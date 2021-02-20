@@ -15,13 +15,13 @@ import javax.inject.Singleton
 abstract class PreferenceModule {
     @Singleton
     @Binds
-    abstract fun providePreferenceProvider(
+    abstract fun bindPreferenceProvider(
         preferenceProviderImpl: PreferenceProviderImpl
-    ):PreferenceProvider
+    ): PreferenceProvider
 
     @Singleton
     @Binds
-    abstract fun provideEncryptedPreferenceProvider(
+    abstract fun bindEncryptedPreferenceProvider(
         encryptedPreferenceProviderImpl: EncryptedPreferenceProviderImpl
-    ):EncryptedPreferenceProvider
+    ): EncryptedPreferenceProvider
 }
