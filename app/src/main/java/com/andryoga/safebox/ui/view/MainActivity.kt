@@ -1,7 +1,8 @@
-package com.andryoga.safebox
+package com.andryoga.safebox.ui.view
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import com.andryoga.safebox.R
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
