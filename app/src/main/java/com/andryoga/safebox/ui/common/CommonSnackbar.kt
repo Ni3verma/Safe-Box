@@ -15,7 +15,7 @@ class CommonSnackbar {
                         android.R.color.holo_red_light
                     )
                 )
-                .setTextColor(ContextCompat.getColor(view.context, R.color.white))
+                .setTextColor(ContextCompat.getColor(view.context, R.color.white_50))
                 .show()
         }
 
@@ -27,7 +27,7 @@ class CommonSnackbar {
                         R.color.colorPrimary
                     )
                 )
-                .setTextColor(ContextCompat.getColor(view.context, R.color.white))
+                .setTextColor(ContextCompat.getColor(view.context, R.color.white_50))
                 .show()
         }
 
@@ -43,7 +43,7 @@ class CommonSnackbar {
                         R.color.colorAccent
                     )
                 )
-                .setTextColor(ContextCompat.getColor(view.context, R.color.black))
+                .setTextColor(ContextCompat.getColor(view.context, R.color.black_800))
         }
     }
 }
