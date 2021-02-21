@@ -5,9 +5,13 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
 
-class EncryptedPreferenceProviderImpl(context: Context) :
+class EncryptedPreferenceProviderImpl @Inject constructor(
+    @ApplicationContext context: Context
+) :
     EncryptedPreferenceProvider {
     private val appContext = context.applicationContext
     private val sharedPref: SharedPreferences

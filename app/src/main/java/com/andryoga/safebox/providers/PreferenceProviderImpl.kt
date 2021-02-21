@@ -3,8 +3,12 @@ package com.andryoga.safebox.providers
 import android.content.Context
 import android.content.SharedPreferences
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class PreferenceProviderImpl(context: Context) :
+class PreferenceProviderImpl @Inject constructor(
+    @ApplicationContext context: Context
+) :
     PreferenceProvider {
     private val appContext = context.applicationContext
     private val sharedPref: SharedPreferences = appContext.getSharedPreferences(
