@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Safe Box</string>
+    <string name="choose_master_password_head">Choose a Master Password</string>
+    <string name="enter_password">Enter password</string>
+    <string name="enter_password_again">Enter password again</string>
+    <string name="length_vaidation_text">Must be more than 8 characters</string>
+    <string name="special_char_validation_text">Must contain more than 1 special character</string>
+    <string name="case_validation_text">Must be a mix of upper and lower case letters</string>
+    <string name="numeric_validation_text">Must contain more than 2 numeric characters</string>
+    <string name="alternate_validation_text">Must not contain alternate digits or letters\n eg:123, abc</string>
+    <string name="pswrd_match_validation_text">Both passwords must match</string>
+    <string name="save">Save</string>
 </resources>

@@ -17,6 +17,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!--Components-->
+    <style name="validationTextViewStyle">
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAppearance">@style/TextAppearance.MyTheme.Caption</item>
+        <item name="android:drawablePadding">8dp</item>
+    </style>
 
     <!--Bottom Sheets-->
     <style name="ThemeOverlay.MyTheme.BottomSheetDialog" parent="ThemeOverlay.MaterialComponents.Dialog">

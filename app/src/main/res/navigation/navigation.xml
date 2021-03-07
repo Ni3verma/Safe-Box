@@ -3,11 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/chooseMasterPswrdFragment">
 
     <fragment
         android:id="@+id/loginFragment"
         android:name="com.andryoga.safebox.ui.view.login.LoginFragment"
         android:label="login_fragment"
         tools:layout="@layout/login_fragment" />
+    <fragment
+        android:id="@+id/chooseMasterPswrdFragment"
+        android:name="com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdFragment"
+        android:label="ChooseMasterPswrdFragment"
+        tools:layout="@layout/choose_master_pswrd_fragment" />
 </navigation>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdViewModel" />
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.view.chooseMasterPswrd.ChooseMasterPswrdFragment">
+
+        <TextView
+            android:id="@+id/heading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/choose_master_password_head"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/pswrd"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/heading">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/pswrd_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/enter_password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:text="@={viewModel.pswrd}">
+
+            </com.google.android.material.textfield.TextInputEditText>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/confirm_pswrd"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/pswrd">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/confirm_pswrd_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/enter_password_again"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:text="@={viewModel.confirmPswrd}">
+
+            </com.google.android.material.textfield.TextInputEditText>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/length_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/length_vaidation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/confirm_pswrd"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <TextView
+            android:id="@+id/special_char_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/special_char_validation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/length_validation"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <TextView
+            android:id="@+id/case_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/case_validation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/special_char_validation"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <TextView
+            android:id="@+id/numeric_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/numeric_validation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/case_validation"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <TextView
+            android:id="@+id/alternate_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alternate_validation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/numeric_validation"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <TextView
+            android:id="@+id/pswrd_match_validation"
+            style="@style/validationTextViewStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/pswrd_match_validation_text"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/alternate_validation"
+            tools:drawableLeftCompat="@drawable/ic_check_24" />
+
+        <Button
+            android:id="@+id/save_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:enabled="@{viewModel.isSaveButtonEnabled()}"
+            android:text="@string/save"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/pswrd_match_validation"
+            tools:enabled="false" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

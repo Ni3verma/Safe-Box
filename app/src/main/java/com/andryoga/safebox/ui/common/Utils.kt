@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.common
 
 import android.view.View
+import android.widget.TextView
 
 class Utils {
     companion object {
@@ -18,6 +19,10 @@ class Utils {
                     }
                 }
             }
+        }
+
+        fun setTextViewLeftDrawable(view: TextView, drawableId: Int) {
+            view.setCompoundDrawablesWithIntrinsicBounds(drawableId, 0, 0, 0)
         }
     }
 }
