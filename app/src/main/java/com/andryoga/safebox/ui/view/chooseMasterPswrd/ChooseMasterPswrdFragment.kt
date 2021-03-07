@@ -13,6 +13,7 @@ import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ChooseMasterPswrdFragment : Fragment() {
@@ -48,11 +49,12 @@ class ChooseMasterPswrdFragment : Fragment() {
             }
 
             // change icon for those where validation failed
+            Timber.d("failure validation codes : $failureCode")
             for (code in failureCode) {
                 if (validatorMapping.containsKey(code))
                     Utils.setTextViewLeftDrawable(validatorMapping[code]!!, R.drawable.ic_error_24)
                 else {
-                    // log error here
+                    Timber.e("$code not found in validatorMapping")
                 }
             }
         }
