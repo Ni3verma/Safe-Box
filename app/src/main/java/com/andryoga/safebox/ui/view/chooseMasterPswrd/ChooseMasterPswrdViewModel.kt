@@ -1,13 +1,18 @@
 package com.andryoga.safebox.ui.view.chooseMasterPswrd
 
 import androidx.lifecycle.*
+import com.andryoga.safebox.common.Constants.Companion.IS_SIGN_UP_REQUIRED
+import com.andryoga.safebox.common.Constants.Companion.MASTER_PSWRD
+import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class ChooseMasterPswrdViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider
 ) : ViewModel() {
 
     private val _isSaveButtonEnabled = MutableLiveData<Boolean>(false)
@@ -76,6 +81,14 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         }
 
         return list
+    }
+
+    fun onSaveClick() {
+        Timber.i("save password clicked")
+        encryptedPreferenceProvider.upsertStringPref(MASTER_PSWRD, pswrd.value!!)
+        encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
+        Timber.i("pref updated")
+        //TODO navigate to home
     }
 
 }
