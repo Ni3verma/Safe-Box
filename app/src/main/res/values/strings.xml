@@ -12,4 +12,10 @@
     <string name="save">Save</string>
     <string name="password">Password</string>
     <string name="unlock">unlock</string>
+
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="drawer_title_all_items">All Items</string>
+    <string name="drawer_title_logins">Logins</string>
 </resources>

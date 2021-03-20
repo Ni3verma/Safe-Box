@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
@@ -64,6 +65,13 @@ class ChooseMasterPswrdFragment : Fragment() {
                 Utils.setTextViewLeftDrawable(binding.pswrdMatchValidation, R.drawable.ic_check_24)
             } else {
                 Utils.setTextViewLeftDrawable(binding.pswrdMatchValidation, R.drawable.ic_error_24)
+            }
+        }
+
+        viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
+            if (isNavigate) {
+                Timber.i("navigating to home")
+                findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_homeFragment)
             }
         }
     }

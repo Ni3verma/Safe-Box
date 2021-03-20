@@ -19,16 +19,20 @@ class LoginViewModel @Inject constructor(
     val isSignUpRequired: Boolean =
         encryptedPreferenceProvider.getBooleanPref(IS_SIGN_UP_REQUIRED, true)
 
-    val pswrd = MutableLiveData<String>("")
+    val pswrd = MutableLiveData<String>("Qwerty@@135")
 
     private val _isWrongPswrdEntered = MutableLiveData<Boolean>()
     val isWrongPswrdEntered: LiveData<Boolean> = _isWrongPswrdEntered
+
+    private val _navigateToHome = MutableLiveData<Boolean>()
+    val navigateToHome: LiveData<Boolean> = _navigateToHome
 
     fun onUnlockClick() {
         Timber.d("unlock clicked, entered pswrd = ${pswrd.value}")
         val masterPswrd = encryptedPreferenceProvider.getStringPref(MASTER_PSWRD, null)
         if (masterPswrd == pswrd.value) {
             Timber.i("correct pswrd entered")
+            _navigateToHome.value = true
         } else {
             Timber.i("wrong pswrd entered")
             _isWrongPswrdEntered.value = true

@@ -53,5 +53,12 @@ class LoginFragment : Fragment() {
                 binding.pswrd.isErrorEnabled = true
             }
         }
+
+        viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
+            if (isNavigate) {
+                Timber.i("navigating to home")
+                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+            }
+        }
     }
 }

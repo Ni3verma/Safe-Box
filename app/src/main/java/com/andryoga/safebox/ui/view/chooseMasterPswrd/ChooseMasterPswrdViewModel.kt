@@ -18,6 +18,9 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     private val _isSaveButtonEnabled = MutableLiveData<Boolean>(false)
     val isSaveButtonEnabled: LiveData<Boolean> = _isSaveButtonEnabled
 
+    private val _navigateToHome = MutableLiveData<Boolean>()
+    val navigateToHome: LiveData<Boolean> = _navigateToHome
+
     val pswrd = MutableLiveData<String>("")
     val confirmPswrd = MutableLiveData<String>("")
 
@@ -88,7 +91,8 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         encryptedPreferenceProvider.upsertStringPref(MASTER_PSWRD, pswrd.value!!)
         encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
         Timber.i("pref updated")
-        //TODO navigate to home
+
+        _navigateToHome.value = true
     }
 
 }
