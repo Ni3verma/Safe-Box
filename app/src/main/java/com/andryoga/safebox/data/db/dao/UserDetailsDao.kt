@@ -11,12 +11,6 @@ interface UserDetailsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserDetailsData(userDetailsEntity: UserDetailsEntity)
 
-    /*
-    * This function validates whether password entered is correct or not
-    * @author Nitin
-    * @param password This is the password that needs to be checked
-    * @return int If output is 1 then entered password is correct, otherwise wrong
-    * */
-    @Query("select count(*) from user_details where password=:password limit 1")
-    suspend fun checkPassword(password: String): Int
+    @Query("select * from user_details limit 1")
+    suspend fun getUserDetails(): UserDetailsEntity
 }

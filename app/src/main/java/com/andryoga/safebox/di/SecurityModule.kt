@@ -2,7 +2,9 @@ package com.andryoga.safebox.di
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import com.andryoga.safebox.security.HashingUtilsImpl
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
+import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.Module
 import dagger.Provides
@@ -56,5 +58,11 @@ object SecurityModule {
             keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
 
         return secretKeyEntry.secretKey
+    }
+
+    @Singleton
+    @Provides
+    fun provideHashingUtils(): HashingUtils {
+        return HashingUtilsImpl()
     }
 }

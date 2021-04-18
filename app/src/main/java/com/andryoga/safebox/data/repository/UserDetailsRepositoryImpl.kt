@@ -17,7 +17,6 @@ class UserDetailsRepositoryImpl @Inject constructor(
     }
 
     override suspend fun checkPassword(password: String): Boolean {
-        val count = userDetailsDaoSecure.checkPassword(password)
-        return count > 0
+        return userDetailsDaoSecure.checkPassword(password)
     }
 }
