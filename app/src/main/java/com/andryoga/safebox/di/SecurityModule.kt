@@ -2,8 +2,8 @@ package com.andryoga.safebox.di
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.andryoga.safebox.common.Constants
-import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.security.SymmetricKeyUtils
+import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,16 +19,29 @@ object SecurityModule {
 
     @Singleton
     @Provides
-    fun provideSecretKey(
-        preferenceProvider: PreferenceProvider
+    fun provideSymmetricKey(
     ): SecretKey {
-        val isKeyAlreadyPresent =
-            preferenceProvider.getBooleanPref(Constants.IS_KEY_GENERATED, false)
-        if (!isKeyAlreadyPresent) {
+        return getSymmetricKey()
+    }
+
+    @Singleton
+    @Provides
+    fun provideSymmetricKeyUtils(
+        secretKey: SecretKey
+    ): SymmetricKeyUtils {
+        return SymmetricKeyUtilsImpl(secretKey)
+    }
+
+    private fun getSymmetricKey(): SecretKey {
+        val alias = "symmetricDataKey"
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+
+        if (!keyStore.containsAlias(alias)) {
             val keyGenerator =
                 KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
             val keyGenParameterSpec = KeyGenParameterSpec.Builder(
-                "SafeBox",
+                alias,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
             )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
@@ -38,17 +51,10 @@ object SecurityModule {
                 .build()
             keyGenerator.init(keyGenParameterSpec)
             keyGenerator.generateKey()
-
-            preferenceProvider.upsertBooleanPref(Constants.IS_KEY_GENERATED, true)
         }
-
-        val keyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
-
         val secretKeyEntry =
-            keyStore.getEntry("SafeBox", null) as KeyStore.SecretKeyEntry
+            keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
+
         return secretKeyEntry.secretKey
     }
-
-
 }

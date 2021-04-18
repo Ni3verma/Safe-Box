@@ -1,6 +1,6 @@
 package com.andryoga.safebox.security
 
-interface KeyStoreUtils {
+interface SymmetricKeyUtils {
     fun encrypt(data: String): String
     fun decrypt(data: String): String
 }

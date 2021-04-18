@@ -2,17 +2,19 @@ package com.andryoga.safebox.ui.view.chooseMasterPswrd
 
 import androidx.lifecycle.*
 import com.andryoga.safebox.common.Constants.Companion.IS_SIGN_UP_REQUIRED
-import com.andryoga.safebox.common.Constants.Companion.MASTER_PSWRD
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class ChooseMasterPswrdViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val encryptedPreferenceProvider: EncryptedPreferenceProvider
+    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
+    private val userDetailsRepository: UserDetailsRepository
 ) : ViewModel() {
 
     private val _isSaveButtonEnabled = MutableLiveData<Boolean>(false)
@@ -86,13 +88,17 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         return list
     }
 
+    /*
+    * Add password in DB and update pref flag so that next time app asks user to login
+    * instead of sign up
+    * */
     fun onSaveClick() {
         Timber.i("save password clicked")
-        encryptedPreferenceProvider.upsertStringPref(MASTER_PSWRD, pswrd.value!!)
-        encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
-        Timber.i("pref updated")
-
-        _navigateToHome.value = true
+        viewModelScope.launch {
+            userDetailsRepository.insertUserDetailsData(pswrd.value!!, "ADD HINT IN UI")
+            encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
+            Timber.i("Added pswrd in db")
+            _navigateToHome.value = true
+        }
     }
-
 }
