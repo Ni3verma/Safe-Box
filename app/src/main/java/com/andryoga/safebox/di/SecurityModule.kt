@@ -2,8 +2,8 @@ package com.andryoga.safebox.di
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
-import com.andryoga.safebox.security.SymmetricKeyUtils
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
+import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

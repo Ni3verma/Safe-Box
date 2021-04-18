@@ -2,7 +2,7 @@ package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
-import com.andryoga.safebox.security.SymmetricKeyUtils
+import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import javax.inject.Inject
 
 class UserDetailsDaoSecure @Inject constructor(

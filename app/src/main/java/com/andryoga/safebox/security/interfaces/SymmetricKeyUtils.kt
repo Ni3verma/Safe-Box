@@ -1,4 +1,4 @@
-package com.andryoga.safebox.security
+package com.andryoga.safebox.security.interfaces
 
 interface SymmetricKeyUtils {
     fun encrypt(data: String): String
