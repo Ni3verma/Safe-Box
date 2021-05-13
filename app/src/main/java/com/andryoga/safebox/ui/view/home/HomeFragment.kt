@@ -32,6 +32,8 @@ class HomeFragment : Fragment() {
         binding.lifecycleOwner = this
         setHasOptionsMenu(true)
 
+        setupObservers()
+
         return binding.root
     }
 
@@ -64,5 +66,22 @@ class HomeFragment : Fragment() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun setupObservers() {
+        viewModel.masterOptionClicked.observe(viewLifecycleOwner) { isExpanded ->
+            if (isExpanded) {
+                binding.addNewUserPersonalDataLayout.newDataMasterFab.apply {
+                    setIconResource(R.drawable.ic_cancel_24)
+                    extend()
+                }
+
+            } else {
+                binding.addNewUserPersonalDataLayout.newDataMasterFab.apply {
+                    setIconResource(R.drawable.ic_add_24)
+                    shrink()
+                }
+            }
+        }
     }
 }

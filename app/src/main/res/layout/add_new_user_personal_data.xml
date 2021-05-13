@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="com.andryoga.safebox.ui.view.home.HomeViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/new_data_master_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/cd_open_options_to_add_new_personal_data"
+            android:onClick="@{()->viewModel.onMasterOptionClick()}"
+            android:text="@string/collapse"
+            app:icon="@drawable/ic_add_24"
+            app:iconTint="@color/white_50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/new_personal_login_data_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/cd_add_new_login_data"
+            android:text="@string/login_data"
+            app:icon="@drawable/ic_person_24"
+            app:iconTint="@color/white_50"
+            app:layout_constraintBottom_toTopOf="@id/new_data_master_fab"
+            app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/new_personal_bank_account_data_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/cd_add_new_bank_account_data"
+            android:text="@string/bank_account"
+            app:icon="@drawable/ic_bank_24"
+            app:iconTint="@color/white_50"
+            app:layout_constraintBottom_toTopOf="@id/new_personal_login_data_fab"
+            app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/new_personal_bank_card_data_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/cd_add_new_bank_card_data"
+            android:text="@string/bank_card"
+            app:icon="@drawable/ic_card_24"
+            app:iconTint="@color/white_50"
+            app:layout_constraintBottom_toTopOf="@id/new_personal_bank_account_data_fab"
+            app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
+
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/new_personal_note_data_fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="@string/cd_add_a_new_note"
+            android:text="@string/secure_note"
+            app:icon="@drawable/ic_key_24"
+            app:iconTint="@color/white_50"
+            app:layout_constraintBottom_toTopOf="@id/new_personal_bank_card_data_fab"
+            app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/end_margin_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="16dp" />
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/new_options_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="@{viewModel.isAddNewOptionsExpanded()? View.VISIBLE:View.GONE}"
+            app:constraint_referenced_ids="new_personal_login_data_fab,new_personal_bank_account_data_fab,new_personal_bank_card_data_fab,new_personal_note_data_fab"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

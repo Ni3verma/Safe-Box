@@ -1,4 +1,17 @@
 <resources>
+    <!--    Content descriptions-->
+    <string name="cd_open_options_to_add_new_personal_data">Open options to add new personal data</string>
+    <string name="cd_add_new_login_data">Add new login data</string>
+    <string name="cd_add_new_bank_account_data">Add new bank account data</string>
+    <string name="cd_add_new_bank_card_data">Add new bank card data</string>
+    <string name="cd_add_a_new_note">Add a new note</string>
+
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="drawer_title_all_items">All Items</string>
+    <string name="drawer_title_logins">Logins</string>
+
     <string name="app_name">Safe Box</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
     <string name="enter_password">Enter password</string>
@@ -12,10 +25,9 @@
     <string name="save">Save</string>
     <string name="password">Password</string>
     <string name="unlock">unlock</string>
-
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
-    <string name="nav_header_desc">Navigation header</string>
-    <string name="drawer_title_all_items">All Items</string>
-    <string name="drawer_title_logins">Logins</string>
+    <string name="collapse">Collapse</string>
+    <string name="login_data">Login Data</string>
+    <string name="bank_account">Bank Account</string>
+    <string name="bank_card">Bank Card</string>
+    <string name="secure_note">Secure Note</string>
 </resources>
