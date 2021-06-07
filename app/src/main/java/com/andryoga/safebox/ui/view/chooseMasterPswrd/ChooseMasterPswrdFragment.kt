@@ -46,8 +46,12 @@ class ChooseMasterPswrdFragment : Fragment() {
     private fun setupObservers() {
         viewModel.pswrdValidationFailures.observe(viewLifecycleOwner) { failureCode ->
             // by default make every validation as pass
-            validatorMapping.values.forEach { validationView ->
-                Utils.setTextViewLeftDrawable(validationView, R.drawable.ic_check_24)
+            val validatorMappingIterator = validatorMapping.values.iterator()
+            while (validatorMappingIterator.hasNext()) {
+                Utils.setTextViewLeftDrawable(
+                    validatorMappingIterator.next(),
+                    R.drawable.ic_check_24
+                )
             }
 
             // change icon for those where validation failed
