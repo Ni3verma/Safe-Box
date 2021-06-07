@@ -18,7 +18,7 @@ abstract class SafeBoxDatabase : RoomDatabase() {
     abstract fun loginDataDao(): LoginDataDao
     abstract fun userDetailsDao(): UserDetailsDao
 
-    companion object{
+    companion object {
         const val DATABASE_NAME: String = "SAFEBOX_APP_DB"
     }
 }

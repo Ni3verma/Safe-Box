@@ -1,0 +1,56 @@
+static def isLinuxOrMacOs() {
+    def osName = System.getProperty('os.name').toLowerCase(Locale.ROOT)
+    return osName.contains('linux') || osName.contains('mac os') || osName.contains('macos')
+}
+
+task copyGitHooks(type: Copy) {
+    description 'Copies the git hooks from CICD/gitHooks to the .git folder.'
+    from("${rootDir}/CICD/gitHooks/") {
+        include '**/*.sh'
+        rename '(.*).sh', '$1'
+    }
+    into "${rootDir}/.git/hooks"
+    doLast {
+        println("Copied git hooks successfully.")
+    }
+}
+
+task installGitHooks(type: Exec) {
+    description 'Installs the git hooks from CICD/gitHooks.'
+    group 'git hooks'
+    workingDir rootDir
+    commandLine 'chmod'
+    args '-R', '+x', '.git/hooks/'
+    dependsOn copyGitHooks
+    onlyIf {
+        def isMacOrLinux = isLinuxOrMacOs()
+        if(!isMacOrLinux){
+            println("skipping task on Windows OS")
+        }
+    }
+    doLast {
+        println('Git hook installed successfully.')
+    }
+
+}
+
+afterEvaluate {
+    // We install the hook at the first occasion
+    tasks['clean'].dependsOn installGitHooks
+    tasks['assemble'].dependsOn installGitHooks
+    tasks['assembleDebug'].dependsOn installGitHooks
+}
+
+detekt {
+    buildUponDefaultConfig = true // preconfigure defaults
+    allRules = false // activate all available (even unstable) rules.
+    config = files("$rootDir/CICD/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
+
+
+    reports {
+        xml.enabled = false
+        txt.enabled = false
+        html.enabled = true // observe findings in your browser with structure and code snippets
+        sarif.enabled = true // standardized SARIF format (https://sarifweb.azurewebsites.net/) to support integrations with Github Code Scanning
+    }
+}

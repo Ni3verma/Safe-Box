@@ -24,7 +24,8 @@ class ChooseMasterPswrdFragment : Fragment() {
     private lateinit var validatorMapping: Map<PasswordValidationFailureCode, TextView>
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(

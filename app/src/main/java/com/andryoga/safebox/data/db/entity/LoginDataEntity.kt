@@ -22,7 +22,8 @@ data class LoginDataEntity(
         password: String,
         notes: String?,
         userId: String,
-        creationDate: Date, updateDate: Date
+        creationDate: Date,
+        updateDate: Date
     ) : this(
         0, title, url, password, notes, userId, creationDate, updateDate
     )

@@ -13,8 +13,8 @@ interface LoginDataDao {
     suspend fun insertLoginData(loginDataEntity: LoginDataEntity)
 
     @Query("select * from login_data")
-     fun getAllLoginData(): Flow<List<LoginDataEntity>>
+    fun getAllLoginData(): Flow<List<LoginDataEntity>>
 
     @Query("select * from login_data where `key` = :key limit 1")
-     fun getLoginDataByKey(key: Int): Flow<LoginDataEntity>
+    fun getLoginDataByKey(key: Int): Flow<LoginDataEntity>
 }

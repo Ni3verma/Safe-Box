@@ -45,5 +45,5 @@ object CacheModule {
         return safeBoxDatabase.userDetailsDao()
     }
 
-    //Secure DAO
+    // Secure DAO
 }

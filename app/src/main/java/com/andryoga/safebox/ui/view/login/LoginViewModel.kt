@@ -1,7 +1,10 @@
 package com.andryoga.safebox.ui.view.login
 
-import androidx.lifecycle.*
-import com.andryoga.safebox.common.Constants.Companion.IS_SIGN_UP_REQUIRED
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.andryoga.safebox.common.Constants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,14 +14,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle,
     encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val userDetailsRepository: UserDetailsRepository
 ) : ViewModel() {
     val isSignUpRequired: Boolean =
         encryptedPreferenceProvider.getBooleanPref(IS_SIGN_UP_REQUIRED, true)
 
-    val pswrd = MutableLiveData<String>("Qwerty@@135")
+    val pswrd = MutableLiveData("Qwerty@@135")
 
     private val _isWrongPswrdEntered = MutableLiveData<Boolean>()
     val isWrongPswrdEntered: LiveData<Boolean> = _isWrongPswrdEntered

@@ -10,7 +10,10 @@ class SymmetricKeyUtilsImpl
 @Inject constructor(
     private val secretKey: SecretKey
 ) : SymmetricKeyUtils {
-    private val separator = "|"
+    object Constants {
+        const val separator = "|"
+        const val gcmAuthTagLength = 128
+    }
 
     override fun encrypt(data: String): String {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -21,18 +24,18 @@ class SymmetricKeyUtilsImpl
         val base64EncodedData = SecurityUtils.encodeBase64(encryptedBytes)
         val base64EncodedIvData = SecurityUtils.encodeBase64(ivBytes)
 
-        return base64EncodedData + separator + base64EncodedIvData
+        return base64EncodedData + Constants.separator + base64EncodedIvData
     }
 
     override fun decrypt(data: String): String {
-        val dataArray = data.split(separator, limit = 2)
+        val dataArray = data.split(Constants.separator, limit = 2)
         val base64EncodedEncryptedString = dataArray[0]
         val base64EncodedInitVector = dataArray[1]
 
         val encryptedByteArray = SecurityUtils.decodeBase64(base64EncodedEncryptedString)
         val initVectorByteArray = SecurityUtils.decodeBase64(base64EncodedInitVector)
 
-        val spec = GCMParameterSpec(128, initVectorByteArray)
+        val spec = GCMParameterSpec(Constants.gcmAuthTagLength, initVectorByteArray)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
         val decryptedBytes = cipher.doFinal(encryptedByteArray)
