@@ -6,11 +6,15 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 class HashingUtilsImpl : HashingUtils {
+    object Constants {
+        const val iterationCount = 500
+        const val keyLength = 64 * 8
+        const val saltSize = 16
+    }
+
     private val separator = "|"
     private val secureRandomAlgo = "SHA1PRNG"
     private val hashingAlgo = "PBKDF2WithHmacSHA1"
-    private val iterationCount = 500
-    private val keyLength = 64 * 8
 
     private val secureRandom: SecureRandom = SecureRandom.getInstance(secureRandomAlgo)
     private val keyFactory = SecretKeyFactory.getInstance(hashingAlgo)
@@ -19,7 +23,10 @@ class HashingUtilsImpl : HashingUtils {
         val salt = getSalt()
         val base64EncodedSalt = SecurityUtils.encodeBase64(salt)
 
-        val spec = PBEKeySpec(password.toCharArray(), salt, iterationCount, keyLength)
+        val spec = PBEKeySpec(
+            password.toCharArray(), salt,
+            Constants.iterationCount, Constants.keyLength
+        )
         val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
             keyFactory.generateSecret(spec).encoded
         )
@@ -30,11 +37,18 @@ class HashingUtilsImpl : HashingUtils {
     override suspend fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
         val hashInfo = toCompareWithHash.split(separator)
         if (hashInfo.size != 2) {
-            throw SecurityException("proper hash info not passed. It must be of this format : {base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}")
+            throw SecurityException(
+                "proper hash info not passed. " +
+                    "It must be of this format : " +
+                    "{base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}"
+            )
         }
         val salt = SecurityUtils.decodeBase64(hashInfo[1])
 
-        val spec = PBEKeySpec(toCompareText.toCharArray(), salt, iterationCount, keyLength)
+        val spec = PBEKeySpec(
+            toCompareText.toCharArray(), salt,
+            Constants.iterationCount, Constants.keyLength
+        )
         val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
             keyFactory.generateSecret(spec).encoded
         )
@@ -43,7 +57,7 @@ class HashingUtilsImpl : HashingUtils {
     }
 
     private fun getSalt(): ByteArray {
-        val salt = ByteArray(16)
+        val salt = ByteArray(Constants.saltSize)
         secureRandom.nextBytes(salt)
         return salt
     }

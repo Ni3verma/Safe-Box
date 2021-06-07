@@ -18,7 +18,8 @@ class AllInfoFragment : Fragment() {
     private lateinit var binding: AllInfoFragmentBinding
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.all_info_fragment, container, false)

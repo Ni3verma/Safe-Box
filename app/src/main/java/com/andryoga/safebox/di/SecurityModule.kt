@@ -21,8 +21,7 @@ object SecurityModule {
 
     @Singleton
     @Provides
-    fun provideSymmetricKey(
-    ): SecretKey {
+    fun provideSymmetricKey(): SecretKey {
         return getSymmetricKey()
     }
 

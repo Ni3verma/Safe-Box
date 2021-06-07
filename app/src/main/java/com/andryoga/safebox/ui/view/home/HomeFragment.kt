@@ -24,7 +24,8 @@ class HomeFragment : Fragment() {
     private lateinit var binding: HomeFragmentBinding
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.home_fragment, container, false)
@@ -75,7 +76,6 @@ class HomeFragment : Fragment() {
                     setIconResource(R.drawable.ic_cancel_24)
                     extend()
                 }
-
             } else {
                 binding.addNewUserPersonalDataLayout.newDataMasterFab.apply {
                     setIconResource(R.drawable.ic_add_24)

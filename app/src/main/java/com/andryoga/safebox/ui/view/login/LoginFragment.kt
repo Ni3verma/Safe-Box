@@ -21,7 +21,8 @@ class LoginFragment : Fragment() {
     private lateinit var binding: LoginFragmentBinding
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.login_fragment, container, false)

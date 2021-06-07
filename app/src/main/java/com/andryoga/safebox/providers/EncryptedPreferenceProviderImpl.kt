@@ -8,7 +8,6 @@ import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-
 class EncryptedPreferenceProviderImpl @Inject constructor(
     @ApplicationContext context: Context
 ) :

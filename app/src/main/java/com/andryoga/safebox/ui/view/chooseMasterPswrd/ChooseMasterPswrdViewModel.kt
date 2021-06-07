@@ -1,7 +1,7 @@
 package com.andryoga.safebox.ui.view.chooseMasterPswrd
 
 import androidx.lifecycle.*
-import com.andryoga.safebox.common.Constants.Companion.IS_SIGN_UP_REQUIRED
+import com.andryoga.safebox.common.Constants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
@@ -12,10 +12,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChooseMasterPswrdViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle,
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val userDetailsRepository: UserDetailsRepository
 ) : ViewModel() {
+
+    object Constants {
+        const val minPasswordLength = 8
+    }
 
     private val _isSaveButtonEnabled = MutableLiveData<Boolean>(false)
     val isSaveButtonEnabled: LiveData<Boolean> = _isSaveButtonEnabled
@@ -43,7 +46,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     private fun evaluatePasswordValidationRules(pswrd: String): List<PasswordValidationFailureCode> {
         val list = mutableListOf<PasswordValidationFailureCode>()
 
-        if (pswrd.length <= 8) {
+        if (pswrd.length <= Constants.minPasswordLength) {
             list.add(LOW_PASSWORD_LENGTH)
         }
         var regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
