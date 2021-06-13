@@ -7,9 +7,7 @@ Please include a summary of the change that you have done.
 Fixes #issueNumber
 
 # Type of change
-Just put an x in the [] where applicable.
-- [] Bug fix.
-- [] New feature.
+Bug fix **OR** New feature ?
 
 # Code quality checklist
 Just put an x in the [] where applicable.
