@@ -30,4 +30,8 @@
     <string name="bank_account">Bank Account</string>
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
+    <string name="title">Title</string>
+    <string name="url">URL</string>
+    <string name="user_id">User Id</string>
+    <string name="notes">Notes</string>
 </resources>

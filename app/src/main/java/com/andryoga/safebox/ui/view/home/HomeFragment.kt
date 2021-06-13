@@ -10,6 +10,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
@@ -94,6 +95,7 @@ class HomeFragment : Fragment() {
         when (viewId) {
             R.id.new_personal_login_data_fab -> {
                 Timber.i("opening add new login data")
+                findNavController().navigate(R.id.action_homeFragment_to_addNewLoginDataDialogFragment)
             }
             else -> {
                 Timber.w("no handler found for $viewId")
