@@ -16,6 +16,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.HomeFragmentBinding
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -81,6 +82,21 @@ class HomeFragment : Fragment() {
                     setIconResource(R.drawable.ic_add_24)
                     shrink()
                 }
+            }
+        }
+
+        viewModel.addNewUserDataFabClicked.observe(viewLifecycleOwner) { viewId ->
+            handleAddNewUserDataFabClick(viewId)
+        }
+    }
+
+    private fun handleAddNewUserDataFabClick(viewId: Int) {
+        when (viewId) {
+            R.id.new_personal_login_data_fab -> {
+                Timber.i("opening add new login data")
+            }
+            else -> {
+                Timber.w("no handler found for $viewId")
             }
         }
     }
