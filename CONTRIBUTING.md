@@ -1,10 +1,16 @@
-# Contibuting
+# Contributing
 
 When contributing to this repository, please first raise a new issue or discuss on an existing issue.
 
-## Overview Of Process (For those who have worked on open source projects before)
+## Overview Of Process (For experienced developers)
 1. Find/Create a Issue > Fork the repo > work on your branch (name = `feature/nameOfFeature`).
 2. Verify detekt, ktlint, lint reports.
+```
+gradlew ktlintFormat
+gradlew ktlintCheck
+gradlew detekt
+gradlew lint
+```
 3. push > wait for CI pipeline to complete > verify the reports in artifacts.
 4. Wait for your changes to be merged.
 
@@ -31,7 +37,7 @@ IMPORTANT : Follow this naming convention for new branch names : `feature/nameOf
 
 ### 4. Run the project locally and test your changes on emulator/Real device.
 
-### 5. Run Analyze>Inspect Code. In the "Inspection Scope" section, choose uncommited files and click "OK" and fix the issues.
+### 5. Run Analyze>Inspect Code. In the "Inspection Scope" section, choose uncommitted files and click "OK" and fix the issues.
 
 ### 6. Run ktlint formatter.
 * You can either install ktlint plugin > select app from left side project navigation > Select Refactor then "Format with ktlint" option towards bottom.
@@ -45,7 +51,7 @@ IMPORTANT : Follow this naming convention for new branch names : `feature/nameOf
 git add .
 git commit -m'a descriptive message here'
 ```
-* Incase you are commiting from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
+* In case you are committing from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
 
 <img src="./screenshots/commit_from_android_studio.png">
 
@@ -57,7 +63,7 @@ app/build/reports/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.txt
 ```
 INFO : For ktlint : errors can also be found in the commit error message.
 
-NOTE : untill ktlint and detekt issues are fixed, you will not be able to commit your changes.
+NOTE : until ktlint and detekt issues are fixed, you will not be able to commit your changes.
 
 Once commit is done, push your changes.
 
