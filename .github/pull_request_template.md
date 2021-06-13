@@ -4,7 +4,7 @@ Please include a summary of the change that you have done.
 * If there is any UI change, please add screenshots.
 * If you had to add any new dependency, please mention it here.
 
-Fixes #(issueNumber)
+Fixes #issueNumber
 
 # Type of change
 Just put an x in the [] where applicable.
