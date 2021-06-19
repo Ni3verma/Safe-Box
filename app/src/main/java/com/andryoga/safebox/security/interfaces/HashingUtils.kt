@@ -6,7 +6,7 @@ interface HashingUtils {
     * Computes hash of passed input
     * @param password : simple string that needs to be hashed
     * @return {base64 encoded hash(password+salt)}+someSeparator+{base64 encoded salt}*/
-    suspend fun hash(password: String): String
+    fun hash(password: String): String
 
     /*
     * @author Nitin
@@ -15,5 +15,5 @@ interface HashingUtils {
     * @param toCompareWithHash : it the hash that will be compared with.
     * It must be of this format : {base64 encoded hash(password+salt)}+someSeparator+{base64 encoded salt}
     * @return true if text and its hash matches, false otherwise*/
-    suspend fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean
+    fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean
 }
