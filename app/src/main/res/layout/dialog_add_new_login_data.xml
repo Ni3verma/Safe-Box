@@ -20,11 +20,11 @@
             android:id="@+id/header_icon"
             android:layout_width="64dp"
             android:layout_height="64dp"
+            android:contentDescription="@string/cd_add_new_login_data"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_person_24"
-            android:contentDescription="@string/cd_add_new_login_data"
             app:tint="@color/colorPrimaryDark" />
 
         <TextView
@@ -52,7 +52,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/title"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginData.title}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -74,7 +75,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/url"
                 android:inputType="textWebEmailAddress"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginData.url}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -95,7 +97,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/user_id"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginData.userId}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -117,7 +120,8 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/password"
                 android:inputType="textPassword"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginData.password}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -130,11 +134,12 @@
             android:ems="10"
             android:gravity="start|top"
             android:hint="@string/notes"
-            android:inputType="textMultiLine"
             android:importantForAutofill="no"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:text="@={viewModel.addNewLoginData.notes}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:minLines="2"
             app:layout_constraintTop_toBottomOf="@+id/pswrd" />
 
         <Button
@@ -142,6 +147,7 @@
             style="@style/Widget.MaterialComponents.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:onClick="@{()->viewModel.onSaveClick()}"
             android:text="@string/save"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

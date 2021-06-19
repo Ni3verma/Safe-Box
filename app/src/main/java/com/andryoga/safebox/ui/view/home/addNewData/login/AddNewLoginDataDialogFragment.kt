@@ -8,6 +8,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.DialogAddNewLoginDataBinding
+import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -29,5 +30,18 @@ class AddNewLoginDataDialogFragment : BottomSheetDialogFragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val requiredFieldValidator = RequiredFieldValidator(
+            listOf(
+                binding.title,
+                binding.userId,
+                binding.pswrd
+            ),
+            binding.saveBtn,
+            "add new login data dialog fragment"
+        )
+        requiredFieldValidator.validate()
     }
 }

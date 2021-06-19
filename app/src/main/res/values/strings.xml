@@ -23,15 +23,15 @@
     <string name="alternate_validation_text">Must not contain alternate digits or letters\n eg:123, abc</string>
     <string name="pswrd_match_validation_text">Both passwords must match</string>
     <string name="save">Save</string>
-    <string name="password">Password</string>
+    <string name="password">Password <font color='#FF0000'>̽</font></string>
     <string name="unlock">unlock</string>
     <string name="collapse">Collapse</string>
     <string name="login_data">Login Data</string>
     <string name="bank_account">Bank Account</string>
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
-    <string name="title">Title</string>
+    <string name="title">Title <font color='#FF0000'>̽</font></string>
     <string name="url">URL</string>
-    <string name="user_id">User Id</string>
+    <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
 </resources>
