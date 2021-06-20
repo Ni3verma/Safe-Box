@@ -4,11 +4,8 @@ When contributing to this repository, please first raise a new issue or discuss 
 
 ## Overview Of Process (For experienced developers)
 1. Find/Create a Issue > Fork the repo > work on your branch (name = `feature/nameOfFeature`).
-2. Verify detekt, ktlint, lint reports.
+2. Verify lint report. Detekt and ktlint check will automatically happen in pre-commit hook.
 ```
-gradlew ktlintFormat
-gradlew ktlintCheck
-gradlew detekt
 gradlew lint
 ```
 3. push > wait for CI pipeline to complete > verify the reports in artifacts.
@@ -39,14 +36,11 @@ IMPORTANT : Follow this naming convention for new branch names : `feature/nameOf
 
 ### 5. Run Analyze>Inspect Code. In the "Inspection Scope" section, choose uncommitted files and click "OK" and fix the issues.
 
-### 6. Run ktlint formatter.
-* You can either install ktlint plugin > select app from left side project navigation > Select Refactor then "Format with ktlint" option towards bottom.
-* **OR** you can run `gradlew ktlintFormat` in Android studio integrated terminal.
+### 6. Run `gradlew lint` in Android studio integrated terminal.As shown below the command will be automatically highlighted in Yellow, after this press `ctrl+enter`. You can find report at this location `app/build/reports/lint-results.html`. If you see a new error/warning because of your code, make sure you fix it before making a PR.
+<img src="./screenshots/running_terminal_command.png">
 
-### 7. Run `gradlew lint` in Android studio integrated terminal. You can find report at this location `app/build/reports/lint-results.html`. If you see a new error/warning because of your code, make sure you fix it before making a PR.
-
-### 8. Commit your changes
-* You can commit from command line. On commit detekt and ktlint will run automatically to verify code quality. If you have already run the ktlint formatter then you should not see many errors.
+### 7. Commit your changes
+* You can commit from command line. On commit detekt and ktlint will run automatically to verify code quality.
 ```
 git add .
 git commit -m'a descriptive message here'
@@ -55,7 +49,7 @@ git commit -m'a descriptive message here'
 
 <img src="./screenshots/commit_from_android_studio.png">
 
-### 9. Solve detekt, ktlint errors
+### 8. Solve detekt, ktlint errors
 In case your commit was failed. then correct issues in detekt and ktlint reports found in below locations respectively and re-commit:
 ```
 app/build/reports/detekt/detekt.html
@@ -67,7 +61,7 @@ NOTE : until ktlint and detekt issues are fixed, you will not be able to commit 
 
 Once commit is done, push your changes.
 
-### 10. Create Pull Request
+### 9. Create Pull Request
 Open the forked repo in browser. You should see an option to create pull request.
 
 <img src="./screenshots/pull_request_button.png">
@@ -88,4 +82,4 @@ You can also track progress in actions tab. Click on the workflow to see which s
 
 <img src="./screenshots/workflow.png">
 
-### 11. Wait for someone to review your code and merge changes.
+### 10. Wait for someone to review your code and merge changes.
