@@ -3,65 +3,48 @@
 # !!!!!!!!!!!!!!!!!!  IMPORTANT  !!!!!!!!!!!!!!!!!!!!!!!!
 # whenever this file is edited, ALWAYS rebuild the app to copy changes to git hook
 
-echo "Running detekt check..."
-OUTPUT="/tmp/detekt-$(date +%s)"
-./gradlew detekt >$OUTPUT
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne 0 ]; then
-  cat $OUTPUT
-  rm $OUTPUT
+log_info() {
   echo ""
   echo "***********************************************"
-  echo "                 Detekt failed                 "
-  echo " Please fix the above issues before committing "
+  echo "    $1    "
   echo "***********************************************"
   echo ""
-  exit $EXIT_CODE
-fi
-rm $OUTPUT
-echo "**********detekt passed"
+}
 
-echo "Running ktlint check"
+run_detekt() {
+  OUTPUT="/tmp/detekt-$(date +%s)"
+  ./gradlew detekt >$OUTPUT
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -ne 0 ]; then
+    cat $OUTPUT
+    rm $OUTPUT
+    log_info "Detekt failed"
+    start app/build/reports/detekt/detekt.html
+    exit 1
+  fi
+  rm $OUTPUT
+  log_info "detekt passed"
+}
+
+log_info "Autoformatting using ktlint"
+
+./gradlew app:ktlintFormat
+
+log_info "ktlint Autoformatting done"
+
+git add .
+
+log_info "Running ktlint check"
 ./gradlew app:ktlintCheck --daemon
 
 status=$?
 
 if [ "$status" = 0 ]; then
-  echo "**********ktlint passed"
+  log_info "ktlint passed. Running detekt"
+
+  run_detekt
+  exit 0
 else
-  echo ""
-  echo "***********************************************"
-  echo "                 ktlint failed                 "
-  echo " Running ktlint format to automatically fix issues "
-  echo "***********************************************"
-  echo ""
-
-  ./gradlew app:ktlintFormat
-
-  echo ""
-  echo "***********************************************"
-  echo "             ktlint Autoformatting done        "
-  echo "***********************************************"
-  echo ""
-
-  status=$?
-  if [ "$status" = 0 ]; then
-    echo ""
-    echo ""
-    echo "***********************************************"
-    echo "                 ktlint PASSED               "
-    echo " Please commit your changes again after git add "
-    echo "***********************************************"
-    echo ""
-
-  else
-    echo ""
-    echo "***********************************************"
-    echo "                 ktlint failed AGAIN               "
-    echo " Please manually fix issues that could not be automatically fixed by ktlintFormat "
-    echo "***********************************************"
-    echo ""
-    exit 0
-  fi
+  log_info "ktlint Failed. Please fix issues"
   exit 1
 fi
