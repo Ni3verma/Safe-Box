@@ -3,6 +3,7 @@ package com.andryoga.safebox.ui.common
 import android.view.View
 import android.widget.Button
 import androidx.core.widget.addTextChangedListener
+import com.andryoga.safebox.R
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import timber.log.Timber
@@ -29,7 +30,7 @@ class RequiredFieldValidator(
                 editText.addTextChangedListener { text ->
                     if (text.isNullOrBlank()) {
                         view.isErrorEnabled = true
-                        view.error = "Mandatory Field"
+                        view.error = view.context.getString(R.string.common_error_mandatory_field)
                         errorFields = errorFields.plusElement(view.id)
                         Timber.i("$tag --> disabling button")
                         validationOnViewId.isEnabled = false

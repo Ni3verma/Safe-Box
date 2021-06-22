@@ -6,12 +6,21 @@
     <string name="cd_add_new_bank_card_data">Add new bank card data</string>
     <string name="cd_add_a_new_note">Add a new note</string>
 
+    <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="drawer_title_all_items">All Items</string>
     <string name="drawer_title_logins">Logins</string>
 
+    <!--    Snackbar -->
+    <string name="snackbar_common_data_saved">Data saved</string>
+    <string name="snackbar_common_error_saving_data">Error occurred while saving data</string>
+
+    <!--    Common-->
+    <string name="common_error_mandatory_field">Mandatory Field</string>
+
+    <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
     <string name="enter_password">Enter password</string>

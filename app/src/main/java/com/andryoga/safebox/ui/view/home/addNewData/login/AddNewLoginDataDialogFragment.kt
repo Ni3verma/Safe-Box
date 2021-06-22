@@ -49,17 +49,25 @@ class AddNewLoginDataDialogFragment : BottomSheetDialogFragment() {
     }
 
     private fun handleSaveButtonClick(resource: Resource<Boolean>) {
-        // FIXME: 6/19/2021 Not able to figure out why snackbar is not showing up
+        // NEED_HELP: 6/19/2021 Not able to figure out
+        // why snackbar is not showing up if I use requireView() in view param
         Utils.logResourceInfo(tagLocal, resource)
         when (resource.status) {
             Status.LOADING -> switchVisibility(binding.saveBtn, binding.loading)
             Status.SUCCESS -> {
-                showSuccessSnackbar(requireView(), "Data saved")
+                showSuccessSnackbar(
+                    activity!!.findViewById(R.id.drawer_layout),
+                    getString(R.string.snackbar_common_data_saved)
+                )
                 dismiss()
             }
             Status.ERROR -> {
                 switchVisibility(binding.saveBtn, binding.loading)
-                showErrorSnackbar(requireView(), "Error occurred while saving data")
+                showErrorSnackbar(
+                    activity!!.findViewById(R.id.drawer_layout),
+                    getString(R.string.snackbar_common_error_saving_data)
+                )
+                dismiss()
             }
         }
     }
