@@ -30,7 +30,6 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     val confirmPswrd = MutableLiveData<String>("")
     val hint = MutableLiveData<String>("")
 
-
     val pswrdValidationFailures: LiveData<List<PasswordValidationFailureCode>> =
         Transformations.map(pswrd) { currPswrd ->
             val validationFailures = evaluatePasswordValidationRules(currPswrd)
