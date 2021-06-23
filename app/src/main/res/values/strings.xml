@@ -30,4 +30,5 @@
     <string name="bank_account">Bank Account</string>
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
+    <string name="add_hint">Add hint</string>
 </resources>

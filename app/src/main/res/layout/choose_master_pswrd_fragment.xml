@@ -72,6 +72,29 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/add_a_hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/confirm_pswrd">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/hint_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/add_hint"
+                android:inputType="textNoSuggestions"
+                android:singleLine="true"
+                android:text="@={viewModel.hint}">
+
+            </com.google.android.material.textfield.TextInputEditText>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <TextView
             android:id="@+id/length_validation"
             style="@style/validationTextViewStyle"
@@ -80,7 +103,7 @@
             android:layout_marginTop="16dp"
             android:text="@string/length_validation_text"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/confirm_pswrd"
+            app:layout_constraintTop_toBottomOf="@+id/add_a_hint"
             tools:drawableLeftCompat="@drawable/ic_check_24" />
 
         <TextView
