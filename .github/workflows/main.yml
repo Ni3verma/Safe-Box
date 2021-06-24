@@ -64,27 +64,27 @@ jobs:
           name: Unit test result
           path: app/build/reports/tests/testDebugUnitTest/
 
-  instrumentation-test:
-    needs: [ unit-test ]
-    runs-on: macos-latest
+#   instrumentation-test:
+#     needs: [ unit-test ]
+#     runs-on: macos-latest
 
-    steps:
-      - uses: actions/checkout@v2
+#     steps:
+#       - uses: actions/checkout@v2
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+#       - name: Make gradlew executable
+#         run: chmod +x ./gradlew
 
-      - name: Run espresso test
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew connectedCheck
+#       - name: Run espresso test
+#         uses: reactivecircus/android-emulator-runner@v2
+#         with:
+#           api-level: 29
+#           script: ./gradlew connectedCheck
 
-      - name: upload test result
-        uses: actions/upload-artifact@v2
-        with:
-          name: Instrumentation test result
-          path: app/build/reports/androidTests/connected/
+#       - name: upload test result
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: Instrumentation test result
+#           path: app/build/reports/androidTests/connected/
 
   Detekt:
     name: Detekt Scan
