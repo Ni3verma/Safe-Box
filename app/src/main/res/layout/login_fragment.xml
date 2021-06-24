@@ -50,6 +50,13 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/show_hint"
+                    android:textColor="#068AC6"
+                    android:layout_gravity="end"/>
+
                 <Button
                     android:id="@+id/save_btn"
                     android:layout_width="wrap_content"
