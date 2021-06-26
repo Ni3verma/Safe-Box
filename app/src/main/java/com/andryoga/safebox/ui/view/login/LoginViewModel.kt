@@ -21,6 +21,7 @@ class LoginViewModel @Inject constructor(
         encryptedPreferenceProvider.getBooleanPref(IS_SIGN_UP_REQUIRED, true)
 
     val pswrd = MutableLiveData("Qwerty@@135")
+    val hint = MutableLiveData("Here's a hint")
 
     private val _isWrongPswrdEntered = MutableLiveData<Boolean>()
     val isWrongPswrdEntered: LiveData<Boolean> = _isWrongPswrdEntered

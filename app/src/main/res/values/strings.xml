@@ -31,5 +31,7 @@
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
     <string name="add_hint">Add hint</string>
-    <string name="show_hint"><u>Show hint</u></string>
+    <string name="show_hint">Show hint</string>
+    <string name="hide_hint">Hide hint</string>
+
 </resources>

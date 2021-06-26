@@ -44,6 +44,21 @@ class LoginFragment : Fragment() {
 
         setupObservers()
 
+        binding.ShowHintText.setOnClickListener {
+
+            if (binding.ShowHintText.text == getString(R.string.show_hint)) {
+
+                binding.ShowHintText.text = getString(R.string.hide_hint)
+                binding.displayHintText.visibility = View.VISIBLE
+                binding.hintDivider.visibility = View.VISIBLE
+            } else {
+
+                binding.ShowHintText.text = getString(R.string.show_hint)
+                binding.displayHintText.visibility = View.GONE
+                binding.hintDivider.visibility = View.GONE
+            }
+        }
+
         return binding.root
     }
 
