@@ -32,30 +32,41 @@ gradlew lint
   
 IMPORTANT : Follow this naming convention for new branch names : `feature/nameOfFeature`
 
-### 4. Run the project locally and test your changes on emulator/Real device.
+### 4. Run the project locally and test your changes on emulator/Real device. Feel free to ask for help on slack. Everyone is beginner at first.
 
-### 5. Run Analyze>Inspect Code. In the "Inspection Scope" section, choose uncommitted files and click "OK" and fix the issues.
-
-### 6. Run `gradlew lint` in Android studio integrated terminal.As shown below the command will be automatically highlighted in Yellow, after this press `ctrl+enter`. You can find report at this location `app/build/reports/lint-results.html`. If you see a new error/warning because of your code, make sure you fix it before making a PR.
+### 5. Run `gradlew lint` in Android studio integrated terminal.As shown below the command will be automatically highlighted in Yellow, after this press `ctrl+enter`. You can find report at this location `app/build/reports/lint-results.html`. If you see a new error/warning because of your code, make sure you fix it before making a PR.
 <img src="./screenshots/running_terminal_command.png">
 
+### 6. Before you push your changes, make sure you merge latest master changes in your feature branch.
+```
+First pull latest changes from my master to your master:
+git remote add upstream git@github.com:Ni3verma/Safe-Box.git
+git checkout master
+git pull upstream master
+
+Now checkout your new branch and merge master in it:
+git checkout yourNextBranchNameHere
+git merge master
+```
+
 ### 7. Commit your changes
-* You can commit from command line. On commit detekt and ktlint will run automatically to verify code quality.
+* (Not Recommended) You can commit from command line.
 ```
 git add .
 git commit -m'a descriptive message here'
 ```
-* In case you are committing from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
+* (Recommended way) In case you are committing from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
 
 <img src="./screenshots/commit_from_android_studio.png">
+On commit detekt and ktlint will run automatically to verify code quality.
 
 ### 8. Solve detekt, ktlint errors
-In case your commit was failed. then correct issues in detekt and ktlint reports found in below locations respectively and re-commit:
+In case your commit failed, then correct issues in detekt and ktlint reports found in below locations respectively and re-commit:
 ```
 app/build/reports/detekt/detekt.html
 app/build/reports/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.txt
 ```
-INFO : For ktlint : errors can also be found in the commit error message.
+INFO : For ktlint, errors can also be found in the terminal.
 
 NOTE : until ktlint and detekt issues are fixed, you will not be able to commit your changes.
 
