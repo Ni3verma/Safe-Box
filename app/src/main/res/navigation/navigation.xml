@@ -35,5 +35,14 @@
         android:id="@+id/homeFragment"
         android:name="com.andryoga.safebox.ui.view.home.HomeFragment"
         android:label="HomeFragment"
-        tools:layout="@layout/home_fragment" />
+        tools:layout="@layout/home_fragment">
+        <action
+            android:id="@+id/action_homeFragment_to_addNewLoginDataDialogFragment"
+            app:destination="@id/addNewLoginDataDialogFragment" />
+    </fragment>
+    <dialog
+        android:id="@+id/addNewLoginDataDialogFragment"
+        android:name="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataDialogFragment"
+        android:label="Add new Login data"
+        tools:layout="@layout/dialog_add_new_login_data" />
 </navigation>

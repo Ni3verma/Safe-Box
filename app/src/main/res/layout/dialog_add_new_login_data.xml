@@ -1,22 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_margin="16dp"
-    app:cardCornerRadius="8dp"
-    app:contentPadding="16dp">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataViewModel" />
+    </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:padding="16dp">
 
         <ImageView
             android:id="@+id/header_icon"
             android:layout_width="64dp"
             android:layout_height="64dp"
+            android:contentDescription="@string/cd_add_new_login_data"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -27,7 +31,7 @@
             android:id="@+id/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Login Data"
+            android:text="@string/login_data"
             android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
             app:layout_constraintEnd_toEndOf="@+id/header_icon"
             app:layout_constraintStart_toStartOf="@+id/header_icon"
@@ -47,8 +51,9 @@
                 android:id="@+id/title_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Title"
-                android:singleLine="true">
+                android:hint="@string/title"
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginScreenData.title}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -68,9 +73,10 @@
                 android:id="@+id/url_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="URL"
+                android:hint="@string/url"
                 android:inputType="textWebEmailAddress"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginScreenData.url}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -90,8 +96,9 @@
                 android:id="@+id/user_id_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="User Id"
-                android:singleLine="true">
+                android:hint="@string/user_id"
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginScreenData.userId}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -111,9 +118,10 @@
                 android:id="@+id/pswrd_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Password"
+                android:hint="@string/password"
                 android:inputType="textPassword"
-                android:singleLine="true">
+                android:singleLine="true"
+                android:text="@={viewModel.addNewLoginScreenData.password}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -125,12 +133,34 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:gravity="start|top"
-            android:hint="Notes"
+            android:hint="@string/notes"
+            android:importantForAutofill="no"
             android:inputType="textMultiLine"
-            android:lines="5"
+            android:minLines="2"
+            android:text="@={viewModel.addNewLoginScreenData.notes}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/pswrd" />
 
+        <Button
+            android:id="@+id/save_btn"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/save"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editTextTextMultiLine" />
+
+        <ProgressBar
+            android:id="@+id/loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateDrawable="@drawable/progress"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/save_btn"
+            app:layout_constraintEnd_toEndOf="@id/save_btn"
+            app:layout_constraintStart_toStartOf="@id/save_btn"
+            app:layout_constraintTop_toTopOf="@id/save_btn" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-</androidx.cardview.widget.CardView>
+</layout>
