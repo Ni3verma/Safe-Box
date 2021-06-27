@@ -26,25 +26,25 @@ run_detekt() {
   log_info "detekt passed"
 }
 
-log_info "Autoformatting using ktlint"
-
-./gradlew app:ktlintFormat
-
-log_info "ktlint Autoformatting done"
-
-git add .
-
 log_info "Running ktlint check"
 ./gradlew app:ktlintCheck --daemon
-
 status=$?
 
 if [ "$status" = 0 ]; then
   log_info "ktlint passed. Running detekt"
-
   run_detekt
   exit 0
 else
-  log_info "ktlint Failed. Please fix issues"
-  exit 1
+  log_info "ktlint failed, auto-formatting"
+  ./gradlew app:ktlintFormat
+  status=$?
+  log_info "ktlint Autoformatting done"
+
+  if [ "$status" = 0 ]; then
+    log_info "autoformatting done, commit changes again after adding required files"
+    exit 1
+  else
+    log_info "Autoformatting failed, manual action required"
+    exit 1
+  fi
 fi
