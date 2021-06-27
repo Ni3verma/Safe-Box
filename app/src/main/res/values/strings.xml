@@ -39,15 +39,11 @@
     <string name="bank_account">Bank Account</string>
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
-<<<<<<< HEAD
     <string name="add_hint">Add hint</string>
     <string name="show_hint">Show hint</string>
     <string name="hide_hint">Hide hint</string>
-
-=======
     <string name="title">Title <font color='#FF0000'>̽</font></string>
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
->>>>>>> master
 </resources>
