@@ -6,12 +6,21 @@
     <string name="cd_add_new_bank_card_data">Add new bank card data</string>
     <string name="cd_add_a_new_note">Add a new note</string>
 
+    <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="drawer_title_all_items">All Items</string>
     <string name="drawer_title_logins">Logins</string>
 
+    <!--    Snackbar -->
+    <string name="snackbar_common_data_saved">Data saved</string>
+    <string name="snackbar_common_error_saving_data">Error occurred while saving data</string>
+
+    <!--    Common-->
+    <string name="common_error_mandatory_field">Mandatory Field</string>
+
+    <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
     <string name="enter_password">Enter password</string>
@@ -23,15 +32,22 @@
     <string name="alternate_validation_text">Must not contain alternate digits or letters\n eg:123, abc</string>
     <string name="pswrd_match_validation_text">Both passwords must match</string>
     <string name="save">Save</string>
-    <string name="password">Password</string>
+    <string name="password">Password <font color='#FF0000'>̽</font></string>
     <string name="unlock">unlock</string>
     <string name="collapse">Collapse</string>
     <string name="login_data">Login Data</string>
     <string name="bank_account">Bank Account</string>
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
+<<<<<<< HEAD
     <string name="add_hint">Add hint</string>
     <string name="show_hint">Show hint</string>
     <string name="hide_hint">Hide hint</string>
 
+=======
+    <string name="title">Title <font color='#FF0000'>̽</font></string>
+    <string name="url">URL</string>
+    <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
+    <string name="notes">Notes</string>
+>>>>>>> master
 </resources>

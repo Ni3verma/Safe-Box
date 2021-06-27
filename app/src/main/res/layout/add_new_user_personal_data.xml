@@ -38,6 +38,7 @@
             android:text="@string/login_data"
             app:icon="@drawable/ic_person_24"
             app:iconTint="@color/white_50"
+            android:onClick="@{(view)->viewModel.onAddNewUserDataFabClick(view)}"
             app:layout_constraintBottom_toTopOf="@id/new_data_master_fab"
             app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
 
@@ -50,6 +51,7 @@
             android:text="@string/bank_account"
             app:icon="@drawable/ic_bank_24"
             app:iconTint="@color/white_50"
+            android:onClick="@{(view)->viewModel.onAddNewUserDataFabClick(view)}"
             app:layout_constraintBottom_toTopOf="@id/new_personal_login_data_fab"
             app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
 
@@ -62,6 +64,7 @@
             android:text="@string/bank_card"
             app:icon="@drawable/ic_card_24"
             app:iconTint="@color/white_50"
+            android:onClick="@{(view)->viewModel.onAddNewUserDataFabClick(view)}"
             app:layout_constraintBottom_toTopOf="@id/new_personal_bank_account_data_fab"
             app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
 
@@ -74,6 +77,7 @@
             android:text="@string/secure_note"
             app:icon="@drawable/ic_key_24"
             app:iconTint="@color/white_50"
+            android:onClick="@{(view)->viewModel.onAddNewUserDataFabClick(view)}"
             app:layout_constraintBottom_toTopOf="@id/new_personal_bank_card_data_fab"
             app:layout_constraintEnd_toEndOf="@id/end_margin_guideline" />
 

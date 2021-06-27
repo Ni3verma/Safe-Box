@@ -22,7 +22,7 @@ class UserDetailsDaoSecure @Inject constructor(
         return hashingUtils.compareHash(password, userDetailsEntity.password)
     }
 
-    private suspend fun hash(userDetailsEntity: UserDetailsEntity): UserDetailsEntity {
+    private fun hash(userDetailsEntity: UserDetailsEntity): UserDetailsEntity {
         userDetailsEntity.let {
             return UserDetailsEntity(
                 it.key,

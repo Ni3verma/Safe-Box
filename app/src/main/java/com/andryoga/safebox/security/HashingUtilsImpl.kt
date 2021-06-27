@@ -19,7 +19,7 @@ class HashingUtilsImpl : HashingUtils {
     private val secureRandom: SecureRandom = SecureRandom.getInstance(secureRandomAlgo)
     private val keyFactory = SecretKeyFactory.getInstance(hashingAlgo)
 
-    override suspend fun hash(password: String): String {
+    override fun hash(password: String): String {
         val salt = getSalt()
         val base64EncodedSalt = SecurityUtils.encodeBase64(salt)
 
@@ -34,7 +34,7 @@ class HashingUtilsImpl : HashingUtils {
         return base64EncodedPasswordHash + separator + base64EncodedSalt
     }
 
-    override suspend fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
+    override fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
         val hashInfo = toCompareWithHash.split(separator)
         if (hashInfo.size != 2) {
             throw SecurityException(
