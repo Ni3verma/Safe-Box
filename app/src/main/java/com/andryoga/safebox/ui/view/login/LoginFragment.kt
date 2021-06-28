@@ -49,14 +49,12 @@ class LoginFragment : Fragment() {
 
             if (binding.ShowHintText.text == getString(R.string.show_hint)) {
 
-                Utils.switchText(binding.ShowHintText, getString(R.string.hide_hint))
-                Utils.switchVisibility(binding.displayHintText)
-                Utils.switchVisibility(binding.hintDivider)
+                Utils.switchText(binding.ShowHintText, getString(R.string.show_hint), getString(R.string.hide_hint))
+                Utils.switchVisibility(binding.displayHintText, binding.hintDivider)
             } else {
 
-                Utils.switchText(binding.ShowHintText, getString(R.string.show_hint))
-                Utils.switchVisibility(binding.displayHintText)
-                Utils.switchVisibility(binding.hintDivider)
+                Utils.switchText(binding.ShowHintText, getString(R.string.hide_hint), getString(R.string.show_hint))
+                Utils.switchVisibility(binding.displayHintText, binding.hintDivider)
             }
         }
 

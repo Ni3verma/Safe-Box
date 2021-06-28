@@ -8,7 +8,7 @@ object Utils {
         views.forEach { view ->
             when (view.visibility) {
                 View.VISIBLE -> {
-                    view.visibility = View.GONE
+                    view.visibility = View.INVISIBLE
                 }
                 View.INVISIBLE -> {
                     view.visibility = View.VISIBLE
@@ -24,7 +24,11 @@ object Utils {
         view.setCompoundDrawablesWithIntrinsicBounds(drawableId, 0, 0, 0)
     }
 
-    fun switchText(view: TextView, changeToText: String) {
-        view.text = changeToText
+    fun switchText(view: TextView, originalText: String, changeToText: String) {
+        if (view.text == originalText) {
+            view.text = changeToText
+        } else {
+            view.text = originalText
+        }
     }
 }
