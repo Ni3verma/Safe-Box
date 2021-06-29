@@ -3,6 +3,7 @@ package com.andryoga.safebox.di
 import android.content.Context
 import androidx.room.Room
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import dagger.Module
@@ -25,7 +26,8 @@ object CacheModule {
             context,
             SafeBoxDatabase::class.java,
             SafeBoxDatabase.DATABASE_NAME
-        ).build()
+        ).addMigrations(SafeBoxDatabase.MIGRATION_1_2)
+            .build()
     }
 
     // DAO
@@ -45,5 +47,12 @@ object CacheModule {
         return safeBoxDatabase.userDetailsDao()
     }
 
+    @Singleton
+    @Provides
+    fun provideBankAccountDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): BankAccountDataDao {
+        return safeBoxDatabase.bankAccountDataDao()
+    }
     // Secure DAO
 }
