@@ -12,8 +12,9 @@ class UserDetailsDaoSecure @Inject constructor(
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : UserDetailsDao {
     override suspend fun insertUserDetailsData(userDetailsEntity: UserDetailsEntity) {
-        userDetailsDao.insertUserDetailsData(hash(userDetailsEntity))
-        userDetailsDao.insertUserDetailsData(encrypt(userDetailsEntity))
+        var entity = hash(userDetailsEntity)
+        entity = encrypt(entity)
+        userDetailsDao.insertUserDetailsData(entity)
     }
 
     override suspend fun getUserDetails(): UserDetailsEntity {
@@ -41,8 +42,8 @@ class UserDetailsDaoSecure @Inject constructor(
         userDetailsEntity.let {
             return UserDetailsEntity(
                 it.key,
-                it.hint,
-                symmetricKeyUtils.encrypt(it.hint),
+                it.password,
+                it.hint?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
                 it.creationDate,
                 it.updateDate
             )

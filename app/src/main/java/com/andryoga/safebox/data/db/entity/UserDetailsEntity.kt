@@ -9,7 +9,7 @@ data class UserDetailsEntity(
     @PrimaryKey(autoGenerate = true)
     val key: Int,
     val password: String,
-    val hint: String,
+    val hint: String?,
     val creationDate: Date,
     val updateDate: Date
 ) {
