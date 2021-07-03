@@ -21,6 +21,10 @@ class UserDetailsDaoSecure @Inject constructor(
         return userDetailsDao.getUserDetails()
     }
 
+    override suspend fun getHint(): UserDetailsEntity {
+        return userDetailsDao.getHint()
+    }
+
     suspend fun checkPassword(password: String): Boolean {
         val userDetailsEntity = getUserDetails()
         return hashingUtils.compareHash(password, userDetailsEntity.password)
