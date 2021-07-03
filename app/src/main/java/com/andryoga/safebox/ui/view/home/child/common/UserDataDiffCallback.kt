@@ -7,13 +7,13 @@ class UserDataDiffCallback : DiffUtil.ItemCallback<UserDataAdapterEntity>() {
         oldItem: UserDataAdapterEntity,
         newItem: UserDataAdapterEntity
     ): Boolean {
-        TODO("Not yet implemented")
+        return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
         oldItem: UserDataAdapterEntity,
         newItem: UserDataAdapterEntity
     ): Boolean {
-        TODO("Not yet implemented")
+        return oldItem == newItem
     }
 }

@@ -18,32 +18,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
+        android:onClick="@{() -> clickListener.onClick(data)}"
         app:contentPadding="8dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/icon"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:tint="@color/colorSecondary"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
-                tools:srcCompat="@drawable/ic_person_24" />
+                app:srcCompat="@drawable/ic_person_24" />
 
             <TextView
                 android:id="@+id/label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
-                android:textAppearance="@style/TextAppearance.MyTheme.Headline4"
+                android:text="@{data.title}"
                 app:layout_constraintBottom_toTopOf="@+id/sub_label"
                 app:layout_constraintStart_toEndOf="@+id/icon"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_chainStyle="spread"
+                android:textAppearance="@style/TextAppearance.MyTheme.Headline5"
                 tools:text="Google" />
 
             <TextView
@@ -54,6 +56,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="@+id/label"
                 app:layout_constraintTop_toBottomOf="@+id/label"
+                android:text="@{data.subTitle}"
                 tools:text="canvas.nv@gmail.com" />
 
 
