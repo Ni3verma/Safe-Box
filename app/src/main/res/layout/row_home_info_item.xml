@@ -33,7 +33,8 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
-                app:srcCompat="@drawable/ic_person_24" />
+                app:userDataType="@{data.type}"
+                tools:srcCompat="@drawable/ic_person_24" />
 
             <TextView
                 android:id="@+id/label"
