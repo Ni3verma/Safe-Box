@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
@@ -9,7 +10,7 @@ data class UserDetailsEntity(
     @PrimaryKey(autoGenerate = true)
     val key: Int,
     val password: String,
-    val hint: String?,
+    @ColumnInfo(name = "hint")val hint: String?,
     val creationDate: Date,
     val updateDate: Date
 ) {
