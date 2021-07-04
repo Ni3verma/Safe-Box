@@ -10,7 +10,7 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 ## Contributing to this project
 Want to contribute to Safe Box? Please read [Contribution process](https://github.com/Ni3verma/Safe-Box/blob/master/CONTRIBUTING.md). In case you have any questions, feel free to reach me on canvas.nv@gmail.com
 
-</br>
+<br/>
 <a href="https://join.slack.com/t/safe-box-workspace/shared_invite/zt-s7prrr82-PAtzDTxHubkIvR5QPNKnBA">
     <img src="./screenshots/slack.png" width="50%">
 </a>
