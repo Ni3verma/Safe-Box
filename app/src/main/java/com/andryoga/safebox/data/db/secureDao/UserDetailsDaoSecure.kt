@@ -21,7 +21,7 @@ class UserDetailsDaoSecure @Inject constructor(
         return userDetailsDao.getUserDetails()
     }
 
-    override suspend fun getHint(): UserDetailsEntity {
+    override suspend fun getHint(): String {
         return userDetailsDao.getHint()
     }
 
