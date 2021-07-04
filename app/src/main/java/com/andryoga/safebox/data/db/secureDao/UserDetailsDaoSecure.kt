@@ -22,7 +22,7 @@ class UserDetailsDaoSecure @Inject constructor(
     }
 
     override suspend fun getHint(): String {
-        return userDetailsDao.getHint()
+        return symmetricKeyUtils.decrypt(getHint())
     }
 
     suspend fun checkPassword(password: String): Boolean {

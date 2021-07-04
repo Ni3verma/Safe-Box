@@ -19,4 +19,8 @@ class UserDetailsRepositoryImpl @Inject constructor(
     override suspend fun checkPassword(password: String): Boolean {
         return userDetailsDaoSecure.checkPassword(password)
     }
+
+    override suspend fun getHint(): String {
+        return userDetailsDaoSecure.getHint()
+    }
 }
