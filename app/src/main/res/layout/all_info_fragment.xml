@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
@@ -11,14 +12,69 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_mid_horizontal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ALL INFO HERE"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.55" />
 
+        <TextView
+            android:id="@+id/no_result_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/common_no_result"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline5"
+            android:translationZ="500dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/guideline_mid_horizontal" />
+
+        <TextView
+            android:id="@+id/add_new_data_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:padding="8dp"
+            android:text="@string/common_click_on_plus_to_add_data"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline5"
+            android:textColor="@color/colorPrimaryDark"
+            android:translationZ="500dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/no_result_text" />
+
+        <ImageView
+            android:id="@+id/empty_view_background"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/cd_empty_list"
+            android:scaleType="fitXY"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/no_result" />
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/empty_view_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:constraint_referenced_ids="empty_view_background,no_result_text,add_new_data_text" />
+
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/all_info_rv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:listitem="@layout/row_home_info_item" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
