@@ -46,4 +46,8 @@
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
+    <string name="login">Login</string>
+    <string name="bank">Bank</string>
+    <string name="card">Card</string>
+    <string name="note">Note</string>
 </resources>

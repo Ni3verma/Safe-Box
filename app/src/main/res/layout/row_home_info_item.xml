@@ -18,19 +18,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="@{() -> clickListener.onClick(data)}"
-        android:padding="8dp">
+        android:padding="4dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/icon"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:tint="@color/colorSecondary"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
-            app:userDataType="@{data.type}"
+            userDataTypeIcon="@{data.type}"
             tools:srcCompat="@drawable/ic_person_24" />
+
+        <TextView
+            userDataTypeText="@{data.type}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textColor="@color/colorPrimaryDark"
+            app:layout_constraintEnd_toEndOf="@id/icon"
+            app:layout_constraintStart_toStartOf="@id/icon"
+            app:layout_constraintTop_toBottomOf="@id/icon"
+            tools:text="Login" />
 
         <TextView
             android:id="@+id/label"
@@ -38,6 +48,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:text="@{data.title}"
+            android:ellipsize="end"
+            android:maxWidth="300dp"
+            android:maxLines="1"
             android:textAppearance="@style/TextAppearance.MyTheme.Headline5"
             app:layout_constraintBottom_toTopOf="@+id/sub_label"
             app:layout_constraintStart_toEndOf="@+id/icon"
@@ -50,6 +63,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@{data.subTitle}"
+            android:ellipsize="end"
+            android:maxWidth="300dp"
+            android:maxLines="1"
             android:textAppearance="@style/TextAppearance.MyTheme.Caption"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/label"
