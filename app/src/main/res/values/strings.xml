@@ -23,6 +23,12 @@
     <string name="common_no_result">No Result!</string>
     <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
 
+    <!--    User data type text-->
+    <string name="login">Login</string>
+    <string name="bank">Bank</string>
+    <string name="card">Card</string>
+    <string name="note">Note</string>
+
     <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
@@ -46,8 +52,4 @@
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
-    <string name="login">Login</string>
-    <string name="bank">Bank</string>
-    <string name="card">Card</string>
-    <string name="note">Note</string>
 </resources>
