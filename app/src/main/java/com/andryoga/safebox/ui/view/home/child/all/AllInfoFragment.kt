@@ -44,6 +44,13 @@ class AllInfoFragment : Fragment() {
 
         lifecycleScope.launchWhenStarted {
             viewModel.listData.collect { data ->
+                if (data.isEmpty()) {
+                    binding.emptyViewGroup.visibility = View.VISIBLE
+                    binding.emptyViewBackground.setImageResource(R.drawable.no_result)
+                } else {
+                    binding.emptyViewGroup.visibility = View.GONE
+                    binding.emptyViewBackground.setImageResource(R.drawable.empty)
+                }
                 adapter.submitList(data)
             }
         }
