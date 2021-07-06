@@ -22,7 +22,8 @@ class UserDetailsDaoSecure @Inject constructor(
     }
 
     override suspend fun getHint(): String {
-        return symmetricKeyUtils.decrypt(getHint())
+        val userDetailsEntity = getUserDetails()
+        return symmetricKeyUtils.decrypt(userDetailsEntity.hint!!)
     }
 
     suspend fun checkPassword(password: String): Boolean {
