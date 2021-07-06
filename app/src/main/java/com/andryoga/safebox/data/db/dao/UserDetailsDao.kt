@@ -15,5 +15,5 @@ interface UserDetailsDao {
     suspend fun getUserDetails(): UserDetailsEntity
 
     @Query("select hint from user_details")
-    suspend fun getHint(): String
+    suspend fun getHint(): String?
 }
