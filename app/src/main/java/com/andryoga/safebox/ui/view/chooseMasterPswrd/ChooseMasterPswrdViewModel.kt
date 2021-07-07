@@ -28,7 +28,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
 
     val pswrd = MutableLiveData<String>("")
     val confirmPswrd = MutableLiveData<String>("")
-    val hint = MutableLiveData<String>("")
+    val hint = MutableLiveData<String?>(null)
 
     val pswrdValidationFailures: LiveData<List<PasswordValidationFailureCode>> =
         Transformations.map(pswrd) { currPswrd ->
@@ -99,7 +99,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     fun onSaveClick() {
         Timber.i("save password clicked")
         viewModelScope.launch {
-            userDetailsRepository.insertUserDetailsData(pswrd.value!!, hint.value!!)
+            userDetailsRepository.insertUserDetailsData(pswrd.value!!, hint.value)
             encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
             Timber.i("Added pswrd in db")
             _navigateToHome.value = true

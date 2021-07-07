@@ -13,7 +13,7 @@ data class UserDetailsEntity(
     val creationDate: Date,
     val updateDate: Date
 ) {
-    constructor(password: String, hint: String, creationDate: Date, updateDate: Date) : this(
+    constructor(password: String, hint: String?, creationDate: Date, updateDate: Date) : this(
         0,
         password,
         hint,
