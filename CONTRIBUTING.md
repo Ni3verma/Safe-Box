@@ -40,12 +40,12 @@ IMPORTANT : Follow this naming convention for new branch names : `feature/nameOf
 ### 6. Before you push your changes, make sure you merge latest master changes in your feature branch.
 ```
 First pull latest changes from my master to your master:
-git remote add upstream git@github.com:Ni3verma/Safe-Box.git
+git remote add upstream git://github.com/Ni3verma/Safe-Box.git
 git checkout master
 git pull upstream master
 
 Now checkout your new branch and merge master in it:
-git checkout yourNextBranchNameHere
+git checkout yourNewBranchNameHere
 git merge master
 ```
 

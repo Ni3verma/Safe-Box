@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -13,7 +14,7 @@ interface LoginDataDao {
     suspend fun insertLoginData(loginDataEntity: LoginDataEntity)
 
     @Query("select * from login_data")
-    fun getAllLoginData(): Flow<List<LoginDataEntity>>
+    fun getAllLoginData(): Flow<List<SearchLoginData>>
 
     @Query("select * from login_data where `key` = :key limit 1")
     fun getLoginDataByKey(key: Int): Flow<LoginDataEntity>
