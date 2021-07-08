@@ -26,8 +26,7 @@ object CacheModule {
             context,
             SafeBoxDatabase::class.java,
             SafeBoxDatabase.DATABASE_NAME
-        ).addMigrations(SafeBoxDatabase.MIGRATION_1_2)
-            .build()
+        ).build()
     }
 
     // DAO
