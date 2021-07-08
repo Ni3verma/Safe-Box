@@ -34,7 +34,9 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchAddress,
                 symmetricKeyUtils.encrypt(it.ifscCode),
                 it.micrCode?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
-                it.notes?.let { it1 -> symmetricKeyUtils.encrypt(it1) }
+                it.notes?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.creationDate,
+                it.updateDate
             )
         }
     }
@@ -51,7 +53,9 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchAddress,
                 symmetricKeyUtils.decrypt(it.ifscCode),
                 it.micrCode?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
-                it.notes?.let { it1 -> symmetricKeyUtils.decrypt(it1) }
+                it.notes?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                it.creationDate,
+                it.updateDate
             )
         }
     }

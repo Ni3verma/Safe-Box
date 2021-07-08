@@ -4,6 +4,7 @@ import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountScreenData
+import java.util.*
 import javax.inject.Inject
 
 class BankAccountDataRepositoryImpl @Inject constructor(
@@ -20,7 +21,9 @@ class BankAccountDataRepositoryImpl @Inject constructor(
             addNewBankAccountScreenData.branchAddress,
             addNewBankAccountScreenData.ifscCode,
             addNewBankAccountScreenData.micrCode,
-            addNewBankAccountScreenData.notes
+            addNewBankAccountScreenData.notes,
+            Date(),
+            Date()
         )
         bankAccountDataDaoSecure.insertBankAccountData(entity)
     }

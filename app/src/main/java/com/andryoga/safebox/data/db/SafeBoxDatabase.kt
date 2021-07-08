@@ -22,17 +22,15 @@ abstract class SafeBoxDatabase : RoomDatabase() {
     abstract fun bankAccountDataDao(): BankAccountDataDao
     abstract fun loginDataDao(): LoginDataDao
     abstract fun userDetailsDao(): UserDetailsDao
-
     companion object {
         const val DATABASE_NAME: String = "SAFEBOX_APP_DB"
-
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     "create table `bank_account_data` (`key` INTEGER NOT NULL, `title` TEXT NOT NULL, " +
-                            "`accountNumber` TEXT NOT NULL, `customerName` TEXT,`customerId` TEXT NOT NULL," +
-                            "`branchCode` TEXT, `branchName` TEXT, `branchAddress` TEXT," +
-                            "`ifscCode` TEXT NOT NULL, `micrCode` TEXT, `notes` TEXT, PRIMARY KEY(`key`))"
+                        "`accountNumber` TEXT NOT NULL, `customerName` TEXT,`customerId` TEXT NOT NULL," +
+                        "`branchCode` TEXT, `branchName` TEXT, `branchAddress` TEXT," +
+                        "`ifscCode` TEXT NOT NULL, `micrCode` TEXT, `notes` TEXT, PRIMARY KEY(`key`))"
                 )
             }
         }

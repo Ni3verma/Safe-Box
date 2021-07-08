@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.util.*
 
 @Entity(tableName = "bank_account_data")
 data class BankAccountDataEntity(
@@ -16,7 +17,9 @@ data class BankAccountDataEntity(
     val branchAddress: String?,
     val ifscCode: String,
     val micrCode: String?,
-    val notes: String?
+    val notes: String?,
+    val creationDate: Date,
+    val updateDate: Date
 ) {
     constructor(
         title: String,
@@ -28,7 +31,9 @@ data class BankAccountDataEntity(
         branchAddress: String?,
         ifscCode: String,
         micrCode: String?,
-        notes: String?
+        notes: String?,
+        creationDate: Date,
+        updateDate: Date
     ) : this(
         0,
         title,
@@ -40,6 +45,8 @@ data class BankAccountDataEntity(
         branchAddress,
         ifscCode,
         micrCode,
-        notes
+        notes,
+        creationDate,
+        updateDate
     )
 }
