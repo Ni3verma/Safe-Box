@@ -28,7 +28,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/ic_account_balance_24"
+                app:srcCompat="@drawable/ic_bank_24"
                 app:tint="@color/colorPrimaryDark" />
 
             <TextView
@@ -110,11 +110,11 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/cust_id"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:errorEnabled="true"
-                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/branch_code"
                 app:layout_constraintTop_toBottomOf="@+id/cust_name">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -132,12 +132,13 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/branch_code"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:errorEnabled="true"
+                android:layout_marginStart="8dp"
+                app:layout_constraintStart_toEndOf="@+id/cust_id"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/cust_id">
+                app:layout_constraintTop_toBottomOf="@+id/cust_name">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/branch_code_text"
@@ -197,10 +198,10 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/ifsc_code"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:errorEnabled="true"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/micr_code"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/branch_address">
 
@@ -209,6 +210,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/ifsc_code"
+                    android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.ifscCode}">
 
                 </com.google.android.material.textfield.TextInputEditText>
@@ -218,18 +220,20 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/micr_code"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:errorEnabled="true"
+                android:layout_marginStart="8dp"
+                app:layout_constraintStart_toEndOf="@+id/ifsc_code"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/ifsc_code">
+                app:layout_constraintTop_toBottomOf="@+id/branch_address">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/micr_code_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/micr_code"
+                    android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.micrCode}">
 
                 </com.google.android.material.textfield.TextInputEditText>

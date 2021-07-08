@@ -27,11 +27,11 @@ class BankAccountDataDaoSecure @Inject constructor(
             return BankAccountDataEntity(
                 symmetricKeyUtils.encrypt(it.title),
                 symmetricKeyUtils.encrypt(it.accountNumber),
-                it.customerName?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.customerName,
                 symmetricKeyUtils.encrypt(it.customerId),
-                it.branchCode?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
-                it.branchName?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
-                it.branchAddress?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.branchCode,
+                it.branchName,
+                it.branchAddress,
                 symmetricKeyUtils.encrypt(it.ifscCode),
                 it.micrCode?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
                 it.notes?.let { it1 -> symmetricKeyUtils.encrypt(it1) }
@@ -44,11 +44,11 @@ class BankAccountDataDaoSecure @Inject constructor(
             return BankAccountDataEntity(
                 symmetricKeyUtils.decrypt(it.title),
                 symmetricKeyUtils.decrypt(it.accountNumber),
-                it.customerName?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                it.customerName,
                 symmetricKeyUtils.decrypt(it.customerId),
-                it.branchCode?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
-                it.branchName?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
-                it.branchAddress?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                it.branchCode,
+                it.branchName,
+                it.branchAddress,
                 symmetricKeyUtils.decrypt(it.ifscCode),
                 it.micrCode?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
                 it.notes?.let { it1 -> symmetricKeyUtils.decrypt(it1) }
