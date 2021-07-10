@@ -1,8 +1,10 @@
 package com.andryoga.safebox.ui.common
 
+import android.view.View
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
+import androidx.databinding.BindingConversion
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.google.android.material.imageview.ShapeableImageView
@@ -29,4 +31,9 @@ fun TextView.setUserDataTypeText(type: UserDataType) {
             UserDataType.SECURE_NOTE -> context.getString(R.string.note)
         }
         )
+}
+
+@BindingConversion
+fun convertBooleanToVisibility(visible: Boolean): Int {
+    return if (visible) View.VISIBLE else View.GONE
 }
