@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.constraintlayout.motion.widget.MotionLayout
 
 object Utils {
     fun switchVisibility(vararg views: View) {
@@ -40,6 +41,19 @@ object Utils {
             view.text = changeToText
         } else {
             view.text = originalText
+        }
+    }
+
+    fun startMotionLayoutTransition(
+        motionLayout: MotionLayout,
+        endState: Int,
+        startState: Int = motionLayout.currentState,
+        duration: Int = 700
+    ) {
+        if (motionLayout.currentState != endState) {
+            motionLayout.setTransition(startState, endState)
+            motionLayout.setTransitionDuration(duration)
+            motionLayout.transitionToEnd()
         }
     }
 }
