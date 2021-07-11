@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.security.interfaces.HashingUtils
@@ -47,7 +48,7 @@ class UserDetailsDaoSecure @Inject constructor(
             return UserDetailsEntity(
                 it.key,
                 it.password,
-                it.hint?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.hint.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
             )

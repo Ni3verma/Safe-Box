@@ -87,7 +87,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/add_hint"
-                android:text="@={viewModel.hint}">
+                android:text="@={viewModel.hint}"
+                android:maxLength="30">
 
             </com.google.android.material.textfield.TextInputEditText>
 
