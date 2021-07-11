@@ -5,6 +5,7 @@
     <string name="cd_add_new_bank_account_data">Add new bank account data</string>
     <string name="cd_add_new_bank_card_data">Add new bank card data</string>
     <string name="cd_add_a_new_note">Add a new note</string>
+    <string name="cd_empty_list">Empty List</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
@@ -19,6 +20,14 @@
 
     <!--    Common-->
     <string name="common_error_mandatory_field">Mandatory Field</string>
+    <string name="common_no_result">No Result!</string>
+    <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
+
+    <!--    User data type text-->
+    <string name="login">Login</string>
+    <string name="bank">Bank</string>
+    <string name="card">Card</string>
+    <string name="note">Note</string>
 
     <!--    Other-->
     <string name="app_name">Safe Box</string>

@@ -7,4 +7,5 @@ object Constants {
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
 
     //        Other
+    const val time500Milli = 500L
 }

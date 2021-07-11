@@ -13,9 +13,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Then ..
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -24,11 +22,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. iOS]
+ - OS: Windows 10 
 
 **Smartphone (please complete the following information):**
- - Device: [e.g. Pixel3]
- - OS: [e.g. API 26]
+ - Device: Pixel 3 API 26
 
 **Additional context**
 Add any other context about the problem here.
