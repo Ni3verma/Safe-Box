@@ -33,8 +33,8 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchName,
                 it.branchAddress,
                 symmetricKeyUtils.encrypt(it.ifscCode),
-                it.micrCode?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
-                it.notes?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                encryptNullOrBlankString(it.micrCode),
+                encryptNullOrBlankString(it.notes),
                 it.creationDate,
                 it.updateDate
             )
@@ -52,11 +52,19 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchName,
                 it.branchAddress,
                 symmetricKeyUtils.decrypt(it.ifscCode),
-                it.micrCode?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
-                it.notes?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                decryptNullOrBlankString(it.micrCode),
+                decryptNullOrBlankString(it.notes),
                 it.creationDate,
                 it.updateDate
             )
         }
+    }
+
+    fun encryptNullOrBlankString(string: String?): String? {
+        return if (string.isNullOrBlank()) null else symmetricKeyUtils.encrypt(string)
+    }
+
+    fun decryptNullOrBlankString(string: String?): String? {
+        return if (string.isNullOrBlank()) null else symmetricKeyUtils.decrypt(string)
     }
 }

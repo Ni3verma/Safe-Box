@@ -46,7 +46,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/header_title">
@@ -55,6 +54,7 @@
                     android:id="@+id/title_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:hint="@string/title"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.title}">
@@ -68,7 +68,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title">
@@ -77,6 +76,7 @@
                     android:id="@+id/account_no_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:hint="@string/account_number"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.accountNo}">
@@ -90,7 +90,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/account_no">
@@ -100,6 +99,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/customer_name"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.customerName}">
 
@@ -112,7 +112,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/branch_code"
                 app:layout_constraintTop_toBottomOf="@+id/cust_name">
@@ -122,6 +121,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/customer_id"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.customerId}">
 
@@ -134,7 +134,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 android:layout_marginStart="8dp"
                 app:layout_constraintStart_toEndOf="@+id/cust_id"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -145,6 +144,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/branch_code"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.branchCode}">
 
@@ -157,7 +157,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/branch_code">
@@ -167,6 +166,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/branch_name"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.branchName}">
 
@@ -179,7 +179,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/branch_name">
@@ -189,6 +188,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/branch_address"
+                    android:layout_marginBottom="8dp"
                     android:text="@={viewModel.addNewBankAccountScreenData.branchAddress}">
 
                 </com.google.android.material.textfield.TextInputEditText>
@@ -200,7 +200,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 app:layout_constraintEnd_toStartOf="@+id/micr_code"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/branch_address">
@@ -210,6 +209,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/ifsc_code"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.ifscCode}">
 
@@ -222,7 +222,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:errorEnabled="true"
                 android:layout_marginStart="8dp"
                 app:layout_constraintStart_toEndOf="@+id/ifsc_code"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -233,6 +232,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/micr_code"
+                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.addNewBankAccountScreenData.micrCode}">
 

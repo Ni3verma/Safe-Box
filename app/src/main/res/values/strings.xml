@@ -53,12 +53,12 @@
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
     <string name="bank_account_data">Bank Account Data</string>
-    <string name="account_number">Account Number</string>
+    <string name="account_number">Account Number <font color='#FF0000'>̽</font></string>
     <string name="customer_name">Customer Name</string>
-    <string name="customer_id">Customer Id</string>
+    <string name="customer_id">Customer Id <font color='#FF0000'>̽</font></string>
     <string name="branch_code">Branch Code</string>
     <string name="branch_name">Branch Name</string>
     <string name="branch_address">Branch Address</string>
-    <string name="ifsc_code">IFSC Code</string>
+    <string name="ifsc_code">IFSC Code <font color='#FF0000'>̽</font></string>
     <string name="micr_code">MICR Code</string>
 </resources>
