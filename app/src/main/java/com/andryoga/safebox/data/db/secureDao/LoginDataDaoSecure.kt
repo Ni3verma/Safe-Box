@@ -1,5 +1,7 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.decryptNullableString
+import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
@@ -30,9 +32,9 @@ class LoginDataDaoSecure @Inject constructor(
         loginDataEntity.let {
             return LoginDataEntity(
                 symmetricKeyUtils.encrypt(it.title),
-                it.url?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.url.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.password),
-                it.notes?.let { it1 -> symmetricKeyUtils.encrypt(it1) },
+                it.notes.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.userId),
                 it.creationDate,
                 it.updateDate,
@@ -45,9 +47,9 @@ class LoginDataDaoSecure @Inject constructor(
             return LoginDataEntity(
                 it.key,
                 symmetricKeyUtils.decrypt(it.title),
-                it.url?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                it.url.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.password),
-                it.notes?.let { it1 -> symmetricKeyUtils.decrypt(it1) },
+                it.notes.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.userId),
                 it.creationDate,
                 it.updateDate,

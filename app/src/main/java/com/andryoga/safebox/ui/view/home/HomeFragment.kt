@@ -6,17 +6,22 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.Constants.time500Milli
 import com.andryoga.safebox.databinding.HomeFragmentBinding
+import com.andryoga.safebox.ui.common.Utils.startMotionLayoutTransition
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -24,6 +29,7 @@ class HomeFragment : Fragment() {
     private val viewModel: HomeViewModel by viewModels()
 
     private lateinit var binding: HomeFragmentBinding
+    private lateinit var motionLayout: MotionLayout
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,6 +37,7 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.home_fragment, container, false)
+        motionLayout = binding.addNewUserPersonalDataLayout.motionLayout
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         setHasOptionsMenu(true)
@@ -59,11 +66,12 @@ class HomeFragment : Fragment() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        collapseAddNewDataOptions()
         when (item.itemId) {
             android.R.id.home -> {
-                if (binding.drawerLayout.isOpen) {
+                if (binding.drawerLayout.isOpen)
                     binding.drawerLayout.close()
-                } else
+                else
                     binding.drawerLayout.open()
                 return true
             }
@@ -72,28 +80,25 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.masterOptionClicked.observe(viewLifecycleOwner) { isExpanded ->
-            if (isExpanded) {
-                binding.addNewUserPersonalDataLayout.newDataMasterFab.apply {
-                    setIconResource(R.drawable.ic_cancel_24)
-                    extend()
-                }
+        binding.addNewUserPersonalDataLayout.newDataMasterFab.setOnClickListener {
+            if (motionLayout.currentState == R.id.start) {
+                startMotionLayoutTransition(motionLayout, R.id.end)
             } else {
-                binding.addNewUserPersonalDataLayout.newDataMasterFab.apply {
-                    setIconResource(R.drawable.ic_add_24)
-                    shrink()
-                }
+                collapseAddNewDataOptions()
             }
         }
 
-        viewModel.addNewUserDataFabClicked.observe(viewLifecycleOwner) { viewId ->
+        binding.addNewUserPersonalDataLayout.background.setOnClickListener {
+            collapseAddNewDataOptions()
+        }
+        viewModel.addNewUserDataOptionClicked.observe(viewLifecycleOwner) { viewId ->
             handleAddNewUserDataFabClick(viewId)
         }
     }
 
     private fun handleAddNewUserDataFabClick(viewId: Int) {
         when (viewId) {
-            R.id.new_personal_login_data_fab -> {
+            R.id.new_personal_login_data -> {
                 Timber.i("opening add new login data")
                 findNavController().navigate(R.id.action_homeFragment_to_addNewLoginDataDialogFragment)
             }
@@ -105,5 +110,14 @@ class HomeFragment : Fragment() {
                 Timber.w("no handler found for $viewId")
             }
         }
+
+        lifecycleScope.launchWhenStarted {
+            delay(time500Milli)
+            collapseAddNewDataOptions()
+        }
+    }
+
+    private fun collapseAddNewDataOptions() {
+        startMotionLayoutTransition(motionLayout, R.id.start)
     }
 }

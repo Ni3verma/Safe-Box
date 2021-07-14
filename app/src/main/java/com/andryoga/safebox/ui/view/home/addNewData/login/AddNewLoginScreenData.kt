@@ -4,10 +4,10 @@ import com.andryoga.safebox.BuildConfig
 
 data class AddNewLoginScreenData(
     var title: String = "",
-    var url: String = "",
+    var url: String? = null,
     var userId: String = "",
     var password: String = "",
-    var notes: String = ""
+    var notes: String? = null
 ) {
     init {
         if (BuildConfig.DEBUG) {
