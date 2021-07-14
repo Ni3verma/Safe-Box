@@ -1,5 +1,7 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.decryptNullableString
+import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
@@ -33,8 +35,8 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchName,
                 it.branchAddress,
                 symmetricKeyUtils.encrypt(it.ifscCode),
-                encryptNullOrBlankString(it.micrCode),
-                encryptNullOrBlankString(it.notes),
+                it.micrCode.encryptNullableString(symmetricKeyUtils),
+                it.notes.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
             )
@@ -52,19 +54,11 @@ class BankAccountDataDaoSecure @Inject constructor(
                 it.branchName,
                 it.branchAddress,
                 symmetricKeyUtils.decrypt(it.ifscCode),
-                decryptNullOrBlankString(it.micrCode),
-                decryptNullOrBlankString(it.notes),
+                it.micrCode.decryptNullableString(symmetricKeyUtils),
+                it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
             )
         }
-    }
-
-    fun encryptNullOrBlankString(string: String?): String? {
-        return if (string.isNullOrBlank()) null else symmetricKeyUtils.encrypt(string)
-    }
-
-    fun decryptNullOrBlankString(string: String?): String? {
-        return if (string.isNullOrBlank()) null else symmetricKeyUtils.decrypt(string)
     }
 }
