@@ -102,6 +102,10 @@ class HomeFragment : Fragment() {
                 Timber.i("opening add new login data")
                 findNavController().navigate(R.id.action_homeFragment_to_addNewLoginDataDialogFragment)
             }
+            R.id.new_personal_bank_account_data -> {
+                Timber.i("opening add new bank account data")
+                findNavController().navigate(R.id.action_homeFragment_to_addNewBankAccountDataDialogFragment)
+            }
             else -> {
                 Timber.w("no handler found for $viewId")
             }
