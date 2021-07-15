@@ -39,10 +39,18 @@
         <action
             android:id="@+id/action_homeFragment_to_addNewLoginDataDialogFragment"
             app:destination="@id/addNewLoginDataDialogFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_addNewBankAccountDataDialogFragment"
+            app:destination="@id/addNewBankAccountDataDialogFragment" />
     </fragment>
     <dialog
         android:id="@+id/addNewLoginDataDialogFragment"
         android:name="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataDialogFragment"
         android:label="Add new Login data"
         tools:layout="@layout/dialog_add_new_login_data" />
+    <dialog
+        android:id="@+id/addNewBankAccountDataDialogFragment"
+        android:name="com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountDataDialogFragment"
+        android:label="Add new Bank Account data"
+        tools:layout="@layout/fragment_add_new_bank_account_data_dialog" />
 </navigation>
