@@ -31,7 +31,6 @@ class AllInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.all_info_fragment, container, false)
-        binding.viewModel = viewModel
         binding.lifecycleOwner = this
 
         adapter = UserDataAdapter(
@@ -45,11 +44,11 @@ class AllInfoFragment : Fragment() {
         lifecycleScope.launchWhenStarted {
             viewModel.listData.collect { data ->
                 if (data.isEmpty()) {
-                    binding.emptyViewGroup.visibility = View.VISIBLE
-                    binding.emptyViewBackground.setImageResource(R.drawable.no_result)
+                    binding.emptyView.isVisible = true
+                    binding.emptyView.emptyViewBackground.setImageResource(R.drawable.no_result)
                 } else {
-                    binding.emptyViewGroup.visibility = View.GONE
-                    binding.emptyViewBackground.setImageResource(R.drawable.empty)
+                    binding.emptyView.isVisible = false
+                    binding.emptyView.emptyViewBackground.setImageResource(R.drawable.empty)
                 }
                 adapter.submitList(data)
             }
