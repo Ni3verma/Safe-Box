@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -15,9 +16,15 @@ import com.andryoga.safebox.ui.common.Utils
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
+import java.util.*
 
 @AndroidEntryPoint
 class ChooseMasterPswrdFragment : Fragment() {
+
+    object Constants {
+        const val maxSimilarLength = 5
+    }
+
     private val viewModel: ChooseMasterPswrdViewModel by viewModels()
 
     private lateinit var binding: ChooseMasterPswrdFragmentBinding
@@ -37,10 +44,44 @@ class ChooseMasterPswrdFragment : Fragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
 
+        binding.hintText.addTextChangedListener {
+            val similarLength = longestCommonSubstring(
+                binding.hintText.text.toString(),
+                binding.pswrdText.text.toString()
+            )
+
+            if (similarLength >= Constants.maxSimilarLength) {
+                binding.hint.isErrorEnabled = true
+                binding.hint.error = "Hint should not contain more than 5 consecutive letters from user password"
+            }
+        }
+
         initValidatorMapping()
         setupObservers()
 
         return binding.root
+    }
+
+    private fun longestCommonSubstring(hintText: String, pswrdText: String): Int {
+        val matrix = Array(hintText.length + 1) {
+            IntArray(pswrdText.length + 1)
+        }
+        var maxLength = 0
+        for (i in 1 until matrix.size) {
+            for (j in 1 until matrix[0].size) {
+                val text1 = hintText[i - 1]
+                val text2 = pswrdText[j - 1]
+                if (text1 != text2) {
+                    matrix[i][j] = 0
+                } else {
+                    matrix[i][j] = matrix[i - 1][j - 1] + 1
+                }
+                if (matrix[i][j] > maxLength) {
+                    maxLength = matrix[i][j]
+                }
+            }
+        }
+        return maxLength
     }
 
     private fun setupObservers() {
