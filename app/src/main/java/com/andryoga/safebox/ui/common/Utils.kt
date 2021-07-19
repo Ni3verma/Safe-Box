@@ -36,6 +36,14 @@ object Utils {
         }
     }
 
+    fun switchText(view: TextView, originalText: String, changeToText: String) {
+        if (view.text == originalText) {
+            view.text = changeToText
+        } else {
+            view.text = originalText
+        }
+    }
+
     fun startMotionLayoutTransition(
         motionLayout: MotionLayout,
         endState: Int,

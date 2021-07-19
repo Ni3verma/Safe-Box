@@ -1,20 +1,29 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.security.interfaces.HashingUtils
+import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import javax.inject.Inject
 
 class UserDetailsDaoSecure @Inject constructor(
     private val userDetailsDao: UserDetailsDao,
-    private val hashingUtils: HashingUtils
+    private val hashingUtils: HashingUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : UserDetailsDao {
     override suspend fun insertUserDetailsData(userDetailsEntity: UserDetailsEntity) {
-        userDetailsDao.insertUserDetailsData(hash(userDetailsEntity))
+        var entity = hash(userDetailsEntity)
+        entity = encrypt(entity)
+        userDetailsDao.insertUserDetailsData(entity)
     }
 
     override suspend fun getUserDetails(): UserDetailsEntity {
         return userDetailsDao.getUserDetails()
+    }
+
+    override suspend fun getHint(): String? {
+        return userDetailsDao.getHint()?.let { symmetricKeyUtils.decrypt(it) }
     }
 
     suspend fun checkPassword(password: String): Boolean {
@@ -28,6 +37,18 @@ class UserDetailsDaoSecure @Inject constructor(
                 it.key,
                 hashingUtils.hash(it.password),
                 it.hint,
+                it.creationDate,
+                it.updateDate
+            )
+        }
+    }
+
+    private fun encrypt(userDetailsEntity: UserDetailsEntity): UserDetailsEntity {
+        userDetailsEntity.let {
+            return UserDetailsEntity(
+                it.key,
+                it.password,
+                it.hint.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
             )

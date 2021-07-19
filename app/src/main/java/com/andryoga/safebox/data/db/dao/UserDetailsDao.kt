@@ -13,4 +13,7 @@ interface UserDetailsDao {
 
     @Query("select * from user_details limit 1")
     suspend fun getUserDetails(): UserDetailsEntity
+
+    @Query("select hint from user_details")
+    suspend fun getHint(): String?
 }
