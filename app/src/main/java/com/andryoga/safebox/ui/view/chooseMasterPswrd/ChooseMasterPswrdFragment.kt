@@ -46,13 +46,18 @@ class ChooseMasterPswrdFragment : Fragment() {
 
         binding.hintText.addTextChangedListener {
             val similarLength = longestCommonSubstring(
-                binding.hintText.text.toString(),
-                binding.pswrdText.text.toString()
+                binding.hintText.text.toString().toLowerCase(),
+                binding.pswrdText.text.toString().toLowerCase()
             )
 
             if (similarLength >= Constants.maxSimilarLength) {
                 binding.hint.isErrorEnabled = true
-                binding.hint.error = "Hint should not contain more than 5 consecutive letters from user password"
+                binding.hint.error = getString(R.string.hint_error)
+                binding.saveBtn.isEnabled = false
+            } else {
+                binding.hint.isErrorEnabled = false
+                binding.hint.error = null
+                binding.saveBtn.isEnabled = true
             }
         }
 
