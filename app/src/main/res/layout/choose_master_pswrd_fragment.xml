@@ -163,7 +163,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:enabled="@{viewModel.isSaveButtonEnabled()}"
             android:onClick="@{()->viewModel.onSaveClick()}"
             android:text="@string/save"
             app:layout_constraintEnd_toEndOf="parent"

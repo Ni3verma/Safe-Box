@@ -1,10 +1,15 @@
 package com.andryoga.safebox.ui.view.chooseMasterPswrd
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.common.Constants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
-import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
+import com.andryoga.safebox.ui.common.Utils.longestCommonSubstring
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdViewModel.Constants.maxHintSubsetLength
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -18,44 +23,42 @@ class ChooseMasterPswrdViewModel @Inject constructor(
 
     object Constants {
         const val minPasswordLength = 8
+        const val maxHintSubsetLength = 5
     }
 
-    private val _isSaveButtonEnabled = MutableLiveData<Boolean>(false)
-    val isSaveButtonEnabled: LiveData<Boolean> = _isSaveButtonEnabled
+    private val _validationFailureCode =
+        MutableLiveData<Set<ChooseMasterPswrdValidationFailureCode>>(
+            emptySet()
+        )
+    val validationFailureCode: LiveData<Set<ChooseMasterPswrdValidationFailureCode>> =
+        _validationFailureCode
 
     private val _navigateToHome = MutableLiveData<Boolean>()
     val navigateToHome: LiveData<Boolean> = _navigateToHome
 
-    val pswrd = MutableLiveData<String>("")
-    val confirmPswrd = MutableLiveData<String>("")
-    val hint = MutableLiveData<String?>(null)
+    val pswrd = MutableLiveData("")
+    val confirmPswrd = MutableLiveData("")
+    val hint = MutableLiveData("")
 
-    val pswrdValidationFailures: LiveData<List<PasswordValidationFailureCode>> =
-        Transformations.map(pswrd) { currPswrd ->
-            val validationFailures = evaluatePasswordValidationRules(currPswrd)
-            _isSaveButtonEnabled.value = validationFailures.isNullOrEmpty()
-            return@map validationFailures
-        }
-
-    val isBothPasswordsMatch = Transformations.map(confirmPswrd) { confirmPswrdText ->
-        val isBothMatch = confirmPswrdText == pswrd.value
-        _isSaveButtonEnabled.value =
-            pswrd.value?.let { evaluatePasswordValidationRules(it).isNullOrEmpty() }
-        return@map isBothMatch
+    init {
+        evaluateValidationRules()
     }
 
-    private fun evaluatePasswordValidationRules(pswrd: String): List<PasswordValidationFailureCode> {
-        val list = mutableListOf<PasswordValidationFailureCode>()
+    fun evaluateValidationRules() {
+        val set = mutableSetOf<ChooseMasterPswrdValidationFailureCode>()
+        val pswrd = pswrd.value!!
+        val confirmPswrd = confirmPswrd.value!!
+        val hint = hint.value!!
 
         if (pswrd.length <= Constants.minPasswordLength) {
-            list.add(LOW_PASSWORD_LENGTH)
+            set.add(LOW_PASSWORD_LENGTH)
         }
         var regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
         var numOfSpecialChar = 0
         regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
 
         if (numOfSpecialChar < 2) {
-            list.add(LESS_SPECIAL_CHAR_COUNT)
+            set.add(LESS_SPECIAL_CHAR_COUNT)
         }
 
         regex = Regex("[A-Z]")
@@ -65,7 +68,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         val containsLowerCase = regex.containsMatchIn(pswrd)
 
         if (!containsLowerCase || !containsUpperCase) {
-            list.add(NOT_MIX_CASE)
+            set.add(NOT_MIX_CASE)
         }
 
         regex = Regex("[0-9]")
@@ -73,23 +76,27 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
 
         if (numericCount <= 2) {
-            list.add(LESS_NUMERIC_COUNT)
+            set.add(LESS_NUMERIC_COUNT)
         }
 
         for ((index, char) in pswrd.withIndex()) {
             val nextChar = char + 1
             val nextToNextChar = char + 2
             if (pswrd.indexOf("" + nextChar + nextToNextChar) == index + 1) {
-                list.add(ALTERNATE_CHAR_FOUND)
+                set.add(ALTERNATE_CHAR_FOUND)
                 break
             }
         }
 
-        if (pswrd != confirmPswrd.value) {
-            list.add(PASSWORD_DO_NOT_MATCH)
+        if (pswrd != confirmPswrd) {
+            set.add(PASSWORD_DO_NOT_MATCH)
         }
 
-        return list
+        if (longestCommonSubstring(pswrd.lowercase(), hint.lowercase()) >= maxHintSubsetLength) {
+            set.add(HINT_IS_SUBSET)
+        }
+
+        _validationFailureCode.value = set
     }
 
     /*

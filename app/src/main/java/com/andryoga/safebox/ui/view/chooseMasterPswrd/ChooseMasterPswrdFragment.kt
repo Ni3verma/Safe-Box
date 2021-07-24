@@ -13,22 +13,16 @@ import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
-import com.andryoga.safebox.ui.view.chooseMasterPswrd.PasswordValidationFailureCode.*
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
-import java.util.*
 
 @AndroidEntryPoint
 class ChooseMasterPswrdFragment : Fragment() {
-
-    object Constants {
-        const val maxSimilarLength = 5
-    }
-
     private val viewModel: ChooseMasterPswrdViewModel by viewModels()
 
     private lateinit var binding: ChooseMasterPswrdFragmentBinding
-    private lateinit var validatorMapping: Map<PasswordValidationFailureCode, TextView>
+    private lateinit var pswrdValidatorMapping: Map<ChooseMasterPswrdValidationFailureCode, TextView>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,74 +38,51 @@ class ChooseMasterPswrdFragment : Fragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
 
-        binding.hintText.addTextChangedListener {
-            val similarLength = longestCommonSubstring(
-                binding.hintText.text.toString().toLowerCase(),
-                binding.pswrdText.text.toString().toLowerCase()
-            )
-
-            if (similarLength >= Constants.maxSimilarLength) {
-                binding.hint.isErrorEnabled = true
-                binding.hint.error = getString(R.string.hint_error)
-                binding.saveBtn.isEnabled = false
-            } else {
-                binding.hint.isErrorEnabled = false
-                binding.hint.error = null
-                binding.saveBtn.isEnabled = true
-            }
+        binding.pswrdText.addTextChangedListener {
+            viewModel.evaluateValidationRules()
         }
 
-        initValidatorMapping()
+        binding.confirmPswrdText.addTextChangedListener {
+            viewModel.evaluateValidationRules()
+        }
+
+        binding.hintText.addTextChangedListener {
+            viewModel.evaluateValidationRules()
+        }
+
+        initPasswordValidatorMapping()
         setupObservers()
 
         return binding.root
     }
 
-    private fun longestCommonSubstring(hintText: String, pswrdText: String): Int {
-        val matrix = Array(hintText.length + 1) {
-            IntArray(pswrdText.length + 1)
-        }
-        var maxLength = 0
-        for (i in 1 until matrix.size) {
-            for (j in 1 until matrix[0].size) {
-                val text1 = hintText[i - 1]
-                val text2 = pswrdText[j - 1]
-                if (text1 != text2) {
-                    matrix[i][j] = 0
-                } else {
-                    matrix[i][j] = matrix[i - 1][j - 1] + 1
-                }
-                if (matrix[i][j] > maxLength) {
-                    maxLength = matrix[i][j]
-                }
-            }
-        }
-        return maxLength
-    }
-
     private fun setupObservers() {
-        viewModel.pswrdValidationFailures.observe(viewLifecycleOwner) { failureCode ->
+        viewModel.validationFailureCode.observe(viewLifecycleOwner) { failureCode ->
             // by default make every validation as pass
-            validatorMapping.values.forEach { validationView ->
+            pswrdValidatorMapping.values.forEach { validationView ->
                 Utils.setTextViewLeftDrawable(validationView, R.drawable.ic_check_24)
             }
+            binding.hint.error = null
+
+            // save button will be enabled only if there is no validation failure
+            binding.saveBtn.isEnabled = failureCode.isNullOrEmpty()
 
             // change icon for those where validation failed
             Timber.d("failure validation codes : $failureCode")
             for (code in failureCode) {
-                if (validatorMapping.containsKey(code))
-                    Utils.setTextViewLeftDrawable(validatorMapping[code]!!, R.drawable.ic_error_24)
-                else {
-                    Timber.e("$code not found in validatorMapping")
+                when {
+                    pswrdValidatorMapping.containsKey(code) -> Utils.setTextViewLeftDrawable(
+                        pswrdValidatorMapping[code]!!,
+                        R.drawable.ic_error_24
+                    )
+                    code == HINT_IS_SUBSET -> {
+                        binding.hint.isErrorEnabled = true
+                        binding.hint.error = getString(R.string.hint_error)
+                    }
+                    else -> {
+                        Timber.e("$code not found in validatorMapping")
+                    }
                 }
-            }
-        }
-
-        viewModel.isBothPasswordsMatch.observe(viewLifecycleOwner) { isMatch ->
-            if (isMatch) {
-                Utils.setTextViewLeftDrawable(binding.pswrdMatchValidation, R.drawable.ic_check_24)
-            } else {
-                Utils.setTextViewLeftDrawable(binding.pswrdMatchValidation, R.drawable.ic_error_24)
             }
         }
 
@@ -123,8 +94,8 @@ class ChooseMasterPswrdFragment : Fragment() {
         }
     }
 
-    private fun initValidatorMapping() {
-        validatorMapping = mapOf(
+    private fun initPasswordValidatorMapping() {
+        pswrdValidatorMapping = mapOf(
             LOW_PASSWORD_LENGTH to binding.lengthValidation,
             LESS_SPECIAL_CHAR_COUNT to binding.specialCharValidation,
             NOT_MIX_CASE to binding.caseValidation,

@@ -56,4 +56,26 @@ object Utils {
             motionLayout.transitionToEnd()
         }
     }
+
+    fun longestCommonSubstring(string1: String, string2: String): Int {
+        val matrix = Array(string1.length + 1) {
+            IntArray(string2.length + 1)
+        }
+        var maxLength = 0
+        for (i in 1 until matrix.size) {
+            for (j in 1 until matrix[0].size) {
+                val text1 = string1[i - 1]
+                val text2 = string2[j - 1]
+                if (text1 != text2) {
+                    matrix[i][j] = 0
+                } else {
+                    matrix[i][j] = matrix[i - 1][j - 1] + 1
+                }
+                if (matrix[i][j] > maxLength) {
+                    maxLength = matrix[i][j]
+                }
+            }
+        }
+        return maxLength
+    }
 }
