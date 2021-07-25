@@ -11,6 +11,8 @@ import com.andryoga.safebox.ui.common.Utils.longestCommonSubstring
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdViewModel.Constants.maxHintSubsetLength
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -26,11 +28,13 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         const val maxHintSubsetLength = 5
     }
 
+    private var evaluateValidationRuleJob: Job = Job()
+
     private val _validationFailureCode =
-        MutableLiveData<Set<ChooseMasterPswrdValidationFailureCode>>(
-            emptySet()
+        MutableLiveData<List<ChooseMasterPswrdValidationFailureCode>>(
+            emptyList()
         )
-    val validationFailureCode: LiveData<Set<ChooseMasterPswrdValidationFailureCode>> =
+    val validationFailureCode: LiveData<List<ChooseMasterPswrdValidationFailureCode>> =
         _validationFailureCode
 
     private val _navigateToHome = MutableLiveData<Boolean>()
@@ -45,58 +49,67 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     }
 
     fun evaluateValidationRules() {
-        val set = mutableSetOf<ChooseMasterPswrdValidationFailureCode>()
-        val pswrd = pswrd.value!!
-        val confirmPswrd = confirmPswrd.value!!
-        val hint = hint.value!!
-
-        if (pswrd.length <= Constants.minPasswordLength) {
-            set.add(LOW_PASSWORD_LENGTH)
+        if (evaluateValidationRuleJob.isActive) {
+            evaluateValidationRuleJob.cancel()
         }
-        var regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
-        var numOfSpecialChar = 0
-        regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
+        evaluateValidationRuleJob = viewModelScope.launch(Dispatchers.IO) {
+            val list = mutableListOf<ChooseMasterPswrdValidationFailureCode>()
+            val pswrd = pswrd.value!!
+            val confirmPswrd = confirmPswrd.value!!
+            val hint = hint.value!!
 
-        if (numOfSpecialChar < 2) {
-            set.add(LESS_SPECIAL_CHAR_COUNT)
-        }
-
-        regex = Regex("[A-Z]")
-        val containsUpperCase = regex.containsMatchIn(pswrd)
-
-        regex = Regex("[a-z]")
-        val containsLowerCase = regex.containsMatchIn(pswrd)
-
-        if (!containsLowerCase || !containsUpperCase) {
-            set.add(NOT_MIX_CASE)
-        }
-
-        regex = Regex("[0-9]")
-        var numericCount = 0
-        regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
-
-        if (numericCount <= 2) {
-            set.add(LESS_NUMERIC_COUNT)
-        }
-
-        for ((index, char) in pswrd.withIndex()) {
-            val nextChar = char + 1
-            val nextToNextChar = char + 2
-            if (pswrd.indexOf("" + nextChar + nextToNextChar) == index + 1) {
-                set.add(ALTERNATE_CHAR_FOUND)
-                break
+            if (pswrd.length <= Constants.minPasswordLength) {
+                list.add(LOW_PASSWORD_LENGTH)
             }
-        }
+            var regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
+            var numOfSpecialChar = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
 
-        if (pswrd != confirmPswrd) {
-            set.add(PASSWORD_DO_NOT_MATCH)
-        }
+            if (numOfSpecialChar < 2) {
+                list.add(LESS_SPECIAL_CHAR_COUNT)
+            }
 
-        if (longestCommonSubstring(pswrd.lowercase(), hint.lowercase()) >= maxHintSubsetLength) {
-            set.add(HINT_IS_SUBSET)
-        }
+            regex = Regex("[A-Z]")
+            val containsUpperCase = regex.containsMatchIn(pswrd)
 
-        _validationFailureCode.value = set
+            regex = Regex("[a-z]")
+            val containsLowerCase = regex.containsMatchIn(pswrd)
+
+            if (!containsLowerCase || !containsUpperCase) {
+                list.add(NOT_MIX_CASE)
+            }
+
+            regex = Regex("[0-9]")
+            var numericCount = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
+
+            if (numericCount <= 2) {
+                list.add(LESS_NUMERIC_COUNT)
+            }
+
+            for ((index, char) in pswrd.withIndex()) {
+                val nextChar = char + 1
+                val nextToNextChar = char + 2
+                if (pswrd.indexOf("" + nextChar + nextToNextChar) == index + 1) {
+                    list.add(ALTERNATE_CHAR_FOUND)
+                    break
+                }
+            }
+
+            if (pswrd != confirmPswrd) {
+                list.add(PASSWORD_DO_NOT_MATCH)
+            }
+
+            if (longestCommonSubstring(
+                    pswrd.lowercase(),
+                    hint.lowercase()
+                ) >= maxHintSubsetLength
+            ) {
+                list.add(HINT_IS_SUBSET)
+            }
+
+            _validationFailureCode.postValue(list)
+        }
     }
 
     /*
