@@ -42,6 +42,9 @@
         <action
             android:id="@+id/action_homeFragment_to_addNewBankAccountDataDialogFragment"
             app:destination="@id/addNewBankAccountDataDialogFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_addNewBankCardDialogFragment"
+            app:destination="@id/addNewBankCardDialogFragment" />
     </fragment>
     <dialog
         android:id="@+id/addNewLoginDataDialogFragment"
@@ -53,4 +56,9 @@
         android:name="com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountDataDialogFragment"
         android:label="Add new Bank Account data"
         tools:layout="@layout/fragment_add_new_bank_account_data_dialog" />
+    <dialog
+        android:id="@+id/addNewBankCardDialogFragment"
+        android:name="com.andryoga.safebox.ui.view.home.addNewData.bankCard.AddNewBankCardDialogFragment"
+        android:label="AddNewBankCardDialogFragment"
+        tools:layout="@layout/dialog_add_new_bank_card_data" />
 </navigation>

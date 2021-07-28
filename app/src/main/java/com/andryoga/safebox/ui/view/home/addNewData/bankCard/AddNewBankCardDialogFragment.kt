@@ -4,28 +4,42 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.core.widget.doAfterTextChanged
+import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
+import com.andryoga.safebox.databinding.DialogAddNewBankCardDataBinding
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import timber.log.Timber
 
-class AddNewBankCardDialogFragment : Fragment() {
+class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
 
-    companion object {
-        fun newInstance() = AddNewBankCardDialogFragment()
-    }
-
-    private lateinit var viewModel: AddNewBankCardViewModel
+    private val viewModel: AddNewBankCardViewModel by viewModels()
+    private lateinit var binding: DialogAddNewBankCardDataBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.dialog_add_new_bank_card_data, container, false)
+    ): View {
+        binding = DataBindingUtil.inflate(
+            inflater,
+            R.layout.dialog_add_new_bank_card_data,
+            container,
+            false
+        )
+        binding.viewModel = viewModel
+        binding.lifecycleOwner = this
+
+        return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProvider(this).get(AddNewBankCardViewModel::class.java)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.expiryDateText.doAfterTextChanged { currentText ->
+            if (currentText?.toString()?.length == 2) {
+                // gotta handle this
+                Timber.i("$currentText")
+            }
+        }
     }
 }
