@@ -7,6 +7,6 @@ data class AddNewBankCardScreenData(
     var expiryDate: String = "",
     var pin: String? = null,
     var cvv: String = "",
-    var linkedBankAccount: String? = null,
+    var linkedBankAccount: Int? = null,
     var notes: String? = null
 )
