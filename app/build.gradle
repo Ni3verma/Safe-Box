@@ -44,13 +44,7 @@ android {
         viewBinding true
         dataBinding true
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
+
     lintOptions {
         disable 'UnusedResources','FragmentTagUsage'
         disable 'Correctness','Messages'
@@ -78,8 +72,8 @@ dependencies {
     implementation "androidx.security:security-crypto:1.1.0-alpha03"
 
     // coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.0-native-mt'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0-native-mt'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1'
 
     //lifecycle
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_extension_version"
