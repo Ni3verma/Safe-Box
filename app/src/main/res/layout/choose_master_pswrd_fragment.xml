@@ -72,6 +72,31 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/hint"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:counterEnabled="true"
+            app:counterMaxLength="30"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/confirm_pswrd">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/hint_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/add_hint"
+                android:singleLine="true"
+                android:text="@={viewModel.hint}"
+                android:maxLength="30">
+
+            </com.google.android.material.textfield.TextInputEditText>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <TextView
             android:id="@+id/length_validation"
             style="@style/validationTextViewStyle"
@@ -80,7 +105,7 @@
             android:layout_marginTop="16dp"
             android:text="@string/length_validation_text"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/confirm_pswrd"
+            app:layout_constraintTop_toBottomOf="@+id/hint"
             tools:drawableLeftCompat="@drawable/ic_check_24" />
 
         <TextView
@@ -139,7 +164,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="16dp"
-            android:enabled="@{viewModel.isSaveButtonEnabled()}"
             android:onClick="@{()->viewModel.onSaveClick()}"
             android:text="@string/save"
             app:layout_constraintEnd_toEndOf="parent"
