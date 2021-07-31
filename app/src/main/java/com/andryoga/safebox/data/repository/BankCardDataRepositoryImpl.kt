@@ -2,14 +2,14 @@ package com.andryoga.safebox.data.repository
 
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
-import com.andryoga.safebox.data.repository.interfaces.BankCardRepository
+import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.ui.view.home.addNewData.bankCard.AddNewBankCardScreenData
 import java.util.*
 import javax.inject.Inject
 
-class BankCardRepositoryImpl @Inject constructor(
+class BankCardDataRepositoryImpl @Inject constructor(
     private val bankCardDataDaoSecure: BankCardDataDaoSecure
-) : BankCardRepository {
+) : BankCardDataRepository {
     override suspend fun insertBankCardData(addNewBankCardScreenData: AddNewBankCardScreenData) {
         val entity = BankCardDataEntity(
             addNewBankCardScreenData.title,

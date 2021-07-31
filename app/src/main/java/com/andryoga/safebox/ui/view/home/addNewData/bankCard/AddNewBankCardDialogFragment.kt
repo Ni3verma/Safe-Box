@@ -15,7 +15,9 @@ import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
 
     private val viewModel: AddNewBankCardViewModel by viewModels()
