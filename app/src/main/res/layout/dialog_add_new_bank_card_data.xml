@@ -96,7 +96,7 @@
                 android:capitalize="characters"
                 android:hint="@string/number"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.name}">
+                android:text="@={viewModel.addNewBankCardScreenData.number}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -164,8 +164,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/linkedAccount"
-                android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.linkedBankAccount}">
+                android:singleLine="true">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -186,10 +185,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/expiryDate"
-                android:inputType="number"
+                android:inputType="datetime"
                 android:maxLength="5"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.linkedBankAccount}">
+                android:text="@={viewModel.addNewBankCardScreenData.expiryDate}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
