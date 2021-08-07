@@ -43,6 +43,15 @@ android {
     buildFeatures {
         viewBinding true
         dataBinding true
+        compose true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion compose_version
+    }
+    packagingOptions {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
     }
 
     lintOptions {
@@ -100,4 +109,12 @@ dependencies {
 
     //preference
     implementation "androidx.preference:preference-ktx:$preference_version"
+
+    //compose
+    implementation "androidx.compose.ui:ui:$compose_version"
+    implementation "androidx.compose.material:material:$compose_version"
+    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
+    implementation 'androidx.activity:activity-compose:1.3.0'
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 }
