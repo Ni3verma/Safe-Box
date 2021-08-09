@@ -12,7 +12,7 @@ import com.andryoga.safebox.data.db.entity.*
         LoginDataEntity::class,
         UserDetailsEntity::class,
         BankCardDataEntity::class,
-        SecretNoteDataEntity::class
+        SecureNoteDataEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -23,7 +23,7 @@ abstract class SafeBoxDatabase : RoomDatabase() {
     abstract fun loginDataDao(): LoginDataDao
     abstract fun userDetailsDao(): UserDetailsDao
     abstract fun bankCardDataDao(): BankCardDataDao
-    abstract fun secretNoteDataDao(): SecretNoteDataDao
+    abstract fun secureNoteDataDao(): SecureNoteDataDao
 
     companion object {
         const val DATABASE_NAME: String = "SAFEBOX_APP_DB"

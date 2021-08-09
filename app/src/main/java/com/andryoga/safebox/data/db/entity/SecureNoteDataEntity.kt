@@ -4,8 +4,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.*
 
-@Entity(tableName = "secret_note_data")
-data class SecretNoteDataEntity(
+@Entity(tableName = "secure_note_data")
+data class SecureNoteDataEntity(
     @PrimaryKey(autoGenerate = true)
     val key: Int,
     val title: String,

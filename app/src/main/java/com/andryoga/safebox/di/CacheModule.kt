@@ -62,9 +62,9 @@ object CacheModule {
 
     @Singleton
     @Provides
-    fun provideSecretNoteDataDao(
+    fun provideSecureNoteDataDao(
         safeBoxDatabase: SafeBoxDatabase
-    ): SecretNoteDataDao {
-        return safeBoxDatabase.secretNoteDataDao()
+    ): SecureNoteDataDao {
+        return safeBoxDatabase.secureNoteDataDao()
     }
 }

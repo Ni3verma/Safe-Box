@@ -4,17 +4,17 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.andryoga.safebox.data.db.entity.SecretNoteDataEntity
+import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface SecretNoteDataDao {
+interface SecureNoteDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertSecretNoteData(secretNoteDataEntity: SecretNoteDataEntity)
+    suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
     @Query("select * from secret_note_data")
-    fun getAllSecretNoteData(): Flow<List<SecretNoteDataEntity>>
+    fun getAllSecretNoteData(): Flow<List<SecureNoteDataEntity>>
 
     @Query("select * from secret_note_data where `key` = :key limit 1")
-    fun getSecretNoteDataByKey(key: Int): Flow<SecretNoteDataEntity>
+    fun getSecretNoteDataByKey(key: Int): Flow<SecureNoteDataEntity>
 }
