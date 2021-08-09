@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/font/roboto_mono_light.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_add_new_bank_card_data.xml" value="0.25416666666666665" />
       </map>
     </option>

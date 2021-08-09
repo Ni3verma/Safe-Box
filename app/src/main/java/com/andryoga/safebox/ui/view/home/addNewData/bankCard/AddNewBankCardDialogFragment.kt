@@ -4,33 +4,32 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
+import androidx.compose.material.Divider
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.LiveData
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.databinding.DialogAddNewBankCardDataBinding
-import com.andryoga.safebox.ui.common.CommonSnackbar
-import com.andryoga.safebox.ui.common.RequiredFieldValidator
-import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.common.Status
+import com.andryoga.safebox.ui.common.*
+import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
@@ -53,7 +52,7 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         binding.composeView.setContent {
-            MaterialTheme {
+            BasicSafeBoxTheme {
                 initSelectBankAccountDialog()
             }
         }
@@ -104,22 +103,32 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
             Column {
                 LazyColumn(
                     modifier = Modifier
-                        .height(300.dp)
+                        .heightIn(Dp.Unspecified, 500.dp)
                         .padding(8.dp)
                 ) {
                     items(
                         items = bankAccountData,
                         key = { bankAccount -> bankAccount.key }
                     ) { item ->
-                        Text(
-                            item.title,
-                            style = MaterialTheme.typography.body1
-                        )
-                        Text(
-                            item.accountNumber,
-                            style = MaterialTheme.typography.body2
-                        )
-                        Divider()
+                        Column(
+                            Modifier.clickable {
+                                Timber.i("clicked ${item.title} bank account")
+                                viewModel.addNewBankCardScreenData.linkedBankAccount = item.key
+                                binding.linkedBankAccount.text =
+                                    String(StringBuilder("${item.title}\n${item.accountNumber}"))
+                                viewModel.switchSelectBankAccountDialog()
+                            }
+                        ) {
+                            Text(
+                                item.title,
+                                style = MaterialTheme.typography.h6
+                            )
+                            Text(
+                                item.accountNumber,
+                                style = MaterialTheme.typography.body1,
+                            )
+                            Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
+                        }
                     }
                 }
             }
@@ -152,34 +161,6 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
                     getString(R.string.snackbar_common_error_saving_data)
                 )
                 dismiss()
-            }
-        }
-    }
-
-    @Composable
-    fun CommonDialog(
-        isShown: LiveData<Boolean>,
-        title: String,
-        onDialogDismiss: () -> Unit,
-        onCloseClick: () -> Unit,
-        content: @Composable () -> Unit
-    ) {
-        val showDialog by isShown.observeAsState(false)
-        if (showDialog) {
-            Dialog(onDismissRequest = { onDialogDismiss() }) {
-                Surface(shape = MaterialTheme.shapes.medium, elevation = 4.dp) {
-                    Column(Modifier.padding(8.dp)) {
-                        Text(title, style = MaterialTheme.typography.h5)
-                        Divider()
-                        content()
-                        Button(
-                            onClick = { onCloseClick() },
-                            modifier = Modifier.align(Alignment.End)
-                        ) {
-                            Text("Close")
-                        }
-                    }
-                }
             }
         }
     }
