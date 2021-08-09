@@ -29,6 +29,14 @@
     <string name="card">Card</string>
     <string name="note">Note</string>
 
+    <!--    Bank card dialog-->
+    <string name="number">Number <font color='#FF0000'>̽</font></string>
+    <string name="expiryDate">Expiry Date <font color='#FF0000'>̽</font></string>
+    <string name="name">Name</string>
+    <string name="pin">PIN</string>
+    <string name="cvv">CVV <font color='#FF0000'>̽</font></string>
+    <string name="linkedAccount">Linked Account</string>
+
     <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="choose_master_password_head">Choose a Master Password</string>

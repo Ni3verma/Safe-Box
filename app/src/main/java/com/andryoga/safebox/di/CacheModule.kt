@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
+import com.andryoga.safebox.data.db.dao.BankCardDataDao
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import dagger.Module
@@ -52,6 +53,14 @@ object CacheModule {
         safeBoxDatabase: SafeBoxDatabase
     ): BankAccountDataDao {
         return safeBoxDatabase.bankAccountDataDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideBankCardDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): BankCardDataDao {
+        return safeBoxDatabase.bankCardDataDao()
     }
     // Secure DAO
 }

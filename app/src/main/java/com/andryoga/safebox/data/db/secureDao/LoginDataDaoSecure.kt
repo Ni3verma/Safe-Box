@@ -21,7 +21,8 @@ class LoginDataDaoSecure @Inject constructor(
     }
 
     override fun getAllLoginData(): Flow<List<SearchLoginData>> {
-        return loginDataDao.getAllLoginData().map { SearchLoginData.decrypt(it, symmetricKeyUtils) }
+        return loginDataDao.getAllLoginData()
+            .map { SearchLoginData.decrypt(it, symmetricKeyUtils) }
     }
 
     override fun getLoginDataByKey(key: Int): Flow<LoginDataEntity> {

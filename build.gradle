@@ -10,7 +10,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle:7.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -33,6 +33,7 @@ ext{
     biometric_version='1.1.0'
     room_version='2.3.0'
     preference_version='1.1.1'
+    compose_version = '1.0.0'
 }
 
 allprojects {

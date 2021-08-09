@@ -1,6 +1,8 @@
 style:
   WildcardImport:
     active: false
+  MagicNumber:
+    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/Color.kt']
 exceptions:
   TooGenericExceptionCaught:
     active: false

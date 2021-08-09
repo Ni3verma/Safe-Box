@@ -1,9 +1,11 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountScreenData
+import kotlinx.coroutines.flow.Flow
 import java.util.*
 import javax.inject.Inject
 
@@ -26,5 +28,9 @@ class BankAccountDataRepositoryImpl @Inject constructor(
             Date()
         )
         bankAccountDataDaoSecure.insertBankAccountData(entity)
+    }
+
+    override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
+        return bankAccountDataDaoSecure.getAllBankAccountData()
     }
 }
