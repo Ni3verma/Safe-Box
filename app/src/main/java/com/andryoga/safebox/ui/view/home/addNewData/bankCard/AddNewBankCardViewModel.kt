@@ -1,8 +1,7 @@
 package com.andryoga.safebox.ui.view.home.addNewData.bankCard
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.liveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
+import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.ui.common.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,15 +10,21 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddNewBankCardViewModel @Inject constructor(
-    private val bankCardRepository: BankCardDataRepository
+    private val bankCardDataRepository: BankCardDataRepository,
+    bankAccountDataRepository: BankAccountDataRepository
 ) : ViewModel() {
+
+    private val _showSelectBankAccountDialog = MutableLiveData<Boolean>(false)
+    val showSelectBankAccountDialog: LiveData<Boolean> = _showSelectBankAccountDialog
+    val bankAccounts = bankAccountDataRepository.getAllBankAccountData()
+
     val addNewBankCardScreenData = AddNewBankCardScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
         Timber.i("save clicked, adding bank card data in db")
         emit(Resource.loading(true))
         try {
-            bankCardRepository.insertBankCardData(addNewBankCardScreenData)
+            bankCardDataRepository.insertBankCardData(addNewBankCardScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {
             emit(
@@ -30,5 +35,9 @@ class AddNewBankCardViewModel @Inject constructor(
             )
             Timber.e(ex)
         }
+    }
+
+    fun switchSelectBankAccountDialog() {
+        _showSelectBankAccountDialog.value = !_showSelectBankAccountDialog.value!!
     }
 }

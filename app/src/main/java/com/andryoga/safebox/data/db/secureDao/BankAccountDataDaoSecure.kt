@@ -3,9 +3,11 @@ package com.andryoga.safebox.data.db.secureDao
 import com.andryoga.safebox.common.Utils.decryptNullableString
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
+import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class BankAccountDataDaoSecure @Inject constructor(
@@ -16,12 +18,13 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataDao.insertBankAccountData(encrypt(bankAccountDataEntity))
     }
 
-    override fun getAllBankAcountData(): Flow<List<BankAccountDataEntity>> {
+    override fun getBankAccountDataByKey(key: Int): Flow<BankAccountDataEntity> {
         TODO("Not yet implemented")
     }
 
-    override fun getBankAccountDataByKey(key: Int): Flow<BankAccountDataEntity> {
-        TODO("Not yet implemented")
+    override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
+        return bankAccountDataDao.getAllBankAccountData()
+            .map { SearchBankAccountData.decrypt(it, symmetricKeyUtils) }
     }
 
     private fun encrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
