@@ -98,7 +98,7 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
             isShown = viewModel.showSelectBankAccountDialog,
             title = "Select Bank Account",
             onDialogDismiss = { viewModel.switchSelectBankAccountDialog() },
-            onCloseClick = { viewModel.switchSelectBankAccountDialog() }
+            onPrimaryButtonClick = { viewModel.switchSelectBankAccountDialog() }
         ) {
             Column {
                 LazyColumn(

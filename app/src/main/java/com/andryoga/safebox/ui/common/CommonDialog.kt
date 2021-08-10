@@ -13,17 +13,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.LiveData
+import com.andryoga.safebox.R
 
 @Composable
 fun CommonDialog(
     isShown: LiveData<Boolean>,
     title: String,
+    primaryButtonText: String = stringResource(id = R.string.close),
     onDialogDismiss: () -> Unit,
-    onCloseClick: () -> Unit,
+    onPrimaryButtonClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val showDialog by isShown.observeAsState(false)
@@ -40,10 +43,10 @@ fun CommonDialog(
                     )
                     content()
                     Button(
-                        onClick = { onCloseClick() },
+                        onClick = { onPrimaryButtonClick() },
                         modifier = Modifier.align(Alignment.End)
                     ) {
-                        Text("Close")
+                        Text(text = primaryButtonText)
                     }
                 }
             }

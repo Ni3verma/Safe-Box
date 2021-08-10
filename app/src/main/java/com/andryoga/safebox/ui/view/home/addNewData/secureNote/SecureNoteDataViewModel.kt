@@ -1,24 +1,24 @@
-package com.andryoga.safebox.ui.view.home.addNewData.login
+package com.andryoga.safebox.ui.view.home.addNewData.secureNote
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
-import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
+import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.common.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AddNewLoginDataViewModel @Inject constructor(
-    private val loginDataRepository: LoginDataRepository
+class SecureNoteDataViewModel @Inject constructor(
+    private val secureNoteDataRepository: SecureNoteDataRepository
 ) : ViewModel() {
-    val addNewLoginScreenData = AddNewLoginScreenData()
+    val secureNoteScreenData = SecureNoteScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
         emit(Resource.loading(true))
         try {
-            loginDataRepository.insertLoginData(addNewLoginScreenData)
+            secureNoteDataRepository.insertSecureNoteData(secureNoteScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {
             emit(

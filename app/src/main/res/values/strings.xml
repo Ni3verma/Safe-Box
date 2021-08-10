@@ -22,6 +22,7 @@
     <string name="common_error_mandatory_field">Mandatory Field</string>
     <string name="common_no_result">No Result!</string>
     <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
+    <string name="close">Close</string>
 
     <!--    User data type text-->
     <string name="login">Login</string>
@@ -63,6 +64,7 @@
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
+    <string name="notes_mandatory">Notes <font color='#FF0000'>̽</font></string>
     <string name="bank_account_data">Bank Account Data</string>
     <string name="account_number">Account Number <font color='#FF0000'>̽</font></string>
     <string name="customer_name">Customer Name</string>
