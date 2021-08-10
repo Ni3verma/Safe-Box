@@ -6,3 +6,7 @@ style:
 exceptions:
   TooGenericExceptionCaught:
     active: false
+complexity:
+  LongParameterList:
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['@Composable']
