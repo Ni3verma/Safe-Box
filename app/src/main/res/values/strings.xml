@@ -64,6 +64,7 @@
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
     <string name="notes">Notes</string>
+    <string name="notes_mandatory">Notes <font color='#FF0000'>̽</font></string>
     <string name="bank_account_data">Bank Account Data</string>
     <string name="account_number">Account Number <font color='#FF0000'>̽</font></string>
     <string name="customer_name">Customer Name</string>
