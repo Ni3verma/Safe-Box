@@ -12,9 +12,9 @@ interface SecureNoteDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
-    @Query("select * from secret_note_data")
+    @Query("select * from secure_note_data")
     fun getAllSecretNoteData(): Flow<List<SecureNoteDataEntity>>
 
-    @Query("select * from secret_note_data where `key` = :key limit 1")
+    @Query("select * from secure_note_data where `key` = :key limit 1")
     fun getSecretNoteDataByKey(key: Int): Flow<SecureNoteDataEntity>
 }
