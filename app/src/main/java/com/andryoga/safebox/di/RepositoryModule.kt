@@ -1,17 +1,8 @@
 package com.andryoga.safebox.di
 
-import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
-import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
-import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
-import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
-import com.andryoga.safebox.data.repository.BankAccountDataRepositoryImpl
-import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
-import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
-import com.andryoga.safebox.data.repository.UserDetailsRepositoryImpl
-import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
-import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
-import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
-import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.data.db.secureDao.*
+import com.andryoga.safebox.data.repository.*
+import com.andryoga.safebox.data.repository.interfaces.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,5 +46,13 @@ object RepositoryModule {
         bankCardDataDaoSecure: BankCardDataDaoSecure
     ): BankCardDataRepository {
         return BankCardDataRepositoryImpl(bankCardDataDaoSecure)
+    }
+
+    @Singleton
+    @Provides
+    fun provideSecureNoteDataRepo(
+        secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+    ): SecureNoteDataRepository {
+        return SecureNoteDataRepositoryImpl(secureNoteDataDaoSecure)
     }
 }
