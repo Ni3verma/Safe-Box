@@ -16,7 +16,6 @@ class SecureNoteDataViewModel @Inject constructor(
     val secureNoteScreenData = SecureNoteScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
-        Timber.i("save clicked, adding login data in db")
         emit(Resource.loading(true))
         try {
             secureNoteDataRepository.insertSecureNoteData(secureNoteScreenData)

@@ -16,7 +16,6 @@ class AddNewBankAccountDataViewModel @Inject constructor(
     val addNewBankAccountScreenData = AddNewBankAccountScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
-        Timber.i("save clicked, adding bank account data in db")
         emit(Resource.loading(true))
         try {
             bankAccountDataRepository.insertBankAccountData(addNewBankAccountScreenData)

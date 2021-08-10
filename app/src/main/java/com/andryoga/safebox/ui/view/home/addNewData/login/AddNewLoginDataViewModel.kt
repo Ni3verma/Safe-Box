@@ -16,7 +16,6 @@ class AddNewLoginDataViewModel @Inject constructor(
     val addNewLoginScreenData = AddNewLoginScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
-        Timber.i("save clicked, adding login data in db")
         emit(Resource.loading(true))
         try {
             loginDataRepository.insertLoginData(addNewLoginScreenData)
