@@ -3,16 +3,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@id/nav_all_info">
-    <fragment
-        android:id="@+id/nav_login_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
-        android:label="@string/drawer_title_logins"
-        tools:layout="@layout/login_info_fragment" />
+    app:startDestination="@id/nav_bank_account_info">
 
     <fragment
         android:id="@+id/nav_all_info"
         android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
         android:label="@string/drawer_title_all_items"
         tools:layout="@layout/all_info_fragment" />
+
+    <fragment
+        android:id="@+id/nav_login_info"
+        android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
+        android:label="@string/drawer_title_login"
+        tools:layout="@layout/login_info_fragment" />
+
+    <fragment
+        android:id="@+id/nav_bank_account_info"
+        android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
+        android:label="@string/drawer_title_bank_account" />
 </navigation>

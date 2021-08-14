@@ -12,7 +12,8 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="drawer_title_all_items">All Items</string>
-    <string name="drawer_title_logins">Login</string>
+    <string name="drawer_title_login">Login</string>
+    <string name="drawer_title_bank_account">Bank Account</string>
 
     <!--    Snackbar -->
     <string name="snackbar_common_data_saved">Data saved</string>
