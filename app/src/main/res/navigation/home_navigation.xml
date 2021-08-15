@@ -8,14 +8,12 @@
     <fragment
         android:id="@+id/nav_all_info"
         android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
-        android:label="@string/drawer_title_all_items"
-        tools:layout="@layout/all_info_fragment" />
+        android:label="@string/drawer_title_all_items"/>
 
     <fragment
         android:id="@+id/nav_login_info"
         android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
-        android:label="@string/drawer_title_login"
-        tools:layout="@layout/login_info_fragment" />
+        android:label="@string/drawer_title_login" />
 
     <fragment
         android:id="@+id/nav_bank_account_info"

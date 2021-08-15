@@ -40,8 +40,8 @@ private val typeToTextMap = mapOf(
 
 @Composable
 fun UserDataList(
-    listResource: Resource<List<UserDataAdapterEntity>>,
-    onItemClick: (item: UserDataAdapterEntity) -> Unit
+    listResource: Resource<List<UserListItemData>>,
+    onItemClick: (item: UserListItemData) -> Unit
 ) {
     when (listResource.status) {
         Status.LOADING -> {
@@ -103,7 +103,7 @@ fun EmptyUserData() {
 }
 
 @Composable
-fun UserDataListItem(item: UserDataAdapterEntity, onClick: (item: UserDataAdapterEntity) -> Unit) {
+fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -119,7 +119,7 @@ fun UserDataListItem(item: UserDataAdapterEntity, onClick: (item: UserDataAdapte
                 contentDescription = "icon",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
-                    .size(60.dp)
+                    .size(50.dp)
                     .background(MaterialTheme.colors.secondary, CircleShape)
                     .padding(8.dp)
             )
@@ -155,7 +155,7 @@ fun UserDataListItem(item: UserDataAdapterEntity, onClick: (item: UserDataAdapte
 private fun item() {
     BasicSafeBoxTheme {
         UserDataListItem(
-            item = UserDataAdapterEntity(
+            item = UserListItemData(
                 1,
                 "HDFC Bank ajsfnsajfaslfnalfnaasnflasnfasljnflasnflasnflkansflkansflkasnflnalf",
                 "xxxxxxxx123",

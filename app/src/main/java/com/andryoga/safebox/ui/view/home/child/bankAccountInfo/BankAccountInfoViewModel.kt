@@ -3,8 +3,8 @@ package com.andryoga.safebox.ui.view.home.child.bankAccountInfo
 import androidx.lifecycle.ViewModel
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
+import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -17,14 +17,14 @@ import javax.inject.Inject
 class BankAccountInfoViewModel @Inject constructor(
     private val bankAccountDataRepository: BankAccountDataRepository
 ) : ViewModel() {
-    val listData = flow<Resource<List<UserDataAdapterEntity>>> {
+    val listData = flow<Resource<List<UserListItemData>>> {
         bankAccountDataRepository
             .getAllBankAccountData()
             .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserDataAdapterEntity>()
+                val adapterEntityList = mutableListOf<UserListItemData>()
                 searchData.forEach {
                     adapterEntityList.add(
-                        UserDataAdapterEntity(
+                        UserListItemData(
                             it.key,
                             it.title,
                             it.accountNumber,
