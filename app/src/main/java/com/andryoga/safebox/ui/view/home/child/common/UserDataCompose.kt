@@ -138,13 +138,15 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                Text(
-                    text = item.subTitle,
-                    style = MaterialTheme.typography.body1,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            if (item.subTitle != null) {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    Text(
+                        text = item.subTitle,
+                        style = MaterialTheme.typography.body1,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }

@@ -1,14 +1,16 @@
 package com.andryoga.safebox.data.repository
 
-import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
+import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.view.home.addNewData.secureNote.SecureNoteScreenData
+import kotlinx.coroutines.flow.Flow
 import java.util.*
 import javax.inject.Inject
 
 class SecureNoteDataRepositoryImpl @Inject constructor(
-    private val secureNoteDataDao: SecureNoteDataDao
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : SecureNoteDataRepository {
     override suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
         val entity = SecureNoteDataEntity(
@@ -17,6 +19,10 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
             Date(),
             Date()
         )
-        secureNoteDataDao.insertSecretNoteData(entity)
+        secureNoteDataDaoSecure.insertSecretNoteData(entity)
+    }
+
+    override suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>> {
+        return secureNoteDataDaoSecure.getAllSecretNoteData()
     }
 }
