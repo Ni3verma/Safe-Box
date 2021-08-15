@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,10 +44,43 @@ fun UserDataList(
     list: List<UserDataAdapterEntity>,
     onItemClick: (item: UserDataAdapterEntity) -> Unit
 ) {
-    LazyColumn() {
-        items(items = list, key = { it.id }) {
-            UserDataListItem(item = it, onItemClick)
+    if (list.isNullOrEmpty()) {
+        EmptyUserData()
+    } else {
+        LazyColumn() {
+            items(items = list, key = { it.id }) {
+                UserDataListItem(item = it, onItemClick)
+            }
         }
+    }
+}
+
+@Composable
+@Preview(name = "empty view")
+fun EmptyUserData() {
+    Image(
+        painter = painterResource(id = R.drawable.no_result),
+        contentDescription = "No result found",
+        contentScale = ContentScale.FillBounds,
+        modifier = Modifier
+            .fillMaxSize()
+    )
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = stringResource(id = R.string.common_no_result),
+            style = MaterialTheme.typography.h4,
+            modifier = Modifier.padding(top = 180.dp)
+        )
+        Text(
+            text = stringResource(id = R.string.common_click_on_plus_to_add_data),
+            style = MaterialTheme.typography.h5,
+            color = MaterialTheme.colors.primary,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
