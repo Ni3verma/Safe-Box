@@ -52,7 +52,8 @@ class HomeFragment : Fragment() {
         val appBarConfiguration = AppBarConfiguration.Builder(
             R.id.nav_login_info,
             R.id.nav_all_info,
-            R.id.nav_bank_account_info
+            R.id.nav_bank_account_info,
+            R.id.nav_bank_card_info
         ).setOpenableLayout(binding.drawerLayout).build()
 
         val navController = requireActivity().findNavController(R.id.home_nav_host_fragment)
