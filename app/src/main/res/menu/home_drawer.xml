@@ -12,7 +12,12 @@
         <item
             android:id="@+id/nav_login_info"
             android:icon="@drawable/ic_person_24"
-            android:title="@string/drawer_title_logins" />
+            android:title="@string/drawer_title_login" />
+
+        <item
+            android:id="@+id/nav_bank_account_info"
+            android:icon="@drawable/ic_bank_24"
+            android:title="@string/drawer_title_bank_account" />
 
     </group>
 </menu>

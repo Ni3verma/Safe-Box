@@ -24,7 +24,9 @@ class BankAccountDataDaoSecure @Inject constructor(
 
     override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
         return bankAccountDataDao.getAllBankAccountData()
-            .map { SearchBankAccountData.decrypt(it, symmetricKeyUtils) }
+            .map {
+                SearchBankAccountData.decrypt(it, symmetricKeyUtils)
+            }
     }
 
     private fun encrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
