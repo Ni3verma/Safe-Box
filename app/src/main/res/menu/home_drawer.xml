@@ -19,5 +19,10 @@
             android:icon="@drawable/ic_bank_24"
             android:title="@string/drawer_title_bank_account" />
 
+        <item
+            android:id="@+id/nav_bank_card_info"
+            android:icon="@drawable/ic_card_24"
+            android:title="@string/drawer_title_bank_card" />
+
     </group>
 </menu>
