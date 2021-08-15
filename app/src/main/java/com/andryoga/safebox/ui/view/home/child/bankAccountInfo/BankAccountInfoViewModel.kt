@@ -19,7 +19,6 @@ class BankAccountInfoViewModel @Inject constructor(
     val listData = flow<List<UserDataAdapterEntity>> {
         bankAccountDataRepository
             .getAllBankAccountData()
-            .flowOn(Dispatchers.IO)
             .transform { searchData ->
                 val adapterEntityList = mutableListOf<UserDataAdapterEntity>()
                 searchData.forEach {
@@ -33,7 +32,10 @@ class BankAccountInfoViewModel @Inject constructor(
                     )
                 }
                 emit(adapterEntityList)
-            }.collect {
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                it.sortBy { data -> data.title }
                 emit(it)
             }
     }

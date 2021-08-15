@@ -9,9 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class BankAccountInfoFragment : Fragment() {
@@ -27,9 +30,22 @@ class BankAccountInfoFragment : Fragment() {
             setContent {
                 val listData by viewModel.listData.collectAsState(initial = listOf())
                 BasicSafeBoxTheme {
-                    UserDataList(list = listData)
+                    UserDataList(
+                        list = listData,
+                        onItemClick = {
+                            onListItemClick(it)
+                        }
+                    )
                 }
             }
         }
+    }
+
+    private fun onListItemClick(item: UserDataAdapterEntity) {
+        Timber.i("clicked ${item.id}")
+        CommonSnackbar.showSuccessSnackbar(
+            requireView(),
+            "FUTURE FEATURE : ${item.id}"
+        )
     }
 }
