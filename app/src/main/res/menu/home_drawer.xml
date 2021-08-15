@@ -24,5 +24,10 @@
             android:icon="@drawable/ic_card_24"
             android:title="@string/drawer_title_bank_card" />
 
+        <item
+            android:id="@+id/nav_secure_note_info"
+            android:icon="@drawable/ic_key_24"
+            android:title="@string/drawer_title_secure_note" />
+
     </group>
 </menu>
