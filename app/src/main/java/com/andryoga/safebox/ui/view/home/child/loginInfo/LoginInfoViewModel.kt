@@ -2,8 +2,9 @@ package com.andryoga.safebox.ui.view.home.child.loginInfo
 
 import androidx.lifecycle.ViewModel
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
-import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
+import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
+import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -16,15 +17,14 @@ import javax.inject.Inject
 class LoginInfoViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository
 ) : ViewModel() {
-    val listData = flow<List<UserDataAdapterEntity>> {
+    val listData = flow<Resource<List<UserListItemData>>> {
         loginDataRepository
             .getAllLoginData()
-            .flowOn(Dispatchers.IO)
             .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserDataAdapterEntity>()
+                val adapterEntityList = mutableListOf<UserListItemData>()
                 searchData.forEach {
                     adapterEntityList.add(
-                        UserDataAdapterEntity(
+                        UserListItemData(
                             it.key,
                             it.title,
                             it.userId,
@@ -33,8 +33,11 @@ class LoginInfoViewModel @Inject constructor(
                     )
                 }
                 emit(adapterEntityList)
-            }.collect {
-                emit(it)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                it.sortBy { data -> data.title }
+                emit(Resource.success(it))
             }
     }
 }

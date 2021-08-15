@@ -12,8 +12,8 @@ import androidx.fragment.app.viewModels
 import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
-import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
+import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -45,7 +45,7 @@ class BankAccountInfoFragment : Fragment() {
         }
     }
 
-    private fun onListItemClick(item: UserDataAdapterEntity) {
+    private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
         CommonSnackbar.showSuccessSnackbar(
             requireView(),
