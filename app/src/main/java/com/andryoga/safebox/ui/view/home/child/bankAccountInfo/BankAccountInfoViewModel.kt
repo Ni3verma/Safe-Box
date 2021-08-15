@@ -2,6 +2,7 @@ package com.andryoga.safebox.ui.view.home.child.bankAccountInfo
 
 import androidx.lifecycle.ViewModel
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,7 @@ import javax.inject.Inject
 class BankAccountInfoViewModel @Inject constructor(
     private val bankAccountDataRepository: BankAccountDataRepository
 ) : ViewModel() {
-    val listData = flow<List<UserDataAdapterEntity>> {
+    val listData = flow<Resource<List<UserDataAdapterEntity>>> {
         bankAccountDataRepository
             .getAllBankAccountData()
             .transform { searchData ->
@@ -36,7 +37,7 @@ class BankAccountInfoViewModel @Inject constructor(
             .flowOn(Dispatchers.Default)
             .collect {
                 it.sortBy { data -> data.title }
-                emit(it)
+                emit(Resource.success(it))
             }
     }
 }

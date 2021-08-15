@@ -7,10 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -23,6 +20,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
+import com.andryoga.safebox.ui.common.Resource
+import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 
 private val typeToIconMap = mapOf(
@@ -41,16 +40,35 @@ private val typeToTextMap = mapOf(
 
 @Composable
 fun UserDataList(
-    list: List<UserDataAdapterEntity>,
+    listResource: Resource<List<UserDataAdapterEntity>>,
     onItemClick: (item: UserDataAdapterEntity) -> Unit
 ) {
-    if (list.isNullOrEmpty()) {
-        EmptyUserData()
-    } else {
-        LazyColumn() {
-            items(items = list, key = { it.id }) {
-                UserDataListItem(item = it, onItemClick)
+    when (listResource.status) {
+        Status.LOADING -> {
+            // In loading state, just show a indefinite circular progress in center of screen
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
             }
+        }
+        Status.SUCCESS -> {
+            // In success state, if there was no data then show empty view other show list of data
+            if (listResource.data.isNullOrEmpty()) {
+                EmptyUserData()
+            } else {
+                val list = listResource.data
+                LazyColumn() {
+                    items(items = list, key = { it.id }) {
+                        UserDataListItem(item = it, onItemClick)
+                    }
+                }
+            }
+        }
+        Status.ERROR -> {
+            // In error state, show a error snackbar : Future feature
         }
     }
 }

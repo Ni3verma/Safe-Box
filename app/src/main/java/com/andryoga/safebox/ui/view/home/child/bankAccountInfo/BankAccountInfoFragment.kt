@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.ui.common.CommonSnackbar
+import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.home.child.common.UserDataAdapterEntity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
@@ -28,14 +29,17 @@ class BankAccountInfoFragment : Fragment() {
         return ComposeView(requireContext()).apply {
 
             setContent {
-                val listData by viewModel.listData.collectAsState(initial = listOf())
+                val listData by viewModel.listData.collectAsState(
+                    initial = Resource.loading(
+                        emptyList()
+                    )
+                )
                 BasicSafeBoxTheme {
                     UserDataList(
-                        list = listData,
-                        onItemClick = {
-                            onListItemClick(it)
-                        }
-                    )
+                        listResource = listData
+                    ) {
+                        onListItemClick(it)
+                    }
                 }
             }
         }
