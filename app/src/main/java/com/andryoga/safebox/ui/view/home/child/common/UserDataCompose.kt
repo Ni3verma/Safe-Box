@@ -61,7 +61,7 @@ fun UserDataList(
             } else {
                 val list = listResource.data
                 LazyColumn() {
-                    items(items = list, key = { it.id }) {
+                    items(items = list, key = { it.type.name + it.id }) {
                         UserDataListItem(item = it, onItemClick)
                     }
                 }

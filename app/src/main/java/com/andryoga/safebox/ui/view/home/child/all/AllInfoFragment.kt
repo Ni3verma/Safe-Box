@@ -15,12 +15,14 @@ import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
 
 @AndroidEntryPoint
 class AllInfoFragment : Fragment() {
     private val viewModel: AllInfoViewModel by viewModels()
 
+    @ExperimentalCoroutinesApi
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -28,7 +30,7 @@ class AllInfoFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                val listData by viewModel.listData.collectAsState(
+                val listData by viewModel.allData.collectAsState(
                     initial = Resource.loading(
                         emptyList()
                     )

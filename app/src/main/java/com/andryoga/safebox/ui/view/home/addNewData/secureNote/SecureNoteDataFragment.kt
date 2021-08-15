@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
@@ -33,10 +33,8 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
             inflater, R.layout.dialog_secure_note_data,
             container, false
         )
-        binding.apply {
-            viewModel = viewModel
-            lifecycleOwner = this@SecureNoteDataFragment
-        }
+        binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         setupObservers()
         return binding.root
     }
