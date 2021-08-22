@@ -25,8 +25,8 @@ class LoginDataDaoSecure @Inject constructor(
             .map { SearchLoginData.decrypt(it, symmetricKeyUtils) }
     }
 
-    override fun getLoginDataByKey(key: Int): Flow<LoginDataEntity> {
-        TODO("Not yet implemented")
+    override suspend fun getLoginDataByKey(key: Int): LoginDataEntity {
+        return decrypt(loginDataDao.getLoginDataByKey(key))
     }
 
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {

@@ -7,4 +7,5 @@ import kotlinx.coroutines.flow.Flow
 interface LoginDataRepository {
     suspend fun insertLoginData(addNewLoginScreenData: AddNewLoginScreenData)
     suspend fun getAllLoginData(): Flow<List<SearchLoginData>>
+    suspend fun getLoginDataByKey(key: Int): AddNewLoginScreenData
 }

@@ -53,7 +53,12 @@
         android:id="@+id/addNewLoginDataDialogFragment"
         android:name="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataDialogFragment"
         android:label="Add new Login data"
-        tools:layout="@layout/dialog_add_new_login_data" />
+        tools:layout="@layout/dialog_add_new_login_data" >
+        <argument
+            android:name="id"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </dialog>
     <dialog
         android:id="@+id/addNewBankAccountDataDialogFragment"
         android:name="com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountDataDialogFragment"

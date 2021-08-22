@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.databinding.DialogAddNewLoginDataBinding
@@ -17,12 +18,14 @@ import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.common.Utils.switchVisibility
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AddNewLoginDataDialogFragment : BottomSheetDialogFragment() {
     private val viewModel: AddNewLoginDataViewModel by viewModels()
+    private val args: AddNewLoginDataDialogFragmentArgs by navArgs()
     private lateinit var binding: DialogAddNewLoginDataBinding
-    private val tagLocal = "add new login data dialog fragment"
+    private val tagLocal = "Nitin add new login data dialog fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,8 +37,10 @@ class AddNewLoginDataDialogFragment : BottomSheetDialogFragment() {
                 inflater, R.layout.dialog_add_new_login_data,
                 container, false
             )
-        binding.viewModel = viewModel
+        binding.screenData = viewModel.addNewLoginScreenData
         binding.lifecycleOwner = this
+        Timber.i("received id = ${args.id}")
+        viewModel.setRuntimeVar(args)
         setupObservers()
         return binding.root
     }

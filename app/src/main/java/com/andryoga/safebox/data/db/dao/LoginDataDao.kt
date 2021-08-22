@@ -17,5 +17,5 @@ interface LoginDataDao {
     fun getAllLoginData(): Flow<List<SearchLoginData>>
 
     @Query("select * from login_data where `key` = :key limit 1")
-    fun getLoginDataByKey(key: Int): Flow<LoginDataEntity>
+    suspend fun getLoginDataByKey(key: Int): LoginDataEntity
 }

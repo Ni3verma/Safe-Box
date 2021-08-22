@@ -5,10 +5,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
         <variable
-            name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataViewModel" />
+            name="screenData"
+            type="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginScreenData" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -53,7 +52,7 @@
                 android:layout_marginBottom="8dp"
                 android:hint="@string/title"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.title}">
+                android:text="@={screenData.title}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -76,7 +75,7 @@
                 android:hint="@string/url"
                 android:inputType="textWebEmailAddress"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.url}">
+                android:text="@={screenData.url}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -98,7 +97,7 @@
                 android:layout_marginBottom="8dp"
                 android:hint="@string/user_id"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.userId}">
+                android:text="@={screenData.userId}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -121,7 +120,7 @@
                 android:hint="@string/password"
                 android:inputType="textPassword"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.password}">
+                android:text="@={screenData.password}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -137,7 +136,7 @@
             android:importantForAutofill="no"
             android:inputType="textMultiLine"
             android:minLines="2"
-            android:text="@={viewModel.addNewLoginScreenData.notes}"
+            android:text="@={screenData.notes}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/pswrd" />
