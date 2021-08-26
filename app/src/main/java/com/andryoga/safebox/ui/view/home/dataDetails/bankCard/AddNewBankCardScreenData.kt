@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.bankCard
+package com.andryoga.safebox.ui.view.home.dataDetails.bankCard
 
 data class AddNewBankCardScreenData(
     var title: String = "",

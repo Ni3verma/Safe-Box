@@ -50,7 +50,7 @@ class LoginInfoFragment : Fragment() {
         val parent = requireParentFragment().requireParentFragment()
         Timber.i("clicked ${item.id}")
         parent.findNavController().navigate(
-            HomeFragmentDirections.actionHomeFragmentToAddNewLoginDataDialogFragment(
+            HomeFragmentDirections.actionHomeFragmentToLoginDataFragment(
                 item.id
             )
         )

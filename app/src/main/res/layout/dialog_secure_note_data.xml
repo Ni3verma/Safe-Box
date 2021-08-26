@@ -8,7 +8,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.addNewData.secureNote.SecureNoteDataViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

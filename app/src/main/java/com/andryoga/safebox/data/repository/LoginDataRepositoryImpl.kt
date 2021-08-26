@@ -3,9 +3,9 @@ package com.andryoga.safebox.data.repository
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
-import com.andryoga.safebox.ui.view.home.addNewData.login.LoginScreenData
-import com.andryoga.safebox.ui.view.home.addNewData.login.LoginScreenData.Companion.toAddNewLoginScreenData
-import com.andryoga.safebox.ui.view.home.addNewData.login.LoginScreenData.Companion.toLoginDataEntity
+import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toAddNewLoginScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginDataEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

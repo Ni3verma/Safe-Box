@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.login
+package com.andryoga.safebox.ui.view.home.dataDetails.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
@@ -13,14 +13,14 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AddNewLoginDataViewModel @Inject constructor(
+class LoginDataViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository
 ) : ViewModel() {
     val loginScreenData = LoginScreenData()
     private var isEditMode: Boolean = false
     private var loginDataKey: Int = -1
 
-    fun setRuntimeVar(args: AddNewLoginDataDialogFragmentArgs) {
+    fun setRuntimeVar(args: LoginDataFragmentArgs) {
         isEditMode = args.id != -1
         loginDataKey = args.id
         if (isEditMode) {

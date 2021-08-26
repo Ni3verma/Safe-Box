@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.bankAccount
+package com.andryoga.safebox.ui.view.home.dataDetails.bankAccount
 
 import com.andryoga.safebox.BuildConfig
 

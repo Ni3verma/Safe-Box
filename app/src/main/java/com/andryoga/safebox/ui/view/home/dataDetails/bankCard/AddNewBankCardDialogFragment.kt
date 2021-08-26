@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.bankCard
+package com.andryoga.safebox.ui.view.home.dataDetails.bankCard
 
 import android.os.Bundle
 import android.view.LayoutInflater

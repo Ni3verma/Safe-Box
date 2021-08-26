@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.secureNote
+package com.andryoga.safebox.ui.view.home.dataDetails.bankAccount
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,7 +8,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.databinding.DialogSecureNoteDataBinding
+import com.andryoga.safebox.databinding.FragmentAddNewBankAccountDataDialogBinding
 import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
@@ -17,20 +17,21 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class SecureNoteDataFragment : BottomSheetDialogFragment() {
-    private val viewModel: SecureNoteDataViewModel by viewModels()
-    private lateinit var binding: DialogSecureNoteDataBinding
-    private val tagLocal = "add new secure note fragment"
+class AddNewBankAccountDataDialogFragment : BottomSheetDialogFragment() {
+    private val viewModel: AddNewBankAccountDataViewModel by viewModels()
+    private lateinit var binding: FragmentAddNewBankAccountDataDialogBinding
+    private val tagLocal = "add new bank account data dialog fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = DataBindingUtil.inflate(
-            inflater, R.layout.dialog_secure_note_data,
-            container, false
-        )
+    ): View? {
+        binding =
+            DataBindingUtil.inflate(
+                inflater, R.layout.fragment_add_new_bank_account_data_dialog,
+                container, false
+            )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         setupObservers()
@@ -79,7 +80,9 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
         val requiredFieldValidator = RequiredFieldValidator(
             listOf(
                 binding.title,
-                binding.notes
+                binding.accountNo,
+                binding.custId,
+                binding.ifscCode
             ),
             binding.saveBtn,
             tagLocal

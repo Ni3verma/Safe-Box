@@ -1,7 +1,7 @@
 package com.andryoga.safebox.data.repository.interfaces
 
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
-import com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.AddNewBankAccountScreenData
 import kotlinx.coroutines.flow.Flow
 
 interface BankAccountDataRepository {

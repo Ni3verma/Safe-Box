@@ -4,7 +4,7 @@ import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
-import com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.AddNewBankAccountScreenData
 import kotlinx.coroutines.flow.Flow
 import java.util.*
 import javax.inject.Inject

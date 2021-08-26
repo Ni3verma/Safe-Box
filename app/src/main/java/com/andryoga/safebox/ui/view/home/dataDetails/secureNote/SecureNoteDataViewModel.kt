@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.secureNote
+package com.andryoga.safebox.ui.view.home.dataDetails.secureNote
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData

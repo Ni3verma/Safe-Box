@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.bankAccount
+package com.andryoga.safebox.ui.view.home.dataDetails.login
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -6,34 +6,41 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.databinding.FragmentAddNewBankAccountDataDialogBinding
-import com.andryoga.safebox.ui.common.CommonSnackbar
+import com.andryoga.safebox.databinding.LoginDataFragmentBinding
+import com.andryoga.safebox.ui.common.CommonSnackbar.showErrorSnackbar
+import com.andryoga.safebox.ui.common.CommonSnackbar.showSuccessSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
+import com.andryoga.safebox.ui.common.Utils.switchVisibility
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
-class AddNewBankAccountDataDialogFragment : BottomSheetDialogFragment() {
-    private val viewModel: AddNewBankAccountDataViewModel by viewModels()
-    private lateinit var binding: FragmentAddNewBankAccountDataDialogBinding
-    private val tagLocal = "add new bank account data dialog fragment"
+class LoginDataFragment : BottomSheetDialogFragment() {
+    private val viewModel: LoginDataViewModel by viewModels()
+    private val args: LoginDataFragmentArgs by navArgs()
+    private lateinit var binding: LoginDataFragmentBinding
+    private val tagLocal = "Nitin add new login data dialog fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(
-                inflater, R.layout.fragment_add_new_bank_account_data_dialog,
+                inflater, R.layout.login_data_fragment,
                 container, false
             )
-        binding.viewModel = viewModel
+        binding.screenData = viewModel.loginScreenData
         binding.lifecycleOwner = this
+        Timber.i("received id = ${args.id}")
+        viewModel.setRuntimeVar(args)
         setupObservers()
         return binding.root
     }
@@ -51,23 +58,17 @@ class AddNewBankAccountDataDialogFragment : BottomSheetDialogFragment() {
         // why snackbar is not showing up if I use requireView() in view param
         Utils.logResourceInfo(tagLocal, resource)
         when (resource.status) {
-            Status.LOADING -> com.andryoga.safebox.ui.common.Utils.switchVisibility(
-                binding.saveBtn,
-                binding.loading
-            )
+            Status.LOADING -> switchVisibility(binding.saveBtn, binding.loading)
             Status.SUCCESS -> {
-                CommonSnackbar.showSuccessSnackbar(
+                showSuccessSnackbar(
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_data_saved)
                 )
                 dismiss()
             }
             Status.ERROR -> {
-                com.andryoga.safebox.ui.common.Utils.switchVisibility(
-                    binding.saveBtn,
-                    binding.loading
-                )
-                CommonSnackbar.showErrorSnackbar(
+                switchVisibility(binding.saveBtn, binding.loading)
+                showErrorSnackbar(
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
@@ -80,9 +81,8 @@ class AddNewBankAccountDataDialogFragment : BottomSheetDialogFragment() {
         val requiredFieldValidator = RequiredFieldValidator(
             listOf(
                 binding.title,
-                binding.accountNo,
-                binding.custId,
-                binding.ifscCode
+                binding.userId,
+                binding.pswrd
             ),
             binding.saveBtn,
             tagLocal

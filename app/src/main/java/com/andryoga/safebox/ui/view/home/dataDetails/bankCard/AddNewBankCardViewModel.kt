@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.bankCard
+package com.andryoga.safebox.ui.view.home.dataDetails.bankCard
 
 import androidx.lifecycle.*
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository

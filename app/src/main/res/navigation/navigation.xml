@@ -37,9 +37,6 @@
         android:label="HomeFragment"
         tools:layout="@layout/home_fragment">
         <action
-            android:id="@+id/action_homeFragment_to_addNewLoginDataDialogFragment"
-            app:destination="@id/addNewLoginDataDialogFragment" />
-        <action
             android:id="@+id/action_homeFragment_to_addNewBankAccountDataDialogFragment"
             app:destination="@id/addNewBankAccountDataDialogFragment" />
         <action
@@ -48,12 +45,15 @@
         <action
             android:id="@+id/action_homeFragment_to_secureNoteDataFragment"
             app:destination="@id/secureNoteDataFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_loginDataFragment"
+            app:destination="@id/loginDataFragment" />
     </fragment>
     <dialog
-        android:id="@+id/addNewLoginDataDialogFragment"
-        android:name="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataDialogFragment"
-        android:label="Add new Login data"
-        tools:layout="@layout/dialog_add_new_login_data" >
+        android:id="@+id/loginDataFragment"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.login.LoginDataFragment"
+        android:label="Login data"
+        tools:layout="@layout/login_data_fragment" >
         <argument
             android:name="id"
             app:argType="integer"
@@ -61,17 +61,17 @@
     </dialog>
     <dialog
         android:id="@+id/addNewBankAccountDataDialogFragment"
-        android:name="com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountDataDialogFragment"
-        android:label="Add new Bank Account data"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.AddNewBankAccountDataDialogFragment"
+        android:label="Bank Account data"
         tools:layout="@layout/fragment_add_new_bank_account_data_dialog" />
     <dialog
         android:id="@+id/addNewBankCardDialogFragment"
-        android:name="com.andryoga.safebox.ui.view.home.addNewData.bankCard.AddNewBankCardDialogFragment"
-        android:label="AddNewBankCardDialogFragment"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.AddNewBankCardDialogFragment"
+        android:label="Bank Card data"
         tools:layout="@layout/dialog_add_new_bank_card_data" />
     <dialog
         android:id="@+id/secureNoteDataFragment"
-        android:name="com.andryoga.safebox.ui.view.home.addNewData.secureNote.SecureNoteDataFragment"
-        android:label="SecureNoteDataFragment"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataFragment"
+        android:label="Secure Note data"
         tools:layout="@layout/dialog_secure_note_data" />
 </navigation>

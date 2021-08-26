@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home.addNewData.login
+package com.andryoga.safebox.ui.view.home.dataDetails.login
 
 import androidx.databinding.ObservableField
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
