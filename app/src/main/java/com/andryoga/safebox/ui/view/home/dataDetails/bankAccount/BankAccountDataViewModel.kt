@@ -10,10 +10,10 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class AddNewBankAccountDataViewModel @Inject constructor(
+class BankAccountDataViewModel @Inject constructor(
     private val bankAccountDataRepository: BankAccountDataRepository
 ) : ViewModel() {
-    val addNewBankAccountScreenData = AddNewBankAccountScreenData()
+    val addNewBankAccountScreenData = BankAccountScreenData()
 
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
         emit(Resource.loading(true))

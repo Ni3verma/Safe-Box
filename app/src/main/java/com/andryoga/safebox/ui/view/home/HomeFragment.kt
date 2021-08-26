@@ -107,11 +107,11 @@ class HomeFragment : Fragment() {
             }
             R.id.new_personal_bank_account_data -> {
                 Timber.i("opening bank account data details")
-                findNavController().navigate(R.id.action_homeFragment_to_addNewBankAccountDataDialogFragment)
+                findNavController().navigate(R.id.action_homeFragment_to_bankAccountDataFragment)
             }
             R.id.new_personal_bank_card_data -> {
                 Timber.i("opening bank card data details")
-                findNavController().navigate(R.id.action_homeFragment_to_addNewBankCardDialogFragment)
+                findNavController().navigate(R.id.action_homeFragment_to_bankCardDataFragment)
             }
             R.id.new_personal_note_data -> {
                 Timber.i("opening secure note data details")

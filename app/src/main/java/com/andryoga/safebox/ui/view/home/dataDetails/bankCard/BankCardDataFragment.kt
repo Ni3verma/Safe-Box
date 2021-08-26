@@ -24,7 +24,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.databinding.DialogAddNewBankCardDataBinding
+import com.andryoga.safebox.databinding.BankCardDataFragmentBinding
 import com.andryoga.safebox.ui.common.*
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -32,10 +32,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
+class BankCardDataFragment : BottomSheetDialogFragment() {
 
-    private val viewModel: AddNewBankCardViewModel by viewModels()
-    private lateinit var binding: DialogAddNewBankCardDataBinding
+    private val dataViewModel: BankCardDataViewModel by viewModels()
+    private lateinit var binding: BankCardDataFragmentBinding
     private val tagLocal = "add new bank card dialog fragment"
 
     override fun onCreateView(
@@ -45,11 +45,11 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
     ): View {
         binding = DataBindingUtil.inflate(
             inflater,
-            R.layout.dialog_add_new_bank_card_data,
+            R.layout.bank_card_data_fragment,
             container,
             false
         )
-        binding.viewModel = viewModel
+        binding.viewModel = dataViewModel
         binding.lifecycleOwner = this
         binding.composeView.setContent {
             BasicSafeBoxTheme {
@@ -73,7 +73,7 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
         }
 
         binding.saveBtn.setOnClickListener {
-            viewModel.onSaveClick().observe(viewLifecycleOwner) {
+            dataViewModel.onSaveClick().observe(viewLifecycleOwner) {
                 handleSaveButtonClick(it)
             }
         }
@@ -93,12 +93,12 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
 
     @Composable
     private fun initSelectBankAccountDialog() {
-        val bankAccountData by viewModel.bankAccounts.collectAsState(emptyList())
+        val bankAccountData by dataViewModel.bankAccounts.collectAsState(emptyList())
         CommonDialog(
-            isShown = viewModel.showSelectBankAccountDialog,
+            isShown = dataViewModel.showSelectBankAccountDialog,
             title = "Select Bank Account",
-            onDialogDismiss = { viewModel.switchSelectBankAccountDialog() },
-            onPrimaryButtonClick = { viewModel.switchSelectBankAccountDialog() }
+            onDialogDismiss = { dataViewModel.switchSelectBankAccountDialog() },
+            onPrimaryButtonClick = { dataViewModel.switchSelectBankAccountDialog() }
         ) {
             Column {
                 LazyColumn(
@@ -113,10 +113,10 @@ class AddNewBankCardDialogFragment : BottomSheetDialogFragment() {
                         Column(
                             Modifier.clickable {
                                 Timber.i("clicked ${item.title} bank account")
-                                viewModel.addNewBankCardScreenData.linkedBankAccount = item.key
+                                dataViewModel.addNewBankCardScreenData.linkedBankAccount = item.key
                                 binding.linkedBankAccount.text =
                                     String(StringBuilder("${item.title}\n${item.accountNumber}"))
-                                viewModel.switchSelectBankAccountDialog()
+                                dataViewModel.switchSelectBankAccountDialog()
                             }
                         ) {
                             Text(

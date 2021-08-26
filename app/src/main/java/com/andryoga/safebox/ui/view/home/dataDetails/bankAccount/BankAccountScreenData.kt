@@ -2,7 +2,7 @@ package com.andryoga.safebox.ui.view.home.dataDetails.bankAccount
 
 import com.andryoga.safebox.BuildConfig
 
-data class AddNewBankAccountScreenData(
+data class BankAccountScreenData(
     var title: String = "",
     var accountNo: String = "",
     var customerName: String = "",

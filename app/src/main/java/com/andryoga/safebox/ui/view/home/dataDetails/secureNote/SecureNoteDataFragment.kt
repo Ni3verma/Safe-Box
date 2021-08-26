@@ -8,7 +8,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.databinding.DialogSecureNoteDataBinding
+import com.andryoga.safebox.databinding.SecureNoteDataFragmentBinding
 import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
@@ -19,7 +19,7 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class SecureNoteDataFragment : BottomSheetDialogFragment() {
     private val viewModel: SecureNoteDataViewModel by viewModels()
-    private lateinit var binding: DialogSecureNoteDataBinding
+    private lateinit var binding: SecureNoteDataFragmentBinding
     private val tagLocal = "add new secure note fragment"
 
     override fun onCreateView(
@@ -28,7 +28,7 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(
-            inflater, R.layout.dialog_secure_note_data,
+            inflater, R.layout.secure_note_data_fragment,
             container, false
         )
         binding.viewModel = viewModel

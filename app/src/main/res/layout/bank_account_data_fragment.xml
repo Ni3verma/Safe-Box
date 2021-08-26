@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.AddNewBankAccountDataViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataViewModel" />
     </data>
 
     <androidx.core.widget.NestedScrollView

@@ -8,7 +8,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.AddNewBankCardViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

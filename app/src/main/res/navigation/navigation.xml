@@ -37,11 +37,11 @@
         android:label="HomeFragment"
         tools:layout="@layout/home_fragment">
         <action
-            android:id="@+id/action_homeFragment_to_addNewBankAccountDataDialogFragment"
-            app:destination="@id/addNewBankAccountDataDialogFragment" />
+            android:id="@+id/action_homeFragment_to_bankAccountDataFragment"
+            app:destination="@id/bankAccountDataFragment" />
         <action
-            android:id="@+id/action_homeFragment_to_addNewBankCardDialogFragment"
-            app:destination="@id/addNewBankCardDialogFragment" />
+            android:id="@+id/action_homeFragment_to_bankCardDataFragment"
+            app:destination="@id/bankCardDataFragment" />
         <action
             android:id="@+id/action_homeFragment_to_secureNoteDataFragment"
             app:destination="@id/secureNoteDataFragment" />
@@ -60,18 +60,18 @@
             android:defaultValue="-1" />
     </dialog>
     <dialog
-        android:id="@+id/addNewBankAccountDataDialogFragment"
-        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.AddNewBankAccountDataDialogFragment"
+        android:id="@+id/bankAccountDataFragment"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataFragment"
         android:label="Bank Account data"
-        tools:layout="@layout/fragment_add_new_bank_account_data_dialog" />
+        tools:layout="@layout/bank_account_data_fragment" />
     <dialog
-        android:id="@+id/addNewBankCardDialogFragment"
-        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.AddNewBankCardDialogFragment"
+        android:id="@+id/bankCardDataFragment"
+        android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataFragment"
         android:label="Bank Card data"
-        tools:layout="@layout/dialog_add_new_bank_card_data" />
+        tools:layout="@layout/bank_card_data_fragment" />
     <dialog
         android:id="@+id/secureNoteDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataFragment"
         android:label="Secure Note data"
-        tools:layout="@layout/dialog_secure_note_data" />
+        tools:layout="@layout/secure_note_data_fragment" />
 </navigation>

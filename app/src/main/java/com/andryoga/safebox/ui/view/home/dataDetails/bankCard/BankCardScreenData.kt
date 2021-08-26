@@ -1,6 +1,6 @@
 package com.andryoga.safebox.ui.view.home.dataDetails.bankCard
 
-data class AddNewBankCardScreenData(
+data class BankCardScreenData(
     var title: String = "",
     var name: String? = null,
     var number: String = "",

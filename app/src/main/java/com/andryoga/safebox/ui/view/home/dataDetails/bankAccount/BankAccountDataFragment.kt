@@ -8,7 +8,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.databinding.FragmentAddNewBankAccountDataDialogBinding
+import com.andryoga.safebox.databinding.BankAccountDataFragmentBinding
 import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
@@ -17,19 +17,19 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class AddNewBankAccountDataDialogFragment : BottomSheetDialogFragment() {
-    private val viewModel: AddNewBankAccountDataViewModel by viewModels()
-    private lateinit var binding: FragmentAddNewBankAccountDataDialogBinding
+class BankAccountDataFragment : BottomSheetDialogFragment() {
+    private val viewModel: BankAccountDataViewModel by viewModels()
+    private lateinit var binding: BankAccountDataFragmentBinding
     private val tagLocal = "add new bank account data dialog fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding =
             DataBindingUtil.inflate(
-                inflater, R.layout.fragment_add_new_bank_account_data_dialog,
+                inflater, R.layout.bank_account_data_fragment,
                 container, false
             )
         binding.viewModel = viewModel
