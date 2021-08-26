@@ -18,6 +18,10 @@ class BankCardDataDaoSecure @Inject constructor(
         bankCardDataDao.insertBankCardData(encrypt(bankCardDataEntity))
     }
 
+    override suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity) {
+        bankCardDataDao.updateBankCardData(encrypt(bankCardDataEntity))
+    }
+
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
         return bankCardDataDao
             .getAllBankCardData()
@@ -31,6 +35,7 @@ class BankCardDataDaoSecure @Inject constructor(
     private fun encrypt(bankCardDataEntity: BankCardDataEntity): BankCardDataEntity {
         bankCardDataEntity.let {
             return BankCardDataEntity(
+                it.key,
                 symmetricKeyUtils.encrypt(it.title),
                 it.name.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.number),

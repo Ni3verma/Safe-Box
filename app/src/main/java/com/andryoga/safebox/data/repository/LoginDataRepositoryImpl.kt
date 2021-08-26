@@ -18,6 +18,10 @@ class LoginDataRepositoryImpl @Inject constructor(
         loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity())
     }
 
+    override suspend fun updateLoginData(loginScreenData: LoginScreenData) {
+        loginDataDaoSecure.updateLoginData(loginScreenData.toLoginDataEntity())
+    }
+
     override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
         return loginDataDaoSecure.getAllLoginData()
     }

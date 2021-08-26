@@ -6,5 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface SecureNoteDataRepository {
     suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData)
+    suspend fun updateSecureNoteData(secureNoteScreenData: SecureNoteScreenData)
     suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>>
 }

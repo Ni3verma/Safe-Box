@@ -6,5 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface BankAccountDataRepository {
     suspend fun insertBankAccountData(addNewBankAccountScreenData: AddNewBankAccountScreenData)
+    suspend fun updateBankAccountData(addNewBankAccountScreenData: AddNewBankAccountScreenData)
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
 }

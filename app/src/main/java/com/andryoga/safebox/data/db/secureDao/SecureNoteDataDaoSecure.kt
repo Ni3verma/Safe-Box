@@ -16,6 +16,10 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataDao.insertSecretNoteData(encrypt(secureNoteDataEntity))
     }
 
+    override suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
+        secureNoteDataDao.updateSecretNoteData(encrypt(secureNoteDataEntity))
+    }
+
     override fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>> {
         return secureNoteDataDao.getAllSecretNoteData()
             .map { SearchSecureNoteData.decrypt(it, symmetricKeyUtils) }
@@ -28,6 +32,7 @@ class SecureNoteDataDaoSecure @Inject constructor(
     private fun encrypt(secureNoteDataEntity: SecureNoteDataEntity): SecureNoteDataEntity {
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
+                it.key,
                 symmetricKeyUtils.encrypt(it.title),
                 symmetricKeyUtils.encrypt(it.notes),
                 it.creationDate,

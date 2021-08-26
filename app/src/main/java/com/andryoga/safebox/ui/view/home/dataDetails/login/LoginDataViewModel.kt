@@ -38,7 +38,11 @@ class LoginDataViewModel @Inject constructor(
     fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
         emit(Resource.loading(true))
         try {
-            loginDataRepository.insertLoginData(loginScreenData)
+            Timber.i("save clicked, edit mode = $isEditMode")
+            if (isEditMode)
+                loginDataRepository.updateLoginData(loginScreenData)
+            else
+                loginDataRepository.insertLoginData(loginScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {
             emit(

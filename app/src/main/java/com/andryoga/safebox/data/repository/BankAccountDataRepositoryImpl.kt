@@ -30,6 +30,10 @@ class BankAccountDataRepositoryImpl @Inject constructor(
         bankAccountDataDaoSecure.insertBankAccountData(entity)
     }
 
+    override suspend fun updateBankAccountData(addNewBankAccountScreenData: AddNewBankAccountScreenData) {
+        TODO("Not yet implemented")
+    }
+
     override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
         return bankAccountDataDaoSecure.getAllBankAccountData()
     }
