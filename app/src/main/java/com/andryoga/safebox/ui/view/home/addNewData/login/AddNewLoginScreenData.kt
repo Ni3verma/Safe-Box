@@ -1,9 +1,8 @@
 package com.andryoga.safebox.ui.view.home.addNewData.login
 
-import androidx.databinding.BaseObservable
-import androidx.databinding.Bindable
-import com.andryoga.safebox.BR
+import androidx.databinding.ObservableField
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
+import com.andryoga.safebox.ui.common.Utils.getValueOrEmpty
 import java.util.*
 
 class AddNewLoginScreenData(
@@ -12,50 +11,22 @@ class AddNewLoginScreenData(
     pUserId: String = "",
     pPassword: String = "",
     pNotes: String? = null
-) : BaseObservable() {
-    @get:Bindable
-    var title: String = pTitle
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.title)
-        }
+) {
+    var title: ObservableField<String> = ObservableField(pTitle)
 
-    @get:Bindable
-    var url: String? = pUrl
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.url)
-        }
-
-    @get:Bindable
-    var userId: String = pUserId
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.userId)
-        }
-
-    @get:Bindable
-    var password: String = pPassword
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.password)
-        }
-
-    @get:Bindable
-    var notes: String? = pNotes
-        set(value) {
-            field = value
-            notifyPropertyChanged(BR.notes)
-        }
+    var url: ObservableField<String?> = ObservableField(pUrl)
+    var userId: ObservableField<String> = ObservableField(pUserId)
+    var password: ObservableField<String> = ObservableField(pPassword)
+    var notes: ObservableField<String?> = ObservableField(pNotes)
 
     companion object {
         fun AddNewLoginScreenData.toLoginDataEntity(): LoginDataEntity {
             return LoginDataEntity(
-                this.title,
-                this.url,
-                this.password,
-                this.notes,
-                this.userId,
+                this.title.getValueOrEmpty(),
+                this.url.get(),
+                this.password.getValueOrEmpty(),
+                this.notes.get(),
+                this.userId.getValueOrEmpty(),
                 Date(),
                 Date()
             )
@@ -73,10 +44,10 @@ class AddNewLoginScreenData(
     }
 
     fun updateData(addNewLoginScreenData: AddNewLoginScreenData) {
-        title = addNewLoginScreenData.title
-        url = addNewLoginScreenData.url
-        userId = addNewLoginScreenData.userId
-        password = addNewLoginScreenData.password
-        notes = addNewLoginScreenData.notes
+        title.set(addNewLoginScreenData.title.get())
+        url.set(addNewLoginScreenData.url.get())
+        userId.set(addNewLoginScreenData.userId.get())
+        password.set(addNewLoginScreenData.password.get())
+        notes.set(addNewLoginScreenData.notes.get())
     }
 }
