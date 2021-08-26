@@ -5,7 +5,7 @@ import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.ui.common.Utils.getValueOrEmpty
 import java.util.*
 
-class AddNewLoginScreenData(
+class LoginScreenData(
     pTitle: String = "",
     pUrl: String? = null,
     pUserId: String = "",
@@ -20,7 +20,7 @@ class AddNewLoginScreenData(
     var notes: ObservableField<String?> = ObservableField(pNotes)
 
     companion object {
-        fun AddNewLoginScreenData.toLoginDataEntity(): LoginDataEntity {
+        fun LoginScreenData.toLoginDataEntity(): LoginDataEntity {
             return LoginDataEntity(
                 this.title.getValueOrEmpty(),
                 this.url.get(),
@@ -32,8 +32,8 @@ class AddNewLoginScreenData(
             )
         }
 
-        fun LoginDataEntity.toAddNewLoginScreenData(): AddNewLoginScreenData {
-            return AddNewLoginScreenData(
+        fun LoginDataEntity.toAddNewLoginScreenData(): LoginScreenData {
+            return LoginScreenData(
                 this.title,
                 this.url,
                 this.userId,
@@ -43,7 +43,7 @@ class AddNewLoginScreenData(
         }
     }
 
-    fun updateData(addNewLoginScreenData: AddNewLoginScreenData) {
+    fun updateData(addNewLoginScreenData: LoginScreenData) {
         title.set(addNewLoginScreenData.title.get())
         url.set(addNewLoginScreenData.url.get())
         userId.set(addNewLoginScreenData.userId.get())

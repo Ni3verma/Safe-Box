@@ -16,7 +16,7 @@ import javax.inject.Inject
 class AddNewLoginDataViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository
 ) : ViewModel() {
-    val addNewLoginScreenData = AddNewLoginScreenData()
+    val addNewLoginScreenData = LoginScreenData()
     private var isEditMode: Boolean = false
     private var loginDataKey: Int = -1
 
