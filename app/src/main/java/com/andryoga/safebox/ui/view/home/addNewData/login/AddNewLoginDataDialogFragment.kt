@@ -37,7 +37,7 @@ class AddNewLoginDataDialogFragment : BottomSheetDialogFragment() {
                 inflater, R.layout.dialog_add_new_login_data,
                 container, false
             )
-        binding.screenData = viewModel.addNewLoginScreenData
+        binding.screenData = viewModel.loginScreenData
         binding.lifecycleOwner = this
         Timber.i("received id = ${args.id}")
         viewModel.setRuntimeVar(args)

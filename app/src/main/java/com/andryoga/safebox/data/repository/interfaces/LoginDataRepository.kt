@@ -5,7 +5,7 @@ import com.andryoga.safebox.ui.view.home.addNewData.login.LoginScreenData
 import kotlinx.coroutines.flow.Flow
 
 interface LoginDataRepository {
-    suspend fun insertLoginData(addNewLoginScreenData: LoginScreenData)
+    suspend fun insertLoginData(loginScreenData: LoginScreenData)
     suspend fun getAllLoginData(): Flow<List<SearchLoginData>>
     suspend fun getLoginDataByKey(key: Int): LoginScreenData
 }

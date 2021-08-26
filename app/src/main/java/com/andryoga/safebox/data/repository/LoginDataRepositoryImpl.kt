@@ -14,8 +14,8 @@ import javax.inject.Inject
 class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
-    override suspend fun insertLoginData(addNewLoginScreenData: LoginScreenData) {
-        loginDataDaoSecure.insertLoginData(addNewLoginScreenData.toLoginDataEntity())
+    override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
+        loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity())
     }
 
     override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
