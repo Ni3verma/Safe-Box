@@ -25,7 +25,7 @@ class LoginDataFragment : BottomSheetDialogFragment() {
     private val viewModel: LoginDataViewModel by viewModels()
     private val args: LoginDataFragmentArgs by navArgs()
     private lateinit var binding: LoginDataFragmentBinding
-    private val tagLocal = "Nitin add new login data dialog fragment"
+    private val tagLocal = "Nitin login data fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,

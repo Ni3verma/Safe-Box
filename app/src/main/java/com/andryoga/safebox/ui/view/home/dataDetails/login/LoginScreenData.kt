@@ -32,7 +32,7 @@ class LoginScreenData(
             )
         }
 
-        fun LoginDataEntity.toAddNewLoginScreenData(): LoginScreenData {
+        fun LoginDataEntity.toLoginScreenData(): LoginScreenData {
             return LoginScreenData(
                 this.title,
                 this.url,
@@ -43,11 +43,11 @@ class LoginScreenData(
         }
     }
 
-    fun updateData(addNewLoginScreenData: LoginScreenData) {
-        title.set(addNewLoginScreenData.title.get())
-        url.set(addNewLoginScreenData.url.get())
-        userId.set(addNewLoginScreenData.userId.get())
-        password.set(addNewLoginScreenData.password.get())
-        notes.set(addNewLoginScreenData.notes.get())
+    fun updateData(loginScreenData: LoginScreenData) {
+        title.set(loginScreenData.title.get())
+        url.set(loginScreenData.url.get())
+        userId.set(loginScreenData.userId.get())
+        password.set(loginScreenData.password.get())
+        notes.set(loginScreenData.notes.get())
     }
 }

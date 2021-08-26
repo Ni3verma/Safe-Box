@@ -4,8 +4,8 @@ import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
-import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toAddNewLoginScreenData
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginDataEntity
+import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginScreenData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -23,6 +23,6 @@ class LoginDataRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getLoginDataByKey(key: Int): LoginScreenData {
-        return loginDataDaoSecure.getLoginDataByKey(key).toAddNewLoginScreenData()
+        return loginDataDaoSecure.getLoginDataByKey(key).toLoginScreenData()
     }
 }
