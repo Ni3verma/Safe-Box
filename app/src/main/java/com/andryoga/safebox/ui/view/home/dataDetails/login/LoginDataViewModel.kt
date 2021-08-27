@@ -18,18 +18,18 @@ class LoginDataViewModel @Inject constructor(
 ) : ViewModel() {
     val loginScreenData = LoginScreenData()
     private var isEditMode: Boolean = false
-    private var loginDataKey: Int = -1
+    private var dataKey: Int = -1
 
     fun setRuntimeVar(args: LoginDataFragmentArgs) {
         isEditMode = args.id != -1
-        loginDataKey = args.id
+        dataKey = args.id
         if (isEditMode) {
             Timber.i("opened in edit mode, getting record data")
             viewModelScope.launch(Dispatchers.Default) {
-                val data = loginDataRepository.getLoginDataByKey(loginDataKey)
+                val data = loginDataRepository.getLoginDataByKey(dataKey)
                 withContext(Dispatchers.Main) {
                     loginScreenData.updateData(data)
-                    Timber.i("screen data updated with $data")
+                    Timber.i("screen data updated with new data")
                 }
             }
         }

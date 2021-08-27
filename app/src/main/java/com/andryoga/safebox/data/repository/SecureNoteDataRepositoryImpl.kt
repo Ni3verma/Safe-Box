@@ -29,4 +29,8 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
     override suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>> {
         return secureNoteDataDaoSecure.getAllSecretNoteData()
     }
+
+    override suspend fun getSecureNoteDataByKey(key: Int): SecureNoteScreenData {
+        TODO("Not yet implemented")
+    }
 }

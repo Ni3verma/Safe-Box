@@ -28,8 +28,8 @@ class BankCardDataDaoSecure @Inject constructor(
             .map { SearchBankCardData.decrypt(it, symmetricKeyUtils) }
     }
 
-    override fun getBankCardDataByKey(key: Int): Flow<BankCardDataEntity> {
-        TODO("Not yet implemented")
+    override suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity {
+        return decrypt(bankCardDataDao.getBankCardDataByKey(key))
     }
 
     private fun encrypt(bankCardDataEntity: BankCardDataEntity): BankCardDataEntity {
@@ -53,6 +53,7 @@ class BankCardDataDaoSecure @Inject constructor(
     private fun decrypt(bankCardDataEntity: BankCardDataEntity): BankCardDataEntity {
         bankCardDataEntity.let {
             return BankCardDataEntity(
+                it.key,
                 symmetricKeyUtils.decrypt(it.title),
                 it.name.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.number),

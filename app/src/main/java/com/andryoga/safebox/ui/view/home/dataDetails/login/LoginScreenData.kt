@@ -29,11 +29,11 @@ class LoginScreenData(
         fun LoginScreenData.toLoginDataEntity(): LoginDataEntity {
             return LoginDataEntity(
                 key,
-                this.title.getValueOrEmpty(),
-                this.url.get(),
-                this.password.getValueOrEmpty(),
-                this.notes.get(),
-                this.userId.getValueOrEmpty(),
+                title.getValueOrEmpty(),
+                url.get(),
+                password.getValueOrEmpty(),
+                notes.get(),
+                userId.getValueOrEmpty(),
                 Date(),
                 Date()
             )
@@ -41,12 +41,12 @@ class LoginScreenData(
 
         fun LoginDataEntity.toLoginScreenData(): LoginScreenData {
             return LoginScreenData(
-                this.key,
-                this.title,
-                this.url,
-                this.userId,
-                this.password,
-                this.notes,
+                key,
+                title,
+                url,
+                userId,
+                password,
+                notes,
             )
         }
     }
@@ -58,10 +58,5 @@ class LoginScreenData(
         userId.set(loginScreenData.userId.get())
         password.set(loginScreenData.password.get())
         notes.set(loginScreenData.notes.get())
-    }
-
-    override fun toString(): String {
-        return "$key - ${title.get()} - ${url.get()} - ${userId.get()} - " +
-            "${password.get()} - ${notes.get()}"
     }
 }

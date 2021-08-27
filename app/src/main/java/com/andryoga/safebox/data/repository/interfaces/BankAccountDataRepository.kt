@@ -8,4 +8,5 @@ interface BankAccountDataRepository {
     suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData)
     suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData)
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
+    suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData
 }

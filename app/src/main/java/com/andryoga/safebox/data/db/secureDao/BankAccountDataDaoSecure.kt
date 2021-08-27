@@ -22,8 +22,8 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataDao.updateBankAccountData(encrypt(bankAccountDataEntity))
     }
 
-    override fun getBankAccountDataByKey(key: Int): Flow<BankAccountDataEntity> {
-        TODO("Not yet implemented")
+    override suspend fun getBankAccountDataByKey(key: Int): BankAccountDataEntity {
+        return decrypt(bankAccountDataDao.getBankAccountDataByKey(key))
     }
 
     override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
@@ -56,6 +56,7 @@ class BankAccountDataDaoSecure @Inject constructor(
     private fun decrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
         bankAccountDataEntity.let {
             return BankAccountDataEntity(
+                it.key,
                 symmetricKeyUtils.decrypt(it.title),
                 symmetricKeyUtils.decrypt(it.accountNumber),
                 it.customerName,

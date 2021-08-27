@@ -63,15 +63,30 @@
         android:id="@+id/bankAccountDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataFragment"
         android:label="Bank Account data"
-        tools:layout="@layout/bank_account_data_fragment" />
+        tools:layout="@layout/bank_account_data_fragment" >
+        <argument
+            android:name="id"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </dialog>
     <dialog
         android:id="@+id/bankCardDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataFragment"
         android:label="Bank Card data"
-        tools:layout="@layout/bank_card_data_fragment" />
+        tools:layout="@layout/bank_card_data_fragment">
+        <argument
+            android:name="id"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </dialog>
     <dialog
         android:id="@+id/secureNoteDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataFragment"
         android:label="Secure Note data"
-        tools:layout="@layout/secure_note_data_fragment" />
+        tools:layout="@layout/secure_note_data_fragment" >
+        <argument
+            android:name="id"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </dialog>
 </navigation>

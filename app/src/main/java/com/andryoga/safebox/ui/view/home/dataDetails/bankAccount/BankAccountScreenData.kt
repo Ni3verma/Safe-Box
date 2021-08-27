@@ -1,31 +1,83 @@
 package com.andryoga.safebox.ui.view.home.dataDetails.bankAccount
 
-import com.andryoga.safebox.BuildConfig
+import androidx.databinding.ObservableField
+import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
+import com.andryoga.safebox.ui.common.Utils.getValueOrEmpty
+import java.util.*
 
-data class BankAccountScreenData(
-    var title: String = "",
-    var accountNo: String = "",
-    var customerName: String = "",
-    var customerId: String = "",
-    var branchCode: String = "",
-    var branchName: String = "",
-    var branchAddress: String = "",
-    var ifscCode: String = "",
-    var micrCode: String = "",
-    var notes: String = ""
+class BankAccountScreenData(
+    /*
+    * It is very important to initialize key with 0
+    * so that when we convert screen data to entity for db insertion at that
+    * 0 will be passed. For room zero means that it can auto-increment value
+    * */
+    pKey: Int = 0,
+    pTitle: String = "",
+    pAccountNo: String = "",
+    pCustomerName: String? = null,
+    pCustomerId: String = "",
+    pBranchCode: String? = null,
+    pBranchName: String? = null,
+    pBranchAddress: String? = null,
+    pIfscCode: String = "",
+    pMicrCode: String? = null,
+    pNotes: String? = null
 ) {
-    init {
-        if (BuildConfig.DEBUG) {
-            title = "HDFC Bank"
-            accountNo = "H883830290902"
-            customerName = "test"
-            customerId = "132455"
-            branchCode = "002829"
-            branchName = "abc"
-            branchAddress = "xyz,punjab"
-            ifscCode = "HDFC8938939"
-            micrCode = "7339893"
-            notes = "fnsf:35235 \nfasgag:546436 \nsafafasf:fasassa\nsfasf=ffaf"
+    var key = pKey
+    var title: ObservableField<String> = ObservableField(pTitle)
+    var accountNo: ObservableField<String> = ObservableField(pAccountNo)
+    var customerName: ObservableField<String> = ObservableField(pCustomerName)
+    var customerId: ObservableField<String> = ObservableField(pCustomerId)
+    var branchCode: ObservableField<String?> = ObservableField(pBranchCode)
+    var branchName: ObservableField<String> = ObservableField(pBranchName)
+    var branchAddress: ObservableField<String?> = ObservableField(pBranchAddress)
+    var ifscCode: ObservableField<String> = ObservableField(pIfscCode)
+    var micrCode: ObservableField<String> = ObservableField(pMicrCode)
+    var notes: ObservableField<String?> = ObservableField(pNotes)
+
+    companion object {
+        fun BankAccountScreenData.toBankAccountDataEntity(): BankAccountDataEntity {
+            return BankAccountDataEntity(
+                key,
+                title.getValueOrEmpty(),
+                accountNo.getValueOrEmpty(),
+                customerName.get(),
+                customerId.getValueOrEmpty(),
+                branchCode.get(),
+                branchName.get(),
+                branchAddress.get(),
+                ifscCode.getValueOrEmpty(),
+                micrCode.get(),
+                notes.get(),
+                Date(),
+                Date()
+            )
         }
+
+        fun BankAccountDataEntity.toBankAccountScreenData(): BankAccountScreenData {
+            return BankAccountScreenData(
+                key,
+                title,
+                accountNumber,
+                customerName,
+                customerId,
+                branchCode,
+                branchName, branchAddress, ifscCode, micrCode, notes
+            )
+        }
+    }
+
+    fun updateData(bankAccountScreenData: BankAccountScreenData) {
+        key = bankAccountScreenData.key
+        title.set(bankAccountScreenData.title.get())
+        accountNo.set(bankAccountScreenData.accountNo.get())
+        customerName.set(bankAccountScreenData.customerName.get())
+        customerId.set(bankAccountScreenData.customerId.get())
+        branchCode.set(bankAccountScreenData.branchCode.get())
+        branchName.set(bankAccountScreenData.branchName.get())
+        branchAddress.set(bankAccountScreenData.branchAddress.get())
+        ifscCode.set(bankAccountScreenData.ifscCode.get())
+        micrCode.set(bankAccountScreenData.micrCode.get())
+        notes.set(bankAccountScreenData.notes.get())
     }
 }

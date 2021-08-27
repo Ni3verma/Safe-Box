@@ -35,4 +35,8 @@ class BankCardDataRepositoryImpl @Inject constructor(
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
         return bankCardDataDaoSecure.getAllBankCardData()
     }
+
+    override suspend fun getBankCardDataByKey(key: Int): BankCardScreenData {
+        TODO("Not yet implemented")
+    }
 }

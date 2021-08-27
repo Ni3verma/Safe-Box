@@ -8,4 +8,5 @@ interface SecureNoteDataRepository {
     suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData)
     suspend fun updateSecureNoteData(secureNoteScreenData: SecureNoteScreenData)
     suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>>
+    suspend fun getSecureNoteDataByKey(key: Int): SecureNoteScreenData
 }

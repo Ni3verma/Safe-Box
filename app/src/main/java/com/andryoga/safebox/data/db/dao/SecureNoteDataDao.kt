@@ -17,5 +17,5 @@ interface SecureNoteDataDao {
     fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>>
 
     @Query("select * from secure_note_data where `key` = :key limit 1")
-    fun getSecretNoteDataByKey(key: Int): Flow<SecureNoteDataEntity>
+    suspend fun getSecretNoteDataByKey(key: Int): SecureNoteDataEntity
 }
