@@ -4,29 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.databinding.BankCardDataFragmentBinding
-import com.andryoga.safebox.ui.common.*
-import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.common.CommonSnackbar
+import com.andryoga.safebox.ui.common.RequiredFieldValidator
+import com.andryoga.safebox.ui.common.Resource
+import com.andryoga.safebox.ui.common.Status
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
@@ -34,9 +22,10 @@ import timber.log.Timber
 @AndroidEntryPoint
 class BankCardDataFragment : BottomSheetDialogFragment() {
 
-    private val dataViewModel: BankCardDataViewModel by viewModels()
+    private val viewModel: BankCardDataViewModel by viewModels()
+    private val args: BankCardDataFragmentArgs by navArgs()
     private lateinit var binding: BankCardDataFragmentBinding
-    private val tagLocal = "add new bank card dialog fragment"
+    private val tagLocal = "add bank card dialog fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,13 +38,10 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
             container,
             false
         )
-        binding.viewModel = dataViewModel
+        binding.viewModel = viewModel
         binding.lifecycleOwner = this
-        binding.composeView.setContent {
-            BasicSafeBoxTheme {
-                initSelectBankAccountDialog()
-            }
-        }
+        Timber.i("received id = ${args.id}")
+        viewModel.setRuntimeVar(args)
 
         return binding.root
     }
@@ -73,7 +59,7 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
         }
 
         binding.saveBtn.setOnClickListener {
-            dataViewModel.onSaveClick().observe(viewLifecycleOwner) {
+            viewModel.onSaveClick().observe(viewLifecycleOwner) {
                 handleSaveButtonClick(it)
             }
         }
@@ -89,50 +75,6 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
             tagLocal
         )
         requiredFieldValidator.validate()
-    }
-
-    @Composable
-    private fun initSelectBankAccountDialog() {
-        val bankAccountData by dataViewModel.bankAccounts.collectAsState(emptyList())
-        CommonDialog(
-            isShown = dataViewModel.showSelectBankAccountDialog,
-            title = "Select Bank Account",
-            onDialogDismiss = { dataViewModel.switchSelectBankAccountDialog() },
-            onPrimaryButtonClick = { dataViewModel.switchSelectBankAccountDialog() }
-        ) {
-            Column {
-                LazyColumn(
-                    modifier = Modifier
-                        .heightIn(Dp.Unspecified, 500.dp)
-                        .padding(8.dp)
-                ) {
-                    items(
-                        items = bankAccountData,
-                        key = { bankAccount -> bankAccount.key }
-                    ) { item ->
-                        Column(
-                            Modifier.clickable {
-                                Timber.i("clicked ${item.title} bank account")
-                                dataViewModel.addNewBankCardScreenData.linkedBankAccount = item.key
-                                binding.linkedBankAccount.text =
-                                    String(StringBuilder("${item.title}\n${item.accountNumber}"))
-                                dataViewModel.switchSelectBankAccountDialog()
-                            }
-                        ) {
-                            Text(
-                                item.title,
-                                style = MaterialTheme.typography.h6
-                            )
-                            Text(
-                                item.accountNumber,
-                                style = MaterialTheme.typography.body1,
-                            )
-                            Divider(modifier = Modifier.padding(top = 4.dp, bottom = 4.dp))
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private fun handleSaveButtonClick(resource: Resource<Boolean>) {

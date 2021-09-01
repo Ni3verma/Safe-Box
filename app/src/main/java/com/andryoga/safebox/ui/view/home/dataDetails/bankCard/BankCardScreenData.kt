@@ -1,12 +1,65 @@
 package com.andryoga.safebox.ui.view.home.dataDetails.bankCard
 
-data class BankCardScreenData(
-    var title: String = "",
-    var name: String? = null,
-    var number: String = "",
-    var expiryDate: String = "",
-    var pin: String? = null,
-    var cvv: String = "",
-    var linkedBankAccount: Int? = null,
-    var notes: String? = null
-)
+import androidx.databinding.ObservableField
+import com.andryoga.safebox.data.db.entity.BankCardDataEntity
+import com.andryoga.safebox.ui.common.Utils.getValueOrEmpty
+import java.util.*
+
+class BankCardScreenData(
+    /*
+   * It is very important to initialize key with 0
+   * so that when we convert screen data to entity for db insertion at that
+   * 0 will be passed. For room zero means that it can auto-increment value
+   * */
+    pKey: Int = 0,
+    pTitle: String = "",
+    pName: String? = null,
+    pNumber: String = "",
+    pExpiryDate: String = "",
+    pPin: String? = null,
+    pCvv: String = "",
+    pNotes: String? = null
+) {
+    var key = pKey
+    var title: ObservableField<String> = ObservableField(pTitle)
+    var name: ObservableField<String?> = ObservableField(pName)
+    var number: ObservableField<String> = ObservableField(pNumber)
+    var expiryDate: ObservableField<String> = ObservableField(pExpiryDate)
+    var pin: ObservableField<String?> = ObservableField(pPin)
+    var cvv: ObservableField<String> = ObservableField(pCvv)
+    var notes: ObservableField<String?> = ObservableField(pNotes)
+
+    companion object {
+        fun BankCardScreenData.toBankCardDataEntity(): BankCardDataEntity {
+            return BankCardDataEntity(
+                key,
+                title.getValueOrEmpty(),
+                name.get(),
+                number.getValueOrEmpty(),
+                pin.get(),
+                cvv.getValueOrEmpty(),
+                expiryDate.getValueOrEmpty(),
+                notes.get(),
+                Date(),
+                Date()
+            )
+        }
+
+        fun BankCardDataEntity.toBankCardScreenData(): BankCardScreenData {
+            return BankCardScreenData(
+                key, title, name, number, expiryDate, pin, cvv, notes
+            )
+        }
+    }
+
+    fun updateData(bankCardScreenData: BankCardScreenData) {
+        key = bankCardScreenData.key
+        title.set(bankCardScreenData.title.get())
+        name.set(bankCardScreenData.name.get())
+        number.set(bankCardScreenData.number.get())
+        expiryDate.set(bankCardScreenData.expiryDate.get())
+        pin.set(bankCardScreenData.pin.get())
+        cvv.set(bankCardScreenData.cvv.get())
+        notes.set(bankCardScreenData.notes.get())
+    }
+}
