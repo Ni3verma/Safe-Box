@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.databinding.SecureNoteDataFragmentBinding
@@ -15,10 +16,12 @@ import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class SecureNoteDataFragment : BottomSheetDialogFragment() {
     private val viewModel: SecureNoteDataViewModel by viewModels()
+    private val args: SecureNoteDataFragmentArgs by navArgs()
     private lateinit var binding: SecureNoteDataFragmentBinding
     private val tagLocal = "add new secure note fragment"
 
@@ -33,6 +36,8 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
         )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
+        Timber.i("received id = ${args.id}")
+        viewModel.setRuntimeVar(args)
         setupObservers()
         return binding.root
     }
