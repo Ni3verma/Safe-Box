@@ -5,6 +5,7 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
 import androidx.constraintlayout.motion.widget.MotionLayout
+import androidx.databinding.ObservableField
 
 object Utils {
     fun switchVisibility(vararg views: View) {
@@ -77,5 +78,12 @@ object Utils {
             }
         }
         return maxLength
+    }
+
+    /* This is an extension function to get observable field data
+    * Use it only if you know that data will never be null
+    * instead of using !!, use this util function*/
+    fun ObservableField<String>.getValueOrEmpty(): String {
+        return this.get() ?: ""
     }
 }

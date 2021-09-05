@@ -8,7 +8,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.addNewData.login.AddNewLoginDataViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -24,14 +24,14 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_person_24"
+            app:srcCompat="@drawable/ic_key_24"
             app:tint="@color/colorPrimaryDark" />
 
         <TextView
             android:id="@+id/header_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/login_data"
+            android:text="@string/secure_note"
             android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
             app:layout_constraintEnd_toEndOf="@+id/header_icon"
             app:layout_constraintStart_toStartOf="@+id/header_icon"
@@ -53,14 +53,14 @@
                 android:layout_marginBottom="8dp"
                 android:hint="@string/title"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.title}">
+                android:text="@={viewModel.secureNoteScreenData.title}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/url"
+            android:id="@+id/notes"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -69,78 +69,18 @@
             app:layout_constraintTop_toBottomOf="@+id/title">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/url_text"
+                android:id="@+id/notes_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:hint="@string/url"
-                android:inputType="textWebEmailAddress"
-                android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.url}">
+                android:hint="@string/notes_mandatory"
+                android:inputType="textMultiLine"
+                android:minLines="4"
+                android:text="@={viewModel.secureNoteScreenData.notes}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
         </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/user_id"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/url">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/user_id_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:hint="@string/user_id"
-                android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.userId}">
-
-            </com.google.android.material.textfield.TextInputEditText>
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pswrd"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/user_id">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pswrd_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:hint="@string/password"
-                android:inputType="textPassword"
-                android:singleLine="true"
-                android:text="@={viewModel.addNewLoginScreenData.password}">
-
-            </com.google.android.material.textfield.TextInputEditText>
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <EditText
-            android:id="@+id/editTextTextMultiLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:gravity="start|top"
-            android:hint="@string/notes"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:text="@={viewModel.addNewLoginScreenData.notes}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pswrd" />
 
         <Button
             android:id="@+id/save_btn"
@@ -150,7 +90,7 @@
             android:text="@string/save"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextTextMultiLine" />
+            app:layout_constraintTop_toBottomOf="@+id/notes" />
 
         <ProgressBar
             android:id="@+id/loading"

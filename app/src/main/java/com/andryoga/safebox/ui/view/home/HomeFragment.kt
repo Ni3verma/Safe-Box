@@ -102,19 +102,19 @@ class HomeFragment : Fragment() {
     private fun handleAddNewUserDataFabClick(viewId: Int) {
         when (viewId) {
             R.id.new_personal_login_data -> {
-                Timber.i("opening add new login data")
-                findNavController().navigate(R.id.action_homeFragment_to_addNewLoginDataDialogFragment)
+                Timber.i("opening login data details")
+                findNavController().navigate(R.id.action_homeFragment_to_loginDataFragment)
             }
             R.id.new_personal_bank_account_data -> {
-                Timber.i("opening add new bank account data")
-                findNavController().navigate(R.id.action_homeFragment_to_addNewBankAccountDataDialogFragment)
+                Timber.i("opening bank account data details")
+                findNavController().navigate(R.id.action_homeFragment_to_bankAccountDataFragment)
             }
             R.id.new_personal_bank_card_data -> {
-                Timber.i("opening add new bank card data")
-                findNavController().navigate(R.id.action_homeFragment_to_addNewBankCardDialogFragment)
+                Timber.i("opening bank card data details")
+                findNavController().navigate(R.id.action_homeFragment_to_bankCardDataFragment)
             }
             R.id.new_personal_note_data -> {
-                Timber.i("opening add new secure note data")
+                Timber.i("opening secure note data details")
                 findNavController().navigate(R.id.action_homeFragment_to_secureNoteDataFragment)
             }
             else -> {

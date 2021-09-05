@@ -18,25 +18,29 @@ class BankCardDataDaoSecure @Inject constructor(
         bankCardDataDao.insertBankCardData(encrypt(bankCardDataEntity))
     }
 
+    override suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity) {
+        bankCardDataDao.updateBankCardData(encrypt(bankCardDataEntity))
+    }
+
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
         return bankCardDataDao
             .getAllBankCardData()
             .map { SearchBankCardData.decrypt(it, symmetricKeyUtils) }
     }
 
-    override fun getBankCardDataByKey(key: Int): Flow<BankCardDataEntity> {
-        TODO("Not yet implemented")
+    override suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity {
+        return decrypt(bankCardDataDao.getBankCardDataByKey(key))
     }
 
     private fun encrypt(bankCardDataEntity: BankCardDataEntity): BankCardDataEntity {
         bankCardDataEntity.let {
             return BankCardDataEntity(
+                it.key,
                 symmetricKeyUtils.encrypt(it.title),
                 it.name.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.number),
                 it.pin.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.cvv),
-                it.linkedBankAccountKey,
                 symmetricKeyUtils.encrypt(it.expiryDate),
                 it.notes.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
@@ -48,12 +52,12 @@ class BankCardDataDaoSecure @Inject constructor(
     private fun decrypt(bankCardDataEntity: BankCardDataEntity): BankCardDataEntity {
         bankCardDataEntity.let {
             return BankCardDataEntity(
+                it.key,
                 symmetricKeyUtils.decrypt(it.title),
                 it.name.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.number),
                 it.pin.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.cvv),
-                it.linkedBankAccountKey,
                 symmetricKeyUtils.decrypt(it.expiryDate),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,

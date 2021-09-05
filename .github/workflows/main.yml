@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: lint.html
-          path: app/build/reports/lint-results.html
+          path: app/build/reports/lint-results-debug.html
 
       - name: Run ktlint
         run: ./gradlew app:ktlintCheck --daemon

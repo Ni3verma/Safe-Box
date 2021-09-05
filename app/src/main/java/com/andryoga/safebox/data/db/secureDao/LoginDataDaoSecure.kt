@@ -20,18 +20,23 @@ class LoginDataDaoSecure @Inject constructor(
         loginDataDao.insertLoginData(encrypt(loginDataEntity))
     }
 
+    override suspend fun updateLoginData(loginDataEntity: LoginDataEntity) {
+        loginDataDao.updateLoginData(encrypt(loginDataEntity))
+    }
+
     override fun getAllLoginData(): Flow<List<SearchLoginData>> {
         return loginDataDao.getAllLoginData()
             .map { SearchLoginData.decrypt(it, symmetricKeyUtils) }
     }
 
-    override fun getLoginDataByKey(key: Int): Flow<LoginDataEntity> {
-        TODO("Not yet implemented")
+    override suspend fun getLoginDataByKey(key: Int): LoginDataEntity {
+        return decrypt(loginDataDao.getLoginDataByKey(key))
     }
 
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {
         loginDataEntity.let {
             return LoginDataEntity(
+                it.key,
                 symmetricKeyUtils.encrypt(it.title),
                 it.url.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.password),

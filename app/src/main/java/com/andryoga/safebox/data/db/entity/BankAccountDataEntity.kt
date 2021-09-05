@@ -20,33 +20,4 @@ data class BankAccountDataEntity(
     val notes: String?,
     val creationDate: Date,
     val updateDate: Date
-) {
-    constructor(
-        title: String,
-        accountNumber: String,
-        customerName: String?,
-        customerId: String,
-        branchCode: String?,
-        branchName: String?,
-        branchAddress: String?,
-        ifscCode: String,
-        micrCode: String?,
-        notes: String?,
-        creationDate: Date,
-        updateDate: Date
-    ) : this(
-        0,
-        title,
-        accountNumber,
-        customerName,
-        customerId,
-        branchCode,
-        branchName,
-        branchAddress,
-        ifscCode,
-        micrCode,
-        notes,
-        creationDate,
-        updateDate
-    )
-}
+)

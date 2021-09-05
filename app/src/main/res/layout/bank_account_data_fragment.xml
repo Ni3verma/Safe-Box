@@ -6,7 +6,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountDataViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataViewModel" />
     </data>
 
     <androidx.core.widget.NestedScrollView
@@ -57,7 +57,7 @@
                     android:layout_marginBottom="8dp"
                     android:hint="@string/title"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.title}">
+                    android:text="@={viewModel.bankAccountScreenData.title}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -79,7 +79,7 @@
                     android:layout_marginBottom="8dp"
                     android:hint="@string/account_number"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.accountNo}">
+                    android:text="@={viewModel.bankAccountScreenData.accountNo}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -101,7 +101,7 @@
                     android:hint="@string/customer_name"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.customerName}">
+                    android:text="@={viewModel.bankAccountScreenData.customerName}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -123,7 +123,7 @@
                     android:hint="@string/customer_id"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.customerId}">
+                    android:text="@={viewModel.bankAccountScreenData.customerId}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -146,7 +146,7 @@
                     android:hint="@string/branch_code"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.branchCode}">
+                    android:text="@={viewModel.bankAccountScreenData.branchCode}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -168,7 +168,7 @@
                     android:hint="@string/branch_name"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.branchName}">
+                    android:text="@={viewModel.bankAccountScreenData.branchName}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -189,7 +189,7 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/branch_address"
                     android:layout_marginBottom="8dp"
-                    android:text="@={viewModel.addNewBankAccountScreenData.branchAddress}">
+                    android:text="@={viewModel.bankAccountScreenData.branchAddress}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -211,7 +211,7 @@
                     android:hint="@string/ifsc_code"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.ifscCode}">
+                    android:text="@={viewModel.bankAccountScreenData.ifscCode}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -234,7 +234,7 @@
                     android:hint="@string/micr_code"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
-                    android:text="@={viewModel.addNewBankAccountScreenData.micrCode}">
+                    android:text="@={viewModel.bankAccountScreenData.micrCode}">
 
                 </com.google.android.material.textfield.TextInputEditText>
 
@@ -251,7 +251,7 @@
                 android:importantForAutofill="no"
                 android:inputType="textMultiLine"
                 android:minLines="2"
-                android:text="@={viewModel.addNewBankAccountScreenData.notes}"
+                android:text="@={viewModel.bankAccountScreenData.notes}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/micr_code" />

@@ -1,36 +1,31 @@
 package com.andryoga.safebox.data.repository
 
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
-import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
-import com.andryoga.safebox.ui.view.home.addNewData.bankAccount.AddNewBankAccountScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData
+import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData.Companion.toBankAccountDataEntity
+import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData.Companion.toBankAccountScreenData
 import kotlinx.coroutines.flow.Flow
-import java.util.*
 import javax.inject.Inject
 
 class BankAccountDataRepositoryImpl @Inject constructor(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure
 ) : BankAccountDataRepository {
-    override suspend fun insertBankAccountData(addNewBankAccountScreenData: AddNewBankAccountScreenData) {
-        val entity = BankAccountDataEntity(
-            addNewBankAccountScreenData.title,
-            addNewBankAccountScreenData.accountNo,
-            addNewBankAccountScreenData.customerName,
-            addNewBankAccountScreenData.customerId,
-            addNewBankAccountScreenData.branchCode,
-            addNewBankAccountScreenData.branchName,
-            addNewBankAccountScreenData.branchAddress,
-            addNewBankAccountScreenData.ifscCode,
-            addNewBankAccountScreenData.micrCode,
-            addNewBankAccountScreenData.notes,
-            Date(),
-            Date()
-        )
+    override suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData) {
+        val entity = bankAccountScreenData.toBankAccountDataEntity()
         bankAccountDataDaoSecure.insertBankAccountData(entity)
+    }
+
+    override suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData) {
+        bankAccountDataDaoSecure.updateBankAccountData(bankAccountScreenData.toBankAccountDataEntity())
     }
 
     override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
         return bankAccountDataDaoSecure.getAllBankAccountData()
+    }
+
+    override suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData {
+        return bankAccountDataDaoSecure.getBankAccountDataByKey(key).toBankAccountScreenData()
     }
 }

@@ -8,7 +8,7 @@
 
         <variable
             name="viewModel"
-            type="com.andryoga.safebox.ui.view.home.addNewData.bankCard.AddNewBankCardViewModel" />
+            type="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -52,7 +52,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/title"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.title}">
+                android:text="@={viewModel.bankCardScreenData.title}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -74,7 +74,7 @@
                 android:capitalize="characters"
                 android:hint="@string/name"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.name}">
+                android:text="@={viewModel.bankCardScreenData.name}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -96,7 +96,7 @@
                 android:capitalize="characters"
                 android:hint="@string/number"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.number}">
+                android:text="@={viewModel.bankCardScreenData.number}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -119,7 +119,7 @@
                 android:hint="@string/pin"
                 android:inputType="number"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.pin}">
+                android:text="@={viewModel.bankCardScreenData.pin}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -142,24 +142,11 @@
                 android:hint="@string/cvv"
                 android:inputType="number"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.cvv}">
+                android:text="@={viewModel.bankCardScreenData.cvv}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
         </com.google.android.material.textfield.TextInputLayout>
-
-        <TextView
-            android:id="@+id/linked_bank_account"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_margin="4dp"
-            android:gravity="center"
-            android:onClick="@{()->viewModel.switchSelectBankAccountDialog()}"
-            android:text="@string/linkedAccount"
-            app:layout_constraintEnd_toStartOf="@id/expiry_date"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/expiry_date"
-            app:layout_constraintTop_toTopOf="@+id/expiry_date" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/expiry_date"
@@ -168,7 +155,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/linked_bank_account"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/pin">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -179,7 +166,7 @@
                 android:inputType="datetime"
                 android:maxLength="5"
                 android:singleLine="true"
-                android:text="@={viewModel.addNewBankCardScreenData.expiryDate}">
+                android:text="@={viewModel.bankCardScreenData.expiryDate}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
@@ -195,7 +182,7 @@
             android:importantForAutofill="no"
             android:inputType="textMultiLine"
             android:minLines="2"
-            android:text="@={viewModel.addNewBankCardScreenData.notes}"
+            android:text="@={viewModel.bankCardScreenData.notes}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/expiry_date" />
@@ -221,11 +208,5 @@
             app:layout_constraintStart_toStartOf="@id/save_btn"
             app:layout_constraintTop_toTopOf="@id/save_btn" />
 
-        <androidx.compose.ui.platform.ComposeView
-            android:id="@+id/compose_view"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
