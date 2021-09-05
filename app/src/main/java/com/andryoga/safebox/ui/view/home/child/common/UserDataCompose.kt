@@ -8,10 +8,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -38,6 +41,7 @@ private val typeToTextMap = mapOf(
     UserDataType.SECURE_NOTE to R.string.note
 )
 
+@ExperimentalMaterialApi
 @Composable
 fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
@@ -56,13 +60,54 @@ fun UserDataList(
         }
         Status.SUCCESS -> {
             // In success state, if there was no data then show empty view other show list of data
-            if (listResource.data.isNullOrEmpty()) {
+            val list = listResource.data
+            if (list.isNullOrEmpty()) {
                 EmptyUserData()
             } else {
-                val list = listResource.data
                 LazyColumn() {
-                    items(items = list, key = { it.type.name + it.id }) {
-                        UserDataListItem(item = it, onItemClick)
+                    items(
+                        items = list,
+                        key = {
+                            it.type.name + it.id
+                        }
+                    ) { item ->
+                        val dismissState = rememberDismissState(
+                            confirmStateChange = {
+                                if (it == DismissValue.DismissedToStart) {
+                                    list.minus(item)
+                                }
+                                true
+                            }
+                        )
+
+                        SwipeToDismiss(
+                            state = dismissState,
+                            background = {
+                                val color = when (dismissState.dismissDirection) {
+                                    DismissDirection.StartToEnd -> Color.Transparent
+                                    DismissDirection.EndToStart -> Color.Red
+                                    null -> Color.Transparent
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(color)
+                                        .padding(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.align(Alignment.CenterEnd)
+                                    )
+                                }
+                            },
+                            dismissContent = {
+                                UserDataListItem(item = item, onItemClick)
+                            },
+                            directions = setOf(DismissDirection.EndToStart)
+                        )
                     }
                 }
             }
