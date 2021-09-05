@@ -25,7 +25,7 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
     private val viewModel: BankCardDataViewModel by viewModels()
     private val args: BankCardDataFragmentArgs by navArgs()
     private lateinit var binding: BankCardDataFragmentBinding
-    private val tagLocal = "add bank card dialog fragment"
+    private val tagLocal = "Nitin bank card fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,

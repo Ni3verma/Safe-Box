@@ -23,7 +23,7 @@ class BankAccountDataFragment : BottomSheetDialogFragment() {
     private val viewModel: BankAccountDataViewModel by viewModels()
     private val args: BankAccountDataFragmentArgs by navArgs()
     private lateinit var binding: BankAccountDataFragmentBinding
-    private val tagLocal = "add new bank account data dialog fragment"
+    private val tagLocal = "Nitin bank account data fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,

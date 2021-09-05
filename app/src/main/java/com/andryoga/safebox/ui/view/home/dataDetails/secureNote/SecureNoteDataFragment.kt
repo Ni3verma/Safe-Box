@@ -23,7 +23,7 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
     private val viewModel: SecureNoteDataViewModel by viewModels()
     private val args: SecureNoteDataFragmentArgs by navArgs()
     private lateinit var binding: SecureNoteDataFragmentBinding
-    private val tagLocal = "add new secure note fragment"
+    private val tagLocal = "Nitin secure note fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
