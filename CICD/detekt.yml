@@ -10,5 +10,6 @@ complexity:
   LongParameterList:
     ignoreDefaultParameters: true
     ignoreAnnotated: ['@Composable']
+    functionThreshold: 10
   LongMethod:
     threshold: 80

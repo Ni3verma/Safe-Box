@@ -1,31 +1,42 @@
 package com.andryoga.safebox.ui.view.home.child.common
 
+import android.content.res.Resources
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumePositionChange
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import timber.log.Timber
+import kotlin.math.roundToInt
 
 private val typeToIconMap = mapOf(
     UserDataType.LOGIN_DATA to R.drawable.ic_person_24,
@@ -40,6 +51,10 @@ private val typeToTextMap = mapOf(
     UserDataType.BANK_CARD to R.string.card,
     UserDataType.SECURE_NOTE to R.string.note
 )
+
+const val ACTION_ITEM_SIZE = 56
+const val CARD_HEIGHT = 56
+const val CARD_OFFSET = 56f
 
 @ExperimentalMaterialApi
 @Composable
@@ -71,43 +86,26 @@ fun UserDataList(
                             it.type.name + it.id
                         }
                     ) { item ->
-                        val dismissState = rememberDismissState(
-                            confirmStateChange = {
-                                if (it == DismissValue.DismissedToStart) {
-                                    list.minus(item)
-                                }
-                                true
-                            }
-                        )
-
-                        SwipeToDismiss(
-                            state = dismissState,
-                            background = {
-                                val color = when (dismissState.dismissDirection) {
-                                    DismissDirection.StartToEnd -> Color.Transparent
-                                    DismissDirection.EndToStart -> Color.Red
-                                    null -> Color.Transparent
-                                }
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(color)
-                                        .padding(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.align(Alignment.CenterEnd)
-                                    )
-                                }
-                            },
-                            dismissContent = {
-                                UserDataListItem(item = item, onItemClick)
-                            },
-                            directions = setOf(DismissDirection.EndToStart)
-                        )
+                        val isRevealed = remember { mutableStateOf(false) }
+                        Box(Modifier.fillMaxWidth()) {
+                            ActionsRow(
+                                actionIconSize = ACTION_ITEM_SIZE.dp,
+                                onDelete = {}
+                            )
+                            DraggableCard(
+                                item = item,
+                                isRevealed = isRevealed.value,
+                                cardHeight = CARD_HEIGHT.dp,
+                                cardOffset = CARD_OFFSET.dp(),
+                                onExpand = {
+                                    isRevealed.value = true
+                                },
+                                onCollapse = {
+                                    isRevealed.value = false
+                                },
+                                onClick = onItemClick
+                            )
+                        }
                     }
                 }
             }
@@ -116,6 +114,11 @@ fun UserDataList(
             // In error state, show a error snackbar : Future feature
         }
     }
+}
+
+fun test(revealedCards: MutableSet<String>, s: String): Boolean {
+    Timber.i("${revealedCards.contains(s)}")
+    return revealedCards.contains(s)
 }
 
 @Composable
@@ -196,6 +199,106 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
         }
     }
 }
+
+@Composable
+fun ActionsRow(
+    actionIconSize: Dp,
+    onDelete: () -> Unit
+) {
+    Row(
+        Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .background(Color.Red)
+    ) {
+        IconButton(
+            modifier = Modifier.size(actionIconSize),
+            onClick = {
+                onDelete()
+            },
+            content = {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = Color.White
+                )
+            }
+        )
+    }
+}
+
+const val ANIMATION_DURATION = 500
+const val MIN_DRAG = 10
+
+@Composable
+fun DraggableCard(
+    item: UserListItemData,
+    cardHeight: Dp,
+    isRevealed: Boolean,
+    cardOffset: Float,
+    onExpand: () -> Unit,
+    onCollapse: () -> Unit,
+    onClick: (item: UserListItemData) -> Unit,
+) {
+    Timber.i("composing ${item.type.name + item.id} as revealed = $isRevealed")
+    val offsetX = remember { mutableStateOf(0f) }
+    val transitionState = remember {
+        MutableTransitionState(isRevealed).apply {
+            targetState = !isRevealed
+        }
+    }
+    val transition = updateTransition(transitionState, "cardTransition")
+    val cardBgColor by transition.animateColor(
+        label = "cardBgColorTransition",
+        transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
+        targetValueByState = {
+            if (isRevealed) Color.LightGray else Color.White
+        }
+    )
+    val offsetTransition by transition.animateFloat(
+        label = "cardOffsetTransition",
+        transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
+        targetValueByState = { if (isRevealed) cardOffset - offsetX.value else -offsetX.value },
+
+    )
+    val cardElevation by transition.animateDp(
+        label = "cardElevation",
+        transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
+        targetValueByState = { if (isRevealed) 20.dp else 2.dp }
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .height(cardHeight)
+            .offset { IntOffset((offsetX.value + offsetTransition).roundToInt(), 0) }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { change, dragAmount ->
+                    val original = Offset(offsetX.value, 0f)
+                    val summed = original + Offset(x = dragAmount, y = 0f)
+                    val newValue = Offset(x = summed.x.coerceIn(0f, cardOffset), y = 0f)
+                    if (newValue.x >= MIN_DRAG) {
+                        onExpand()
+                        return@detectHorizontalDragGestures
+                    } else if (newValue.x <= 0) {
+                        onCollapse()
+                        return@detectHorizontalDragGestures
+                    }
+                    change.consumePositionChange()
+                    offsetX.value = newValue.x
+                }
+            },
+        backgroundColor = cardBgColor,
+        shape = RoundedCornerShape(0.dp),
+        elevation = cardElevation,
+        content = { UserDataListItem(item, onClick) }
+    )
+}
+
+fun Float.dp(): Float = this * density + 1f
+
+val density: Float
+    get() = Resources.getSystem().displayMetrics.density
 
 @Composable
 @Preview(name = "item")
