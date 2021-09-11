@@ -41,10 +41,10 @@ class AllInfoFragment : Fragment() {
                 )
                 BasicSafeBoxTheme {
                     UserDataList(
-                        listResource = listData
-                    ) {
-                        onListItemClick(it)
-                    }
+                        listResource = listData,
+                        onItemClick = { onListItemClick(it) },
+                        onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
+                    )
                 }
             }
         }

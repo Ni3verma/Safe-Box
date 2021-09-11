@@ -18,4 +18,7 @@ interface BankCardDataDao {
 
     @Query("select * from bank_card_data where `key` = :key limit 1")
     suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity
+
+    @Query("Delete from bank_card_data where `key` = :key")
+    suspend fun deleteBankCardDataByKey(key: Int)
 }

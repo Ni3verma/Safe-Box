@@ -9,4 +9,5 @@ interface LoginDataRepository {
     suspend fun updateLoginData(loginScreenData: LoginScreenData)
     suspend fun getAllLoginData(): Flow<List<SearchLoginData>>
     suspend fun getLoginDataByKey(key: Int): LoginScreenData
+    suspend fun deleteLoginDataByKey(key: Int)
 }

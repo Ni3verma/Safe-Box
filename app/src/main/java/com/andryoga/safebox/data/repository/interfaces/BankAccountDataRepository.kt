@@ -9,4 +9,5 @@ interface BankAccountDataRepository {
     suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData)
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
     suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData
+    suspend fun deleteBankAccountDataByKey(key: Int)
 }

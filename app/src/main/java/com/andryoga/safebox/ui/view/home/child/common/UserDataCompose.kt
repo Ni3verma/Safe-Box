@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
+import timber.log.Timber
 
 private val typeToIconMap = mapOf(
     UserDataType.LOGIN_DATA to R.drawable.ic_person_24,
@@ -41,7 +42,8 @@ private val typeToTextMap = mapOf(
 @Composable
 fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
-    onItemClick: (item: UserListItemData) -> Unit
+    onItemClick: (item: UserListItemData) -> Unit,
+    onDeleteItemClick: (id: UserListItemData) -> Unit
 ) {
     when (listResource.status) {
         Status.LOADING -> {
@@ -71,7 +73,10 @@ fun UserDataList(
                         val itemKey = item.type.name + item.id
                         Box(Modifier.fillMaxWidth()) {
                             ActionsRow(
-                                onDelete = {}
+                                onDelete = {
+                                    Timber.i("clicked delete on $itemKey")
+                                    onDeleteItemClick(item)
+                                }
                             )
                             DraggableCard(
                                 isRevealed = revealedCardId == itemKey,

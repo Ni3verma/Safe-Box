@@ -33,6 +33,10 @@ class LoginDataDaoSecure @Inject constructor(
         return decrypt(loginDataDao.getLoginDataByKey(key))
     }
 
+    override suspend fun deleteLoginDataByKey(key: Int) {
+        loginDataDao.deleteLoginDataByKey(key)
+    }
+
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {
         loginDataEntity.let {
             return LoginDataEntity(

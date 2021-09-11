@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.view.home.child.secureNoteInfo
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,5 +41,12 @@ class SecureNoteViewModel @Inject constructor(
                 it.sortBy { data -> data.title }
                 emit(Resource.success(it))
             }
+    }
+
+    fun onDeleteItemClick(itemData: UserListItemData) {
+        val key = itemData.id
+        viewModelScope.launch {
+            secureNoteDataRepository.deleteSecureNoteDataByKey(key)
+        }
     }
 }
