@@ -14,9 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -24,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 const val ANIMATION_DURATION = 500
-const val MIN_DRAG = 10
+const val MIN_DRAG = -10
 
 @Composable
 fun DraggableCard(
@@ -68,19 +66,14 @@ fun DraggableCard(
             .height(cardHeight)
             .offset { IntOffset((offsetX.value - offsetTransition).roundToInt(), 0) }
             .pointerInput(Unit) {
-                detectHorizontalDragGestures { change, dragAmount ->
-                    val original = Offset(offsetX.value, 0f)
-                    val summed = original + Offset(x = dragAmount, y = 0f)
-                    val newValue = Offset(x = summed.x.coerceIn(0f, cardOffset), y = 0f)
-                    if (newValue.x <= MIN_DRAG) {
+                detectHorizontalDragGestures { _, dragAmount ->
+                    if (dragAmount <= MIN_DRAG) {
                         onExpand()
                         return@detectHorizontalDragGestures
-                    } else if (newValue.x >= 0) {
+                    } else {
                         onCollapse()
                         return@detectHorizontalDragGestures
                     }
-                    change.consumePositionChange()
-                    offsetX.value = newValue.x
                 }
             },
         backgroundColor = cardBgColor,
