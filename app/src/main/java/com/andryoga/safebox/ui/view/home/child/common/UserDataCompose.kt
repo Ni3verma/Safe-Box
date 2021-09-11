@@ -9,10 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -63,6 +60,7 @@ fun UserDataList(
             if (list.isNullOrEmpty()) {
                 EmptyUserData()
             } else {
+                var revealedCardId by remember { mutableStateOf("") }
                 LazyColumn() {
                     items(
                         items = list,
@@ -70,18 +68,18 @@ fun UserDataList(
                             it.type.name + it.id
                         }
                     ) { item ->
-                        val isRevealed = remember { mutableStateOf(false) }
+                        val itemKey = item.type.name + item.id
                         Box(Modifier.fillMaxWidth()) {
                             ActionsRow(
                                 onDelete = {}
                             )
                             DraggableCard(
-                                isRevealed = isRevealed.value,
+                                isRevealed = revealedCardId == itemKey,
                                 onExpand = {
-                                    isRevealed.value = true
+                                    revealedCardId = itemKey
                                 },
                                 onCollapse = {
-                                    isRevealed.value = false
+                                    revealedCardId = ""
                                 }
                             ) {
                                 UserDataListItem(item, onItemClick)
@@ -136,7 +134,6 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
 
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
@@ -146,7 +143,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
                 modifier = Modifier
                     .size(50.dp)
                     .background(MaterialTheme.colors.secondary, CircleShape)
-                    .padding(8.dp)
+                    .padding(4.dp)
             )
             Text(
                 text = stringResource(id = typeToTextMap.getValue(item.type)),

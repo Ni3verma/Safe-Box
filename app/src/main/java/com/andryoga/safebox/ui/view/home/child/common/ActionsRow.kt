@@ -1,10 +1,7 @@
 package com.andryoga.safebox.ui.view.home.child.common
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
@@ -22,9 +19,11 @@ fun ActionsRow(
 ) {
     Row(
         Modifier
-            .height(64.dp)
-            .padding(4.dp)
-            .background(Color.Red)
+            .height(70.dp)
+            .padding(start = 4.dp, top = 8.dp)
+            .fillMaxWidth()
+            .background(Color.Red),
+        horizontalArrangement = Arrangement.End
     ) {
         IconButton(
             modifier = Modifier.size(actionIconSize),

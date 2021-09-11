@@ -29,7 +29,7 @@ const val MIN_DRAG = 10
 @Composable
 fun DraggableCard(
     isRevealed: Boolean,
-    cardHeight: Dp = 64.dp,
+    cardHeight: Dp = 70.dp,
     cardOffset: Float = 56f.dp(),
     onExpand: () -> Unit,
     onCollapse: () -> Unit,
@@ -63,19 +63,19 @@ fun DraggableCard(
 
     Card(
         modifier = Modifier
+            .padding(start = 4.dp, top = 8.dp)
             .fillMaxWidth()
-            .padding(4.dp)
             .height(cardHeight)
-            .offset { IntOffset((offsetX.value + offsetTransition).roundToInt(), 0) }
+            .offset { IntOffset((offsetX.value - offsetTransition).roundToInt(), 0) }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, dragAmount ->
                     val original = Offset(offsetX.value, 0f)
                     val summed = original + Offset(x = dragAmount, y = 0f)
                     val newValue = Offset(x = summed.x.coerceIn(0f, cardOffset), y = 0f)
-                    if (newValue.x >= MIN_DRAG) {
+                    if (newValue.x <= MIN_DRAG) {
                         onExpand()
                         return@detectHorizontalDragGestures
-                    } else if (newValue.x <= 0) {
+                    } else if (newValue.x >= 0) {
                         onCollapse()
                         return@detectHorizontalDragGestures
                     }
