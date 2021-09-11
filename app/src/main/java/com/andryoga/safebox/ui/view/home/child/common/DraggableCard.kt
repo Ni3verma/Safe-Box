@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 const val ANIMATION_DURATION = 500
-const val MIN_DRAG = -10
+const val MIN_DRAG = 10
 
 @Composable
 fun DraggableCard(
@@ -67,12 +67,10 @@ fun DraggableCard(
             .offset { IntOffset((offsetX.value - offsetTransition).roundToInt(), 0) }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { _, dragAmount ->
-                    if (dragAmount <= MIN_DRAG) {
+                    if (dragAmount <= -MIN_DRAG) {
                         onExpand()
-                        return@detectHorizontalDragGestures
-                    } else {
+                    } else if (dragAmount > MIN_DRAG) {
                         onCollapse()
-                        return@detectHorizontalDragGestures
                     }
                 }
             },
