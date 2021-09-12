@@ -27,4 +27,8 @@ class BankCardDataRepositoryImpl @Inject constructor(
     override suspend fun getBankCardDataByKey(key: Int): BankCardScreenData {
         return bankCardDataDaoSecure.getBankCardDataByKey(key).toBankCardScreenData()
     }
+
+    override suspend fun deleteBankCardDataByKey(key: Int) {
+        bankCardDataDaoSecure.deleteBankCardDataByKey(key)
+    }
 }

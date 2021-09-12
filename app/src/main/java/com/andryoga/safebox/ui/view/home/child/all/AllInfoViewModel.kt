@@ -1,17 +1,19 @@
 package com.andryoga.safebox.ui.view.home.child.all
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.view.home.child.common.UserDataType
+import com.andryoga.safebox.ui.view.home.child.common.UserDataType.*
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,7 +56,7 @@ class AllInfoViewModel @Inject constructor(
                             it.key,
                             it.title,
                             it.userId,
-                            UserDataType.LOGIN_DATA
+                            LOGIN_DATA
                         )
                     )
                 }
@@ -77,7 +79,7 @@ class AllInfoViewModel @Inject constructor(
                             it.key,
                             it.title,
                             it.accountNumber,
-                            UserDataType.BANK_ACCOUNT
+                            BANK_ACCOUNT
                         )
                     )
                 }
@@ -100,7 +102,7 @@ class AllInfoViewModel @Inject constructor(
                             it.key,
                             it.title,
                             it.number,
-                            UserDataType.BANK_CARD
+                            BANK_CARD
                         )
                     )
                 }
@@ -123,7 +125,7 @@ class AllInfoViewModel @Inject constructor(
                             it.key,
                             it.title,
                             null,
-                            UserDataType.SECURE_NOTE
+                            SECURE_NOTE
                         )
                     )
                 }
@@ -133,5 +135,17 @@ class AllInfoViewModel @Inject constructor(
             .collect {
                 emit(it)
             }
+    }
+
+    fun onDeleteItemClick(itemData: UserListItemData) {
+        val key = itemData.id
+        viewModelScope.launch {
+            when (itemData.type) {
+                LOGIN_DATA -> loginDataRepository.deleteLoginDataByKey(key)
+                BANK_ACCOUNT -> bankAccountDataRepository.deleteBankAccountDataByKey(key)
+                BANK_CARD -> bankCardDataRepository.deleteBankCardDataByKey(key)
+                SECURE_NOTE -> secureNoteDataRepository.deleteSecureNoteDataByKey(key)
+            }
+        }
     }
 }

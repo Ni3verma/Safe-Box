@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.view.home.child.common
 
+import android.content.res.Resources
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,8 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
-import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import timber.log.Timber
 
 private val typeToIconMap = mapOf(
     UserDataType.LOGIN_DATA to R.drawable.ic_person_24,
@@ -38,10 +38,12 @@ private val typeToTextMap = mapOf(
     UserDataType.SECURE_NOTE to R.string.note
 )
 
+@ExperimentalMaterialApi
 @Composable
 fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
-    onItemClick: (item: UserListItemData) -> Unit
+    onItemClick: (item: UserListItemData) -> Unit,
+    onDeleteItemClick: (id: UserListItemData) -> Unit
 ) {
     when (listResource.status) {
         Status.LOADING -> {
@@ -56,13 +58,38 @@ fun UserDataList(
         }
         Status.SUCCESS -> {
             // In success state, if there was no data then show empty view other show list of data
-            if (listResource.data.isNullOrEmpty()) {
+            val list = listResource.data
+            if (list.isNullOrEmpty()) {
                 EmptyUserData()
             } else {
-                val list = listResource.data
+                var revealedCardId by remember { mutableStateOf("") }
                 LazyColumn() {
-                    items(items = list, key = { it.type.name + it.id }) {
-                        UserDataListItem(item = it, onItemClick)
+                    items(
+                        items = list,
+                        key = {
+                            it.type.name + it.id
+                        }
+                    ) { item ->
+                        val itemKey = item.type.name + item.id
+                        Box(Modifier.fillMaxWidth()) {
+                            ActionsRow(
+                                onDelete = {
+                                    Timber.i("clicked delete on $itemKey")
+                                    onDeleteItemClick(item)
+                                }
+                            )
+                            DraggableCard(
+                                isRevealed = revealedCardId == itemKey,
+                                onExpand = {
+                                    revealedCardId = itemKey
+                                },
+                                onCollapse = {
+                                    revealedCardId = ""
+                                }
+                            ) {
+                                UserDataListItem(item, onItemClick)
+                            }
+                        }
                     }
                 }
             }
@@ -109,9 +136,9 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
         modifier = Modifier
             .clickable { onClick(item) }
             .fillMaxWidth()
+
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
@@ -121,7 +148,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
                 modifier = Modifier
                     .size(50.dp)
                     .background(MaterialTheme.colors.secondary, CircleShape)
-                    .padding(8.dp)
+                    .padding(4.dp)
             )
             Text(
                 text = stringResource(id = typeToTextMap.getValue(item.type)),
@@ -152,18 +179,6 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
     }
 }
 
-@Composable
-@Preview(name = "item")
-private fun item() {
-    BasicSafeBoxTheme {
-        UserDataListItem(
-            item = UserListItemData(
-                1,
-                "HDFC Bank ajsfnsajfaslfnalfnaasnflasnfasljnflasnflasnflkansflkansflkasnflnalf",
-                "xxxxxxxx123",
-                UserDataType.BANK_ACCOUNT
-            ),
-            {}
-        )
-    }
-}
+fun Float.dp(): Float = this * density + 1f
+val density: Float
+    get() = Resources.getSystem().displayMetrics.density

@@ -29,4 +29,8 @@ class LoginDataRepositoryImpl @Inject constructor(
     override suspend fun getLoginDataByKey(key: Int): LoginScreenData {
         return loginDataDaoSecure.getLoginDataByKey(key).toLoginScreenData()
     }
+
+    override suspend fun deleteLoginDataByKey(key: Int) {
+        loginDataDaoSecure.deleteLoginDataByKey(key)
+    }
 }

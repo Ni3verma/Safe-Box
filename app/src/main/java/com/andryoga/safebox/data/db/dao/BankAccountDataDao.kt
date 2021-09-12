@@ -19,4 +19,7 @@ interface BankAccountDataDao {
 
     @Query("select * from bank_account_data")
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
+
+    @Query("Delete from bank_account_data where `key` = :key")
+    suspend fun deleteBankAccountDataByKey(key: Int)
 }

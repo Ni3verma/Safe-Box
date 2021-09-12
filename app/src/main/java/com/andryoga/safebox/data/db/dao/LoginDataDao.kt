@@ -18,4 +18,7 @@ interface LoginDataDao {
 
     @Query("select * from login_data where `key` = :key limit 1")
     suspend fun getLoginDataByKey(key: Int): LoginDataEntity
+
+    @Query("Delete from login_data where `key` = :key")
+    suspend fun deleteLoginDataByKey(key: Int)
 }

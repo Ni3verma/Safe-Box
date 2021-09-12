@@ -27,4 +27,8 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
     override suspend fun getSecureNoteDataByKey(key: Int): SecureNoteScreenData {
         return secureNoteDataDaoSecure.getSecretNoteDataByKey(key).toSecureNoteScreenData()
     }
+
+    override suspend fun deleteSecureNoteDataByKey(key: Int) {
+        secureNoteDataDaoSecure.deleteSecretNoteDataByKey(key)
+    }
 }

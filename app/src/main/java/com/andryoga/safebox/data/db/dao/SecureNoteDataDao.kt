@@ -18,4 +18,7 @@ interface SecureNoteDataDao {
 
     @Query("select * from secure_note_data where `key` = :key limit 1")
     suspend fun getSecretNoteDataByKey(key: Int): SecureNoteDataEntity
+
+    @Query("Delete from secure_note_data where `key` = :key")
+    suspend fun deleteSecretNoteDataByKey(key: Int)
 }

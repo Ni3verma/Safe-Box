@@ -28,4 +28,8 @@ class BankAccountDataRepositoryImpl @Inject constructor(
     override suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData {
         return bankAccountDataDaoSecure.getBankAccountDataByKey(key).toBankAccountScreenData()
     }
+
+    override suspend fun deleteBankAccountDataByKey(key: Int) {
+        bankAccountDataDaoSecure.deleteBankAccountDataByKey(key)
+    }
 }

@@ -9,4 +9,5 @@ interface BankCardDataRepository {
     suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData)
     fun getAllBankCardData(): Flow<List<SearchBankCardData>>
     suspend fun getBankCardDataByKey(key: Int): BankCardScreenData
+    suspend fun deleteBankCardDataByKey(key: Int)
 }

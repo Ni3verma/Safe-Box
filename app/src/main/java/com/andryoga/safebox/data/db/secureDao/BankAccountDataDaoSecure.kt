@@ -33,6 +33,10 @@ class BankAccountDataDaoSecure @Inject constructor(
             }
     }
 
+    override suspend fun deleteBankAccountDataByKey(key: Int) {
+        bankAccountDataDao.deleteBankAccountDataByKey(key)
+    }
+
     private fun encrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
         bankAccountDataEntity.let {
             return BankAccountDataEntity(
