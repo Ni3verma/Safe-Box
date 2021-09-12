@@ -6,9 +6,10 @@ import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.motion.widget.MotionLayout
+import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.Navigation
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
@@ -26,14 +27,18 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
     private lateinit var binding: ActivityMainBinding
     private lateinit var motionLayout: MotionLayout
-    private lateinit var navController: NavController
+    private lateinit var drawerLayout: DrawerLayout
+
+    private val navController by lazy {
+        Navigation.findNavController(this, R.id.nav_host_fragment)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         motionLayout = binding.addNewUserPersonalDataLayout.motionLayout
-        navController = Navigation.findNavController(this, R.id.nav_host_fragment)
+        drawerLayout = binding.drawerLayout
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
 
@@ -41,14 +46,12 @@ class MainActivity : AppCompatActivity() {
 
         // top level navigation for which back button should not appear
         val appBarConfiguration = AppBarConfiguration.Builder(
-            R.id.chooseMasterPswrdFragment,
-            R.id.loginFragment,
             R.id.nav_login_info,
             R.id.nav_all_info,
             R.id.nav_bank_account_info,
             R.id.nav_bank_card_info,
             R.id.nav_secure_note_info
-        ).setOpenableLayout(binding.drawerLayout).build()
+        ).setOpenableLayout(drawerLayout).build()
 
         binding.navView.setupWithNavController(navController)
         NavigationUI.setupActionBarWithNavController(
@@ -65,14 +68,26 @@ class MainActivity : AppCompatActivity() {
         collapseAddNewDataOptions()
         when (item.itemId) {
             android.R.id.home -> {
-                if (binding.drawerLayout.isOpen)
-                    binding.drawerLayout.close()
+                if (drawerLayout.isOpen)
+                    drawerLayout.close()
                 else
-                    binding.drawerLayout.open()
+                    drawerLayout.open()
                 return true
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return NavigationUI.navigateUp(navController, drawerLayout)
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
     private fun setupObservers() {

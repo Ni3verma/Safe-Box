@@ -39,7 +39,7 @@
             android:id="@+id/action_loginFragment_to_nav_all_info"
             app:destination="@id/nav_all_info"
             app:popUpTo="@id/navigation"
-            app:popUpToInclusive="false" />
+            app:popUpToInclusive="true" />
     </fragment>
     <fragment
         android:id="@+id/chooseMasterPswrdFragment"
