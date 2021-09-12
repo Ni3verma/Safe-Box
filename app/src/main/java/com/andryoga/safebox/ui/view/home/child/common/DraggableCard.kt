@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
 const val ANIMATION_DURATION = 500
-const val MIN_DRAG = 10
+const val MIN_DRAG = 30
 
 @Composable
 fun DraggableCard(
