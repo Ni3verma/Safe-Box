@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
@@ -47,6 +48,15 @@ class AllInfoFragment : Fragment() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Timber.i("toggling visibility of add new fab and action bar")
+        (requireActivity() as MainActivity).apply {
+            setAddNewUserDataVisibility(true)
+            setSupportActionBarVisibility(true)
         }
     }
 

@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.view
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
@@ -56,9 +57,22 @@ class MainActivity : AppCompatActivity() {
             appBarConfiguration
         )
 
-        setAddNewUserDataFabVisibility(true)
-        setAddNewUserDataFabVisibility(false)
+        setAddNewUserDataVisibility(false)
         setSupportActionBarVisibility(false)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        collapseAddNewDataOptions()
+        when (item.itemId) {
+            android.R.id.home -> {
+                if (binding.drawerLayout.isOpen)
+                    binding.drawerLayout.close()
+                else
+                    binding.drawerLayout.open()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun setupObservers() {
@@ -111,8 +125,8 @@ class MainActivity : AppCompatActivity() {
         Utils.startMotionLayoutTransition(motionLayout, R.id.start)
     }
 
-    fun setAddNewUserDataFabVisibility(isVisible: Boolean) {
-        binding.addNewUserPersonalDataLayout.newDataMasterFab.visibility =
+    fun setAddNewUserDataVisibility(isVisible: Boolean) {
+        binding.addNewUserPersonalDataLayout.motionLayout.visibility =
             if (isVisible) View.VISIBLE else View.INVISIBLE
     }
 
