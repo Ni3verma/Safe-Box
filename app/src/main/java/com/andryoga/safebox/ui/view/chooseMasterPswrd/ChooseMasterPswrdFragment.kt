@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
@@ -88,8 +89,13 @@ class ChooseMasterPswrdFragment : Fragment() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
+                Timber.i("toggling visibility of add new fab and action bar")
+                (requireActivity() as MainActivity).apply {
+                    setAddNewUserDataFabVisibility(true)
+                    setSupportActionBarVisibility(true)
+                }
                 Timber.i("navigating to home")
-                findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_homeFragment)
+                findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_nav_all_info)
             }
         }
     }

@@ -11,9 +11,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
-import com.andryoga.safebox.ui.view.home.HomeFragmentDirections
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
@@ -51,28 +51,26 @@ class AllInfoFragment : Fragment() {
     }
 
     private fun onListItemClick(item: UserListItemData) {
-        // first parent is NavHostFragment, then we get parent of it to get home fragment
-        val parent = requireParentFragment().requireParentFragment()
         Timber.i("clicked ${item.id} - ${item.type.name}")
-        parent.findNavController().navigate(
+        findNavController().navigate(
             when (item.type) {
                 UserDataType.LOGIN_DATA -> {
-                    HomeFragmentDirections.actionHomeFragmentToLoginDataFragment(
+                    NavigationDirections.actionGlobalLoginDataFragment(
                         item.id
                     )
                 }
                 UserDataType.BANK_ACCOUNT -> {
-                    HomeFragmentDirections.actionHomeFragmentToBankAccountDataFragment(
+                    NavigationDirections.actionGlobalBankAccountDataFragment(
                         item.id
                     )
                 }
                 UserDataType.BANK_CARD -> {
-                    HomeFragmentDirections.actionHomeFragmentToBankCardDataFragment(
+                    NavigationDirections.actionGlobalBankCardDataFragment(
                         item.id
                     )
                 }
                 UserDataType.SECURE_NOTE -> {
-                    HomeFragmentDirections.actionHomeFragmentToSecureNoteDataFragment(
+                    NavigationDirections.actionGlobalSecureNoteDataFragment(
                         item.id
                     )
                 }

@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/empty.xml" value="0.2324074074074074" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/test.xml" value="0.22962962962962963" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/font/roboto_mono_light.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/add_new_user_personal_data.xml" value="0.1" />
@@ -14,7 +15,9 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_secure_note.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_secure_note_data.xml" value="0.264" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/empty_home_view.xml" value="0.25416666666666665" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_drawer_header.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_fragment.xml" value="0.15925925925925927" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_fragment.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_info_fragment.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/row_home_info_item.xml" value="0.536" />
       </map>

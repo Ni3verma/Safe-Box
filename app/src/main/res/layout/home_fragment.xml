@@ -37,13 +37,6 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:navGraph="@navigation/home_navigation" />
 
-                <include
-                    android:id="@+id/addNewUserPersonalDataLayout"
-                    layout="@layout/add_new_user_personal_data"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:viewModel="@{viewModel}" />
-
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
