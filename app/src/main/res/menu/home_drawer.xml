@@ -4,6 +4,15 @@
     tools:showIn="navigation_view">
 
     <group android:checkableBehavior="single">
+        <!-- Adding 2 below invisible options so that navigation works fine-->
+        <item
+            android:id="@+id/loginFragment"
+            android:icon="@drawable/ic_baseline_folder_open_24"
+            android:visible="false" />
+        <item
+            android:id="@+id/chooseMasterPswrdFragment"
+            android:icon="@drawable/ic_baseline_folder_open_24"
+            android:visible="false" />
         <item
             android:id="@+id/nav_all_info"
             android:icon="@drawable/ic_baseline_folder_open_24"

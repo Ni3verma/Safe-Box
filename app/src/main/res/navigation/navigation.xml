@@ -6,26 +6,6 @@
     app:startDestination="@id/loginFragment">
 
     <fragment
-        android:id="@+id/nav_login_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
-        android:label="@string/drawer_title_login" />
-    <fragment
-        android:id="@+id/nav_bank_account_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
-        android:label="@string/drawer_title_bank_account" />
-    <fragment
-        android:id="@+id/nav_bank_card_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragment"
-        android:label="@string/drawer_title_bank_card" />
-    <fragment
-        android:id="@+id/nav_secure_note_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragment"
-        android:label="@string/drawer_title_secure_note" />
-    <fragment
-        android:id="@+id/nav_all_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
-        android:label="@string/drawer_title_all_items" />
-    <fragment
         android:id="@+id/loginFragment"
         android:name="com.andryoga.safebox.ui.view.login.LoginFragment"
         android:label="login_fragment"
@@ -38,7 +18,8 @@
         <action
             android:id="@+id/action_loginFragment_to_nav_all_info"
             app:destination="@id/nav_all_info"
-            app:popUpTo="@id/navigation"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/loginFragment"
             app:popUpToInclusive="true" />
     </fragment>
     <fragment
@@ -49,7 +30,9 @@
         <action
             android:id="@+id/action_chooseMasterPswrdFragment_to_nav_all_info"
             app:destination="@id/nav_all_info"
-            app:popUpTo="@id/navigation" />
+            app:launchSingleTop="true"
+            app:popUpTo="@id/chooseMasterPswrdFragment"
+            app:popUpToInclusive="true" />
     </fragment>
     <dialog
         android:id="@+id/loginDataFragment"
@@ -95,4 +78,26 @@
     <action android:id="@+id/action_global_loginDataFragment" app:destination="@id/loginDataFragment" />
     <action android:id="@+id/action_global_bankAccountDataFragment" app:destination="@id/bankAccountDataFragment" />
     <action android:id="@+id/action_global_bankCardDataFragment" app:destination="@id/bankCardDataFragment" />
+
+        <fragment
+            android:id="@+id/nav_all_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
+            android:label="@string/drawer_title_all_items" />
+        <fragment
+            android:id="@+id/nav_login_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
+            android:label="@string/drawer_title_login" />
+        <fragment
+            android:id="@+id/nav_bank_account_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
+            android:label="@string/drawer_title_bank_account" />
+        <fragment
+            android:id="@+id/nav_bank_card_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragment"
+            android:label="@string/drawer_title_bank_card" />
+        <fragment
+            android:id="@+id/nav_secure_note_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragment"
+            android:label="@string/drawer_title_secure_note" />
+
 </navigation>

@@ -12,7 +12,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.NavigationUI
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants
@@ -28,10 +29,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var motionLayout: MotionLayout
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var appBarConfiguration: AppBarConfiguration
 
     private val navController by lazy {
         Navigation.findNavController(this, R.id.nav_host_fragment)
     }
+    private val drawerLayoutTopLevelNavigationIds = setOf(
+        R.id.loginFragment,
+        R.id.chooseMasterPswrdFragment,
+        R.id.nav_login_info,
+        R.id.nav_all_info,
+        R.id.nav_bank_account_info,
+        R.id.nav_bank_card_info,
+        R.id.nav_secure_note_info
+    )
+    private val drawerLayoutFirstScreen = R.id.nav_all_info
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,20 +57,24 @@ class MainActivity : AppCompatActivity() {
         setupObservers()
 
         // top level navigation for which back button should not appear
-        val appBarConfiguration = AppBarConfiguration.Builder(
-            R.id.nav_login_info,
-            R.id.nav_all_info,
-            R.id.nav_bank_account_info,
-            R.id.nav_bank_card_info,
-            R.id.nav_secure_note_info
-        ).setOpenableLayout(drawerLayout).build()
-
-        binding.navView.setupWithNavController(navController)
-        NavigationUI.setupActionBarWithNavController(
-            this,
-            navController,
-            appBarConfiguration
+        appBarConfiguration = AppBarConfiguration(
+            drawerLayoutTopLevelNavigationIds,
+            drawerLayout
         )
+
+        setupActionBarWithNavController(navController, appBarConfiguration)
+        binding.navView.setupWithNavController(navController)
+        binding.navView.setNavigationItemSelectedListener {
+            val id = it.itemId
+            if (id == drawerLayoutFirstScreen) {
+                navController.popBackStack(drawerLayoutFirstScreen, true)
+            } else if (id in drawerLayoutTopLevelNavigationIds) {
+                navController.popBackStack(drawerLayoutFirstScreen, false)
+            }
+            navController.navigate(id)
+            drawerLayout.closeDrawers()
+            true
+        }
 
         setAddNewUserDataVisibility(false)
         setSupportActionBarVisibility(false)
@@ -79,7 +95,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        return NavigationUI.navigateUp(navController, drawerLayout)
+        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
     override fun onBackPressed() {
