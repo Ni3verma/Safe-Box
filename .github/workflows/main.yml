@@ -36,6 +36,11 @@ jobs:
     needs: [ debug-build ]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run lint
         run: ./gradlew lint
 
@@ -52,6 +57,11 @@ jobs:
     needs: [ lint ]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Set Secret Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
