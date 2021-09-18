@@ -57,6 +57,7 @@ jobs:
     #    needs: [ lint ]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Set Secret Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
