@@ -21,17 +21,16 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build app
-        run: ./gradlew assemble
+      - name: Build debug app
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleDebug --info
 
-  lint:
-    needs: [ build ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: upload debug apk
+        uses: actions/upload-artifact@v2
+        with:
+          name: debug.apk
+          path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
       - name: Run lint
         run: ./gradlew lint
@@ -45,46 +44,68 @@ jobs:
       - name: Run ktlint
         run: ./gradlew app:ktlintCheck --daemon
 
-  unit-test:
-    needs: [ build ]
-    runs-on: ubuntu-latest
+      - name: Set Secret Properties
+        env:
+          RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
+        run: echo "$RELEASE_KEYSTORE_PROPERTIES" > ./releaseKeyStore.properties
 
-    steps:
-      - uses: actions/checkout@v2
+      - name: Prepare release keystore properties
+        run: echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+      - name: Prepare release keystore
+        run: gpg -d --passphrase "${{ secrets.RELEASE_KEYSTORE_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
 
-      - name: Run Unit test
-        run: ./gradlew test
+      - name: Build release apk
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleRelease --info
 
-      - name: upload test result
+      - name: upload release apk
         uses: actions/upload-artifact@v2
         with:
-          name: Unit test result
-          path: app/build/reports/tests/testDebugUnitTest/
+          name: release.apk
+          path: app/build/outputs/apk/release/SafeBox-release.apk
 
-#   instrumentation-test:
-#     needs: [ unit-test ]
-#     runs-on: macos-latest
+  #  unit-test:
+  #    needs: [ build ]
+  #    runs-on: ubuntu-latest
+  #
+  #    steps:
+  #      - uses: actions/checkout@v2
+  #
+  #      - name: Make gradlew executable
+  #        run: chmod +x ./gradlew
+  #
+  #      - name: Run Unit test
+  #        run: ./gradlew test
+  #
+  #      - name: upload test result
+  #        uses: actions/upload-artifact@v2
+  #        with:
+  #          name: Unit test result
+  #          path: app/build/reports/tests/testDebugUnitTest/
 
-#     steps:
-#       - uses: actions/checkout@v2
+  #   instrumentation-test:
+  #     needs: [ unit-test ]
+  #     runs-on: macos-latest
 
-#       - name: Make gradlew executable
-#         run: chmod +x ./gradlew
+  #     steps:
+  #       - uses: actions/checkout@v2
 
-#       - name: Run espresso test
-#         uses: reactivecircus/android-emulator-runner@v2
-#         with:
-#           api-level: 29
-#           script: ./gradlew connectedCheck
+  #       - name: Make gradlew executable
+  #         run: chmod +x ./gradlew
 
-#       - name: upload test result
-#         uses: actions/upload-artifact@v2
-#         with:
-#           name: Instrumentation test result
-#           path: app/build/reports/androidTests/connected/
+  #       - name: Run espresso test
+  #         uses: reactivecircus/android-emulator-runner@v2
+  #         with:
+  #           api-level: 29
+  #           script: ./gradlew connectedCheck
+
+  #       - name: upload test result
+  #         uses: actions/upload-artifact@v2
+  #         with:
+  #           name: Instrumentation test result
+  #           path: app/build/reports/androidTests/connected/
 
   Detekt:
     name: Detekt Scan
