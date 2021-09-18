@@ -13,51 +13,45 @@ env:
   DETEKT_RELEASE_TAG: v1.15.0
 
 jobs:
-  #  Debug-build:
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - uses: actions/checkout@v2
-  #
-  #      - name: Make gradlew executable
-  #        run: chmod +x ./gradlew
-  #
-  #      - name: Build debug app
-  #        env:
-  #          VERSION_CODE: ${{ github.run_number }}
-  #        run: ./gradlew assembleDebug --info
-  #
-  #      - name: upload debug apk
-  #        uses: actions/upload-artifact@v2
-  #        with:
-  #          name: debug.apk
-  #          path: app/build/outputs/apk/debug/SafeBox-debug.apk
-  #
-  #  lint:
-  #    needs: [ debug-build ]
-  #    runs-on: ubuntu-latest
-  #    steps:
-  #      - uses: actions/checkout@v2
-  #
-  #      - name: Make gradlew executable
-  #        run: chmod +x ./gradlew
-  #
-  #      - name: Run lint
-  #        run: ./gradlew lint
-  #
-  #      - name: upload html lint report
-  #        uses: actions/upload-artifact@v2
-  #        with:
-  #          name: lint.html
-  #          path: app/build/reports/lint-results-debug.html
-  #
-  #      - name: Run ktlint
-  #        run: ./gradlew app:ktlintCheck --daemon
-
-  Release-build:
-    #    needs: [ lint ]
+  Debug-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build debug app
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleDebug --info
+
+      - name: upload debug apk
+        uses: actions/upload-artifact@v2
+        with:
+          name: debug.apk
+          path: app/build/outputs/apk/debug/SafeBox-debug.apk
+
+  lint:
+    needs: [ debug-build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run lint
+        run: ./gradlew lint
+
+      - name: upload html lint report
+        uses: actions/upload-artifact@v2
+        with:
+          name: lint.html
+          path: app/build/reports/lint-results-debug.html
+
+      - name: Run ktlint
+        run: ./gradlew app:ktlintCheck --daemon
+
+  Release-build:
+    needs: [ lint ]
+    runs-on: ubuntu-latest
+    steps:
       - name: Set Secret Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
@@ -66,9 +60,6 @@ jobs:
       - name: Prepare release keystore properties
         run: echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
 
-      - name: delete it later
-        run: ls & pwd
-
       - name: Prepare release keystore
         run: gpg -d --passphrase "${{ secrets.RELEASE_KEYSTORE_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
 
@@ -76,9 +67,6 @@ jobs:
         env:
           VERSION_CODE: ${{ github.run_number }}
         run: ./gradlew assembleRelease --info
-
-      - name: List files
-        run: ls -lrt app/build/outputs/apk/release
 
       - name: upload release apk
         uses: actions/upload-artifact@v2
