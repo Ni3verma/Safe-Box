@@ -63,10 +63,13 @@ jobs:
         run: echo "$RELEASE_KEYSTORE_PROPERTIES" > ./releaseKeyStore.properties
 
       - name: Prepare release keystore properties
-        run: echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > releaseKeyStore.jks.asc
+        run: echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
+
+      - name: delete it later
+        run: ls & pwd
 
       - name: Prepare release keystore
-        run: gpg -d --passphrase "${{ secrets.RELEASE_KEYSTORE_PASSPHRASE }}" --batch releaseKeyStore.jks.asc > app/releaseKeyStore.jks
+        run: gpg -d --passphrase "${{ secrets.RELEASE_KEYSTORE_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
 
       - name: Build release apk
         env:
