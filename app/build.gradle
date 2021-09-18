@@ -34,10 +34,33 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            // Load releaseKeyStore.properties in an object
+            // if you want to make release build in your local then make a releaseKeyStore.properties file with below keys at root level
+            // also store your release key store (*.jks) file and mention path in STORE_FILE property
+            // both these files are meant to be stored only locally and not committed to VCS
+            def localReleaseKeyStoreProperties = new Properties()
+            localReleaseKeyStoreProperties.load(new FileInputStream(rootProject.file("releaseKeyStore.properties")))
+            storeFile file(localReleaseKeyStoreProperties['STORE_FILE'])
+            storePassword localReleaseKeyStoreProperties['STORE_PASSWORD']
+            keyPassword localReleaseKeyStoreProperties['KEY_PASSWORD']
+            keyAlias localReleaseKeyStoreProperties['KEY_ALIAS']
+        }
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            // if you are changing apk name then also change name in git workflow file
+            outputFileName = "SafeBox-${variant.name}.apk"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
     }
     kotlinOptions {
