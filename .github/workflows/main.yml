@@ -13,7 +13,7 @@ env:
   DETEKT_RELEASE_TAG: v1.15.0
 
 jobs:
-  Debug-build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -32,15 +32,6 @@ jobs:
           name: debug.apk
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
-  lint:
-    needs: [ debug-build ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
       - name: Run lint
         run: ./gradlew lint
 
@@ -52,15 +43,6 @@ jobs:
 
       - name: Run ktlint
         run: ./gradlew app:ktlintCheck --daemon
-
-  Release-build:
-    needs: [ lint ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
 
       - name: Set Secret Properties
         env:
@@ -85,7 +67,7 @@ jobs:
           path: app/build/outputs/apk/release/SafeBox-release.apk
 
   #  unit-test:
-  #    needs: [ debug-build ]
+  #    needs: [ build ]
   #    runs-on: ubuntu-latest
   #
   #    steps:
