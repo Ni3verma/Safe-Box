@@ -13,7 +13,7 @@ env:
   DETEKT_RELEASE_TAG: v1.15.0
 
 jobs:
-  build:
+  Debug-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -21,11 +21,19 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build app
-        run: ./gradlew assemble
+      - name: Build debug app
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleDebug --info
+
+      - name: upload debug apk
+        uses: actions/upload-artifact@v2
+        with:
+          name: debug.apk
+          path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
   lint:
-    needs: [ build ]
+    needs: [ debug-build ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,7 +53,7 @@ jobs:
       - name: Run ktlint
         run: ./gradlew app:ktlintCheck --daemon
 
-  Make-Release-apk:
+  Release-build:
     needs: [ lint ]
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +70,7 @@ jobs:
       - name: Build release apk
         env:
           VERSION_CODE: ${{ github.run_number }}
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease --info
 
       - name: List files
         run: ls -lrt app/build/outputs/apk/release
@@ -74,7 +82,7 @@ jobs:
           path: app/build/outputs/apk/release/SafeBox-release.apk
 
   #  unit-test:
-  #    needs: [ build ]
+  #    needs: [ debug-build ]
   #    runs-on: ubuntu-latest
   #
   #    steps:

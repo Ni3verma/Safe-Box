@@ -15,5 +15,3 @@
 /releaseKeyStore.properties
 *.jks
 *.apk
-/app/release
-/app/debug
