@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.view.home
+package com.andryoga.safebox.ui.view
 
 import android.view.View
 import androidx.lifecycle.LiveData
@@ -9,7 +9,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor() : ViewModel() {
+class MainActivityViewModel @Inject constructor() : ViewModel() {
     private val _addNewUserDataOptionClicked = SingleLiveEvent<Int>()
     val addNewUserDataOptionClicked: LiveData<Int> = _addNewUserDataOptionClicked
 

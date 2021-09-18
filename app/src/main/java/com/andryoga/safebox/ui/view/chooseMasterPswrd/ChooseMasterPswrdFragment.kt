@@ -89,7 +89,7 @@ class ChooseMasterPswrdFragment : Fragment() {
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
                 Timber.i("navigating to home")
-                findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_homeFragment)
+                findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_nav_all_info)
             }
         }
     }

@@ -65,7 +65,7 @@ class LoginFragment : Fragment() {
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
                 Timber.i("navigating to home")
-                findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
+                findNavController().navigate(R.id.action_loginFragment_to_nav_all_info)
             }
         }
     }
