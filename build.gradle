@@ -1,9 +1,9 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.5.10'
+    ext.kotlin_version = '1.5.21'
     ext.navigationVersion = '2.3.5'
-    ext.hilt_version = '2.37'
+    ext.hilt_version = '2.38.1'
 
     repositories {
         google()
@@ -33,7 +33,7 @@ ext{
     biometric_version='1.1.0'
     room_version='2.3.0'
     preference_version='1.1.1'
-    compose_version = '1.0.0'
+    compose_version = '1.0.1'
 }
 
 allprojects {
