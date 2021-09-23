@@ -3,3 +3,6 @@
 
 # hide the original source file name.
 -renamesourcefileattribute SourceFile
+
+# Keep custom exceptions.
+-keep public class * extends java.lang.Exception

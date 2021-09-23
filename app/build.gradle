@@ -6,6 +6,8 @@ plugins {
     id 'dagger.hilt.android.plugin'
     id 'org.jlleitschuh.gradle.ktlint'
     id "io.gitlab.arturbosch.detekt"
+    id "com.google.gms.google-services"
+    id "com.google.firebase.crashlytics"
 }
 
 apply from: '../CICD/cicd.gradle'
@@ -62,6 +64,9 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            firebaseCrashlytics {
+                mappingFileUploadEnabled true
+            }
         }
     }
     kotlinOptions {
@@ -139,4 +144,9 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.3.0'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+
+    //crashlytics
+    implementation platform('com.google.firebase:firebase-bom:28.4.1')
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }

@@ -36,7 +36,7 @@ class LoginViewModel @Inject constructor(
     val navigateToHome: LiveData<Boolean> = _navigateToHome
 
     fun onUnlockClick() {
-        Timber.d("unlock clicked, entered pswrd = ${pswrd.value}")
+        Timber.d("unlock clicked")
         if (pswrd.value != null) {
             viewModelScope.launch {
                 val isPasswordCorrect = userDetailsRepository.checkPassword(pswrd.value!!)
