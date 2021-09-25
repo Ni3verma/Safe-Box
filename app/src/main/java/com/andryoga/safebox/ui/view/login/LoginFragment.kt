@@ -31,9 +31,11 @@ class LoginFragment : Fragment() {
         binding.lifecycleOwner = this
 
         binding.pswrdText.addTextChangedListener {
-            Timber.i("clearing error(if any) on pswrd edit text")
-            binding.pswrd.isErrorEnabled = false
-            binding.pswrd.error = null
+            if (binding.pswrd.isErrorEnabled) {
+                Timber.i("clearing error on pswrd edit text")
+                binding.pswrd.isErrorEnabled = false
+                binding.pswrd.error = null
+            }
         }
 
         if (viewModel.isSignUpRequired) {
