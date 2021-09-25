@@ -5,8 +5,8 @@ import com.andryoga.safebox.ui.common.Resource
 import timber.log.Timber
 
 object Utils {
-    fun logResourceInfo(tag: String, resource: Resource<Any>) {
-        Timber.i("$tag --> status = ${resource.status}, data = ${resource.data}, message = ${resource.message}")
+    fun logResource(tag: String, resource: Resource<Any>) {
+        Timber.d("$tag --> status = ${resource.status}\ndata = ${resource.data}\nmessage = ${resource.message}\n")
     }
 
     fun String?.encryptNullableString(symmetricKeyUtils: SymmetricKeyUtils): String? {

@@ -18,23 +18,27 @@ class UserDetailsDaoSecure @Inject constructor(
         userDetailsDao.insertUserDetailsData(entity)
     }
 
-    override suspend fun getUserDetails(): UserDetailsEntity {
-        return userDetailsDao.getUserDetails()
+    override suspend fun getUserPassword(): String {
+        return userDetailsDao.getUserPassword()
     }
 
     override suspend fun getHint(): String? {
         return userDetailsDao.getHint()?.let { symmetricKeyUtils.decrypt(it) }
     }
 
+    override suspend fun getUid(): String {
+        return userDetailsDao.getUid()
+    }
+
     suspend fun checkPassword(password: String): Boolean {
-        val userDetailsEntity = getUserDetails()
-        return hashingUtils.compareHash(password, userDetailsEntity.password)
+        return hashingUtils.compareHash(password, getUserPassword())
     }
 
     private fun hash(userDetailsEntity: UserDetailsEntity): UserDetailsEntity {
         userDetailsEntity.let {
             return UserDetailsEntity(
                 it.key,
+                it.uid,
                 hashingUtils.hash(it.password),
                 it.hint,
                 it.creationDate,
@@ -47,6 +51,7 @@ class UserDetailsDaoSecure @Inject constructor(
         userDetailsEntity.let {
             return UserDetailsEntity(
                 it.key,
+                it.uid,
                 it.password,
                 it.hint.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,

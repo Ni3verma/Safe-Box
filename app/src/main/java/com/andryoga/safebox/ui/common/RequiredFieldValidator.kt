@@ -32,13 +32,15 @@ class RequiredFieldValidator(
                         view.isErrorEnabled = true
                         view.error = view.context.getString(R.string.common_error_mandatory_field)
                         errorFields = errorFields.plusElement(view.id)
-                        Timber.i("$tag --> disabling button")
-                        validationOnViewId.isEnabled = false
+                        if (validationOnViewId.isEnabled) {
+                            Timber.i("$tag --> disabling button")
+                            validationOnViewId.isEnabled = false
+                        }
                     } else {
                         view.isErrorEnabled = false
                         view.error = null
                         errorFields = errorFields.minusElement(view.id)
-                        if (errorFields.isEmpty()) {
+                        if (errorFields.isEmpty() && !validationOnViewId.isEnabled) {
                             Timber.i("$tag --> enabling button")
                             validationOnViewId.isEnabled = true
                         }

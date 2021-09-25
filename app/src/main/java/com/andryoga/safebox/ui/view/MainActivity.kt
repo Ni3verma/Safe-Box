@@ -17,6 +17,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants
+import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils
 import dagger.hilt.android.AndroidEntryPoint
@@ -78,6 +79,8 @@ class MainActivity : AppCompatActivity() {
 
         setAddNewUserDataVisibility(false)
         setSupportActionBarVisibility(false)
+
+        CrashlyticsKeys(this).setDefaultKeys()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

@@ -51,9 +51,10 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
     }
 
     private fun handleSaveButtonClick(resource: Resource<Boolean>) {
+        Timber.i("save clicked")
         // NEED_HELP: 6/19/2021 Not able to figure out
         // why snackbar is not showing up if I use requireView() in view param
-        Utils.logResourceInfo(tagLocal, resource)
+        Utils.logResource(tagLocal, resource)
         when (resource.status) {
             Status.LOADING -> com.andryoga.safebox.ui.common.Utils.switchVisibility(
                 binding.saveBtn,

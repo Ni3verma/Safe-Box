@@ -26,6 +26,17 @@ run_detekt() {
   log_info "detekt passed"
 }
 
+restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json )
+for changedFile in `git diff --name-only --cached`; do
+	for restricted_file in "${restricted_files[@]}"; do
+		echo "$restricted_file"
+	done | grep "$changedFile"
+	if [ $? -eq 0 ]; then
+		echo "ERROR : you cannot commit $changedFile as it contains your secret data"
+		exit 1
+	fi
+done
+
 log_info "Running ktlint check"
 ./gradlew app:ktlintCheck --daemon
 status=$?

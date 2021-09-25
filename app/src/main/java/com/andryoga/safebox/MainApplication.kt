@@ -1,7 +1,10 @@
 package com.andryoga.safebox
 
 import android.app.Application
+import android.util.Log
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
+import org.jetbrains.annotations.NotNull
 import timber.log.Timber
 import java.util.*
 
@@ -21,6 +24,27 @@ class MainApplication : Application() {
                     )
                 }
             })
+        } else {
+            Timber.plant(ReleaseTree())
+        }
+    }
+}
+
+class ReleaseTree : @NotNull Timber.Tree() {
+    override fun isLoggable(tag: String?, priority: Int): Boolean {
+        return (priority in listOf(Log.ERROR, Log.WARN, Log.INFO))
+    }
+
+    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        val crashlytics = FirebaseCrashlytics.getInstance()
+        crashlytics.log(message)
+
+        if (priority == Log.ERROR || priority == Log.WARN) {
+            // SEND ERROR REPORTS TO Crashlytics.
+            if (t != null) {
+                crashlytics.recordException(t)
+            }
+            crashlytics.sendUnsentReports()
         }
     }
 }
