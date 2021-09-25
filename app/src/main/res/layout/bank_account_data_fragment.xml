@@ -68,6 +68,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                app:passwordToggleEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title">
@@ -77,6 +78,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
+                    android:inputType="numberPassword"
                     android:hint="@string/account_number"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.accountNo}">
@@ -121,6 +123,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/customer_id"
+                    android:nextFocusDown="@+id/branch_code_text"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.customerId}">
@@ -209,6 +212,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="@string/ifsc_code"
+                    android:nextFocusDown="@+id/micr_code_text"
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.ifscCode}">

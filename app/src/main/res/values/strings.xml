@@ -43,6 +43,7 @@
 
     <!--    Other-->
     <string name="app_name">Safe Box</string>
+    <string name="app_subtitle">Safely store your private data</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
     <string name="enter_password">Enter password</string>
     <string name="enter_password_again">Enter password again</string>
