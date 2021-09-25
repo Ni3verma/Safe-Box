@@ -26,7 +26,7 @@ run_detekt() {
   log_info "detekt passed"
 }
 
-restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks )
+restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json )
 for changedFile in `git diff --name-only --cached`; do
 	for restricted_file in "${restricted_files[@]}"; do
 		echo "$restricted_file"

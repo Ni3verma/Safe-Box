@@ -2,6 +2,7 @@ package com.andryoga.safebox
 
 import android.app.Application
 import android.util.Log
+import com.google.firebase.crashlytics.CustomKeysAndValues
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
@@ -31,9 +32,19 @@ class MainApplication : Application() {
 }
 
 class ReleaseTree : @NotNull Timber.Tree() {
+    override fun isLoggable(tag: String?, priority: Int): Boolean {
+        return (priority in listOf(Log.ERROR, Log.WARN, Log.INFO))
+    }
+
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val crashlytics = FirebaseCrashlytics.getInstance()
-        crashlytics.log(message)
+        crashlytics.setCustomKeys(
+            CustomKeysAndValues.Builder()
+                .putString("tag", tag ?: "null")
+                .build()
+        )
+
+        crashlytics.log("$tag : $message")
 
         if (priority == Log.ERROR || priority == Log.WARN) {
             // SEND ERROR REPORTS TO Crashlytics.
