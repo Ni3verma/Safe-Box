@@ -10,13 +10,15 @@
             type="com.andryoga.safebox.ui.view.login.LoginViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.constraintlayout.motion.widget.MotionLayout
+        android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layoutDescription="@xml/login_fragment_xml_constraintlayout_scene"
         tools:context=".ui.view.login.LoginFragment">
 
         <ImageView
-            android:id="@+id/top_curve"
+            android:id="@+id/top_curve_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/cd_top_curve"
@@ -38,6 +40,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/login_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -56,13 +59,13 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:fontFamily="@font/roboto_mono_medium"
-            android:text="Welcome Back !"
+            android:text="@string/welcome_back"
             android:textAppearance="@style/TextAppearance.MyTheme.Headline4"
             android:textColor="@color/colorSecondary"
             android:typeface="monospace"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/top_curve" />
+            app:layout_constraintTop_toBottomOf="@id/top_curve_view" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/pswrd"
@@ -132,6 +135,7 @@
             app:srcCompat="@drawable/ic_arrow_forward" />
 
         <ImageView
+            android:id="@+id/bottom_curve_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/cd_bottom_curve"
@@ -141,5 +145,5 @@
             android:src="@drawable/bottom_curve"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.motion.widget.MotionLayout>
 </layout>

@@ -82,4 +82,5 @@
     <string name="ifsc_code">IFSC Code <font color='#FF0000'>̽</font></string>
     <string name="micr_code">MICR Code</string>
     <string name="hint_error">User Password subset not allowed</string>
+    <string name="welcome_back">Welcome Back !</string>
 </resources>
