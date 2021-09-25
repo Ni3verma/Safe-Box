@@ -48,7 +48,7 @@
     <string name="app_name">Safe Box</string>
     <string name="app_subtitle">Safely store your private data</string>
     <string name="choose_master_password_head">Choose a Master Password</string>
-    <string name="enter_password">Enter password</string>
+    <string name="enter_password">Enter password <font color='#FF0000'>̽</font></string>
     <string name="enter_password_again">Enter password again</string>
     <string name="length_validation_text">Must be more than 8 characters</string>
     <string name="special_char_validation_text">Must contain more than 1 special character</string>

@@ -41,7 +41,6 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     val navigateToHome: LiveData<Boolean> = _navigateToHome
 
     val pswrd = MutableLiveData("")
-    val confirmPswrd = MutableLiveData("")
     val hint = MutableLiveData("")
 
     init {
@@ -55,7 +54,6 @@ class ChooseMasterPswrdViewModel @Inject constructor(
         evaluateValidationRuleJob = viewModelScope.launch(Dispatchers.IO) {
             val list = mutableListOf<ChooseMasterPswrdValidationFailureCode>()
             val pswrd = pswrd.value!!
-            val confirmPswrd = confirmPswrd.value!!
             val hint = hint.value!!
 
             if (pswrd.length <= Constants.minPasswordLength) {
@@ -94,10 +92,6 @@ class ChooseMasterPswrdViewModel @Inject constructor(
                     list.add(ALTERNATE_CHAR_FOUND)
                     break
                 }
-            }
-
-            if (pswrd != confirmPswrd) {
-                list.add(PASSWORD_DO_NOT_MATCH)
             }
 
             if (longestCommonSubstring(

@@ -20,6 +20,7 @@ import timber.log.Timber
 @AndroidEntryPoint
 class ChooseMasterPswrdFragment : Fragment() {
     private val viewModel: ChooseMasterPswrdViewModel by viewModels()
+    private var isPasswordStrong = true
 
     private lateinit var binding: ChooseMasterPswrdFragmentBinding
     private lateinit var pswrdValidatorMapping: Map<ChooseMasterPswrdValidationFailureCode, TextView>
@@ -39,11 +40,32 @@ class ChooseMasterPswrdFragment : Fragment() {
         binding.lifecycleOwner = this
 
         binding.pswrdText.addTextChangedListener {
+            binding.pswrd.isErrorEnabled = false
+            binding.pswrd.isHelperTextEnabled = false
             viewModel.evaluateValidationRules()
         }
 
-        binding.confirmPswrdText.addTextChangedListener {
-            viewModel.evaluateValidationRules()
+        binding.pswrdText.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                viewModel.evaluateValidationRules()
+            } else {
+                binding.pswrdValidationGroup.visibility = View.GONE
+                if (!isPasswordStrong) {
+                    binding.pswrd.apply {
+                        isErrorEnabled = true
+                        isHelperTextEnabled = false
+//                        TODO : resource
+                        error = "Password is weak"
+                    }
+                } else {
+                    binding.pswrd.apply {
+                        isErrorEnabled = false
+                        isHelperTextEnabled = true
+//                        TODO : resource
+                        helperText = "Password is Strong"
+                    }
+                }
+            }
         }
 
         binding.hintText.addTextChangedListener {
@@ -60,21 +82,27 @@ class ChooseMasterPswrdFragment : Fragment() {
         viewModel.validationFailureCode.observe(viewLifecycleOwner) { failureCode ->
             // by default make every validation as pass
             pswrdValidatorMapping.values.forEach { validationView ->
-                Utils.setTextViewLeftDrawable(validationView, R.drawable.ic_check_24)
+                validationView.visibility = View.GONE
             }
             binding.hint.error = null
 
             // save button will be enabled only if there is no validation failure
             binding.saveBtn.isEnabled = failureCode.isNullOrEmpty()
 
+            isPasswordStrong = failureCode.isNullOrEmpty()
+
             // change icon for those where validation failed
             Timber.d("failure validation codes : $failureCode")
             for (code in failureCode) {
                 when {
-                    pswrdValidatorMapping.containsKey(code) -> Utils.setTextViewLeftDrawable(
-                        pswrdValidatorMapping[code]!!,
-                        R.drawable.ic_error_24
-                    )
+                    pswrdValidatorMapping.containsKey(code) -> {
+                        val validationView = pswrdValidatorMapping[code]!!
+                        validationView.visibility = View.VISIBLE
+                        Utils.setTextViewLeftDrawable(
+                            validationView,
+                            R.drawable.ic_error_24
+                        )
+                    }
                     code == HINT_IS_SUBSET -> {
                         binding.hint.isErrorEnabled = true
                         binding.hint.error = getString(R.string.hint_error)
@@ -100,8 +128,7 @@ class ChooseMasterPswrdFragment : Fragment() {
             LESS_SPECIAL_CHAR_COUNT to binding.specialCharValidation,
             NOT_MIX_CASE to binding.caseValidation,
             LESS_NUMERIC_COUNT to binding.numericValidation,
-            ALTERNATE_CHAR_FOUND to binding.alternateValidation,
-            PASSWORD_DO_NOT_MATCH to binding.pswrdMatchValidation
+            ALTERNATE_CHAR_FOUND to binding.alternateValidation
         )
     }
 }
