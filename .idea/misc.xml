@@ -10,6 +10,7 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/add_new_user_personal_data.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/bank_account_data_fragment.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/bank_card_data_fragment.xml" value="0.264" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/choose_master_pswrd_fragment.xml" value="0.18055555555555555" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_add_new_bank_card_data.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_add_new_login_data.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/dialog_secure_note.xml" value="0.25416666666666665" />
@@ -17,6 +18,7 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/empty_home_view.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_drawer_header.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_fragment.xml" value="0.15925925925925927" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_data_fragment.xml" value="0.18055555555555555" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_fragment.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_info_fragment.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/row_home_info_item.xml" value="0.536" />

@@ -93,7 +93,7 @@
                 android:id="@+id/number_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:capitalize="characters"
+                android:inputType="number"
                 android:hint="@string/number"
                 android:singleLine="true"
                 android:text="@={viewModel.bankCardScreenData.number}">
@@ -117,6 +117,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/pin"
+                android:nextFocusDown="@+id/cvv_text"
                 android:inputType="number"
                 android:singleLine="true"
                 android:text="@={viewModel.bankCardScreenData.pin}">
@@ -131,6 +132,7 @@
             android:layout_width="0dp"
             android:layout_marginStart="4dp"
             android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/pin"
             app:layout_constraintTop_toBottomOf="@+id/number">
@@ -140,7 +142,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/cvv"
-                android:inputType="number"
+                android:inputType="numberPassword"
                 android:singleLine="true"
                 android:text="@={viewModel.bankCardScreenData.cvv}">
 
@@ -153,7 +155,6 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/pin">
