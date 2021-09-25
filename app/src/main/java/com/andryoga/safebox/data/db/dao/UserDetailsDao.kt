@@ -11,9 +11,12 @@ interface UserDetailsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserDetailsData(userDetailsEntity: UserDetailsEntity)
 
-    @Query("select * from user_details limit 1")
-    suspend fun getUserDetails(): UserDetailsEntity
+    @Query("select password from user_details limit 1")
+    suspend fun getUserPassword(): String
 
     @Query("select hint from user_details")
     suspend fun getHint(): String?
+
+    @Query("select uid from user_details ")
+    suspend fun getUid(): String
 }
