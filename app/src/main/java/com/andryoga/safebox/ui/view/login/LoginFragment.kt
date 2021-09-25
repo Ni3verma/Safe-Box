@@ -48,9 +48,12 @@ class LoginFragment : Fragment() {
         setupObservers()
 
         binding.ShowHintText.setOnClickListener {
-
-            Utils.switchText(binding.ShowHintText, getString(R.string.show_hint), getString(R.string.hide_hint))
-            Utils.switchVisibility(binding.displayHintText, binding.hintDivider)
+            Utils.switchText(
+                binding.ShowHintText,
+                getString(R.string.show_hint),
+                getString(R.string.hide_hint)
+            )
+            Utils.switchVisibility(binding.displayHintText)
         }
 
         return binding.root

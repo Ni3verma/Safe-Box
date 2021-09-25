@@ -2,7 +2,9 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
+
     <data>
+
         <variable
             name="viewModel"
             type="com.andryoga.safebox.ui.view.login.LoginViewModel" />
@@ -13,89 +15,131 @@
         android:layout_height="match_parent"
         tools:context=".ui.view.login.LoginFragment">
 
-        <androidx.cardview.widget.CardView
+        <ImageView
+            android:id="@+id/top_curve"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:contentDescription="@string/cd_top_curve"
+            android:scaleType="fitXY"
+            android:scaleX="1.03"
+            android:scaleY="1.03"
+            android:src="@drawable/top_curve"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="8dp"
-            app:contentPadding="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:contentDescription="@string/cd_app_logo"
+            android:src="@mipmap/ic_launcher_round"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/roboto_mono_medium"
+            android:text="@string/login"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline4"
+            android:textColor="@color/colorAccent"
+            android:typeface="monospace"
+            app:layout_constraintBottom_toBottomOf="@id/logo"
+            app:layout_constraintStart_toEndOf="@id/logo"
+            app:layout_constraintTop_toTopOf="@id/logo" />
+
+        <TextView
+            android:id="@+id/welcome_back_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/roboto_mono_medium"
+            android:text="Welcome Back !"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline4"
+            android:textColor="@color/colorSecondary"
+            android:typeface="monospace"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/top_curve" />
 
-            <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/pswrd"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="32dp"
+            app:boxCornerRadiusBottomEnd="28dp"
+            app:boxCornerRadiusTopEnd="28dp"
+            app:layout_constraintEnd_toStartOf="@id/save_btn"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/welcome_back_text"
+            app:passwordToggleEnabled="true">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/pswrd_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:hint="@string/password"
+                android:inputType="textPassword"
+                android:singleLine="true"
+                android:text="@={viewModel.pswrd}">
 
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/pswrd"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:passwordToggleEnabled="true"
-                    app:errorEnabled="true">
+            </com.google.android.material.textfield.TextInputEditText>
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/pswrd_text"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/password"
-                        android:inputType="textPassword"
-                        android:singleLine="true"
-                        android:text="@={viewModel.pswrd}">
+        </com.google.android.material.textfield.TextInputLayout>
 
-                    </com.google.android.material.textfield.TextInputEditText>
+        <TextView
+            android:id="@+id/Show_hint_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:fontFamily="@font/roboto_mono_medium"
+            android:text="@string/show_hint"
+            android:textColor="@color/colorSecondary"
+            android:textSize="16sp"
+            app:layout_constraintStart_toStartOf="@id/pswrd"
+            app:layout_constraintTop_toBottomOf="@id/pswrd" />
 
-                </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/display_hint_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@{viewModel.hint}"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/Show_hint_text"
+            app:layout_constraintStart_toEndOf="@id/Show_hint_text"
+            app:layout_constraintTop_toTopOf="@id/Show_hint_text"
+            tools:text="This is Hint"
+            tools:visibility="visible" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:layout_marginTop="8dp"
-                    android:orientation="vertical">
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/save_btn"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_marginEnd="8dp"
+            android:background="@color/colorSecondary"
+            android:onClick="@{()->viewModel.onUnlockClick()}"
+            android:padding="8dp"
+            app:layout_constraintBottom_toBottomOf="@id/pswrd"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/pswrd"
+            app:layout_constraintTop_toTopOf="@id/pswrd"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
+            app:srcCompat="@drawable/ic_arrow_forward" />
 
-                    <TextView
-                        android:id="@+id/display_hint_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@{viewModel.hint}"
-                        android:textSize="16sp"
-                        android:visibility="invisible"/>
-
-                    <View
-                        android:id="@+id/hint_divider"
-                        android:layout_width="match_parent"
-                        android:layout_height="0.5dp"
-                        android:background="@color/colorPrimary"
-                        android:visibility="invisible"/>
-
-                    <TextView
-                        android:id="@+id/Show_hint_text"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="end"
-                        android:text="@string/show_hint"
-                        android:textColor="@color/colorPrimary"/>
-
-                </LinearLayout>
-
-
-                <Button
-                    android:id="@+id/save_btn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:onClick="@{()->viewModel.onUnlockClick()}"
-                    android:text="@string/unlock" />
-
-
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/cd_bottom_curve"
+            android:scaleType="fitXY"
+            android:scaleX="1.03"
+            android:scaleY="1.03"
+            android:src="@drawable/bottom_curve"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

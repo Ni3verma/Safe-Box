@@ -4,6 +4,8 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/empty.xml" value="0.2324074074074074" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/ic_check_24.xml" value="0.2" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/progress.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/test.xml" value="0.22962962962962963" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/font/roboto_mono_light.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />

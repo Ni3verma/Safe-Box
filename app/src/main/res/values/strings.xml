@@ -6,6 +6,9 @@
     <string name="cd_add_new_bank_card_data">Add new bank card data</string>
     <string name="cd_add_a_new_note">Add a new note</string>
     <string name="cd_empty_list">Empty List</string>
+    <string name="cd_top_curve">screen top curve view</string>
+    <string name="cd_bottom_curve">screen bottom curve view</string>
+    <string name="cd_app_logo">App logo</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
@@ -62,8 +65,8 @@
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
     <string name="add_hint">Add hint</string>
-    <string name="show_hint">Show hint</string>
-    <string name="hide_hint">Hide hint</string>
+    <string name="show_hint">Show Hint</string>
+    <string name="hide_hint">Hide Hint</string>
     <string name="title">Title <font color='#FF0000'>̽</font></string>
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
