@@ -16,26 +16,56 @@
         android:layout_height="match_parent"
         tools:context=".ui.view.chooseMasterPswrd.ChooseMasterPswrdFragment">
 
-        <TextView
-            android:id="@+id/heading"
-            android:layout_width="wrap_content"
+        <ImageView
+            android:id="@+id/top_curve_view"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/choose_master_password_head"
-            android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="@string/cd_top_curve"
+            android:scaleType="fitXY"
+            android:scaleX="1.03"
+            android:scaleY="1.03"
+            android:src="@drawable/top_curve"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/logo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/cd_app_logo"
+            android:src="@mipmap/ic_launcher_round"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/welcome_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/roboto_mono_medium"
+            android:text="@string/welcome"
+            android:textAppearance="@style/TextAppearance.MyTheme.Headline4"
+            android:textColor="@color/colorAccent"
+            android:typeface="monospace"
+            app:layout_constraintBottom_toBottomOf="@id/logo"
+            app:layout_constraintStart_toEndOf="@id/logo"
+            app:layout_constraintTop_toTopOf="@id/logo" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/pswrd"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:passwordToggleEnabled="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:boxCornerRadiusBottomEnd="28dp"
+            app:boxCornerRadiusTopEnd="28dp"
+            app:helperText="@string/set_password_help_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/heading">
+            app:layout_constraintTop_toBottomOf="@id/top_curve_view"
+            app:passwordToggleEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/pswrd_text"
@@ -51,127 +81,68 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/confirm_pswrd"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            app:passwordToggleEnabled="true"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/pswrd">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/confirm_pswrd_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/enter_password_again"
-                android:inputType="textPassword"
-                android:singleLine="true"
-                android:text="@={viewModel.confirmPswrd}">
-
-            </com.google.android.material.textfield.TextInputEditText>
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/hint"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            app:boxCornerRadiusBottomEnd="28dp"
+            app:boxCornerRadiusTopEnd="28dp"
             app:counterEnabled="true"
             app:counterMaxLength="30"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/confirm_pswrd">
+            app:layout_constraintTop_toBottomOf="@id/pswrd">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/hint_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="@string/add_hint"
+                android:maxLength="30"
                 android:singleLine="true"
-                android:text="@={viewModel.hint}"
-                android:maxLength="30">
+                android:text="@={viewModel.hint}">
 
             </com.google.android.material.textfield.TextInputEditText>
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
-            android:id="@+id/length_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/length_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/hint"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/special_char_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/special_char_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/length_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/case_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/case_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/special_char_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/numeric_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/numeric_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/case_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/alternate_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/alternate_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/numeric_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/pswrd_match_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/pswrd_match_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/alternate_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <Button
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/save_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:layout_marginEnd="8dp"
+            android:alpha="0"
+            android:background="@color/colorSecondary"
             android:onClick="@{()->viewModel.onSaveClick()}"
-            android:text="@string/save"
+            android:padding="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/pswrd_match_validation"
-            tools:enabled="false" />
+            app:layout_constraintTop_toBottomOf="@id/hint"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
+            app:srcCompat="@drawable/ic_arrow_forward" />
 
+        <ImageView
+            android:id="@+id/bottom_curve_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/cd_bottom_curve"
+            android:scaleType="fitXY"
+            android:scaleX="1.03"
+            android:scaleY="1.03"
+            android:src="@drawable/bottom_curve"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/ic_github"
+            android:tint="@color/white_50"
+            android:onClick="openGithub"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="@string/cd_open_github_repo" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

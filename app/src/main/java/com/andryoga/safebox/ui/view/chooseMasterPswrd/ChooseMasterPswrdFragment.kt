@@ -4,17 +4,18 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.core.widget.addTextChangedListener
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -22,7 +23,7 @@ class ChooseMasterPswrdFragment : Fragment() {
     private val viewModel: ChooseMasterPswrdViewModel by viewModels()
 
     private lateinit var binding: ChooseMasterPswrdFragmentBinding
-    private lateinit var pswrdValidatorMapping: Map<ChooseMasterPswrdValidationFailureCode, TextView>
+    private lateinit var validatorErrorMessageMap: Map<ChooseMasterPswrdValidationFailureCode, String>
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,10 +43,6 @@ class ChooseMasterPswrdFragment : Fragment() {
             viewModel.evaluateValidationRules()
         }
 
-        binding.confirmPswrdText.addTextChangedListener {
-            viewModel.evaluateValidationRules()
-        }
-
         binding.hintText.addTextChangedListener {
             viewModel.evaluateValidationRules()
         }
@@ -57,30 +54,47 @@ class ChooseMasterPswrdFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.validationFailureCode.observe(viewLifecycleOwner) { failureCode ->
-            // by default make every validation as pass
-            pswrdValidatorMapping.values.forEach { validationView ->
-                Utils.setTextViewLeftDrawable(validationView, R.drawable.ic_check_24)
-            }
-            binding.hint.error = null
-
-            // save button will be enabled only if there is no validation failure
-            binding.saveBtn.isEnabled = failureCode.isNullOrEmpty()
-
-            // change icon for those where validation failed
-            Timber.d("failure validation codes : $failureCode")
-            for (code in failureCode) {
-                when {
-                    pswrdValidatorMapping.containsKey(code) -> Utils.setTextViewLeftDrawable(
-                        pswrdValidatorMapping[code]!!,
-                        R.drawable.ic_error_24
-                    )
-                    code == HINT_IS_SUBSET -> {
-                        binding.hint.isErrorEnabled = true
-                        binding.hint.error = getString(R.string.hint_error)
+        lifecycleScope.launchWhenStarted {
+            viewModel.validationFailureCode.collect { failureCode ->
+                if (failureCode == null && viewModel.pswrd.value.isBlank()) {
+                    // do nothing
+                } else if (failureCode == null) {
+                    binding.apply {
+                        saveBtn.animate().alpha(1f).start()
+                        pswrd.apply {
+                            isErrorEnabled = false
+                            isHelperTextEnabled = true
+                            helperText = context.getString(R.string.password_is_ok)
+                        }
+                        hint.apply {
+                            isErrorEnabled = false
+                            isHelperTextEnabled = true
+                            helperText = context.getString(R.string.hint_is_ok)
+                        }
                     }
-                    else -> {
-                        Timber.e("$code not found in validatorMapping")
+                } else if (failureCode == HINT_IS_SUBSET) {
+                    binding.saveBtn.animate().alpha(0f).start()
+                    binding.hint.apply {
+                        isErrorEnabled = true
+                        error = validatorErrorMessageMap.getOrDefault(
+                            failureCode,
+                            context.getString(
+                                R.string.error
+                            )
+                        )
+                        isHelperTextEnabled = false
+                    }
+                } else {
+                    binding.saveBtn.animate().alpha(0f).start()
+                    binding.pswrd.apply {
+                        isErrorEnabled = true
+                        error = validatorErrorMessageMap.getOrDefault(
+                            failureCode,
+                            context.getString(
+                                R.string.error
+                            )
+                        )
+                        isHelperTextEnabled = false
                     }
                 }
             }
@@ -88,6 +102,8 @@ class ChooseMasterPswrdFragment : Fragment() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
+                Timber.i("hiding keyboard")
+                Utils.hideSoftKeyboard(requireActivity())
                 Timber.i("navigating to home")
                 findNavController().navigate(R.id.action_chooseMasterPswrdFragment_to_nav_all_info)
             }
@@ -95,13 +111,13 @@ class ChooseMasterPswrdFragment : Fragment() {
     }
 
     private fun initPasswordValidatorMapping() {
-        pswrdValidatorMapping = mapOf(
-            LOW_PASSWORD_LENGTH to binding.lengthValidation,
-            LESS_SPECIAL_CHAR_COUNT to binding.specialCharValidation,
-            NOT_MIX_CASE to binding.caseValidation,
-            LESS_NUMERIC_COUNT to binding.numericValidation,
-            ALTERNATE_CHAR_FOUND to binding.alternateValidation,
-            PASSWORD_DO_NOT_MATCH to binding.pswrdMatchValidation
+        validatorErrorMessageMap = mapOf(
+            LOW_PASSWORD_LENGTH to getString(R.string.length_validation_text),
+            LESS_SPECIAL_CHAR_COUNT to getString(R.string.special_char_validation_text),
+            NOT_MIX_CASE to getString(R.string.case_validation_text),
+            LESS_NUMERIC_COUNT to getString(R.string.numeric_validation_text),
+            ALTERNATE_CHAR_FOUND to getString(R.string.alternate_validation_text),
+            HINT_IS_SUBSET to getString(R.string.hint_subset_validation_text)
         )
     }
 }

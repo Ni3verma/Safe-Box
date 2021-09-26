@@ -6,6 +6,10 @@
     <string name="cd_add_new_bank_card_data">Add new bank card data</string>
     <string name="cd_add_a_new_note">Add a new note</string>
     <string name="cd_empty_list">Empty List</string>
+    <string name="cd_top_curve">screen top curve view</string>
+    <string name="cd_bottom_curve">screen bottom curve view</string>
+    <string name="cd_app_logo">App logo</string>
+    <string name="cd_open_github_repo">Open github repo of this app</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
@@ -26,6 +30,7 @@
     <string name="common_no_result">No Result!</string>
     <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
     <string name="close">Close</string>
+    <string name="error">Error!</string>
 
     <!--    User data type text-->
     <string name="login">Login</string>
@@ -44,15 +49,13 @@
     <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="app_subtitle">Safely store your private data</string>
-    <string name="choose_master_password_head">Choose a Master Password</string>
-    <string name="enter_password">Enter password</string>
-    <string name="enter_password_again">Enter password again</string>
+    <string name="enter_password">Enter password <font color='#FF0000'>̽</font></string>
     <string name="length_validation_text">Must be more than 8 characters</string>
-    <string name="special_char_validation_text">Must contain more than 1 special character</string>
+    <string name="special_char_validation_text">Must contain more than 1 special char</string>
     <string name="case_validation_text">Must be a mix of upper and lower case letters</string>
-    <string name="numeric_validation_text">Must contain more than 2 numeric characters</string>
-    <string name="alternate_validation_text">Must not contain alternate digits or letters\n eg:123, abc</string>
-    <string name="pswrd_match_validation_text">Both passwords must match</string>
+    <string name="numeric_validation_text">Must contain more than 2 numeric char</string>
+    <string name="alternate_validation_text">Must not contain alternate digits or letters</string>
+    <string name="hint_subset_validation_text">User Password subset not allowed</string>
     <string name="save">Save</string>
     <string name="password">Password <font color='#FF0000'>̽</font></string>
     <string name="unlock">unlock</string>
@@ -62,8 +65,8 @@
     <string name="bank_card">Bank Card</string>
     <string name="secure_note">Secure Note</string>
     <string name="add_hint">Add hint</string>
-    <string name="show_hint">Show hint</string>
-    <string name="hide_hint">Hide hint</string>
+    <string name="show_hint">Show Hint</string>
+    <string name="hint">Hint: </string>
     <string name="title">Title <font color='#FF0000'>̽</font></string>
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
@@ -78,5 +81,9 @@
     <string name="branch_address">Branch Address</string>
     <string name="ifsc_code">IFSC Code <font color='#FF0000'>̽</font></string>
     <string name="micr_code">MICR Code</string>
-    <string name="hint_error">User Password subset not allowed</string>
+    <string name="welcome_back">Welcome Back !</string>
+    <string name="password_is_ok">Password is OK</string>
+    <string name="hint_is_ok">Hint is OK</string>
+    <string name="welcome">Welcome !</string>
+    <string name="set_password_help_text">Set a strong master password</string>
 </resources>
