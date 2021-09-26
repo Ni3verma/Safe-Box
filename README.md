@@ -32,9 +32,9 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 
 ## Add different kind of personal data
 
-<img src="./screenshots/login data.png" height="400px" width = "200px"/> . . . .
-<img src="./screenshots/bank account data.png" height="400px" width = "200px"/> . . . .
-<img src="./screenshots/bank card data.png" height="400px" width = "200px"/> . . . .
+<img src="./screenshots/login data.png" height="400px" width = "200px"/> . 
+<img src="./screenshots/bank account data.png" height="400px" width = "200px"/> . 
+<img src="./screenshots/bank card data.png" height="400px" width = "200px"/> . 
 <img src="./screenshots/secure note data.png" height="400px" width = "200px"/>
 
 <br>
