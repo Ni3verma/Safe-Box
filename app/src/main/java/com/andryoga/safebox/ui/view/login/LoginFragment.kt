@@ -11,7 +11,6 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.LoginFragmentBinding
-import com.andryoga.safebox.ui.common.Utils
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -48,12 +47,9 @@ class LoginFragment : Fragment() {
         setupObservers()
 
         binding.ShowHintText.setOnClickListener {
-            Utils.switchText(
-                binding.ShowHintText,
-                getString(R.string.show_hint),
-                getString(R.string.hide_hint)
-            )
-            Utils.switchVisibility(binding.displayHintText)
+            viewModel.getHintFromDb()
+            binding.ShowHintText.isEnabled = false
+            binding.ShowHintText.text = getString(R.string.hint)
         }
 
         return binding.root

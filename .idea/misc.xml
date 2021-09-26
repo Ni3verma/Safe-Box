@@ -5,7 +5,9 @@
       <map>
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/bottom_curve.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/empty.xml" value="0.2324074074074074" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/ic_add_24.xml" value="0.2703125" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/ic_check_24.xml" value="0.2" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/ic_github.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/light_primary_color_gradient.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/progress.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/test.xml" value="0.22962962962962963" />
@@ -24,7 +26,7 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_drawer_header.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_fragment.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_data_fragment.xml" value="0.18055555555555555" />
-        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_fragment.xml" value="0.1" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_fragment.xml" value="0.4132231404958678" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_info_fragment.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/row_home_info_item.xml" value="0.536" />
       </map>

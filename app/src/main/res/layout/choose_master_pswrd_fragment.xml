@@ -86,10 +86,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            app:counterEnabled="true"
-            app:counterMaxLength="30"
             app:boxCornerRadiusBottomEnd="28dp"
             app:boxCornerRadiusTopEnd="28dp"
+            app:counterEnabled="true"
+            app:counterMaxLength="30"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/pswrd">
@@ -112,13 +112,13 @@
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_marginEnd="8dp"
+            android:alpha="0"
             android:background="@color/colorSecondary"
             android:onClick="@{()->viewModel.onSaveClick()}"
             android:padding="8dp"
-            android:alpha="0"
-            app:layout_constraintTop_toBottomOf="@id/hint"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/hint"
             app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
             app:srcCompat="@drawable/ic_arrow_forward" />
 
@@ -133,5 +133,16 @@
             android:src="@drawable/bottom_curve"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/ic_github"
+            android:tint="@color/white_50"
+            android:onClick="openGithub"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="@string/cd_open_github_repo" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

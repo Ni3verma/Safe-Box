@@ -112,12 +112,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:text="@{viewModel.hint}"
-            android:visibility="invisible"
             app:layout_constraintBottom_toBottomOf="@id/Show_hint_text"
             app:layout_constraintStart_toEndOf="@id/Show_hint_text"
             app:layout_constraintTop_toTopOf="@id/Show_hint_text"
-            tools:text="This is Hint"
-            tools:visibility="visible" />
+            tools:text="This is Hint" />
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/save_btn"
@@ -145,5 +143,17 @@
             android:src="@drawable/bottom_curve"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageView
+            android:id="@+id/open_git"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_margin="8dp"
+            android:contentDescription="@string/cd_open_github_repo"
+            android:onClick="openGithub"
+            android:tint="@color/white_50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_github" />
     </androidx.constraintlayout.motion.widget.MotionLayout>
 </layout>

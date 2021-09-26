@@ -9,6 +9,7 @@
     <string name="cd_top_curve">screen top curve view</string>
     <string name="cd_bottom_curve">screen bottom curve view</string>
     <string name="cd_app_logo">App logo</string>
+    <string name="cd_open_github_repo">Open github repo of this app</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
@@ -65,7 +66,7 @@
     <string name="secure_note">Secure Note</string>
     <string name="add_hint">Add hint</string>
     <string name="show_hint">Show Hint</string>
-    <string name="hide_hint">Hide Hint</string>
+    <string name="hint">Hint: </string>
     <string name="title">Title <font color='#FF0000'>̽</font></string>
     <string name="url">URL</string>
     <string name="user_id">User Id <font color='#FF0000'>̽</font></string>

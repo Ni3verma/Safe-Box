@@ -21,19 +21,22 @@ class LoginViewModel @Inject constructor(
         encryptedPreferenceProvider.getBooleanPref(IS_SIGN_UP_REQUIRED, true)
 
     val pswrd = MutableLiveData("Qwerty@@135")
-    val hint = MutableLiveData<String?>(null)
-
-    init {
-        viewModelScope.launch {
-            hint.postValue(userDetailsRepository.getHint())
-        }
-    }
+    val hint = MutableLiveData("")
 
     private val _isWrongPswrdEntered = MutableLiveData<Boolean>()
     val isWrongPswrdEntered: LiveData<Boolean> = _isWrongPswrdEntered
 
     private val _navigateToHome = MutableLiveData<Boolean>()
     val navigateToHome: LiveData<Boolean> = _navigateToHome
+
+    fun getHintFromDb() {
+        viewModelScope.launch {
+            Timber.i("getting hint")
+            val hintText = userDetailsRepository.getHint()
+            hint.postValue(hintText)
+            Timber.d("hint = $hintText")
+        }
+    }
 
     fun onUnlockClick() {
         Timber.i("unlock clicked")

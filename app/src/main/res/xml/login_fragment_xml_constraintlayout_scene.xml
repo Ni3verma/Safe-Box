@@ -1,48 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<MotionScene 
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:motion="http://schemas.android.com/apk/res-auto">
 
     <Transition
-        motion:constraintSetStart="@+id/start"
-        motion:constraintSetEnd="@+id/end"
         motion:autoTransition="animateToEnd"
+        motion:constraintSetEnd="@+id/end"
+        motion:constraintSetStart="@+id/start"
         motion:duration="1000"
         motion:motionInterpolator="bounce" />
 
     <ConstraintSet android:id="@+id/start">
         <Constraint
             android:id="@+id/welcome_back_text"
-            motion:layout_constraintEnd_toEndOf="parent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            motion:layout_constraintTop_toBottomOf="@id/top_curve_view"
             android:layout_marginStart="8dp"
-            motion:layout_constraintStart_toStartOf="parent"
             android:scaleX="0.5"
-            android:scaleY="0.5" />
+            android:scaleY="0.5"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintTop_toBottomOf="@id/top_curve_view" />
         <Constraint
             android:id="@+id/login_text"
-            motion:layout_constraintStart_toEndOf="@id/logo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            motion:layout_constraintBottom_toBottomOf="@id/logo"
             android:layout_marginStart="8dp"
-            motion:layout_constraintTop_toTopOf="@id/logo"
-            android:alpha="0" />
+            android:alpha="0"
+            motion:layout_constraintBottom_toBottomOf="@id/logo"
+            motion:layout_constraintStart_toEndOf="@id/logo"
+            motion:layout_constraintTop_toTopOf="@id/logo" />
         <Constraint
             android:id="@+id/save_btn"
-            motion:layout_constraintEnd_toEndOf="parent"
-            motion:layout_constraintStart_toEndOf="@id/pswrd"
             android:layout_width="55dp"
             android:layout_height="55dp"
-            motion:layout_constraintBottom_toBottomOf="@id/pswrd"
             android:layout_marginEnd="8dp"
-            motion:layout_constraintTop_toTopOf="@id/pswrd"
+            android:alpha="0"
             android:rotationY="180"
-            android:alpha="0" />
+            motion:layout_constraintBottom_toBottomOf="@id/pswrd"
+            motion:layout_constraintEnd_toEndOf="parent"
+            motion:layout_constraintStart_toEndOf="@id/pswrd"
+            motion:layout_constraintTop_toTopOf="@id/pswrd" />
     </ConstraintSet>
 
-    <ConstraintSet android:id="@+id/end">
-    </ConstraintSet>
+    <ConstraintSet android:id="@+id/end"></ConstraintSet>
 </MotionScene>
