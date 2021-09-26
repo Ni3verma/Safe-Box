@@ -48,7 +48,6 @@
     <!--    Other-->
     <string name="app_name">Safe Box</string>
     <string name="app_subtitle">Safely store your private data</string>
-    <string name="choose_master_password_head">Choose a Master Password</string>
     <string name="enter_password">Enter password <font color='#FF0000'>̽</font></string>
     <string name="length_validation_text">Must be more than 8 characters</string>
     <string name="special_char_validation_text">Must contain more than 1 special char</string>
@@ -84,4 +83,6 @@
     <string name="welcome_back">Welcome Back !</string>
     <string name="password_is_ok">Password is OK</string>
     <string name="hint_is_ok">Hint is OK</string>
+    <string name="welcome">Welcome !</string>
+    <string name="set_password_help_text">Set a strong master password</string>
 </resources>

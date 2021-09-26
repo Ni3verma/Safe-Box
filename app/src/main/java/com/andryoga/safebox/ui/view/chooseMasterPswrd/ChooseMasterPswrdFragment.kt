@@ -59,7 +59,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                     // do nothing
                 } else if (failureCode == null) {
                     binding.apply {
-                        saveBtn.isEnabled = true
+                        saveBtn.animate().alpha(1f).start()
                         pswrd.apply {
                             isErrorEnabled = false
                             isHelperTextEnabled = true
@@ -72,7 +72,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                         }
                     }
                 } else if (failureCode == HINT_IS_SUBSET) {
-                    binding.saveBtn.isEnabled = false
+                    binding.saveBtn.animate().alpha(0f).start()
                     binding.hint.apply {
                         isErrorEnabled = true
                         error = validatorErrorMessageMap.getOrDefault(
@@ -84,7 +84,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                         isHelperTextEnabled = false
                     }
                 } else {
-                    binding.saveBtn.isEnabled = false
+                    binding.saveBtn.animate().alpha(0f).start()
                     binding.pswrd.apply {
                         isErrorEnabled = true
                         error = validatorErrorMessageMap.getOrDefault(
