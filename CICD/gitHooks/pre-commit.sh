@@ -27,7 +27,11 @@ run_detekt() {
 }
 
 restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json )
-for changedFile in `git diff --name-only --cached`; do
+# added IFS so that space in a changed file doesnt cause issues in script
+# as given in https://github.com/koalaman/shellcheck/wiki/SC2066#loop-over-each-line-with-globbing-hello-world-my-catpng
+IFS='
+'
+for changedFile in $(git diff --name-only --cached); do
 	for restricted_file in "${restricted_files[@]}"; do
 		echo "$restricted_file"
 	done | grep "$changedFile"
@@ -52,7 +56,7 @@ else
   log_info "ktlint Autoformatting done"
 
   if [ "$status" = 0 ]; then
-    log_info "autoformatting done, commit changes again after adding required files"
+    log_info "Commit changes again after adding newly formatted files(if any)"
     exit 1
   else
     log_info "Autoformatting failed, manual action required"
