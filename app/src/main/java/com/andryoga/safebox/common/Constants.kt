@@ -11,4 +11,5 @@ object Constants {
 
     //        Other
     const val time500Milli = 500L
+    const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
 }

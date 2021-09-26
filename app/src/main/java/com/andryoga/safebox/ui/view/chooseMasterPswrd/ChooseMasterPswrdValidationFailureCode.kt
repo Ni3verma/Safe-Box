@@ -6,6 +6,5 @@ enum class ChooseMasterPswrdValidationFailureCode {
     NOT_MIX_CASE,
     LESS_NUMERIC_COUNT,
     ALTERNATE_CHAR_FOUND,
-    PASSWORD_DO_NOT_MATCH,
     HINT_IS_SUBSET
 }

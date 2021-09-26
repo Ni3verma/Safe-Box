@@ -1,5 +1,7 @@
 package com.andryoga.safebox.ui.view
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
@@ -17,6 +19,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants
+import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils
@@ -166,5 +169,13 @@ class MainActivity : AppCompatActivity() {
 
     fun setSupportActionBarVisibility(isVisible: Boolean) {
         if (isVisible) supportActionBar?.show() else supportActionBar?.hide()
+    }
+
+    fun openGithub(expected: View) {
+        Timber.i("opening app github page")
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_GITHUB_URL))
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        }
     }
 }

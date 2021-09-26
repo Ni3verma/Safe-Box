@@ -103,22 +103,13 @@ fun UserDataList(
 @Composable
 @Preview(name = "empty view")
 fun EmptyUserData() {
-    Image(
-        painter = painterResource(id = R.drawable.no_result),
-        contentDescription = "No result found",
-        contentScale = ContentScale.FillBounds,
-        modifier = Modifier
-            .fillMaxSize()
-    )
-
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = stringResource(id = R.string.common_no_result),
-            style = MaterialTheme.typography.h4,
-            modifier = Modifier.padding(top = 180.dp)
+            style = MaterialTheme.typography.h4
         )
         Text(
             text = stringResource(id = R.string.common_click_on_plus_to_add_data),

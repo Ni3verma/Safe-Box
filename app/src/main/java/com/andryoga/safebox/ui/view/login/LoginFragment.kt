@@ -11,7 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.LoginFragmentBinding
-import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -48,9 +48,9 @@ class LoginFragment : Fragment() {
         setupObservers()
 
         binding.ShowHintText.setOnClickListener {
-
-            Utils.switchText(binding.ShowHintText, getString(R.string.show_hint), getString(R.string.hide_hint))
-            Utils.switchVisibility(binding.displayHintText, binding.hintDivider)
+            viewModel.getHintFromDb()
+            binding.ShowHintText.isEnabled = false
+            binding.ShowHintText.text = getString(R.string.hint)
         }
 
         return binding.root
@@ -66,6 +66,8 @@ class LoginFragment : Fragment() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
+                Timber.i("hiding keyboard")
+                hideSoftKeyboard(requireActivity())
                 Timber.i("navigating to home")
                 findNavController().navigate(R.id.action_loginFragment_to_nav_all_info)
             }

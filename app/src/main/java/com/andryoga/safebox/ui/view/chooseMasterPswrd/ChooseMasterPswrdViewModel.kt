@@ -13,6 +13,8 @@ import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -31,73 +33,32 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     private var evaluateValidationRuleJob: Job = Job()
 
     private val _validationFailureCode =
-        MutableLiveData<List<ChooseMasterPswrdValidationFailureCode>>(
-            emptyList()
-        )
-    val validationFailureCode: LiveData<List<ChooseMasterPswrdValidationFailureCode>> =
+        MutableStateFlow<ChooseMasterPswrdValidationFailureCode?>(null)
+    val validationFailureCode: StateFlow<ChooseMasterPswrdValidationFailureCode?> =
         _validationFailureCode
 
     private val _navigateToHome = MutableLiveData<Boolean>()
     val navigateToHome: LiveData<Boolean> = _navigateToHome
 
-    val pswrd = MutableLiveData("")
-    val confirmPswrd = MutableLiveData("")
-    val hint = MutableLiveData("")
-
-    init {
-        evaluateValidationRules()
-    }
+    val pswrd = MutableStateFlow("")
+    val hint = MutableStateFlow("")
 
     fun evaluateValidationRules() {
         if (evaluateValidationRuleJob.isActive) {
             evaluateValidationRuleJob.cancel()
         }
         evaluateValidationRuleJob = viewModelScope.launch(Dispatchers.IO) {
-            val list = mutableListOf<ChooseMasterPswrdValidationFailureCode>()
-            val pswrd = pswrd.value!!
-            val confirmPswrd = confirmPswrd.value!!
-            val hint = hint.value!!
-
-            if (pswrd.length <= Constants.minPasswordLength) {
-                list.add(LOW_PASSWORD_LENGTH)
-            }
-            var regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
-            var numOfSpecialChar = 0
-            regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
-
-            if (numOfSpecialChar < 2) {
-                list.add(LESS_SPECIAL_CHAR_COUNT)
-            }
-
-            regex = Regex("[A-Z]")
-            val containsUpperCase = regex.containsMatchIn(pswrd)
-
-            regex = Regex("[a-z]")
-            val containsLowerCase = regex.containsMatchIn(pswrd)
-
-            if (!containsLowerCase || !containsUpperCase) {
-                list.add(NOT_MIX_CASE)
-            }
-
-            regex = Regex("[0-9]")
-            var numericCount = 0
-            regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
-
-            if (numericCount <= 2) {
-                list.add(LESS_NUMERIC_COUNT)
-            }
+            _validationFailureCode.value = null
+            val pswrd = pswrd.value
+            val hint = hint.value
 
             for ((index, char) in pswrd.withIndex()) {
                 val nextChar = char + 1
                 val nextToNextChar = char + 2
                 if (pswrd.indexOf("" + nextChar + nextToNextChar) == index + 1) {
-                    list.add(ALTERNATE_CHAR_FOUND)
-                    break
+                    _validationFailureCode.value = ALTERNATE_CHAR_FOUND
+                    return@launch
                 }
-            }
-
-            if (pswrd != confirmPswrd) {
-                list.add(PASSWORD_DO_NOT_MATCH)
             }
 
             if (longestCommonSubstring(
@@ -105,10 +66,43 @@ class ChooseMasterPswrdViewModel @Inject constructor(
                     hint.lowercase()
                 ) >= maxHintSubsetLength
             ) {
-                list.add(HINT_IS_SUBSET)
+                _validationFailureCode.value = HINT_IS_SUBSET
+                return@launch
             }
 
-            _validationFailureCode.postValue(list)
+            var regex = Regex("[a-z]")
+            val containsLowerCase = regex.containsMatchIn(pswrd)
+
+            regex = Regex("[A-Z]")
+            val containsUpperCase = regex.containsMatchIn(pswrd)
+
+            if (!containsLowerCase || !containsUpperCase) {
+                _validationFailureCode.value = NOT_MIX_CASE
+                return@launch
+            }
+
+            regex = Regex("[0-9]")
+            var numericCount = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
+
+            if (numericCount <= 2) {
+                _validationFailureCode.value = LESS_NUMERIC_COUNT
+                return@launch
+            }
+
+            regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
+            var numOfSpecialChar = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
+
+            if (numOfSpecialChar < 2) {
+                _validationFailureCode.value = LESS_SPECIAL_CHAR_COUNT
+                return@launch
+            }
+
+            if (pswrd.length <= Constants.minPasswordLength) {
+                _validationFailureCode.value = LOW_PASSWORD_LENGTH
+                return@launch
+            }
         }
     }
 
@@ -119,7 +113,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     fun onSaveClick() {
         Timber.i("save password clicked")
         viewModelScope.launch {
-            userDetailsRepository.insertUserDetailsData(pswrd.value!!, hint.value)
+            userDetailsRepository.insertUserDetailsData(pswrd.value, hint.value)
             encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
             Timber.i("Added pswrd in db")
             _navigateToHome.value = true
