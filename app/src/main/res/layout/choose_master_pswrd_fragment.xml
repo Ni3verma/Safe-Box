@@ -51,57 +51,6 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <TextView
-            android:id="@+id/length_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/length_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pswrd"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/special_char_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/special_char_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/length_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/case_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/case_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/special_char_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/numeric_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/numeric_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/case_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
-        <TextView
-            android:id="@+id/alternate_validation"
-            style="@style/validationTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/alternate_validation_text"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/numeric_validation"
-            tools:drawableLeftCompat="@drawable/ic_check_24" />
-
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/hint"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -112,7 +61,7 @@
             app:counterMaxLength="30"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/alternate_validation">
+            app:layout_constraintTop_toBottomOf="@id/pswrd">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/hint_text"
@@ -138,14 +87,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/hint"
-            tools:enabled="false" />
-
-        <androidx.constraintlayout.widget.Group
-            android:id="@+id/pswrd_validation_group"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:constraint_referenced_ids="length_validation,special_char_validation,case_validation,numeric_validation,alternate_validation,pswrd_match_validation" />
+            android:enabled="false" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
