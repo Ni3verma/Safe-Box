@@ -27,7 +27,9 @@ run_detekt() {
 }
 
 restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json )
-for changedFile in `git diff --name-only --cached`; do
+IFS='
+'
+for changedFile in $(git diff --name-only --cached); do
 	for restricted_file in "${restricted_files[@]}"; do
 		echo "$restricted_file"
 	done | grep "$changedFile"
