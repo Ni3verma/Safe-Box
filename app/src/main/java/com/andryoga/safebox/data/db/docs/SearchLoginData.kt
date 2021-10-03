@@ -1,11 +1,13 @@
 package com.andryoga.safebox.data.db.docs
 
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import java.util.*
 
 data class SearchLoginData(
     val key: Int,
     val title: String,
-    val userId: String
+    val userId: String,
+    val creationDate: Date
 ) {
     companion object {
         fun decrypt(
@@ -17,6 +19,7 @@ data class SearchLoginData(
                     it.key,
                     it.title,
                     symmetricKeyUtils.decrypt(it.userId),
+                    it.creationDate
                 )
             }
         }
