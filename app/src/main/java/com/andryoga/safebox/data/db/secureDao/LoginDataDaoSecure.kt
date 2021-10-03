@@ -41,7 +41,7 @@ class LoginDataDaoSecure @Inject constructor(
         loginDataEntity.let {
             return LoginDataEntity(
                 it.key,
-                symmetricKeyUtils.encrypt(it.title),
+                it.title,
                 it.url.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.password),
                 it.notes.encryptNullableString(symmetricKeyUtils),
@@ -56,7 +56,7 @@ class LoginDataDaoSecure @Inject constructor(
         loginDataEntity.let {
             return LoginDataEntity(
                 it.key,
-                symmetricKeyUtils.decrypt(it.title),
+                it.title,
                 it.url.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.password),
                 it.notes.decryptNullableString(symmetricKeyUtils),

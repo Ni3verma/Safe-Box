@@ -38,7 +38,6 @@ class BankCardInfoViewModel @Inject constructor(
             }
             .flowOn(Dispatchers.Default)
             .collect {
-                it.sortBy { data -> data.title }
                 emit(Resource.success(it))
             }
     }

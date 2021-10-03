@@ -17,7 +17,7 @@ data class SearchBankAccountData(
                 val accountNumber = symmetricKeyUtils.decrypt(it.accountNumber)
                 return SearchBankAccountData(
                     it.key,
-                    symmetricKeyUtils.decrypt(it.title),
+                    it.title,
                     accountNumber.replace(Regex(".(?=.{4})"), "X")
                 )
             }

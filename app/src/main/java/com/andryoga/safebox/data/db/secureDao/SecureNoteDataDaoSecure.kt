@@ -5,7 +5,6 @@ import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class SecureNoteDataDaoSecure @Inject constructor(
@@ -22,7 +21,6 @@ class SecureNoteDataDaoSecure @Inject constructor(
 
     override fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>> {
         return secureNoteDataDao.getAllSecretNoteData()
-            .map { SearchSecureNoteData.decrypt(it, symmetricKeyUtils) }
     }
 
     override suspend fun getSecretNoteDataByKey(key: Int): SecureNoteDataEntity {
@@ -37,7 +35,7 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
                 it.key,
-                symmetricKeyUtils.encrypt(it.title),
+                it.title,
                 symmetricKeyUtils.encrypt(it.notes),
                 it.creationDate,
                 it.updateDate
@@ -49,7 +47,7 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
                 it.key,
-                symmetricKeyUtils.decrypt(it.title),
+                it.title,
                 symmetricKeyUtils.decrypt(it.notes),
                 it.creationDate,
                 it.updateDate

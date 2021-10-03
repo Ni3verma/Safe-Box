@@ -13,7 +13,7 @@ interface SecureNoteDataDao {
     @Update
     suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
-    @Query("select * from secure_note_data")
+    @Query("select * from secure_note_data order by title")
     fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>>
 
     @Query("select * from secure_note_data where `key` = :key limit 1")

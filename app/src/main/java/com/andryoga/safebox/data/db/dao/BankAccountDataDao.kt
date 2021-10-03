@@ -17,7 +17,7 @@ interface BankAccountDataDao {
     @Query("select * from bank_account_data where `key` = :key limit 1")
     suspend fun getBankAccountDataByKey(key: Int): BankAccountDataEntity
 
-    @Query("select * from bank_account_data")
+    @Query("select * from bank_account_data order by title")
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
 
     @Query("Delete from bank_account_data where `key` = :key")
