@@ -17,7 +17,7 @@ data class SearchBankCardData(
                 val cardNumber = symmetricKeyUtils.decrypt(it.number)
                 return SearchBankCardData(
                     it.key,
-                    symmetricKeyUtils.decrypt(it.title),
+                    it.title,
                     cardNumber.replace(Regex(".(?=.{4})"), "X")
                 )
             }

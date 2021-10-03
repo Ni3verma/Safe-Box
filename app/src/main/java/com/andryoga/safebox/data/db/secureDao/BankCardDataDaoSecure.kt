@@ -40,7 +40,7 @@ class BankCardDataDaoSecure @Inject constructor(
         bankCardDataEntity.let {
             return BankCardDataEntity(
                 it.key,
-                symmetricKeyUtils.encrypt(it.title),
+                it.title,
                 it.name.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.number),
                 it.pin.encryptNullableString(symmetricKeyUtils),
@@ -57,7 +57,7 @@ class BankCardDataDaoSecure @Inject constructor(
         bankCardDataEntity.let {
             return BankCardDataEntity(
                 it.key,
-                symmetricKeyUtils.decrypt(it.title),
+                it.title,
                 it.name.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.number),
                 it.pin.decryptNullableString(symmetricKeyUtils),

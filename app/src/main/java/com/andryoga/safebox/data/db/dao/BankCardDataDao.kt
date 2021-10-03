@@ -13,7 +13,7 @@ interface BankCardDataDao {
     @Update
     suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity)
 
-    @Query("select * from bank_card_data")
+    @Query("select * from bank_card_data order by title")
     fun getAllBankCardData(): Flow<List<SearchBankCardData>>
 
     @Query("select * from bank_card_data where `key` = :key limit 1")

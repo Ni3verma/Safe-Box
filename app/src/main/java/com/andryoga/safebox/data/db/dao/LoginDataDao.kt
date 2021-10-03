@@ -13,7 +13,7 @@ interface LoginDataDao {
     @Update
     suspend fun updateLoginData(loginDataEntity: LoginDataEntity)
 
-    @Query("select * from login_data")
+    @Query("select * from login_data order by title")
     fun getAllLoginData(): Flow<List<SearchLoginData>>
 
     @Query("select * from login_data where `key` = :key limit 1")

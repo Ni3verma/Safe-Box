@@ -15,7 +15,7 @@ data class SearchLoginData(
             searchLoginData.let {
                 return SearchLoginData(
                     it.key,
-                    symmetricKeyUtils.decrypt(it.title),
+                    it.title,
                     symmetricKeyUtils.decrypt(it.userId),
                 )
             }

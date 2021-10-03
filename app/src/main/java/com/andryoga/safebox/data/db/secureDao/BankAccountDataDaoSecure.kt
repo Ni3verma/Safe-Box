@@ -41,7 +41,7 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataEntity.let {
             return BankAccountDataEntity(
                 it.key,
-                symmetricKeyUtils.encrypt(it.title),
+                it.title,
                 symmetricKeyUtils.encrypt(it.accountNumber),
                 it.customerName,
                 symmetricKeyUtils.encrypt(it.customerId),
@@ -61,7 +61,7 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataEntity.let {
             return BankAccountDataEntity(
                 it.key,
-                symmetricKeyUtils.decrypt(it.title),
+                it.title,
                 symmetricKeyUtils.decrypt(it.accountNumber),
                 it.customerName,
                 symmetricKeyUtils.decrypt(it.customerId),
