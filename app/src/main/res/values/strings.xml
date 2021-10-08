@@ -10,6 +10,7 @@
     <string name="cd_bottom_curve">screen bottom curve view</string>
     <string name="cd_app_logo">App logo</string>
     <string name="cd_open_github_repo">Open github repo of this app</string>
+    <string name="cd_background_image">background image</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
