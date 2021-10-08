@@ -3,7 +3,9 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
+
     <data>
+
         <variable
             name="viewModel"
             type="com.andryoga.safebox.ui.view.MainActivityViewModel" />
@@ -25,6 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:measureAllChildren="true">
+
                 <fragment
                     android:id="@+id/nav_host_fragment"
                     android:name="androidx.navigation.fragment.NavHostFragment"
@@ -32,6 +35,7 @@
                     android:layout_height="match_parent"
                     app:defaultNavHost="true"
                     app:navGraph="@navigation/navigation" />
+
                 <include
                     android:id="@+id/addNewUserPersonalDataLayout"
                     layout="@layout/add_new_user_personal_data"
@@ -44,11 +48,10 @@
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
-            android:layout_width="wrap_content"
+            android:layout_width="240dp"
             android:layout_height="match_parent"
             android:layout_gravity="start"
             android:fitsSystemWindows="false"
-            app:headerLayout="@layout/home_drawer_header"
             app:menu="@menu/home_drawer" />
     </androidx.drawerlayout.widget.DrawerLayout>
 </layout>

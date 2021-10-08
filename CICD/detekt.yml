@@ -13,3 +13,5 @@ complexity:
     functionThreshold: 10
   LongMethod:
     threshold: 80
+  TooManyFunctions:
+    active: false
