@@ -16,7 +16,8 @@ class LoginScreenData(
     pUrl: String? = null,
     pUserId: String = "",
     pPassword: String = "",
-    pNotes: String? = null
+    pNotes: String? = null,
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -24,6 +25,7 @@ class LoginScreenData(
     var userId: ObservableField<String> = ObservableField(pUserId)
     var password: ObservableField<String> = ObservableField(pPassword)
     var notes: ObservableField<String?> = ObservableField(pNotes)
+    var creationDate = pCreationDate
 
     companion object {
         fun LoginScreenData.toLoginDataEntity(): LoginDataEntity {
@@ -34,7 +36,7 @@ class LoginScreenData(
                 password.getValueOrEmpty(),
                 notes.get(),
                 userId.getValueOrEmpty(),
-                Date(),
+                creationDate,
                 Date()
             )
         }
@@ -46,7 +48,7 @@ class LoginScreenData(
                 url,
                 userId,
                 password,
-                notes,
+                notes, creationDate
             )
         }
     }
@@ -58,5 +60,6 @@ class LoginScreenData(
         userId.set(loginScreenData.userId.get())
         password.set(loginScreenData.password.get())
         notes.set(loginScreenData.notes.get())
+        creationDate = loginScreenData.creationDate
     }
 }

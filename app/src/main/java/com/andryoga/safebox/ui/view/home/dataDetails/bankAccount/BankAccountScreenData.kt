@@ -21,7 +21,8 @@ class BankAccountScreenData(
     pBranchAddress: String? = null,
     pIfscCode: String = "",
     pMicrCode: String? = null,
-    pNotes: String? = null
+    pNotes: String? = null,
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -34,6 +35,7 @@ class BankAccountScreenData(
     var ifscCode: ObservableField<String> = ObservableField(pIfscCode)
     var micrCode: ObservableField<String> = ObservableField(pMicrCode)
     var notes: ObservableField<String?> = ObservableField(pNotes)
+    var creationDate = pCreationDate
 
     companion object {
         fun BankAccountScreenData.toBankAccountDataEntity(): BankAccountDataEntity {
@@ -49,7 +51,7 @@ class BankAccountScreenData(
                 ifscCode.getValueOrEmpty(),
                 micrCode.get(),
                 notes.get(),
-                Date(),
+                creationDate,
                 Date()
             )
         }
@@ -62,7 +64,7 @@ class BankAccountScreenData(
                 customerName,
                 customerId,
                 branchCode,
-                branchName, branchAddress, ifscCode, micrCode, notes
+                branchName, branchAddress, ifscCode, micrCode, notes, creationDate
             )
         }
     }
@@ -79,5 +81,6 @@ class BankAccountScreenData(
         ifscCode.set(bankAccountScreenData.ifscCode.get())
         micrCode.set(bankAccountScreenData.micrCode.get())
         notes.set(bankAccountScreenData.notes.get())
+        creationDate = bankAccountScreenData.creationDate
     }
 }

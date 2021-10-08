@@ -1,11 +1,13 @@
 package com.andryoga.safebox.data.db.docs
 
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import java.util.*
 
 data class SearchBankAccountData(
     val key: Int,
     val title: String,
-    val accountNumber: String
+    val accountNumber: String,
+    val creationDate: Date
 ) {
     companion object {
         fun decrypt(
@@ -18,7 +20,8 @@ data class SearchBankAccountData(
                 return SearchBankAccountData(
                     it.key,
                     it.title,
-                    accountNumber.replace(Regex(".(?=.{4})"), "X")
+                    accountNumber.replace(Regex(".(?=.{4})"), "X"),
+                    it.creationDate
                 )
             }
         }

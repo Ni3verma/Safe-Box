@@ -13,11 +13,13 @@ class SecureNoteScreenData(
    * */
     pKey: Int = 0,
     pTitle: String = "",
-    pNotes: String = ""
+    pNotes: String = "",
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
     var notes: ObservableField<String> = ObservableField(pNotes)
+    var creationDate = pCreationDate
 
     companion object {
         fun SecureNoteScreenData.toSecureNoteDataEntity(): SecureNoteDataEntity {
@@ -25,7 +27,7 @@ class SecureNoteScreenData(
                 key,
                 title.getValueOrEmpty(),
                 notes.getValueOrEmpty(),
-                Date(),
+                creationDate,
                 Date()
             )
         }
@@ -34,7 +36,7 @@ class SecureNoteScreenData(
             return SecureNoteScreenData(
                 key,
                 title,
-                notes,
+                notes, creationDate
             )
         }
     }
@@ -43,5 +45,6 @@ class SecureNoteScreenData(
         key = secureNoteScreenData.key
         title.set(secureNoteScreenData.title.get())
         notes.set(secureNoteScreenData.notes.get())
+        creationDate = secureNoteScreenData.creationDate
     }
 }

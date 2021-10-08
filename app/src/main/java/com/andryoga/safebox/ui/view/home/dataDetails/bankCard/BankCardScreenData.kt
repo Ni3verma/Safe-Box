@@ -18,7 +18,8 @@ class BankCardScreenData(
     pExpiryDate: String = "",
     pPin: String? = null,
     pCvv: String = "",
-    pNotes: String? = null
+    pNotes: String? = null,
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -28,6 +29,7 @@ class BankCardScreenData(
     var pin: ObservableField<String?> = ObservableField(pPin)
     var cvv: ObservableField<String> = ObservableField(pCvv)
     var notes: ObservableField<String?> = ObservableField(pNotes)
+    var creationDate = pCreationDate
 
     companion object {
         fun BankCardScreenData.toBankCardDataEntity(): BankCardDataEntity {
@@ -40,14 +42,14 @@ class BankCardScreenData(
                 cvv.getValueOrEmpty(),
                 expiryDate.getValueOrEmpty(),
                 notes.get(),
-                Date(),
+                creationDate,
                 Date()
             )
         }
 
         fun BankCardDataEntity.toBankCardScreenData(): BankCardScreenData {
             return BankCardScreenData(
-                key, title, name, number, expiryDate, pin, cvv, notes
+                key, title, name, number, expiryDate, pin, cvv, notes, creationDate
             )
         }
     }
@@ -61,5 +63,6 @@ class BankCardScreenData(
         pin.set(bankCardScreenData.pin.get())
         cvv.set(bankCardScreenData.cvv.get())
         notes.set(bankCardScreenData.notes.get())
+        creationDate = bankCardScreenData.creationDate
     }
 }
