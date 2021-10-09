@@ -91,12 +91,6 @@ class MainActivity : AppCompatActivity() {
         CrashlyticsKeys(this).setDefaultKeys()
     }
 
-    // hide the whole nav view so that nothing is visible in the recent apps view
-    override fun onPause() {
-        super.onPause()
-        binding.navView.visibility = View.INVISIBLE
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         collapseAddNewDataOptions()
         when (item.itemId) {

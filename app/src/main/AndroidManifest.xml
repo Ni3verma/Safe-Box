@@ -13,6 +13,7 @@
         android:theme="@style/Theme.SafeBox">
         <activity
             android:name=".ui.view.MainActivity"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:noHistory="true">
             <intent-filter>
