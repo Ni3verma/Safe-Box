@@ -74,6 +74,11 @@ class MainActivity : AppCompatActivity() {
                 navController.popBackStack(drawerLayoutFirstScreen, true)
             } else if (id in drawerLayoutTopLevelNavigationIds) {
                 navController.popBackStack(drawerLayoutFirstScreen, false)
+            } else if (id == R.id.open_git) {
+                openGithubPage()
+                drawerLayout.closeDrawers()
+                // return false so that this option is not selected
+                return@setNavigationItemSelectedListener false
             }
             navController.navigate(id)
             drawerLayout.closeDrawers()
@@ -171,7 +176,13 @@ class MainActivity : AppCompatActivity() {
         if (isVisible) supportActionBar?.show() else supportActionBar?.hide()
     }
 
+    // this is directly called from xml so view input param is required
+    // name=expected is used so that detekt dont complain about it
     fun openGithub(expected: View) {
+        openGithubPage()
+    }
+
+    private fun openGithubPage() {
         Timber.i("opening app github page")
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_GITHUB_URL))
         if (intent.resolveActivity(packageManager) != null) {

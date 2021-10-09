@@ -138,11 +138,11 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:layout_margin="8dp"
-            app:srcCompat="@drawable/ic_github"
-            android:tint="@color/white_50"
+            android:contentDescription="@string/cd_open_github_repo"
             android:onClick="openGithub"
+            android:tint="@color/white_50"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:contentDescription="@string/cd_open_github_repo" />
+            app:srcCompat="@drawable/ic_github" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

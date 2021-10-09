@@ -68,18 +68,18 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:passwordToggleEnabled="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title">
+                app:layout_constraintTop_toBottomOf="@+id/title"
+                app:passwordToggleEnabled="true">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/account_no_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
-                    android:inputType="numberPassword"
                     android:hint="@string/account_number"
+                    android:inputType="numberPassword"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.accountNo}">
 
@@ -100,8 +100,8 @@
                     android:id="@+id/cust_name_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/customer_name"
                     android:layout_marginBottom="8dp"
+                    android:hint="@string/customer_name"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.customerName}">
 
@@ -114,17 +114,17 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/branch_code"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/cust_name">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/cust_id_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:hint="@string/customer_id"
                     android:nextFocusDown="@+id/branch_code_text"
-                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.customerId}">
 
@@ -138,16 +138,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                app:layout_constraintStart_toEndOf="@+id/cust_id"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/cust_id"
                 app:layout_constraintTop_toBottomOf="@+id/cust_name">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/branch_code_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/branch_code"
                     android:layout_marginBottom="8dp"
+                    android:hint="@string/branch_code"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.branchCode}">
 
@@ -168,8 +168,8 @@
                     android:id="@+id/branch_name_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/branch_name"
                     android:layout_marginBottom="8dp"
+                    android:hint="@string/branch_name"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.branchName}">
 
@@ -190,8 +190,8 @@
                     android:id="@+id/branch_address_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/branch_address"
                     android:layout_marginBottom="8dp"
+                    android:hint="@string/branch_address"
                     android:text="@={viewModel.bankAccountScreenData.branchAddress}">
 
                 </com.google.android.material.textfield.TextInputEditText>
@@ -211,9 +211,9 @@
                     android:id="@+id/ifsc_code_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:hint="@string/ifsc_code"
                     android:nextFocusDown="@+id/micr_code_text"
-                    android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.ifscCode}">
 
@@ -227,16 +227,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                app:layout_constraintStart_toEndOf="@+id/ifsc_code"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/ifsc_code"
                 app:layout_constraintTop_toBottomOf="@+id/branch_address">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/micr_code_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/micr_code"
                     android:layout_marginBottom="8dp"
+                    android:hint="@string/micr_code"
                     android:singleLine="true"
                     android:text="@={viewModel.bankAccountScreenData.micrCode}">
 
