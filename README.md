@@ -4,6 +4,10 @@
 
 Safe Box is an easy to use, secure app which will store all your data in a super secured encrypted manner. No data ever leave your mobile device. Any kind of personal user data will be never stored on any server.
 
+<a href="https://play.google.com/store/apps/details?id=com.andryoga.safebox">
+    <img src="./screenshots/get it on google play store.jpg" width="40%">
+</a>
+
 ## Contributing to this project
 Want to contribute to Safe Box? Please read [Contribution process](https://github.com/Ni3verma/Safe-Box/blob/master/CONTRIBUTING.md). In case you have any questions, feel free to reach me on canvas.nv@gmail.com
 
@@ -11,7 +15,7 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 
 <a href="https://join.slack.com/t/safe-box-workspace/shared_invite/zt-s7prrr82-PAtzDTxHubkIvR5QPNKnBA">
     <img src="./screenshots/slack.png" width="30%">
-</a> &nbsp &nbsp &nbsp
+</a> &emsp;
 <a href="https://www.linkedin.com/in/nitinverma1120/">
     <img src="./screenshots/linked in.png" width="30%">
 </a>
