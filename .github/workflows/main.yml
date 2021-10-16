@@ -72,7 +72,7 @@ jobs:
       - name: upload QA apk
         uses: actions/upload-artifact@v2
         with:
-          name: release.apk
+          name: qa.apk
           path: app/build/outputs/apk/qa/SafeBox-qa.apk
 
   #  unit-test:
