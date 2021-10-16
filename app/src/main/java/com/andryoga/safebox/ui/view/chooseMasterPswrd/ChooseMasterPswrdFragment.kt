@@ -116,7 +116,6 @@ class ChooseMasterPswrdFragment : Fragment() {
             LESS_SPECIAL_CHAR_COUNT to getString(R.string.special_char_validation_text),
             NOT_MIX_CASE to getString(R.string.case_validation_text),
             LESS_NUMERIC_COUNT to getString(R.string.numeric_validation_text),
-            ALTERNATE_CHAR_FOUND to getString(R.string.alternate_validation_text),
             HINT_IS_SUBSET to getString(R.string.hint_subset_validation_text)
         )
     }
