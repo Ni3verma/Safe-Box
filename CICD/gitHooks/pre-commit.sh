@@ -26,7 +26,7 @@ run_detekt() {
   log_info "detekt passed"
 }
 
-restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json )
+restricted_files=( releaseKeyStore.properties app/releaseKeyStore.jks app/google-services.json app/src/qa/google-services.json )
 # added IFS so that space in a changed file doesnt cause issues in script
 # as given in https://github.com/koalaman/shellcheck/wiki/SC2066#loop-over-each-line-with-globbing-hello-world-my-catpng
 IFS='
