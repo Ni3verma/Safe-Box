@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
@@ -63,6 +64,7 @@ class AllInfoFragment : Fragment() {
         } else {
             Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
+        insertDummyData()
     }
 
     private fun onListItemClick(item: UserListItemData) {
@@ -91,5 +93,11 @@ class AllInfoFragment : Fragment() {
                 }
             }
         )
+    }
+
+    private fun insertDummyData() {
+        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
+//            viewModel.insertDummyData()
+        }
     }
 }

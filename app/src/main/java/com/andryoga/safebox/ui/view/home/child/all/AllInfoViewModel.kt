@@ -2,6 +2,7 @@ package com.andryoga.safebox.ui.view.home.child.all
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.safebox.common.sampleData.RandomUserData.insertRandomData
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
@@ -146,6 +147,19 @@ class AllInfoViewModel @Inject constructor(
                 BANK_CARD -> bankCardDataRepository.deleteBankCardDataByKey(key)
                 SECURE_NOTE -> secureNoteDataRepository.deleteSecureNoteDataByKey(key)
             }
+        }
+    }
+
+    // This method is for test purpose only
+    // should never be called in production code
+    fun insertDummyData() {
+        viewModelScope.launch(Dispatchers.Default) {
+            insertRandomData(
+                loginDataRepository,
+                bankAccountDataRepository,
+                bankCardDataRepository,
+                secureNoteDataRepository
+            )
         }
     }
 }
