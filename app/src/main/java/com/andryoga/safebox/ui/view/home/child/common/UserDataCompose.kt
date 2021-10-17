@@ -127,6 +127,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
         modifier = Modifier
             .clickable { onClick(item) }
             .fillMaxWidth()
+            .background(MaterialTheme.colors.background)
 
     ) {
         Column(
@@ -152,6 +153,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
         ) {
             Text(
                 text = item.title,
+                color = MaterialTheme.colors.onBackground,
                 style = MaterialTheme.typography.h5,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -160,6 +162,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                     Text(
                         text = item.subTitle,
+                        color = MaterialTheme.colors.onBackground,
                         style = MaterialTheme.typography.body1,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
