@@ -9,6 +9,7 @@ import androidx.biometric.BiometricPrompt.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import com.andryoga.safebox.R
 import java.util.concurrent.Executor
 
 enum class BiometricableEventType {
@@ -32,7 +33,9 @@ interface Biometricable {
 
     fun configureBiometrics(activity: FragmentActivity, listener: Biometricable? = null)
 
-    fun showBiometricsAuthDialog(title: String, subtitle: String, negativeButtonText: String)
+    fun showBiometricsAuthDialog(context: Context)
+
+    fun showDialog(title: String, subtitle: String, negativeButtonText: String)
 
     fun canUseBiometrics(): Boolean
 
@@ -130,7 +133,33 @@ fun biometricableHandler() = object : Biometricable {
         this.listener = listener
     }
 
-    override fun showBiometricsAuthDialog(
+    override fun showBiometricsAuthDialog(context: Context) {
+        when {
+            canUseBiometricsFeature(BiometricsFeatureType.BIOMETRICS_FINGERPRINT, context) -> {
+                showDialog(
+                    context.getString(R.string.biometric_touch_id_title),
+                    context.getString(R.string.biometric_touch_id_title),
+                    context.getString(R.string.biometric_negative_button_text)
+                )
+            }
+            canUseBiometricsFeature(BiometricsFeatureType.BIOMETRICS_FACE, context) -> {
+                showDialog(
+                    context.getString(R.string.biometric_face_id_title),
+                    context.getString(R.string.biometric_face_id_title),
+                    context.getString(R.string.biometric_negative_button_text)
+                )
+            }
+            canUseBiometricsFeature(BiometricsFeatureType.BIOMETRICS_IRIS, context) -> {
+                showDialog(
+                    context.getString(R.string.biometric_iris_id_title),
+                    context.getString(R.string.biometric_iris_id_title),
+                    context.getString(R.string.biometric_negative_button_text)
+                )
+            }
+        }
+    }
+
+    override fun showDialog(
         title: String,
         subtitle: String,
         negativeButtonText: String

@@ -15,6 +15,7 @@ import com.andryoga.safebox.ui.common.Biometricable
 import com.andryoga.safebox.ui.common.BiometricableEventType
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.common.biometricableHandler
+import com.andryoga.safebox.ui.view.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -61,27 +62,37 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
         return binding.root
     }
 
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start of login fragment")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(false)
+                setSupportActionBarVisibility(false)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         if (canUseBiometrics()) {
-            showBiometricsAuthDialog(
-                "Touch ID",
-                "Use Touch ID to authenticate",
-                "Close"
-            )
+            Timber.i("device can use biometric")
+            showBiometricsAuthDialog(requireContext())
+        } else {
+            Timber.i("device cannot use biometric")
         }
     }
 
     override fun onBiometricEvent(event: BiometricableEventType) {
         when (event) {
-            BiometricableEventType.BIOMETRICS_AVAILABLE -> Timber.i("Biometric authentication available")
-            BiometricableEventType.BIOMETRICS_ERROR -> Timber.i("There's been an error with biometric authentication")
-            BiometricableEventType.BIOMETRICS_NOT_AVAILABLE -> Timber.i("Biometric authentication not available")
-            BiometricableEventType.AUTHENTICATION_CANCELED -> Timber.i("Authentication canceled by user")
-            BiometricableEventType.AUTHENTICATION_FAILED -> Timber.i("Authentication failed")
             BiometricableEventType.AUTHENTICATION_SUCCEEDED -> {
                 Timber.i("User authenticated with biometric")
                 navigateToHome()
+            }
+            else -> {
+                Timber.i("biometric event failed, name = ${event.name}")
             }
         }
     }

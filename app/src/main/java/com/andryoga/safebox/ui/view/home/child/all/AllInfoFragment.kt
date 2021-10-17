@@ -33,7 +33,7 @@ class AllInfoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        Timber.i("on create view fragment")
+        Timber.i("on create view of all info fragment")
         return ComposeView(requireContext()).apply {
             setContent {
                 val listData by viewModel.allData.collectAsState(
@@ -52,23 +52,17 @@ class AllInfoFragment : Fragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Timber.i("on view created fragment")
-    }
-
     override fun onStart() {
         super.onStart()
-        Timber.i("on start fragment")
-        (requireActivity() as MainActivity).apply {
-            setAddNewUserDataVisibility(true)
-            setSupportActionBarVisibility(true)
+        Timber.i("on start of all info fragment")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(true)
+                setSupportActionBarVisibility(true)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Timber.i("on resume fragment")
     }
 
     private fun onListItemClick(item: UserListItemData) {

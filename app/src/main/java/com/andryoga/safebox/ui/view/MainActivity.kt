@@ -23,18 +23,14 @@ import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
-import com.andryoga.safebox.ui.common.Biometricable
 import com.andryoga.safebox.ui.common.Utils
-import com.andryoga.safebox.ui.common.biometricableHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler() {
+class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
-
-    private var lastTimeInteracted = System.currentTimeMillis()
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var motionLayout: MotionLayout
@@ -96,20 +92,7 @@ class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler(
             true
         }
 
-        setAddNewUserDataVisibility(false)
-        setSupportActionBarVisibility(false)
-
         CrashlyticsKeys(this).setDefaultKeys()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Timber.i("on start activity")
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        Timber.i("on restart activity")
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -136,19 +119,6 @@ class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler(
         } else {
             super.onBackPressed()
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        lastTimeInteracted = System.currentTimeMillis()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Timber.i("resume activity")
-//        if (System.currentTimeMillis() - lastTimeInteracted > 10000) {
-//            navController.navigate(R.id.action_global_loginFragment)
-//        }
     }
 
     private fun setupObservers() {
@@ -202,10 +172,6 @@ class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler(
     }
 
     fun setAddNewUserDataVisibility(isVisible: Boolean) {
-//        if (this::binding.isInitialized) {
-//            binding.addNewUserPersonalDataLayout.motionLayout.visibility =
-//                if (isVisible) View.VISIBLE else View.INVISIBLE
-//        }
         Timber.i("setting add new user data visibility to $isVisible")
         binding.addNewUserPersonalDataLayout.motionLayout.visibility =
             if (isVisible) View.VISIBLE else View.INVISIBLE
