@@ -13,6 +13,7 @@ class CrashlyticsKeys(
 ) {
 
     fun setDefaultKeys() {
+        Timber.i("setting crashlytics keys")
         FirebaseCrashlytics.getInstance().setCustomKeys {
             key("locale", locale)
             key("Screen Density", density)

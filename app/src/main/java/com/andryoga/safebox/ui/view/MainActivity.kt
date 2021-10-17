@@ -196,11 +196,13 @@ class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler(
 //            binding.addNewUserPersonalDataLayout.motionLayout.visibility =
 //                if (isVisible) View.VISIBLE else View.INVISIBLE
 //        }
+        Timber.i("setting add new user data visibility to $isVisible")
         binding.addNewUserPersonalDataLayout.motionLayout.visibility =
             if (isVisible) View.VISIBLE else View.INVISIBLE
     }
 
     fun setSupportActionBarVisibility(isVisible: Boolean) {
+        Timber.i("setting support action bar visibility to $isVisible")
         if (isVisible) supportActionBar?.show() else supportActionBar?.hide()
     }
 

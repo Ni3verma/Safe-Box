@@ -54,7 +54,7 @@ class AllInfoFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Timber.i("toggling visibility of add new fab and action bar")
+        Timber.i("on view created fragment")
         (requireActivity() as MainActivity).apply {
             setAddNewUserDataVisibility(true)
             setSupportActionBarVisibility(true)
