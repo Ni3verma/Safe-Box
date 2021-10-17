@@ -102,6 +102,16 @@ class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler(
         CrashlyticsKeys(this).setDefaultKeys()
     }
 
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start activity")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Timber.i("on restart activity")
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         collapseAddNewDataOptions()
         when (item.itemId) {

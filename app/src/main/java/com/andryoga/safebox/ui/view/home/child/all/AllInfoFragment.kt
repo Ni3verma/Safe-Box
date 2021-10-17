@@ -55,10 +55,20 @@ class AllInfoFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         Timber.i("on view created fragment")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start fragment")
         (requireActivity() as MainActivity).apply {
             setAddNewUserDataVisibility(true)
             setSupportActionBarVisibility(true)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Timber.i("on resume fragment")
     }
 
     private fun onListItemClick(item: UserListItemData) {
