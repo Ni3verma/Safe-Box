@@ -79,7 +79,10 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
         super.onResume()
         if (canUseBiometrics()) {
             Timber.i("device can use biometric")
-            showBiometricsAuthDialog(requireContext())
+            showBiometricsAuthDialog(
+                getString(R.string.biometric_title_text),
+                getString(R.string.biometric_negative_button_text)
+            )
         } else {
             Timber.i("device cannot use biometric")
         }

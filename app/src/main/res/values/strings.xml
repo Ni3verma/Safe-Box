@@ -33,6 +33,8 @@
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
+    <string name="biometric_title_text">Biometric Authentication</string>
+    <string name="biometric_negative_button_text">Close</string>
 
     <!--    User data type text-->
     <string name="login">Login</string>
@@ -87,11 +89,4 @@
     <string name="hint_is_ok">Hint is OK</string>
     <string name="welcome">Welcome !</string>
     <string name="set_password_help_text">Set a strong master password</string>
-    <string name="biometric_negative_button_text">Close</string>
-    <string name="biometric_touch_id_title">Touch ID</string>
-    <string name="biometric_touch_id_subtitle">Use Touch ID to authenticate</string>
-    <string name="biometric_face_id_title">Face ID</string>
-    <string name="biometric_face_id_subtitle">Use Face ID to authenticate</string>
-    <string name="biometric_iris_id_title">Iris ID</string>
-    <string name="biometric_iris_id_subtitle">Use Iris ID to authenticate</string>
 </resources>
