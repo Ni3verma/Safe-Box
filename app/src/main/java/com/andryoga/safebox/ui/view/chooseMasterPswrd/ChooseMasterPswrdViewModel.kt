@@ -52,15 +52,6 @@ class ChooseMasterPswrdViewModel @Inject constructor(
             val pswrd = pswrd.value
             val hint = hint.value
 
-            for ((index, char) in pswrd.withIndex()) {
-                val nextChar = char + 1
-                val nextToNextChar = char + 2
-                if (pswrd.indexOf("" + nextChar + nextToNextChar) == index + 1) {
-                    _validationFailureCode.value = ALTERNATE_CHAR_FOUND
-                    return@launch
-                }
-            }
-
             if (longestCommonSubstring(
                     pswrd.lowercase(),
                     hint.lowercase()

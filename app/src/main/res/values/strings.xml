@@ -56,7 +56,6 @@
     <string name="special_char_validation_text">Must contain more than 1 special char</string>
     <string name="case_validation_text">Must be a mix of upper and lower case letters</string>
     <string name="numeric_validation_text">Must contain more than 2 numeric char</string>
-    <string name="alternate_validation_text">Must not contain alternate digits or letters</string>
     <string name="hint_subset_validation_text">User Password subset not allowed</string>
     <string name="save">Save</string>
     <string name="password">Password <font color='#FF0000'>̽</font></string>
