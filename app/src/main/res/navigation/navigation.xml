@@ -99,5 +99,10 @@
             android:id="@+id/nav_secure_note_info"
             android:name="com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragment"
             android:label="@string/drawer_title_secure_note" />
+    <action
+        android:id="@+id/action_global_loginFragment"
+        app:destination="@id/loginFragment"
+        app:launchSingleTop="true"
+        app:popUpTo="@id/loginFragment" />
 
 </navigation>

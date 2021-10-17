@@ -11,12 +11,15 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.LoginFragmentBinding
+import com.andryoga.safebox.ui.common.Biometricable
+import com.andryoga.safebox.ui.common.BiometricableEventType
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
+import com.andryoga.safebox.ui.common.biometricableHandler
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class LoginFragment : Fragment() {
+class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
     private val viewModel: LoginViewModel by viewModels()
 
     private lateinit var binding: LoginFragmentBinding
@@ -29,6 +32,8 @@ class LoginFragment : Fragment() {
         binding = DataBindingUtil.inflate(inflater, R.layout.login_fragment, container, false)
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
+
+        configureBiometrics(this, this)
 
         binding.pswrdText.addTextChangedListener {
             if (binding.pswrd.isErrorEnabled) {
@@ -56,6 +61,31 @@ class LoginFragment : Fragment() {
         return binding.root
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (canUseBiometrics()) {
+            showBiometricsAuthDialog(
+                "Touch ID",
+                "Use Touch ID to authenticate",
+                "Close"
+            )
+        }
+    }
+
+    override fun onBiometricEvent(event: BiometricableEventType) {
+        when (event) {
+            BiometricableEventType.BIOMETRICS_AVAILABLE -> Timber.i("Biometric authentication available")
+            BiometricableEventType.BIOMETRICS_ERROR -> Timber.i("There's been an error with biometric authentication")
+            BiometricableEventType.BIOMETRICS_NOT_AVAILABLE -> Timber.i("Biometric authentication not available")
+            BiometricableEventType.AUTHENTICATION_CANCELED -> Timber.i("Authentication canceled by user")
+            BiometricableEventType.AUTHENTICATION_FAILED -> Timber.i("Authentication failed")
+            BiometricableEventType.AUTHENTICATION_SUCCEEDED -> {
+                Timber.i("User authenticated with biometric")
+                navigateToHome()
+            }
+        }
+    }
+
     private fun setupObservers() {
         viewModel.isWrongPswrdEntered.observe(viewLifecycleOwner) {
             if (it) {
@@ -66,11 +96,15 @@ class LoginFragment : Fragment() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
-                Timber.i("hiding keyboard")
-                hideSoftKeyboard(requireActivity())
-                Timber.i("navigating to home")
-                findNavController().navigate(R.id.action_loginFragment_to_nav_all_info)
+                navigateToHome()
             }
         }
+    }
+
+    private fun navigateToHome() {
+        Timber.i("hiding keyboard")
+        hideSoftKeyboard(requireActivity())
+        Timber.i("navigating to home")
+        findNavController().navigate(R.id.action_loginFragment_to_nav_all_info)
     }
 }

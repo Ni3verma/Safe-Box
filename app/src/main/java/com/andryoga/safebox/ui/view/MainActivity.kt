@@ -23,14 +23,19 @@ import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
+import com.andryoga.safebox.ui.common.Biometricable
 import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.common.biometricableHandler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), Biometricable by biometricableHandler() {
     private val viewModel: MainActivityViewModel by viewModels()
+
+    private var lastTimeInteracted = System.currentTimeMillis()
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var motionLayout: MotionLayout
     private lateinit var drawerLayout: DrawerLayout
@@ -52,6 +57,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Timber.i("on create activity")
         // add secure flag so that view is not visible in recent app screen
         // NOTE : this will also restrict user to take screenshots inside app
         // could be USER_PREFERENCE in future
@@ -122,6 +128,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        lastTimeInteracted = System.currentTimeMillis()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Timber.i("resume activity")
+//        if (System.currentTimeMillis() - lastTimeInteracted > 10000) {
+//            navController.navigate(R.id.action_global_loginFragment)
+//        }
+    }
+
     private fun setupObservers() {
         binding.addNewUserPersonalDataLayout.newDataMasterFab.setOnClickListener {
             if (motionLayout.currentState == R.id.start) {
@@ -173,6 +192,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setAddNewUserDataVisibility(isVisible: Boolean) {
+//        if (this::binding.isInitialized) {
+//            binding.addNewUserPersonalDataLayout.motionLayout.visibility =
+//                if (isVisible) View.VISIBLE else View.INVISIBLE
+//        }
         binding.addNewUserPersonalDataLayout.motionLayout.visibility =
             if (isVisible) View.VISIBLE else View.INVISIBLE
     }

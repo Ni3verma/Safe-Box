@@ -33,6 +33,7 @@ class AllInfoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Timber.i("on create view fragment")
         return ComposeView(requireContext()).apply {
             setContent {
                 val listData by viewModel.allData.collectAsState(
