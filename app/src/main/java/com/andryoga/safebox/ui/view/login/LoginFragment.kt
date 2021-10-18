@@ -16,6 +16,7 @@ import com.andryoga.safebox.ui.common.BiometricableEventType
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.common.biometricableHandler
 import com.andryoga.safebox.ui.view.MainActivity
+import com.andryoga.safebox.ui.view.login.LoginViewModel.Constants.MAX_CONT_BIOMETRIC_LOGINS
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -77,14 +78,14 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
 
     override fun onResume() {
         super.onResume()
-        if (canUseBiometrics()) {
-            Timber.i("device can use biometric")
+        if (canUseBiometrics() && viewModel.loginCountWithBiometric < MAX_CONT_BIOMETRIC_LOGINS) {
+            Timber.i("showing biometric dialog")
             showBiometricsAuthDialog(
                 getString(R.string.biometric_title_text),
                 getString(R.string.biometric_negative_button_text)
             )
         } else {
-            Timber.i("device cannot use biometric")
+            Timber.i("not showing biometric dialog, cont count with biometric = ${viewModel.loginCountWithBiometric}")
         }
     }
 
@@ -92,6 +93,7 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
         when (event) {
             BiometricableEventType.AUTHENTICATION_SUCCEEDED -> {
                 Timber.i("User authenticated with biometric")
+                viewModel.onUnlockedWithBiometric()
                 navigateToHome()
             }
             else -> {

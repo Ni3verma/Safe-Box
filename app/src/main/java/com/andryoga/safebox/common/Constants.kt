@@ -5,6 +5,7 @@ object Constants {
 
     //        SHOULD ONLY be user for encrypted shared preference
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
+    const val LOGIN_COUNT_WITH_BIOMETRIC = "login_count_with_biometric"
 
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
