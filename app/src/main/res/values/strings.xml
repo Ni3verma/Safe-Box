@@ -89,4 +89,7 @@
     <string name="hint_is_ok">Hint is OK</string>
     <string name="welcome">Welcome !</string>
     <string name="set_password_help_text">Set a strong master password</string>
+    <string name="timeout_dialog_title">Timeout</string>
+    <string name="timeout_dialog_message">You were away for too long. Please click OK to login to app again</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
 </resources>

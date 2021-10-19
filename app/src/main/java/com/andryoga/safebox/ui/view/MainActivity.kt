@@ -19,11 +19,13 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
+import com.andryoga.safebox.common.Constants.time500Milli
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import timber.log.Timber
@@ -31,6 +33,8 @@ import timber.log.Timber
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
+
+    private var lastInteractionTime: Long = System.currentTimeMillis()
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var motionLayout: MotionLayout
@@ -51,6 +55,11 @@ class MainActivity : AppCompatActivity() {
     )
     private val drawerLayoutFirstScreen = R.id.nav_all_info
 
+    object Constants {
+        const val LAST_INTERACTED_TIME = "last_interacted_time"
+        const val MAX_USER_AWAY_MILLI_SECONDS = 20000L
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.i("on create activity")
@@ -59,6 +68,10 @@ class MainActivity : AppCompatActivity() {
         // could be USER_PREFERENCE in future
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+
+        lastInteractionTime = savedInstanceState?.getLong(LAST_INTERACTED_TIME)
+            ?: System.currentTimeMillis()
+        checkUserAwayTimeout()
 
         motionLayout = binding.addNewUserPersonalDataLayout.motionLayout
         drawerLayout = binding.drawerLayout
@@ -93,6 +106,21 @@ class MainActivity : AppCompatActivity() {
         }
 
         CrashlyticsKeys(this).setDefaultKeys()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        lastInteractionTime = System.currentTimeMillis()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkUserAwayTimeout()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putLong(LAST_INTERACTED_TIME, System.currentTimeMillis())
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -162,7 +190,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenStarted {
-            delay(Constants.time500Milli)
+            delay(time500Milli)
             collapseAddNewDataOptions()
         }
     }
@@ -194,5 +222,25 @@ class MainActivity : AppCompatActivity() {
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
         }
+    }
+
+    /*Check if user is away for too long
+    * @returns true if timeout has happened
+    * */
+    fun checkUserAwayTimeout(): Boolean {
+        return if ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS) {
+            Timber.i("away timeout, showing dialog")
+            binding.hideView.visibility = View.VISIBLE
+            MaterialAlertDialogBuilder(this)
+                .setTitle(getString(R.string.timeout_dialog_title))
+                .setMessage(getString(R.string.timeout_dialog_message))
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.timeout_dialog_positive_button_text)) { _, _ ->
+                    Timber.i("ok clicked, restarting app")
+                    finish()
+                    startActivity(intent)
+                }.show()
+            true
+        } else false
     }
 }

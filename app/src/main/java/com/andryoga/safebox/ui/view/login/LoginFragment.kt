@@ -78,7 +78,14 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
 
     override fun onResume() {
         super.onResume()
-        if (canUseBiometrics() && viewModel.loginCountWithBiometric < MAX_CONT_BIOMETRIC_LOGINS) {
+        /* show biometric dialog only if device can authenticate with biometric
+        * and login count with biometric has not crossed threshold
+        * and user away timeout has not happened
+        * */
+        if (canUseBiometrics() &&
+            viewModel.loginCountWithBiometric < MAX_CONT_BIOMETRIC_LOGINS &&
+            !(requireActivity() as MainActivity).checkUserAwayTimeout()
+        ) {
             Timber.i("showing biometric dialog")
             showBiometricsAuthDialog(
                 getString(R.string.biometric_title_text),
