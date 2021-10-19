@@ -53,5 +53,14 @@
             android:layout_gravity="start"
             android:fitsSystemWindows="false"
             app:menu="@menu/home_drawer" />
+
+        <ImageView
+            android:id="@+id/hide_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/darker_gray"
+            android:contentDescription="@string/cd_background_image"
+            android:translationZ="2dp"
+            android:visibility="gone" />
     </androidx.drawerlayout.widget.DrawerLayout>
 </layout>

@@ -7,5 +7,8 @@ interface EncryptedPreferenceProvider {
     fun upsertStringPref(key: String, value: String)
     fun getStringPref(key: String, defValue: String?): String?
 
+    fun upsertIntPref(key: String, value: Int)
+    fun getIntPref(key: String, defValue: Int): Int
+
     fun removePrefByKey(key: String)
 }

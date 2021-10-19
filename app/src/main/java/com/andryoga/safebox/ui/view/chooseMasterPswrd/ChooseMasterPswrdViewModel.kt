@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.Constants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
@@ -42,6 +43,13 @@ class ChooseMasterPswrdViewModel @Inject constructor(
 
     val pswrd = MutableStateFlow("")
     val hint = MutableStateFlow("")
+
+    init {
+        if (BuildConfig.DEBUG) {
+            pswrd.value = "Qwerty@@135"
+            hint.value = "first 5 @@ first 3"
+        }
+    }
 
     fun evaluateValidationRules() {
         if (evaluateValidationRuleJob.isActive) {

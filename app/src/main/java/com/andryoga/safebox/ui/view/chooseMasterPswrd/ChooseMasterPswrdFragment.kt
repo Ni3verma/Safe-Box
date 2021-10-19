@@ -13,6 +13,7 @@ import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.databinding.ChooseMasterPswrdFragmentBinding
 import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
@@ -51,6 +52,19 @@ class ChooseMasterPswrdFragment : Fragment() {
         setupObservers()
 
         return binding.root
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start of choose mstr pswrd fragment")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(false)
+                setSupportActionBarVisibility(false)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
+        }
     }
 
     private fun setupObservers() {

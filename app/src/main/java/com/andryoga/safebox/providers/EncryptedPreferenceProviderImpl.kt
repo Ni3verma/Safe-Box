@@ -42,6 +42,14 @@ class EncryptedPreferenceProviderImpl @Inject constructor(
         return sharedPref.getString(key, defValue)
     }
 
+    override fun getIntPref(key: String, defValue: Int): Int {
+        return sharedPref.getInt(key, defValue)
+    }
+
+    override fun upsertIntPref(key: String, value: Int) {
+        sharedPref.edit().putInt(key, value).apply()
+    }
+
     override fun removePrefByKey(key: String) {
         sharedPref.edit().remove(key).apply()
     }

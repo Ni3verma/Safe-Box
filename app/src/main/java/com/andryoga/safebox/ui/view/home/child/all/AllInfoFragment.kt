@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
@@ -33,6 +34,7 @@ class AllInfoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Timber.i("on create view of all info fragment")
         return ComposeView(requireContext()).apply {
             setContent {
                 val listData by viewModel.allData.collectAsState(
@@ -51,13 +53,18 @@ class AllInfoFragment : Fragment() {
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        Timber.i("toggling visibility of add new fab and action bar")
-        (requireActivity() as MainActivity).apply {
-            setAddNewUserDataVisibility(true)
-            setSupportActionBarVisibility(true)
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start of all info fragment")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(true)
+                setSupportActionBarVisibility(true)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
+        insertDummyData()
     }
 
     private fun onListItemClick(item: UserListItemData) {
@@ -86,5 +93,11 @@ class AllInfoFragment : Fragment() {
                 }
             }
         )
+    }
+
+    private fun insertDummyData() {
+        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
+//            viewModel.insertDummyData()
+        }
     }
 }
