@@ -74,6 +74,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginTop="32dp"
+            android:hint="@string/password"
             app:boxCornerRadiusBottomEnd="28dp"
             app:boxCornerRadiusTopEnd="28dp"
             app:layout_constraintEnd_toStartOf="@id/save_btn"
@@ -85,7 +86,6 @@
                 android:id="@+id/pswrd_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/password"
                 android:inputType="textPassword"
                 android:singleLine="true"
                 android:text="@={viewModel.pswrd}">
