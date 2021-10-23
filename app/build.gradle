@@ -59,6 +59,11 @@ android {
     }
 
     buildTypes {
+        debug{
+            applicationIdSuffix ".debug"
+            debuggable true
+            minifyEnabled false
+        }
         qa {
             applicationIdSuffix ".qa"
             minifyEnabled true
