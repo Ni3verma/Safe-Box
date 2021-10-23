@@ -1,7 +1,6 @@
 package com.andryoga.safebox.ui.common
 
 import android.view.View
-import android.widget.Button
 import androidx.core.widget.addTextChangedListener
 import com.andryoga.safebox.R
 import com.google.android.material.textfield.TextInputEditText
@@ -10,7 +9,7 @@ import timber.log.Timber
 
 class RequiredFieldValidator(
     private val mandatoryViews: List<View>,
-    private val validationOnViewId: Button,
+    private val validationOnViewId: View,
     private val tag: String
 ) {
     var errorFields = setOf<Int>()

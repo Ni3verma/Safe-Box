@@ -11,14 +11,16 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.andryoga.safebox.BuildConfig
-import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.MainActivity
+import com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragmentDirections
+import com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragmentDirections
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
+import com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragmentDirections
+import com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragmentDirections
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
@@ -64,40 +66,40 @@ class AllInfoFragment : Fragment() {
         } else {
             Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
-        insertDummyData()
     }
 
     private fun onListItemClick(item: UserListItemData) {
-        Timber.i("clicked ${item.id} - ${item.type.name}")
+        val id = item.id
+        Timber.i("clicked $id - ${item.type.name}")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(false)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
+        }
+
         findNavController().navigate(
             when (item.type) {
                 UserDataType.LOGIN_DATA -> {
-                    NavigationDirections.actionGlobalLoginDataFragment(
-                        item.id
-                    )
+                    LoginInfoFragmentDirections.actionNavLoginInfoToLoginDataFragment(id)
                 }
                 UserDataType.BANK_ACCOUNT -> {
-                    NavigationDirections.actionGlobalBankAccountDataFragment(
-                        item.id
-                    )
+                    BankAccountInfoFragmentDirections.actionNavBankAccountInfoToBankAccountDataFragment(id)
                 }
                 UserDataType.BANK_CARD -> {
-                    NavigationDirections.actionGlobalBankCardDataFragment(
-                        item.id
-                    )
+                    BankCardInfoFragmentDirections.actionNavBankCardInfoToBankCardDataFragment(id)
                 }
                 UserDataType.SECURE_NOTE -> {
-                    NavigationDirections.actionGlobalSecureNoteDataFragment(
-                        item.id
-                    )
+                    SecureNoteInfoFragmentDirections.actionNavSecureNoteInfoToSecureNoteDataFragment(id)
                 }
             }
         )
     }
 
-    private fun insertDummyData() {
-        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
+//    private fun insertDummyData() {
+//        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
 //            viewModel.insertDummyData()
-        }
-    }
+//        }
+//    }
 }

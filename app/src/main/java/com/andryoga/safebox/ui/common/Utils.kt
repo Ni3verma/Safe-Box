@@ -48,7 +48,7 @@ object Utils {
         motionLayout: MotionLayout,
         endState: Int,
         startState: Int = motionLayout.currentState,
-        duration: Int = 700
+        duration: Int = 500
     ) {
         if (motionLayout.currentState != endState) {
             motionLayout.setTransition(startState, endState)

@@ -25,11 +25,12 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/empty_home_view.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_drawer_header.xml" value="0.6" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/home_fragment.xml" value="0.15925925925925927" />
-        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_data_fragment.xml" value="0.18055555555555555" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_data_fragment.xml" value="0.2" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_fragment.xml" value="0.4132231404958678" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/login_info_fragment.xml" value="0.15925925925925927" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/row_home_info_item.xml" value="0.536" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/menu/home_drawer.xml" value="0.6" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/menu/user_data_edit_menu.xml" value="0.25416666666666665" />
       </map>
     </option>
   </component>
