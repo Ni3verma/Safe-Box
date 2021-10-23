@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/y509118/.gradle/caches/transforms-3/c7735dadc3e3555594b7c51abf7f8992/transformed/biometric-1.1.0/res/layout/fingerprint_dialog_layout.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/bottom_curve.xml" value="0.22314814814814815" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/empty.xml" value="0.2324074074074074" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/drawable/ic_add_24.xml" value="0.2703125" />
@@ -15,6 +16,7 @@
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/font/roboto_mono_light.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/add_new_user_personal_data.xml" value="0.1" />
+        <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/add_new_user_personal_data_dialog.xml" value="0.4" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/bank_account_data_fragment.xml" value="0.4" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/bank_card_data_fragment.xml" value="0.1" />
         <entry key="..\:/Users/y509118/AndroidStudioProjects/SafeBox/app/src/main/res/layout/choose_master_pswrd_fragment.xml" value="0.264" />

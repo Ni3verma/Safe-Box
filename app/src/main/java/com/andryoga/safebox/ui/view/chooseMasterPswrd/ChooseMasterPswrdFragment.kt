@@ -59,7 +59,6 @@ class ChooseMasterPswrdFragment : Fragment() {
         Timber.i("on start of choose mstr pswrd fragment")
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {
-                setAddNewUserDataVisibility(false)
                 setSupportActionBarVisibility(false)
             }
         } else {
