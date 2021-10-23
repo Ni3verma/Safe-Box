@@ -11,9 +11,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.andryoga.safebox.NavigationDirections
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.AndroidEntryPoint
@@ -48,12 +48,29 @@ class BankCardInfoFragment : Fragment() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        Timber.i("on start of all info fragment")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(true)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
+        }
+    }
+
     private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
+        if (requireActivity() is MainActivity) {
+            (requireActivity() as MainActivity).apply {
+                setAddNewUserDataVisibility(false)
+            }
+        } else {
+            Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
+        }
         findNavController().navigate(
-            NavigationDirections.actionGlobalBankCardDataFragment(
-                item.id
-            )
+            BankCardInfoFragmentDirections.actionNavBankCardInfoToBankCardDataFragment(item.id)
         )
     }
 }

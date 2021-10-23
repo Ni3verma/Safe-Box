@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/nav_login_info">
+    app:startDestination="@id/loginFragment">
 
     <fragment
         android:id="@+id/loginFragment"
@@ -44,7 +44,7 @@
             app:argType="integer"
             android:defaultValue="-1" />
     </fragment>
-    <dialog
+    <fragment
         android:id="@+id/bankAccountDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataFragment"
         android:label="Bank Account data"
@@ -53,8 +53,8 @@
             android:name="id"
             app:argType="integer"
             android:defaultValue="-1" />
-    </dialog>
-    <dialog
+    </fragment>
+    <fragment
         android:id="@+id/bankCardDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataFragment"
         android:label="Bank Card data"
@@ -63,8 +63,8 @@
             android:name="id"
             app:argType="integer"
             android:defaultValue="-1" />
-    </dialog>
-    <dialog
+    </fragment>
+    <fragment
         android:id="@+id/secureNoteDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataFragment"
         android:label="Secure Note data"
@@ -73,13 +73,9 @@
             android:name="id"
             app:argType="integer"
             android:defaultValue="-1" />
-    </dialog>
-    <action android:id="@+id/action_global_secureNoteDataFragment" app:destination="@id/secureNoteDataFragment" />
-    <action android:id="@+id/action_global_loginDataFragment" app:destination="@id/loginDataFragment" />
-    <action android:id="@+id/action_global_bankAccountDataFragment" app:destination="@id/bankAccountDataFragment" />
-    <action android:id="@+id/action_global_bankCardDataFragment" app:destination="@id/bankCardDataFragment" />
+    </fragment>
 
-        <fragment
+    <fragment
             android:id="@+id/nav_all_info"
             android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
             android:label="@string/drawer_title_all_items" >

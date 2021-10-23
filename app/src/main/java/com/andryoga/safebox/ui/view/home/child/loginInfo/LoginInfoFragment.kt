@@ -53,7 +53,6 @@ class LoginInfoFragment : Fragment() {
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {
                 setAddNewUserDataVisibility(true)
-                setSupportActionBarVisibility(true)
             }
         } else {
             Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")

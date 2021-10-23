@@ -6,7 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.widget.doOnTextChanged
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
@@ -15,17 +17,17 @@ import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class BankCardDataFragment : BottomSheetDialogFragment() {
+class BankCardDataFragment : Fragment() {
 
     private val viewModel: BankCardDataViewModel by viewModels()
     private val args: BankCardDataFragmentArgs by navArgs()
     private lateinit var binding: BankCardDataFragmentBinding
-    private val tagLocal = "Nitin bank card fragment"
+    private val tagLocal = "bank card fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,7 +42,7 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
         )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
-        Timber.i("received id = ${args.id}")
+        Timber.i("$tagLocal : received id = ${args.id}")
         viewModel.setRuntimeVar(args)
 
         return binding.root
@@ -92,7 +94,8 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_data_saved)
                 )
-                dismiss()
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
             Status.ERROR -> {
                 com.andryoga.safebox.ui.common.Utils.switchVisibility(
@@ -103,7 +106,8 @@ class BankCardDataFragment : BottomSheetDialogFragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
-                dismiss()
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
         }
     }

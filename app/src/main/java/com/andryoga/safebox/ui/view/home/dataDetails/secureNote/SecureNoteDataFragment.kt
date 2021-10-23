@@ -5,7 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
@@ -14,16 +16,16 @@ import com.andryoga.safebox.ui.common.CommonSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class SecureNoteDataFragment : BottomSheetDialogFragment() {
+class SecureNoteDataFragment : Fragment() {
     private val viewModel: SecureNoteDataViewModel by viewModels()
     private val args: SecureNoteDataFragmentArgs by navArgs()
     private lateinit var binding: SecureNoteDataFragmentBinding
-    private val tagLocal = "Nitin secure note fragment"
+    private val tagLocal = "secure note fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,10 +38,22 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
         )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
-        Timber.i("received id = ${args.id}")
+        Timber.i("$tagLocal : received id = ${args.id}")
         viewModel.setRuntimeVar(args)
         setupObservers()
         return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val requiredFieldValidator = RequiredFieldValidator(
+            listOf(
+                binding.title,
+                binding.notes
+            ),
+            binding.saveBtn,
+            tagLocal
+        )
+        requiredFieldValidator.validate()
     }
 
     private fun setupObservers() {
@@ -65,7 +79,8 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_data_saved)
                 )
-                dismiss()
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
             Status.ERROR -> {
                 com.andryoga.safebox.ui.common.Utils.switchVisibility(
@@ -76,20 +91,9 @@ class SecureNoteDataFragment : BottomSheetDialogFragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
-                dismiss()
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
         }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val requiredFieldValidator = RequiredFieldValidator(
-            listOf(
-                binding.title,
-                binding.notes
-            ),
-            binding.saveBtn,
-            tagLocal
-        )
-        requiredFieldValidator.validate()
     }
 }

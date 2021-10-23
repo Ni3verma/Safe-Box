@@ -11,96 +11,110 @@
             type="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/main_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:isScrollContainer="true">
 
-        <ImageView
-            android:id="@+id/header_icon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:contentDescription="@string/cd_add_new_login_data"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_key_24"
-            app:tint="@color/colorPrimaryDark" />
-
-        <TextView
-            android:id="@+id/header_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/secure_note"
-            android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
-            app:layout_constraintEnd_toEndOf="@+id/header_icon"
-            app:layout_constraintStart_toStartOf="@+id/header_icon"
-            app:layout_constraintTop_toBottomOf="@+id/header_icon" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/title"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header_title">
+            android:layout_height="match_parent">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/title_text"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:hint="@string/title"
-                android:singleLine="true"
-                android:text="@={viewModel.secureNoteScreenData.title}">
+                android:padding="16dp">
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <ImageView
+                    android:id="@+id/header_icon"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:contentDescription="@string/cd_add_new_login_data"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:srcCompat="@drawable/ic_key_24"
+                    app:tint="@color/colorPrimaryDark" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <TextView
+                    android:id="@+id/header_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/secure_note"
+                    android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
+                    app:layout_constraintEnd_toEndOf="@+id/header_icon"
+                    app:layout_constraintStart_toStartOf="@+id/header_icon"
+                    app:layout_constraintTop_toBottomOf="@+id/header_icon" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/notes"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title">
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/title"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/header_title">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/notes_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:hint="@string/notes_mandatory"
-                android:inputType="textMultiLine"
-                android:minLines="4"
-                android:text="@={viewModel.secureNoteScreenData.notes}">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/title_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/title"
+                        android:singleLine="true"
+                        android:text="@={viewModel.secureNoteScreenData.title}">
 
-            </com.google.android.material.textfield.TextInputEditText>
+                    </com.google.android.material.textfield.TextInputEditText>
 
-        </com.google.android.material.textfield.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/notes"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/title">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/notes_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/notes_mandatory"
+                        android:inputType="textMultiLine"
+                        android:minLines="4"
+                        android:text="@={viewModel.secureNoteScreenData.notes}">
+
+                    </com.google.android.material.textfield.TextInputEditText>
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/save_btn"
-            style="@style/Widget.MaterialComponents.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/save"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/notes" />
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/cd_save_button"
+            android:src="@drawable/ic_check_24"
+            app:layout_anchorGravity="bottom|end"
+            app:tint="@color/white_50" />
 
         <ProgressBar
             android:id="@+id/loading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
             android:indeterminateDrawable="@drawable/progress"
             android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="@id/save_btn"
-            app:layout_constraintEnd_toEndOf="@id/save_btn"
-            app:layout_constraintStart_toStartOf="@id/save_btn"
-            app:layout_constraintTop_toTopOf="@id/save_btn" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            app:layout_anchorGravity="bottom|end" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
 </layout>

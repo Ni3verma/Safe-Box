@@ -44,7 +44,6 @@ class LoginDataFragment : Fragment() {
         binding.lifecycleOwner = this
         Timber.i("$tagLocal : received id = ${args.id}")
         viewModel.setRuntimeVar(args)
-        setHasOptionsMenu(true)
         setupObservers()
         return binding.root
     }
@@ -81,8 +80,8 @@ class LoginDataFragment : Fragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_data_saved)
                 )
-                findNavController().navigateUp()
                 hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
             Status.ERROR -> {
                 switchVisibility(binding.saveBtn, binding.loading)
@@ -90,8 +89,8 @@ class LoginDataFragment : Fragment() {
                     activity!!.findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
-                findNavController().navigateUp()
                 hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
             }
         }
     }
