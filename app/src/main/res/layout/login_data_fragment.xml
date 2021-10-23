@@ -140,6 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
+            app:tint="@color/white_50"
             android:contentDescription="@string/cd_save_button"
             android:src="@drawable/ic_check_24"
             app:layout_anchorGravity="bottom|end" />

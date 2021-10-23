@@ -34,6 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
+            app:tint="@color/white_50"
             android:contentDescription="@string/cd_open_options_to_add_new_personal_data"
             android:src="@drawable/ic_add_24"
             app:layout_constraintBottom_toBottomOf="parent"

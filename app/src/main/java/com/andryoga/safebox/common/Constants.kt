@@ -11,6 +11,6 @@ object Constants {
     const val CRASHLYTICS_KEY_UID = "uid"
 
     //        Other
-    const val time500Milli = 500L
+    const val time1Sec = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
 }
