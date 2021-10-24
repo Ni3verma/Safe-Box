@@ -12,13 +12,4 @@ data class SecureNoteDataEntity(
     val notes: String,
     val creationDate: Date,
     val updateDate: Date
-) {
-    constructor(
-        title: String,
-        notes: String,
-        creationDate: Date,
-        updateDate: Date
-    ) : this(
-        0, title, notes, creationDate, updateDate
-    )
-}
+)

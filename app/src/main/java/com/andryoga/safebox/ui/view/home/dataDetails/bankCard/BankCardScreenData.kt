@@ -15,9 +15,9 @@ class BankCardScreenData(
     pTitle: String = "",
     pName: String? = null,
     pNumber: String = "",
-    pExpiryDate: String = "",
+    pExpiryDate: String? = null,
     pPin: String? = null,
-    pCvv: String = "",
+    pCvv: String? = null,
     pNotes: String? = null,
     pCreationDate: Date = Date()
 ) {
@@ -39,8 +39,8 @@ class BankCardScreenData(
                 name.get(),
                 number.getValueOrEmpty(),
                 pin.get(),
-                cvv.getValueOrEmpty(),
-                expiryDate.getValueOrEmpty(),
+                cvv.get(),
+                expiryDate.get(),
                 notes.get(),
                 creationDate,
                 Date()

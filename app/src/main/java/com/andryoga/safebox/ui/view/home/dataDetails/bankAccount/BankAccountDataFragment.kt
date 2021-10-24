@@ -49,9 +49,7 @@ class BankAccountDataFragment : Fragment() {
         val requiredFieldValidator = RequiredFieldValidator(
             listOf(
                 binding.title,
-                binding.accountNo,
-                binding.custId,
-                binding.ifscCode
+                binding.accountNo
             ),
             binding.saveBtn,
             tagLocal

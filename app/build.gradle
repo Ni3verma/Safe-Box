@@ -28,8 +28,10 @@ android {
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += [
-                        "room.incremental":"true",
-                        "room.expandProjection":"true"]
+                        "room.incremental"     : "true",
+                        "room.expandProjection": "true",
+                        "room.schemaLocation"  : "$projectDir/schemas".toString()
+                ]
             }
         }
 
@@ -59,7 +61,7 @@ android {
     }
 
     buildTypes {
-        debug{
+        debug {
             applicationIdSuffix ".debug"
             debuggable true
             minifyEnabled false
@@ -104,8 +106,8 @@ android {
     }
 
     lintOptions {
-        disable 'UnusedResources','FragmentTagUsage'
-        disable 'Correctness','Messages'
+        disable 'UnusedResources', 'FragmentTagUsage'
+        disable 'Correctness', 'Messages'
     }
 }
 

@@ -14,8 +14,8 @@ data class BankCardDataEntity(
     val name: String?,
     val number: String,
     val pin: String?,
-    val cvv: String,
-    val expiryDate: String,
+    val cvv: String?,
+    val expiryDate: String?,
     val notes: String?,
     val creationDate: Date,
     val updateDate: Date

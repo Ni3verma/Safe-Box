@@ -2,6 +2,7 @@ package com.andryoga.safebox.di
 
 import android.content.Context
 import androidx.room.Room
+import com.andryoga.safebox.data.db.MIGRATION_1_2
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.*
 import dagger.Module
@@ -24,7 +25,7 @@ object CacheModule {
             context,
             SafeBoxDatabase::class.java,
             SafeBoxDatabase.DATABASE_NAME
-        ).build()
+        ).addMigrations(MIGRATION_1_2).build()
     }
 
     // DAO

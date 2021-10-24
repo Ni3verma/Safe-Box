@@ -52,8 +52,7 @@ class LoginDataFragment : Fragment() {
         val requiredFieldValidator = RequiredFieldValidator(
             listOf(
                 binding.title,
-                binding.userId,
-                binding.pswrd
+                binding.userId
             ),
             binding.saveBtn,
             tagLocal

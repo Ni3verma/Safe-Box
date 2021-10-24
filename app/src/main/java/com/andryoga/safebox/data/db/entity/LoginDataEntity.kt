@@ -10,7 +10,7 @@ data class LoginDataEntity(
     val key: Int,
     val title: String,
     val url: String?,
-    val password: String,
+    val password: String?,
     val notes: String?,
     val userId: String,
     val creationDate: Date,
