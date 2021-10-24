@@ -18,6 +18,9 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 </a> &emsp;
 <a href="https://www.linkedin.com/in/nitinverma1120/">
     <img src="./screenshots/linked in.png" width="30%">
+</a> &emsp;
+<a href="https://nitin-code.medium.com/">
+    <img src="./screenshots/medium.png" width="30%">
 </a>
 
 <br><br><hr>
@@ -36,10 +39,9 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 
 ## Add different kind of personal data
 
-<img src="./screenshots/login data.png" height="400px" width = "200px"/> . 
-<img src="./screenshots/bank account data.png" height="400px" width = "200px"/> . 
-<img src="./screenshots/bank card data.png" height="400px" width = "200px"/> . 
-<img src="./screenshots/secure note data.png" height="400px" width = "200px"/>
+Login Data| Bank Account Data| Bank Card Data| Secure Note Data
+--- | --- | --- | ---
+<img src="./screenshots/login data.png" height="400px" width = "200px"/> | <img src="./screenshots/bank account data.png" height="400px" width = "200px"/> | <img src="./screenshots/bank card data.png" height="400px" width = "200px"/> | <img src="./screenshots/secure note data.png" height="400px" width = "200px"/>
 
 <br>
 
