@@ -68,7 +68,6 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
         Timber.i("on start of login fragment")
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {
-                setAddNewUserDataVisibility(false)
                 setSupportActionBarVisibility(false)
             }
         } else {

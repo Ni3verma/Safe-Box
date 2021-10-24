@@ -3,14 +3,6 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
-
-    <data>
-
-        <variable
-            name="viewModel"
-            type="com.andryoga.safebox.ui.view.MainActivityViewModel" />
-    </data>
-
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
@@ -35,13 +27,6 @@
                     android:layout_height="match_parent"
                     app:defaultNavHost="true"
                     app:navGraph="@navigation/navigation" />
-
-                <include
-                    android:id="@+id/addNewUserPersonalDataLayout"
-                    layout="@layout/add_new_user_personal_data"
-                    android:layout_gravity="bottom|end"
-                    app:viewModel="@{viewModel}" />
-
             </FrameLayout>
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>

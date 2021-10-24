@@ -5,7 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
@@ -15,17 +17,18 @@ import com.andryoga.safebox.ui.common.CommonSnackbar.showSuccessSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.common.Utils.switchVisibility
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
-class LoginDataFragment : BottomSheetDialogFragment() {
+class LoginDataFragment : Fragment() {
     private val viewModel: LoginDataViewModel by viewModels()
     private val args: LoginDataFragmentArgs by navArgs()
     private lateinit var binding: LoginDataFragmentBinding
-    private val tagLocal = "Nitin login data fragment"
+
+    private val tagLocal = "login data fragment"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,43 +42,10 @@ class LoginDataFragment : BottomSheetDialogFragment() {
             )
         binding.screenData = viewModel.loginScreenData
         binding.lifecycleOwner = this
-        Timber.i("received id = ${args.id}")
+        Timber.i("$tagLocal : received id = ${args.id}")
         viewModel.setRuntimeVar(args)
         setupObservers()
         return binding.root
-    }
-
-    private fun setupObservers() {
-        binding.saveBtn.setOnClickListener {
-            viewModel.onSaveClick().observe(viewLifecycleOwner) {
-                handleSaveButtonClick(it)
-            }
-        }
-    }
-
-    private fun handleSaveButtonClick(resource: Resource<Boolean>) {
-        Timber.i("save clicked")
-        // NEED_HELP: 6/19/2021 Not able to figure out
-        // why snackbar is not showing up if I use requireView() in view param
-        Utils.logResource(tagLocal, resource)
-        when (resource.status) {
-            Status.LOADING -> switchVisibility(binding.saveBtn, binding.loading)
-            Status.SUCCESS -> {
-                showSuccessSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_data_saved)
-                )
-                dismiss()
-            }
-            Status.ERROR -> {
-                switchVisibility(binding.saveBtn, binding.loading)
-                showErrorSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_error_saving_data)
-                )
-                dismiss()
-            }
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -89,5 +59,39 @@ class LoginDataFragment : BottomSheetDialogFragment() {
             tagLocal
         )
         requiredFieldValidator.validate()
+    }
+
+    private fun setupObservers() {
+        binding.saveBtn.setOnClickListener {
+            viewModel.onSaveClick().observe(viewLifecycleOwner) {
+                handleSaveButtonClick(it)
+            }
+        }
+    }
+    private fun handleSaveButtonClick(resource: Resource<Boolean>) {
+        Timber.i("save clicked")
+        // NEED_HELP: 6/19/2021 Not able to figure out
+        // why snackbar is not showing up if I use requireView() in view param
+        Utils.logResource(tagLocal, resource)
+        when (resource.status) {
+            Status.LOADING -> switchVisibility(binding.saveBtn, binding.loading)
+            Status.SUCCESS -> {
+                showSuccessSnackbar(
+                    activity!!.findViewById(R.id.drawer_layout),
+                    getString(R.string.snackbar_common_data_saved)
+                )
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
+            }
+            Status.ERROR -> {
+                switchVisibility(binding.saveBtn, binding.loading)
+                showErrorSnackbar(
+                    activity!!.findViewById(R.id.drawer_layout),
+                    getString(R.string.snackbar_common_error_saving_data)
+                )
+                hideSoftKeyboard(requireActivity())
+                findNavController().navigateUp()
+            }
+        }
     }
 }

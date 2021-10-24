@@ -11,9 +11,10 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.andryoga.safebox.NavigationDirections
+import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.view.home.child.common.AddNewDataFab
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.AndroidEntryPoint
@@ -43,6 +44,10 @@ class BankAccountInfoFragment : Fragment() {
                         onItemClick = { onListItemClick(it) },
                         onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                     )
+                    AddNewDataFab() {
+                        findNavController()
+                            .navigate(R.id.action_nav_bank_account_info_to_addNewUserPersonalDataDialogFragment)
+                    }
                 }
             }
         }
@@ -51,9 +56,7 @@ class BankAccountInfoFragment : Fragment() {
     private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
-            NavigationDirections.actionGlobalBankAccountDataFragment(
-                item.id
-            )
+            BankAccountInfoFragmentDirections.actionNavBankAccountInfoToBankAccountDataFragment(item.id)
         )
     }
 }

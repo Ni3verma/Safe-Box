@@ -11,203 +11,195 @@
             type="com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardDataViewModel" />
     </data>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/main_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:layout_height="match_parent"
+        android:isScrollContainer="true">
 
-        <ImageView
-            android:id="@+id/header_icon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:contentDescription="@string/cd_add_new_bank_card_data"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_card_24"
-            app:tint="@color/colorPrimaryDark" />
-
-        <TextView
-            android:id="@+id/header_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/bank_card"
-            android:textAppearance="@style/TextAppearance.MyTheme.Headline6"
-            app:layout_constraintEnd_toEndOf="@+id/header_icon"
-            app:layout_constraintStart_toStartOf="@+id/header_icon"
-            app:layout_constraintTop_toBottomOf="@+id/header_icon" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/title"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/header_title">
+            android:layout_height="match_parent">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/title_text"
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/title"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.title}">
+                android:padding="16dp">
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/title"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/title"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/header_title">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/title_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.title}">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/name"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/title">
+                    </com.google.android.material.textfield.TextInputEditText>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/name_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:capitalize="characters"
-                android:hint="@string/name"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.name}">
+                </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/name"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/name"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/title">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/name_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:capitalize="characters"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.name}">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/number"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/name">
+                    </com.google.android.material.textfield.TextInputEditText>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/number_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/number"
-                android:inputType="number"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.number}">
+                </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/number"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:hint="@string/number"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/name">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/number_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.number}">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/pin"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            app:layout_constraintEnd_toStartOf="@id/cvv"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/number">
+                    </com.google.android.material.textfield.TextInputEditText>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/pin_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/pin"
-                android:inputType="number"
-                android:nextFocusDown="@+id/cvv_text"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.pin}">
+                </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/pin"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:hint="@string/pin"
+                    app:layout_constraintEnd_toStartOf="@id/cvv"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/number">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/pin_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number"
+                        android:nextFocusDown="@+id/cvv_text"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.pin}">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/cvv"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/pin"
-            app:layout_constraintTop_toBottomOf="@+id/number"
-            app:passwordToggleEnabled="true">
+                    </com.google.android.material.textfield.TextInputEditText>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/cvv_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/cvv"
-                android:inputType="numberPassword"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.cvv}">
+                </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/cvv"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:hint="@string/cvv"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/pin"
+                    app:layout_constraintTop_toBottomOf="@+id/number"
+                    app:passwordToggleEnabled="true">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/cvv_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="numberPassword"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.cvv}">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/expiry_date"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/pin">
+                    </com.google.android.material.textfield.TextInputEditText>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/expiry_date_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/expiryDate"
-                android:inputType="datetime"
-                android:maxLength="5"
-                android:singleLine="true"
-                android:text="@={viewModel.bankCardScreenData.expiryDate}">
+                </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputEditText>
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/expiry_date"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/expiryDate"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/pin">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/expiry_date_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="datetime"
+                        android:maxLength="5"
+                        android:singleLine="true"
+                        android:text="@={viewModel.bankCardScreenData.expiryDate}">
 
-        <EditText
-            android:id="@+id/editTextTextMultiLine"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:gravity="start|top"
-            android:hint="@string/notes"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:text="@={viewModel.bankCardScreenData.notes}"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/expiry_date" />
+                    </com.google.android.material.textfield.TextInputEditText>
 
-        <Button
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <EditText
+                    android:id="@+id/editTextTextMultiLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:gravity="start|top"
+                    android:hint="@string/notes"
+                    android:importantForAutofill="no"
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:text="@={viewModel.bankCardScreenData.notes}"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/expiry_date" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </ScrollView>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/save_btn"
-            style="@style/Widget.MaterialComponents.Button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/save"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editTextTextMultiLine" />
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="@string/cd_save_button"
+            android:src="@drawable/ic_check_24"
+            app:layout_anchorGravity="bottom|end"
+            app:tint="@color/white_50" />
 
         <ProgressBar
             android:id="@+id/loading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
             android:indeterminateDrawable="@drawable/progress"
             android:visibility="invisible"
-            app:layout_constraintBottom_toBottomOf="@id/save_btn"
-            app:layout_constraintEnd_toEndOf="@id/save_btn"
-            app:layout_constraintStart_toStartOf="@id/save_btn"
-            app:layout_constraintTop_toTopOf="@id/save_btn" />
+            app:layout_anchorGravity="bottom|end" />
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

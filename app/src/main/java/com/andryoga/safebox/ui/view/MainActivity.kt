@@ -6,13 +6,10 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -20,24 +17,19 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
-import com.andryoga.safebox.common.Constants.time500Milli
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
-import com.andryoga.safebox.ui.common.Utils
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    private val viewModel: MainActivityViewModel by viewModels()
-
     private var lastInteractionTime: Long = System.currentTimeMillis()
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var motionLayout: MotionLayout
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var appBarConfiguration: AppBarConfiguration
 
@@ -73,12 +65,8 @@ class MainActivity : AppCompatActivity() {
             ?: System.currentTimeMillis()
         checkUserAwayTimeout()
 
-        motionLayout = binding.addNewUserPersonalDataLayout.motionLayout
         drawerLayout = binding.drawerLayout
-        binding.viewModel = viewModel
         binding.lifecycleOwner = this
-
-        setupObservers()
 
         // top level navigation for which back button should not appear
         appBarConfiguration = AppBarConfiguration(
@@ -124,20 +112,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        collapseAddNewDataOptions()
         when (item.itemId) {
             android.R.id.home -> {
-                if (drawerLayout.isOpen)
+                if (drawerLayout.isOpen) {
                     drawerLayout.close()
-                else
-                    drawerLayout.open()
-                return true
+                    return true
+                }
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
     override fun onSupportNavigateUp(): Boolean {
+        hideSoftKeyboard(this)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
@@ -147,62 +134,6 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onBackPressed()
         }
-    }
-
-    private fun setupObservers() {
-        binding.addNewUserPersonalDataLayout.newDataMasterFab.setOnClickListener {
-            if (motionLayout.currentState == R.id.start) {
-                Utils.startMotionLayoutTransition(motionLayout, R.id.end)
-            } else {
-                collapseAddNewDataOptions()
-            }
-        }
-
-        binding.addNewUserPersonalDataLayout.background.setOnClickListener {
-            collapseAddNewDataOptions()
-        }
-        viewModel.addNewUserDataOptionClicked.observe(this) { viewId ->
-            handleAddNewUserDataFabClick(viewId)
-        }
-    }
-
-    private fun handleAddNewUserDataFabClick(viewId: Int) {
-        when (viewId) {
-            R.id.new_personal_login_data -> {
-                Timber.i("opening login data details")
-                navController.navigate(R.id.action_global_loginDataFragment)
-            }
-            R.id.new_personal_bank_account_data -> {
-                Timber.i("opening bank account data details")
-                navController.navigate(R.id.action_global_bankAccountDataFragment)
-            }
-            R.id.new_personal_bank_card_data -> {
-                Timber.i("opening bank card data details")
-                navController.navigate(R.id.action_global_bankCardDataFragment)
-            }
-            R.id.new_personal_note_data -> {
-                Timber.i("opening secure note data details")
-                navController.navigate(R.id.action_global_secureNoteDataFragment)
-            }
-            else -> {
-                Timber.w("no handler found for $viewId")
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            delay(time500Milli)
-            collapseAddNewDataOptions()
-        }
-    }
-
-    private fun collapseAddNewDataOptions() {
-        Utils.startMotionLayoutTransition(motionLayout, R.id.start)
-    }
-
-    fun setAddNewUserDataVisibility(isVisible: Boolean) {
-        Timber.i("setting add new user data visibility to $isVisible")
-        binding.addNewUserPersonalDataLayout.motionLayout.visibility =
-            if (isVisible) View.VISIBLE else View.INVISIBLE
     }
 
     fun setSupportActionBarVisibility(isVisible: Boolean) {

@@ -30,7 +30,6 @@
         </item>
         <item name="android:layout_marginEnd">32dp</item>
         <item name="android:layout_marginStart">32dp</item>
-        <item name="android:layout_marginBottom">32dp</item>
         <item name="android:tint">@color/white_50</item>
         <item name="android:background">@color/colorSecondary</item>
         <item name="android:layout_width">80dp</item>

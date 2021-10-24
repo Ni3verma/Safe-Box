@@ -5,7 +5,7 @@
 
 * If you had to add any new dependency, please mention it here.
 
-Fixes #issueNumber
+Closes #issueNumber
 
 # Type of change
 Bug fix **OR** New feature **OR** Enhancement

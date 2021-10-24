@@ -59,7 +59,6 @@ class ChooseMasterPswrdFragment : Fragment() {
         Timber.i("on start of choose mstr pswrd fragment")
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {
-                setAddNewUserDataVisibility(false)
                 setSupportActionBarVisibility(false)
             }
         } else {
@@ -75,6 +74,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                 } else if (failureCode == null) {
                     binding.apply {
                         saveBtn.animate().alpha(1f).start()
+                        saveBtn.isClickable = true
                         pswrd.apply {
                             isErrorEnabled = false
                             isHelperTextEnabled = true
@@ -88,6 +88,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                     }
                 } else if (failureCode == HINT_IS_SUBSET) {
                     binding.saveBtn.animate().alpha(0f).start()
+                    binding.saveBtn.isClickable = false
                     binding.hint.apply {
                         isErrorEnabled = true
                         error = validatorErrorMessageMap.getOrDefault(
@@ -100,6 +101,7 @@ class ChooseMasterPswrdFragment : Fragment() {
                     }
                 } else {
                     binding.saveBtn.animate().alpha(0f).start()
+                    binding.saveBtn.isClickable = false
                     binding.pswrd.apply {
                         isErrorEnabled = true
                         error = validatorErrorMessageMap.getOrDefault(

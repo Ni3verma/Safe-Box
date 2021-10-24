@@ -11,11 +11,11 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.andryoga.safebox.BuildConfig
-import com.andryoga.safebox.NavigationDirections
+import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.MainActivity
+import com.andryoga.safebox.ui.view.home.child.common.AddNewDataFab
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
@@ -48,6 +48,10 @@ class AllInfoFragment : Fragment() {
                         onItemClick = { onListItemClick(it) },
                         onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                     )
+                    AddNewDataFab() {
+                        findNavController()
+                            .navigate(R.id.action_nav_all_info_to_addNewUserPersonalDataDialogFragment)
+                    }
                 }
             }
         }
@@ -58,46 +62,37 @@ class AllInfoFragment : Fragment() {
         Timber.i("on start of all info fragment")
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {
-                setAddNewUserDataVisibility(true)
                 setSupportActionBarVisibility(true)
             }
         } else {
             Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
-        insertDummyData()
     }
 
     private fun onListItemClick(item: UserListItemData) {
-        Timber.i("clicked ${item.id} - ${item.type.name}")
+        val id = item.id
+        Timber.i("clicked $id - ${item.type.name}")
         findNavController().navigate(
             when (item.type) {
                 UserDataType.LOGIN_DATA -> {
-                    NavigationDirections.actionGlobalLoginDataFragment(
-                        item.id
-                    )
+                    AllInfoFragmentDirections.actionNavAllInfoToLoginDataFragment(id)
                 }
                 UserDataType.BANK_ACCOUNT -> {
-                    NavigationDirections.actionGlobalBankAccountDataFragment(
-                        item.id
-                    )
+                    AllInfoFragmentDirections.actionNavAllInfoToBankAccountDataFragment(id)
                 }
                 UserDataType.BANK_CARD -> {
-                    NavigationDirections.actionGlobalBankCardDataFragment(
-                        item.id
-                    )
+                    AllInfoFragmentDirections.actionNavAllInfoToBankCardDataFragment(id)
                 }
                 UserDataType.SECURE_NOTE -> {
-                    NavigationDirections.actionGlobalSecureNoteDataFragment(
-                        item.id
-                    )
+                    AllInfoFragmentDirections.actionNavAllInfoToSecureNoteDataFragment(id)
                 }
             }
         )
     }
 
-    private fun insertDummyData() {
-        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
+//    private fun insertDummyData() {
+//        if (BuildConfig.BUILD_TYPE in listOf("debug", "qa")) {
 //            viewModel.insertDummyData()
-        }
-    }
+//        }
+//    }
 }
