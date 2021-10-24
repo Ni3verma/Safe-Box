@@ -19,6 +19,7 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
+import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -123,6 +124,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
+        hideSoftKeyboard(this)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
