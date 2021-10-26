@@ -15,7 +15,7 @@ class LoginScreenData(
     pTitle: String = "",
     pUrl: String? = null,
     pUserId: String = "",
-    pPassword: String = "",
+    pPassword: String? = null,
     pNotes: String? = null,
     pCreationDate: Date = Date()
 ) {
@@ -33,7 +33,7 @@ class LoginScreenData(
                 key,
                 title.getValueOrEmpty(),
                 url.get(),
-                password.getValueOrEmpty(),
+                password.get(),
                 notes.get(),
                 userId.getValueOrEmpty(),
                 creationDate,

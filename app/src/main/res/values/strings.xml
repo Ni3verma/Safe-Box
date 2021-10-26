@@ -45,10 +45,10 @@
 
     <!--    Bank card dialog-->
     <string name="number">Number <font color='#FF0000'>̽</font></string>
-    <string name="expiryDate">Expiry Date <font color='#FF0000'>̽</font></string>
+    <string name="expiryDate">Expiry Date</string>
     <string name="name">Name</string>
     <string name="pin">PIN</string>
-    <string name="cvv">CVV <font color='#FF0000'>̽</font></string>
+    <string name="cvv">CVV</string>
     <string name="linkedAccount">Linked Account</string>
 
     <!--    Other-->
@@ -61,7 +61,7 @@
     <string name="numeric_validation_text">Must contain more than 2 numeric char</string>
     <string name="hint_subset_validation_text">User Password subset not allowed</string>
     <string name="save">Save</string>
-    <string name="password">Password <font color='#FF0000'>̽</font></string>
+    <string name="password">Password</string>
     <string name="unlock">unlock</string>
     <string name="collapse">Collapse</string>
     <string name="login_data">Login Data</string>
@@ -79,11 +79,11 @@
     <string name="bank_account_data">Bank Account Data</string>
     <string name="account_number">Account Number <font color='#FF0000'>̽</font></string>
     <string name="customer_name">Customer Name</string>
-    <string name="customer_id">Customer Id <font color='#FF0000'>̽</font></string>
+    <string name="customer_id">Customer Id</string>
     <string name="branch_code">Branch Code</string>
     <string name="branch_name">Branch Name</string>
     <string name="branch_address">Branch Address</string>
-    <string name="ifsc_code">IFSC Code <font color='#FF0000'>̽</font></string>
+    <string name="ifsc_code">IFSC Code</string>
     <string name="micr_code">MICR Code</string>
     <string name="welcome_back">Welcome Back !</string>
     <string name="password_is_ok">Password is OK</string>

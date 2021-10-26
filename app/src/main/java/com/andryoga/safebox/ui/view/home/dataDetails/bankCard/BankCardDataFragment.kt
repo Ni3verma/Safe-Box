@@ -69,9 +69,7 @@ class BankCardDataFragment : Fragment() {
         val requiredFieldValidator = RequiredFieldValidator(
             listOf(
                 binding.title,
-                binding.number,
-                binding.cvv,
-                binding.expiryDate
+                binding.number
             ),
             binding.saveBtn,
             tagLocal

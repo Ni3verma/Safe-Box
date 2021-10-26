@@ -21,15 +21,18 @@ android {
         minSdkVersion 23
         targetSdkVersion 30
         versionCode 3
-        versionName "1.2.0"
+        // majorVersion.minorVersion.dbVersion.fixVersion
+        versionName "1.2.2.0"
 
         //room.incremental: Enables Gradle incremental annotation processor
         //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += [
-                        "room.incremental":"true",
-                        "room.expandProjection":"true"]
+                        "room.incremental"     : "true",
+                        "room.expandProjection": "true",
+                        "room.schemaLocation"  : "$projectDir/schemas".toString()
+                ]
             }
         }
 
@@ -59,7 +62,7 @@ android {
     }
 
     buildTypes {
-        debug{
+        debug {
             applicationIdSuffix ".debug"
             debuggable true
             minifyEnabled false
@@ -104,8 +107,8 @@ android {
     }
 
     lintOptions {
-        disable 'UnusedResources','FragmentTagUsage'
-        disable 'Correctness','Messages'
+        disable 'UnusedResources', 'FragmentTagUsage'
+        disable 'Correctness', 'Messages'
     }
 }
 

@@ -44,8 +44,8 @@ class BankCardDataDaoSecure @Inject constructor(
                 it.name.encryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.encrypt(it.number),
                 it.pin.encryptNullableString(symmetricKeyUtils),
-                symmetricKeyUtils.encrypt(it.cvv),
-                symmetricKeyUtils.encrypt(it.expiryDate),
+                it.cvv.encryptNullableString(symmetricKeyUtils),
+                it.expiryDate.encryptNullableString(symmetricKeyUtils),
                 it.notes.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
@@ -61,8 +61,8 @@ class BankCardDataDaoSecure @Inject constructor(
                 it.name.decryptNullableString(symmetricKeyUtils),
                 symmetricKeyUtils.decrypt(it.number),
                 it.pin.decryptNullableString(symmetricKeyUtils),
-                symmetricKeyUtils.decrypt(it.cvv),
-                symmetricKeyUtils.decrypt(it.expiryDate),
+                it.cvv.decryptNullableString(symmetricKeyUtils),
+                it.expiryDate.decryptNullableString(symmetricKeyUtils),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate
