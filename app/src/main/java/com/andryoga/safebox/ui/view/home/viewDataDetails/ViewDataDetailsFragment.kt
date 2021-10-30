@@ -40,7 +40,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class ViewDataDetailsFragment : Fragment() {
     private val viewModel: ViewDataDetailsViewModel by viewModels()
     private val args: ViewDataDetailsFragmentArgs by navArgs()
-    private val tagLocal = "view data fragment for"
+    private var tagLocal = "view data fragment for"
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -52,13 +52,14 @@ class ViewDataDetailsFragment : Fragment() {
                 val id = args.id
                 val dataType = args.userDataType
                 var map = emptyMap<Int, String?>()
+                tagLocal += dataType.name
 
                 when (dataType) {
                     UserDataType.LOGIN_DATA -> TODO()
                     UserDataType.BANK_ACCOUNT -> {
                         val data by viewModel.getBankAccountData(id)
                             .observeAsState(initial = Resource.loading(null))
-                        logResource("$tagLocal ${dataType.name}", data)
+                        logResource(tagLocal, data)
                         val viewData = data.data
                         if (viewData != null) {
                             map = mapOf(
@@ -79,7 +80,27 @@ class ViewDataDetailsFragment : Fragment() {
                             UserDataView(map, viewData?.title ?: "", data.status)
                         }
                     }
-                    UserDataType.BANK_CARD -> TODO()
+                    UserDataType.BANK_CARD -> {
+                        val data by viewModel.getBankCardData(id)
+                            .observeAsState(initial = Resource.loading(null))
+                        logResource(tagLocal, data)
+                        val viewData = data.data
+                        if (viewData != null) {
+                            map = mapOf(
+                                R.string.name to viewData.name,
+                                R.string.number to viewData.number,
+                                R.string.pin to viewData.pin,
+                                R.string.cvv to viewData.cvv,
+                                R.string.expiryDate to viewData.expiryDate,
+                                R.string.notes to viewData.notes,
+                                R.string.created_on to viewData.creationDate,
+                                R.string.updated_on to viewData.updateDate,
+                            )
+                        }
+                        BasicSafeBoxTheme {
+                            UserDataView(map, viewData?.title ?: "", data.status)
+                        }
+                    }
                     UserDataType.SECURE_NOTE -> TODO()
                 }
             }

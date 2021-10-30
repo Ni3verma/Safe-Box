@@ -111,9 +111,6 @@
             android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
             android:label="@string/drawer_title_bank_account" >
             <action
-                android:id="@+id/action_nav_bank_account_info_to_bankAccountDataFragment"
-                app:destination="@id/bankAccountDataFragment" />
-            <action
                 android:id="@+id/action_nav_bank_account_info_to_addNewUserPersonalDataDialogFragment"
                 app:destination="@id/addNewUserPersonalDataDialogFragment" />
             <action
@@ -125,11 +122,13 @@
             android:name="com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragment"
             android:label="@string/drawer_title_bank_card" >
             <action
-                android:id="@+id/action_nav_bank_card_info_to_bankCardDataFragment"
-                app:destination="@id/bankCardDataFragment" />
-            <action
                 android:id="@+id/action_nav_bank_card_info_to_addNewUserPersonalDataDialogFragment"
                 app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_bank_card_info_to_viewDataDetailsFragment"
+                app:destination="@id/viewDataDetailsFragment"
+                app:enterAnim="@anim/bottom_sheet_slide_in"
+                app:exitAnim="@anim/bottom_sheet_slide_out" />
         </fragment>
         <fragment
             android:id="@+id/nav_secure_note_info"

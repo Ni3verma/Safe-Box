@@ -1,25 +1,26 @@
 package com.andryoga.safebox.common
 
+import com.andryoga.safebox.common.Utils.getFormattedDate
 import com.andryoga.safebox.data.db.docs.ViewBankAccountData
+import com.andryoga.safebox.data.db.docs.ViewBankCardData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
-import java.text.SimpleDateFormat
+import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 
 object DomainMappers {
     fun BankAccountDataEntity.toViewBankAccountData(): ViewBankAccountData {
         return ViewBankAccountData(
-            key,
-            title,
-            accountNumber,
-            customerName,
-            customerId,
-            branchCode,
-            branchName,
-            branchAddress,
-            ifscCode,
-            micrCode,
-            notes,
-            SimpleDateFormat("EEEE, dd MMM yyyy hh-mm-ss a").format(creationDate),
-            SimpleDateFormat("EEEE, dd MMM yyyy hh-mm-ss a").format(updateDate)
+            key, title, accountNumber, customerName, customerId,
+            branchCode, branchName, branchAddress, ifscCode, micrCode, notes,
+            getFormattedDate(creationDate),
+            getFormattedDate(updateDate)
+        )
+    }
+
+    fun BankCardDataEntity.toViewBankCardData(): ViewBankCardData {
+        return ViewBankCardData(
+            key, title, name, number, pin, cvv, expiryDate, notes,
+            getFormattedDate(creationDate),
+            getFormattedDate(updateDate)
         )
     }
 }

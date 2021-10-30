@@ -26,7 +26,17 @@ class ViewDataDetailsViewModel @Inject constructor(
         liveData(viewModelScope.coroutineContext) {
             try {
                 val data = bankAccountDataRepository.getViewBankAccountDataByKey(key)
-                Timber.d("data in view mode = $data")
+                emit(Resource.success(data))
+            } catch (ex: Exception) {
+                emit(Resource.error(null, ex.message))
+                Timber.e(ex)
+            }
+        }
+
+    fun getBankCardData(key: Int) =
+        liveData(viewModelScope.coroutineContext) {
+            try {
+                val data = bankCardDataRepository.getViewBankCardDataByKey(key)
                 emit(Resource.success(data))
             } catch (ex: Exception) {
                 emit(Resource.error(null, ex.message))
