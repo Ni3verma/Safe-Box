@@ -44,6 +44,28 @@ class ViewDataDetailsViewModel @Inject constructor(
             }
         }
 
+    fun getLoginData(key: Int) =
+        liveData(viewModelScope.coroutineContext) {
+            try {
+                val data = loginDataRepository.getViewLoginDataByKey(key)
+                emit(Resource.success(data))
+            } catch (ex: Exception) {
+                emit(Resource.error(null, ex.message))
+                Timber.e(ex)
+            }
+        }
+
+    fun getSecureNoteData(key: Int) =
+        liveData(viewModelScope.coroutineContext) {
+            try {
+                val data = secureNoteDataRepository.getViewSecureNoteDataByKey(key)
+                emit(Resource.success(data))
+            } catch (ex: Exception) {
+                emit(Resource.error(null, ex.message))
+                Timber.e(ex)
+            }
+        }
+
     fun deleteData(key: Int, dataType: UserDataType) {
         viewModelScope.launch {
             when (dataType) {

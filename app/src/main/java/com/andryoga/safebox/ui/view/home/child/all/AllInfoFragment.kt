@@ -13,7 +13,6 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.common.UserDataType
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.home.child.common.AddNewDataFab
@@ -73,20 +72,7 @@ class AllInfoFragment : Fragment() {
         val id = item.id
         Timber.i("clicked $id - ${item.type.name}")
         findNavController().navigate(
-            when (item.type) {
-                UserDataType.LOGIN_DATA -> {
-                    AllInfoFragmentDirections.actionNavAllInfoToLoginDataFragment(id)
-                }
-                UserDataType.BANK_ACCOUNT -> {
-                    AllInfoFragmentDirections.actionNavAllInfoToBankAccountDataFragment(id)
-                }
-                UserDataType.BANK_CARD -> {
-                    AllInfoFragmentDirections.actionNavAllInfoToBankCardDataFragment(id)
-                }
-                UserDataType.SECURE_NOTE -> {
-                    AllInfoFragmentDirections.actionNavAllInfoToSecureNoteDataFragment(id)
-                }
-            }
+            AllInfoFragmentDirections.actionNavAllInfoToViewDataDetailsFragment(id, item.type)
         )
     }
 

@@ -51,59 +51,115 @@ class ViewDataDetailsFragment : Fragment() {
             setContent {
                 val id = args.id
                 val dataType = args.userDataType
-                var map = emptyMap<Int, String?>()
                 tagLocal += dataType.name
 
                 when (dataType) {
-                    UserDataType.LOGIN_DATA -> TODO()
+                    UserDataType.LOGIN_DATA -> {
+                        handleLoginDataType(id = id)
+                    }
                     UserDataType.BANK_ACCOUNT -> {
-                        val data by viewModel.getBankAccountData(id)
-                            .observeAsState(initial = Resource.loading(null))
-                        logResource(tagLocal, data)
-                        val viewData = data.data
-                        if (viewData != null) {
-                            map = mapOf(
-                                R.string.account_number to viewData.accountNumber,
-                                R.string.customer_name to viewData.customerName,
-                                R.string.customer_id to viewData.customerId,
-                                R.string.branch_code to viewData.branchCode,
-                                R.string.branch_name to viewData.branchName,
-                                R.string.branch_address to viewData.branchAddress,
-                                R.string.ifsc_code to viewData.ifscCode,
-                                R.string.micr_code to viewData.micrCode,
-                                R.string.notes to viewData.notes,
-                                R.string.created_on to viewData.creationDate,
-                                R.string.updated_on to viewData.updateDate,
-                            )
-                        }
-                        BasicSafeBoxTheme {
-                            UserDataView(map, viewData?.title ?: "", data.status)
-                        }
+                        handleBankAccountDataType(id = id)
                     }
                     UserDataType.BANK_CARD -> {
-                        val data by viewModel.getBankCardData(id)
-                            .observeAsState(initial = Resource.loading(null))
-                        logResource(tagLocal, data)
-                        val viewData = data.data
-                        if (viewData != null) {
-                            map = mapOf(
-                                R.string.name to viewData.name,
-                                R.string.number to viewData.number,
-                                R.string.pin to viewData.pin,
-                                R.string.cvv to viewData.cvv,
-                                R.string.expiryDate to viewData.expiryDate,
-                                R.string.notes to viewData.notes,
-                                R.string.created_on to viewData.creationDate,
-                                R.string.updated_on to viewData.updateDate,
-                            )
-                        }
-                        BasicSafeBoxTheme {
-                            UserDataView(map, viewData?.title ?: "", data.status)
-                        }
+                        handleBankCardDataType(id = id)
                     }
-                    UserDataType.SECURE_NOTE -> TODO()
+                    UserDataType.SECURE_NOTE -> {
+                        handleSecureNoteDataType(id = id)
+                    }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun handleLoginDataType(id: Int) {
+        var map = emptyMap<Int, String?>()
+        val data by viewModel.getLoginData(id)
+            .observeAsState(initial = Resource.loading(null))
+        logResource(tagLocal, data)
+        val viewData = data.data
+        if (viewData != null) {
+            map = mapOf(
+                R.string.url to viewData.url,
+                R.string.password to viewData.password,
+                R.string.user_id to viewData.userId,
+                R.string.notes to viewData.notes,
+                R.string.created_on to viewData.creationDate,
+                R.string.updated_on to viewData.updateDate,
+            )
+        }
+        BasicSafeBoxTheme {
+            UserDataView(map, viewData?.title ?: "", data.status)
+        }
+    }
+
+    @Composable
+    private fun handleBankAccountDataType(id: Int) {
+        var map = emptyMap<Int, String?>()
+        val data by viewModel.getBankAccountData(id)
+            .observeAsState(initial = Resource.loading(null))
+        logResource(tagLocal, data)
+        val viewData = data.data
+        if (viewData != null) {
+            map = mapOf(
+                R.string.account_number to viewData.accountNumber,
+                R.string.customer_name to viewData.customerName,
+                R.string.customer_id to viewData.customerId,
+                R.string.branch_code to viewData.branchCode,
+                R.string.branch_name to viewData.branchName,
+                R.string.branch_address to viewData.branchAddress,
+                R.string.ifsc_code to viewData.ifscCode,
+                R.string.micr_code to viewData.micrCode,
+                R.string.notes to viewData.notes,
+                R.string.created_on to viewData.creationDate,
+                R.string.updated_on to viewData.updateDate,
+            )
+        }
+        BasicSafeBoxTheme {
+            UserDataView(map, viewData?.title ?: "", data.status)
+        }
+    }
+
+    @Composable
+    private fun handleBankCardDataType(id: Int) {
+        var map = emptyMap<Int, String?>()
+        val data by viewModel.getBankCardData(id)
+            .observeAsState(initial = Resource.loading(null))
+        logResource(tagLocal, data)
+        val viewData = data.data
+        if (viewData != null) {
+            map = mapOf(
+                R.string.name to viewData.name,
+                R.string.number to viewData.number,
+                R.string.pin to viewData.pin,
+                R.string.cvv to viewData.cvv,
+                R.string.expiryDate to viewData.expiryDate,
+                R.string.notes to viewData.notes,
+                R.string.created_on to viewData.creationDate,
+                R.string.updated_on to viewData.updateDate,
+            )
+        }
+        BasicSafeBoxTheme {
+            UserDataView(map, viewData?.title ?: "", data.status)
+        }
+    }
+
+    @Composable
+    private fun handleSecureNoteDataType(id: Int) {
+        var map = emptyMap<Int, String?>()
+        val data by viewModel.getSecureNoteData(id)
+            .observeAsState(initial = Resource.loading(null))
+        logResource(tagLocal, data)
+        val viewData = data.data
+        if (viewData != null) {
+            map = mapOf(
+                R.string.notes to viewData.notes,
+                R.string.created_on to viewData.creationDate,
+                R.string.updated_on to viewData.updateDate,
+            )
+        }
+        BasicSafeBoxTheme {
+            UserDataView(map, viewData?.title ?: "", data.status)
         }
     }
 

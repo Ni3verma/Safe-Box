@@ -55,7 +55,10 @@ class SecureNoteInfoFragment : Fragment() {
     private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
-            SecureNoteInfoFragmentDirections.actionNavSecureNoteInfoToSecureNoteDataFragment(item.id)
+            SecureNoteInfoFragmentDirections.actionNavSecureNoteInfoToViewDataDetailsFragment(
+                item.id,
+                item.type
+            )
         )
     }
 }

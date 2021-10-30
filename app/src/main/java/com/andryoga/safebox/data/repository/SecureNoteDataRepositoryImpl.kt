@@ -1,6 +1,8 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.common.DomainMappers.toViewSecureNoteData
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.docs.ViewSecureNoteData
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteScreenData
@@ -30,5 +32,9 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
 
     override suspend fun deleteSecureNoteDataByKey(key: Int) {
         secureNoteDataDaoSecure.deleteSecretNoteDataByKey(key)
+    }
+
+    override suspend fun getViewSecureNoteDataByKey(key: Int): ViewSecureNoteData {
+        return secureNoteDataDaoSecure.getSecretNoteDataByKey(key).toViewSecureNoteData()
     }
 }

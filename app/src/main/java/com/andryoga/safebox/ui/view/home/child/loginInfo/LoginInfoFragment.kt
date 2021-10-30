@@ -55,8 +55,8 @@ class LoginInfoFragment : Fragment() {
     private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
-            LoginInfoFragmentDirections.actionNavLoginInfoToLoginDataFragment(
-                item.id
+            LoginInfoFragmentDirections.actionNavLoginInfoToViewDataDetailsFragment(
+                item.id, item.type
             )
         )
     }

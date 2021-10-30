@@ -1,6 +1,8 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.common.DomainMappers.toViewLoginData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
+import com.andryoga.safebox.data.db.docs.ViewLoginData
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
@@ -32,5 +34,9 @@ class LoginDataRepositoryImpl @Inject constructor(
 
     override suspend fun deleteLoginDataByKey(key: Int) {
         loginDataDaoSecure.deleteLoginDataByKey(key)
+    }
+
+    override suspend fun getViewLoginDataByKey(key: Int): ViewLoginData {
+        return loginDataDaoSecure.getLoginDataByKey(key).toViewLoginData()
     }
 }
