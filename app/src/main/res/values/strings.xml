@@ -18,14 +18,16 @@
     <string name="cd_action_copy">Copy data to clipboard</string>
 
     <!--    Screen title-->
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
-    <string name="nav_header_desc">Navigation header</string>
     <string name="drawer_title_all_items">All Items</string>
     <string name="drawer_title_login">Login</string>
     <string name="drawer_title_bank_account">Bank Account</string>
     <string name="drawer_title_bank_card">Bank Card</string>
     <string name="drawer_title_secure_note">Secure Note</string>
+    <string name="title_login_data">Login Data</string>
+    <string name="title_bank_account_data">Bank Account Data</string>
+    <string name="title_bank_card_data">Bank Card Data</string>
+    <string name="title_secure_note_data">Secure Note Data</string>
+    <string name="title_view_data">View Data</string>
 
     <!--    Snackbar -->
     <string name="snackbar_common_data_saved">Data saved</string>
