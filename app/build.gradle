@@ -165,6 +165,11 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 
+    // only enable next dependency to copy icon to MaterialIconsCopy file at
+    // src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt
+    // don't enable this as app size increases drastically for debug builds
+//    implementation "androidx.compose.material:material-icons-extended:$compose_version"
+
     //crashlytics
     implementation platform('com.google.firebase:firebase-bom:28.4.1')
     implementation 'com.google.firebase:firebase-crashlytics-ktx'

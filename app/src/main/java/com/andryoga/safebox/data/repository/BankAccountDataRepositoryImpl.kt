@@ -1,6 +1,8 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.common.DomainMappers.toViewBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
+import com.andryoga.safebox.data.db.docs.ViewBankAccountData
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData
@@ -31,5 +33,9 @@ class BankAccountDataRepositoryImpl @Inject constructor(
 
     override suspend fun deleteBankAccountDataByKey(key: Int) {
         bankAccountDataDaoSecure.deleteBankAccountDataByKey(key)
+    }
+
+    override suspend fun getViewBankAccountDataByKey(key: Int): ViewBankAccountData {
+        return bankAccountDataDaoSecure.getBankAccountDataByKey(key).toViewBankAccountData()
     }
 }

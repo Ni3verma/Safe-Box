@@ -13,11 +13,11 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
+import com.andryoga.safebox.ui.common.UserDataType
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.home.child.common.AddNewDataFab
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
-import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi

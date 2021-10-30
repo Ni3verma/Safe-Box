@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
+import com.andryoga.safebox.ui.common.UserDataType
 import timber.log.Timber
 
 private val typeToIconMap = mapOf(

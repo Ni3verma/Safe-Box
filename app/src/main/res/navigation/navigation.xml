@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation"
-    app:startDestination="@id/loginFragment">
+    app:startDestination="@id/nav_bank_account_info">
 
     <fragment
         android:id="@+id/loginFragment"
@@ -116,6 +116,9 @@
             <action
                 android:id="@+id/action_nav_bank_account_info_to_addNewUserPersonalDataDialogFragment"
                 app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_bank_account_info_to_viewBankAccountFragment"
+                app:destination="@id/viewBankAccountFragment" />
         </fragment>
         <fragment
             android:id="@+id/nav_bank_card_info"
@@ -157,5 +160,17 @@
             android:id="@+id/action_addNewUserPersonalDataDialogFragment_to_secureNoteDataFragment"
             app:destination="@id/secureNoteDataFragment" />
     </dialog>
+    <fragment
+        android:id="@+id/viewBankAccountFragment"
+        android:name="com.andryoga.safebox.ui.view.home.viewDataDetails.ViewDataDetailsFragment"
+        android:label="ViewBankAccountFragment" >
+        <argument
+            android:name="id"
+            app:argType="integer"
+            android:defaultValue="-1" />
+        <argument
+            android:name="userDataType"
+            app:argType="com.andryoga.safebox.ui.common.UserDataType" />
+    </fragment>
 
 </navigation>

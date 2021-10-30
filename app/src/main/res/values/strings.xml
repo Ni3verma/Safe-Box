@@ -12,6 +12,10 @@
     <string name="cd_open_github_repo">Open github repo of this app</string>
     <string name="cd_background_image">background image</string>
     <string name="cd_save_button">Press to save data</string>
+    <string name="cd_action_delete">Delete data</string>
+    <string name="cd_action_edit">Edit data</string>
+    <string name="cd_action_share">Share full data</string>
+    <string name="cd_action_copy">Copy data to clipboard</string>
 
     <!--    Screen title-->
     <string name="nav_header_title">Android Studio</string>
@@ -36,6 +40,10 @@
     <string name="github">Github</string>
     <string name="biometric_title_text">Biometric Authentication</string>
     <string name="biometric_negative_button_text">Close</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
 
     <!--    User data type text-->
     <string name="login">Login</string>
@@ -93,4 +101,6 @@
     <string name="timeout_dialog_title">Timeout</string>
     <string name="timeout_dialog_message">You were away for too long. Please click OK to login to app again</string>
     <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Created on</string>
+    <string name="updated_on">Updated on</string>
 </resources>

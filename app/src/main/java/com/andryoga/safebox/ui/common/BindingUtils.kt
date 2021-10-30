@@ -6,7 +6,6 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.BindingAdapter
 import androidx.databinding.BindingConversion
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.view.home.child.common.UserDataType
 import com.google.android.material.imageview.ShapeableImageView
 
 @BindingAdapter("userDataTypeIcon")
