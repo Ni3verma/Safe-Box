@@ -2,14 +2,19 @@ style:
   WildcardImport:
     active: false
   MagicNumber:
-    excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/Color.kt']
+    excludes: [
+        '**/test/**', '**/androidTest/**',
+        '**/commonTest/**', '**/jvmTest/**', '**/Color.kt',
+        '**/app/src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt',
+        '**/app/src/main/java/com/andryoga/safebox/data/db/SafeBoxDatabase.kt'
+    ]
 exceptions:
   TooGenericExceptionCaught:
     active: false
 complexity:
   LongParameterList:
     ignoreDefaultParameters: true
-    ignoreAnnotated: ['@Composable']
+    ignoreAnnotated: [ '@Composable' ]
     functionThreshold: 10
   LongMethod:
     threshold: 80

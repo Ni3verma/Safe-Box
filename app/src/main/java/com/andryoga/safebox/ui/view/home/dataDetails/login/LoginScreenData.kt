@@ -28,7 +28,12 @@ class LoginScreenData(
     var creationDate = pCreationDate
 
     companion object {
-        fun LoginScreenData.toLoginDataEntity(): LoginDataEntity {
+        /*
+        * converts screen data to db entity data
+        * while inserting new data in db, we want current date for creation date
+        * while updating data in db, we don't want to update creation date
+        * */
+        fun LoginScreenData.toLoginDataEntity(getCurrentDate: Boolean): LoginDataEntity {
             return LoginDataEntity(
                 key,
                 title.getValueOrEmpty(),
@@ -36,7 +41,7 @@ class LoginScreenData(
                 password.get(),
                 notes.get(),
                 userId.getValueOrEmpty(),
-                creationDate,
+                if (getCurrentDate) Date() else creationDate,
                 Date()
             )
         }

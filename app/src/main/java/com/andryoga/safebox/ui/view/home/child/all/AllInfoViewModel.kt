@@ -8,7 +8,7 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.view.home.child.common.UserDataType.*
+import com.andryoga.safebox.ui.common.UserDataType.*
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

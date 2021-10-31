@@ -17,7 +17,7 @@ import timber.log.Timber
         BankCardDataEntity::class,
         SecureNoteDataEntity::class
     ],
-    version = 2
+    version = 3
 )
 @TypeConverters(Converters::class)
 abstract class SafeBoxDatabase : RoomDatabase() {
@@ -102,6 +102,21 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         database.execSQL(
             "DROP TABLE bank_card_data_tmp;"
         )
+
+        Timber.i("$migrationMessage success")
+    }
+}
+
+// https://github.com/Ni3verma/Safe-Box/issues/100
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        val migrationMessage = "migration from 2 to 3"
+        Timber.i(migrationMessage)
+
+        database.execSQL("update `bank_account_data` set `creationDate`=`updateDate`")
+        database.execSQL("update `bank_card_data` set `creationDate`=`updateDate`")
+        database.execSQL("update `login_data` set `creationDate`=`updateDate`")
+        database.execSQL("update `secure_note_data` set `creationDate`=`updateDate`")
 
         Timber.i("$migrationMessage success")
     }

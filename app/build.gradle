@@ -20,9 +20,9 @@ android {
         applicationId "com.andryoga.safebox"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 3
+        versionCode 4
         // majorVersion.minorVersion.dbVersion.fixVersion
-        versionName "1.2.2.0"
+        versionName "1.3.3.0"
 
         //room.incremental: Enables Gradle incremental annotation processor
         //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.
@@ -164,6 +164,11 @@ dependencies {
     implementation 'androidx.activity:activity-compose:1.3.0'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+
+    // only enable next dependency to copy icon to MaterialIconsCopy file at
+    // src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt
+    // don't enable this as app size increases drastically for debug builds
+//    implementation "androidx.compose.material:material-icons-extended:$compose_version"
 
     //crashlytics
     implementation platform('com.google.firebase:firebase-bom:28.4.1')

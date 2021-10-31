@@ -56,7 +56,10 @@ class BankCardInfoFragment : Fragment() {
     private fun onListItemClick(item: UserListItemData) {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
-            BankCardInfoFragmentDirections.actionNavBankCardInfoToBankCardDataFragment(item.id)
+            BankCardInfoFragmentDirections.actionNavBankCardInfoToViewDataDetailsFragment(
+                item.id,
+                item.type
+            )
         )
     }
 }
