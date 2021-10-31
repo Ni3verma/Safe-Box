@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils.logResource
@@ -89,7 +91,7 @@ class ViewDataDetailsFragment : Fragment() {
             )
         }
         BasicSafeBoxTheme {
-            UserDataView(map, viewData?.title ?: "", data.status)
+            UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
         }
     }
 
@@ -116,7 +118,7 @@ class ViewDataDetailsFragment : Fragment() {
             )
         }
         BasicSafeBoxTheme {
-            UserDataView(map, viewData?.title ?: "", data.status)
+            UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
         }
     }
 
@@ -140,7 +142,7 @@ class ViewDataDetailsFragment : Fragment() {
             )
         }
         BasicSafeBoxTheme {
-            UserDataView(map, viewData?.title ?: "", data.status)
+            UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
         }
     }
 
@@ -159,7 +161,7 @@ class ViewDataDetailsFragment : Fragment() {
             )
         }
         BasicSafeBoxTheme {
-            UserDataView(map, viewData?.title ?: "", data.status)
+            UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
         }
     }
 
@@ -190,9 +192,13 @@ class ViewDataDetailsFragment : Fragment() {
         labelResId: Int,
         contentDescriptionResId: Int,
         iconSize: Dp = 32.dp,
-        tint: Color = MaterialTheme.colors.primary
+        tint: Color = MaterialTheme.colors.primary,
+        onClick: () -> Unit
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.clickable(onClick = onClick)
+        ) {
             Icon(
                 imageVector = imageVector,
                 contentDescription = stringResource(id = contentDescriptionResId),
@@ -211,7 +217,8 @@ class ViewDataDetailsFragment : Fragment() {
     fun UserDataView(
         viewDataMap: Map<Int, String?>,
         title: String,
-        status: Status
+        status: Status,
+        dataType: UserDataType
     ) {
         when (status) {
             Status.LOADING -> {
@@ -255,22 +262,22 @@ class ViewDataDetailsFragment : Fragment() {
                             imageVector = Icons.Filled.Edit,
                             labelResId = R.string.edit,
                             contentDescriptionResId = R.string.cd_action_edit
-                        )
+                        ) { navigateToEditScreen(dataType) }
                         ActionIcon(
                             imageVector = MaterialIconsCopy.ContentCopyFilled,
                             labelResId = R.string.copy,
                             contentDescriptionResId = R.string.cd_action_copy
-                        )
+                        ) {}
                         ActionIcon(
                             imageVector = MaterialIconsCopy.DeleteForeverFilled,
                             labelResId = R.string.delete,
                             contentDescriptionResId = R.string.cd_action_delete
-                        )
+                        ) {}
                         ActionIcon(
                             imageVector = Icons.Filled.Share,
                             labelResId = R.string.share,
                             contentDescriptionResId = R.string.cd_action_share
-                        )
+                        ) {}
                     }
                     Divider(
                         color = MaterialTheme.colors.primary,
@@ -288,5 +295,32 @@ class ViewDataDetailsFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun navigateToEditScreen(dataType: UserDataType) {
+        findNavController().navigate(
+            when (dataType) {
+                UserDataType.LOGIN_DATA -> {
+                    ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToLoginDataFragment(
+                        args.id
+                    )
+                }
+                UserDataType.BANK_ACCOUNT -> {
+                    ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankAccountDataFragment(
+                        args.id
+                    )
+                }
+                UserDataType.BANK_CARD -> {
+                    ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankCardDataFragment(
+                        args.id
+                    )
+                }
+                UserDataType.SECURE_NOTE -> {
+                    ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToSecureNoteDataFragment(
+                        args.id
+                    )
+                }
+            }
+        )
     }
 }
