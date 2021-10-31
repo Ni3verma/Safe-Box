@@ -1,20 +1,27 @@
 package com.andryoga.safebox.ui.view.home.viewDataDetails
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context.CLIPBOARD_SERVICE
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast.LENGTH_SHORT
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,30 +37,37 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.Constants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.common.Utils.logResource
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.common.UserDataType
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ViewDataDetailsFragment : Fragment() {
     private val viewModel: ViewDataDetailsViewModel by viewModels()
     private val args: ViewDataDetailsFragmentArgs by navArgs()
     private var tagLocal = "view data fragment for"
+    private lateinit var clipboardManager: ClipboardManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        clipboardManager =
+            requireActivity().getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
         return ComposeView(requireContext()).apply {
             setContent {
                 val id = args.id
                 val dataType = args.userDataType
                 tagLocal += dataType.name
+                Timber.i("in data view fragment, id=$id, type=${dataType.name}")
 
                 when (dataType) {
                     UserDataType.LOGIN_DATA -> {
@@ -75,19 +89,19 @@ class ViewDataDetailsFragment : Fragment() {
 
     @Composable
     private fun handleLoginDataType(id: Int) {
-        var map = emptyMap<Int, String?>()
+        var map = emptyMap<Int, ViewDataProperties>()
         val data by viewModel.getLoginData(id)
             .observeAsState(initial = Resource.loading(null))
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
             map = mapOf(
-                R.string.url to viewData.url,
-                R.string.password to viewData.password,
-                R.string.user_id to viewData.userId,
-                R.string.notes to viewData.notes,
-                R.string.created_on to viewData.creationDate,
-                R.string.updated_on to viewData.updateDate,
+                R.string.url to ViewDataProperties(viewData.url),
+                R.string.password to ViewDataProperties(viewData.password, false),
+                R.string.user_id to ViewDataProperties(viewData.userId),
+                R.string.notes to ViewDataProperties(viewData.notes, false),
+                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
             )
         }
         BasicSafeBoxTheme {
@@ -97,24 +111,24 @@ class ViewDataDetailsFragment : Fragment() {
 
     @Composable
     private fun handleBankAccountDataType(id: Int) {
-        var map = emptyMap<Int, String?>()
+        var map = emptyMap<Int, ViewDataProperties>()
         val data by viewModel.getBankAccountData(id)
             .observeAsState(initial = Resource.loading(null))
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
             map = mapOf(
-                R.string.account_number to viewData.accountNumber,
-                R.string.customer_name to viewData.customerName,
-                R.string.customer_id to viewData.customerId,
-                R.string.branch_code to viewData.branchCode,
-                R.string.branch_name to viewData.branchName,
-                R.string.branch_address to viewData.branchAddress,
-                R.string.ifsc_code to viewData.ifscCode,
-                R.string.micr_code to viewData.micrCode,
-                R.string.notes to viewData.notes,
-                R.string.created_on to viewData.creationDate,
-                R.string.updated_on to viewData.updateDate,
+                R.string.account_number to ViewDataProperties(viewData.accountNumber),
+                R.string.customer_name to ViewDataProperties(viewData.customerName),
+                R.string.customer_id to ViewDataProperties(viewData.customerId, false),
+                R.string.branch_code to ViewDataProperties(viewData.branchCode),
+                R.string.branch_name to ViewDataProperties(viewData.branchName),
+                R.string.branch_address to ViewDataProperties(viewData.branchAddress),
+                R.string.ifsc_code to ViewDataProperties(viewData.ifscCode),
+                R.string.micr_code to ViewDataProperties(viewData.micrCode, false),
+                R.string.notes to ViewDataProperties(viewData.notes, false),
+                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
             )
         }
         BasicSafeBoxTheme {
@@ -124,21 +138,21 @@ class ViewDataDetailsFragment : Fragment() {
 
     @Composable
     private fun handleBankCardDataType(id: Int) {
-        var map = emptyMap<Int, String?>()
+        var map = emptyMap<Int, ViewDataProperties>()
         val data by viewModel.getBankCardData(id)
             .observeAsState(initial = Resource.loading(null))
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
             map = mapOf(
-                R.string.name to viewData.name,
-                R.string.number to viewData.number,
-                R.string.pin to viewData.pin,
-                R.string.cvv to viewData.cvv,
-                R.string.expiryDate to viewData.expiryDate,
-                R.string.notes to viewData.notes,
-                R.string.created_on to viewData.creationDate,
-                R.string.updated_on to viewData.updateDate,
+                R.string.name to ViewDataProperties(viewData.name),
+                R.string.number to ViewDataProperties(viewData.number),
+                R.string.pin to ViewDataProperties(viewData.pin, false),
+                R.string.cvv to ViewDataProperties(viewData.cvv),
+                R.string.expiryDate to ViewDataProperties(viewData.expiryDate),
+                R.string.notes to ViewDataProperties(viewData.notes, false),
+                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
             )
         }
         BasicSafeBoxTheme {
@@ -148,16 +162,16 @@ class ViewDataDetailsFragment : Fragment() {
 
     @Composable
     private fun handleSecureNoteDataType(id: Int) {
-        var map = emptyMap<Int, String?>()
+        var map = emptyMap<Int, ViewDataProperties>()
         val data by viewModel.getSecureNoteData(id)
             .observeAsState(initial = Resource.loading(null))
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
             map = mapOf(
-                R.string.notes to viewData.notes,
-                R.string.created_on to viewData.creationDate,
-                R.string.updated_on to viewData.updateDate,
+                R.string.notes to ViewDataProperties(viewData.notes),
+                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
             )
         }
         BasicSafeBoxTheme {
@@ -168,9 +182,9 @@ class ViewDataDetailsFragment : Fragment() {
     @Composable
     fun UserDataField(
         fieldLabelResourceId: Int,
-        field: String?
+        fieldProperties: ViewDataProperties
     ) {
-        if (field != null) {
+        if (fieldProperties.value != null) {
             val label = stringResource(id = fieldLabelResourceId).replace("̽", "")
             Text(
                 text = label,
@@ -178,10 +192,18 @@ class ViewDataDetailsFragment : Fragment() {
                 style = MaterialTheme.typography.h6
             )
             Text(
-                text = field,
+                text = fieldProperties.value,
                 color = MaterialTheme.colors.onBackground,
                 style = MaterialTheme.typography.subtitle1,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .clickable(
+                        indication = rememberRipple(),
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) {
+                        Timber.i("$label clicked for copy")
+                        copyContentToClipboard(label, fieldProperties.value)
+                    }
             )
         }
     }
@@ -215,7 +237,7 @@ class ViewDataDetailsFragment : Fragment() {
 
     @Composable
     fun UserDataView(
-        viewDataMap: Map<Int, String?>,
+        viewDataMap: Map<Int, ViewDataProperties>,
         title: String,
         status: Status,
         dataType: UserDataType
@@ -253,43 +275,13 @@ class ViewDataDetailsFragment : Fragment() {
                     )
 
                     // action row
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        ActionIcon(
-                            imageVector = Icons.Filled.Edit,
-                            labelResId = R.string.edit,
-                            contentDescriptionResId = R.string.cd_action_edit
-                        ) { navigateToEditScreen(dataType) }
-                        ActionIcon(
-                            imageVector = MaterialIconsCopy.ContentCopyFilled,
-                            labelResId = R.string.copy,
-                            contentDescriptionResId = R.string.cd_action_copy
-                        ) {}
-                        ActionIcon(
-                            imageVector = MaterialIconsCopy.DeleteForeverFilled,
-                            labelResId = R.string.delete,
-                            contentDescriptionResId = R.string.cd_action_delete
-                        ) {}
-                        ActionIcon(
-                            imageVector = Icons.Filled.Share,
-                            labelResId = R.string.share,
-                            contentDescriptionResId = R.string.cd_action_share
-                        ) {}
-                    }
-                    Divider(
-                        color = MaterialTheme.colors.primary,
-                        startIndent = 8.dp,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-                    )
+                    ActionRow(title, dataType, viewDataMap)
 
                     // user data in view only mode
-                    viewDataMap.forEach { (titleResourceId, value) ->
+                    viewDataMap.forEach { (titleResourceId, properties) ->
                         UserDataField(
                             fieldLabelResourceId = titleResourceId,
-                            field = value
+                            fieldProperties = properties
                         )
                     }
                 }
@@ -297,7 +289,57 @@ class ViewDataDetailsFragment : Fragment() {
         }
     }
 
+    @Composable
+    private fun ActionRow(
+        title: String,
+        dataType: UserDataType,
+        viewDataMap: Map<Int, ViewDataProperties>
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            ActionIcon(
+                imageVector = Icons.Filled.Edit,
+                labelResId = R.string.edit,
+                contentDescriptionResId = R.string.cd_action_edit
+            ) {
+                Timber.i("edit action clicked")
+                navigateToEditScreen(dataType)
+            }
+            ActionIcon(
+                imageVector = MaterialIconsCopy.ContentCopyFilled,
+                labelResId = R.string.copy,
+                contentDescriptionResId = R.string.cd_action_copy
+            ) {
+                Timber.i("copy action clicked")
+                copyContent(title, viewDataMap)
+            }
+            ActionIcon(
+                imageVector = MaterialIconsCopy.DeleteForeverFilled,
+                labelResId = R.string.delete,
+                contentDescriptionResId = R.string.cd_action_delete
+            ) {
+                Timber.i("delete action clicked")
+            }
+            ActionIcon(
+                imageVector = Icons.Filled.Share,
+                labelResId = R.string.share,
+                contentDescriptionResId = R.string.cd_action_share
+            ) {
+                Timber.i("share action clicked")
+            }
+        }
+        Divider(
+            color = MaterialTheme.colors.primary,
+            startIndent = 8.dp,
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+        )
+    }
+
     private fun navigateToEditScreen(dataType: UserDataType) {
+        Timber.i("navigating to edit screen for ${dataType.name}")
         findNavController().navigate(
             when (dataType) {
                 UserDataType.LOGIN_DATA -> {
@@ -322,5 +364,51 @@ class ViewDataDetailsFragment : Fragment() {
                 }
             }
         )
+    }
+
+    private fun copyContent(userDataTitle: String, viewDataMap: Map<Int, ViewDataProperties>) {
+        Timber.i("copying content")
+        val content = getCopyableContent(userDataTitle, viewDataMap)
+        copyContentToClipboard(getString(R.string.common_data), content)
+    }
+
+    private fun getCopyableContent(
+        userDataTitle: String,
+        viewDataMap: Map<Int, ViewDataProperties>
+    ): String {
+        Timber.i("making copyable content")
+        val dataStringBuffer =
+            StringBuffer(userDataTitle).append(":\n---------------\n---------------\n")
+        viewDataMap
+            .filter { it.value.isCopyable && it.value.value != null }
+            .forEach { (titleResourceId, properties) ->
+                val propertyTitle = getString(titleResourceId)
+                val propertyValue = properties.value
+                dataStringBuffer.append("$propertyTitle : $propertyValue\n")
+            }
+        dataStringBuffer.append(
+            "---------------\n---------------\n${
+            getString(
+                R.string.common_app_playstore_download,
+                APP_PLAYSTORE_LINK
+            )
+            }"
+        )
+        return dataStringBuffer.toString()
+    }
+
+    private fun copyContentToClipboard(contentLabel: String, contentValue: String) {
+        val clip = ClipData.newPlainText(contentLabel, contentValue)
+        Timber.i("setting primary clip")
+        Timber.d("setting primary clip\n label = $contentLabel\n value=$contentValue")
+        clipboardManager.setPrimaryClip(clip)
+        Timber.i("showing snackbar after setting primary clip")
+        Snackbar
+            .make(
+                requireView(),
+                getString(R.string.snackbar_common_copied_to_clipboard, contentLabel),
+                LENGTH_SHORT
+            )
+            .show()
     }
 }
