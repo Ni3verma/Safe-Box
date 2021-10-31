@@ -161,16 +161,24 @@
             app:argType="com.andryoga.safebox.ui.common.UserDataType" />
         <action
             android:id="@+id/action_viewDataDetailsFragment_to_bankCardDataFragment"
-            app:destination="@id/bankCardDataFragment" />
+            app:destination="@id/bankCardDataFragment"
+            app:popUpTo="@id/viewDataDetailsFragment"
+            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_viewDataDetailsFragment_to_secureNoteDataFragment"
-            app:destination="@id/secureNoteDataFragment" />
+            app:destination="@id/secureNoteDataFragment"
+            app:popUpTo="@id/viewDataDetailsFragment"
+            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_viewDataDetailsFragment_to_loginDataFragment"
-            app:destination="@id/loginDataFragment" />
+            app:destination="@id/loginDataFragment"
+            app:popUpTo="@id/viewDataDetailsFragment"
+            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_viewDataDetailsFragment_to_bankAccountDataFragment"
-            app:destination="@id/bankAccountDataFragment" />
+            app:destination="@id/bankAccountDataFragment"
+            app:popUpTo="@id/viewDataDetailsFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
 </navigation>
