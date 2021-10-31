@@ -15,11 +15,11 @@ class BankCardDataRepositoryImpl @Inject constructor(
     private val bankCardDataDaoSecure: BankCardDataDaoSecure
 ) : BankCardDataRepository {
     override suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity())
+        bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = true))
     }
 
     override suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.updateBankCardData(bankCardScreenData.toBankCardDataEntity())
+        bankCardDataDaoSecure.updateBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = false))
     }
 
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {

@@ -15,11 +15,19 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : SecureNoteDataRepository {
     override suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
-        secureNoteDataDaoSecure.insertSecretNoteData(secureNoteScreenData.toSecureNoteDataEntity())
+        secureNoteDataDaoSecure.insertSecretNoteData(
+            secureNoteScreenData.toSecureNoteDataEntity(
+                getCurrentDate = true
+            )
+        )
     }
 
     override suspend fun updateSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
-        secureNoteDataDaoSecure.updateSecretNoteData(secureNoteScreenData.toSecureNoteDataEntity())
+        secureNoteDataDaoSecure.updateSecretNoteData(
+            secureNoteScreenData.toSecureNoteDataEntity(
+                getCurrentDate = false
+            )
+        )
     }
 
     override suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>> {

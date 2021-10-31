@@ -5,7 +5,8 @@ style:
     excludes: [
         '**/test/**', '**/androidTest/**',
         '**/commonTest/**', '**/jvmTest/**', '**/Color.kt',
-        '**/icons/MaterialIconsCopy.kt'
+        '**/app/src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt',
+        '**/app/src/main/java/com/andryoga/safebox/data/db/SafeBoxDatabase.kt'
     ]
 exceptions:
   TooGenericExceptionCaught:

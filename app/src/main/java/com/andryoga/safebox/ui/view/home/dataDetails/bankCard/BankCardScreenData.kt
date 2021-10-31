@@ -32,7 +32,12 @@ class BankCardScreenData(
     var creationDate = pCreationDate
 
     companion object {
-        fun BankCardScreenData.toBankCardDataEntity(): BankCardDataEntity {
+        /*
+        * converts screen data to db entity data
+        * while inserting new data in db, we want current date for creation date
+        * while updating data in db, we don't want to update creation date
+        * */
+        fun BankCardScreenData.toBankCardDataEntity(getCurrentDate: Boolean): BankCardDataEntity {
             return BankCardDataEntity(
                 key,
                 title.getValueOrEmpty(),
@@ -42,7 +47,7 @@ class BankCardScreenData(
                 cvv.get(),
                 expiryDate.get(),
                 notes.get(),
-                creationDate,
+                if (getCurrentDate) Date() else creationDate,
                 Date()
             )
         }

@@ -22,12 +22,17 @@ class SecureNoteScreenData(
     var creationDate = pCreationDate
 
     companion object {
-        fun SecureNoteScreenData.toSecureNoteDataEntity(): SecureNoteDataEntity {
+        /*
+        * converts screen data to db entity data
+        * while inserting new data in db, we want current date for creation date
+        * while updating data in db, we don't want to update creation date
+        * */
+        fun SecureNoteScreenData.toSecureNoteDataEntity(getCurrentDate: Boolean): SecureNoteDataEntity {
             return SecureNoteDataEntity(
                 key,
                 title.getValueOrEmpty(),
                 notes.getValueOrEmpty(),
-                creationDate,
+                if (getCurrentDate) Date() else creationDate,
                 Date()
             )
         }

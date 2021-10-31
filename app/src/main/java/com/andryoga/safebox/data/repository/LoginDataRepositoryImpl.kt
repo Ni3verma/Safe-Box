@@ -17,11 +17,11 @@ class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
     override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
-        loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity())
+        loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = true))
     }
 
     override suspend fun updateLoginData(loginScreenData: LoginScreenData) {
-        loginDataDaoSecure.updateLoginData(loginScreenData.toLoginDataEntity())
+        loginDataDaoSecure.updateLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = false))
     }
 
     override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {

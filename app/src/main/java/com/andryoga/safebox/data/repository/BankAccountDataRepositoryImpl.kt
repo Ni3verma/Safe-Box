@@ -15,12 +15,16 @@ class BankAccountDataRepositoryImpl @Inject constructor(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure
 ) : BankAccountDataRepository {
     override suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData) {
-        val entity = bankAccountScreenData.toBankAccountDataEntity()
+        val entity = bankAccountScreenData.toBankAccountDataEntity(getCurrentDate = true)
         bankAccountDataDaoSecure.insertBankAccountData(entity)
     }
 
     override suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData) {
-        bankAccountDataDaoSecure.updateBankAccountData(bankAccountScreenData.toBankAccountDataEntity())
+        bankAccountDataDaoSecure.updateBankAccountData(
+            bankAccountScreenData.toBankAccountDataEntity(
+                getCurrentDate = false
+            )
+        )
     }
 
     override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {

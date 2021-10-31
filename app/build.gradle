@@ -20,9 +20,9 @@ android {
         applicationId "com.andryoga.safebox"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 3
+        versionCode 4
         // majorVersion.minorVersion.dbVersion.fixVersion
-        versionName "1.2.2.0"
+        versionName "1.3.3.0"
 
         //room.incremental: Enables Gradle incremental annotation processor
         //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.

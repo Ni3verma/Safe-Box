@@ -19,7 +19,7 @@ object Utils {
         return if (this.isNullOrBlank()) null else symmetricKeyUtils.decrypt(this)
     }
 
-    fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh-mm-ss a"): String {
+    fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
         return SimpleDateFormat(pattern).format(date)
     }
 }
