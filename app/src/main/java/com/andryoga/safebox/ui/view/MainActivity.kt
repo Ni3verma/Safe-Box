@@ -22,7 +22,7 @@ import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.play.core.review.ReviewManagerFactory
+import com.google.android.play.core.review.testing.FakeReviewManager
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -178,7 +178,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startInAppReview() {
-        val manager = ReviewManagerFactory.create(this)
+//        val manager = ReviewManagerFactory.create(this)
+        val manager = FakeReviewManager(this)
         val request = manager.requestReviewFlow()
         request.addOnCompleteListener { task ->
             if (task.isSuccessful) {
