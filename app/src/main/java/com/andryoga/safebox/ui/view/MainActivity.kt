@@ -22,17 +22,21 @@ import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.play.core.review.testing.FakeReviewManager
+import com.google.android.play.core.review.ReviewInfo
+import com.google.android.play.core.review.ReviewManager
+import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private var lastInteractionTime: Long = System.currentTimeMillis()
+    private var reviewInfo: ReviewInfo? = null
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var appBarConfiguration: AppBarConfiguration
+    private lateinit var reviewManager: ReviewManager
 
     private val navController by lazy {
         Navigation.findNavController(this, R.id.nav_host_fragment)
@@ -95,7 +99,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         CrashlyticsKeys(this).setDefaultKeys()
-        startInAppReview()
+        prefetchReviewInfo()
     }
 
     override fun onPause() {
@@ -177,21 +181,28 @@ class MainActivity : AppCompatActivity() {
         } else false
     }
 
-    private fun startInAppReview() {
-//        val manager = ReviewManagerFactory.create(this)
-        val manager = FakeReviewManager(this)
-        val request = manager.requestReviewFlow()
-        request.addOnCompleteListener { task ->
+    private fun prefetchReviewInfo() {
+        reviewManager = ReviewManagerFactory.create(this)
+        val reviewInfoTask = reviewManager.requestReviewFlow()
+        reviewInfoTask.addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                Timber.i("request done")
-                val reviewInfo = task.result
-                val flow = manager.launchReviewFlow(this, reviewInfo)
-                flow.addOnCompleteListener { _ ->
-                    Timber.i("flow done")
-                }
+                Timber.i("review info fetched")
+                reviewInfo = task.result
             } else {
                 Timber.w("error while requesting app review flow", task.exception)
             }
+        }
+    }
+
+    fun launchReviewFlow(nextFunction: () -> Unit) {
+        if (this::reviewManager.isInitialized && reviewInfo != null) {
+            val flow = reviewManager.launchReviewFlow(this, reviewInfo!!)
+            flow.addOnCompleteListener { _ ->
+                Timber.i("review flow done")
+                nextFunction()
+            }
+        } else {
+            nextFunction()
         }
     }
 }

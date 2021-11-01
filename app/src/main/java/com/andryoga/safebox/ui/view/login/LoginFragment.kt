@@ -16,6 +16,7 @@ import com.andryoga.safebox.ui.common.BiometricableEventType
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.common.biometricableHandler
 import com.andryoga.safebox.ui.view.MainActivity
+import com.andryoga.safebox.ui.view.login.LoginViewModel.Constants.ASK_FOR_REVIEW_AFTER_EVERY
 import com.andryoga.safebox.ui.view.login.LoginViewModel.Constants.MAX_CONT_BIOMETRIC_LOGINS
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
@@ -100,7 +101,6 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
             BiometricableEventType.AUTHENTICATION_SUCCEEDED -> {
                 Timber.i("User authenticated with biometric")
                 viewModel.onUnlockedWithBiometric()
-                navigateToHome()
             }
             else -> {
                 Timber.i("biometric event failed, name = ${event.name}")
@@ -118,7 +118,11 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
 
         viewModel.navigateToHome.observe(viewLifecycleOwner) { isNavigate ->
             if (isNavigate) {
-                navigateToHome()
+                if (viewModel.totalLoginCount < 0 || viewModel.totalLoginCount % ASK_FOR_REVIEW_AFTER_EVERY == 0) {
+                    (requireActivity() as MainActivity).launchReviewFlow { navigateToHome() }
+                } else {
+                    navigateToHome()
+                }
             }
         }
     }
