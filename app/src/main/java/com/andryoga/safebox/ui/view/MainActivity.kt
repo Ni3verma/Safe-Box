@@ -22,6 +22,7 @@ import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -94,6 +95,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         CrashlyticsKeys(this).setDefaultKeys()
+        startInAppReview()
     }
 
     override fun onPause() {
@@ -173,5 +175,22 @@ class MainActivity : AppCompatActivity() {
                 }.show()
             true
         } else false
+    }
+
+    private fun startInAppReview() {
+        val manager = ReviewManagerFactory.create(this)
+        val request = manager.requestReviewFlow()
+        request.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Timber.i("request done")
+                val reviewInfo = task.result
+                val flow = manager.launchReviewFlow(this, reviewInfo)
+                flow.addOnCompleteListener { _ ->
+                    Timber.i("flow done")
+                }
+            } else {
+                Timber.w("error while requesting app review flow", task.exception)
+            }
+        }
     }
 }
