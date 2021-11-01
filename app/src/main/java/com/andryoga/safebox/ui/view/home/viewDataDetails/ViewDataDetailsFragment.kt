@@ -220,7 +220,12 @@ class ViewDataDetailsFragment : Fragment() {
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.clickable(onClick = onClick)
+            modifier = Modifier.clickable(
+                indication = rememberRipple(bounded = false),
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                onClick()
+            }
         ) {
             Icon(
                 imageVector = imageVector,
@@ -380,7 +385,7 @@ class ViewDataDetailsFragment : Fragment() {
     ): String {
         Timber.i("making copyable content")
         val dataStringBuffer =
-            StringBuffer(userDataTitle).append(":\n---------------\n---------------\n")
+            StringBuffer(userDataTitle).append(":\n---------------\n")
         viewDataMap
             .filter { it.value.isCopyable && it.value.value != null }
             .forEach { (titleResourceId, properties) ->
@@ -389,7 +394,7 @@ class ViewDataDetailsFragment : Fragment() {
                 dataStringBuffer.append("$propertyTitle : $propertyValue\n")
             }
         dataStringBuffer.append(
-            "---------------\n---------------\n${
+            "---------------\n${
             getString(
                 R.string.common_app_playstore_download,
                 APP_PLAYSTORE_LINK
