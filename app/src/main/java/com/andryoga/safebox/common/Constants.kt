@@ -13,4 +13,5 @@ object Constants {
     //        Other
     const val time1Sec = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
+    const val APP_PLAYSTORE_LINK = "https://play.google.com/store/apps/details?id=com.andryoga.safebox"
 }
