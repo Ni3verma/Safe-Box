@@ -35,7 +35,7 @@ class LoginViewModel @Inject constructor(
     val loginCountWithBiometric: Int =
         preferenceProvider.getIntPref(LOGIN_COUNT_WITH_BIOMETRIC, 0)
 
-    var totalLoginCount: Int = 0
+    var totalLoginCount: Int = 1
 
     val pswrd = MutableStateFlow("")
     val hint = MutableStateFlow("")
@@ -45,7 +45,7 @@ class LoginViewModel @Inject constructor(
             pswrd.value = "Qwerty@@135"
         }
         viewModelScope.launch(Dispatchers.IO) {
-            totalLoginCount = preferenceProvider.getIntPref(TOTAL_LOGIN_COUNT, 0)
+            totalLoginCount = preferenceProvider.getIntPref(TOTAL_LOGIN_COUNT, 1)
         }
     }
 
