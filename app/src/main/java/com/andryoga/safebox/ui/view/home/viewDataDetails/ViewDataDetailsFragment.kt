@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ShareCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -148,7 +149,7 @@ class ViewDataDetailsFragment : Fragment() {
                 R.string.name to ViewDataProperties(viewData.name),
                 R.string.number to ViewDataProperties(viewData.number),
                 R.string.pin to ViewDataProperties(viewData.pin, false),
-                R.string.cvv to ViewDataProperties(viewData.cvv),
+                R.string.cvv to ViewDataProperties(viewData.cvv, false),
                 R.string.expiryDate to ViewDataProperties(viewData.expiryDate),
                 R.string.notes to ViewDataProperties(viewData.notes, false),
                 R.string.created_on to ViewDataProperties(viewData.creationDate, false),
@@ -308,13 +309,15 @@ class ViewDataDetailsFragment : Fragment() {
                 Timber.i("edit action clicked")
                 navigateToEditScreen(dataType)
             }
-            ActionIcon(
-                imageVector = MaterialIconsCopy.ContentCopyFilled,
-                labelResId = R.string.copy,
-                contentDescriptionResId = R.string.cd_action_copy
-            ) {
-                Timber.i("copy action clicked")
-                copyContent(title, viewDataMap)
+            if (dataType in arrayOf(UserDataType.BANK_CARD, UserDataType.BANK_ACCOUNT)) {
+                ActionIcon(
+                    imageVector = Icons.Filled.Share,
+                    labelResId = R.string.share,
+                    contentDescriptionResId = R.string.cd_action_share
+                ) {
+                    Timber.i("share action clicked")
+                    shareContent(title, viewDataMap)
+                }
             }
             ActionIcon(
                 imageVector = MaterialIconsCopy.DeleteForeverFilled,
@@ -322,13 +325,6 @@ class ViewDataDetailsFragment : Fragment() {
                 contentDescriptionResId = R.string.cd_action_delete
             ) {
                 Timber.i("delete action clicked")
-            }
-            ActionIcon(
-                imageVector = Icons.Filled.Share,
-                labelResId = R.string.share,
-                contentDescriptionResId = R.string.cd_action_share
-            ) {
-                Timber.i("share action clicked")
             }
         }
         Divider(
@@ -366,10 +362,16 @@ class ViewDataDetailsFragment : Fragment() {
         )
     }
 
-    private fun copyContent(userDataTitle: String, viewDataMap: Map<Int, ViewDataProperties>) {
-        Timber.i("copying content")
+    private fun shareContent(userDataTitle: String, viewDataMap: Map<Int, ViewDataProperties>) {
         val content = getCopyableContent(userDataTitle, viewDataMap)
-        copyContentToClipboard(getString(R.string.common_data), content)
+        val shareIntent = ShareCompat.IntentBuilder(requireContext())
+            .setType("text/plain")
+            .setText(content)
+            .intent
+        if (shareIntent.resolveActivity(requireActivity().packageManager) != null) {
+            Timber.i("starting intent to share data")
+            startActivity(shareIntent)
+        }
     }
 
     private fun getCopyableContent(

@@ -14,8 +14,7 @@
     <string name="cd_save_button">Press to save data</string>
     <string name="cd_action_delete">Delete data</string>
     <string name="cd_action_edit">Edit data</string>
-    <string name="cd_action_share">Share full data</string>
-    <string name="cd_action_copy">Copy data to clipboard</string>
+    <string name="cd_action_share">Share data</string>
 
     <!--    Screen title-->
     <string name="drawer_title_all_items">All Items</string>
@@ -47,7 +46,6 @@
     <string name="biometric_negative_button_text">Close</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
-    <string name="copy">Copy</string>
     <string name="share">Share</string>
 
 
