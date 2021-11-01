@@ -14,8 +14,7 @@
     <string name="cd_save_button">Press to save data</string>
     <string name="cd_action_delete">Delete data</string>
     <string name="cd_action_edit">Edit data</string>
-    <string name="cd_action_share">Share full data</string>
-    <string name="cd_action_copy">Copy data to clipboard</string>
+    <string name="cd_action_share">Share data</string>
 
     <!--    Screen title-->
     <string name="drawer_title_all_items">All Items</string>
@@ -32,11 +31,14 @@
     <!--    Snackbar -->
     <string name="snackbar_common_data_saved">Data saved</string>
     <string name="snackbar_common_error_saving_data">Error occurred while saving data</string>
+    <string name="snackbar_common_copied_to_clipboard">Copied %1$s to clipboard</string>
 
     <!--    Common-->
     <string name="common_error_mandatory_field">Mandatory Field</string>
     <string name="common_no_result">No Result!</string>
     <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
+    <string name="common_app_playstore_download">Data stored securely by Safe Box.\nDownload it from playstore : %1$s</string>
+    <string name="common_data">Data</string>
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
@@ -44,8 +46,8 @@
     <string name="biometric_negative_button_text">Close</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
-    <string name="copy">Copy</string>
     <string name="share">Share</string>
+
 
     <!--    User data type text-->
     <string name="login">Login</string>
