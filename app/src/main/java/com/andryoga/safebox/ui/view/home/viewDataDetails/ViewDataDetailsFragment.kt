@@ -358,17 +358,23 @@ class ViewDataDetailsFragment : Fragment() {
                         findNavController().navigateUp()
                     }
                 ) {
-                    Text(text = "Yes")
+                    Text(text = stringResource(R.string.common_delete))
                 }
             },
             title = {
                 Text(
-                    text = "Delete this record?",
+                    text = stringResource(R.string.delete_this_record),
                     style = MaterialTheme.typography.h6,
                     color = MaterialTheme.colors.primary,
+                    fontWeight = FontWeight.Bold
                 )
             },
-            text = { Text("I understand that this record will be permanently removed and there is no going back.") },
+            text = {
+                Text(
+                    stringResource(R.string.delete_record_dialog_body),
+                    style = MaterialTheme.typography.body1
+                )
+            },
         )
     }
 
