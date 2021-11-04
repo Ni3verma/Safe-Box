@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
@@ -21,16 +20,8 @@ import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
-import com.andryoga.safebox.ui.view.MainActivity.Constants.AUTO_UPDATE_REQUEST_CODE
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.play.core.appupdate.AppUpdateManager
-import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.install.InstallStateUpdatedListener
-import com.google.android.play.core.install.model.AppUpdateType
-import com.google.android.play.core.install.model.InstallStatus
-import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -64,10 +55,7 @@ class MainActivity : AppCompatActivity() {
     object Constants {
         const val LAST_INTERACTED_TIME = "last_interacted_time"
         const val MAX_USER_AWAY_MILLI_SECONDS = 20000L
-        const val AUTO_UPDATE_REQUEST_CODE = 11
     }
-
-    private lateinit var appUpdateManager: AppUpdateManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,7 +65,6 @@ class MainActivity : AppCompatActivity() {
         // could be USER_PREFERENCE in future
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-        appUpdateManager = AppUpdateManagerFactory.create(this)
 
         lastInteractionTime = savedInstanceState?.getLong(LAST_INTERACTED_TIME)
             ?: System.currentTimeMillis()
@@ -113,44 +100,6 @@ class MainActivity : AppCompatActivity() {
 
         CrashlyticsKeys(this).setDefaultKeys()
         prefetchReviewInfo()
-
-        appUpdate()
-
-    }
-
-    private fun appUpdate(){
-        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
-        appUpdateInfoTask.addOnSuccessListener{ appUpdateInfo ->
-           if ( appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-               && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)){
-               appUpdateManager.startUpdateFlowForResult(appUpdateInfo,AppUpdateType.FLEXIBLE, this, AUTO_UPDATE_REQUEST_CODE)
-               appUpdateManager.registerListener(listener)
-           }
-            else if ( appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-               && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)){
-               appUpdateManager.startUpdateFlowForResult(appUpdateInfo,AppUpdateType.IMMEDIATE, this, AUTO_UPDATE_REQUEST_CODE)
-            }
-        }
-    }
-
-    private val listener = InstallStateUpdatedListener{ state ->
-        if (state.installStatus() == InstallStatus.DOWNLOADED){
-            snackbarForCompleteUpdate()
-        }
-    }
-
-    private fun snackbarForCompleteUpdate(){
-        Snackbar.make(findViewById(R.id.content), "App update has been downloaded", Snackbar.LENGTH_INDEFINITE).
-        setAction("Install"){
-            appUpdateManager.completeUpdate()
-        }.show()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == AUTO_UPDATE_REQUEST_CODE){
-            if (resultCode != RESULT_OK )
-                Toast.makeText(this, "Update Failed", Toast.LENGTH_SHORT).show()
-        }
     }
 
     override fun onPause() {
@@ -160,11 +109,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS){
-                appUpdateManager.startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE, this, AUTO_UPDATE_REQUEST_CODE)
-            }
-        }
         checkUserAwayTimeout()
     }
 
