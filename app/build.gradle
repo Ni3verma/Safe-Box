@@ -52,6 +52,14 @@ android {
             keyPassword localReleaseKeyStoreProperties['KEY_PASSWORD']
             keyAlias localReleaseKeyStoreProperties['KEY_ALIAS']
         }
+        qa {
+            def nonProdKeyStoreProperties = new Properties()
+            nonProdKeyStoreProperties.load(new FileInputStream(rootProject.file("nonProdReleaseKeyStore.properties")))
+            storeFile file(nonProdKeyStoreProperties['STORE_FILE'])
+            storePassword nonProdKeyStoreProperties['STORE_PASSWORD']
+            keyPassword nonProdKeyStoreProperties['KEY_PASSWORD']
+            keyAlias nonProdKeyStoreProperties['KEY_ALIAS']
+        }
     }
 
     android.applicationVariants.all { variant ->
@@ -67,17 +75,6 @@ android {
             debuggable true
             minifyEnabled false
         }
-        qa {
-            applicationIdSuffix ".qa"
-            minifyEnabled true
-            shrinkResources true
-            debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
-            firebaseCrashlytics {
-                mappingFileUploadEnabled true
-            }
-        }
         release {
             minifyEnabled true
             shrinkResources true
@@ -87,6 +84,11 @@ android {
             firebaseCrashlytics {
                 mappingFileUploadEnabled true
             }
+        }
+        qa {
+            initWith(buildTypes["release"])
+            applicationIdSuffix ".qa"
+            signingConfig signingConfigs.qa
         }
     }
     kotlinOptions {
