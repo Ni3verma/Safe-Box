@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
@@ -263,6 +264,10 @@ class ViewDataDetailsFragment : Fragment() {
                 // FUTURE
             }
             Status.SUCCESS -> {
+                val isDeleteRecordDialogVisible by viewModel.showDeleteRecordDialog.collectAsState()
+                if (isDeleteRecordDialogVisible) {
+                    DeleteRecordDialog()
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -330,12 +335,46 @@ class ViewDataDetailsFragment : Fragment() {
                 contentDescriptionResId = R.string.cd_action_delete
             ) {
                 Timber.i("delete action clicked")
+                viewModel.setDeleteRecordDialogVisibility(true)
             }
         }
         Divider(
             color = MaterialTheme.colors.primary,
             startIndent = 8.dp,
             modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+        )
+    }
+
+    @Composable
+    private fun DeleteRecordDialog() {
+        AlertDialog(
+            onDismissRequest = { viewModel.setDeleteRecordDialogVisibility(false) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteData(args.id, args.userDataType)
+                        viewModel.setDeleteRecordDialogVisibility(false)
+                        Timber.i("data deleted, navigation back")
+                        findNavController().navigateUp()
+                    }
+                ) {
+                    Text(text = stringResource(R.string.common_delete))
+                }
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.delete_this_record),
+                    style = MaterialTheme.typography.h6,
+                    color = MaterialTheme.colors.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    stringResource(R.string.delete_record_dialog_body),
+                    style = MaterialTheme.typography.body1
+                )
+            },
         )
     }
 
