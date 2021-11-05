@@ -92,7 +92,12 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
                 getString(R.string.biometric_negative_button_text)
             )
         } else {
-            Timber.i("not showing biometric dialog, cont count with biometric = ${viewModel.loginCountWithBiometric}")
+            Timber.i(
+                "not showing biometric dialog, cont. count" +
+                    " with biometric = ${viewModel.loginCountWithBiometric}\n" +
+                    "showing enter password manually message"
+            )
+            binding.enterPasswordManuallyMessage.visibility = View.VISIBLE
         }
     }
 

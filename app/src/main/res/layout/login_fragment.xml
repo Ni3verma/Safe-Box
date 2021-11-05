@@ -117,6 +117,16 @@
             app:layout_constraintTop_toTopOf="@id/Show_hint_text"
             tools:text="This is Hint" />
 
+        <TextView
+            android:id="@+id/enter_password_manually_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enter_password_manually"
+            android:textColor="@color/colorError"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="@id/Show_hint_text"
+            app:layout_constraintTop_toBottomOf="@id/Show_hint_text" />
+
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/save_btn"
             android:layout_width="55dp"

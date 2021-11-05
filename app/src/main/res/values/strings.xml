@@ -113,4 +113,5 @@
     <string name="timeout_dialog_positive_button_text">OK</string>
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
+    <string name="enter_password_manually">For security reason, Please manually enter password</string>
 </resources>
