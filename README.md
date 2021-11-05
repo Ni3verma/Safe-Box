@@ -13,7 +13,7 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 
 ## Connect with me on
 
-<a href="https://join.slack.com/t/safe-box-workspace/shared_invite/zt-s7prrr82-PAtzDTxHubkIvR5QPNKnBA">
+<a href="https://join.slack.com/t/safe-box-workspace/shared_invite/zt-yatwfl44-uu3BgU3JohO2RQSuOuY3xA">
     <img src="./screenshots/slack.png" width="30%">
 </a> &emsp;
 <a href="https://www.linkedin.com/in/nitinverma1120/">

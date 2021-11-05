@@ -39,6 +39,8 @@
     <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
     <string name="common_app_playstore_download">Data stored securely by Safe Box.\nDownload it from playstore : %1$s</string>
     <string name="common_data">Data</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_cancel">Cancel</string>
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
@@ -62,6 +64,10 @@
     <string name="pin">PIN</string>
     <string name="cvv">CVV</string>
     <string name="linkedAccount">Linked Account</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Delete this record?</string>
+    <string name="delete_record_dialog_body">I understand that this record will be permanently removed.</string>
 
     <!--    Other-->
     <string name="app_name">Safe Box</string>

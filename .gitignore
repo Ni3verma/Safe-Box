@@ -13,5 +13,5 @@
 .externalNativeBuild
 .cxx
 /releaseKeyStore.properties
-*.jks
+app/releaseKeyStore.jks
 *.apk
