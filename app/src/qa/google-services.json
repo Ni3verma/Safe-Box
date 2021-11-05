@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "635429303081",
+    "project_id": "safebox-nonprod",
+    "storage_bucket": "safebox-nonprod.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:635429303081:android:ae5cf72ac4bed47e44fd38",
+        "android_client_info": {
+          "package_name": "com.andryoga.safebox.qa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "635429303081-ek3tjnujgbrtd8f6cvm3ut1dhmg2bicb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6eQ4t85AVggOLIzdsEe2uqn3IYCzyVQ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "635429303081-ek3tjnujgbrtd8f6cvm3ut1dhmg2bicb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
