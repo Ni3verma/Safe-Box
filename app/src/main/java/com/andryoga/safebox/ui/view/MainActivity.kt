@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
@@ -15,17 +16,22 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
+import com.andryoga.safebox.worker.ExportDataWorker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -100,6 +106,25 @@ class MainActivity : AppCompatActivity() {
 
         CrashlyticsKeys(this).setDefaultKeys()
         prefetchReviewInfo()
+
+        testWork()
+    }
+
+    @ExperimentalCoroutinesApi
+    private fun testWork() {
+        val workManager = WorkManager.getInstance(this)
+        val exportRequest = OneTimeWorkRequestBuilder<ExportDataWorker>()
+            .setInputData(Data(mapOf("PASSWORD" to "WxBJu4B9ntquCM4v9km3oHubA1RaZRfq|80AbRVgaMG8efL+t")))
+            .build()
+
+        workManager.enqueue(exportRequest)
+    }
+
+    fun pickPath() {
+        val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
+            Timber.i("uri = $it")
+        }
+        req.launch(null)
     }
 
     override fun onPause() {

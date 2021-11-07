@@ -2,14 +2,26 @@ package com.andryoga.safebox
 
 import android.app.Application
 import android.util.Log
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
 import timber.log.Timber
 import java.util.*
+import javax.inject.Inject
 
 @HiltAndroidApp
-class MainApplication : Application() {
+class MainApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override fun getWorkManagerConfiguration() =
+        Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
