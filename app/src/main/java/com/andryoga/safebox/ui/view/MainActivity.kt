@@ -22,6 +22,7 @@ import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.AUTO_UPDATE_REQUEST_CODE
+import com.andryoga.safebox.ui.view.MainActivity.Constants.DAYS_FOR_UPDATE
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -62,10 +63,17 @@ class MainActivity : AppCompatActivity() {
     )
     private val drawerLayoutFirstScreen = R.id.nav_all_info
 
+    private val listener = InstallStateUpdatedListener { state ->
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            snackbarForCompleteUpdate()
+        }
+    }
+
     object Constants {
         const val LAST_INTERACTED_TIME = "last_interacted_time"
         const val MAX_USER_AWAY_MILLI_SECONDS = 20000L
         const val AUTO_UPDATE_REQUEST_CODE = 11
+        const val DAYS_FOR_UPDATE = 2
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -114,42 +122,11 @@ class MainActivity : AppCompatActivity() {
         prefetchReviewInfo()
 
         appUpdate()
-
-    }
-
-    private fun appUpdate(){
-        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
-        appUpdateInfoTask.addOnSuccessListener{ appUpdateInfo ->
-            if ( appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)){
-                    Timber.i("Flexible Update Available")
-                appUpdateManager.startUpdateFlowForResult(appUpdateInfo,AppUpdateType.FLEXIBLE, this, AUTO_UPDATE_REQUEST_CODE)
-                appUpdateManager.registerListener(listener)
-            }
-            else if ( appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)){
-                    Timber.i("Immediate Update Available")
-                appUpdateManager.startUpdateFlowForResult(appUpdateInfo,AppUpdateType.IMMEDIATE, this, AUTO_UPDATE_REQUEST_CODE)
-            }
-        }
-    }
-
-    private val listener = InstallStateUpdatedListener{ state ->
-        if (state.installStatus() == InstallStatus.DOWNLOADED){
-            snackbarForCompleteUpdate()
-        }
-    }
-
-    private fun snackbarForCompleteUpdate(){
-        Snackbar.make(findViewById(R.id.content), "App update has been downloaded", Snackbar.LENGTH_INDEFINITE).
-        setAction(getString(R.string.install)){
-            appUpdateManager.completeUpdate()
-        }.show()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == AUTO_UPDATE_REQUEST_CODE){
-            if (resultCode != RESULT_OK )
+        if (requestCode == AUTO_UPDATE_REQUEST_CODE) {
+            if (resultCode != RESULT_OK)
                 Toast.makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT).show()
         }
     }
@@ -161,11 +138,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS){
-                appUpdateManager.startUpdateFlowForResult(appUpdateInfo, AppUpdateType.IMMEDIATE, this, AUTO_UPDATE_REQUEST_CODE)
-            }
-        }
         checkUserAwayTimeout()
     }
 
@@ -261,5 +233,28 @@ class MainActivity : AppCompatActivity() {
         } else {
             nextFunction()
         }
+    }
+
+    private fun appUpdate() {
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                (appUpdateInfo.clientVersionStalenessDays() ?: -1) >= DAYS_FOR_UPDATE
+            ) {
+                Timber.i("Update Available")
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    AppUpdateType.FLEXIBLE, this, AUTO_UPDATE_REQUEST_CODE
+                )
+                appUpdateManager.registerListener(listener)
+            }
+        }
+    }
+
+    private fun snackbarForCompleteUpdate() {
+        Snackbar.make(findViewById(R.id.content), "App update has been downloaded", Snackbar.LENGTH_INDEFINITE)
+            .setAction(getString(R.string.install)) {
+                appUpdateManager.completeUpdate()
+            }.show()
     }
 }
