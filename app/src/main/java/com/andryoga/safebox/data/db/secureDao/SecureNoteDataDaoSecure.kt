@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
@@ -31,7 +32,7 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataDao.deleteSecretNoteDataByKey(key)
     }
 
-    override suspend fun exportAllData(): List<SecureNoteDataEntity> {
+    override suspend fun exportAllData(): List<ExportSecureNoteData> {
         return secureNoteDataDao.exportAllData().map { decrypt(it) }
     }
 
@@ -51,6 +52,17 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
                 it.key,
+                it.title,
+                symmetricKeyUtils.decrypt(it.notes),
+                it.creationDate,
+                it.updateDate
+            )
+        }
+    }
+
+    private fun decrypt(exportSecureNoteData: ExportSecureNoteData): ExportSecureNoteData {
+        exportSecureNoteData.let {
+            return ExportSecureNoteData(
                 it.title,
                 symmetricKeyUtils.decrypt(it.notes),
                 it.creationDate,

@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
 import com.andryoga.safebox.data.db.docs.SearchLoginData
+import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -23,5 +24,5 @@ interface LoginDataDao {
     suspend fun deleteLoginDataByKey(key: Int)
 
     @Query("select * from login_data")
-    suspend fun exportAllData(): List<LoginDataEntity>
+    suspend fun exportAllData(): List<ExportLoginData>
 }

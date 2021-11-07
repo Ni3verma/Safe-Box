@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -23,5 +24,5 @@ interface SecureNoteDataDao {
     suspend fun deleteSecretNoteDataByKey(key: Int)
 
     @Query("select * from secure_note_data")
-    suspend fun exportAllData(): List<SecureNoteDataEntity>
+    suspend fun exportAllData(): List<ExportSecureNoteData>
 }

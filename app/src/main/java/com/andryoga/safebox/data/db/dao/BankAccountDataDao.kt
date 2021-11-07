@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
+import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -24,5 +25,5 @@ interface BankAccountDataDao {
     suspend fun deleteBankAccountDataByKey(key: Int)
 
     @Query("select * from bank_account_data")
-    suspend fun exportAllData(): List<BankAccountDataEntity>
+    suspend fun exportAllData(): List<ExportBankAccountData>
 }
