@@ -21,4 +21,7 @@ interface BankCardDataDao {
 
     @Query("Delete from bank_card_data where `key` = :key")
     suspend fun deleteBankCardDataByKey(key: Int)
+
+    @Query("select * from bank_card_data")
+    suspend fun exportAllData(): List<BankCardDataEntity>
 }

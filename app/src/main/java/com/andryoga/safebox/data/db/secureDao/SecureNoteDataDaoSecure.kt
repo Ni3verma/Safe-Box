@@ -31,6 +31,10 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataDao.deleteSecretNoteDataByKey(key)
     }
 
+    override suspend fun exportAllData(): List<SecureNoteDataEntity> {
+        return secureNoteDataDao.exportAllData().map { decrypt(it) }
+    }
+
     private fun encrypt(secureNoteDataEntity: SecureNoteDataEntity): SecureNoteDataEntity {
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(

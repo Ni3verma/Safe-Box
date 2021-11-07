@@ -8,6 +8,7 @@ plugins {
     id "io.gitlab.arturbosch.detekt"
     id "com.google.gms.google-services"
     id "com.google.firebase.crashlytics"
+    id "kotlinx-serialization"
 }
 
 apply from: '../CICD/cicd.gradle'
@@ -172,7 +173,7 @@ dependencies {
     // don't enable this as app size increases drastically for debug builds
 //    implementation "androidx.compose.material:material-icons-extended:$compose_version"
 
-    //crashlytics
+    //crashlytics and analytics
     implementation platform('com.google.firebase:firebase-bom:28.4.1')
     implementation 'com.google.firebase:firebase-crashlytics-ktx'
     implementation 'com.google.firebase:firebase-analytics-ktx'
@@ -182,4 +183,7 @@ dependencies {
 
     // play core
     implementation("com.google.android.play:core:1.10.2")
+
+    // serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
 }

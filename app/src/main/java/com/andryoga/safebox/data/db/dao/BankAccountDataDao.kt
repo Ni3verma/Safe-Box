@@ -22,4 +22,7 @@ interface BankAccountDataDao {
 
     @Query("Delete from bank_account_data where `key` = :key")
     suspend fun deleteBankAccountDataByKey(key: Int)
+
+    @Query("select * from bank_account_data")
+    suspend fun exportAllData(): List<BankAccountDataEntity>
 }

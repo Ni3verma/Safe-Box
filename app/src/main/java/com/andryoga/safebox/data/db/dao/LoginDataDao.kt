@@ -21,4 +21,7 @@ interface LoginDataDao {
 
     @Query("Delete from login_data where `key` = :key")
     suspend fun deleteLoginDataByKey(key: Int)
+
+    @Query("select * from login_data")
+    suspend fun exportAllData(): List<LoginDataEntity>
 }

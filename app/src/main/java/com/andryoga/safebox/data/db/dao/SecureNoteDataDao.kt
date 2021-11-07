@@ -21,4 +21,7 @@ interface SecureNoteDataDao {
 
     @Query("Delete from secure_note_data where `key` = :key")
     suspend fun deleteSecretNoteDataByKey(key: Int)
+
+    @Query("select * from secure_note_data")
+    suspend fun exportAllData(): List<SecureNoteDataEntity>
 }
