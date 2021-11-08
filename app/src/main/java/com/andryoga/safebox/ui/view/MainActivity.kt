@@ -121,8 +121,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun pickPath() {
-        val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-            Timber.i("uri = $it")
+        val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            Timber.i("uri = $uri")
+            val takeFlags: Int =
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            contentResolver.takePersistableUriPermission(uri, takeFlags)
         }
         req.launch(null)
     }
