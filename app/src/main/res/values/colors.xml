@@ -30,15 +30,13 @@
     <color name="colorSecondary">#CDDC39</color>
     <color name="colorSecondaryDark">#AFB42B</color>
     <color name="colorAccent">#FEFFFF</color>
+    <color name="colorError">#b00020</color>
 
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-
-    <color name="red_200">#cf6679</color> <!--Color error (dark)-->
-    <color name="red_600">#b00020</color> <!--Color error (light)-->
 
     <!--Color surface (light), color on error (light), -->
     <!--color on surface (dark), color on surface (dark)-->

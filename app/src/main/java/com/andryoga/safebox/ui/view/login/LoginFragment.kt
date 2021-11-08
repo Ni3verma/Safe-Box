@@ -82,7 +82,9 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
         * and login count with biometric has not crossed threshold
         * and user away timeout has not happened
         * */
-        if (canUseBiometrics() &&
+        val canUnlockWithBiometric = canUseBiometrics()
+        Timber.i("can unlock with biometric = $canUnlockWithBiometric")
+        if (canUnlockWithBiometric &&
             viewModel.loginCountWithBiometric < MAX_CONT_BIOMETRIC_LOGINS &&
             !(requireActivity() as MainActivity).checkUserAwayTimeout()
         ) {
@@ -91,8 +93,13 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
                 getString(R.string.biometric_title_text),
                 getString(R.string.biometric_negative_button_text)
             )
-        } else {
-            Timber.i("not showing biometric dialog, cont count with biometric = ${viewModel.loginCountWithBiometric}")
+        } else if (canUnlockWithBiometric && viewModel.loginCountWithBiometric >= MAX_CONT_BIOMETRIC_LOGINS) {
+            Timber.i(
+                "not showing biometric dialog, cont. count" +
+                    " with biometric = ${viewModel.loginCountWithBiometric}\n" +
+                    "showing enter password manually message"
+            )
+            binding.enterPasswordManuallyMessage.visibility = View.VISIBLE
         }
     }
 
