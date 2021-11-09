@@ -35,7 +35,7 @@ import kotlin.properties.Delegates
 
 @HiltWorker
 @ExperimentalCoroutinesApi
-class ExportDataWorker
+class BackupDataWorker
 @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,

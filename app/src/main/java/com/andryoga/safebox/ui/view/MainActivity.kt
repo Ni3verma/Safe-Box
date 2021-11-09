@@ -25,7 +25,7 @@ import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
-import com.andryoga.safebox.worker.ExportDataWorker
+import com.andryoga.safebox.worker.BackupDataWorker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
     @ExperimentalCoroutinesApi
     private fun testWork() {
         val workManager = WorkManager.getInstance(this)
-        val exportRequest = OneTimeWorkRequestBuilder<ExportDataWorker>()
+        val exportRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
             .setInputData(Data(mapOf("PASSWORD" to "WxBJu4B9ntquCM4v9km3oHubA1RaZRfq|80AbRVgaMG8efL+t")))
             .build()
 
