@@ -17,11 +17,15 @@
     <string name="cd_action_share">Share data</string>
 
     <!--    Screen title-->
+    <string name="drawer_group_my_data">My Data</string>
+    <string name="drawer_group_contact_us">Contact Us</string>
     <string name="drawer_title_all_items">All Items</string>
     <string name="drawer_title_login">Login</string>
     <string name="drawer_title_bank_account">Bank Account</string>
     <string name="drawer_title_bank_card">Bank Card</string>
     <string name="drawer_title_secure_note">Secure Note</string>
+    <string name="drawer_title_backup_and_restore">Backup and Restore</string>
+    <string name="drawer_title_playstore">Play Store</string>
     <string name="title_login_data">Login Data</string>
     <string name="title_bank_account_data">Bank Account Data</string>
     <string name="title_bank_card_data">Bank Card Data</string>

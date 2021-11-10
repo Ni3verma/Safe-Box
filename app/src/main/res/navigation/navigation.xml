@@ -180,5 +180,9 @@
             app:popUpTo="@id/viewDataDetailsFragment"
             app:popUpToInclusive="true" />
     </fragment>
+    <fragment
+        android:id="@+id/nav_backup_restore"
+        android:name="com.andryoga.safebox.ui.view.home.child.backupAndRestore.BackupAndRestoreFragment"
+        android:label="@string/drawer_title_backup_and_restore" />
 
 </navigation>
