@@ -6,7 +6,7 @@ style:
         '**/test/**', '**/androidTest/**',
         '**/commonTest/**', '**/jvmTest/**', '**/Color.kt',
         '**/app/src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt',
-        '**/app/src/main/java/com/andryoga/safebox/data/db/SafeBoxDatabase.kt',
+        '**/app/src/main/java/com/andryoga/safebox/data/db/Migration.kt',
         '**/andryoga/safebox/NitinTest.kt'
     ]
 exceptions:

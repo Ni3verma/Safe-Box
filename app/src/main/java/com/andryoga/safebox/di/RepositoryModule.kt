@@ -1,5 +1,6 @@
 package com.andryoga.safebox.di
 
+import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.secureDao.*
 import com.andryoga.safebox.data.repository.*
 import com.andryoga.safebox.data.repository.interfaces.*
@@ -54,5 +55,13 @@ object RepositoryModule {
         secureNoteDataDaoSecure: SecureNoteDataDaoSecure
     ): SecureNoteDataRepository {
         return SecureNoteDataRepositoryImpl(secureNoteDataDaoSecure)
+    }
+
+    @Singleton
+    @Provides
+    fun provideBackupMetadataRepo(
+        backupMetadataDao: BackupMetadataDao
+    ): BackupMetadataRepository {
+        return BackupMetadataRepositoryImpl(backupMetadataDao)
     }
 }
