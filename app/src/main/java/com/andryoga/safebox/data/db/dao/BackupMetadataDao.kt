@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BackupMetadataDao {
@@ -14,6 +15,6 @@ interface BackupMetadataDao {
     @Query("update backup_metadata set lastBackupDate=:date")
     suspend fun updateLastBackupDate(date: Long)
 
-    @Query("select count(*) from backup_metadata")
-    suspend fun getBackupMetadataCount(): Int
+    @Query("select * from backup_metadata where `key` = 0")
+    fun getBackupMetadata(): Flow<BackupMetadataEntity?>
 }

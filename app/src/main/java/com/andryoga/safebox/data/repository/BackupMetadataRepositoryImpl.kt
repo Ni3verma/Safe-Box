@@ -3,6 +3,7 @@ package com.andryoga.safebox.data.repository
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class BackupMetadataRepositoryImpl @Inject constructor(
@@ -20,7 +21,7 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         backupMetadataDao.updateLastBackupDate(date)
     }
 
-    override suspend fun isBackupPathSet(): Boolean {
-        return backupMetadataDao.getBackupMetadataCount() > 0
+    override fun getBackupMetadata(): Flow<BackupMetadataEntity?> {
+        return backupMetadataDao.getBackupMetadata()
     }
 }

@@ -1,14 +1,8 @@
 package com.andryoga.safebox.common
 
 import com.andryoga.safebox.common.Utils.getFormattedDate
-import com.andryoga.safebox.data.db.docs.ViewBankAccountData
-import com.andryoga.safebox.data.db.docs.ViewBankCardData
-import com.andryoga.safebox.data.db.docs.ViewLoginData
-import com.andryoga.safebox.data.db.docs.ViewSecureNoteData
-import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
-import com.andryoga.safebox.data.db.entity.BankCardDataEntity
-import com.andryoga.safebox.data.db.entity.LoginDataEntity
-import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.docs.*
+import com.andryoga.safebox.data.db.entity.*
 
 object DomainMappers {
     fun BankAccountDataEntity.toViewBankAccountData(): ViewBankAccountData {
@@ -41,6 +35,14 @@ object DomainMappers {
             key, title, notes,
             getFormattedDate(creationDate),
             getFormattedDate(updateDate)
+        )
+    }
+
+    fun BackupMetadataEntity.toBackupAndRestoreData(): BackupData {
+        return BackupData(
+            key, uriString, displayPath,
+            if (lastBackupDate == null) "NA" else getFormattedDate(lastBackupDate),
+            getFormattedDate(createdOn)
         )
     }
 }
