@@ -15,6 +15,6 @@ interface BackupMetadataDao {
     @Query("update backup_metadata set lastBackupDate=:date")
     suspend fun updateLastBackupDate(date: Long)
 
-    @Query("select * from backup_metadata where `key` = 0")
+    @Query("select * from backup_metadata where `key` = 1")
     fun getBackupMetadata(): Flow<BackupMetadataEntity?>
 }

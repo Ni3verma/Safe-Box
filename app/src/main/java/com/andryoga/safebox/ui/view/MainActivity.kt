@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
@@ -106,29 +105,16 @@ class MainActivity : AppCompatActivity() {
 
         CrashlyticsKeys(this).setDefaultKeys()
         prefetchReviewInfo()
-
-        testWork()
     }
 
     @ExperimentalCoroutinesApi
-    private fun testWork() {
+    fun testWork() {
         val workManager = WorkManager.getInstance(this)
         val exportRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
             .setInputData(Data(mapOf("PASSWORD" to "WxBJu4B9ntquCM4v9km3oHubA1RaZRfq|80AbRVgaMG8efL+t")))
             .build()
 
         workManager.enqueue(exportRequest)
-    }
-
-    fun pickPath() {
-        val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-            Timber.i("uri = $uri")
-            val takeFlags: Int =
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            contentResolver.takePersistableUriPermission(uri, takeFlags)
-        }
-        req.launch(null)
     }
 
     override fun onPause() {

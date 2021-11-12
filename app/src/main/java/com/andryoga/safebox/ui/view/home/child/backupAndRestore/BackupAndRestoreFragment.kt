@@ -1,9 +1,11 @@
 package com.andryoga.safebox.ui.view.home.child.backupAndRestore
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -32,6 +34,17 @@ import timber.log.Timber
 @AndroidEntryPoint
 class BackupAndRestoreFragment : Fragment() {
     private val viewModel: BackupAndRestoreViewModel by viewModels()
+    private val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        Timber.i("uri selected for backup = $uri, path = ${uri.path}")
+        val takeFlags: Int =
+            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        requireActivity().contentResolver.takePersistableUriPermission(
+            uri,
+            takeFlags
+        )
+        viewModel.setBackupMetadata(uri)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -136,14 +149,16 @@ class BackupAndRestoreFragment : Fragment() {
                 Text(
                     text = "Backup location is not set. Click below button to set. " +
                         "It is recommended that while selecting location, add a new folder (e.g. Safe Box backup)" +
-                        " and then select same.",
+                        "in local Storage and then select same.",
                     modifier = Modifier.padding(8.dp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colors.onSurface,
                     style = MaterialTheme.typography.body1
                 )
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = {
+                        req.launch(null)
+                    },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 8.dp)
@@ -175,7 +190,7 @@ class BackupAndRestoreFragment : Fragment() {
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = "Backup location is set.", style = MaterialTheme.typography.h6
+                        text = "Backup location is set", style = MaterialTheme.typography.h6
                     )
                 }
                 Text(
@@ -194,13 +209,20 @@ class BackupAndRestoreFragment : Fragment() {
                     fontWeight = FontWeight.Thin
                 )
 
-                Button(
-                    onClick = { /*TODO*/ },
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(bottom = 8.dp)
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 ) {
-                    Text(text = "Backup")
+                    Button(
+                        onClick = { /*TODO*/ }
+                    ) {
+                        Text(text = "Edit Path")
+                    }
+                    Button(
+                        onClick = { /*TODO*/ }
+                    ) {
+                        Text(text = "Backup")
+                    }
                 }
             }
         }
