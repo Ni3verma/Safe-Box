@@ -11,28 +11,28 @@ import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Constants.time1Sec
-import com.andryoga.safebox.common.Constants.time5Sec
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
-import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
+import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.NotificationOptions
 import com.andryoga.safebox.ui.common.Utils.makeStatusNotification
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -47,7 +47,7 @@ class BackupDataWorker
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
-    private val backupMetadataDao: BackupMetadataDao,
+    private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
@@ -64,18 +64,23 @@ class BackupDataWorker
     private val exportMap = mutableMapOf<String, Any?>()
 
     override suspend fun doWork(): Result {
-        backupMetadataDao.getBackupMetadata().take(1).collect { backupMetadataEntity ->
+        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadataEntity ->
             if (backupMetadataEntity != null) {
                 Timber.i("backup metadata found")
-                makeStatusNotification(
-                    applicationContext,
-                    getNotificationOptions(
-                        "Backing up your data to local storage." +
-                            " You will be notified once it is complete"
+                val isShowStartNotification =
+                    inputData.getBoolean(Constants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+                if (isShowStartNotification) {
+                    makeStatusNotification(
+                        applicationContext,
+                        getNotificationOptions(
+                            "Backing up your data to local storage." +
+                                " You will be notified once it is complete"
+                        )
                     )
-                )
+                }
+
                 // remove it later
-                delay(time5Sec)
+                delay(Constants.time5Sec)
                 startTime = System.currentTimeMillis()
 
                 val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)
@@ -111,7 +116,27 @@ class BackupDataWorker
                         secureNoteData
                     )
 
-                    exportToFile(backupMetadataEntity)
+                    Timber.i("getting picked dir")
+                    try {
+                        val pickedDir = DocumentFile.fromTreeUri(
+                            applicationContext,
+                            Uri.parse(backupMetadataEntity.uriString)
+                        )!!
+
+                        deleteExtraBackupFiles(pickedDir)
+                        exportToFile(pickedDir)
+                    } catch (exception: Exception) {
+                        Timber.e(
+                            exception,
+                            "$localTag exception occurred : ${exception.localizedMessage}"
+                        )
+                        Timber.i("removing backup metadata")
+                        backupMetadataRepository.deleteBackupMetadata()
+                        makeStatusNotification(
+                            applicationContext,
+                            getNotificationOptions("Backup Failed ! We will look into the issue")
+                        )
+                    }
                 } else {
                     Timber.i("$localTag  nothing to export")
                     makeStatusNotification(
@@ -152,48 +177,50 @@ class BackupDataWorker
         exportMap[Constants.CREATION_DATE_KEY] = System.currentTimeMillis()
     }
 
-    private suspend fun exportToFile(backupMetadataEntity: BackupMetadataEntity) {
-        Timber.i("$localTag  getting picked dir")
-        val pickedDir = DocumentFile.fromTreeUri(
-            applicationContext,
-            Uri.parse(backupMetadataEntity.uriString)
-        )
-
-        val nameSuffix =
-            Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".sbb"
-        Timber.i("$localTag  creating file")
-        val file = pickedDir!!.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
-
-        try {
-            Timber.i("$localTag opening file descriptor")
-            applicationContext.contentResolver.openFileDescriptor(
-                file!!.uri,
-                "w"
-            )?.use { parcelFileDescriptor ->
-                Timber.i("$localTag making output stream")
-                ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
-                    Timber.i("$localTag writing to backup file")
-                    it.writeObject(exportMap)
+    private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
+        withContext(Dispatchers.IO) {
+            val files = pickedDir.listFiles().filter {
+                it.isFile && it.name != null &&
+                    it.name!!.endsWith(".bak") &&
+                    it.name!!.startsWith("SafeBoxBackup")
+            }
+            if (files.size >= Constants.MAX_BACKUP_FILES) {
+                Timber.i("max backup files threshold reached")
+                val sortedFiles = files.sortedBy {
+                    it.name
+                }
+                for (i in 0..(files.size - Constants.MAX_BACKUP_FILES)) {
+                    Timber.i("deleting backup file ${sortedFiles[i].name}")
+                    sortedFiles[i].delete()
                 }
             }
-            recordTime("exported to file, updating date in db")
-            backupMetadataDao.updateLastBackupDate(System.currentTimeMillis())
-            makeStatusNotification(
-                applicationContext,
-                getNotificationOptions("Backup is complete. It's good idea to keep a copy in cloud")
-            )
-        } catch (exception: Exception) {
-            Timber.e(
-                exception,
-                "$localTag exception occurred : ${exception.localizedMessage}"
-            )
-            Timber.i("removing backup metadata")
-            backupMetadataDao.deleteBackupMetadata(backupMetadataEntity)
-            makeStatusNotification(
-                applicationContext,
-                getNotificationOptions("Backup Failed ! We will look into the issue")
-            )
         }
+
+    private suspend fun exportToFile(
+        pickedDir: DocumentFile
+    ) = withContext(Dispatchers.IO) {
+        val nameSuffix =
+            Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
+        Timber.i("$localTag  creating file")
+        val file = pickedDir.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
+
+        Timber.i("$localTag opening file descriptor")
+        applicationContext.contentResolver.openFileDescriptor(
+            file!!.uri,
+            "w"
+        )?.use { parcelFileDescriptor ->
+            Timber.i("$localTag making output stream")
+            ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
+                Timber.i("$localTag writing to backup file")
+                it.writeObject(exportMap)
+            }
+        }
+        recordTime("exported to file, updating date in db")
+        backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
+        makeStatusNotification(
+            applicationContext,
+            getNotificationOptions("Backup is complete. It's good idea to keep a copy in cloud")
+        )
     }
 
     private fun encryptLoginData(

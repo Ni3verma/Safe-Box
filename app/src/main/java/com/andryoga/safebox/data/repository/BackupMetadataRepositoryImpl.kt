@@ -13,8 +13,8 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         backupMetadataDao.insertBackupMetadata(backupMetadataEntity)
     }
 
-    override suspend fun deleteBackupMetadata(backupMetadataEntity: BackupMetadataEntity) {
-        backupMetadataDao.deleteBackupMetadata(backupMetadataEntity)
+    override suspend fun deleteBackupMetadata() {
+        backupMetadataDao.deleteBackupMetadata()
     }
 
     override suspend fun updateLastBackupDate(date: Long) {

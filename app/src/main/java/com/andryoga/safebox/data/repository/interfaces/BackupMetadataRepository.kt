@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface BackupMetadataRepository {
     suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
-    suspend fun deleteBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
+    suspend fun deleteBackupMetadata()
     suspend fun updateLastBackupDate(date: Long)
     fun getBackupMetadata(): Flow<BackupMetadataEntity?>
 }

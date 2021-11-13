@@ -7,6 +7,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.andryoga.safebox.common.Constants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.Constants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.Constants.BACKUP_WORK_NAME
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
@@ -66,7 +67,8 @@ class BackupAndRestoreViewModel @Inject constructor(
                     .setInputData(
                         Data(
                             mapOf(
-                                BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password)
+                                BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                                BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to true
                             )
                         )
                     )

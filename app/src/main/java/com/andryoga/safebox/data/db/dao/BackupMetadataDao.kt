@@ -1,6 +1,9 @@
 package com.andryoga.safebox.data.db.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -9,8 +12,8 @@ interface BackupMetadataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
 
-    @Delete
-    suspend fun deleteBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
+    @Query("delete from backup_metadata")
+    suspend fun deleteBackupMetadata()
 
     @Query("update backup_metadata set lastBackupDate=:date")
     suspend fun updateLastBackupDate(date: Long)

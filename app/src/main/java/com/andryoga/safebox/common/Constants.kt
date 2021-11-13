@@ -11,7 +11,7 @@ object Constants {
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
 
-    // Backup
+    // Backup file data
     const val VERSION_KEY = "0"
     const val SALT_KEY = "1"
     const val IV_KEY = "2"
@@ -22,9 +22,13 @@ object Constants {
     const val SECURE_NOTE_DATA_KEY = "7"
     const val BACKUP_VERSION = 1
 
-    // Backup metadata
+    // Backup params
     const val BACKUP_PARAM_PASSWORD = "0"
+    const val BACKUP_PARAM_IS_SHOW_START_NOTIFICATION = "1"
+
+    // Backup metadata
     const val BACKUP_WORK_NAME = "BACKUP_SAFE_BOX_DATA_WORK"
+    const val MAX_BACKUP_FILES = 5
 
     //        Other
     const val time1Sec = 1000L
