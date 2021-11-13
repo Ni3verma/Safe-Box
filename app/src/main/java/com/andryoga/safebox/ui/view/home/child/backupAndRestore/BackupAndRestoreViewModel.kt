@@ -13,11 +13,14 @@ import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.worker.BackupDataWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.*
@@ -31,7 +34,12 @@ class BackupAndRestoreViewModel @Inject constructor(
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : ViewModel() {
 
-    val backupMetadata = backupMetadataRepository.getBackupMetadata()
+    val backupMetadata = flow {
+        emit(Resource.loading(null))
+        backupMetadataRepository.getBackupMetadata().collect {
+            emit(Resource.success(it))
+        }
+    }
 
     private val _isPasswordCorrect = MutableStateFlow<Boolean?>(null)
     val isPasswordCorrect: StateFlow<Boolean?> = _isPasswordCorrect
@@ -48,7 +56,7 @@ class BackupAndRestoreViewModel @Inject constructor(
     }
 
     @ExperimentalCoroutinesApi
-    fun checkUserPassword(password: String) {
+    fun backupData(password: String) {
         viewModelScope.launch {
             val isPswrdCorrect = userDetailsRepository.checkPassword(password)
             _isPasswordCorrect.value = isPswrdCorrect
@@ -68,6 +76,7 @@ class BackupAndRestoreViewModel @Inject constructor(
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
                     backupDataRequest
                 )
+                Timber.i("enqueued backup work")
             } else {
                 Timber.i("wrong pswrd entered")
             }

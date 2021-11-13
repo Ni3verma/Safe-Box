@@ -30,9 +30,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.DomainMappers.toBackupAndRestoreData
 import com.andryoga.safebox.data.db.docs.BackupData
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
+import com.andryoga.safebox.ui.common.Resource
+import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.Visibility
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.VisibilityOff
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
@@ -44,20 +47,29 @@ import timber.log.Timber
 @ExperimentalCoroutinesApi
 class BackupAndRestoreFragment : Fragment() {
     private val viewModel: BackupAndRestoreViewModel by viewModels()
-    private val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        Timber.i("uri selected for backup = $uri")
-        if (uri != null) {
-            Timber.i("path = ${uri.path}")
-            val takeFlags: Int =
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            requireActivity().contentResolver.takePersistableUriPermission(
-                uri,
-                takeFlags
-            )
-            viewModel.setBackupMetadata(uri)
+    private val selectBackupDirReq =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            Timber.i("uri selected for backup = $uri")
+            if (uri != null) {
+                Timber.i("path = ${uri.path}")
+                val takeFlags: Int =
+                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                requireActivity().contentResolver.takePersistableUriPermission(
+                    uri,
+                    takeFlags
+                )
+                viewModel.setBackupMetadata(uri)
+            }
         }
-    }
+
+    private val selectFileReq =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            Timber.i("uri selected for restore = $uri")
+            if (uri != null) {
+                Timber.i("path = ${uri.path}")
+            }
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -66,10 +78,9 @@ class BackupAndRestoreFragment : Fragment() {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                val backupMetadata: BackupMetadataEntity? by viewModel.backupMetadata.collectAsState(
-                    initial = null
+                val backupMetadata by viewModel.backupMetadata.collectAsState(
+                    Resource.loading(null)
                 )
-                val backupData: BackupData? = backupMetadata?.toBackupAndRestoreData()
                 val isPswrdCorrect by viewModel.isPasswordCorrect.collectAsState()
                 BasicSafeBoxTheme {
                     Column(
@@ -77,7 +88,7 @@ class BackupAndRestoreFragment : Fragment() {
                             .padding(8.dp)
                             .verticalScroll(ScrollState(0))
                     ) {
-                        BackupDataView(backupData, isPswrdCorrect)
+                        BackupDataView(backupMetadata, isPswrdCorrect)
                         Spacer(modifier = Modifier.height(16.dp))
                         RestoreDataView()
                     }
@@ -87,13 +98,17 @@ class BackupAndRestoreFragment : Fragment() {
     }
 
     @Composable
-    private fun BackupDataView(backupData: BackupData?, isPswrdCorrect: Boolean?) {
+    private fun BackupDataView(
+        backupMetadataResource: Resource<BackupMetadataEntity?>,
+        isPswrdCorrect: Boolean?
+    ) {
         var isPasswordDialogVisible by remember { mutableStateOf(false) }
+
         EnterPasswordDialog(
             isVisible = isPasswordDialogVisible,
             onDismiss = { isPasswordDialogVisible = false },
             onPasswordSubmit = {
-                viewModel.checkUserPassword(it)
+                viewModel.backupData(it)
                 isPasswordDialogVisible = false
             }
         )
@@ -104,14 +119,20 @@ class BackupAndRestoreFragment : Fragment() {
             fontWeight = FontWeight.Medium
         )
         Divider(color = MaterialTheme.colors.secondary)
-        if (backupData == null) {
-            Timber.i("backup path is not set")
-            BackupPathNotSetView()
-        } else {
-            Timber.i("backup path is already set")
-            BackupPathSetView(backupData, isPswrdCorrect) {
-                Timber.i("Backup clicked")
-                isPasswordDialogVisible = true
+        if (backupMetadataResource.status == Status.LOADING) {
+            Timber.i("showing loading view")
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+        } else if (backupMetadataResource.status == Status.SUCCESS) {
+            val backupData: BackupData? = backupMetadataResource.data?.toBackupAndRestoreData()
+            if (backupData == null) {
+                Timber.i("backup path is not set")
+                BackupPathNotSetView()
+            } else {
+                Timber.i("backup path is already set")
+                BackupPathSetView(backupData, isPswrdCorrect) {
+                    Timber.i("Backup clicked")
+                    isPasswordDialogVisible = true
+                }
             }
         }
     }
@@ -144,7 +165,7 @@ class BackupAndRestoreFragment : Fragment() {
                         style = MaterialTheme.typography.body1
                     )
                     Button(
-                        onClick = { /*TODO*/ },
+                        onClick = { selectFileReq.launch(arrayOf("application/octet-stream")) },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(bottom = 8.dp)
@@ -187,7 +208,7 @@ class BackupAndRestoreFragment : Fragment() {
                 )
                 Button(
                     onClick = {
-                        req.launch(null)
+                        selectBackupDirReq.launch(null)
                     },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -237,8 +258,7 @@ class BackupAndRestoreFragment : Fragment() {
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "* Backup file is encrypted by your master password\n" +
-                        "* It is good practice to store the backup file in your PC/GDrive/Dropbox/etc",
+                    text = "* Backup file is encrypted by your master password",
                     style = MaterialTheme.typography.subtitle1,
                     fontWeight = FontWeight.Thin
                 )
@@ -246,11 +266,11 @@ class BackupAndRestoreFragment : Fragment() {
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     modifier = Modifier
-                        .padding(bottom = 8.dp)
+                        .padding(bottom = 8.dp, top = 8.dp)
                         .fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { req.launch(null) }
+                        onClick = { selectBackupDirReq.launch(null) }
                     ) {
                         Text(text = "Edit Path")
                     }
@@ -278,7 +298,14 @@ class BackupAndRestoreFragment : Fragment() {
         onPasswordSubmit: (value: String) -> Unit
     ) {
         if (isVisible) {
-            var passwordValue by remember { mutableStateOf(TextFieldValue()) }
+            var passwordValue by remember {
+                mutableStateOf(
+                    TextFieldValue(
+                        if (BuildConfig.DEBUG) "Qwerty@@135"
+                        else ""
+                    )
+                )
+            }
             var isPasswordMasked: Boolean by remember { mutableStateOf(true) }
             Dialog(onDismissRequest = { onDismiss() }) {
                 Card(modifier = Modifier.padding(8.dp)) {

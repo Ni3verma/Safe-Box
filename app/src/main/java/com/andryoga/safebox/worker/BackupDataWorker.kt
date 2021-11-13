@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Constants.time1Sec
+import com.andryoga.safebox.common.Constants.time5Sec
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
@@ -29,6 +30,7 @@ import com.andryoga.safebox.ui.common.Utils.makeStatusNotification
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.builtins.ListSerializer
@@ -72,9 +74,12 @@ class BackupDataWorker
                             " You will be notified once it is complete"
                     )
                 )
+                // remove it later
+                delay(time5Sec)
                 startTime = System.currentTimeMillis()
 
-                val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)!!
+                val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)
+                    ?: throw IllegalArgumentException("expected password input was not received")
 
                 val loginData = loginDataDaoSecure.exportAllData()
                 val bankAccountData = bankAccountDataDaoSecure.exportAllData()
@@ -157,7 +162,7 @@ class BackupDataWorker
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".sbb"
         Timber.i("$localTag  creating file")
-        val file = pickedDir!!.createFile("text", "SafeBoxBackup$nameSuffix")
+        val file = pickedDir!!.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
 
         try {
             Timber.i("$localTag opening file descriptor")
