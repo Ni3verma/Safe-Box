@@ -98,22 +98,13 @@ class BackupDataWorker
                     )
                     recordTime("got salt and iv")
 
-                    exportMap[Constants.LOGIN_DATA_KEY] = exportLoginData(loginData, inputPassword)
-                    recordTime("got login data byte array")
-
-                    exportMap[Constants.BANK_ACCOUNT_DATA_KEY] =
-                        exportBankAccountData(bankAccountData, inputPassword)
-                    recordTime("got bank account data byte array")
-
-                    exportMap[Constants.BANK_CARD_DATA_KEY] =
-                        exportBankCardData(bankCardData, inputPassword)
-                    recordTime("got bank card data byte array")
-
-                    exportMap[Constants.SECURE_NOTE_DATA_KEY] =
-                        exportSecureNoteData(secureNoteData, inputPassword)
-                    recordTime("got secure note data byte array")
-
-                    exportMap[Constants.CREATION_DATE_KEY] = System.currentTimeMillis()
+                    populateExportMapWithData(
+                        loginData,
+                        inputPassword,
+                        bankAccountData,
+                        bankCardData,
+                        secureNoteData
+                    )
 
                     exportToFile(backupMetadataEntity)
                 } else {
@@ -129,6 +120,31 @@ class BackupDataWorker
         }
 
         return Result.Success()
+    }
+
+    private fun populateExportMapWithData(
+        loginData: List<ExportLoginData>,
+        inputPassword: String,
+        bankAccountData: List<ExportBankAccountData>,
+        bankCardData: List<ExportBankCardData>,
+        secureNoteData: List<ExportSecureNoteData>
+    ) {
+        exportMap[Constants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
+        recordTime("got login data byte array")
+
+        exportMap[Constants.BANK_ACCOUNT_DATA_KEY] =
+            encryptBankAccountData(bankAccountData, inputPassword)
+        recordTime("got bank account data byte array")
+
+        exportMap[Constants.BANK_CARD_DATA_KEY] =
+            encryptBankCardData(bankCardData, inputPassword)
+        recordTime("got bank card data byte array")
+
+        exportMap[Constants.SECURE_NOTE_DATA_KEY] =
+            encryptSecureNoteData(secureNoteData, inputPassword)
+        recordTime("got secure note data byte array")
+
+        exportMap[Constants.CREATION_DATE_KEY] = System.currentTimeMillis()
     }
 
     private suspend fun exportToFile(backupMetadataEntity: BackupMetadataEntity) {
@@ -175,7 +191,7 @@ class BackupDataWorker
         }
     }
 
-    private fun exportLoginData(
+    private fun encryptLoginData(
         data: List<ExportLoginData>,
         inputPassword: String
     ): ByteArray? {
@@ -190,7 +206,7 @@ class BackupDataWorker
         return null
     }
 
-    private fun exportBankAccountData(
+    private fun encryptBankAccountData(
         data: List<ExportBankAccountData>,
         inputPassword: String
     ): ByteArray? {
@@ -205,7 +221,7 @@ class BackupDataWorker
         return null
     }
 
-    private fun exportBankCardData(
+    private fun encryptBankCardData(
         data: List<ExportBankCardData>,
         inputPassword: String
     ): ByteArray? {
@@ -220,7 +236,7 @@ class BackupDataWorker
         return null
     }
 
-    private fun exportSecureNoteData(
+    private fun encryptSecureNoteData(
         data: List<ExportSecureNoteData>,
         inputPassword: String
     ): ByteArray? {
