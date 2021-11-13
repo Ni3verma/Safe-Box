@@ -7,8 +7,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.common.Constants
+import com.andryoga.safebox.common.Constants.BACKUP_VERSION
 import com.andryoga.safebox.common.Constants.CREATION_DATE_KEY
-import com.andryoga.safebox.common.Constants.EXPORT_IMPORT_VERSION
 import com.andryoga.safebox.common.Constants.IV_KEY
 import com.andryoga.safebox.common.Constants.SALT_KEY
 import com.andryoga.safebox.common.Constants.VERSION_KEY
@@ -58,7 +58,7 @@ class BackupDataWorker
 
         startTime = System.currentTimeMillis()
 
-        val inputPassword = inputData.getString("PASSWORD")!!
+        val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)!!
 
         val loginData = loginDataDaoSecure.exportAllData()
         val bankAccountData = bankAccountDataDaoSecure.exportAllData()
@@ -77,7 +77,7 @@ class BackupDataWorker
                 mapOf(
                     SALT_KEY to salt,
                     IV_KEY to iv,
-                    VERSION_KEY to EXPORT_IMPORT_VERSION
+                    VERSION_KEY to BACKUP_VERSION
                 )
             )
             recordTime("got salt and iv")
@@ -101,9 +101,9 @@ class BackupDataWorker
 
             val pickedDir = DocumentFile.fromTreeUri(
                 applicationContext,
-                Uri.parse("content://com.android.externalstorage.documents/tree/primary:safe box")
+                Uri.parse("content://com.android.externalstorage.documents/tree/primary:safebox")
             )
-            val file = pickedDir!!.createFile("text/plain", "try3.txt")
+            val file = pickedDir!!.createFile("text/plain", "try4.txt")
 
             applicationContext.contentResolver.openFileDescriptor(
                 file!!.uri,

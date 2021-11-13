@@ -38,22 +38,27 @@ import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.Visibility
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.VisibilityOff
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
 @AndroidEntryPoint
+@ExperimentalCoroutinesApi
 class BackupAndRestoreFragment : Fragment() {
     private val viewModel: BackupAndRestoreViewModel by viewModels()
     private val req = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        Timber.i("uri selected for backup = $uri, path = ${uri.path}")
-        val takeFlags: Int =
-            Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        requireActivity().contentResolver.takePersistableUriPermission(
-            uri,
-            takeFlags
-        )
-        viewModel.setBackupMetadata(uri)
+        Timber.i("uri selected for backup = $uri")
+        if (uri != null) {
+            Timber.i("path = ${uri.path}")
+            val takeFlags: Int =
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            requireActivity().contentResolver.takePersistableUriPermission(
+                uri,
+                takeFlags
+            )
+            viewModel.setBackupMetadata(uri)
+        }
     }
 
     override fun onCreateView(

@@ -11,17 +11,20 @@ object Constants {
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
 
-    // export and import
-    const val VERSION_KEY = "VERSION"
-    const val SALT_KEY = "SALT"
-    const val IV_KEY = "IV"
-    const val CREATION_DATE_KEY = "CREATION_DATE"
-    const val LOGIN_DATA_KEY = "LOGIN_DATA"
-    const val BANK_ACCOUNT_DATA_KEY = "BANK_ACCOUNT_DATA"
-    const val BANK_CARD_DATA_KEY = "BANK_CARD_DATA"
-    const val SECURE_NOTE_DATA_KEY = "SECURE_NOTE_DATA"
+    // Backup
+    const val VERSION_KEY = "0"
+    const val SALT_KEY = "1"
+    const val IV_KEY = "2"
+    const val CREATION_DATE_KEY = "3"
+    const val LOGIN_DATA_KEY = "4"
+    const val BANK_ACCOUNT_DATA_KEY = "5"
+    const val BANK_CARD_DATA_KEY = "6"
+    const val SECURE_NOTE_DATA_KEY = "7"
+    const val BACKUP_VERSION = 1
 
-    const val EXPORT_IMPORT_VERSION = 1
+    // Backup metadata
+    const val BACKUP_PARAM_PASSWORD = "0"
+    const val BACKUP_WORK_NAME = "BACKUP_SAFE_BOX_DATA_WORK"
 
     //        Other
     const val time1Sec = 1000L
