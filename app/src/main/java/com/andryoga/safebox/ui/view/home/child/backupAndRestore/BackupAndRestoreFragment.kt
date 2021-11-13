@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import com.andryoga.safebox.common.DomainMappers.toBackupAndRestoreData
 import com.andryoga.safebox.data.db.docs.BackupData
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
@@ -39,7 +38,6 @@ import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.VisibilityOff
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -82,15 +80,6 @@ class BackupAndRestoreFragment : Fragment() {
                         BackupDataView(backupData, isPswrdCorrect)
                         Spacer(modifier = Modifier.height(16.dp))
                         RestoreDataView()
-                    }
-                }
-            }
-            lifecycleScope.launchWhenStarted {
-                viewModel.isPasswordCorrect.collect {
-                    if (it == true) {
-                        Timber.i("correct pswrd entered")
-                    } else if (it == false) {
-                        Timber.i("wrong pswrd entered")
                     }
                 }
             }
@@ -276,12 +265,6 @@ class BackupAndRestoreFragment : Fragment() {
                         text = "Wrong password entered",
                         style = MaterialTheme.typography.h6,
                         color = MaterialTheme.colors.error
-                    )
-                } else if (isPswrdCorrect == true) {
-                    Text(
-                        text = "You will be notified once backup is complete",
-                        style = MaterialTheme.typography.h6,
-                        color = MaterialTheme.colors.onSurface
                     )
                 }
             }

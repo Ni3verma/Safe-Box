@@ -51,7 +51,7 @@ class ReleaseTree : @NotNull Timber.Tree() {
         val crashlytics = FirebaseCrashlytics.getInstance()
         crashlytics.log(message)
 
-        if (priority == Log.ERROR || priority == Log.WARN) {
+        if (priority == Log.ERROR) {
             // SEND ERROR REPORTS TO Crashlytics.
             if (t != null) {
                 crashlytics.recordException(t)
