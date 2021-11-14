@@ -102,6 +102,9 @@ object Utils {
             .setSmallIcon(notificationOptions.notificationSmallIcon)
             .setContentTitle(notificationOptions.notificationTitle)
             .setContentText(notificationOptions.notificationContent)
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(notificationOptions.notificationContent)
+            )
             .setPriority(notificationOptions.notificationPriority)
             .setVibrate(LongArray(0))
 

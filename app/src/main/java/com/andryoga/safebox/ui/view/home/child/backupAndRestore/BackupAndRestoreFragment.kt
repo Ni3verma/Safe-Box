@@ -53,7 +53,7 @@ class BackupAndRestoreFragment : Fragment() {
             if (uri != null) {
                 Timber.i("path = ${uri.path}")
                 val takeFlags: Int =
-                    Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION and
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 requireActivity().contentResolver.takePersistableUriPermission(
                     uri,
