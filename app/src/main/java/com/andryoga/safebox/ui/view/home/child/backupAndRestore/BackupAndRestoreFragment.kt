@@ -31,6 +31,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.DomainMappers.toBackupAndRestoreData
 import com.andryoga.safebox.data.db.docs.BackupData
@@ -42,7 +45,9 @@ import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.VisibilityOff
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.collect
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 @ExperimentalCoroutinesApi
@@ -64,6 +69,9 @@ class BackupAndRestoreFragment : Fragment() {
             }
         }
 
+    @Inject
+    lateinit var workManager: WorkManager
+
     private val selectFileReq =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             Timber.i("uri selected for restore = $uri")
@@ -79,6 +87,23 @@ class BackupAndRestoreFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        lifecycleScope.launchWhenStarted {
+            viewModel.restoreWorkEnqueued.collect {
+                if (it != null) {
+                    workManager.getWorkInfoByIdLiveData(it)
+                        .observe(viewLifecycleOwner) { workInfo ->
+                            if (workInfo != null) {
+                                if (workInfo.state == WorkInfo.State.SUCCEEDED) {
+                                    viewModel.setRestoreScreenState(RestoreScreenState.COMPLETE)
+                                } else if (workInfo.state == WorkInfo.State.FAILED) {
+                                    viewModel.setRestoreScreenState(RestoreScreenState.ERROR)
+                                }
+                            }
+                        }
+                }
+            }
+        }
+
         return ComposeView(requireContext()).apply {
             setContent {
                 val backupMetadata by viewModel.backupMetadata.collectAsState(
@@ -209,7 +234,7 @@ class BackupAndRestoreFragment : Fragment() {
 
     @Composable
     private fun RestoreErrorDialog() {
-        Dialog(onDismissRequest = {}) {
+        Dialog(onDismissRequest = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) }) {
             Card {
                 Row(
                     modifier = Modifier
@@ -236,7 +261,7 @@ class BackupAndRestoreFragment : Fragment() {
 
     @Composable
     private fun RestoreCompleteDialog() {
-        Dialog(onDismissRequest = {}) {
+        Dialog(onDismissRequest = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) }) {
             Card {
                 Row(
                     modifier = Modifier

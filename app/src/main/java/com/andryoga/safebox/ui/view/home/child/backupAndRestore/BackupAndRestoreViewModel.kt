@@ -9,13 +9,17 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.andryoga.safebox.common.Constants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.Constants.BACKUP_PARAM_PASSWORD
+import com.andryoga.safebox.common.Constants.RESTORE_PARAM_FILE_URI
+import com.andryoga.safebox.common.Constants.RESTORE_PARAM_PASSWORD
 import com.andryoga.safebox.common.Constants.WORKER_NAME_BACKUP_DATA
+import com.andryoga.safebox.common.Constants.WORKER_NAME_RESTORE_DATA
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.andryoga.safebox.worker.RestoreDataWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -50,6 +54,9 @@ class BackupAndRestoreViewModel @Inject constructor(
     private val _restoreScreenState =
         MutableStateFlow(RestoreScreenState.INITIAL_STATE)
     val restoreScreenState: StateFlow<RestoreScreenState> = _restoreScreenState
+
+    private val _restoreWorkEnqueued = MutableStateFlow<UUID?>(null)
+    val restoreWorkEnqueued: StateFlow<UUID?> = _restoreWorkEnqueued
 
     lateinit var selectedFileUriForRestore: String
 
@@ -94,12 +101,30 @@ class BackupAndRestoreViewModel @Inject constructor(
         }
     }
 
+    @ExperimentalCoroutinesApi
     fun restoreData(password: String) {
         viewModelScope.launch {
             val isPswrdCorrect = userDetailsRepository.checkPassword(password)
             if (isPswrdCorrect) {
                 _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
                 Timber.i("pswrd is correct, preparing restore work")
+                val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
+                    .setInputData(
+                        Data(
+                            mapOf(
+                                RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                                RESTORE_PARAM_FILE_URI to selectedFileUriForRestore
+                            )
+                        )
+                    )
+                    .build()
+                workManager.enqueueUniqueWork(
+                    WORKER_NAME_RESTORE_DATA,
+                    ExistingWorkPolicy.APPEND_OR_REPLACE,
+                    restoreDataRequest
+                )
+                _restoreWorkEnqueued.value = restoreDataRequest.id
+                Timber.i("enqueued restore work")
             } else {
                 _restoreScreenState.value = RestoreScreenState.WRONG_PASSWORD
                 Timber.i("wrong pswrd entered")
