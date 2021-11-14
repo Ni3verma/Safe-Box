@@ -61,7 +61,7 @@ class BackupDataWorker
     private lateinit var salt: ByteArray
     private lateinit var iv: ByteArray
 
-    private val exportMap = mutableMapOf<String, Any?>()
+    private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
         backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadataEntity ->
@@ -103,7 +103,9 @@ class BackupDataWorker
                         mapOf(
                             Constants.SALT_KEY to salt,
                             Constants.IV_KEY to iv,
-                            Constants.VERSION_KEY to Constants.BACKUP_VERSION
+                            Constants.VERSION_KEY to ByteArray(1) {
+                                Constants.BACKUP_VERSION.toByte()
+                            }
                         )
                     )
                     recordTime("got salt and iv")
@@ -126,16 +128,7 @@ class BackupDataWorker
                         deleteExtraBackupFiles(pickedDir)
                         exportToFile(pickedDir)
                     } catch (exception: Exception) {
-                        Timber.e(
-                            exception,
-                            "$localTag exception occurred : ${exception.localizedMessage}"
-                        )
-                        Timber.i("removing backup metadata")
-                        backupMetadataRepository.deleteBackupMetadata()
-                        makeStatusNotification(
-                            applicationContext,
-                            getNotificationOptions("Backup Failed ! We will look into the issue")
-                        )
+                        onBackupError(exception)
                     }
                 } else {
                     Timber.i("$localTag  nothing to export")
@@ -150,6 +143,19 @@ class BackupDataWorker
         }
 
         return Result.Success()
+    }
+
+    private suspend fun onBackupError(exception: Exception) {
+        Timber.e(
+            exception,
+            "$localTag exception occurred : ${exception.localizedMessage}"
+        )
+        Timber.i("removing backup metadata")
+        backupMetadataRepository.deleteBackupMetadata()
+        makeStatusNotification(
+            applicationContext,
+            getNotificationOptions("Backup Failed ! We will look into the issue")
+        )
     }
 
     private fun populateExportMapWithData(
@@ -174,7 +180,9 @@ class BackupDataWorker
             encryptSecureNoteData(secureNoteData, inputPassword)
         recordTime("got secure note data byte array")
 
-        exportMap[Constants.CREATION_DATE_KEY] = System.currentTimeMillis()
+        exportMap[Constants.CREATION_DATE_KEY] = ByteArray(1) {
+            System.currentTimeMillis().toByte()
+        }
     }
 
     private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
