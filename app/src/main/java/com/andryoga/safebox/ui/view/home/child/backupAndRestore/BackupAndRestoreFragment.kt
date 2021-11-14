@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.andryoga.safebox.BuildConfig
@@ -68,6 +69,8 @@ class BackupAndRestoreFragment : Fragment() {
             Timber.i("uri selected for restore = $uri")
             if (uri != null) {
                 Timber.i("path = ${uri.path}")
+                viewModel.selectedFileUriForRestore = uri.toString()
+                viewModel.setRestoreScreenState(RestoreScreenState.ENTER_PASSWORD)
             }
         }
 
@@ -81,14 +84,13 @@ class BackupAndRestoreFragment : Fragment() {
                 val backupMetadata by viewModel.backupMetadata.collectAsState(
                     Resource.loading(null)
                 )
-                val isPswrdCorrect by viewModel.isPasswordCorrect.collectAsState()
                 BasicSafeBoxTheme {
                     Column(
                         modifier = Modifier
                             .padding(8.dp)
                             .verticalScroll(ScrollState(0))
                     ) {
-                        BackupDataView(backupMetadata, isPswrdCorrect)
+                        BackupDataView(backupMetadata)
                         Spacer(modifier = Modifier.height(16.dp))
                         RestoreDataView()
                     }
@@ -99,17 +101,15 @@ class BackupAndRestoreFragment : Fragment() {
 
     @Composable
     private fun BackupDataView(
-        backupMetadataResource: Resource<BackupMetadataEntity?>,
-        isPswrdCorrect: Boolean?
+        backupMetadataResource: Resource<BackupMetadataEntity?>
     ) {
-        var isPasswordDialogVisible by remember { mutableStateOf(false) }
-
+        val backupScreenState by viewModel.backupScreenState.collectAsState(BackupScreenState.INITIAL_STATE)
         EnterPasswordDialog(
-            isVisible = isPasswordDialogVisible,
-            onDismiss = { isPasswordDialogVisible = false },
+            isVisible = backupScreenState == BackupScreenState.ENTER_PASSWORD,
+            onDismiss = { viewModel.setBackupScreenState(BackupScreenState.INITIAL_STATE) },
             onPasswordSubmit = {
+                Timber.i("password submit for backup")
                 viewModel.backupData(it)
-                isPasswordDialogVisible = false
             }
         )
         Text(
@@ -129,9 +129,9 @@ class BackupAndRestoreFragment : Fragment() {
                 BackupPathNotSetView()
             } else {
                 Timber.i("backup path is already set")
-                BackupPathSetView(backupData, isPswrdCorrect) {
+                BackupPathSetView(backupData, backupScreenState) {
                     Timber.i("Backup clicked")
-                    isPasswordDialogVisible = true
+                    viewModel.setBackupScreenState(BackupScreenState.ENTER_PASSWORD)
                 }
             }
         }
@@ -139,6 +139,28 @@ class BackupAndRestoreFragment : Fragment() {
 
     @Composable
     private fun RestoreDataView() {
+        val restoreScreenState by viewModel.restoreScreenState.collectAsState(RestoreScreenState.INITIAL_STATE)
+        EnterPasswordDialog(
+            isVisible = restoreScreenState == RestoreScreenState.ENTER_PASSWORD,
+            onDismiss = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) },
+            onPasswordSubmit = {
+                Timber.i("password submit for restore")
+                viewModel.restoreData(it)
+            }
+        )
+
+        when (restoreScreenState) {
+            RestoreScreenState.IN_PROGRESS -> {
+                RestoreInProgressDialog()
+            }
+            RestoreScreenState.COMPLETE -> {
+                RestoreCompleteDialog()
+            }
+            RestoreScreenState.ERROR -> {
+                RestoreErrorDialog()
+            }
+        }
+
         Column {
             Text(
                 text = "Restore",
@@ -152,7 +174,7 @@ class BackupAndRestoreFragment : Fragment() {
                 elevation = 2.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(top = 4.dp)
+                    modifier = Modifier.padding(4.dp)
                 ) {
 
                     Text(
@@ -172,6 +194,96 @@ class BackupAndRestoreFragment : Fragment() {
                     ) {
                         Text(text = "Restore")
                     }
+                    if (restoreScreenState == RestoreScreenState.WRONG_PASSWORD) {
+                        Text(
+                            text = "Wrong password entered",
+                            style = MaterialTheme.typography.h6,
+                            color = MaterialTheme.colors.error,
+
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun RestoreErrorDialog() {
+        Dialog(onDismissRequest = {}) {
+            Card {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = "TODO",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.Red
+                    )
+                    Text(
+                        text = "Error while importing data. Please check that you selected the correct file.",
+                        modifier = Modifier.padding(start = 16.dp),
+                        style = MaterialTheme.typography.body1,
+                        color = MaterialTheme.colors.onSurface
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun RestoreCompleteDialog() {
+        Dialog(onDismissRequest = {}) {
+            Card {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CheckCircle,
+                        contentDescription = "TODO",
+                        modifier = Modifier.size(32.dp),
+                        tint = Color.Green
+                    )
+                    Text(
+                        text = "Successfully restored data",
+                        modifier = Modifier.padding(start = 16.dp),
+                        style = MaterialTheme.typography.body1,
+                        color = MaterialTheme.colors.onSurface
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun RestoreInProgressDialog() {
+        Dialog(
+            onDismissRequest = {},
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Card {
+                Row(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator()
+                    Text(
+                        text = "It may take a while to restore data. Sit back and relax !",
+                        modifier = Modifier.padding(start = 16.dp),
+                        style = MaterialTheme.typography.body1,
+                        color = MaterialTheme.colors.onSurface
+                    )
                 }
             }
         }
@@ -223,7 +335,7 @@ class BackupAndRestoreFragment : Fragment() {
     @Composable
     fun BackupPathSetView(
         backupData: BackupData,
-        isPswrdCorrect: Boolean?,
+        backupScreenState: BackupScreenState,
         onBackupClick: () -> Unit
     ) {
         Card(
@@ -280,11 +392,17 @@ class BackupAndRestoreFragment : Fragment() {
                         Text(text = "Backup")
                     }
                 }
-                if (isPswrdCorrect == false) {
+                if (backupScreenState == BackupScreenState.WRONG_PASSWORD) {
                     Text(
                         text = "Wrong password entered",
                         style = MaterialTheme.typography.h6,
                         color = MaterialTheme.colors.error
+                    )
+                } else if (backupScreenState == BackupScreenState.IN_PROGRESS) {
+                    Text(
+                        text = "Backup is in-progress",
+                        style = MaterialTheme.typography.h6,
+                        color = MaterialTheme.colors.onSurface
                     )
                 }
             }

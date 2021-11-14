@@ -27,8 +27,15 @@ object Constants {
     const val BACKUP_PARAM_IS_SHOW_START_NOTIFICATION = "1"
 
     // Backup metadata
-    const val BACKUP_WORK_NAME = "BACKUP_SAFE_BOX_DATA_WORK"
+    const val WORKER_NAME_BACKUP_DATA = "BACKUP_SAFE_BOX_DATA_WORK"
     const val MAX_BACKUP_FILES = 5
+
+    // Restore params
+    const val RESTORE_PARAM_PASSWORD = "0"
+    const val RESTORE_PARAM_FILE_URI = "1"
+
+    // Backup metadata
+    const val WORKER_NAME_RESTORE_DATA = "RESTORE_SAFE_BOX_DATA_WORK"
 
     //        Other
     const val time1Sec = 1000L

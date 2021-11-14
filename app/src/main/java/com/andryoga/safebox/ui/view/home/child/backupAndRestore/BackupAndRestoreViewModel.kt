@@ -9,7 +9,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.andryoga.safebox.common.Constants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.Constants.BACKUP_PARAM_PASSWORD
-import com.andryoga.safebox.common.Constants.BACKUP_WORK_NAME
+import com.andryoga.safebox.common.Constants.WORKER_NAME_BACKUP_DATA
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -39,11 +39,19 @@ class BackupAndRestoreViewModel @Inject constructor(
         emit(Resource.loading(null))
         backupMetadataRepository.getBackupMetadata().collect {
             emit(Resource.success(it))
+            _backupScreenState.value = BackupScreenState.INITIAL_STATE
         }
     }
 
-    private val _isPasswordCorrect = MutableStateFlow<Boolean?>(null)
-    val isPasswordCorrect: StateFlow<Boolean?> = _isPasswordCorrect
+    private val _backupScreenState =
+        MutableStateFlow(BackupScreenState.INITIAL_STATE)
+    val backupScreenState: StateFlow<BackupScreenState> = _backupScreenState
+
+    private val _restoreScreenState =
+        MutableStateFlow(RestoreScreenState.INITIAL_STATE)
+    val restoreScreenState: StateFlow<RestoreScreenState> = _restoreScreenState
+
+    lateinit var selectedFileUriForRestore: String
 
     fun setBackupMetadata(uri: Uri) {
         viewModelScope.launch {
@@ -60,8 +68,8 @@ class BackupAndRestoreViewModel @Inject constructor(
     fun backupData(password: String) {
         viewModelScope.launch {
             val isPswrdCorrect = userDetailsRepository.checkPassword(password)
-            _isPasswordCorrect.value = isPswrdCorrect
             if (isPswrdCorrect) {
+                _backupScreenState.value = BackupScreenState.IN_PROGRESS
                 Timber.i("pswrd is correct, preparing backup work")
                 val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
                     .setInputData(
@@ -74,14 +82,36 @@ class BackupAndRestoreViewModel @Inject constructor(
                     )
                     .build()
                 workManager.enqueueUniqueWork(
-                    BACKUP_WORK_NAME,
+                    WORKER_NAME_BACKUP_DATA,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
                     backupDataRequest
                 )
                 Timber.i("enqueued backup work")
             } else {
+                _backupScreenState.value = BackupScreenState.WRONG_PASSWORD
                 Timber.i("wrong pswrd entered")
             }
         }
+    }
+
+    fun restoreData(password: String) {
+        viewModelScope.launch {
+            val isPswrdCorrect = userDetailsRepository.checkPassword(password)
+            if (isPswrdCorrect) {
+                _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
+                Timber.i("pswrd is correct, preparing restore work")
+            } else {
+                _restoreScreenState.value = RestoreScreenState.WRONG_PASSWORD
+                Timber.i("wrong pswrd entered")
+            }
+        }
+    }
+
+    fun setBackupScreenState(newState: BackupScreenState) {
+        _backupScreenState.value = newState
+    }
+
+    fun setRestoreScreenState(newState: RestoreScreenState) {
+        _restoreScreenState.value = newState
     }
 }
