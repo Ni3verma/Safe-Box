@@ -113,7 +113,6 @@
             android:layout_height="55dp"
             android:layout_marginEnd="8dp"
             android:alpha="0"
-            android:clickable="false"
             android:background="@color/colorSecondary"
             android:onClick="@{()->viewModel.onSaveClick()}"
             android:padding="8dp"
