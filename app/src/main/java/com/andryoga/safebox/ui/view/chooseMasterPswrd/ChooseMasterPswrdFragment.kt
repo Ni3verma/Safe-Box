@@ -70,7 +70,7 @@ class ChooseMasterPswrdFragment : Fragment() {
         lifecycleScope.launchWhenStarted {
             viewModel.validationFailureCode.collect { failureCode ->
                 if (failureCode == null && viewModel.pswrd.value.isBlank()) {
-                    // do nothing
+                    binding.saveBtn.isClickable = false
                 } else if (failureCode == null) {
                     binding.apply {
                         saveBtn.animate().alpha(1f).start()
