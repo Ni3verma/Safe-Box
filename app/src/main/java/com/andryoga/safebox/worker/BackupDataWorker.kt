@@ -294,7 +294,7 @@ class BackupDataWorker
     private fun recordTime(message: String) {
         val timeTook = System.currentTimeMillis() - startTime
         val sec = time1Sec
-        Timber.i("$localTag  $message : time took = $timeTook millisec, ${timeTook / sec} sec")
+        Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
     }
 

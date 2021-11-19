@@ -62,6 +62,8 @@ class RestoreDataWorker @AssistedInject constructor(
         val fileUri = inputData.getString(Constants.RESTORE_PARAM_FILE_URI)
             ?: throw IllegalArgumentException("expected file uri input was not received")
 
+        recordTime("got input pswrd and file uri")
+
         ObjectInputStream(
             applicationContext.contentResolver.openInputStream(Uri.parse(fileUri))
         ).use {
@@ -73,15 +75,10 @@ class RestoreDataWorker @AssistedInject constructor(
             val version = importMap[Constants.VERSION_KEY]!![0].toInt()
             val creationDate = importMap[Constants.CREATION_DATE_KEY]!![0].toLong()
             Timber.i(
-                "$localTag version = $version, created on : ${
-                getFormattedDate(
-                    Date(
-                        creationDate
-                    )
-                )
-                }"
+                "$localTag version = $version, " +
+                    "created on : ${getFormattedDate(Date(creationDate))}"
             )
-
+            recordTime("file read to map object")
             startRestore()
         }
 
@@ -91,10 +88,12 @@ class RestoreDataWorker @AssistedInject constructor(
     private fun startRestore() {
         salt = importMap[Constants.SALT_KEY]!!
         iv = importMap[Constants.IV_KEY]!!
+        recordTime("read salt and iv")
         val loginData = decryptLoginData(importMap[Constants.LOGIN_DATA_KEY])
         val bankAccountData = decryptBankAccountData(importMap[Constants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[Constants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[Constants.SECURE_NOTE_DATA_KEY])
+        recordTime("all data decrypted")
 
         restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
     }
@@ -165,9 +164,8 @@ class RestoreDataWorker @AssistedInject constructor(
         bankCardData: List<ExportBankCardData>?,
         secureNoteData: List<ExportSecureNoteData>?
     ) {
-        Timber.d("${loginData?.size}, ${bankAccountData?.size}, ${bankCardData?.size}, ${secureNoteData?.size}")
+        Timber.i("starting transaction")
         safeBoxDatabase.runInTransaction {
-            Timber.i("restoring login data")
             loginDataDaoSecure.deleteAllData()
             loginData?.let {
                 loginDataDaoSecure.insertMultipleLoginData(
@@ -179,8 +177,8 @@ class RestoreDataWorker @AssistedInject constructor(
                     }
                 )
             }
+            recordTime("restored login data")
 
-            Timber.i("restoring bank account data")
             bankAccountDataDaoSecure.deleteAllData()
             bankAccountData?.let {
                 bankAccountDataDaoSecure.insertMultipleBankAccountData(
@@ -193,8 +191,8 @@ class RestoreDataWorker @AssistedInject constructor(
                     }
                 )
             }
+            recordTime("restored bank account data")
 
-            Timber.i("restoring bank card data")
             bankCardDataDaoSecure.deleteAllData()
             bankCardData?.let {
                 bankCardDataDaoSecure.insertMultipleBankCardData(
@@ -207,8 +205,8 @@ class RestoreDataWorker @AssistedInject constructor(
                     }
                 )
             }
+            recordTime("restored bank card data")
 
-            Timber.i("restoring secure note data")
             secureNoteDataDaoSecure.deleteAllData()
             secureNoteData?.let {
                 secureNoteDataDaoSecure.insertMultipleSecureNoteData(
@@ -220,6 +218,14 @@ class RestoreDataWorker @AssistedInject constructor(
                     }
                 )
             }
+            recordTime("restored secure note data")
         }
+    }
+
+    private fun recordTime(message: String) {
+        val timeTook = System.currentTimeMillis() - startTime
+        val sec = Constants.time1Sec
+        Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
+        startTime = System.currentTimeMillis()
     }
 }
