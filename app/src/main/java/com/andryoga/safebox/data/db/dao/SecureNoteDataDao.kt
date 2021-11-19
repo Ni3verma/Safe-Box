@@ -11,6 +11,9 @@ interface SecureNoteDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>)
+
     @Update
     suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
@@ -25,4 +28,7 @@ interface SecureNoteDataDao {
 
     @Query("select * from secure_note_data")
     suspend fun exportAllData(): List<ExportSecureNoteData>
+
+    @Query("delete from secure_note_data")
+    fun deleteAllData()
 }

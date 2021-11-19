@@ -11,6 +11,9 @@ interface BankCardDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertBankCardData(bankCardDataEntity: BankCardDataEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertMultipleBankCardData(bankCardDataEntity: List<BankCardDataEntity>)
+
     @Update
     suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity)
 
@@ -25,4 +28,7 @@ interface BankCardDataDao {
 
     @Query("select * from bank_card_data")
     suspend fun exportAllData(): List<ExportBankCardData>
+
+    @Query("delete from bank_card_data")
+    fun deleteAllData()
 }

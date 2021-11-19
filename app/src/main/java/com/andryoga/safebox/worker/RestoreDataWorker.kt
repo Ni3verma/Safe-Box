@@ -12,8 +12,14 @@ import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
+import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
+import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.assisted.Assisted
@@ -35,9 +41,9 @@ class RestoreDataWorker @AssistedInject constructor(
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val safeBoxDatabase: SafeBoxDatabase,
     private val loginDataDaoSecure: LoginDataDaoSecure,
-//    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
-//    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-//    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
+    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : CoroutineWorker(context, params) {
 
     private val localTag = "restore data worker -> "
@@ -161,19 +167,55 @@ class RestoreDataWorker @AssistedInject constructor(
     ) {
         Timber.d("${loginData?.size}, ${bankAccountData?.size}, ${bankCardData?.size}, ${secureNoteData?.size}")
         safeBoxDatabase.runInTransaction {
+            Timber.i("restoring login data")
             loginDataDaoSecure.deleteAllData()
             loginData?.let {
                 loginDataDaoSecure.insertMultipleLoginData(
                     loginData.map {
                         LoginDataEntity(
-                            0,
-                            it.title,
-                            it.url,
-                            it.password,
-                            it.notes,
-                            it.userId,
-                            Date(it.creationDate),
-                            Date(it.updateDate)
+                            0, it.title, it.url, it.password, it.notes,
+                            it.userId, Date(it.creationDate), Date(it.updateDate)
+                        )
+                    }
+                )
+            }
+
+            Timber.i("restoring bank account data")
+            bankAccountDataDaoSecure.deleteAllData()
+            bankAccountData?.let {
+                bankAccountDataDaoSecure.insertMultipleBankAccountData(
+                    bankAccountData.map {
+                        BankAccountDataEntity(
+                            0, it.title, it.accountNumber, it.customerName, it.customerId,
+                            it.branchCode, it.branchName, it.branchAddress, it.ifscCode,
+                            it.micrCode, it.notes, Date(it.creationDate), Date(it.updateDate)
+                        )
+                    }
+                )
+            }
+
+            Timber.i("restoring bank card data")
+            bankCardDataDaoSecure.deleteAllData()
+            bankCardData?.let {
+                bankCardDataDaoSecure.insertMultipleBankCardData(
+                    bankCardData.map {
+                        BankCardDataEntity(
+                            0, it.title, it.name, it.number, it.pin, it.cvv,
+                            it.expiryDate, it.notes,
+                            Date(it.creationDate), Date(it.updateDate)
+                        )
+                    }
+                )
+            }
+
+            Timber.i("restoring secure note data")
+            secureNoteDataDaoSecure.deleteAllData()
+            secureNoteData?.let {
+                secureNoteDataDaoSecure.insertMultipleSecureNoteData(
+                    secureNoteData.map {
+                        SecureNoteDataEntity(
+                            0, it.title, it.notes,
+                            Date(it.creationDate), Date(it.updateDate)
                         )
                     }
                 )

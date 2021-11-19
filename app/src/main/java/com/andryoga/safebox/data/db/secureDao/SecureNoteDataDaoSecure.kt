@@ -16,6 +16,10 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataDao.insertSecretNoteData(encrypt(secureNoteDataEntity))
     }
 
+    override fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>) {
+        secureNoteDataDao.insertMultipleSecureNoteData(secureNoteDataEntity.map { encrypt(it) })
+    }
+
     override suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
         secureNoteDataDao.updateSecretNoteData(encrypt(secureNoteDataEntity))
     }
@@ -34,6 +38,10 @@ class SecureNoteDataDaoSecure @Inject constructor(
 
     override suspend fun exportAllData(): List<ExportSecureNoteData> {
         return secureNoteDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override fun deleteAllData() {
+        secureNoteDataDao.deleteAllData()
     }
 
     private fun encrypt(secureNoteDataEntity: SecureNoteDataEntity): SecureNoteDataEntity {

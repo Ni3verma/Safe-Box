@@ -19,6 +19,9 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataDao.insertBankAccountData(encrypt(bankAccountDataEntity))
     }
 
+    override fun insertMultipleBankAccountData(bankAccountDataEntity: List<BankAccountDataEntity>) {
+        bankAccountDataDao.insertMultipleBankAccountData(bankAccountDataEntity.map { encrypt(it) })
+    }
     override suspend fun updateBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
         bankAccountDataDao.updateBankAccountData(encrypt(bankAccountDataEntity))
     }
@@ -40,6 +43,10 @@ class BankAccountDataDaoSecure @Inject constructor(
 
     override suspend fun exportAllData(): List<ExportBankAccountData> {
         return bankAccountDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override fun deleteAllData() {
+        bankAccountDataDao.deleteAllData()
     }
 
     private fun encrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
