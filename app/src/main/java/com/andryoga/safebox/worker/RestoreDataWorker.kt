@@ -3,15 +3,17 @@ package com.andryoga.safebox.worker
 import android.content.Context
 import android.net.Uri
 import androidx.hilt.work.HiltWorker
-import androidx.room.Transaction
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.common.Constants
 import com.andryoga.safebox.common.Utils.getFormattedDate
+import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.entity.LoginDataEntity
+import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.assisted.Assisted
@@ -31,7 +33,8 @@ class RestoreDataWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val passwordBasedEncryption: PasswordBasedEncryption,
-//    private val loginDataDaoSecure: LoginDataDaoSecure,
+    private val safeBoxDatabase: SafeBoxDatabase,
+    private val loginDataDaoSecure: LoginDataDaoSecure,
 //    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
 //    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
 //    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
@@ -150,7 +153,6 @@ class RestoreDataWorker @AssistedInject constructor(
         }
     }
 
-    @Transaction
     private fun restoreDataToDb(
         loginData: List<ExportLoginData>?,
         bankAccountData: List<ExportBankAccountData>?,
@@ -158,5 +160,24 @@ class RestoreDataWorker @AssistedInject constructor(
         secureNoteData: List<ExportSecureNoteData>?
     ) {
         Timber.d("${loginData?.size}, ${bankAccountData?.size}, ${bankCardData?.size}, ${secureNoteData?.size}")
+        safeBoxDatabase.runInTransaction {
+            loginDataDaoSecure.deleteAllData()
+            loginData?.let {
+                loginDataDaoSecure.insertMultipleLoginData(
+                    loginData.map {
+                        LoginDataEntity(
+                            0,
+                            it.title,
+                            it.url,
+                            it.password,
+                            it.notes,
+                            it.userId,
+                            Date(it.creationDate),
+                            Date(it.updateDate)
+                        )
+                    }
+                )
+            }
+        }
     }
 }

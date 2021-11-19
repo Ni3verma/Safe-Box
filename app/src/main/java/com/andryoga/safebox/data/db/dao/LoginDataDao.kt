@@ -11,6 +11,9 @@ interface LoginDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertLoginData(loginDataEntity: LoginDataEntity)
 
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>)
+
     @Update
     suspend fun updateLoginData(loginDataEntity: LoginDataEntity)
 
@@ -25,4 +28,7 @@ interface LoginDataDao {
 
     @Query("select * from login_data")
     suspend fun exportAllData(): List<ExportLoginData>
+
+    @Query("delete from login_data")
+    fun deleteAllData()
 }

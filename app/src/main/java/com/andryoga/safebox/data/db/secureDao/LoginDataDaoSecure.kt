@@ -21,6 +21,10 @@ class LoginDataDaoSecure @Inject constructor(
         loginDataDao.insertLoginData(encrypt(loginDataEntity))
     }
 
+    override fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>) {
+        loginDataDao.insertMultipleLoginData(loginDataEntity.map { encrypt(it) })
+    }
+
     override suspend fun updateLoginData(loginDataEntity: LoginDataEntity) {
         loginDataDao.updateLoginData(encrypt(loginDataEntity))
     }
@@ -42,6 +46,9 @@ class LoginDataDaoSecure @Inject constructor(
         return loginDataDao.exportAllData().map { decrypt(it) }
     }
 
+    override fun deleteAllData() {
+        loginDataDao.deleteAllData()
+    }
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {
         loginDataEntity.let {
             return LoginDataEntity(
