@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,6 +36,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.andryoga.safebox.BuildConfig
+import com.andryoga.safebox.R
 import com.andryoga.safebox.common.DomainMappers.toBackupAndRestoreData
 import com.andryoga.safebox.data.db.docs.BackupData
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
@@ -130,7 +132,11 @@ class BackupAndRestoreFragment : Fragment() {
     ) {
         val backupScreenState by viewModel.backupScreenState.collectAsState(BackupScreenState.INITIAL_STATE)
         EnterPasswordDialog(
-            isVisible = backupScreenState == BackupScreenState.ENTER_PASSWORD,
+            isVisible = backupScreenState in listOf(
+                BackupScreenState.ENTER_PASSWORD,
+                BackupScreenState.WRONG_PASSWORD
+            ),
+            isPasswordWrong = backupScreenState == BackupScreenState.WRONG_PASSWORD,
             onDismiss = { viewModel.setBackupScreenState(BackupScreenState.INITIAL_STATE) },
             onPasswordSubmit = {
                 Timber.i("password submit for backup")
@@ -138,7 +144,7 @@ class BackupAndRestoreFragment : Fragment() {
             }
         )
         Text(
-            text = "Backup",
+            text = stringResource(R.string.backup),
             color = MaterialTheme.colors.primary,
             style = MaterialTheme.typography.h5,
             fontWeight = FontWeight.Medium
@@ -167,6 +173,7 @@ class BackupAndRestoreFragment : Fragment() {
         val restoreScreenState by viewModel.restoreScreenState.collectAsState(RestoreScreenState.INITIAL_STATE)
         EnterPasswordDialog(
             isVisible = restoreScreenState == RestoreScreenState.ENTER_PASSWORD,
+            isPasswordWrong = false,
             onDismiss = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) },
             onPasswordSubmit = {
                 Timber.i("password submit for restore")
@@ -184,11 +191,14 @@ class BackupAndRestoreFragment : Fragment() {
             RestoreScreenState.ERROR -> {
                 RestoreErrorDialog()
             }
+            else -> {
+                // do nothing
+            }
         }
 
         Column {
             Text(
-                text = "Restore",
+                text = stringResource(R.string.restore),
                 color = MaterialTheme.colors.primary,
                 style = MaterialTheme.typography.h5,
                 fontWeight = FontWeight.Medium
@@ -203,9 +213,7 @@ class BackupAndRestoreFragment : Fragment() {
                 ) {
 
                     Text(
-                        text = "Click below button to select a file manually. " +
-                            "Please note that to restore data, you have to enter the same master password " +
-                            "that was used to encrypt the backup file",
+                        text = stringResource(R.string.restore_info),
                         modifier = Modifier.padding(8.dp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colors.onSurface,
@@ -217,15 +225,7 @@ class BackupAndRestoreFragment : Fragment() {
                             .align(Alignment.CenterHorizontally)
                             .padding(bottom = 8.dp)
                     ) {
-                        Text(text = "Restore")
-                    }
-                    if (restoreScreenState == RestoreScreenState.WRONG_PASSWORD) {
-                        Text(
-                            text = "Wrong password entered",
-                            style = MaterialTheme.typography.h6,
-                            color = MaterialTheme.colors.error,
-
-                        )
+                        Text(text = stringResource(R.string.restore))
                     }
                 }
             }
@@ -244,12 +244,12 @@ class BackupAndRestoreFragment : Fragment() {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Warning,
-                        contentDescription = "TODO",
+                        contentDescription = null,
                         modifier = Modifier.size(32.dp),
                         tint = Color.Red
                     )
                     Text(
-                        text = "Error while importing data. Please check that you selected the correct file.",
+                        text = stringResource(R.string.restore_error_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
                         color = MaterialTheme.colors.onSurface
@@ -271,12 +271,12 @@ class BackupAndRestoreFragment : Fragment() {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = "TODO",
+                        contentDescription = null,
                         modifier = Modifier.size(32.dp),
                         tint = Color.Green
                     )
                     Text(
-                        text = "Successfully restored data",
+                        text = stringResource(R.string.restore_success_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
                         color = MaterialTheme.colors.onSurface
@@ -304,7 +304,7 @@ class BackupAndRestoreFragment : Fragment() {
                 ) {
                     CircularProgressIndicator()
                     Text(
-                        text = "It may take a while to restore data. Sit back and relax !",
+                        text = stringResource(R.string.restore_in_progress_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
                         color = MaterialTheme.colors.onSurface
@@ -327,7 +327,7 @@ class BackupAndRestoreFragment : Fragment() {
             ) {
                 Icon(
                     imageVector = Icons.Filled.Warning,
-                    contentDescription = "TODO",
+                    contentDescription = null,
                     tint = MaterialTheme.colors.error,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -335,9 +335,7 @@ class BackupAndRestoreFragment : Fragment() {
                         .size(64.dp)
                 )
                 Text(
-                    text = "Backup location is not set. Click below button to set. " +
-                        "It is recommended that while selecting location, add a new folder (e.g. Safe Box backup)" +
-                        "in local Storage and then select same.",
+                    text = stringResource(R.string.backup_path_not_set_message),
                     modifier = Modifier.padding(8.dp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colors.onSurface,
@@ -351,7 +349,7 @@ class BackupAndRestoreFragment : Fragment() {
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 8.dp)
                 ) {
-                    Text(text = "Set Location")
+                    Text(text = stringResource(R.string.backup_set_location))
                 }
             }
         }
@@ -377,25 +375,25 @@ class BackupAndRestoreFragment : Fragment() {
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
-                        contentDescription = "TODO",
+                        contentDescription = null,
                         tint = Color.Green,
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = "Backup location is set", style = MaterialTheme.typography.h6
+                        text = stringResource(R.string.backup_set_message), style = MaterialTheme.typography.h6
                     )
                 }
                 Text(
-                    text = "Backup path is ${backupData.displayPath}",
+                    text = stringResource(R.string.backup_path, backupData.displayPath),
                     style = MaterialTheme.typography.body1
                 )
                 Text(
-                    text = "Backup was last taken on ${backupData.lastBackupDate}",
+                    text = stringResource(R.string.backup_time, backupData.lastBackupDate),
                     style = MaterialTheme.typography.body1,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    text = "* Backup file is encrypted by your master password",
+                    text = stringResource(R.string.backup_info_1),
                     style = MaterialTheme.typography.subtitle1,
                     fontWeight = FontWeight.Thin
                 )
@@ -409,23 +407,17 @@ class BackupAndRestoreFragment : Fragment() {
                     Button(
                         onClick = { selectBackupDirReq.launch(null) }
                     ) {
-                        Text(text = "Edit Path")
+                        Text(text = stringResource(R.string.backup_edit_path))
                     }
                     Button(
                         onClick = { onBackupClick() }
                     ) {
-                        Text(text = "Backup")
+                        Text(text = stringResource(R.string.backup))
                     }
                 }
-                if (backupScreenState == BackupScreenState.WRONG_PASSWORD) {
+                if (backupScreenState == BackupScreenState.IN_PROGRESS) {
                     Text(
-                        text = "Wrong password entered",
-                        style = MaterialTheme.typography.h6,
-                        color = MaterialTheme.colors.error
-                    )
-                } else if (backupScreenState == BackupScreenState.IN_PROGRESS) {
-                    Text(
-                        text = "Backup is in-progress",
+                        text = stringResource(R.string.backup_in_progress_message),
                         style = MaterialTheme.typography.h6,
                         color = MaterialTheme.colors.onSurface
                     )
@@ -437,6 +429,7 @@ class BackupAndRestoreFragment : Fragment() {
     @Composable
     fun EnterPasswordDialog(
         isVisible: Boolean,
+        isPasswordWrong: Boolean,
         onDismiss: () -> Unit,
         onPasswordSubmit: (value: String) -> Unit
     ) {
@@ -451,17 +444,25 @@ class BackupAndRestoreFragment : Fragment() {
             }
             var isPasswordMasked: Boolean by remember { mutableStateOf(true) }
             Dialog(onDismissRequest = { onDismiss() }) {
-                Card(modifier = Modifier.padding(8.dp)) {
-                    Column {
+                Card(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .wrapContentHeight(unbounded = true),
+                    elevation = 4.dp
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(8.dp)
+                    ) {
                         OutlinedTextField(
                             value = passwordValue,
                             onValueChange = {
                                 passwordValue = it
                             },
                             modifier = Modifier
-                                .padding(16.dp)
+                                .padding(8.dp)
                                 .fillMaxWidth(),
-                            label = { Text("Master Password") },
+                            label = { Text(stringResource(R.string.master_password)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             visualTransformation = if (isPasswordMasked) PasswordVisualTransformation()
                             else VisualTransformation.None,
@@ -474,19 +475,25 @@ class BackupAndRestoreFragment : Fragment() {
                                         isPasswordMasked = !isPasswordMasked
                                     }
                                 ) {
-                                    Icon(imageVector = image, "TODO")
+                                    Icon(imageVector = image, null)
                                 }
                             }
                         )
+                        if (isPasswordWrong) {
+                            Text(
+                                text = stringResource(R.string.incorrect_pswrd_message),
+                                color = MaterialTheme.colors.error,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
                         Button(
                             onClick = { onPasswordSubmit(passwordValue.text) },
                             enabled = passwordValue.text.trim()
                                 .isNotEmpty(),
                             modifier = Modifier
-                                .padding(bottom = 8.dp, end = 16.dp)
                                 .align(Alignment.End)
                         ) {
-                            Text(text = "OK")
+                            Text(text = stringResource(R.string.common_ok))
                         }
                     }
                 }

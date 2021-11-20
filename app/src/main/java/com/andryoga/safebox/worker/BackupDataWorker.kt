@@ -29,7 +29,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
@@ -73,14 +72,11 @@ class BackupDataWorker
                     makeStatusNotification(
                         applicationContext,
                         getNotificationOptions(
-                            "Backing up your data to local storage." +
-                                " You will be notified once it is complete"
+                            applicationContext.getString(R.string.notification_backup_in_progress)
                         )
                     )
                 }
 
-                // remove it later
-                delay(Constants.time5Sec)
                 startTime = System.currentTimeMillis()
 
                 val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)
@@ -132,10 +128,6 @@ class BackupDataWorker
                     }
                 } else {
                     Timber.i("$localTag  nothing to export")
-                    makeStatusNotification(
-                        applicationContext,
-                        getNotificationOptions("No data found for backup !")
-                    )
                 }
             } else {
                 Timber.i("backup metadata not found")
@@ -227,7 +219,7 @@ class BackupDataWorker
         backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
         makeStatusNotification(
             applicationContext,
-            getNotificationOptions("Backup is complete. It's good idea to keep a copy in cloud")
+            getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
         )
     }
 
@@ -309,13 +301,13 @@ class BackupDataWorker
 
     private fun getNotificationOptions(notificationContent: String): NotificationOptions {
         return NotificationOptions(
-            "backup data safebox",
+            applicationContext.getString(R.string.notification_backup_channel_id),
             0,
-            "Safe Box Backup",
-            "This notification helps you to keep track of backup progress",
+            applicationContext.getString(R.string.notification_backup_channel_name),
+            applicationContext.getString(R.string.notification_backup_channel_desc),
             NotificationManager.IMPORTANCE_HIGH,
             R.drawable.ic_backup_restore,
-            "Data Backup",
+            applicationContext.getString(R.string.notification_backup_title),
             notificationContent,
             NotificationCompat.PRIORITY_HIGH
         )

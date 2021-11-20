@@ -104,31 +104,25 @@ class BackupAndRestoreViewModel @Inject constructor(
     @ExperimentalCoroutinesApi
     fun restoreData(password: String) {
         viewModelScope.launch {
-            val isPswrdCorrect = userDetailsRepository.checkPassword(password)
-            if (isPswrdCorrect) {
-                _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
-                Timber.i("pswrd is correct, preparing restore work")
-                val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
-                    .setInputData(
-                        Data(
-                            mapOf(
-                                RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
-                                RESTORE_PARAM_FILE_URI to selectedFileUriForRestore
-                            )
+            _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
+            Timber.i("preparing restore work")
+            val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
+                .setInputData(
+                    Data(
+                        mapOf(
+                            RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                            RESTORE_PARAM_FILE_URI to selectedFileUriForRestore
                         )
                     )
-                    .build()
-                workManager.enqueueUniqueWork(
-                    WORKER_NAME_RESTORE_DATA,
-                    ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    restoreDataRequest
                 )
-                _restoreWorkEnqueued.value = restoreDataRequest.id
-                Timber.i("enqueued restore work")
-            } else {
-                _restoreScreenState.value = RestoreScreenState.WRONG_PASSWORD
-                Timber.i("wrong pswrd entered")
-            }
+                .build()
+            workManager.enqueueUniqueWork(
+                WORKER_NAME_RESTORE_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                restoreDataRequest
+            )
+            _restoreWorkEnqueued.value = restoreDataRequest.id
+            Timber.i("enqueued restore work")
         }
     }
 
