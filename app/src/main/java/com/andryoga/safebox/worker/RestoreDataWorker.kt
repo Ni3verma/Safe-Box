@@ -31,6 +31,7 @@ import timber.log.Timber
 import java.io.InvalidObjectException
 import java.io.ObjectInputStream
 import java.util.*
+import javax.crypto.BadPaddingException
 
 @HiltWorker
 @ExperimentalCoroutinesApi
@@ -79,7 +80,12 @@ class RestoreDataWorker @AssistedInject constructor(
                     "created on : ${getFormattedDate(Date(creationDate))}"
             )
             recordTime("file read to map object")
-            startRestore()
+            try {
+                startRestore()
+            } catch (badPaddingException: BadPaddingException) {
+                Timber.w("wrong password entered for restore", badPaddingException)
+                return Result.failure()
+            }
         }
 
         return Result.success()
