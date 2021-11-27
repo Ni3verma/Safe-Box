@@ -5,7 +5,7 @@ import android.net.Uri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.andryoga.safebox.common.Constants
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils.getFormattedDate
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
@@ -58,9 +58,9 @@ class RestoreDataWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         startTime = System.currentTimeMillis()
-        inputPassword = inputData.getString(Constants.RESTORE_PARAM_PASSWORD)
+        inputPassword = inputData.getString(CommonConstants.RESTORE_PARAM_PASSWORD)
             ?: throw IllegalArgumentException("expected password input was not received")
-        val fileUri = inputData.getString(Constants.RESTORE_PARAM_FILE_URI)
+        val fileUri = inputData.getString(CommonConstants.RESTORE_PARAM_FILE_URI)
             ?: throw IllegalArgumentException("expected file uri input was not received")
 
         recordTime("got input pswrd and file uri")
@@ -73,8 +73,8 @@ class RestoreDataWorker @AssistedInject constructor(
                 throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
 
             importMap = fileObject as Map<String, ByteArray?>
-            val version = importMap[Constants.VERSION_KEY]!![0].toInt()
-            val creationDate = importMap[Constants.CREATION_DATE_KEY]!![0].toLong()
+            val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+            val creationDate = importMap[CommonConstants.CREATION_DATE_KEY]!![0].toLong()
             Timber.i(
                 "$localTag version = $version, " +
                     "created on : ${getFormattedDate(Date(creationDate))}"
@@ -92,13 +92,13 @@ class RestoreDataWorker @AssistedInject constructor(
     }
 
     private fun startRestore() {
-        salt = importMap[Constants.SALT_KEY]!!
-        iv = importMap[Constants.IV_KEY]!!
+        salt = importMap[CommonConstants.SALT_KEY]!!
+        iv = importMap[CommonConstants.IV_KEY]!!
         recordTime("read salt and iv")
-        val loginData = decryptLoginData(importMap[Constants.LOGIN_DATA_KEY])
-        val bankAccountData = decryptBankAccountData(importMap[Constants.BANK_ACCOUNT_DATA_KEY])
-        val bankCardData = decryptBankCardData(importMap[Constants.BANK_CARD_DATA_KEY])
-        val secureNoteData = decryptSecureNoteData(importMap[Constants.SECURE_NOTE_DATA_KEY])
+        val loginData = decryptLoginData(importMap[CommonConstants.LOGIN_DATA_KEY])
+        val bankAccountData = decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
+        val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
+        val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
         recordTime("all data decrypted")
 
         restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
@@ -230,7 +230,7 @@ class RestoreDataWorker @AssistedInject constructor(
 
     private fun recordTime(message: String) {
         val timeTook = System.currentTimeMillis() - startTime
-        val sec = Constants.time1Sec
+        val sec = CommonConstants.time1Sec
         Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
     }

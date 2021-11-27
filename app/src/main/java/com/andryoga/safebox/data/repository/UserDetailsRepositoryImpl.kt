@@ -1,6 +1,6 @@
 package com.andryoga.safebox.data.repository
 
-import com.andryoga.safebox.common.Constants.CRASHLYTICS_KEY_UID
+import com.andryoga.safebox.common.CommonConstants.CRASHLYTICS_KEY_UID
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository

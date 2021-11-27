@@ -82,7 +82,7 @@
     <string name="backup_set_message">Backup location is set</string>
     <string name="backup_path">Backup path is %1$s</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
-    <string name="backup_info_1">* Backup file is encrypted by your current master password</string>
+    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken everytime you login with password</string>
     <string name="backup_edit_path">Edit Path</string>
     <string name="backup_in_progress_message">Backup is in-progress</string>
     <string name="backup_not_set_banner_message">Click here to set backup path</string>

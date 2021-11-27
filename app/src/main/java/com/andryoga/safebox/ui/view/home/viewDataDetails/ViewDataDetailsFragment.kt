@@ -39,7 +39,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.Constants.APP_PLAYSTORE_LINK
+import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.common.Utils.logResource
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status

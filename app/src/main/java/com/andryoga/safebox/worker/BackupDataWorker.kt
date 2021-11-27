@@ -9,8 +9,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.Constants
-import com.andryoga.safebox.common.Constants.time1Sec
+import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.CommonConstants.time1Sec
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
@@ -67,7 +67,7 @@ class BackupDataWorker
             if (backupMetadataEntity != null) {
                 Timber.i("backup metadata found")
                 val isShowStartNotification =
-                    inputData.getBoolean(Constants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+                    inputData.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
                 if (isShowStartNotification) {
                     makeStatusNotification(
                         applicationContext,
@@ -79,7 +79,7 @@ class BackupDataWorker
 
                 startTime = System.currentTimeMillis()
 
-                val inputPassword = inputData.getString(Constants.BACKUP_PARAM_PASSWORD)
+                val inputPassword = inputData.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
                     ?: throw IllegalArgumentException("expected password input was not received")
 
                 val loginData = loginDataDaoSecure.exportAllData()
@@ -97,10 +97,10 @@ class BackupDataWorker
                     iv = passwordBasedEncryption.getRandomIV()
                     exportMap.putAll(
                         mapOf(
-                            Constants.SALT_KEY to salt,
-                            Constants.IV_KEY to iv,
-                            Constants.VERSION_KEY to ByteArray(1) {
-                                Constants.BACKUP_VERSION.toByte()
+                            CommonConstants.SALT_KEY to salt,
+                            CommonConstants.IV_KEY to iv,
+                            CommonConstants.VERSION_KEY to ByteArray(1) {
+                                CommonConstants.BACKUP_VERSION.toByte()
                             }
                         )
                     )
@@ -157,22 +157,22 @@ class BackupDataWorker
         bankCardData: List<ExportBankCardData>,
         secureNoteData: List<ExportSecureNoteData>
     ) {
-        exportMap[Constants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
+        exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
         recordTime("got login data byte array")
 
-        exportMap[Constants.BANK_ACCOUNT_DATA_KEY] =
+        exportMap[CommonConstants.BANK_ACCOUNT_DATA_KEY] =
             encryptBankAccountData(bankAccountData, inputPassword)
         recordTime("got bank account data byte array")
 
-        exportMap[Constants.BANK_CARD_DATA_KEY] =
+        exportMap[CommonConstants.BANK_CARD_DATA_KEY] =
             encryptBankCardData(bankCardData, inputPassword)
         recordTime("got bank card data byte array")
 
-        exportMap[Constants.SECURE_NOTE_DATA_KEY] =
+        exportMap[CommonConstants.SECURE_NOTE_DATA_KEY] =
             encryptSecureNoteData(secureNoteData, inputPassword)
         recordTime("got secure note data byte array")
 
-        exportMap[Constants.CREATION_DATE_KEY] = ByteArray(1) {
+        exportMap[CommonConstants.CREATION_DATE_KEY] = ByteArray(1) {
             System.currentTimeMillis().toByte()
         }
     }
@@ -184,12 +184,12 @@ class BackupDataWorker
                     it.name!!.endsWith(".bak") &&
                     it.name!!.startsWith("SafeBoxBackup")
             }
-            if (files.size >= Constants.MAX_BACKUP_FILES) {
+            if (files.size >= CommonConstants.MAX_BACKUP_FILES) {
                 Timber.i("max backup files threshold reached")
                 val sortedFiles = files.sortedBy {
                     it.name
                 }
-                for (i in 0..(files.size - Constants.MAX_BACKUP_FILES)) {
+                for (i in 0..(files.size - CommonConstants.MAX_BACKUP_FILES)) {
                     Timber.i("deleting backup file ${sortedFiles[i].name}")
                     sortedFiles[i].delete()
                 }

@@ -1,6 +1,6 @@
 package com.andryoga.safebox.common
 
-object Constants {
+object CommonConstants {
     //        SHOULD ONLY be user for simple shared preference
     const val TOTAL_LOGIN_COUNT = "total_login_count"
     const val LOGIN_COUNT_WITH_BIOMETRIC = "login_count_with_biometric"

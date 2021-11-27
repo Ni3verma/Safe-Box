@@ -16,7 +16,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
+import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard

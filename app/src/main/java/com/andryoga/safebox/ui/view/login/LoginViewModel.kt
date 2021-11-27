@@ -4,15 +4,25 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.andryoga.safebox.BuildConfig
-import com.andryoga.safebox.common.Constants.IS_SIGN_UP_REQUIRED
-import com.andryoga.safebox.common.Constants.LOGIN_COUNT_WITH_BIOMETRIC
-import com.andryoga.safebox.common.Constants.TOTAL_LOGIN_COUNT
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
+import com.andryoga.safebox.common.CommonConstants.IS_SIGN_UP_REQUIRED
+import com.andryoga.safebox.common.CommonConstants.LOGIN_COUNT_WITH_BIOMETRIC
+import com.andryoga.safebox.common.CommonConstants.TOTAL_LOGIN_COUNT
+import com.andryoga.safebox.common.CommonConstants.WORKER_NAME_BACKUP_DATA
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.worker.BackupDataWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -22,7 +32,9 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val preferenceProvider: PreferenceProvider,
-    private val userDetailsRepository: UserDetailsRepository
+    private val userDetailsRepository: UserDetailsRepository,
+    private val workManager: WorkManager,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : ViewModel() {
 
     object Constants {
@@ -64,13 +76,32 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    @ExperimentalCoroutinesApi
     fun onUnlockClick() {
         Timber.i("unlock clicked")
         if (pswrd.value != "") {
             viewModelScope.launch {
                 val isPasswordCorrect = userDetailsRepository.checkPassword(pswrd.value)
                 if (isPasswordCorrect) {
-                    Timber.i("correct pswrd entered")
+                    Timber.i("pswrd is correct, preparing backup work")
+                    val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
+                        .setInputData(
+                            Data(
+                                mapOf(
+                                    BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(
+                                        pswrd.value
+                                    ),
+                                    BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to false
+                                )
+                            )
+                        )
+                        .build()
+                    workManager.enqueueUniqueWork(
+                        WORKER_NAME_BACKUP_DATA,
+                        ExistingWorkPolicy.APPEND_OR_REPLACE,
+                        backupDataRequest
+                    )
+                    Timber.i("enqueued backup work")
                     canNavigateToHome(0)
                 } else {
                     Timber.i("wrong pswrd entered")
