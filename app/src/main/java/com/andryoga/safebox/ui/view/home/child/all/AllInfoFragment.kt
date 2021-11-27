@@ -58,7 +58,8 @@ class AllInfoFragment : Fragment() {
                 val isBackupPathSet by viewModel.isBackupPathSet.collectAsState()
                 BasicSafeBoxTheme {
                     Column {
-                        if (!isBackupPathSet) {
+                        // show banner only if backup path is not set and user has some data to backup
+                        if (!isBackupPathSet && !listData.data.isNullOrEmpty()) {
                             BackupNotSetBanner()
                         }
                         UserDataList(

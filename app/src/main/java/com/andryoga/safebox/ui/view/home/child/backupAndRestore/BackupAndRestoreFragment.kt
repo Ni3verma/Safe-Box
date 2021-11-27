@@ -225,7 +225,7 @@ class BackupAndRestoreFragment : Fragment() {
                     Button(
                         onClick = {
                             setIsUserAwayTimeoutSuspended(true)
-                            selectFileReq.launch(arrayOf("application/octet-stream"))
+                            selectFileReq.launch(arrayOf("*/*"))
                         },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
@@ -326,7 +326,7 @@ class BackupAndRestoreFragment : Fragment() {
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
             elevation = 2.dp,
             backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.05f)
-                .compositeOver(Color.White)
+                .compositeOver(MaterialTheme.colors.surface)
         ) {
             Column(
                 modifier = Modifier.padding(top = 4.dp)
@@ -370,7 +370,7 @@ class BackupAndRestoreFragment : Fragment() {
         Card(
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
             elevation = 2.dp,
-            backgroundColor = Color.Green.copy(alpha = 0.05f).compositeOver(Color.White)
+            backgroundColor = Color.Green.copy(alpha = 0.05f).compositeOver(MaterialTheme.colors.surface)
         ) {
             Column(
                 modifier = Modifier.padding(4.dp)
@@ -387,22 +387,26 @@ class BackupAndRestoreFragment : Fragment() {
                     )
                     Text(
                         text = stringResource(R.string.backup_set_message),
-                        style = MaterialTheme.typography.h6
+                        style = MaterialTheme.typography.h6,
+                        color = MaterialTheme.colors.onSurface
                     )
                 }
                 Text(
                     text = stringResource(R.string.backup_path, backupData.displayPath),
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.body1,
+                    color = MaterialTheme.colors.onSurface
                 )
                 Text(
                     text = stringResource(R.string.backup_time, backupData.lastBackupDate),
                     style = MaterialTheme.typography.body1,
+                    color = MaterialTheme.colors.onSurface,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
                     text = stringResource(R.string.backup_info_1),
                     style = MaterialTheme.typography.subtitle1,
-                    fontWeight = FontWeight.Thin
+                    fontWeight = FontWeight.Thin,
+                    color = MaterialTheme.colors.onSurface
                 )
 
                 Row(
