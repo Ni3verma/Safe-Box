@@ -45,6 +45,7 @@ import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.Visibility
 import com.andryoga.safebox.ui.common.icons.MaterialIconsCopy.VisibilityOff
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
+import com.andryoga.safebox.ui.view.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
@@ -58,6 +59,7 @@ class BackupAndRestoreFragment : Fragment() {
     private val selectBackupDirReq =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             Timber.i("uri selected for backup = $uri")
+            setIsUserAwayTimeoutSuspended(false)
             if (uri != null) {
                 Timber.i("path = ${uri.path}")
                 val takeFlags: Int =
@@ -77,6 +79,7 @@ class BackupAndRestoreFragment : Fragment() {
     private val selectFileReq =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             Timber.i("uri selected for restore = $uri")
+            setIsUserAwayTimeoutSuspended(false)
             if (uri != null) {
                 Timber.i("path = ${uri.path}")
                 viewModel.selectedFileUriForRestore = uri.toString()
@@ -220,7 +223,10 @@ class BackupAndRestoreFragment : Fragment() {
                         style = MaterialTheme.typography.body1
                     )
                     Button(
-                        onClick = { selectFileReq.launch(arrayOf("application/octet-stream")) },
+                        onClick = {
+                            setIsUserAwayTimeoutSuspended(true)
+                            selectFileReq.launch(arrayOf("application/octet-stream"))
+                        },
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(bottom = 8.dp)
@@ -343,7 +349,7 @@ class BackupAndRestoreFragment : Fragment() {
                 )
                 Button(
                     onClick = {
-                        selectBackupDirReq.launch(null)
+                        launchSelectBackupDir()
                     },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -380,7 +386,8 @@ class BackupAndRestoreFragment : Fragment() {
                         modifier = Modifier.padding(end = 8.dp)
                     )
                     Text(
-                        text = stringResource(R.string.backup_set_message), style = MaterialTheme.typography.h6
+                        text = stringResource(R.string.backup_set_message),
+                        style = MaterialTheme.typography.h6
                     )
                 }
                 Text(
@@ -405,7 +412,7 @@ class BackupAndRestoreFragment : Fragment() {
                         .fillMaxWidth()
                 ) {
                     Button(
-                        onClick = { selectBackupDirReq.launch(null) }
+                        onClick = { launchSelectBackupDir() }
                     ) {
                         Text(text = stringResource(R.string.backup_edit_path))
                     }
@@ -497,6 +504,21 @@ class BackupAndRestoreFragment : Fragment() {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    private fun launchSelectBackupDir() {
+        setIsUserAwayTimeoutSuspended(true)
+        selectBackupDirReq.launch(null)
+    }
+
+    private fun setIsUserAwayTimeoutSuspended(isSuspended: Boolean) {
+        (requireActivity() as MainActivity).apply {
+            if (isSuspended) {
+                suspendUserAwayTimeout()
+            } else {
+                continueUserAwayTimeout()
             }
         }
     }

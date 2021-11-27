@@ -32,6 +32,7 @@ import timber.log.Timber
 class MainActivity : AppCompatActivity() {
     private var lastInteractionTime: Long = System.currentTimeMillis()
     private var reviewInfo: ReviewInfo? = null
+    private var isUserAwayTimeoutSuspended = false
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerLayout: DrawerLayout
@@ -185,7 +186,13 @@ class MainActivity : AppCompatActivity() {
     * @returns true if timeout has happened
     * */
     fun checkUserAwayTimeout(): Boolean {
-        return if ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS) {
+        /*
+        * if timeout was not suspended manually and user was away for too long
+        * then show non-cancelable dialog
+        * */
+        return if (!isUserAwayTimeoutSuspended &&
+            ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS)
+        ) {
             Timber.i("away timeout, showing dialog")
             binding.hideView.visibility = View.VISIBLE
             MaterialAlertDialogBuilder(this)
@@ -199,6 +206,23 @@ class MainActivity : AppCompatActivity() {
                 }.show()
             true
         } else false
+    }
+
+    /*
+    * Used to suspend user away timeout feature
+    * */
+    fun suspendUserAwayTimeout() {
+        Timber.i("suspending away timeout")
+        isUserAwayTimeoutSuspended = true
+    }
+
+    /*
+    * Used to again continue user away timeout feature
+    * */
+    fun continueUserAwayTimeout() {
+        Timber.i("continuing away timeout")
+        lastInteractionTime = System.currentTimeMillis()
+        isUserAwayTimeoutSuspended = false
     }
 
     private fun prefetchReviewInfo() {
