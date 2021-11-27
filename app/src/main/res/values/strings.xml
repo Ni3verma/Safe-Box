@@ -85,11 +85,12 @@
     <string name="backup_info_1">* Backup file is encrypted by your current master password</string>
     <string name="backup_edit_path">Edit Path</string>
     <string name="backup_in_progress_message">Backup is in-progress</string>
+    <string name="backup_not_set_banner_message">Click here to set backup path</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
     <string name="restore_info">"Click below button to select a valid backup file. Please note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
-    <string name="restore_error_message">Error while importing data. Please check that you selected the correct file.</string>
+    <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
     <string name="restore_success_message">Successfully restored data</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
 

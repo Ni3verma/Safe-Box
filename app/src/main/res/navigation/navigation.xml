@@ -85,6 +85,9 @@
         <action
             android:id="@+id/action_nav_all_info_to_viewDataDetailsFragment"
             app:destination="@id/viewDataDetailsFragment" />
+        <action
+            android:id="@+id/action_nav_all_info_to_nav_backup_restore"
+            app:destination="@id/nav_backup_restore" />
     </fragment>
         <fragment
             android:id="@+id/nav_login_info"
