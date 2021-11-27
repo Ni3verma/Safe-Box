@@ -3,60 +3,62 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item android:title="@string/drawer_group_my_data">
-        <menu>
-            <!-- Adding 2 below invisible options so that navigation works fine-->
-            <item
-                android:id="@+id/loginFragment"
-                android:icon="@drawable/ic_baseline_folder_open_24"
-                android:visible="false" />
-            <item
-                android:id="@+id/chooseMasterPswrdFragment"
-                android:icon="@drawable/ic_baseline_folder_open_24"
-                android:visible="false" />
-            <item
-                android:id="@+id/nav_all_info"
-                android:icon="@drawable/ic_baseline_folder_open_24"
-                android:title="@string/drawer_title_all_items" />
+    <group
+        android:id="@+id/menu_data"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/loginFragment"
+            android:icon="@drawable/ic_baseline_folder_open_24"
+            android:visible="false" />
+        <item
+            android:id="@+id/chooseMasterPswrdFragment"
+            android:icon="@drawable/ic_baseline_folder_open_24"
+            android:visible="false" />
+        <item
+            android:id="@+id/nav_all_info"
+            android:icon="@drawable/ic_baseline_folder_open_24"
+            android:title="@string/drawer_title_all_items" />
 
-            <item
-                android:id="@+id/nav_login_info"
-                android:icon="@drawable/ic_person_24"
-                android:title="@string/drawer_title_login" />
+        <item
+            android:id="@+id/nav_login_info"
+            android:icon="@drawable/ic_person_24"
+            android:title="@string/drawer_title_login" />
 
-            <item
-                android:id="@+id/nav_bank_account_info"
-                android:icon="@drawable/ic_bank_24"
-                android:title="@string/drawer_title_bank_account" />
+        <item
+            android:id="@+id/nav_bank_account_info"
+            android:icon="@drawable/ic_bank_24"
+            android:title="@string/drawer_title_bank_account" />
 
-            <item
-                android:id="@+id/nav_bank_card_info"
-                android:icon="@drawable/ic_card_24"
-                android:title="@string/drawer_title_bank_card" />
+        <item
+            android:id="@+id/nav_bank_card_info"
+            android:icon="@drawable/ic_card_24"
+            android:title="@string/drawer_title_bank_card" />
 
-            <item
-                android:id="@+id/nav_secure_note_info"
-                android:icon="@drawable/ic_key_24"
-                android:title="@string/drawer_title_secure_note" />
-        </menu>
-    </item>
+        <item
+            android:id="@+id/nav_secure_note_info"
+            android:icon="@drawable/ic_key_24"
+            android:title="@string/drawer_title_secure_note" />
+    </group>
 
-    <item
-        android:id="@+id/nav_backup_restore"
-        android:icon="@drawable/ic_backup_restore"
-        android:title="@string/drawer_title_backup_and_restore" />
+    <group
+        android:id="@+id/menu_func"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_backup_restore"
+            android:icon="@drawable/ic_backup_restore"
+            android:title="@string/drawer_title_backup_and_restore" />
+    </group>
 
-    <item android:title="@string/drawer_group_contact_us">
-        <menu>
-            <item
-                android:id="@+id/open_git"
-                android:icon="@drawable/ic_github"
-                android:title="@string/github" />
-            <item
-                android:id="@+id/open_playstore"
-                android:icon="@drawable/ic_playstore"
-                android:title="@string/drawer_title_playstore" />
-        </menu>
-
-    </item>
+    <group
+        android:id="@+id/menu_contact"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/open_git"
+            android:icon="@drawable/ic_github"
+            android:title="@string/github" />
+        <item
+            android:id="@+id/open_playstore"
+            android:icon="@drawable/ic_playstore"
+            android:title="@string/drawer_title_playstore" />
+    </group>
 </menu>

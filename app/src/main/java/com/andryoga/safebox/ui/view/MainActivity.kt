@@ -92,6 +92,11 @@ class MainActivity : AppCompatActivity() {
                 drawerLayout.closeDrawers()
                 // return false so that this option is not selected
                 return@setNavigationItemSelectedListener false
+            } else if (id == R.id.open_playstore) {
+                openPlayStore()
+                drawerLayout.closeDrawers()
+                // return false so that this option is not selected
+                return@setNavigationItemSelectedListener false
             }
             navController.navigate(id)
             drawerLayout.closeDrawers()
@@ -158,6 +163,21 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_GITHUB_URL))
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
+        }
+    }
+
+    private fun openPlayStore() {
+        Timber.i("opening playstore")
+        val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+        if (marketIntent.resolveActivity(packageManager) != null) {
+            startActivity(marketIntent)
+        } else {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                )
+            )
         }
     }
 
