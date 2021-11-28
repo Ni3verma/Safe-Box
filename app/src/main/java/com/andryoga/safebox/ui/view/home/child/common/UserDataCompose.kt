@@ -43,7 +43,7 @@ private val typeToTextMap = mapOf(
 @Composable
 fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
-    searchTextFilter: String? = null,
+    searchTextFilter: String?,
     onItemClick: (item: UserListItemData) -> Unit,
     onDeleteItemClick: (id: UserListItemData) -> Unit
 ) {

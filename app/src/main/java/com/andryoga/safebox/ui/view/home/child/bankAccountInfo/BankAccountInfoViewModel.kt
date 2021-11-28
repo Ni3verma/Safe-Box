@@ -8,10 +8,7 @@ import com.andryoga.safebox.ui.common.UserDataType
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,6 +16,10 @@ import javax.inject.Inject
 class BankAccountInfoViewModel @Inject constructor(
     private val bankAccountDataRepository: BankAccountDataRepository
 ) : ViewModel() {
+
+    private val _searchTextFilter = MutableStateFlow<String?>(null)
+    val searchTextFilter: StateFlow<String?> = _searchTextFilter
+
     val listData = flow<Resource<List<UserListItemData>>> {
         bankAccountDataRepository
             .getAllBankAccountData()
@@ -47,5 +48,9 @@ class BankAccountInfoViewModel @Inject constructor(
         viewModelScope.launch {
             bankAccountDataRepository.deleteBankAccountDataByKey(key)
         }
+    }
+
+    fun setSearchText(searchText: String?) {
+        _searchTextFilter.value = searchText
     }
 }

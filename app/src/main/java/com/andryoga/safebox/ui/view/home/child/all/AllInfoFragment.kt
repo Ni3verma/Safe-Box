@@ -47,9 +47,10 @@ class AllInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         Timber.i("on create view of all info fragment")
+        setHasOptionsMenu(true)
         return ComposeView(requireContext()).apply {
             setContent {
-                val searchText by viewModel.searchTextFlow.collectAsState()
+                val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.allData.collectAsState(
                     initial = Resource.loading(
                         emptyList()
@@ -64,7 +65,7 @@ class AllInfoFragment : Fragment() {
                         }
                         UserDataList(
                             listResource = listData,
-                            searchTextFilter = searchText,
+                            searchTextFilter = searchTextFilter,
                             onItemClick = { onListItemClick(it) },
                             onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                         )
@@ -80,7 +81,6 @@ class AllInfoFragment : Fragment() {
 
     override fun onStart() {
         super.onStart()
-        setHasOptionsMenu(true)
         Timber.i("on start of all info fragment")
         if (requireActivity() is MainActivity) {
             (requireActivity() as MainActivity).apply {

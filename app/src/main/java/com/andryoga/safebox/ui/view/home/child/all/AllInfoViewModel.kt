@@ -25,8 +25,8 @@ class AllInfoViewModel @Inject constructor(
     private val _isBackupPathSet = MutableStateFlow(true)
     val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
 
-    private val _searchText = MutableStateFlow<String?>(null)
-    val searchTextFlow: StateFlow<String?> = _searchText
+    private val _searchTextFilter = MutableStateFlow<String?>(null)
+    val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -162,7 +162,7 @@ class AllInfoViewModel @Inject constructor(
     }
 
     fun setSearchText(searchText: String?) {
-        _searchText.value = searchText
+        _searchTextFilter.value = searchText
     }
 
     // This method is for test purpose only
