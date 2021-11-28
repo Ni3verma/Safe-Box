@@ -31,6 +31,7 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 </br></br>
 
 <img src="./screenshots/readme/backupAndRestore.png" height="400px" width = "200px"/>&emsp;
+<img src="./screenshots/readme/searchData.png" height="400px" width = "200px"/>&emsp;
 
 <hr>
 
