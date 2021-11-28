@@ -13,7 +13,6 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.databinding.LoginDataFragmentBinding
 import com.andryoga.safebox.ui.common.CommonSnackbar.showErrorSnackbar
-import com.andryoga.safebox.ui.common.CommonSnackbar.showSuccessSnackbar
 import com.andryoga.safebox.ui.common.RequiredFieldValidator
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.Status
@@ -75,17 +74,13 @@ class LoginDataFragment : Fragment() {
         when (resource.status) {
             Status.LOADING -> switchVisibility(binding.saveBtn, binding.loading)
             Status.SUCCESS -> {
-                showSuccessSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_data_saved)
-                )
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
             }
             Status.ERROR -> {
                 switchVisibility(binding.saveBtn, binding.loading)
                 showErrorSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
+                    requireActivity().findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
                 hideSoftKeyboard(requireActivity())

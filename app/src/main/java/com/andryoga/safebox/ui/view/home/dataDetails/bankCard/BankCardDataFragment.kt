@@ -88,10 +88,6 @@ class BankCardDataFragment : Fragment() {
                 binding.loading
             )
             Status.SUCCESS -> {
-                CommonSnackbar.showSuccessSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_data_saved)
-                )
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
             }
@@ -101,7 +97,7 @@ class BankCardDataFragment : Fragment() {
                     binding.loading
                 )
                 CommonSnackbar.showErrorSnackbar(
-                    activity!!.findViewById(R.id.drawer_layout),
+                    requireActivity().findViewById(R.id.drawer_layout),
                     getString(R.string.snackbar_common_error_saving_data)
                 )
                 hideSoftKeyboard(requireActivity())
