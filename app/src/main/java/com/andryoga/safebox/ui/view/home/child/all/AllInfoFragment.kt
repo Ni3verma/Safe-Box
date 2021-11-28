@@ -70,7 +70,7 @@ class AllInfoFragment : Fragment() {
                             onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                         )
                     }
-                    AddNewDataFab() {
+                    AddNewDataFab {
                         findNavController()
                             .navigate(R.id.action_nav_all_info_to_addNewUserPersonalDataDialogFragment)
                     }
