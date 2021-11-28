@@ -104,7 +104,7 @@
     <string name="notification_backup_channel_desc">This notification helps you to keep track of backup progress</string>
     <string name="notification_backup_title">Data Backup</string>
     <string name="notification_backup_in_progress">"Backing up your data to local storage. You will be notified once it is complete"</string>
-    <string name="notification_backup_failure">Backup Failed ! We will look into the issue</string>
+    <string name="notification_backup_failure">Backup Failed! Please set backup path</string>
     <string name="notification_backup_success">Backup is complete. It is good idea to keep a copy in cloud</string>
 
     <!--    Other-->

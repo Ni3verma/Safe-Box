@@ -16,6 +16,7 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 * Store data locally and encrypted
 * Supports dark theme
 * Share non-confidential data from a record with a single click
+* Backup and Restore data locally
 
 <hr>
 
@@ -27,6 +28,9 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 <img src="./screenshots/readme/onePlace.png" height="400px" width = "200px"/>&emsp;
 <img src="./screenshots/readme/swipeToDelete.png" height="400px" width = "200px"/>&emsp;
 <img src="./screenshots/readme/editCopyShareDelete.png" height="400px" width = "200px"/>
+</br></br>
+
+<img src="./screenshots/readme/backupAndRestore.png" height="400px" width = "200px"/>&emsp;
 
 <hr>
 
