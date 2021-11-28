@@ -146,7 +146,7 @@ class BackupDataWorker
         backupMetadataRepository.deleteBackupMetadata()
         makeStatusNotification(
             applicationContext,
-            getNotificationOptions("Backup Failed ! We will look into the issue")
+            getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure))
         )
     }
 
