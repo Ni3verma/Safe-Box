@@ -74,6 +74,9 @@ class MainActivity : AppCompatActivity() {
         drawerLayout = binding.drawerLayout
         binding.lifecycleOwner = this
 
+        // Note that the Toolbar defined in the layout has the id "my_toolbar"
+        setSupportActionBar(findViewById(R.id.my_toolbar))
+
         // top level navigation for which back button should not appear
         appBarConfiguration = AppBarConfiguration(
             drawerLayoutTopLevelNavigationIds,
@@ -150,7 +153,15 @@ class MainActivity : AppCompatActivity() {
 
     fun setSupportActionBarVisibility(isVisible: Boolean) {
         Timber.i("setting support action bar visibility to $isVisible")
-        if (isVisible) supportActionBar?.show() else supportActionBar?.hide()
+        if (isVisible) {
+            supportActionBar?.show()
+            binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+        } else {
+            supportActionBar?.hide()
+            // doing below so that even sliding from screen start to end
+            // doesn't open the drawer
+            binding.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        }
     }
 
     // this is directly called from xml so view input param is required

@@ -43,6 +43,7 @@ private val typeToTextMap = mapOf(
 @Composable
 fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
+    searchTextFilter: String? = null,
     onItemClick: (item: UserListItemData) -> Unit,
     onDeleteItemClick: (id: UserListItemData) -> Unit
 ) {
@@ -58,8 +59,15 @@ fun UserDataList(
             }
         }
         Status.SUCCESS -> {
-            // In success state, if there was no data then show empty view other show list of data
-            val list = listResource.data
+            // In success state, if there was no data then show empty view otherwise show list of data
+            val list = if (searchTextFilter == null) {
+                listResource.data
+            } else {
+                listResource.data?.filter {
+                    it.title.contains(searchTextFilter, ignoreCase = true) ||
+                        it.subTitle?.contains(searchTextFilter, ignoreCase = true) == true
+                }
+            }
             if (list.isNullOrEmpty()) {
                 EmptyUserData()
             } else {
