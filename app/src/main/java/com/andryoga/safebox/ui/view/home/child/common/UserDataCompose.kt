@@ -106,11 +106,13 @@ fun UserDataList(
 fun EmptyUserData() {
     Column(
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxHeight()
     ) {
         Text(
             text = stringResource(id = R.string.common_no_result),
-            style = MaterialTheme.typography.h4
+            style = MaterialTheme.typography.h4,
+            color = MaterialTheme.colors.onSurface,
         )
         Text(
             text = stringResource(id = R.string.common_click_on_plus_to_add_data),

@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,10 @@ class SecureNoteDataDaoSecure @Inject constructor(
 ) : SecureNoteDataDao {
     override suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
         secureNoteDataDao.insertSecretNoteData(encrypt(secureNoteDataEntity))
+    }
+
+    override fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>) {
+        secureNoteDataDao.insertMultipleSecureNoteData(secureNoteDataEntity.map { encrypt(it) })
     }
 
     override suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
@@ -31,6 +36,14 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataDao.deleteSecretNoteDataByKey(key)
     }
 
+    override suspend fun exportAllData(): List<ExportSecureNoteData> {
+        return secureNoteDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override fun deleteAllData() {
+        secureNoteDataDao.deleteAllData()
+    }
+
     private fun encrypt(secureNoteDataEntity: SecureNoteDataEntity): SecureNoteDataEntity {
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
@@ -47,6 +60,17 @@ class SecureNoteDataDaoSecure @Inject constructor(
         secureNoteDataEntity.let {
             return SecureNoteDataEntity(
                 it.key,
+                it.title,
+                symmetricKeyUtils.decrypt(it.notes),
+                it.creationDate,
+                it.updateDate
+            )
+        }
+    }
+
+    private fun decrypt(exportSecureNoteData: ExportSecureNoteData): ExportSecureNoteData {
+        exportSecureNoteData.let {
+            return ExportSecureNoteData(
                 it.title,
                 symmetricKeyUtils.decrypt(it.notes),
                 it.creationDate,

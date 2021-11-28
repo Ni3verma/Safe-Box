@@ -2,14 +2,26 @@ package com.andryoga.safebox
 
 import android.app.Application
 import android.util.Log
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
 import timber.log.Timber
 import java.util.*
+import javax.inject.Inject
 
 @HiltAndroidApp
-class MainApplication : Application() {
+class MainApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override fun getWorkManagerConfiguration() =
+        Configuration.Builder()
+            .setWorkerFactory(workerFactory)
+            .build()
+
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
@@ -39,7 +51,7 @@ class ReleaseTree : @NotNull Timber.Tree() {
         val crashlytics = FirebaseCrashlytics.getInstance()
         crashlytics.log(message)
 
-        if (priority == Log.ERROR || priority == Log.WARN) {
+        if (priority == Log.ERROR) {
             // SEND ERROR REPORTS TO Crashlytics.
             if (t != null) {
                 crashlytics.recordException(t)

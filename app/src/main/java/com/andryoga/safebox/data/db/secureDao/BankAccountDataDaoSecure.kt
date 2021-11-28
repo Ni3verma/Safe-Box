@@ -4,6 +4,7 @@ import com.andryoga.safebox.common.Utils.decryptNullableString
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
+import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,9 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataDao.insertBankAccountData(encrypt(bankAccountDataEntity))
     }
 
+    override fun insertMultipleBankAccountData(bankAccountDataEntity: List<BankAccountDataEntity>) {
+        bankAccountDataDao.insertMultipleBankAccountData(bankAccountDataEntity.map { encrypt(it) })
+    }
     override suspend fun updateBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
         bankAccountDataDao.updateBankAccountData(encrypt(bankAccountDataEntity))
     }
@@ -35,6 +39,14 @@ class BankAccountDataDaoSecure @Inject constructor(
 
     override suspend fun deleteBankAccountDataByKey(key: Int) {
         bankAccountDataDao.deleteBankAccountDataByKey(key)
+    }
+
+    override suspend fun exportAllData(): List<ExportBankAccountData> {
+        return bankAccountDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override fun deleteAllData() {
+        bankAccountDataDao.deleteAllData()
     }
 
     private fun encrypt(bankAccountDataEntity: BankAccountDataEntity): BankAccountDataEntity {
@@ -61,6 +73,25 @@ class BankAccountDataDaoSecure @Inject constructor(
         bankAccountDataEntity.let {
             return BankAccountDataEntity(
                 it.key,
+                it.title,
+                symmetricKeyUtils.decrypt(it.accountNumber),
+                it.customerName,
+                it.customerId.decryptNullableString(symmetricKeyUtils),
+                it.branchCode,
+                it.branchName,
+                it.branchAddress,
+                it.ifscCode.decryptNullableString(symmetricKeyUtils),
+                it.micrCode.decryptNullableString(symmetricKeyUtils),
+                it.notes.decryptNullableString(symmetricKeyUtils),
+                it.creationDate,
+                it.updateDate
+            )
+        }
+    }
+
+    private fun decrypt(exportBankAccountData: ExportBankAccountData): ExportBankAccountData {
+        exportBankAccountData.let {
+            return ExportBankAccountData(
                 it.title,
                 symmetricKeyUtils.decrypt(it.accountNumber),
                 it.customerName,

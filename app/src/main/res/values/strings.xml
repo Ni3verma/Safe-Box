@@ -17,11 +17,15 @@
     <string name="cd_action_share">Share data</string>
 
     <!--    Screen title-->
+    <string name="drawer_group_my_data">My Data</string>
+    <string name="drawer_group_contact_us">Contact Us</string>
     <string name="drawer_title_all_items">All Items</string>
     <string name="drawer_title_login">Login</string>
     <string name="drawer_title_bank_account">Bank Account</string>
     <string name="drawer_title_bank_card">Bank Card</string>
     <string name="drawer_title_secure_note">Secure Note</string>
+    <string name="drawer_title_backup_and_restore">Backup and Restore</string>
+    <string name="drawer_title_playstore">Play Store</string>
     <string name="title_login_data">Login Data</string>
     <string name="title_bank_account_data">Bank Account Data</string>
     <string name="title_bank_card_data">Bank Card Data</string>
@@ -41,6 +45,7 @@
     <string name="common_data">Data</string>
     <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_ok">OK</string>
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
@@ -68,6 +73,39 @@
     <!--    delete record dialog-->
     <string name="delete_this_record">Delete this record?</string>
     <string name="delete_record_dialog_body">I understand that this record will be permanently removed.</string>
+
+
+    <!--     backup-->
+    <string name="backup">Backup</string>
+    <string name="backup_path_not_set_message">"Backup location is not set. Click below button to set. It is recommended that while selecting location, add a new folder (e.g. Safe Box backup) in local Storage and then select same."</string>
+    <string name="backup_set_location">Set Location</string>
+    <string name="backup_set_message">Backup location is set</string>
+    <string name="backup_path">Backup path is %1$s</string>
+    <string name="backup_time">Backup was last taken on %1$s</string>
+    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken everytime you login with password</string>
+    <string name="backup_edit_path">Edit Path</string>
+    <string name="backup_in_progress_message">Backup is in-progress</string>
+    <string name="backup_not_set_banner_message">Click here to set backup path</string>
+
+    <!--     restore-->
+    <string name="restore">Restore</string>
+    <string name="restore_info">"Click below button to select a valid backup file. Please note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
+    <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
+    <string name="restore_success_message">Successfully restored data</string>
+    <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
+
+    <!--     master password dialog-->
+    <string name="master_password">Master Password</string>
+    <string name="incorrect_pswrd_message">Password is incorrect</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_id">backup data safebox</string>
+    <string name="notification_backup_channel_name">Safe Box Backup</string>
+    <string name="notification_backup_channel_desc">This notification helps you to keep track of backup progress</string>
+    <string name="notification_backup_title">Data Backup</string>
+    <string name="notification_backup_in_progress">"Backing up your data to local storage. You will be notified once it is complete"</string>
+    <string name="notification_backup_failure">Backup Failed! Please set backup path</string>
+    <string name="notification_backup_success">Backup is complete. It is good idea to keep a copy in cloud</string>
 
     <!--    Other-->
     <string name="app_name">Safe Box</string>

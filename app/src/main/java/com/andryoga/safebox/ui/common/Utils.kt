@@ -1,10 +1,15 @@
 package com.andryoga.safebox.ui.common
 
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.constraintlayout.motion.widget.MotionLayout
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.databinding.ObservableField
 
 object Utils {
@@ -71,5 +76,40 @@ object Utils {
     * instead of using !!, use this util function*/
     fun ObservableField<String>.getValueOrEmpty(): String {
         return this.get() ?: ""
+    }
+
+    fun makeStatusNotification(context: Context, notificationOptions: NotificationOptions) {
+        // Make a channel if necessary
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create the NotificationChannel, but only on API 26+ because
+            // the NotificationChannel class is new and not in the support library
+            val channel = NotificationChannel(
+                notificationOptions.channelId,
+                notificationOptions.channelName,
+                notificationOptions.channelImportance
+            )
+            channel.description = notificationOptions.channelDescription
+
+            // Add the channel
+            val notificationManager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+
+            notificationManager?.createNotificationChannel(channel)
+        }
+
+        // Create the notification
+        val builder = NotificationCompat.Builder(context, notificationOptions.channelId)
+            .setSmallIcon(notificationOptions.notificationSmallIcon)
+            .setContentTitle(notificationOptions.notificationTitle)
+            .setContentText(notificationOptions.notificationContent)
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(notificationOptions.notificationContent)
+            )
+            .setPriority(notificationOptions.notificationPriority)
+            .setVibrate(LongArray(0))
+
+        // Show the notification
+        NotificationManagerCompat.from(context)
+            .notify(notificationOptions.notificationId, builder.build())
     }
 }

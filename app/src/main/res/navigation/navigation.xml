@@ -85,6 +85,9 @@
         <action
             android:id="@+id/action_nav_all_info_to_viewDataDetailsFragment"
             app:destination="@id/viewDataDetailsFragment" />
+        <action
+            android:id="@+id/action_nav_all_info_to_nav_backup_restore"
+            app:destination="@id/nav_backup_restore" />
     </fragment>
         <fragment
             android:id="@+id/nav_login_info"
@@ -180,5 +183,9 @@
             app:popUpTo="@id/viewDataDetailsFragment"
             app:popUpToInclusive="true" />
     </fragment>
+    <fragment
+        android:id="@+id/nav_backup_restore"
+        android:name="com.andryoga.safebox.ui.view.home.child.backupAndRestore.BackupAndRestoreFragment"
+        android:label="@string/drawer_title_backup_and_restore" />
 
 </navigation>

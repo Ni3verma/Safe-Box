@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
 import com.andryoga.safebox.data.db.docs.SearchLoginData
+import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -9,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 interface LoginDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertLoginData(loginDataEntity: LoginDataEntity)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>)
 
     @Update
     suspend fun updateLoginData(loginDataEntity: LoginDataEntity)
@@ -21,4 +25,10 @@ interface LoginDataDao {
 
     @Query("Delete from login_data where `key` = :key")
     suspend fun deleteLoginDataByKey(key: Int)
+
+    @Query("select * from login_data")
+    suspend fun exportAllData(): List<ExportLoginData>
+
+    @Query("delete from login_data")
+    fun deleteAllData()
 }

@@ -3,10 +3,7 @@ package com.andryoga.safebox.ui.view.home.child.all
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.common.sampleData.RandomUserData.insertRandomData
-import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
-import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
-import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
-import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.safebox.data.repository.interfaces.*
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.common.UserDataType.*
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
@@ -22,8 +19,19 @@ class AllInfoViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository,
     private val bankAccountDataRepository: BankAccountDataRepository,
     private val bankCardDataRepository: BankCardDataRepository,
-    private val secureNoteDataRepository: SecureNoteDataRepository
+    private val secureNoteDataRepository: SecureNoteDataRepository,
+    private val backupMetadataRepository: BackupMetadataRepository
 ) : ViewModel() {
+    private val _isBackupPathSet = MutableStateFlow<Boolean>(true)
+    val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
+
+    init {
+        viewModelScope.launch(Dispatchers.IO) {
+            backupMetadataRepository.getBackupMetadata().collect {
+                _isBackupPathSet.value = it != null
+            }
+        }
+    }
 
     @ExperimentalCoroutinesApi
     val allData = flow {

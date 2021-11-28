@@ -16,7 +16,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.Constants.APP_GITHUB_URL
+import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
@@ -32,6 +32,7 @@ import timber.log.Timber
 class MainActivity : AppCompatActivity() {
     private var lastInteractionTime: Long = System.currentTimeMillis()
     private var reviewInfo: ReviewInfo? = null
+    private var isUserAwayTimeoutSuspended = false
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerLayout: DrawerLayout
@@ -89,6 +90,11 @@ class MainActivity : AppCompatActivity() {
                 navController.popBackStack(drawerLayoutFirstScreen, false)
             } else if (id == R.id.open_git) {
                 openGithubPage()
+                drawerLayout.closeDrawers()
+                // return false so that this option is not selected
+                return@setNavigationItemSelectedListener false
+            } else if (id == R.id.open_playstore) {
+                openPlayStore()
                 drawerLayout.closeDrawers()
                 // return false so that this option is not selected
                 return@setNavigationItemSelectedListener false
@@ -161,11 +167,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun openPlayStore() {
+        Timber.i("opening playstore")
+        val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+        if (marketIntent.resolveActivity(packageManager) != null) {
+            startActivity(marketIntent)
+        } else {
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                )
+            )
+        }
+    }
+
     /*Check if user is away for too long
     * @returns true if timeout has happened
     * */
     fun checkUserAwayTimeout(): Boolean {
-        return if ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS) {
+        /*
+        * if timeout was not suspended manually and user was away for too long
+        * then show non-cancelable dialog
+        * */
+        return if (!isUserAwayTimeoutSuspended &&
+            ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS)
+        ) {
             Timber.i("away timeout, showing dialog")
             binding.hideView.visibility = View.VISIBLE
             MaterialAlertDialogBuilder(this)
@@ -179,6 +206,23 @@ class MainActivity : AppCompatActivity() {
                 }.show()
             true
         } else false
+    }
+
+    /*
+    * Used to suspend user away timeout feature
+    * */
+    fun suspendUserAwayTimeout() {
+        Timber.i("suspending away timeout")
+        isUserAwayTimeoutSuspended = true
+    }
+
+    /*
+    * Used to again continue user away timeout feature
+    * */
+    fun continueUserAwayTimeout() {
+        Timber.i("continuing away timeout")
+        lastInteractionTime = System.currentTimeMillis()
+        isUserAwayTimeoutSuspended = false
     }
 
     private fun prefetchReviewInfo() {

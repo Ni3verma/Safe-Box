@@ -3,8 +3,10 @@ package com.andryoga.safebox.di
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import com.andryoga.safebox.security.HashingUtilsImpl
+import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
 import com.andryoga.safebox.security.interfaces.HashingUtils
+import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.Module
 import dagger.Provides
@@ -33,6 +35,18 @@ object SecurityModule {
         return SymmetricKeyUtilsImpl(secretKey)
     }
 
+    @Singleton
+    @Provides
+    fun provideHashingUtils(): HashingUtils {
+        return HashingUtilsImpl()
+    }
+
+    @Singleton
+    @Provides
+    fun providePasswordBasedEncryption(): PasswordBasedEncryption {
+        return PasswordBasedEncryptionImpl()
+    }
+
     private fun getSymmetricKey(): SecretKey {
         val alias = "symmetricDataKey"
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
@@ -57,11 +71,5 @@ object SecurityModule {
             keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry
 
         return secretKeyEntry.secretKey
-    }
-
-    @Singleton
-    @Provides
-    fun provideHashingUtils(): HashingUtils {
-        return HashingUtilsImpl()
     }
 }
