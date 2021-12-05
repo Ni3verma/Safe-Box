@@ -1,9 +1,8 @@
 package com.andryoga.safebox.ui.view.home.child.all
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import androidx.appcompat.widget.SearchView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,8 +47,10 @@ class AllInfoFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         Timber.i("on create view of all info fragment")
+        setHasOptionsMenu(true)
         return ComposeView(requireContext()).apply {
             setContent {
+                val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.allData.collectAsState(
                     initial = Resource.loading(
                         emptyList()
@@ -64,11 +65,12 @@ class AllInfoFragment : Fragment() {
                         }
                         UserDataList(
                             listResource = listData,
+                            searchTextFilter = searchTextFilter,
                             onItemClick = { onListItemClick(it) },
                             onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                         )
                     }
-                    AddNewDataFab() {
+                    AddNewDataFab {
                         findNavController()
                             .navigate(R.id.action_nav_all_info_to_addNewUserPersonalDataDialogFragment)
                     }
@@ -87,6 +89,22 @@ class AllInfoFragment : Fragment() {
         } else {
             Timber.w("activity expected was MainActivity but was ${requireActivity().localClassName}")
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.home_info_screen, menu)
+        val searchView = menu.findItem(R.id.action_search).actionView as SearchView
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchText(newText)
+                return true
+            }
+        })
     }
 
     private fun onListItemClick(item: UserListItemData) {

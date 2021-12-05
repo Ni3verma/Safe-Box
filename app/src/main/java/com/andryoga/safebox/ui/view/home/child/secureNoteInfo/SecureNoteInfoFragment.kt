@@ -1,9 +1,8 @@
 package com.andryoga.safebox.ui.view.home.child.secureNoteInfo
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import androidx.appcompat.widget.SearchView
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -30,8 +29,10 @@ class SecureNoteInfoFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        setHasOptionsMenu(true)
         return ComposeView(requireContext()).apply {
             setContent {
+                val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.listData.collectAsState(
                     initial = Resource.loading(
                         emptyList()
@@ -40,16 +41,33 @@ class SecureNoteInfoFragment : Fragment() {
                 BasicSafeBoxTheme {
                     UserDataList(
                         listResource = listData,
+                        searchTextFilter = searchTextFilter,
                         onItemClick = { onListItemClick(it) },
                         onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                     )
-                    AddNewDataFab() {
+                    AddNewDataFab {
                         findNavController()
                             .navigate(R.id.action_nav_secure_note_info_to_addNewUserPersonalDataDialogFragment)
                     }
                 }
             }
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.home_info_screen, menu)
+        val searchView = menu.findItem(R.id.action_search).actionView as SearchView
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchText(newText)
+                return true
+            }
+        })
     }
 
     private fun onListItemClick(item: UserListItemData) {

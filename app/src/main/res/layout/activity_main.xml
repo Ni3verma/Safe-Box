@@ -6,19 +6,36 @@
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="false"
-        tools:openDrawer="start">
+        android:layout_height="match_parent">
 
         <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/appbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/my_toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    android:elevation="4dp"
+                    app:actionViewClass="android.support.v7.widget.SearchView"
+                    tools:visibility="gone"
+                    android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+                    app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight.ActionBar"
+                    app:layout_scrollFlags="enterAlwaysCollapsed"/>
+
+            </com.google.android.material.appbar.AppBarLayout>
+
             <FrameLayout
                 android:id="@+id/frame_layout"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:measureAllChildren="true">
+                android:measureAllChildren="true"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
                 <fragment
                     android:id="@+id/nav_host_fragment"
@@ -36,7 +53,6 @@
             android:layout_width="280dp"
             android:layout_height="match_parent"
             android:layout_gravity="start"
-            android:fitsSystemWindows="false"
             app:menu="@menu/home_drawer" />
 
         <ImageView

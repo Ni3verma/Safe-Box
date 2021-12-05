@@ -22,8 +22,11 @@ class AllInfoViewModel @Inject constructor(
     private val secureNoteDataRepository: SecureNoteDataRepository,
     private val backupMetadataRepository: BackupMetadataRepository
 ) : ViewModel() {
-    private val _isBackupPathSet = MutableStateFlow<Boolean>(true)
+    private val _isBackupPathSet = MutableStateFlow(true)
     val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
+
+    private val _searchTextFilter = MutableStateFlow<String?>(null)
+    val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -156,6 +159,10 @@ class AllInfoViewModel @Inject constructor(
                 SECURE_NOTE -> secureNoteDataRepository.deleteSecureNoteDataByKey(key)
             }
         }
+    }
+
+    fun setSearchText(searchText: String?) {
+        _searchTextFilter.value = searchText
     }
 
     // This method is for test purpose only
