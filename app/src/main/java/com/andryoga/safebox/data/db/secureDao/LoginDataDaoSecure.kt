@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.andryoga.safebox.common.Utils.decryptNullableString
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.LoginDataDao
@@ -49,6 +50,11 @@ class LoginDataDaoSecure @Inject constructor(
     override fun deleteAllData() {
         loginDataDao.deleteAllData()
     }
+
+    override fun getDataForAutoFillService(query: SupportSQLiteQuery): List<LoginDataEntity> {
+        return loginDataDao.getDataForAutoFillService(query).map { decrypt(it) }
+    }
+
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {
         loginDataEntity.let {
             return LoginDataEntity(

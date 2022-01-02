@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.db.dao
 
 import androidx.room.*
+import androidx.sqlite.db.SupportSQLiteQuery
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
@@ -31,4 +32,7 @@ interface LoginDataDao {
 
     @Query("delete from login_data")
     fun deleteAllData()
+
+    @RawQuery
+    fun getDataForAutoFillService(query: SupportSQLiteQuery): List<LoginDataEntity>
 }

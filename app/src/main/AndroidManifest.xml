@@ -31,6 +31,15 @@
             android:exported="false"
             tools:node="remove">
         </provider>
+        <service
+            android:name=".service.SafeBoxAutoFillService"
+            android:label="Safe Box Autofill Service"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

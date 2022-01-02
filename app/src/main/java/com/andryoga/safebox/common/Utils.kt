@@ -22,4 +22,11 @@ object Utils {
     fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
         return SimpleDateFormat(pattern).format(date)
     }
+
+    fun String.isOneOf(vararg matches: String, ignoreCase: Boolean = true): Boolean {
+        matches.forEach { match ->
+            if (this.contains(match, ignoreCase)) return true
+        }
+        return false
+    }
 }
