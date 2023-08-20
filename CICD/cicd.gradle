@@ -23,9 +23,12 @@ task installGitHooks(type: Exec) {
     args '-R', '+x', '.git/hooks/'
     dependsOn copyGitHooks
     onlyIf {
+        println("checking if mac/linux")
         def isMacOrLinux = isLinuxOrMacOs()
         if(!isMacOrLinux){
             println("skipping task on Windows OS")
+        } else{
+            println("this is mac/linux")
         }
     }
     doLast {
