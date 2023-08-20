@@ -11,21 +11,9 @@ import android.widget.Toast.LENGTH_SHORT
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Share
@@ -87,15 +75,12 @@ class ViewDataDetailsFragment : Fragment() {
                     UserDataType.LOGIN_DATA -> {
                         handleLoginDataType(id = id)
                     }
-
                     UserDataType.BANK_ACCOUNT -> {
                         handleBankAccountDataType(id = id)
                     }
-
                     UserDataType.BANK_CARD -> {
                         handleBankCardDataType(id = id)
                     }
-
                     UserDataType.SECURE_NOTE -> {
                         handleSecureNoteDataType(id = id)
                     }
@@ -135,7 +120,7 @@ class ViewDataDetailsFragment : Fragment() {
         val viewData = data.data
         if (viewData != null) {
             map = mapOf(
-                R.string.account_number to ViewDataProperties(addSpaceAfter4Chars(viewData.accountNumber)),
+                R.string.account_number to ViewDataProperties(viewData.accountNumber),
                 R.string.customer_name to ViewDataProperties(viewData.customerName),
                 R.string.customer_id to ViewDataProperties(viewData.customerId, false),
                 R.string.branch_code to ViewDataProperties(viewData.branchCode),
@@ -163,7 +148,7 @@ class ViewDataDetailsFragment : Fragment() {
         if (viewData != null) {
             map = mapOf(
                 R.string.name to ViewDataProperties(viewData.name),
-                R.string.number to ViewDataProperties(addSpaceAfter4Chars(viewData.number)),
+                R.string.number to ViewDataProperties(viewData.number),
                 R.string.pin to ViewDataProperties(viewData.pin, false),
                 R.string.cvv to ViewDataProperties(viewData.cvv, false),
                 R.string.expiryDate to ViewDataProperties(viewData.expiryDate),
@@ -219,7 +204,7 @@ class ViewDataDetailsFragment : Fragment() {
                         interactionSource = remember { MutableInteractionSource() }
                     ) {
                         Timber.i("$label clicked for copy")
-                        copyContentToClipboard(label, fieldProperties.value.trim())
+                        copyContentToClipboard(label, fieldProperties.value)
                     }
             )
         }
@@ -275,11 +260,9 @@ class ViewDataDetailsFragment : Fragment() {
                     CircularProgressIndicator()
                 }
             }
-
             Status.ERROR -> {
                 // FUTURE
             }
-
             Status.SUCCESS -> {
                 val isDeleteRecordDialogVisible by viewModel.showDeleteRecordDialog.collectAsState()
                 if (isDeleteRecordDialogVisible) {
@@ -404,19 +387,16 @@ class ViewDataDetailsFragment : Fragment() {
                         args.id
                     )
                 }
-
                 UserDataType.BANK_ACCOUNT -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankAccountDataFragment(
                         args.id
                     )
                 }
-
                 UserDataType.BANK_CARD -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankCardDataFragment(
                         args.id
                     )
                 }
-
                 UserDataType.SECURE_NOTE -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToSecureNoteDataFragment(
                         args.id
@@ -454,10 +434,10 @@ class ViewDataDetailsFragment : Fragment() {
             }
         dataStringBuffer.append(
             "---------------\n${
-                getString(
-                    R.string.common_app_playstore_download,
-                    APP_PLAYSTORE_LINK
-                )
+            getString(
+                R.string.common_app_playstore_download,
+                APP_PLAYSTORE_LINK
+            )
             }"
         )
         return dataStringBuffer.toString()
@@ -476,10 +456,5 @@ class ViewDataDetailsFragment : Fragment() {
                 LENGTH_SHORT
             )
             .show()
-    }
-
-    private fun addSpaceAfter4Chars(input: String): String {
-        val regex = "(.{1,4})".toRegex()
-        return regex.replace(input, "$1 ").removeSuffix(" ")
     }
 }
