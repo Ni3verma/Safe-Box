@@ -74,7 +74,7 @@ class LoginInfoFragment : Fragment() {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
             LoginInfoFragmentDirections.actionNavLoginInfoToViewDataDetailsFragment(
-                item.id, item.type
+                item.type, item.id
             )
         )
     }
