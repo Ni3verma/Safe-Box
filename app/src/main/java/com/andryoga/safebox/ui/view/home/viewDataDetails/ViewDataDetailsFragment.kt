@@ -75,12 +75,15 @@ class ViewDataDetailsFragment : Fragment() {
                     UserDataType.LOGIN_DATA -> {
                         handleLoginDataType(id = id)
                     }
+
                     UserDataType.BANK_ACCOUNT -> {
                         handleBankAccountDataType(id = id)
                     }
+
                     UserDataType.BANK_CARD -> {
                         handleBankCardDataType(id = id)
                     }
+
                     UserDataType.SECURE_NOTE -> {
                         handleSecureNoteDataType(id = id)
                     }
@@ -439,10 +442,10 @@ class ViewDataDetailsFragment : Fragment() {
             }
         dataStringBuffer.append(
             "---------------\n${
-                getString(
-                    R.string.common_app_playstore_download,
-                    APP_PLAYSTORE_LINK
-                )
+            getString(
+                R.string.common_app_playstore_download,
+                APP_PLAYSTORE_LINK
+            )
             }"
         )
         return dataStringBuffer.toString()
