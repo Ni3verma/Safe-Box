@@ -91,9 +91,7 @@ android {
             signingConfig signingConfigs.qa
         }
     }
-//    kotlinOptions {
-//        setUseIR(true)
-//    }
+
     buildFeatures {
         viewBinding true
         dataBinding true
