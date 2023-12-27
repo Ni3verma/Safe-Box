@@ -35,7 +35,7 @@ ext{
     biometric_version='1.1.0'
     room_version='2.6.1'
     compose_version = '1.1.1'
-    work_version = '2.6.0'
+    work_version = '2.7.0'
 }
 
 allprojects {
