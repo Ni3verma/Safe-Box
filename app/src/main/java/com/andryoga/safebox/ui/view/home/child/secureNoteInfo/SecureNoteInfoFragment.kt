@@ -74,8 +74,8 @@ class SecureNoteInfoFragment : Fragment() {
         Timber.i("clicked ${item.id}")
         findNavController().navigate(
             SecureNoteInfoFragmentDirections.actionNavSecureNoteInfoToViewDataDetailsFragment(
-                item.id,
-                item.type
+                item.type,
+                item.id
             )
         )
     }

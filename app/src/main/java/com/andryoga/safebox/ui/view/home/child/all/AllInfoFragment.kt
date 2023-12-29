@@ -111,7 +111,7 @@ class AllInfoFragment : Fragment() {
         val id = item.id
         Timber.i("clicked $id - ${item.type.name}")
         findNavController().navigate(
-            AllInfoFragmentDirections.actionNavAllInfoToViewDataDetailsFragment(id, item.type)
+            AllInfoFragmentDirections.actionNavAllInfoToViewDataDetailsFragment(item.type, id)
         )
     }
 
