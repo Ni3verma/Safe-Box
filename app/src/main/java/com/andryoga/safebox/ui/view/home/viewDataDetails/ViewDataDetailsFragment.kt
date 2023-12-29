@@ -207,7 +207,7 @@ class ViewDataDetailsFragment : Fragment() {
                         interactionSource = remember { MutableInteractionSource() }
                     ) {
                         Timber.i("$label clicked for copy")
-                        copyContentToClipboard(label, fieldProperties.value.trim())
+                        copyContentToClipboard(label, fieldProperties.value)
                     }
             )
         }
