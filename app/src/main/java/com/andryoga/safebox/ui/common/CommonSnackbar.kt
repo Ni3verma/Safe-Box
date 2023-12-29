@@ -6,25 +6,31 @@ import com.andryoga.safebox.R
 import com.google.android.material.snackbar.Snackbar
 
 object CommonSnackbar {
-    fun showErrorSnackbar(view: View, message: String) {
+    fun showErrorSnackbar(
+        view: View,
+        message: String,
+    ) {
         Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
             .setBackgroundTint(
                 ContextCompat.getColor(
                     view.context,
-                    android.R.color.holo_red_light
-                )
+                    android.R.color.holo_red_light,
+                ),
             )
             .setTextColor(ContextCompat.getColor(view.context, R.color.white_50))
             .show()
     }
 
-    fun showSuccessSnackbar(view: View, message: String) {
+    fun showSuccessSnackbar(
+        view: View,
+        message: String,
+    ) {
         Snackbar.make(view, message, Snackbar.LENGTH_SHORT)
             .setBackgroundTint(
                 ContextCompat.getColor(
                     view.context,
-                    R.color.colorPrimary
-                )
+                    R.color.colorPrimary,
+                ),
             )
             .setTextColor(ContextCompat.getColor(view.context, R.color.white_50))
             .show()
@@ -33,14 +39,14 @@ object CommonSnackbar {
     fun getLoadingSnackbar(
         view: View,
         message: String,
-        duration: Int = Snackbar.LENGTH_INDEFINITE
+        duration: Int = Snackbar.LENGTH_INDEFINITE,
     ): Snackbar {
         return Snackbar.make(view, message, duration)
             .setBackgroundTint(
                 ContextCompat.getColor(
                     view.context,
-                    R.color.colorAccent
-                )
+                    R.color.colorAccent,
+                ),
             )
             .setTextColor(ContextCompat.getColor(view.context, R.color.black_800))
     }

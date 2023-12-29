@@ -32,12 +32,12 @@ class LoginDataFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding =
             DataBindingUtil.inflate(
                 inflater, R.layout.login_data_fragment,
-                container, false
+                container, false,
             )
         binding.screenData = viewModel.loginScreenData
         binding.lifecycleOwner = this
@@ -47,15 +47,19 @@ class LoginDataFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val requiredFieldValidator = RequiredFieldValidator(
-            listOf(
-                binding.title,
-                binding.userId
-            ),
-            binding.saveBtn,
-            tagLocal
-        )
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
+        val requiredFieldValidator =
+            RequiredFieldValidator(
+                listOf(
+                    binding.title,
+                    binding.userId,
+                ),
+                binding.saveBtn,
+                tagLocal,
+            )
         requiredFieldValidator.validate()
     }
 
@@ -66,6 +70,7 @@ class LoginDataFragment : Fragment() {
             }
         }
     }
+
     private fun handleSaveButtonClick(resource: Resource<Boolean>) {
         Timber.i("save clicked")
         // NEED_HELP: 6/19/2021 Not able to figure out
@@ -81,7 +86,7 @@ class LoginDataFragment : Fragment() {
                 switchVisibility(binding.saveBtn, binding.loading)
                 showErrorSnackbar(
                     requireActivity().findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_error_saving_data)
+                    getString(R.string.snackbar_common_error_saving_data),
                 )
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()

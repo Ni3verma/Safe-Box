@@ -6,9 +6,10 @@ interface PasswordBasedEncryption {
         data: ByteArray,
         salt: ByteArray,
         iv: ByteArray,
-        encrypt: Boolean
+        encrypt: Boolean,
     ): ByteArray
 
     fun getRandomSalt(): ByteArray
+
     fun getRandomIV(): ByteArray
 }

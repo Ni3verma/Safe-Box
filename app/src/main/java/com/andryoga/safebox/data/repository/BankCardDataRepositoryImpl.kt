@@ -11,30 +11,32 @@ import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class BankCardDataRepositoryImpl @Inject constructor(
-    private val bankCardDataDaoSecure: BankCardDataDaoSecure
-) : BankCardDataRepository {
-    override suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = true))
-    }
+class BankCardDataRepositoryImpl
+    @Inject
+    constructor(
+        private val bankCardDataDaoSecure: BankCardDataDaoSecure,
+    ) : BankCardDataRepository {
+        override suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData) {
+            bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = true))
+        }
 
-    override suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.updateBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = false))
-    }
+        override suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData) {
+            bankCardDataDaoSecure.updateBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = false))
+        }
 
-    override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
-        return bankCardDataDaoSecure.getAllBankCardData()
-    }
+        override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
+            return bankCardDataDaoSecure.getAllBankCardData()
+        }
 
-    override suspend fun getBankCardDataByKey(key: Int): BankCardScreenData {
-        return bankCardDataDaoSecure.getBankCardDataByKey(key).toBankCardScreenData()
-    }
+        override suspend fun getBankCardDataByKey(key: Int): BankCardScreenData {
+            return bankCardDataDaoSecure.getBankCardDataByKey(key).toBankCardScreenData()
+        }
 
-    override suspend fun deleteBankCardDataByKey(key: Int) {
-        bankCardDataDaoSecure.deleteBankCardDataByKey(key)
-    }
+        override suspend fun deleteBankCardDataByKey(key: Int) {
+            bankCardDataDaoSecure.deleteBankCardDataByKey(key)
+        }
 
-    override suspend fun getViewBankCardDataByKey(key: Int): ViewBankCardData {
-        return bankCardDataDaoSecure.getBankCardDataByKey(key).toViewBankCardData()
+        override suspend fun getViewBankCardDataByKey(key: Int): ViewBankCardData {
+            return bankCardDataDaoSecure.getBankCardDataByKey(key).toViewBankCardData()
+        }
     }
-}

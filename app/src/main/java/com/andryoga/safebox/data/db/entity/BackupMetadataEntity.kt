@@ -11,5 +11,5 @@ data class BackupMetadataEntity(
     val uriString: String,
     val displayPath: String,
     val lastBackupDate: Date?,
-    val createdOn: Date
+    val createdOn: Date,
 )

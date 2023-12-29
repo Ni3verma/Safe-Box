@@ -31,7 +31,7 @@ class PasswordBasedEncryptionImpl : PasswordBasedEncryption {
         data: ByteArray,
         salt: ByteArray,
         iv: ByteArray,
-        encrypt: Boolean
+        encrypt: Boolean,
     ): ByteArray {
         val pbKeySpec = PBEKeySpec(password, salt, KEY_ITERATION_COUNT, KEY_LENGTH)
         val secretKeyFactory = SecretKeyFactory.getInstance(KEY_FACTORY_ALGO)
@@ -47,7 +47,8 @@ class PasswordBasedEncryptionImpl : PasswordBasedEncryption {
             } else {
                 Cipher.DECRYPT_MODE
             },
-            keySpec, ivSpec
+            keySpec,
+            ivSpec,
         )
         return cipher.doFinal(data)
     }

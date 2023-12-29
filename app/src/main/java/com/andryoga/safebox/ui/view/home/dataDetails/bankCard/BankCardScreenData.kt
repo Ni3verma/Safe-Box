@@ -7,10 +7,10 @@ import java.util.*
 
 class BankCardScreenData(
     /*
-   * It is very important to initialize key with 0
-   * so that when we convert screen data to entity for db insertion at that
-   * 0 will be passed. For room zero means that it can auto-increment value
-   * */
+     * It is very important to initialize key with 0
+     * so that when we convert screen data to entity for db insertion at that
+     * 0 will be passed. For room zero means that it can auto-increment value
+     * */
     pKey: Int = 0,
     pTitle: String = "",
     pName: String? = null,
@@ -19,7 +19,7 @@ class BankCardScreenData(
     pPin: String? = null,
     pCvv: String? = null,
     pNotes: String? = null,
-    pCreationDate: Date = Date()
+    pCreationDate: Date = Date(),
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -33,10 +33,10 @@ class BankCardScreenData(
 
     companion object {
         /*
-        * converts screen data to db entity data
-        * while inserting new data in db, we want current date for creation date
-        * while updating data in db, we don't want to update creation date
-        * */
+         * converts screen data to db entity data
+         * while inserting new data in db, we want current date for creation date
+         * while updating data in db, we don't want to update creation date
+         * */
         fun BankCardScreenData.toBankCardDataEntity(getCurrentDate: Boolean): BankCardDataEntity {
             return BankCardDataEntity(
                 key,
@@ -48,13 +48,13 @@ class BankCardScreenData(
                 expiryDate.get(),
                 notes.get(),
                 if (getCurrentDate) Date() else creationDate,
-                Date()
+                Date(),
             )
         }
 
         fun BankCardDataEntity.toBankCardScreenData(): BankCardScreenData {
             return BankCardScreenData(
-                key, title, name, number, expiryDate, pin, cvv, notes, creationDate
+                key, title, name, number, expiryDate, pin, cvv, notes, creationDate,
             )
         }
     }

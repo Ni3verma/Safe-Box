@@ -60,7 +60,7 @@ class ViewDataDetailsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         clipboardManager =
             requireActivity().getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
@@ -100,14 +100,15 @@ class ViewDataDetailsFragment : Fragment() {
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
-            map = mapOf(
-                R.string.url to ViewDataProperties(viewData.url),
-                R.string.password to ViewDataProperties(viewData.password, false),
-                R.string.user_id to ViewDataProperties(viewData.userId),
-                R.string.notes to ViewDataProperties(viewData.notes, false),
-                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
-                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
-            )
+            map =
+                mapOf(
+                    R.string.url to ViewDataProperties(viewData.url),
+                    R.string.password to ViewDataProperties(viewData.password, false),
+                    R.string.user_id to ViewDataProperties(viewData.userId),
+                    R.string.notes to ViewDataProperties(viewData.notes, false),
+                    R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                    R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
+                )
         }
         BasicSafeBoxTheme {
             UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
@@ -122,19 +123,20 @@ class ViewDataDetailsFragment : Fragment() {
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
-            map = mapOf(
-                R.string.account_number to ViewDataProperties(addSpaceAfter4Chars(viewData.accountNumber)),
-                R.string.customer_name to ViewDataProperties(viewData.customerName),
-                R.string.customer_id to ViewDataProperties(viewData.customerId, false),
-                R.string.branch_code to ViewDataProperties(viewData.branchCode),
-                R.string.branch_name to ViewDataProperties(viewData.branchName),
-                R.string.branch_address to ViewDataProperties(viewData.branchAddress),
-                R.string.ifsc_code to ViewDataProperties(viewData.ifscCode),
-                R.string.micr_code to ViewDataProperties(viewData.micrCode, false),
-                R.string.notes to ViewDataProperties(viewData.notes, false),
-                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
-                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
-            )
+            map =
+                mapOf(
+                    R.string.account_number to ViewDataProperties(addSpaceAfter4Chars(viewData.accountNumber)),
+                    R.string.customer_name to ViewDataProperties(viewData.customerName),
+                    R.string.customer_id to ViewDataProperties(viewData.customerId, false),
+                    R.string.branch_code to ViewDataProperties(viewData.branchCode),
+                    R.string.branch_name to ViewDataProperties(viewData.branchName),
+                    R.string.branch_address to ViewDataProperties(viewData.branchAddress),
+                    R.string.ifsc_code to ViewDataProperties(viewData.ifscCode),
+                    R.string.micr_code to ViewDataProperties(viewData.micrCode, false),
+                    R.string.notes to ViewDataProperties(viewData.notes, false),
+                    R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                    R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
+                )
         }
         BasicSafeBoxTheme {
             UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
@@ -149,16 +151,17 @@ class ViewDataDetailsFragment : Fragment() {
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
-            map = mapOf(
-                R.string.name to ViewDataProperties(viewData.name),
-                R.string.number to ViewDataProperties(addSpaceAfter4Chars(viewData.number)),
-                R.string.pin to ViewDataProperties(viewData.pin, false),
-                R.string.cvv to ViewDataProperties(viewData.cvv, false),
-                R.string.expiryDate to ViewDataProperties(viewData.expiryDate),
-                R.string.notes to ViewDataProperties(viewData.notes, false),
-                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
-                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
-            )
+            map =
+                mapOf(
+                    R.string.name to ViewDataProperties(viewData.name),
+                    R.string.number to ViewDataProperties(addSpaceAfter4Chars(viewData.number)),
+                    R.string.pin to ViewDataProperties(viewData.pin, false),
+                    R.string.cvv to ViewDataProperties(viewData.cvv, false),
+                    R.string.expiryDate to ViewDataProperties(viewData.expiryDate),
+                    R.string.notes to ViewDataProperties(viewData.notes, false),
+                    R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                    R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
+                )
         }
         BasicSafeBoxTheme {
             UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
@@ -173,11 +176,12 @@ class ViewDataDetailsFragment : Fragment() {
         logResource(tagLocal, data)
         val viewData = data.data
         if (viewData != null) {
-            map = mapOf(
-                R.string.notes to ViewDataProperties(viewData.notes),
-                R.string.created_on to ViewDataProperties(viewData.creationDate, false),
-                R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
-            )
+            map =
+                mapOf(
+                    R.string.notes to ViewDataProperties(viewData.notes),
+                    R.string.created_on to ViewDataProperties(viewData.creationDate, false),
+                    R.string.updated_on to ViewDataProperties(viewData.updateDate, false),
+                )
         }
         BasicSafeBoxTheme {
             UserDataView(map, viewData?.title ?: "", data.status, args.userDataType)
@@ -187,28 +191,29 @@ class ViewDataDetailsFragment : Fragment() {
     @Composable
     fun UserDataField(
         fieldLabelResourceId: Int,
-        fieldProperties: ViewDataProperties
+        fieldProperties: ViewDataProperties,
     ) {
         if (fieldProperties.value != null) {
             val label = stringResource(id = fieldLabelResourceId).replace("̽", "")
             Text(
                 text = label,
                 color = MaterialTheme.colors.secondaryVariant,
-                style = MaterialTheme.typography.h6
+                style = MaterialTheme.typography.h6,
             )
             Text(
                 text = fieldProperties.value,
                 color = MaterialTheme.colors.onBackground,
                 style = MaterialTheme.typography.subtitle1,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .clickable(
-                        indication = rememberRipple(),
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) {
-                        Timber.i("$label clicked for copy")
-                        copyContentToClipboard(label, fieldProperties.value)
-                    }
+                modifier =
+                    Modifier
+                        .padding(bottom = 8.dp)
+                        .clickable(
+                            indication = rememberRipple(),
+                            interactionSource = remember { MutableInteractionSource() },
+                        ) {
+                            Timber.i("$label clicked for copy")
+                            copyContentToClipboard(label, fieldProperties.value)
+                        },
             )
         }
     }
@@ -220,27 +225,28 @@ class ViewDataDetailsFragment : Fragment() {
         contentDescriptionResId: Int,
         iconSize: Dp = 32.dp,
         tint: Color = MaterialTheme.colors.primary,
-        onClick: () -> Unit
+        onClick: () -> Unit,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.clickable(
-                indication = rememberRipple(bounded = false),
-                interactionSource = remember { MutableInteractionSource() }
-            ) {
-                onClick()
-            }
+            modifier =
+                Modifier.clickable(
+                    indication = rememberRipple(bounded = false),
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {
+                    onClick()
+                },
         ) {
             Icon(
                 imageVector = imageVector,
                 contentDescription = stringResource(id = contentDescriptionResId),
                 tint = tint,
-                modifier = Modifier.size(iconSize)
+                modifier = Modifier.size(iconSize),
             )
             Text(
                 text = stringResource(id = labelResId),
                 color = MaterialTheme.colors.onBackground,
-                style = MaterialTheme.typography.body1
+                style = MaterialTheme.typography.body1,
             )
         }
     }
@@ -250,7 +256,7 @@ class ViewDataDetailsFragment : Fragment() {
         viewDataMap: Map<Int, ViewDataProperties>,
         title: String,
         status: Status,
-        dataType: UserDataType
+        dataType: UserDataType,
     ) {
         when (status) {
             Status.LOADING -> {
@@ -258,7 +264,7 @@ class ViewDataDetailsFragment : Fragment() {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -274,10 +280,11 @@ class ViewDataDetailsFragment : Fragment() {
                     DeleteRecordDialog()
                 }
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                        .verticalScroll(state = ScrollState(0))
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                            .verticalScroll(state = ScrollState(0)),
                 ) {
                     // title
                     Text(
@@ -287,7 +294,7 @@ class ViewDataDetailsFragment : Fragment() {
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
 
                     // action row
@@ -297,7 +304,7 @@ class ViewDataDetailsFragment : Fragment() {
                     viewDataMap.forEach { (titleResourceId, properties) ->
                         UserDataField(
                             fieldLabelResourceId = titleResourceId,
-                            fieldProperties = properties
+                            fieldProperties = properties,
                         )
                     }
                 }
@@ -309,17 +316,18 @@ class ViewDataDetailsFragment : Fragment() {
     private fun ActionRow(
         title: String,
         dataType: UserDataType,
-        viewDataMap: Map<Int, ViewDataProperties>
+        viewDataMap: Map<Int, ViewDataProperties>,
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier =
+                Modifier
+                    .fillMaxWidth(),
         ) {
             ActionIcon(
                 imageVector = Icons.Filled.Edit,
                 labelResId = R.string.edit,
-                contentDescriptionResId = R.string.cd_action_edit
+                contentDescriptionResId = R.string.cd_action_edit,
             ) {
                 Timber.i("edit action clicked")
                 navigateToEditScreen(dataType)
@@ -328,7 +336,7 @@ class ViewDataDetailsFragment : Fragment() {
                 ActionIcon(
                     imageVector = Icons.Filled.Share,
                     labelResId = R.string.share,
-                    contentDescriptionResId = R.string.cd_action_share
+                    contentDescriptionResId = R.string.cd_action_share,
                 ) {
                     Timber.i("share action clicked")
                     shareContent(title, viewDataMap)
@@ -337,7 +345,7 @@ class ViewDataDetailsFragment : Fragment() {
             ActionIcon(
                 imageVector = MaterialIconsCopy.DeleteForeverFilled,
                 labelResId = R.string.delete,
-                contentDescriptionResId = R.string.cd_action_delete
+                contentDescriptionResId = R.string.cd_action_delete,
             ) {
                 Timber.i("delete action clicked")
                 viewModel.setDeleteRecordDialogVisibility(true)
@@ -346,7 +354,7 @@ class ViewDataDetailsFragment : Fragment() {
         Divider(
             color = MaterialTheme.colors.primary,
             startIndent = 8.dp,
-            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+            modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
         )
     }
 
@@ -361,7 +369,7 @@ class ViewDataDetailsFragment : Fragment() {
                         viewModel.setDeleteRecordDialogVisibility(false)
                         Timber.i("data deleted, navigation back")
                         findNavController().navigateUp()
-                    }
+                    },
                 ) {
                     Text(text = stringResource(R.string.common_delete))
                 }
@@ -371,13 +379,13 @@ class ViewDataDetailsFragment : Fragment() {
                     text = stringResource(R.string.delete_this_record),
                     style = MaterialTheme.typography.h6,
                     color = MaterialTheme.colors.primary,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             },
             text = {
                 Text(
                     stringResource(R.string.delete_record_dialog_body),
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.body1,
                 )
             },
         )
@@ -389,37 +397,41 @@ class ViewDataDetailsFragment : Fragment() {
             when (dataType) {
                 UserDataType.LOGIN_DATA -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToLoginDataFragment(
-                        args.id
+                        args.id,
                     )
                 }
 
                 UserDataType.BANK_ACCOUNT -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankAccountDataFragment(
-                        args.id
+                        args.id,
                     )
                 }
 
                 UserDataType.BANK_CARD -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToBankCardDataFragment(
-                        args.id
+                        args.id,
                     )
                 }
 
                 UserDataType.SECURE_NOTE -> {
                     ViewDataDetailsFragmentDirections.actionViewDataDetailsFragmentToSecureNoteDataFragment(
-                        args.id
+                        args.id,
                     )
                 }
-            }
+            },
         )
     }
 
-    private fun shareContent(userDataTitle: String, viewDataMap: Map<Int, ViewDataProperties>) {
+    private fun shareContent(
+        userDataTitle: String,
+        viewDataMap: Map<Int, ViewDataProperties>,
+    ) {
         val content = getCopyableContent(userDataTitle, viewDataMap)
-        val shareIntent = ShareCompat.IntentBuilder(requireContext())
-            .setType("text/plain")
-            .setText(content)
-            .intent
+        val shareIntent =
+            ShareCompat.IntentBuilder(requireContext())
+                .setType("text/plain")
+                .setText(content)
+                .intent
         if (shareIntent.resolveActivity(requireActivity().packageManager) != null) {
             Timber.i("starting intent to share data")
             startActivity(shareIntent)
@@ -428,7 +440,7 @@ class ViewDataDetailsFragment : Fragment() {
 
     private fun getCopyableContent(
         userDataTitle: String,
-        viewDataMap: Map<Int, ViewDataProperties>
+        viewDataMap: Map<Int, ViewDataProperties>,
     ): String {
         Timber.i("making copyable content")
         val dataStringBuffer =
@@ -442,16 +454,19 @@ class ViewDataDetailsFragment : Fragment() {
             }
         dataStringBuffer.append(
             "---------------\n${
-            getString(
-                R.string.common_app_playstore_download,
-                APP_PLAYSTORE_LINK
-            )
-            }"
+                getString(
+                    R.string.common_app_playstore_download,
+                    APP_PLAYSTORE_LINK,
+                )
+            }",
         )
         return dataStringBuffer.toString()
     }
 
-    private fun copyContentToClipboard(contentLabel: String, contentValue: String) {
+    private fun copyContentToClipboard(
+        contentLabel: String,
+        contentValue: String,
+    ) {
         val clip = ClipData.newPlainText(contentLabel, contentValue)
         Timber.i("setting primary clip")
         Timber.d("setting primary clip\n label = $contentLabel\n value=$contentValue")
@@ -461,7 +476,7 @@ class ViewDataDetailsFragment : Fragment() {
             .make(
                 requireView(),
                 getString(R.string.snackbar_common_copied_to_clipboard, contentLabel),
-                LENGTH_SHORT
+                LENGTH_SHORT,
             )
             .show()
     }

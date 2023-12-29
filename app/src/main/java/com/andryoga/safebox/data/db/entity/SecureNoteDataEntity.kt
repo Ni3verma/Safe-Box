@@ -11,5 +11,5 @@ data class SecureNoteDataEntity(
     val title: String,
     val notes: String,
     val creationDate: Date,
-    val updateDate: Date
+    val updateDate: Date,
 )

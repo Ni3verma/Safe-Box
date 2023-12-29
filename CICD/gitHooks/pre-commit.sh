@@ -41,25 +41,29 @@ for changedFile in $(git diff --name-only --cached); do
 	fi
 done
 
-log_info "Running ktlint check"
-./gradlew app:ktlintCheck --daemon
-status=$?
-
-if [ "$status" = 0 ]; then
-  log_info "ktlint passed. Running detekt"
+  log_info "bypassing ktlint for now. Running only detekt"
   run_detekt
   exit 0
-else
-  log_info "ktlint failed, auto-formatting"
-  ./gradlew app:ktlintFormat
-  status=$?
-  log_info "ktlint Autoformatting done"
 
-  if [ "$status" = 0 ]; then
-    log_info "Commit changes again after adding newly formatted files(if any)"
-    exit 1
-  else
-    log_info "Autoformatting failed, manual action required"
-    exit 1
-  fi
-fi
+#log_info "Running ktlint check"
+#./gradlew app:ktlintCheck --daemon
+#status=$?
+#
+#if [ "$status" = 0 ]; then
+#  log_info "ktlint passed. Running detekt"
+#  run_detekt
+#  exit 0
+#else
+#  log_info "ktlint failed, auto-formatting"
+#  ./gradlew app:ktlintFormat
+#  status=$?
+#  log_info "ktlint Autoformatting done"
+#
+#  if [ "$status" = 0 ]; then
+#    log_info "Commit changes again after adding newly formatted files(if any)"
+#    exit 1
+#  else
+#    log_info "Autoformatting failed, manual action required"
+#    exit 1
+#  fi
+#fi

@@ -10,7 +10,7 @@ object DomainMappers {
             key, title, accountNumber, customerName, customerId,
             branchCode, branchName, branchAddress, ifscCode, micrCode, notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate)
+            getFormattedDate(updateDate),
         )
     }
 
@@ -18,31 +18,40 @@ object DomainMappers {
         return ViewBankCardData(
             key, title, name, number, pin, cvv, expiryDate, notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate)
+            getFormattedDate(updateDate),
         )
     }
 
     fun LoginDataEntity.toViewLoginData(): ViewLoginData {
         return ViewLoginData(
-            key, title, url, password, userId, notes,
+            key,
+            title,
+            url,
+            password,
+            userId,
+            notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate)
+            getFormattedDate(updateDate),
         )
     }
 
     fun SecureNoteDataEntity.toViewSecureNoteData(): ViewSecureNoteData {
         return ViewSecureNoteData(
-            key, title, notes,
+            key,
+            title,
+            notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate)
+            getFormattedDate(updateDate),
         )
     }
 
     fun BackupMetadataEntity.toBackupAndRestoreData(): BackupData {
         return BackupData(
-            key, uriString, displayPath,
+            key,
+            uriString,
+            displayPath,
             if (lastBackupDate == null) "NA" else getFormattedDate(lastBackupDate),
-            getFormattedDate(createdOn)
+            getFormattedDate(createdOn),
         )
     }
 }

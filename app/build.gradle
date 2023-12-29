@@ -20,7 +20,7 @@ android {
         applicationId "com.andryoga.safebox"
         minSdkVersion 23
         targetSdkVersion 34
-        versionCode 7
+        versionCode 8
         // majorVersion.minorVersion.dbVersion.fixVersion
         versionName "1.6.4.0"
 
@@ -92,23 +92,31 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
     buildFeatures {
         viewBinding true
         dataBinding true
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.3'
+        kotlinCompilerExtensionVersion '1.4.8'
     }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-
-    lintOptions {
-        disable 'UnusedResources', 'FragmentTagUsage'
-        disable 'Correctness', 'Messages'
+    namespace 'com.andryoga.safebox'
+    lint {
+        disable 'UnusedResources', 'FragmentTagUsage', 'Correctness', 'Messages'
     }
 }
 
@@ -117,6 +125,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // test dep
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     // common
     implementation 'com.google.android.material:material:1.9.0'
@@ -174,7 +187,7 @@ dependencies {
     implementation "androidx.biometric:biometric:$biometric_version"
 
     // play core
-    implementation("com.google.android.play:core:1.10.2")
+    implementation("com.google.android.play:core:1.10.3")
 
     // serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")

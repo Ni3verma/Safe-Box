@@ -25,19 +25,21 @@ import com.andryoga.safebox.ui.common.Status
 import com.andryoga.safebox.ui.common.UserDataType
 import timber.log.Timber
 
-private val typeToIconMap = mapOf(
-    UserDataType.LOGIN_DATA to R.drawable.ic_person_24,
-    UserDataType.BANK_ACCOUNT to R.drawable.ic_bank_24,
-    UserDataType.BANK_CARD to R.drawable.ic_card_24,
-    UserDataType.SECURE_NOTE to R.drawable.ic_key_24
-)
+private val typeToIconMap =
+    mapOf(
+        UserDataType.LOGIN_DATA to R.drawable.ic_person_24,
+        UserDataType.BANK_ACCOUNT to R.drawable.ic_bank_24,
+        UserDataType.BANK_CARD to R.drawable.ic_card_24,
+        UserDataType.SECURE_NOTE to R.drawable.ic_key_24,
+    )
 
-private val typeToTextMap = mapOf(
-    UserDataType.LOGIN_DATA to R.string.login,
-    UserDataType.BANK_ACCOUNT to R.string.bank,
-    UserDataType.BANK_CARD to R.string.card,
-    UserDataType.SECURE_NOTE to R.string.note
-)
+private val typeToTextMap =
+    mapOf(
+        UserDataType.LOGIN_DATA to R.string.login,
+        UserDataType.BANK_ACCOUNT to R.string.bank,
+        UserDataType.BANK_CARD to R.string.card,
+        UserDataType.SECURE_NOTE to R.string.note,
+    )
 
 @ExperimentalMaterialApi
 @Composable
@@ -45,7 +47,7 @@ fun UserDataList(
     listResource: Resource<List<UserListItemData>>,
     searchTextFilter: String?,
     onItemClick: (item: UserListItemData) -> Unit,
-    onDeleteItemClick: (id: UserListItemData) -> Unit
+    onDeleteItemClick: (id: UserListItemData) -> Unit,
 ) {
     when (listResource.status) {
         Status.LOADING -> {
@@ -53,31 +55,32 @@ fun UserDataList(
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 CircularProgressIndicator()
             }
         }
         Status.SUCCESS -> {
             // In success state, if there was no data then show empty view otherwise show list of data
-            val list = if (searchTextFilter == null) {
-                listResource.data
-            } else {
-                listResource.data?.filter {
-                    it.title.contains(searchTextFilter, ignoreCase = true) ||
-                        it.subTitle?.contains(searchTextFilter, ignoreCase = true) == true
+            val list =
+                if (searchTextFilter == null) {
+                    listResource.data
+                } else {
+                    listResource.data?.filter {
+                        it.title.contains(searchTextFilter, ignoreCase = true) ||
+                            it.subTitle?.contains(searchTextFilter, ignoreCase = true) == true
+                    }
                 }
-            }
             if (list.isNullOrEmpty()) {
                 EmptyUserData()
             } else {
                 var revealedCardId by remember { mutableStateOf("") }
-                LazyColumn() {
+                LazyColumn {
                     items(
                         items = list,
                         key = {
                             it.type.name + it.id
-                        }
+                        },
                     ) { item ->
                         val itemKey = item.type.name + item.id
                         Box(Modifier.fillMaxWidth()) {
@@ -85,7 +88,7 @@ fun UserDataList(
                                 onDelete = {
                                     Timber.i("clicked delete on $itemKey")
                                     onDeleteItemClick(item)
-                                }
+                                },
                             )
                             DraggableCard(
                                 isRevealed = revealedCardId == itemKey,
@@ -94,7 +97,7 @@ fun UserDataList(
                                 },
                                 onCollapse = {
                                     revealedCardId = ""
-                                }
+                                },
                             ) {
                                 UserDataListItem(item, onItemClick)
                             }
@@ -115,7 +118,7 @@ fun EmptyUserData() {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxHeight()
+        modifier = Modifier.fillMaxHeight(),
     ) {
         Text(
             text = stringResource(id = R.string.common_no_result),
@@ -126,48 +129,52 @@ fun EmptyUserData() {
             text = stringResource(id = R.string.common_click_on_plus_to_add_data),
             style = MaterialTheme.typography.h5,
             color = MaterialTheme.colors.primary,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
 
 @Composable
-fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -> Unit) {
+fun UserDataListItem(
+    item: UserListItemData,
+    onClick: (item: UserListItemData) -> Unit,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clickable { onClick(item) }
-            .fillMaxWidth()
-            .background(MaterialTheme.colors.background)
-
+        modifier =
+            Modifier
+                .clickable { onClick(item) }
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.background),
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Image(
                 painter = painterResource(id = typeToIconMap.getValue(item.type)),
                 contentDescription = "icon",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .size(50.dp)
-                    .background(MaterialTheme.colors.secondary, CircleShape)
-                    .padding(4.dp)
+                modifier =
+                    Modifier
+                        .size(50.dp)
+                        .background(MaterialTheme.colors.secondary, CircleShape)
+                        .padding(4.dp),
             )
             Text(
                 text = stringResource(id = typeToTextMap.getValue(item.type)),
-                color = MaterialTheme.colors.primary
+                color = MaterialTheme.colors.primary,
             )
         }
 
         Column(
-            modifier = Modifier.padding(start = 8.dp, end = 8.dp)
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp),
         ) {
             Text(
                 text = item.title,
                 color = MaterialTheme.colors.onBackground,
                 style = MaterialTheme.typography.h5,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             if (item.subTitle != null) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
@@ -176,7 +183,7 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
                         color = MaterialTheme.colors.onBackground,
                         style = MaterialTheme.typography.body1,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -185,5 +192,6 @@ fun UserDataListItem(item: UserListItemData, onClick: (item: UserListItemData) -
 }
 
 fun Float.dp(): Float = this * density + 1f
+
 val density: Float
     get() = Resources.getSystem().displayMetrics.density

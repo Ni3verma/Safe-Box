@@ -15,166 +15,173 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AllInfoViewModel @Inject constructor(
-    private val loginDataRepository: LoginDataRepository,
-    private val bankAccountDataRepository: BankAccountDataRepository,
-    private val bankCardDataRepository: BankCardDataRepository,
-    private val secureNoteDataRepository: SecureNoteDataRepository,
-    private val backupMetadataRepository: BackupMetadataRepository
-) : ViewModel() {
-    private val _isBackupPathSet = MutableStateFlow(true)
-    val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
+class AllInfoViewModel
+    @Inject
+    constructor(
+        private val loginDataRepository: LoginDataRepository,
+        private val bankAccountDataRepository: BankAccountDataRepository,
+        private val bankCardDataRepository: BankCardDataRepository,
+        private val secureNoteDataRepository: SecureNoteDataRepository,
+        private val backupMetadataRepository: BackupMetadataRepository,
+    ) : ViewModel() {
+        private val _isBackupPathSet = MutableStateFlow(true)
+        val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
 
-    private val _searchTextFilter = MutableStateFlow<String?>(null)
-    val searchTextFilter: StateFlow<String?> = _searchTextFilter
+        private val _searchTextFilter = MutableStateFlow<String?>(null)
+        val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            backupMetadataRepository.getBackupMetadata().collect {
-                _isBackupPathSet.value = it != null
+        init {
+            viewModelScope.launch(Dispatchers.IO) {
+                backupMetadataRepository.getBackupMetadata().collect {
+                    _isBackupPathSet.value = it != null
+                }
             }
         }
-    }
 
-    @ExperimentalCoroutinesApi
-    val allData = flow {
-        combine(
-            loginData,
-            bankAccountData,
-            bankCardData,
-            secureNoteData
-        ) { (login, bankAccount, bankCard, secureNote) ->
-            var allList = listOf<UserListItemData>()
-            allList = allList.plus(login)
-            allList = allList.plus(bankAccount)
-            allList = allList.plus(bankCard)
-            allList = allList.plus(secureNote)
-            allList
-        }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(Resource.success(it.sortedBy { data -> data.title.lowercase() }))
-            }
-    }
-
-    private val loginData = flow<List<UserListItemData>> {
-        loginDataRepository
-            .getAllLoginData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            it.userId,
-                            LOGIN_DATA
-                        )
-                    )
+        @ExperimentalCoroutinesApi
+        val allData =
+            flow {
+                combine(
+                    loginData,
+                    bankAccountData,
+                    bankCardData,
+                    secureNoteData,
+                ) { (login, bankAccount, bankCard, secureNote) ->
+                    var allList = listOf<UserListItemData>()
+                    allList = allList.plus(login)
+                    allList = allList.plus(bankAccount)
+                    allList = allList.plus(bankCard)
+                    allList = allList.plus(secureNote)
+                    allList
                 }
-                emit(adapterEntityList)
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(Resource.success(it.sortedBy { data -> data.title.lowercase() }))
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(it)
-            }
-    }
 
-    private val bankAccountData = flow<List<UserListItemData>> {
-        bankAccountDataRepository
-            .getAllBankAccountData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            it.accountNumber,
-                            BANK_ACCOUNT
-                        )
-                    )
-                }
-                emit(adapterEntityList)
+        private val loginData =
+            flow<List<UserListItemData>> {
+                loginDataRepository
+                    .getAllLoginData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    it.userId,
+                                    LOGIN_DATA,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(it)
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(it)
-            }
-    }
 
-    private val bankCardData = flow<List<UserListItemData>> {
-        bankCardDataRepository
-            .getAllBankCardData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            it.number,
-                            BANK_CARD
-                        )
-                    )
-                }
-                emit(adapterEntityList)
+        private val bankAccountData =
+            flow<List<UserListItemData>> {
+                bankAccountDataRepository
+                    .getAllBankAccountData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    it.accountNumber,
+                                    BANK_ACCOUNT,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(it)
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(it)
-            }
-    }
 
-    private val secureNoteData = flow<List<UserListItemData>> {
-        secureNoteDataRepository
-            .getAllSecureNoteData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            null,
-                            SECURE_NOTE
-                        )
-                    )
-                }
-                emit(adapterEntityList)
+        private val bankCardData =
+            flow<List<UserListItemData>> {
+                bankCardDataRepository
+                    .getAllBankCardData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    it.number,
+                                    BANK_CARD,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(it)
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(it)
-            }
-    }
 
-    fun onDeleteItemClick(itemData: UserListItemData) {
-        val key = itemData.id
-        viewModelScope.launch {
-            when (itemData.type) {
-                LOGIN_DATA -> loginDataRepository.deleteLoginDataByKey(key)
-                BANK_ACCOUNT -> bankAccountDataRepository.deleteBankAccountDataByKey(key)
-                BANK_CARD -> bankCardDataRepository.deleteBankCardDataByKey(key)
-                SECURE_NOTE -> secureNoteDataRepository.deleteSecureNoteDataByKey(key)
-            }
-        }
-    }
-
-    fun setSearchText(searchText: String?) {
-        _searchTextFilter.value = searchText
-    }
-
-    // This method is for test purpose only
-    // should never be called in production code
-    fun insertDummyData() {
-        viewModelScope.launch(Dispatchers.Default) {
-            insertRandomData(
-                loginDataRepository,
-                bankAccountDataRepository,
-                bankCardDataRepository,
+        private val secureNoteData =
+            flow<List<UserListItemData>> {
                 secureNoteDataRepository
-            )
+                    .getAllSecureNoteData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    null,
+                                    SECURE_NOTE,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(it)
+                    }
+            }
+
+        fun onDeleteItemClick(itemData: UserListItemData) {
+            val key = itemData.id
+            viewModelScope.launch {
+                when (itemData.type) {
+                    LOGIN_DATA -> loginDataRepository.deleteLoginDataByKey(key)
+                    BANK_ACCOUNT -> bankAccountDataRepository.deleteBankAccountDataByKey(key)
+                    BANK_CARD -> bankCardDataRepository.deleteBankCardDataByKey(key)
+                    SECURE_NOTE -> secureNoteDataRepository.deleteSecureNoteDataByKey(key)
+                }
+            }
+        }
+
+        fun setSearchText(searchText: String?) {
+            _searchTextFilter.value = searchText
+        }
+
+        // This method is for test purpose only
+        // should never be called in production code
+        fun insertDummyData() {
+            viewModelScope.launch(Dispatchers.Default) {
+                insertRandomData(
+                    loginDataRepository,
+                    bankAccountDataRepository,
+                    bankCardDataRepository,
+                    secureNoteDataRepository,
+                )
+            }
         }
     }
-}

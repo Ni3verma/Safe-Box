@@ -30,7 +30,7 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.login_fragment, container, false)
         binding.viewModel = viewModel
@@ -79,9 +79,9 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
     override fun onResume() {
         super.onResume()
         /* show biometric dialog only if device can authenticate with biometric
-        * and login count with biometric has not crossed threshold
-        * and user away timeout has not happened
-        * */
+         * and login count with biometric has not crossed threshold
+         * and user away timeout has not happened
+         * */
         val canUnlockWithBiometric = canUseBiometrics()
         Timber.i("can unlock with biometric = $canUnlockWithBiometric")
         if (canUnlockWithBiometric &&
@@ -91,13 +91,13 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
             Timber.i("showing biometric dialog")
             showBiometricsAuthDialog(
                 getString(R.string.biometric_title_text),
-                getString(R.string.biometric_negative_button_text)
+                getString(R.string.biometric_negative_button_text),
             )
         } else if (canUnlockWithBiometric && viewModel.loginCountWithBiometric >= MAX_CONT_BIOMETRIC_LOGINS) {
             Timber.i(
                 "not showing biometric dialog, cont. count" +
                     " with biometric = ${viewModel.loginCountWithBiometric}\n" +
-                    "showing enter password manually message"
+                    "showing enter password manually message",
             )
             binding.enterPasswordManuallyMessage.visibility = View.VISIBLE
         }

@@ -64,10 +64,10 @@ class BackupAndRestoreFragment : Fragment() {
                 Timber.i("path = ${uri.path}")
                 val takeFlags: Int =
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 requireActivity().contentResolver.takePersistableUriPermission(
                     uri,
-                    takeFlags
+                    takeFlags,
                 )
                 viewModel.setBackupMetadata(uri)
             }
@@ -90,7 +90,7 @@ class BackupAndRestoreFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         lifecycleScope.launchWhenStarted {
             viewModel.restoreWorkEnqueued.collect {
@@ -112,13 +112,14 @@ class BackupAndRestoreFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 val backupMetadata by viewModel.backupMetadata.collectAsState(
-                    Resource.loading(null)
+                    Resource.loading(null),
                 )
                 BasicSafeBoxTheme {
                     Column(
-                        modifier = Modifier
+                        modifier =
+                        Modifier
                             .padding(8.dp)
-                            .verticalScroll(ScrollState(0))
+                            .verticalScroll(ScrollState(0)),
                     ) {
                         BackupDataView(backupMetadata)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -130,27 +131,27 @@ class BackupAndRestoreFragment : Fragment() {
     }
 
     @Composable
-    private fun BackupDataView(
-        backupMetadataResource: Resource<BackupMetadataEntity?>
-    ) {
+    private fun BackupDataView(backupMetadataResource: Resource<BackupMetadataEntity?>) {
         val backupScreenState by viewModel.backupScreenState.collectAsState(BackupScreenState.INITIAL_STATE)
         EnterPasswordDialog(
-            isVisible = backupScreenState in listOf(
-                BackupScreenState.ENTER_PASSWORD,
-                BackupScreenState.WRONG_PASSWORD
-            ),
+            isVisible =
+            backupScreenState in
+                    listOf(
+                        BackupScreenState.ENTER_PASSWORD,
+                        BackupScreenState.WRONG_PASSWORD,
+                    ),
             isPasswordWrong = backupScreenState == BackupScreenState.WRONG_PASSWORD,
             onDismiss = { viewModel.setBackupScreenState(BackupScreenState.INITIAL_STATE) },
             onPasswordSubmit = {
                 Timber.i("password submit for backup")
                 viewModel.backupData(it)
-            }
+            },
         )
         Text(
             text = stringResource(R.string.backup),
             color = MaterialTheme.colors.primary,
             style = MaterialTheme.typography.h5,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
         Divider(color = MaterialTheme.colors.secondary)
         if (backupMetadataResource.status == Status.LOADING) {
@@ -181,19 +182,22 @@ class BackupAndRestoreFragment : Fragment() {
             onPasswordSubmit = {
                 Timber.i("password submit for restore")
                 viewModel.restoreData(it)
-            }
+            },
         )
 
         when (restoreScreenState) {
             RestoreScreenState.IN_PROGRESS -> {
                 RestoreInProgressDialog()
             }
+
             RestoreScreenState.COMPLETE -> {
                 RestoreCompleteDialog()
             }
+
             RestoreScreenState.ERROR -> {
                 RestoreErrorDialog()
             }
+
             else -> {
                 // do nothing
             }
@@ -204,32 +208,32 @@ class BackupAndRestoreFragment : Fragment() {
                 text = stringResource(R.string.restore),
                 color = MaterialTheme.colors.primary,
                 style = MaterialTheme.typography.h5,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
             )
             Divider(color = MaterialTheme.colors.secondary)
             Card(
                 modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
-                elevation = 2.dp
+                elevation = 2.dp,
             ) {
                 Column(
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.padding(4.dp),
                 ) {
-
                     Text(
                         text = stringResource(R.string.restore_info),
                         modifier = Modifier.padding(8.dp),
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colors.onSurface,
-                        style = MaterialTheme.typography.body1
+                        style = MaterialTheme.typography.body1,
                     )
                     Button(
                         onClick = {
                             setIsUserAwayTimeoutSuspended(true)
                             selectFileReq.launch(arrayOf("*/*"))
                         },
-                        modifier = Modifier
+                        modifier =
+                        Modifier
                             .align(Alignment.CenterHorizontally)
-                            .padding(bottom = 8.dp)
+                            .padding(bottom = 8.dp),
                     ) {
                         Text(text = stringResource(R.string.restore))
                     }
@@ -243,22 +247,23 @@ class BackupAndRestoreFragment : Fragment() {
         Dialog(onDismissRequest = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) }) {
             Card {
                 Row(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .padding(16.dp)
                         .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Warning,
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        tint = Color.Red
+                        tint = Color.Red,
                     )
                     Text(
                         text = stringResource(R.string.restore_error_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colors.onSurface,
                     )
                 }
             }
@@ -270,22 +275,23 @@ class BackupAndRestoreFragment : Fragment() {
         Dialog(onDismissRequest = { viewModel.setRestoreScreenState(RestoreScreenState.INITIAL_STATE) }) {
             Card {
                 Row(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .padding(16.dp)
                         .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        tint = Color.Green
+                        tint = Color.Green,
                     )
                     Text(
                         text = stringResource(R.string.restore_success_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colors.onSurface,
                     )
                 }
             }
@@ -296,24 +302,26 @@ class BackupAndRestoreFragment : Fragment() {
     private fun RestoreInProgressDialog() {
         Dialog(
             onDismissRequest = {},
-            properties = DialogProperties(
+            properties =
+            DialogProperties(
                 dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            )
+                dismissOnClickOutside = false,
+            ),
         ) {
             Card {
                 Row(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .padding(16.dp)
                         .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CircularProgressIndicator()
                     Text(
                         text = stringResource(R.string.restore_in_progress_message),
                         modifier = Modifier.padding(start = 16.dp),
                         style = MaterialTheme.typography.body1,
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colors.onSurface,
                     )
                 }
             }
@@ -325,35 +333,38 @@ class BackupAndRestoreFragment : Fragment() {
         Card(
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
             elevation = 2.dp,
-            backgroundColor = MaterialTheme.colors.error.copy(alpha = 0.05f)
-                .compositeOver(MaterialTheme.colors.surface)
+            backgroundColor =
+            MaterialTheme.colors.error.copy(alpha = 0.05f)
+                .compositeOver(MaterialTheme.colors.surface),
         ) {
             Column(
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier.padding(top = 4.dp),
             ) {
                 Icon(
                     imageVector = Icons.Filled.Warning,
                     contentDescription = null,
                     tint = MaterialTheme.colors.error,
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 8.dp)
-                        .size(64.dp)
+                        .size(64.dp),
                 )
                 Text(
                     text = stringResource(R.string.backup_path_not_set_message),
                     modifier = Modifier.padding(8.dp),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colors.onSurface,
-                    style = MaterialTheme.typography.body1
+                    style = MaterialTheme.typography.body1,
                 )
                 Button(
                     onClick = {
                         launchSelectBackupDir()
                     },
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .align(Alignment.CenterHorizontally)
-                        .padding(bottom = 8.dp)
+                        .padding(bottom = 8.dp),
                 ) {
                     Text(text = stringResource(R.string.backup_set_location))
                 }
@@ -365,63 +376,65 @@ class BackupAndRestoreFragment : Fragment() {
     fun BackupPathSetView(
         backupData: BackupData,
         backupScreenState: BackupScreenState,
-        onBackupClick: () -> Unit
+        onBackupClick: () -> Unit,
     ) {
         Card(
             modifier = Modifier.padding(top = 16.dp, bottom = 16.dp),
             elevation = 2.dp,
-            backgroundColor = Color.Green.copy(alpha = 0.05f).compositeOver(MaterialTheme.colors.surface)
+            backgroundColor = Color.Green.copy(alpha = 0.05f)
+                .compositeOver(MaterialTheme.colors.surface),
         ) {
             Column(
-                modifier = Modifier.padding(4.dp)
+                modifier = Modifier.padding(4.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
                         contentDescription = null,
                         tint = Color.Green,
-                        modifier = Modifier.padding(end = 8.dp)
+                        modifier = Modifier.padding(end = 8.dp),
                     )
                     Text(
                         text = stringResource(R.string.backup_set_message),
                         style = MaterialTheme.typography.h6,
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colors.onSurface,
                     )
                 }
                 Text(
                     text = stringResource(R.string.backup_path, backupData.displayPath),
                     style = MaterialTheme.typography.body1,
-                    color = MaterialTheme.colors.onSurface
+                    color = MaterialTheme.colors.onSurface,
                 )
                 Text(
                     text = stringResource(R.string.backup_time, backupData.lastBackupDate),
                     style = MaterialTheme.typography.body1,
                     color = MaterialTheme.colors.onSurface,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
                 Text(
                     text = stringResource(R.string.backup_info_1),
                     style = MaterialTheme.typography.subtitle1,
                     fontWeight = FontWeight.Thin,
-                    color = MaterialTheme.colors.onSurface
+                    color = MaterialTheme.colors.onSurface,
                 )
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .padding(bottom = 8.dp, top = 8.dp)
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     Button(
-                        onClick = { launchSelectBackupDir() }
+                        onClick = { launchSelectBackupDir() },
                     ) {
                         Text(text = stringResource(R.string.backup_edit_path))
                     }
                     Button(
-                        onClick = { onBackupClick() }
+                        onClick = { onBackupClick() },
                     ) {
                         Text(text = stringResource(R.string.backup))
                     }
@@ -430,7 +443,7 @@ class BackupAndRestoreFragment : Fragment() {
                     Text(
                         text = stringResource(R.string.backup_in_progress_message),
                         style = MaterialTheme.typography.h6,
-                        color = MaterialTheme.colors.onSurface
+                        color = MaterialTheme.colors.onSurface,
                     )
                 }
             }
@@ -442,67 +455,82 @@ class BackupAndRestoreFragment : Fragment() {
         isVisible: Boolean,
         isPasswordWrong: Boolean,
         onDismiss: () -> Unit,
-        onPasswordSubmit: (value: String) -> Unit
+        onPasswordSubmit: (value: String) -> Unit,
     ) {
         if (isVisible) {
             var passwordValue by remember {
                 mutableStateOf(
                     TextFieldValue(
-                        if (BuildConfig.DEBUG) "Qwerty@@135"
-                        else ""
-                    )
+                        if (BuildConfig.DEBUG) {
+                            "Qwerty@@135"
+                        } else {
+                            ""
+                        },
+                    ),
                 )
             }
             var isPasswordMasked: Boolean by remember { mutableStateOf(true) }
             Dialog(onDismissRequest = { onDismiss() }) {
                 Card(
-                    modifier = Modifier
+                    modifier =
+                    Modifier
                         .padding(8.dp)
                         .wrapContentHeight(unbounded = true),
-                    elevation = 4.dp
+                    elevation = 4.dp,
                 ) {
                     Column(
-                        modifier = Modifier
-                            .padding(8.dp)
+                        modifier =
+                        Modifier
+                            .padding(8.dp),
                     ) {
                         OutlinedTextField(
                             value = passwordValue,
                             onValueChange = {
                                 passwordValue = it
                             },
-                            modifier = Modifier
+                            modifier =
+                            Modifier
                                 .padding(8.dp)
                                 .fillMaxWidth(),
                             label = { Text(stringResource(R.string.master_password)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            visualTransformation = if (isPasswordMasked) PasswordVisualTransformation()
-                            else VisualTransformation.None,
+                            visualTransformation =
+                            if (isPasswordMasked) {
+                                PasswordVisualTransformation()
+                            } else {
+                                VisualTransformation.None
+                            },
                             trailingIcon = {
-                                val image = if (isPasswordMasked)
-                                    Visibility
-                                else VisibilityOff
+                                val image =
+                                    if (isPasswordMasked) {
+                                        Visibility
+                                    } else {
+                                        VisibilityOff
+                                    }
                                 IconButton(
                                     onClick = {
                                         isPasswordMasked = !isPasswordMasked
-                                    }
+                                    },
                                 ) {
                                     Icon(imageVector = image, null)
                                 }
-                            }
+                            },
                         )
                         if (isPasswordWrong) {
                             Text(
                                 text = stringResource(R.string.incorrect_pswrd_message),
                                 color = MaterialTheme.colors.error,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                modifier = Modifier.padding(bottom = 8.dp),
                             )
                         }
                         Button(
                             onClick = { onPasswordSubmit(passwordValue.text) },
-                            enabled = passwordValue.text.trim()
+                            enabled =
+                            passwordValue.text.trim()
                                 .isNotEmpty(),
-                            modifier = Modifier
-                                .align(Alignment.End)
+                            modifier =
+                            Modifier
+                                .align(Alignment.End),
                         ) {
                             Text(text = stringResource(R.string.common_ok))
                         }

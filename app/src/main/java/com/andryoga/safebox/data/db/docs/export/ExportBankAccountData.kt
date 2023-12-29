@@ -17,5 +17,5 @@ data class ExportBankAccountData(
     val micrCode: String?,
     val notes: String?,
     val creationDate: Long,
-    val updateDate: Long
+    val updateDate: Long,
 )

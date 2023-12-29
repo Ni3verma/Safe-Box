@@ -7,12 +7,12 @@ data class SearchBankAccountData(
     val key: Int,
     val title: String,
     val accountNumber: String,
-    val creationDate: Date
+    val creationDate: Date,
 ) {
     companion object {
         fun decrypt(
             searchBankAccountData: SearchBankAccountData,
-            symmetricKeyUtils: SymmetricKeyUtils
+            symmetricKeyUtils: SymmetricKeyUtils,
         ): SearchBankAccountData {
             searchBankAccountData.let {
                 // mask account number except for last 4 digits
@@ -21,14 +21,14 @@ data class SearchBankAccountData(
                     it.key,
                     it.title,
                     accountNumber.replace(Regex(".(?=.{4})"), "X"),
-                    it.creationDate
+                    it.creationDate,
                 )
             }
         }
 
         fun decrypt(
             searchBankAccountData: List<SearchBankAccountData>,
-            symmetricKeyUtils: SymmetricKeyUtils
+            symmetricKeyUtils: SymmetricKeyUtils,
         ): List<SearchBankAccountData> {
             return searchBankAccountData.map { decrypt(it, symmetricKeyUtils) }
         }

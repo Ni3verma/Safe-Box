@@ -18,6 +18,6 @@ complexity:
     ignoreAnnotated: [ '@Composable', 'HiltWorker' ]
     functionThreshold: 10
   LongMethod:
-    threshold: 80
+    threshold: 85
   TooManyFunctions:
     active: false

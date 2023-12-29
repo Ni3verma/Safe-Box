@@ -16,52 +16,40 @@ import javax.inject.Singleton
 object RepositoryModule {
     @Singleton
     @Provides
-    fun provideUserDetailsRepo(
-        userDetailsDaoSecure: UserDetailsDaoSecure
-    ): UserDetailsRepository {
+    fun provideUserDetailsRepo(userDetailsDaoSecure: UserDetailsDaoSecure): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
-            userDetailsDaoSecure
+            userDetailsDaoSecure,
         )
     }
 
     @ExperimentalCoroutinesApi
     @Singleton
     @Provides
-    fun provideLoginDataRepo(
-        loginDataDaoSecure: LoginDataDaoSecure
-    ): LoginDataRepository {
+    fun provideLoginDataRepo(loginDataDaoSecure: LoginDataDaoSecure): LoginDataRepository {
         return LoginDataRepositoryImpl(loginDataDaoSecure)
     }
 
     @Singleton
     @Provides
-    fun provideBankAccountDataRepo(
-        bankAccountDataDaoSecure: BankAccountDataDaoSecure
-    ): BankAccountDataRepository {
+    fun provideBankAccountDataRepo(bankAccountDataDaoSecure: BankAccountDataDaoSecure): BankAccountDataRepository {
         return BankAccountDataRepositoryImpl(bankAccountDataDaoSecure)
     }
 
     @Singleton
     @Provides
-    fun provideBankCardDataRepo(
-        bankCardDataDaoSecure: BankCardDataDaoSecure
-    ): BankCardDataRepository {
+    fun provideBankCardDataRepo(bankCardDataDaoSecure: BankCardDataDaoSecure): BankCardDataRepository {
         return BankCardDataRepositoryImpl(bankCardDataDaoSecure)
     }
 
     @Singleton
     @Provides
-    fun provideSecureNoteDataRepo(
-        secureNoteDataDaoSecure: SecureNoteDataDaoSecure
-    ): SecureNoteDataRepository {
+    fun provideSecureNoteDataRepo(secureNoteDataDaoSecure: SecureNoteDataDaoSecure): SecureNoteDataRepository {
         return SecureNoteDataRepositoryImpl(secureNoteDataDaoSecure)
     }
 
     @Singleton
     @Provides
-    fun provideBackupMetadataRepo(
-        backupMetadataDao: BackupMetadataDao
-    ): BackupMetadataRepository {
+    fun provideBackupMetadataRepo(backupMetadataDao: BackupMetadataDao): BackupMetadataRepository {
         return BackupMetadataRepositoryImpl(backupMetadataDao)
     }
 }

@@ -19,5 +19,5 @@ data class BankAccountDataEntity(
     val micrCode: String?,
     val notes: String?,
     val creationDate: Date,
-    val updateDate: Date
+    val updateDate: Date,
 )

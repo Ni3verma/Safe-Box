@@ -5,5 +5,5 @@ import java.util.*
 data class SearchSecureNoteData(
     val key: Int,
     val title: String,
-    val creationDate: Date
+    val creationDate: Date,
 )

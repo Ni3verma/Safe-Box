@@ -13,44 +13,46 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class BankCardInfoViewModel @Inject constructor(
-    private val bankCardDataRepository: BankCardDataRepository
-) : ViewModel() {
+class BankCardInfoViewModel
+    @Inject
+    constructor(
+        private val bankCardDataRepository: BankCardDataRepository,
+    ) : ViewModel() {
+        private val _searchTextFilter = MutableStateFlow<String?>(null)
+        val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
-    private val _searchTextFilter = MutableStateFlow<String?>(null)
-    val searchTextFilter: StateFlow<String?> = _searchTextFilter
-
-    val listData = flow<Resource<List<UserListItemData>>> {
-        bankCardDataRepository
-            .getAllBankCardData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            it.number,
-                            UserDataType.BANK_CARD
-                        )
-                    )
-                }
-                emit(adapterEntityList)
+        val listData =
+            flow<Resource<List<UserListItemData>>> {
+                bankCardDataRepository
+                    .getAllBankCardData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    it.number,
+                                    UserDataType.BANK_CARD,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(Resource.success(it))
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(Resource.success(it))
-            }
-    }
 
-    fun onDeleteItemClick(itemData: UserListItemData) {
-        val key = itemData.id
-        viewModelScope.launch {
-            bankCardDataRepository.deleteBankCardDataByKey(key)
+        fun onDeleteItemClick(itemData: UserListItemData) {
+            val key = itemData.id
+            viewModelScope.launch {
+                bankCardDataRepository.deleteBankCardDataByKey(key)
+            }
+        }
+
+        fun setSearchText(searchText: String?) {
+            _searchTextFilter.value = searchText
         }
     }
-
-    fun setSearchText(searchText: String?) {
-        _searchTextFilter.value = searchText
-    }
-}

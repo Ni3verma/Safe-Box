@@ -44,7 +44,7 @@ class AllInfoFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         Timber.i("on create view of all info fragment")
         setHasOptionsMenu(true)
@@ -52,9 +52,10 @@ class AllInfoFragment : Fragment() {
             setContent {
                 val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.allData.collectAsState(
-                    initial = Resource.loading(
-                        emptyList()
-                    )
+                    initial =
+                        Resource.loading(
+                            emptyList(),
+                        ),
                 )
                 val isBackupPathSet by viewModel.isBackupPathSet.collectAsState()
                 BasicSafeBoxTheme {
@@ -67,7 +68,7 @@ class AllInfoFragment : Fragment() {
                             listResource = listData,
                             searchTextFilter = searchTextFilter,
                             onItemClick = { onListItemClick(it) },
-                            onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
+                            onDeleteItemClick = { viewModel.onDeleteItemClick(it) },
                         )
                     }
                     AddNewDataFab {
@@ -91,57 +92,64 @@ class AllInfoFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater,
+    ) {
         inflater.inflate(R.menu.home_info_screen, menu)
         val searchView = menu.findItem(R.id.action_search).actionView as SearchView
 
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+        searchView.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return false
+                }
 
-            override fun onQueryTextChange(newText: String?): Boolean {
-                viewModel.setSearchText(newText)
-                return true
-            }
-        })
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    viewModel.setSearchText(newText)
+                    return true
+                }
+            },
+        )
     }
 
     private fun onListItemClick(item: UserListItemData) {
         val id = item.id
         Timber.i("clicked $id - ${item.type.name}")
         findNavController().navigate(
-            AllInfoFragmentDirections.actionNavAllInfoToViewDataDetailsFragment(item.type, id)
+            AllInfoFragmentDirections.actionNavAllInfoToViewDataDetailsFragment(item.type, id),
         )
     }
 
     @Composable
     fun BackupNotSetBanner() {
         Row(
-            modifier = Modifier
-                .padding(8.dp)
-                .fillMaxWidth()
-                .background(MaterialTheme.colors.error.copy(alpha = 0.05f))
-                .padding(8.dp)
-                .clickable {
-                    Timber.i("backup path not set banner clicked")
-                    findNavController().navigate(R.id.action_nav_all_info_to_nav_backup_restore)
-                },
-            horizontalArrangement = Arrangement.Center
+            modifier =
+                Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colors.error.copy(alpha = 0.05f))
+                    .padding(8.dp)
+                    .clickable {
+                        Timber.i("backup path not set banner clicked")
+                        findNavController().navigate(R.id.action_nav_all_info_to_nav_backup_restore)
+                    },
+            horizontalArrangement = Arrangement.Center,
         ) {
             Icon(
                 imageVector = Icons.Filled.Warning,
                 contentDescription = null,
                 tint = MaterialTheme.colors.error,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(end = 16.dp)
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterVertically)
+                        .padding(end = 16.dp),
             )
             Text(
                 text = stringResource(id = R.string.backup_not_set_banner_message),
                 style = MaterialTheme.typography.body1,
                 color = MaterialTheme.colors.error,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }

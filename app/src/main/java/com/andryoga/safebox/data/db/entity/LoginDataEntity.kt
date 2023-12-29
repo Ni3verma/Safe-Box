@@ -14,5 +14,5 @@ data class LoginDataEntity(
     val notes: String?,
     val userId: String,
     val creationDate: Date,
-    val updateDate: Date
+    val updateDate: Date,
 )

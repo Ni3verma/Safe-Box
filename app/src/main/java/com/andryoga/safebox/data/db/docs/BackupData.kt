@@ -5,5 +5,5 @@ data class BackupData(
     val uriString: String,
     val displayPath: String,
     val lastBackupDate: String,
-    val createdOn: String
+    val createdOn: String,
 )

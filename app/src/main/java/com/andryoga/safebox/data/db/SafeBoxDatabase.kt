@@ -13,17 +13,22 @@ import com.andryoga.safebox.data.db.entity.*
         UserDetailsEntity::class,
         BankCardDataEntity::class,
         SecureNoteDataEntity::class,
-        BackupMetadataEntity::class
+        BackupMetadataEntity::class,
     ],
-    version = 4
+    version = 4,
 )
 @TypeConverters(Converters::class)
 abstract class SafeBoxDatabase : RoomDatabase() {
     abstract fun bankAccountDataDao(): BankAccountDataDao
+
     abstract fun loginDataDao(): LoginDataDao
+
     abstract fun userDetailsDao(): UserDetailsDao
+
     abstract fun bankCardDataDao(): BankCardDataDao
+
     abstract fun secureNoteDataDao(): SecureNoteDataDao
+
     abstract fun backupMetadataDao(): BackupMetadataDao
 
     companion object {

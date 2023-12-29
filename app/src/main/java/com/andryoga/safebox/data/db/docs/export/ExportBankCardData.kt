@@ -14,5 +14,5 @@ data class ExportBankCardData(
     val expiryDate: String?,
     val notes: String?,
     val creationDate: Long,
-    val updateDate: Long
+    val updateDate: Long,
 )

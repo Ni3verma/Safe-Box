@@ -16,21 +16,19 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 
 @Composable
-fun AddNewDataFab(
-    onClick: () -> Unit
-) {
+fun AddNewDataFab(onClick: () -> Unit) {
     Column(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End,
-        modifier = Modifier.padding(16.dp)
+        modifier = Modifier.padding(16.dp),
     ) {
         FloatingActionButton(
-            onClick = onClick
+            onClick = onClick,
         ) {
             Icon(
                 imageVector = Icons.Filled.Add,
                 contentDescription = stringResource(R.string.cd_open_options_to_add_new_personal_data),
-                tint = Color.White
+                tint = Color.White,
             )
         }
     }

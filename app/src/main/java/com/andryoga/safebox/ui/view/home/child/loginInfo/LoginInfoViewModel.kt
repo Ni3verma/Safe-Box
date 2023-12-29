@@ -13,44 +13,46 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginInfoViewModel @Inject constructor(
-    private val loginDataRepository: LoginDataRepository
-) : ViewModel() {
+class LoginInfoViewModel
+    @Inject
+    constructor(
+        private val loginDataRepository: LoginDataRepository,
+    ) : ViewModel() {
+        private val _searchTextFilter = MutableStateFlow<String?>(null)
+        val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
-    private val _searchTextFilter = MutableStateFlow<String?>(null)
-    val searchTextFilter: StateFlow<String?> = _searchTextFilter
-
-    val listData = flow<Resource<List<UserListItemData>>> {
-        loginDataRepository
-            .getAllLoginData()
-            .transform { searchData ->
-                val adapterEntityList = mutableListOf<UserListItemData>()
-                searchData.forEach {
-                    adapterEntityList.add(
-                        UserListItemData(
-                            it.key,
-                            it.title,
-                            it.userId,
-                            UserDataType.LOGIN_DATA
-                        )
-                    )
-                }
-                emit(adapterEntityList)
+        val listData =
+            flow<Resource<List<UserListItemData>>> {
+                loginDataRepository
+                    .getAllLoginData()
+                    .transform { searchData ->
+                        val adapterEntityList = mutableListOf<UserListItemData>()
+                        searchData.forEach {
+                            adapterEntityList.add(
+                                UserListItemData(
+                                    it.key,
+                                    it.title,
+                                    it.userId,
+                                    UserDataType.LOGIN_DATA,
+                                ),
+                            )
+                        }
+                        emit(adapterEntityList)
+                    }
+                    .flowOn(Dispatchers.Default)
+                    .collect {
+                        emit(Resource.success(it))
+                    }
             }
-            .flowOn(Dispatchers.Default)
-            .collect {
-                emit(Resource.success(it))
-            }
-    }
 
-    fun onDeleteItemClick(itemData: UserListItemData) {
-        val key = itemData.id
-        viewModelScope.launch {
-            loginDataRepository.deleteLoginDataByKey(key)
+        fun onDeleteItemClick(itemData: UserListItemData) {
+            val key = itemData.id
+            viewModelScope.launch {
+                loginDataRepository.deleteLoginDataByKey(key)
+            }
+        }
+
+        fun setSearchText(searchText: String?) {
+            _searchTextFilter.value = searchText
         }
     }
-
-    fun setSearchText(searchText: String?) {
-        _searchTextFilter.value = searchText
-    }
-}

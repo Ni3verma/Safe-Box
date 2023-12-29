@@ -23,35 +23,46 @@ class HashingUtilsImpl : HashingUtils {
         val salt = getSalt()
         val base64EncodedSalt = SecurityUtils.encodeBase64(salt)
 
-        val spec = PBEKeySpec(
-            password.toCharArray(), salt,
-            Constants.iterationCount, Constants.keyLength
-        )
-        val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
-            keyFactory.generateSecret(spec).encoded
-        )
+        val spec =
+            PBEKeySpec(
+                password.toCharArray(),
+                salt,
+                Constants.iterationCount,
+                Constants.keyLength,
+            )
+        val base64EncodedPasswordHash =
+            SecurityUtils.encodeBase64(
+                keyFactory.generateSecret(spec).encoded,
+            )
 
         return base64EncodedPasswordHash + separator + base64EncodedSalt
     }
 
-    override fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
+    override fun compareHash(
+        toCompareText: String,
+        toCompareWithHash: String,
+    ): Boolean {
         val hashInfo = toCompareWithHash.split(separator)
         if (hashInfo.size != 2) {
             throw SecurityException(
                 "proper hash info not passed. " +
                     "It must be of this format : " +
-                    "{base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}"
+                    "{base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}",
             )
         }
         val salt = SecurityUtils.decodeBase64(hashInfo[1])
 
-        val spec = PBEKeySpec(
-            toCompareText.toCharArray(), salt,
-            Constants.iterationCount, Constants.keyLength
-        )
-        val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
-            keyFactory.generateSecret(spec).encoded
-        )
+        val spec =
+            PBEKeySpec(
+                toCompareText.toCharArray(),
+                salt,
+                Constants.iterationCount,
+                Constants.keyLength,
+            )
+        val base64EncodedPasswordHash =
+            SecurityUtils.encodeBase64(
+                keyFactory.generateSecret(spec).encoded,
+            )
 
         return base64EncodedPasswordHash == hashInfo[0]
     }

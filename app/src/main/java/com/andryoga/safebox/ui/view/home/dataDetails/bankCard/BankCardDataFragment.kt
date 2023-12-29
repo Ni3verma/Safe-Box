@@ -23,7 +23,6 @@ import timber.log.Timber
 
 @AndroidEntryPoint
 class BankCardDataFragment : Fragment() {
-
     private val viewModel: BankCardDataViewModel by viewModels()
     private val args: BankCardDataFragmentArgs by navArgs()
     private lateinit var binding: BankCardDataFragmentBinding
@@ -32,14 +31,15 @@ class BankCardDataFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
-        binding = DataBindingUtil.inflate(
-            inflater,
-            R.layout.bank_card_data_fragment,
-            container,
-            false
-        )
+        binding =
+            DataBindingUtil.inflate(
+                inflater,
+                R.layout.bank_card_data_fragment,
+                container,
+                false,
+            )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         Timber.i("$tagLocal : received id = ${args.id}")
@@ -48,12 +48,15 @@ class BankCardDataFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+    ) {
         /* whenever two characters(basically month) are entered in expiry date
-        * then append "/" in the end.
-        * Here start = 1 means I am entering 2nd character and
-        * before = 0 means I am not deleting a character and moving backwards
-        * */
+         * then append "/" in the end.
+         * Here start = 1 means I am entering 2nd character and
+         * before = 0 means I am not deleting a character and moving backwards
+         * */
         binding.expiryDateText.doOnTextChanged { _, start, before, _ ->
             if (start == 1 && before == 0) {
                 binding.expiryDateText.append("/")
@@ -66,14 +69,15 @@ class BankCardDataFragment : Fragment() {
             }
         }
 
-        val requiredFieldValidator = RequiredFieldValidator(
-            listOf(
-                binding.title,
-                binding.number
-            ),
-            binding.saveBtn,
-            tagLocal
-        )
+        val requiredFieldValidator =
+            RequiredFieldValidator(
+                listOf(
+                    binding.title,
+                    binding.number,
+                ),
+                binding.saveBtn,
+                tagLocal,
+            )
         requiredFieldValidator.validate()
     }
 
@@ -83,10 +87,11 @@ class BankCardDataFragment : Fragment() {
         // why snackbar is not showing up if I use requireView() in view param
         Utils.logResource(tagLocal, resource)
         when (resource.status) {
-            Status.LOADING -> com.andryoga.safebox.ui.common.Utils.switchVisibility(
-                binding.saveBtn,
-                binding.loading
-            )
+            Status.LOADING ->
+                com.andryoga.safebox.ui.common.Utils.switchVisibility(
+                    binding.saveBtn,
+                    binding.loading,
+                )
             Status.SUCCESS -> {
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
@@ -94,11 +99,11 @@ class BankCardDataFragment : Fragment() {
             Status.ERROR -> {
                 com.andryoga.safebox.ui.common.Utils.switchVisibility(
                     binding.saveBtn,
-                    binding.loading
+                    binding.loading,
                 )
                 CommonSnackbar.showErrorSnackbar(
                     requireActivity().findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_error_saving_data)
+                    getString(R.string.snackbar_common_error_saving_data),
                 )
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
