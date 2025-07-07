@@ -4,8 +4,8 @@ plugins {
     id 'kotlin-kapt'
     id 'androidx.navigation.safeargs.kotlin'
     id 'dagger.hilt.android.plugin'
-    id 'org.jlleitschuh.gradle.ktlint'
-    id "io.gitlab.arturbosch.detekt"
+//    id 'org.jlleitschuh.gradle.ktlint'
+//    id "io.gitlab.arturbosch.detekt"
     id "com.google.gms.google-services"
     id "com.google.firebase.crashlytics"
     id "kotlinx-serialization"
@@ -186,8 +186,8 @@ dependencies {
     //biometric
     implementation "androidx.biometric:biometric:$biometric_version"
 
-    // play core
-    implementation("com.google.android.play:core:1.10.3")
+    // in app review
+    implementation("com.google.android.play:review:2.0.2")
 
     // serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")

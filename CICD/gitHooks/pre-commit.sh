@@ -41,7 +41,7 @@ for changedFile in $(git diff --name-only --cached); do
 	fi
 done
 
-  log_info "bypassing ktlint for now. Running only detekt"
+  log_info "bypassing ktlint and detekt for now."
   run_detekt
   exit 0
 
