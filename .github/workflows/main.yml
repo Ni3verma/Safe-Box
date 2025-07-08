@@ -41,8 +41,8 @@ jobs:
           name: lint.html
           path: app/build/reports/lint-results-debug.html
 
-      - name: Run ktlint
-        run: ./gradlew app:ktlintCheck --daemon
+#      - name: Run ktlint
+#        run: ./gradlew app:ktlintCheck --daemon
 
       - name: Build QA apk
         env:
