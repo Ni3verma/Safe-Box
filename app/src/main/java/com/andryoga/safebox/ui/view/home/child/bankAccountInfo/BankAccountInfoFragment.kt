@@ -35,9 +35,9 @@ class BankAccountInfoFragment : Fragment() {
                 val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.listData.collectAsState(
                     initial =
-                        Resource.loading(
-                            emptyList(),
-                        ),
+                    Resource.loading(
+                        emptyList(),
+                    ),
                 )
                 BasicSafeBoxTheme {
                     UserDataList(

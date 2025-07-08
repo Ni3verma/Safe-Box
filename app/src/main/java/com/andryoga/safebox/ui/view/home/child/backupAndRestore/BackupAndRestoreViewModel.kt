@@ -33,112 +33,112 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BackupAndRestoreViewModel
-    @Inject
-    constructor(
-        private val backupMetadataRepository: BackupMetadataRepository,
-        private val userDetailsRepository: UserDetailsRepository,
-        private val workManager: WorkManager,
-        private val symmetricKeyUtils: SymmetricKeyUtils,
-    ) : ViewModel() {
-        val backupMetadata =
-            flow {
-                emit(Resource.loading(null))
-                backupMetadataRepository.getBackupMetadata().collect {
-                    emit(Resource.success(it))
-                    _backupScreenState.value = BackupScreenState.INITIAL_STATE
-                }
-            }
-
-        private val _backupScreenState =
-            MutableStateFlow(BackupScreenState.INITIAL_STATE)
-        val backupScreenState: StateFlow<BackupScreenState> = _backupScreenState
-
-        private val _restoreScreenState =
-            MutableStateFlow(RestoreScreenState.INITIAL_STATE)
-        val restoreScreenState: StateFlow<RestoreScreenState> = _restoreScreenState
-
-        private val _restoreWorkEnqueued = MutableStateFlow<UUID?>(null)
-        val restoreWorkEnqueued: StateFlow<UUID?> = _restoreWorkEnqueued
-
-        lateinit var selectedFileUriForRestore: String
-
-        fun setBackupMetadata(uri: Uri) {
-            viewModelScope.launch {
-                Timber.i("adding backup metadata in db")
-                val backupMetadataEntity =
-                    BackupMetadataEntity(
-                        1,
-                        uri.toString(),
-                        uri.path!!,
-                        null,
-                        Date(),
-                    )
-                backupMetadataRepository.insertBackupMetadata(backupMetadataEntity)
+@Inject
+constructor(
+    private val backupMetadataRepository: BackupMetadataRepository,
+    private val userDetailsRepository: UserDetailsRepository,
+    private val workManager: WorkManager,
+    private val symmetricKeyUtils: SymmetricKeyUtils,
+) : ViewModel() {
+    val backupMetadata =
+        flow {
+            emit(Resource.loading(null))
+            backupMetadataRepository.getBackupMetadata().collect {
+                emit(Resource.success(it))
+                _backupScreenState.value = BackupScreenState.INITIAL_STATE
             }
         }
 
-        @ExperimentalCoroutinesApi
-        fun backupData(password: String) {
-            viewModelScope.launch {
-                val isPswrdCorrect = userDetailsRepository.checkPassword(password)
-                if (isPswrdCorrect) {
-                    _backupScreenState.value = BackupScreenState.IN_PROGRESS
-                    Timber.i("pswrd is correct, preparing backup work")
-                    val backupDataRequest =
-                        OneTimeWorkRequestBuilder<BackupDataWorker>()
-                            .setInputData(
-                                Data(
-                                    mapOf(
-                                        BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
-                                        BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to true,
-                                    ),
-                                ),
-                            )
-                            .build()
-                    workManager.enqueueUniqueWork(
-                        WORKER_NAME_BACKUP_DATA,
-                        ExistingWorkPolicy.APPEND_OR_REPLACE,
-                        backupDataRequest,
-                    )
-                    Timber.i("enqueued backup work")
-                } else {
-                    _backupScreenState.value = BackupScreenState.WRONG_PASSWORD
-                    Timber.i("wrong pswrd entered")
-                }
-            }
-        }
+    private val _backupScreenState =
+        MutableStateFlow(BackupScreenState.INITIAL_STATE)
+    val backupScreenState: StateFlow<BackupScreenState> = _backupScreenState
 
-        @ExperimentalCoroutinesApi
-        fun restoreData(password: String) {
-            viewModelScope.launch {
-                _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
-                Timber.i("preparing restore work")
-                val restoreDataRequest =
-                    OneTimeWorkRequestBuilder<RestoreDataWorker>()
+    private val _restoreScreenState =
+        MutableStateFlow(RestoreScreenState.INITIAL_STATE)
+    val restoreScreenState: StateFlow<RestoreScreenState> = _restoreScreenState
+
+    private val _restoreWorkEnqueued = MutableStateFlow<UUID?>(null)
+    val restoreWorkEnqueued: StateFlow<UUID?> = _restoreWorkEnqueued
+
+    lateinit var selectedFileUriForRestore: String
+
+    fun setBackupMetadata(uri: Uri) {
+        viewModelScope.launch {
+            Timber.i("adding backup metadata in db")
+            val backupMetadataEntity =
+                BackupMetadataEntity(
+                    1,
+                    uri.toString(),
+                    uri.path!!,
+                    null,
+                    Date(),
+                )
+            backupMetadataRepository.insertBackupMetadata(backupMetadataEntity)
+        }
+    }
+
+    @ExperimentalCoroutinesApi
+    fun backupData(password: String) {
+        viewModelScope.launch {
+            val isPswrdCorrect = userDetailsRepository.checkPassword(password)
+            if (isPswrdCorrect) {
+                _backupScreenState.value = BackupScreenState.IN_PROGRESS
+                Timber.i("pswrd is correct, preparing backup work")
+                val backupDataRequest =
+                    OneTimeWorkRequestBuilder<BackupDataWorker>()
                         .setInputData(
                             Data(
                                 mapOf(
-                                    RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
-                                    RESTORE_PARAM_FILE_URI to selectedFileUriForRestore,
+                                    BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                                    BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to true,
                                 ),
                             ),
                         )
                         .build()
                 workManager.enqueueUniqueWork(
-                    WORKER_NAME_RESTORE_DATA,
+                    WORKER_NAME_BACKUP_DATA,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    restoreDataRequest,
+                    backupDataRequest,
                 )
-                _restoreWorkEnqueued.value = restoreDataRequest.id
-                Timber.i("enqueued restore work")
+                Timber.i("enqueued backup work")
+            } else {
+                _backupScreenState.value = BackupScreenState.WRONG_PASSWORD
+                Timber.i("wrong pswrd entered")
             }
         }
+    }
 
-        fun setBackupScreenState(newState: BackupScreenState) {
-            _backupScreenState.value = newState
-        }
-
-        fun setRestoreScreenState(newState: RestoreScreenState) {
-            _restoreScreenState.value = newState
+    @ExperimentalCoroutinesApi
+    fun restoreData(password: String) {
+        viewModelScope.launch {
+            _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
+            Timber.i("preparing restore work")
+            val restoreDataRequest =
+                OneTimeWorkRequestBuilder<RestoreDataWorker>()
+                    .setInputData(
+                        Data(
+                            mapOf(
+                                RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                                RESTORE_PARAM_FILE_URI to selectedFileUriForRestore,
+                            ),
+                        ),
+                    )
+                    .build()
+            workManager.enqueueUniqueWork(
+                WORKER_NAME_RESTORE_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                restoreDataRequest,
+            )
+            _restoreWorkEnqueued.value = restoreDataRequest.id
+            Timber.i("enqueued restore work")
         }
     }
+
+    fun setBackupScreenState(newState: BackupScreenState) {
+        _backupScreenState.value = newState
+    }
+
+    fun setRestoreScreenState(newState: RestoreScreenState) {
+        _restoreScreenState.value = newState
+    }
+}

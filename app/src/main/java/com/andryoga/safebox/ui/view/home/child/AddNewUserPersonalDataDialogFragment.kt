@@ -22,8 +22,10 @@ class AddNewUserPersonalDataDialogFragment :
     ): View {
         binding =
             DataBindingUtil.inflate(
-                inflater, R.layout.add_new_user_personal_data_dialog,
-                container, false,
+                inflater,
+                R.layout.add_new_user_personal_data_dialog,
+                container,
+                false,
             )
         binding.lifecycleOwner = this
 

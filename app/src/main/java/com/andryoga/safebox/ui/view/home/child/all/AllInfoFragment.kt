@@ -53,9 +53,9 @@ class AllInfoFragment : Fragment() {
                 val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.allData.collectAsState(
                     initial =
-                        Resource.loading(
-                            emptyList(),
-                        ),
+                    Resource.loading(
+                        emptyList(),
+                    ),
                 )
                 val isBackupPathSet by viewModel.isBackupPathSet.collectAsState()
                 BasicSafeBoxTheme {
@@ -125,15 +125,15 @@ class AllInfoFragment : Fragment() {
     fun BackupNotSetBanner() {
         Row(
             modifier =
-                Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colors.error.copy(alpha = 0.05f))
-                    .padding(8.dp)
-                    .clickable {
-                        Timber.i("backup path not set banner clicked")
-                        findNavController().navigate(R.id.action_nav_all_info_to_nav_backup_restore)
-                    },
+            Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colors.error.copy(alpha = 0.05f))
+                .padding(8.dp)
+                .clickable {
+                    Timber.i("backup path not set banner clicked")
+                    findNavController().navigate(R.id.action_nav_all_info_to_nav_backup_restore)
+                },
             horizontalArrangement = Arrangement.Center,
         ) {
             Icon(
@@ -141,9 +141,9 @@ class AllInfoFragment : Fragment() {
                 contentDescription = null,
                 tint = MaterialTheme.colors.error,
                 modifier =
-                    Modifier
-                        .align(Alignment.CenterVertically)
-                        .padding(end = 16.dp),
+                Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 16.dp),
             )
             Text(
                 text = stringResource(id = R.string.backup_not_set_banner_message),

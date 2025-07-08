@@ -64,7 +64,7 @@ class BackupAndRestoreFragment : Fragment() {
                 Timber.i("path = ${uri.path}")
                 val takeFlags: Int =
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 requireActivity().contentResolver.takePersistableUriPermission(
                     uri,
                     takeFlags,
@@ -136,10 +136,10 @@ class BackupAndRestoreFragment : Fragment() {
         EnterPasswordDialog(
             isVisible =
             backupScreenState in
-                    listOf(
-                        BackupScreenState.ENTER_PASSWORD,
-                        BackupScreenState.WRONG_PASSWORD,
-                    ),
+                listOf(
+                    BackupScreenState.ENTER_PASSWORD,
+                    BackupScreenState.WRONG_PASSWORD,
+                ),
             isPasswordWrong = backupScreenState == BackupScreenState.WRONG_PASSWORD,
             onDismiss = { viewModel.setBackupScreenState(BackupScreenState.INITIAL_STATE) },
             onPasswordSubmit = {

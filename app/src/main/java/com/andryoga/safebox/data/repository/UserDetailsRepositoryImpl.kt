@@ -10,46 +10,46 @@ import java.util.*
 import javax.inject.Inject
 
 class UserDetailsRepositoryImpl
-    @Inject
-    constructor(
-        private val userDetailsDaoSecure: UserDetailsDaoSecure,
-    ) : UserDetailsRepository {
-        override suspend fun insertUserDetailsData(
-            password: String,
-            hint: String?,
-        ) {
-            val uid = UUID.randomUUID().toString()
-            setCrashlyticsUid(uid)
+@Inject
+constructor(
+    private val userDetailsDaoSecure: UserDetailsDaoSecure,
+) : UserDetailsRepository {
+    override suspend fun insertUserDetailsData(
+        password: String,
+        hint: String?,
+    ) {
+        val uid = UUID.randomUUID().toString()
+        setCrashlyticsUid(uid)
 
-            val entity =
-                UserDetailsEntity(
-                    password,
-                    uid,
-                    hint,
-                    Date(),
-                    Date(),
-                )
-            userDetailsDaoSecure.insertUserDetailsData(entity)
+        val entity =
+            UserDetailsEntity(
+                password,
+                uid,
+                hint,
+                Date(),
+                Date(),
+            )
+        userDetailsDaoSecure.insertUserDetailsData(entity)
+    }
+
+    override suspend fun checkPassword(password: String): Boolean {
+        val isPasswordCorrect = userDetailsDaoSecure.checkPassword(password)
+        if (isPasswordCorrect) {
+            Timber.i("password was correct, setting crashlytics user id")
+            setCrashlyticsUid(userDetailsDaoSecure.getUid())
         }
 
-        override suspend fun checkPassword(password: String): Boolean {
-            val isPasswordCorrect = userDetailsDaoSecure.checkPassword(password)
-            if (isPasswordCorrect) {
-                Timber.i("password was correct, setting crashlytics user id")
-                setCrashlyticsUid(userDetailsDaoSecure.getUid())
-            }
+        return isPasswordCorrect
+    }
 
-            return isPasswordCorrect
-        }
+    override suspend fun getHint(): String? {
+        return userDetailsDaoSecure.getHint()
+    }
 
-        override suspend fun getHint(): String? {
-            return userDetailsDaoSecure.getHint()
-        }
-
-        private fun setCrashlyticsUid(uid: String) {
-            FirebaseCrashlytics.getInstance().apply {
-                setUserId(uid)
-                setCustomKey(CRASHLYTICS_KEY_UID, uid)
-            }
+    private fun setCrashlyticsUid(uid: String) {
+        FirebaseCrashlytics.getInstance().apply {
+            setUserId(uid)
+            setCustomKey(CRASHLYTICS_KEY_UID, uid)
         }
     }
+}

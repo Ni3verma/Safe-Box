@@ -29,7 +29,7 @@ fun TextView.setUserDataTypeText(type: UserDataType) {
             UserDataType.BANK_CARD -> context.getString(R.string.card)
             UserDataType.SECURE_NOTE -> context.getString(R.string.note)
         }
-    )
+        )
 }
 
 @BindingConversion

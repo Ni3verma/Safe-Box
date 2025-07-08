@@ -1,3 +1,14 @@
+formatting:
+  active: true
+  autoCorrect: true
+  Indentation:
+    active: true
+    autoCorrect: true
+  FinalNewline:
+    active: true
+    autoCorrect: true
+  NoWildcardImports:
+    active: false
 style:
   WildcardImport:
     active: false
@@ -21,3 +32,9 @@ complexity:
     threshold: 85
   TooManyFunctions:
     active: false
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    ignoreAnnotated:
+      - "Composable"

@@ -34,8 +34,10 @@ class BankAccountDataFragment : Fragment() {
     ): View {
         binding =
             DataBindingUtil.inflate(
-                inflater, R.layout.bank_account_data_fragment,
-                container, false,
+                inflater,
+                R.layout.bank_account_data_fragment,
+                container,
+                false,
             )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this

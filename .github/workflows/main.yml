@@ -41,9 +41,6 @@ jobs:
           name: lint.html
           path: app/build/reports/lint-results-debug.html
 
-#      - name: Run ktlint
-#        run: ./gradlew app:ktlintCheck --daemon
-
       - name: Build QA apk
         env:
           VERSION_CODE: ${{ github.run_number }}
@@ -108,7 +105,7 @@ jobs:
 
       - name: Run Detekt
         continue-on-error: true
-        run: ./gradlew detekt
+        run: ./gradlew detekt --debug
 
       - uses: github/codeql-action/upload-sarif@v3
         with:

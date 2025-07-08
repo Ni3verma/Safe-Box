@@ -13,14 +13,23 @@ log_info() {
 
 run_detekt() {
   OUTPUT="/tmp/detekt-$(date +%s)"
-  ./gradlew detekt >$OUTPUT
+  ./gradlew detekt --auto-correct >$OUTPUT
   EXIT_CODE=$?
   if [ $EXIT_CODE -ne 0 ]; then
     cat $OUTPUT
     rm $OUTPUT
     log_info "Detekt failed"
-    start app/build/reports/detekt/detekt.html
-    exit 1
+    DETEKT_REPORT_PATH="app/build/reports/detekt/detekt.html"
+
+    # Check OS and open detekt failure report
+    case "$(uname -s)" in
+      Linux*)     xdg-open "$DETEKT_REPORT_PATH";;
+       Darwin*)    open "$DETEKT_REPORT_PATH";;
+      CYGWIN*|MINGW32*|MSYS*|MINGW*) start "" "$DETEKT_REPORT_PATH";;
+      *)          echo "Cannot auto-open report on this OS. Please open $DETEKT_REPORT_PATH manually.";;
+    esac
+
+    exit 1 # fail the commit
   fi
   rm $OUTPUT
   log_info "detekt passed"
@@ -41,27 +50,6 @@ for changedFile in $(git diff --name-only --cached); do
 	fi
 done
 
-log_info "bypassing ktlint and detekt for now."
-
-#log_info "Running ktlint check"
-#./gradlew app:ktlintCheck --daemon
-#status=$?
-#
-#if [ "$status" = 0 ]; then
-#  log_info "ktlint passed. Running detekt"
-#  run_detekt
-#  exit 0
-#else
-#  log_info "ktlint failed, auto-formatting"
-#  ./gradlew app:ktlintFormat
-#  status=$?
-#  log_info "ktlint Autoformatting done"
-#
-#  if [ "$status" = 0 ]; then
-#    log_info "Commit changes again after adding newly formatted files(if any)"
-#    exit 1
-#  else
-#    log_info "Autoformatting failed, manual action required"
-#    exit 1
-#  fi
-#fi
+log_info "Running detekt with auto correction"
+run_detekt
+exit 0

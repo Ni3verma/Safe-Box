@@ -14,45 +14,45 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginInfoViewModel
-    @Inject
-    constructor(
-        private val loginDataRepository: LoginDataRepository,
-    ) : ViewModel() {
-        private val _searchTextFilter = MutableStateFlow<String?>(null)
-        val searchTextFilter: StateFlow<String?> = _searchTextFilter
+@Inject
+constructor(
+    private val loginDataRepository: LoginDataRepository,
+) : ViewModel() {
+    private val _searchTextFilter = MutableStateFlow<String?>(null)
+    val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
-        val listData =
-            flow<Resource<List<UserListItemData>>> {
-                loginDataRepository
-                    .getAllLoginData()
-                    .transform { searchData ->
-                        val adapterEntityList = mutableListOf<UserListItemData>()
-                        searchData.forEach {
-                            adapterEntityList.add(
-                                UserListItemData(
-                                    it.key,
-                                    it.title,
-                                    it.userId,
-                                    UserDataType.LOGIN_DATA,
-                                ),
-                            )
-                        }
-                        emit(adapterEntityList)
+    val listData =
+        flow<Resource<List<UserListItemData>>> {
+            loginDataRepository
+                .getAllLoginData()
+                .transform { searchData ->
+                    val adapterEntityList = mutableListOf<UserListItemData>()
+                    searchData.forEach {
+                        adapterEntityList.add(
+                            UserListItemData(
+                                it.key,
+                                it.title,
+                                it.userId,
+                                UserDataType.LOGIN_DATA,
+                            ),
+                        )
                     }
-                    .flowOn(Dispatchers.Default)
-                    .collect {
-                        emit(Resource.success(it))
-                    }
-            }
-
-        fun onDeleteItemClick(itemData: UserListItemData) {
-            val key = itemData.id
-            viewModelScope.launch {
-                loginDataRepository.deleteLoginDataByKey(key)
-            }
+                    emit(adapterEntityList)
+                }
+                .flowOn(Dispatchers.Default)
+                .collect {
+                    emit(Resource.success(it))
+                }
         }
 
-        fun setSearchText(searchText: String?) {
-            _searchTextFilter.value = searchText
+    fun onDeleteItemClick(itemData: UserListItemData) {
+        val key = itemData.id
+        viewModelScope.launch {
+            loginDataRepository.deleteLoginDataByKey(key)
         }
     }
+
+    fun setSearchText(searchText: String?) {
+        _searchTextFilter.value = searchText
+    }
+}

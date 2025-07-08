@@ -142,10 +142,10 @@ fun UserDataListItem(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier =
-            Modifier
-                .clickable { onClick(item) }
-                .fillMaxWidth()
-                .background(MaterialTheme.colors.background),
+        Modifier
+            .clickable { onClick(item) }
+            .fillMaxWidth()
+            .background(MaterialTheme.colors.background),
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -155,10 +155,10 @@ fun UserDataListItem(
                 contentDescription = "icon",
                 contentScale = ContentScale.Fit,
                 modifier =
-                    Modifier
-                        .size(50.dp)
-                        .background(MaterialTheme.colors.secondary, CircleShape)
-                        .padding(4.dp),
+                Modifier
+                    .size(50.dp)
+                    .background(MaterialTheme.colors.secondary, CircleShape)
+                    .padding(4.dp),
             )
             Text(
                 text = stringResource(id = typeToTextMap.getValue(item.type)),

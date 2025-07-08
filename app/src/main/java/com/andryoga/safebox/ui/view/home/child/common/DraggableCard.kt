@@ -61,20 +61,20 @@ fun DraggableCard(
 
     Card(
         modifier =
-            Modifier
-                .padding(start = 4.dp, top = 8.dp)
-                .fillMaxWidth()
-                .height(cardHeight)
-                .offset { IntOffset((offsetX.value - offsetTransition).roundToInt(), 0) }
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures { _, dragAmount ->
-                        if (dragAmount <= -MIN_DRAG) {
-                            onExpand()
-                        } else if (dragAmount > MIN_DRAG) {
-                            onCollapse()
-                        }
+        Modifier
+            .padding(start = 4.dp, top = 8.dp)
+            .fillMaxWidth()
+            .height(cardHeight)
+            .offset { IntOffset((offsetX.value - offsetTransition).roundToInt(), 0) }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { _, dragAmount ->
+                    if (dragAmount <= -MIN_DRAG) {
+                        onExpand()
+                    } else if (dragAmount > MIN_DRAG) {
+                        onCollapse()
                     }
-                },
+                }
+            },
         backgroundColor = cardBgColor,
         shape = RoundedCornerShape(0.dp),
         elevation = cardElevation,

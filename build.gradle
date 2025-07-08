@@ -4,6 +4,7 @@ buildscript {
     ext.kotlin_version = '1.8.22'
     ext.navigationVersion = '2.5.3'
     ext.hilt_version = '2.43.2'
+    ext.detekt_version = '1.23.0'
 
     repositories {
         google()
@@ -24,8 +25,7 @@ buildscript {
 }
 
 plugins {
-    id "org.jlleitschuh.gradle.ktlint" version "12.3.0"
-    id "io.gitlab.arturbosch.detekt" version "1.23.0"
+    id "io.gitlab.arturbosch.detekt" version "$detekt_version"
 }
 
 ext{

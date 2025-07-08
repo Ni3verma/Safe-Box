@@ -205,15 +205,15 @@ class ViewDataDetailsFragment : Fragment() {
                 color = MaterialTheme.colors.onBackground,
                 style = MaterialTheme.typography.subtitle1,
                 modifier =
-                    Modifier
-                        .padding(bottom = 8.dp)
-                        .clickable(
-                            indication = rememberRipple(),
-                            interactionSource = remember { MutableInteractionSource() },
-                        ) {
-                            Timber.i("$label clicked for copy")
-                            copyContentToClipboard(label, fieldProperties.value)
-                        },
+                Modifier
+                    .padding(bottom = 8.dp)
+                    .clickable(
+                        indication = rememberRipple(),
+                        interactionSource = remember { MutableInteractionSource() },
+                    ) {
+                        Timber.i("$label clicked for copy")
+                        copyContentToClipboard(label, fieldProperties.value)
+                    },
             )
         }
     }
@@ -230,12 +230,12 @@ class ViewDataDetailsFragment : Fragment() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier =
-                Modifier.clickable(
-                    indication = rememberRipple(bounded = false),
-                    interactionSource = remember { MutableInteractionSource() },
-                ) {
-                    onClick()
-                },
+            Modifier.clickable(
+                indication = rememberRipple(bounded = false),
+                interactionSource = remember { MutableInteractionSource() },
+            ) {
+                onClick()
+            },
         ) {
             Icon(
                 imageVector = imageVector,
@@ -281,10 +281,10 @@ class ViewDataDetailsFragment : Fragment() {
                 }
                 Column(
                     modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                            .verticalScroll(state = ScrollState(0)),
+                    Modifier
+                        .fillMaxSize()
+                        .padding(8.dp)
+                        .verticalScroll(state = ScrollState(0)),
                 ) {
                     // title
                     Text(
@@ -321,8 +321,8 @@ class ViewDataDetailsFragment : Fragment() {
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             modifier =
-                Modifier
-                    .fillMaxWidth(),
+            Modifier
+                .fillMaxWidth(),
         ) {
             ActionIcon(
                 imageVector = Icons.Filled.Edit,

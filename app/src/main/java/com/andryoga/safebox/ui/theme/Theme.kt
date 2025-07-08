@@ -26,8 +26,8 @@ private val LightColorPalette =
 fun BasicSafeBoxTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content:
-        @Composable()
-        () -> Unit,
+    @Composable()
+    () -> Unit,
 ) {
     val colors =
         if (darkTheme) {
