@@ -29,15 +29,14 @@ class ChooseMasterPswrdFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
-        binding =
-            DataBindingUtil.inflate(
-                inflater,
-                R.layout.choose_master_pswrd_fragment,
-                container,
-                false,
-            )
+        binding = DataBindingUtil.inflate(
+            inflater,
+            R.layout.choose_master_pswrd_fragment,
+            container,
+            false
+        )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
 
@@ -92,13 +91,12 @@ class ChooseMasterPswrdFragment : Fragment() {
                     binding.saveBtn.isClickable = false
                     binding.hint.apply {
                         isErrorEnabled = true
-                        error =
-                            validatorErrorMessageMap.getOrDefault(
-                                failureCode,
-                                context.getString(
-                                    R.string.error,
-                                ),
+                        error = validatorErrorMessageMap.getOrDefault(
+                            failureCode,
+                            context.getString(
+                                R.string.error
                             )
+                        )
                         isHelperTextEnabled = false
                     }
                 } else {
@@ -106,13 +104,12 @@ class ChooseMasterPswrdFragment : Fragment() {
                     binding.saveBtn.isClickable = false
                     binding.pswrd.apply {
                         isErrorEnabled = true
-                        error =
-                            validatorErrorMessageMap.getOrDefault(
-                                failureCode,
-                                context.getString(
-                                    R.string.error,
-                                ),
+                        error = validatorErrorMessageMap.getOrDefault(
+                            failureCode,
+                            context.getString(
+                                R.string.error
                             )
+                        )
                         isHelperTextEnabled = false
                     }
                 }
@@ -130,13 +127,12 @@ class ChooseMasterPswrdFragment : Fragment() {
     }
 
     private fun initPasswordValidatorMapping() {
-        validatorErrorMessageMap =
-            mapOf(
-                LOW_PASSWORD_LENGTH to getString(R.string.length_validation_text),
-                LESS_SPECIAL_CHAR_COUNT to getString(R.string.special_char_validation_text),
-                NOT_MIX_CASE to getString(R.string.case_validation_text),
-                LESS_NUMERIC_COUNT to getString(R.string.numeric_validation_text),
-                HINT_IS_SUBSET to getString(R.string.hint_subset_validation_text),
-            )
+        validatorErrorMessageMap = mapOf(
+            LOW_PASSWORD_LENGTH to getString(R.string.length_validation_text),
+            LESS_SPECIAL_CHAR_COUNT to getString(R.string.special_char_validation_text),
+            NOT_MIX_CASE to getString(R.string.case_validation_text),
+            LESS_NUMERIC_COUNT to getString(R.string.numeric_validation_text),
+            HINT_IS_SUBSET to getString(R.string.hint_subset_validation_text)
+        )
     }
 }

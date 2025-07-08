@@ -11,10 +11,8 @@ import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScre
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class BankAccountDataRepositoryImpl
-@Inject
-constructor(
-    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
+class BankAccountDataRepositoryImpl @Inject constructor(
+    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure
 ) : BankAccountDataRepository {
     override suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData) {
         val entity = bankAccountScreenData.toBankAccountDataEntity(getCurrentDate = true)
@@ -24,8 +22,8 @@ constructor(
     override suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData) {
         bankAccountDataDaoSecure.updateBankAccountData(
             bankAccountScreenData.toBankAccountDataEntity(
-                getCurrentDate = false,
-            ),
+                getCurrentDate = false
+            )
         )
     }
 

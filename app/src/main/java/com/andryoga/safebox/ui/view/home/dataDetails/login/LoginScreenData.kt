@@ -17,7 +17,7 @@ class LoginScreenData(
     pUserId: String = "",
     pPassword: String? = null,
     pNotes: String? = null,
-    pCreationDate: Date = Date(),
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -42,7 +42,7 @@ class LoginScreenData(
                 notes.get(),
                 userId.getValueOrEmpty(),
                 if (getCurrentDate) Date() else creationDate,
-                Date(),
+                Date()
             )
         }
 
@@ -54,7 +54,7 @@ class LoginScreenData(
                 userId,
                 password,
                 notes,
-                creationDate,
+                creationDate
             )
         }
     }

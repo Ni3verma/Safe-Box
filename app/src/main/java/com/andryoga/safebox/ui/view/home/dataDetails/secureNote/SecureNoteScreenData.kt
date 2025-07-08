@@ -14,7 +14,7 @@ class SecureNoteScreenData(
     pKey: Int = 0,
     pTitle: String = "",
     pNotes: String = "",
-    pCreationDate: Date = Date(),
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -33,7 +33,7 @@ class SecureNoteScreenData(
                 title.getValueOrEmpty(),
                 notes.getValueOrEmpty(),
                 if (getCurrentDate) Date() else creationDate,
-                Date(),
+                Date()
             )
         }
 
@@ -42,7 +42,7 @@ class SecureNoteScreenData(
                 key,
                 title,
                 notes,
-                creationDate,
+                creationDate
             )
         }
     }

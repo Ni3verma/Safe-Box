@@ -11,11 +11,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class BankAccountDataDaoSecure
-@Inject
-constructor(
+class BankAccountDataDaoSecure @Inject constructor(
     private val bankAccountDataDao: BankAccountDataDao,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : BankAccountDataDao {
     override suspend fun insertBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
         bankAccountDataDao.insertBankAccountData(encrypt(bankAccountDataEntity))
@@ -24,7 +22,6 @@ constructor(
     override fun insertMultipleBankAccountData(bankAccountDataEntity: List<BankAccountDataEntity>) {
         bankAccountDataDao.insertMultipleBankAccountData(bankAccountDataEntity.map { encrypt(it) })
     }
-
     override suspend fun updateBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
         bankAccountDataDao.updateBankAccountData(encrypt(bankAccountDataEntity))
     }
@@ -67,7 +64,7 @@ constructor(
                 it.micrCode.encryptNullableString(symmetricKeyUtils),
                 it.notes.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -87,7 +84,7 @@ constructor(
                 it.micrCode.decryptNullableString(symmetricKeyUtils),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -106,7 +103,7 @@ constructor(
                 it.micrCode.decryptNullableString(symmetricKeyUtils),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }

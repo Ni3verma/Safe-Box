@@ -13,37 +13,35 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SecureNoteViewModel
-@Inject
-constructor(
-    private val secureNoteDataRepository: SecureNoteDataRepository,
+class SecureNoteViewModel @Inject constructor(
+    private val secureNoteDataRepository: SecureNoteDataRepository
 ) : ViewModel() {
+
     private val _searchTextFilter = MutableStateFlow<String?>(null)
     val searchTextFilter: StateFlow<String?> = _searchTextFilter
 
-    val listData =
-        flow<Resource<List<UserListItemData>>> {
-            secureNoteDataRepository
-                .getAllSecureNoteData()
-                .transform { searchData ->
-                    val adapterEntityList = mutableListOf<UserListItemData>()
-                    searchData.forEach {
-                        adapterEntityList.add(
-                            UserListItemData(
-                                it.key,
-                                it.title,
-                                null,
-                                UserDataType.SECURE_NOTE,
-                            ),
+    val listData = flow<Resource<List<UserListItemData>>> {
+        secureNoteDataRepository
+            .getAllSecureNoteData()
+            .transform { searchData ->
+                val adapterEntityList = mutableListOf<UserListItemData>()
+                searchData.forEach {
+                    adapterEntityList.add(
+                        UserListItemData(
+                            it.key,
+                            it.title,
+                            null,
+                            UserDataType.SECURE_NOTE
                         )
-                    }
-                    emit(adapterEntityList)
+                    )
                 }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(Resource.success(it))
-                }
-        }
+                emit(adapterEntityList)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(Resource.success(it))
+            }
+    }
 
     fun onDeleteItemClick(itemData: UserListItemData) {
         val key = itemData.id

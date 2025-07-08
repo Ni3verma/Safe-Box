@@ -18,13 +18,11 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class ViewDataDetailsViewModel
-@Inject
-constructor(
+class ViewDataDetailsViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository,
     private val bankAccountDataRepository: BankAccountDataRepository,
     private val bankCardDataRepository: BankCardDataRepository,
-    private val secureNoteDataRepository: SecureNoteDataRepository,
+    private val secureNoteDataRepository: SecureNoteDataRepository
 ) : ViewModel() {
     private val _showDeleteRecordDialog = MutableStateFlow(false)
     val showDeleteRecordDialog: StateFlow<Boolean> = _showDeleteRecordDialog
@@ -73,10 +71,7 @@ constructor(
             }
         }
 
-    fun deleteData(
-        key: Int,
-        dataType: UserDataType,
-    ) {
+    fun deleteData(key: Int, dataType: UserDataType) {
         Timber.i("deleting $key of type=$dataType")
         viewModelScope.launch {
             when (dataType) {

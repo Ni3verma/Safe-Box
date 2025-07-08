@@ -7,12 +7,10 @@ import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import javax.inject.Inject
 
-class UserDetailsDaoSecure
-@Inject
-constructor(
+class UserDetailsDaoSecure @Inject constructor(
     private val userDetailsDao: UserDetailsDao,
     private val hashingUtils: HashingUtils,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : UserDetailsDao {
     override suspend fun insertUserDetailsData(userDetailsEntity: UserDetailsEntity) {
         var entity = hash(userDetailsEntity)
@@ -44,7 +42,7 @@ constructor(
                 hashingUtils.hash(it.password),
                 it.hint,
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -57,7 +55,7 @@ constructor(
                 it.password,
                 it.hint.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }

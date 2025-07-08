@@ -11,25 +11,15 @@ import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class BankCardDataRepositoryImpl
-@Inject
-constructor(
-    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
+class BankCardDataRepositoryImpl @Inject constructor(
+    private val bankCardDataDaoSecure: BankCardDataDaoSecure
 ) : BankCardDataRepository {
     override suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.insertBankCardData(
-            bankCardScreenData.toBankCardDataEntity(
-                getCurrentDate = true
-            )
-        )
+        bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = true))
     }
 
     override suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData) {
-        bankCardDataDaoSecure.updateBankCardData(
-            bankCardScreenData.toBankCardDataEntity(
-                getCurrentDate = false
-            )
-        )
+        bankCardDataDaoSecure.updateBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = false))
     }
 
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {

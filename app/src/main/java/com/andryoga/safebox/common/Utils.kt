@@ -7,10 +7,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 object Utils {
-    fun logResource(
-        tag: String,
-        resource: Resource<Any>,
-    ) {
+    fun logResource(tag: String, resource: Resource<Any>) {
         Timber.d("$tag --> status = ${resource.status}\ndata = ${resource.data}\nmessage = ${resource.message}\n")
     }
 
@@ -22,10 +19,7 @@ object Utils {
         return if (this.isNullOrBlank()) null else symmetricKeyUtils.decrypt(this)
     }
 
-    fun getFormattedDate(
-        date: Date,
-        pattern: String = "EEEE, dd MMM yyyy hh:mm a",
-    ): String {
+    fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
         return SimpleDateFormat(pattern).format(date)
     }
 }

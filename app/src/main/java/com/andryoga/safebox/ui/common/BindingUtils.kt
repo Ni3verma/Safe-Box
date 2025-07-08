@@ -16,7 +16,7 @@ fun ShapeableImageView.setUserDataTypeIcon(type: UserDataType) {
             UserDataType.BANK_ACCOUNT -> ContextCompat.getDrawable(context, R.drawable.ic_bank_24)
             UserDataType.BANK_CARD -> ContextCompat.getDrawable(context, R.drawable.ic_card_24)
             UserDataType.SECURE_NOTE -> ContextCompat.getDrawable(context, R.drawable.ic_key_24)
-        },
+        }
     )
 }
 

@@ -32,22 +32,20 @@ import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
-class BackupAndRestoreViewModel
-@Inject
-constructor(
+class BackupAndRestoreViewModel @Inject constructor(
     private val backupMetadataRepository: BackupMetadataRepository,
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : ViewModel() {
-    val backupMetadata =
-        flow {
-            emit(Resource.loading(null))
-            backupMetadataRepository.getBackupMetadata().collect {
-                emit(Resource.success(it))
-                _backupScreenState.value = BackupScreenState.INITIAL_STATE
-            }
+
+    val backupMetadata = flow {
+        emit(Resource.loading(null))
+        backupMetadataRepository.getBackupMetadata().collect {
+            emit(Resource.success(it))
+            _backupScreenState.value = BackupScreenState.INITIAL_STATE
         }
+    }
 
     private val _backupScreenState =
         MutableStateFlow(BackupScreenState.INITIAL_STATE)
@@ -65,14 +63,13 @@ constructor(
     fun setBackupMetadata(uri: Uri) {
         viewModelScope.launch {
             Timber.i("adding backup metadata in db")
-            val backupMetadataEntity =
-                BackupMetadataEntity(
-                    1,
-                    uri.toString(),
-                    uri.path!!,
-                    null,
-                    Date(),
-                )
+            val backupMetadataEntity = BackupMetadataEntity(
+                1,
+                uri.toString(),
+                uri.path!!,
+                null,
+                Date()
+            )
             backupMetadataRepository.insertBackupMetadata(backupMetadataEntity)
         }
     }
@@ -84,21 +81,20 @@ constructor(
             if (isPswrdCorrect) {
                 _backupScreenState.value = BackupScreenState.IN_PROGRESS
                 Timber.i("pswrd is correct, preparing backup work")
-                val backupDataRequest =
-                    OneTimeWorkRequestBuilder<BackupDataWorker>()
-                        .setInputData(
-                            Data(
-                                mapOf(
-                                    BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
-                                    BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to true,
-                                ),
-                            ),
+                val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
+                    .setInputData(
+                        Data(
+                            mapOf(
+                                BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                                BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to true
+                            )
                         )
-                        .build()
+                    )
+                    .build()
                 workManager.enqueueUniqueWork(
                     WORKER_NAME_BACKUP_DATA,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    backupDataRequest,
+                    backupDataRequest
                 )
                 Timber.i("enqueued backup work")
             } else {
@@ -113,21 +109,20 @@ constructor(
         viewModelScope.launch {
             _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
             Timber.i("preparing restore work")
-            val restoreDataRequest =
-                OneTimeWorkRequestBuilder<RestoreDataWorker>()
-                    .setInputData(
-                        Data(
-                            mapOf(
-                                RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
-                                RESTORE_PARAM_FILE_URI to selectedFileUriForRestore,
-                            ),
-                        ),
+            val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
+                .setInputData(
+                    Data(
+                        mapOf(
+                            RESTORE_PARAM_PASSWORD to symmetricKeyUtils.encrypt(password),
+                            RESTORE_PARAM_FILE_URI to selectedFileUriForRestore
+                        )
                     )
-                    .build()
+                )
+                .build()
             workManager.enqueueUniqueWork(
                 WORKER_NAME_RESTORE_DATA,
                 ExistingWorkPolicy.APPEND_OR_REPLACE,
-                restoreDataRequest,
+                restoreDataRequest
             )
             _restoreWorkEnqueued.value = restoreDataRequest.id
             Timber.i("enqueued restore work")

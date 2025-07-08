@@ -42,8 +42,7 @@ import java.util.*
 @HiltWorker
 @ExperimentalCoroutinesApi
 class BackupDataWorker
-@AssistedInject
-constructor(
+@AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
@@ -52,7 +51,7 @@ constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -68,24 +67,20 @@ constructor(
             if (backupMetadataEntity != null) {
                 Timber.i("backup metadata found")
                 val isShowStartNotification =
-                    inputData.getBoolean(
-                        CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
-                        false
-                    )
+                    inputData.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
                 if (isShowStartNotification) {
                     makeStatusNotification(
                         applicationContext,
                         getNotificationOptions(
-                            applicationContext.getString(R.string.notification_backup_in_progress),
-                        ),
+                            applicationContext.getString(R.string.notification_backup_in_progress)
+                        )
                     )
                 }
 
                 startTime = System.currentTimeMillis()
 
-                val inputPassword =
-                    inputData.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
-                        ?: throw IllegalArgumentException("expected password input was not received")
+                val inputPassword = inputData.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
+                    ?: throw IllegalArgumentException("expected password input was not received")
 
                 val loginData = loginDataDaoSecure.exportAllData()
                 val bankAccountData = bankAccountDataDaoSecure.exportAllData()
@@ -104,11 +99,10 @@ constructor(
                         mapOf(
                             CommonConstants.SALT_KEY to salt,
                             CommonConstants.IV_KEY to iv,
-                            CommonConstants.VERSION_KEY to
-                                ByteArray(1) {
-                                    CommonConstants.BACKUP_VERSION.toByte()
-                                },
-                        ),
+                            CommonConstants.VERSION_KEY to ByteArray(1) {
+                                CommonConstants.BACKUP_VERSION.toByte()
+                            }
+                        )
                     )
                     recordTime("got salt and iv")
 
@@ -117,16 +111,15 @@ constructor(
                         inputPassword,
                         bankAccountData,
                         bankCardData,
-                        secureNoteData,
+                        secureNoteData
                     )
 
                     Timber.i("getting picked dir")
                     try {
-                        val pickedDir =
-                            DocumentFile.fromTreeUri(
-                                applicationContext,
-                                Uri.parse(backupMetadataEntity.uriString),
-                            )!!
+                        val pickedDir = DocumentFile.fromTreeUri(
+                            applicationContext,
+                            Uri.parse(backupMetadataEntity.uriString)
+                        )!!
 
                         deleteExtraBackupFiles(pickedDir)
                         exportToFile(pickedDir)
@@ -147,13 +140,13 @@ constructor(
     private suspend fun onBackupError(exception: Exception) {
         Timber.e(
             exception,
-            "$localTag exception occurred : ${exception.localizedMessage}",
+            "$localTag exception occurred : ${exception.localizedMessage}"
         )
         Timber.i("removing backup metadata")
         backupMetadataRepository.deleteBackupMetadata()
         makeStatusNotification(
             applicationContext,
-            getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure)),
+            getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure))
         )
     }
 
@@ -162,7 +155,7 @@ constructor(
         inputPassword: String,
         bankAccountData: List<ExportBankAccountData>,
         bankCardData: List<ExportBankCardData>,
-        secureNoteData: List<ExportSecureNoteData>,
+        secureNoteData: List<ExportSecureNoteData>
     ) {
         exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
         recordTime("got login data byte array")
@@ -179,26 +172,23 @@ constructor(
             encryptSecureNoteData(secureNoteData, inputPassword)
         recordTime("got secure note data byte array")
 
-        exportMap[CommonConstants.CREATION_DATE_KEY] =
-            ByteArray(1) {
-                System.currentTimeMillis().toByte()
-            }
+        exportMap[CommonConstants.CREATION_DATE_KEY] = ByteArray(1) {
+            System.currentTimeMillis().toByte()
+        }
     }
 
     private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
         withContext(Dispatchers.IO) {
-            val files =
-                pickedDir.listFiles().filter {
-                    it.isFile && it.name != null &&
-                        it.name!!.endsWith(".bak") &&
-                        it.name!!.startsWith("SafeBoxBackup")
-                }
+            val files = pickedDir.listFiles().filter {
+                it.isFile && it.name != null &&
+                    it.name!!.endsWith(".bak") &&
+                    it.name!!.startsWith("SafeBoxBackup")
+            }
             if (files.size >= CommonConstants.MAX_BACKUP_FILES) {
                 Timber.i("max backup files threshold reached")
-                val sortedFiles =
-                    files.sortedBy {
-                        it.name
-                    }
+                val sortedFiles = files.sortedBy {
+                    it.name
+                }
                 for (i in 0..(files.size - CommonConstants.MAX_BACKUP_FILES)) {
                     Timber.i("deleting backup file ${sortedFiles[i].name}")
                     sortedFiles[i].delete()
@@ -206,35 +196,36 @@ constructor(
             }
         }
 
-    private suspend fun exportToFile(pickedDir: DocumentFile) =
-        withContext(Dispatchers.IO) {
-            val nameSuffix =
-                Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
-            Timber.i("$localTag  creating file")
-            val file = pickedDir.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
+    private suspend fun exportToFile(
+        pickedDir: DocumentFile
+    ) = withContext(Dispatchers.IO) {
+        val nameSuffix =
+            Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
+        Timber.i("$localTag  creating file")
+        val file = pickedDir.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
 
-            Timber.i("$localTag opening file descriptor")
-            applicationContext.contentResolver.openFileDescriptor(
-                file!!.uri,
-                "w",
-            )?.use { parcelFileDescriptor ->
-                Timber.i("$localTag making output stream")
-                ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
-                    Timber.i("$localTag writing to backup file")
-                    it.writeObject(exportMap)
-                }
+        Timber.i("$localTag opening file descriptor")
+        applicationContext.contentResolver.openFileDescriptor(
+            file!!.uri,
+            "w"
+        )?.use { parcelFileDescriptor ->
+            Timber.i("$localTag making output stream")
+            ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
+                Timber.i("$localTag writing to backup file")
+                it.writeObject(exportMap)
             }
-            recordTime("exported to file, updating date in db")
-            backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
-            makeStatusNotification(
-                applicationContext,
-                getNotificationOptions(applicationContext.getString(R.string.notification_backup_success)),
-            )
         }
+        recordTime("exported to file, updating date in db")
+        backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
+        makeStatusNotification(
+            applicationContext,
+            getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
+        )
+    }
 
     private fun encryptLoginData(
         data: List<ExportLoginData>,
-        inputPassword: String,
+        inputPassword: String
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportLoginData.serializer()), data)
@@ -243,7 +234,7 @@ constructor(
                 json.toByteArray(),
                 salt,
                 iv,
-                true,
+                true
             )
         }
         return null
@@ -251,7 +242,7 @@ constructor(
 
     private fun encryptBankAccountData(
         data: List<ExportBankAccountData>,
-        inputPassword: String,
+        inputPassword: String
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportBankAccountData.serializer()), data)
@@ -260,7 +251,7 @@ constructor(
                 json.toByteArray(),
                 salt,
                 iv,
-                true,
+                true
             )
         }
         return null
@@ -268,7 +259,7 @@ constructor(
 
     private fun encryptBankCardData(
         data: List<ExportBankCardData>,
-        inputPassword: String,
+        inputPassword: String
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportBankCardData.serializer()), data)
@@ -277,7 +268,7 @@ constructor(
                 json.toByteArray(),
                 salt,
                 iv,
-                true,
+                true
             )
         }
         return null
@@ -285,7 +276,7 @@ constructor(
 
     private fun encryptSecureNoteData(
         data: List<ExportSecureNoteData>,
-        inputPassword: String,
+        inputPassword: String
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportSecureNoteData.serializer()), data)
@@ -294,7 +285,7 @@ constructor(
                 json.toByteArray(),
                 salt,
                 iv,
-                true,
+                true
             )
         }
         return null
@@ -326,7 +317,7 @@ constructor(
             R.drawable.ic_backup_restore,
             applicationContext.getString(R.string.notification_backup_title),
             notificationContent,
-            NotificationCompat.PRIORITY_HIGH,
+            NotificationCompat.PRIORITY_HIGH
         )
     }
 }

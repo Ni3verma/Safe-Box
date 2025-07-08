@@ -7,26 +7,26 @@ data class SearchLoginData(
     val key: Int,
     val title: String,
     val userId: String,
-    val creationDate: Date,
+    val creationDate: Date
 ) {
     companion object {
         fun decrypt(
             searchLoginData: SearchLoginData,
-            symmetricKeyUtils: SymmetricKeyUtils,
+            symmetricKeyUtils: SymmetricKeyUtils
         ): SearchLoginData {
             searchLoginData.let {
                 return SearchLoginData(
                     it.key,
                     it.title,
                     symmetricKeyUtils.decrypt(it.userId),
-                    it.creationDate,
+                    it.creationDate
                 )
             }
         }
 
         fun decrypt(
             searchLoginData: List<SearchLoginData>,
-            symmetricKeyUtils: SymmetricKeyUtils,
+            symmetricKeyUtils: SymmetricKeyUtils
         ): List<SearchLoginData> {
             return searchLoginData.map { decrypt(it, symmetricKeyUtils) }
         }

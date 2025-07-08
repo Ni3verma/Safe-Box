@@ -13,6 +13,7 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class MainApplication : Application(), Configuration.Provider {
+
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
@@ -24,19 +25,17 @@ class MainApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         if (BuildConfig.DEBUG) {
-            Timber.plant(
-                object : Timber.DebugTree() {
-                    override fun createStackElementTag(element: StackTraceElement): String {
-                        return String.format(
-                            Locale.US,
-                            "Nitin Class:%s, Line: %s, Method: %s",
-                            super.createStackElementTag(element),
-                            element.lineNumber,
-                            element.methodName,
-                        )
-                    }
-                },
-            )
+            Timber.plant(object : Timber.DebugTree() {
+                override fun createStackElementTag(element: StackTraceElement): String {
+                    return String.format(
+                        Locale.US,
+                        "Nitin Class:%s, Line: %s, Method: %s",
+                        super.createStackElementTag(element),
+                        element.lineNumber,
+                        element.methodName
+                    )
+                }
+            })
         } else {
             Timber.plant(ReleaseTree())
         }
@@ -44,19 +43,11 @@ class MainApplication : Application(), Configuration.Provider {
 }
 
 class ReleaseTree : @NotNull Timber.Tree() {
-    override fun isLoggable(
-        tag: String?,
-        priority: Int,
-    ): Boolean {
+    override fun isLoggable(tag: String?, priority: Int): Boolean {
         return (priority in listOf(Log.ERROR, Log.WARN, Log.INFO))
     }
 
-    override fun log(
-        priority: Int,
-        tag: String?,
-        message: String,
-        t: Throwable?,
-    ) {
+    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         val crashlytics = FirebaseCrashlytics.getInstance()
         crashlytics.log(message)
 

@@ -20,6 +20,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object SecurityModule {
+
     @Singleton
     @Provides
     fun provideSymmetricKey(): SecretKey {
@@ -28,7 +29,9 @@ object SecurityModule {
 
     @Singleton
     @Provides
-    fun provideSymmetricKeyUtils(secretKey: SecretKey): SymmetricKeyUtils {
+    fun provideSymmetricKeyUtils(
+        secretKey: SecretKey
+    ): SymmetricKeyUtils {
         return SymmetricKeyUtilsImpl(secretKey)
     }
 
@@ -52,16 +55,15 @@ object SecurityModule {
         if (!keyStore.containsAlias(alias)) {
             val keyGenerator =
                 KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-            val keyGenParameterSpec =
-                KeyGenParameterSpec.Builder(
-                    alias,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
-                )
-                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            val keyGenParameterSpec = KeyGenParameterSpec.Builder(
+                alias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
 //            .setUserAuthenticationRequired(true) //  requires lock screen, invalidated if lock screen is disabled
-                    .setRandomizedEncryptionRequired(true) //  different ciphertext for same plaintext on each call
-                    .build()
+                .setRandomizedEncryptionRequired(true) //  different ciphertext for same plaintext on each call
+                .build()
             keyGenerator.init(keyGenParameterSpec)
             keyGenerator.generateKey()
         }

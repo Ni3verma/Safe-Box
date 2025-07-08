@@ -13,10 +13,8 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class BankCardDataViewModel
-@Inject
-constructor(
-    private val bankCardDataRepository: BankCardDataRepository,
+class BankCardDataViewModel @Inject constructor(
+    private val bankCardDataRepository: BankCardDataRepository
 ) : ViewModel() {
     val bankCardScreenData = BankCardScreenData()
     private var isEditMode: Boolean = false
@@ -37,25 +35,23 @@ constructor(
         }
     }
 
-    fun onSaveClick() =
-        liveData(viewModelScope.coroutineContext) {
-            emit(Resource.loading(true))
-            try {
-                Timber.i("save clicked, edit mode = $isEditMode")
-                if (isEditMode) {
-                    bankCardDataRepository.updateBankCardData(bankCardScreenData)
-                } else {
-                    bankCardDataRepository.insertBankCardData(bankCardScreenData)
-                }
-                emit(Resource.success(true))
-            } catch (ex: Exception) {
-                emit(
-                    Resource.error(
-                        data = false,
-                        message = ex.message,
-                    ),
+    fun onSaveClick() = liveData(viewModelScope.coroutineContext) {
+        emit(Resource.loading(true))
+        try {
+            Timber.i("save clicked, edit mode = $isEditMode")
+            if (isEditMode) {
+                bankCardDataRepository.updateBankCardData(bankCardScreenData)
+            } else
+                bankCardDataRepository.insertBankCardData(bankCardScreenData)
+            emit(Resource.success(true))
+        } catch (ex: Exception) {
+            emit(
+                Resource.error(
+                    data = false,
+                    message = ex.message
                 )
-                Timber.e(ex)
-            }
+            )
+            Timber.e(ex)
         }
+    }
 }

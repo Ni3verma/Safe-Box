@@ -5,5 +5,5 @@ data class ViewSecureNoteData(
     val title: String,
     val notes: String,
     val creationDate: String,
-    val updateDate: String,
+    val updateDate: String
 )

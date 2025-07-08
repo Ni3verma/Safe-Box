@@ -22,7 +22,7 @@ class BankAccountScreenData(
     pIfscCode: String? = null,
     pMicrCode: String? = null,
     pNotes: String? = null,
-    pCreationDate: Date = Date(),
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -57,7 +57,7 @@ class BankAccountScreenData(
                 micrCode.get(),
                 notes.get(),
                 if (getCurrentDate) Date() else creationDate,
-                Date(),
+                Date()
             )
         }
 
@@ -69,7 +69,7 @@ class BankAccountScreenData(
                 customerName,
                 customerId,
                 branchCode,
-                branchName, branchAddress, ifscCode, micrCode, notes, creationDate,
+                branchName, branchAddress, ifscCode, micrCode, notes, creationDate
             )
         }
     }

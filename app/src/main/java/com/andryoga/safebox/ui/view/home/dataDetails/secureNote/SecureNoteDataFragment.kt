@@ -30,15 +30,14 @@ class SecureNoteDataFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
-        binding =
-            DataBindingUtil.inflate(
-                inflater,
-                R.layout.secure_note_data_fragment,
-                container,
-                false,
-            )
+        binding = DataBindingUtil.inflate(
+            inflater,
+            R.layout.secure_note_data_fragment,
+            container,
+            false
+        )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this
         Timber.i("$tagLocal : received id = ${args.id}")
@@ -47,19 +46,15 @@ class SecureNoteDataFragment : Fragment() {
         return binding.root
     }
 
-    override fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-    ) {
-        val requiredFieldValidator =
-            RequiredFieldValidator(
-                listOf(
-                    binding.title,
-                    binding.notes,
-                ),
-                binding.saveBtn,
-                tagLocal,
-            )
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val requiredFieldValidator = RequiredFieldValidator(
+            listOf(
+                binding.title,
+                binding.notes
+            ),
+            binding.saveBtn,
+            tagLocal
+        )
         requiredFieldValidator.validate()
     }
 
@@ -77,25 +72,22 @@ class SecureNoteDataFragment : Fragment() {
         // why snackbar is not showing up if I use requireView() in view param
         Utils.logResource(tagLocal, resource)
         when (resource.status) {
-            Status.LOADING ->
-                com.andryoga.safebox.ui.common.Utils.switchVisibility(
-                    binding.saveBtn,
-                    binding.loading,
-                )
-
+            Status.LOADING -> com.andryoga.safebox.ui.common.Utils.switchVisibility(
+                binding.saveBtn,
+                binding.loading
+            )
             Status.SUCCESS -> {
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
             }
-
             Status.ERROR -> {
                 com.andryoga.safebox.ui.common.Utils.switchVisibility(
                     binding.saveBtn,
-                    binding.loading,
+                    binding.loading
                 )
                 CommonSnackbar.showErrorSnackbar(
                     requireActivity().findViewById(R.id.drawer_layout),
-                    getString(R.string.snackbar_common_error_saving_data),
+                    getString(R.string.snackbar_common_error_saving_data)
                 )
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()

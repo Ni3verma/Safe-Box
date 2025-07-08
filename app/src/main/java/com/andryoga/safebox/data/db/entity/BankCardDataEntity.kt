@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 import java.util.*
 
 @Entity(
-    tableName = "bank_card_data",
+    tableName = "bank_card_data"
 )
 data class BankCardDataEntity(
     @PrimaryKey(autoGenerate = true)
@@ -18,5 +18,5 @@ data class BankCardDataEntity(
     val expiryDate: String?,
     val notes: String?,
     val creationDate: Date,
-    val updateDate: Date,
+    val updateDate: Date
 )

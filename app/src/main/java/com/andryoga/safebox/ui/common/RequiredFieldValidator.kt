@@ -10,7 +10,7 @@ import timber.log.Timber
 class RequiredFieldValidator(
     private val mandatoryViews: List<View>,
     private val validationOnViewId: View,
-    private val tag: String,
+    private val tag: String
 ) {
     var errorFields = setOf<Int>()
 

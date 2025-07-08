@@ -17,52 +17,65 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object CacheModule {
+
     @Singleton
     @Provides
     fun provideSafeBoxAppDb(
-        @ApplicationContext context: Context,
+        @ApplicationContext context: Context
     ): SafeBoxDatabase {
         return Room.databaseBuilder(
             context,
             SafeBoxDatabase::class.java,
-            SafeBoxDatabase.DATABASE_NAME,
+            SafeBoxDatabase.DATABASE_NAME
         ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
     }
 
     // DAO
     @Singleton
     @Provides
-    fun provideLoginDataDao(safeBoxDatabase: SafeBoxDatabase): LoginDataDao {
+    fun provideLoginDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): LoginDataDao {
         return safeBoxDatabase.loginDataDao()
     }
 
     @Singleton
     @Provides
-    fun provideUserDetailsDao(safeBoxDatabase: SafeBoxDatabase): UserDetailsDao {
+    fun provideUserDetailsDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): UserDetailsDao {
         return safeBoxDatabase.userDetailsDao()
     }
 
     @Singleton
     @Provides
-    fun provideBankAccountDataDao(safeBoxDatabase: SafeBoxDatabase): BankAccountDataDao {
+    fun provideBankAccountDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): BankAccountDataDao {
         return safeBoxDatabase.bankAccountDataDao()
     }
 
     @Singleton
     @Provides
-    fun provideBankCardDataDao(safeBoxDatabase: SafeBoxDatabase): BankCardDataDao {
+    fun provideBankCardDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): BankCardDataDao {
         return safeBoxDatabase.bankCardDataDao()
     }
 
     @Singleton
     @Provides
-    fun provideSecureNoteDataDao(safeBoxDatabase: SafeBoxDatabase): SecureNoteDataDao {
+    fun provideSecureNoteDataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): SecureNoteDataDao {
         return safeBoxDatabase.secureNoteDataDao()
     }
 
     @Singleton
     @Provides
-    fun provideBackupMetadataDao(safeBoxDatabase: SafeBoxDatabase): BackupMetadataDao {
+    fun provideBackupMetadataDao(
+        safeBoxDatabase: SafeBoxDatabase
+    ): BackupMetadataDao {
         return safeBoxDatabase.backupMetadataDao()
     }
 }

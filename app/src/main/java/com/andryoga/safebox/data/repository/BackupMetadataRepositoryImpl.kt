@@ -6,10 +6,8 @@ import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class BackupMetadataRepositoryImpl
-@Inject
-constructor(
-    private val backupMetadataDao: BackupMetadataDao,
+class BackupMetadataRepositoryImpl @Inject constructor(
+    private val backupMetadataDao: BackupMetadataDao
 ) : BackupMetadataRepository {
     override suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity) {
         backupMetadataDao.insertBackupMetadata(backupMetadataEntity)

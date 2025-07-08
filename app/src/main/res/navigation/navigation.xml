@@ -38,7 +38,7 @@
         android:id="@+id/loginDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.login.LoginDataFragment"
         android:label="@string/title_login_data"
-        tools:layout="@layout/login_data_fragment">
+        tools:layout="@layout/login_data_fragment" >
         <argument
             android:name="id"
             app:argType="integer"
@@ -48,7 +48,7 @@
         android:id="@+id/bankAccountDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountDataFragment"
         android:label="@string/title_bank_account_data"
-        tools:layout="@layout/bank_account_data_fragment">
+        tools:layout="@layout/bank_account_data_fragment" >
         <argument
             android:name="id"
             app:argType="integer"
@@ -68,7 +68,7 @@
         android:id="@+id/secureNoteDataFragment"
         android:name="com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteDataFragment"
         android:label="@string/title_secure_note_data"
-        tools:layout="@layout/secure_note_data_fragment">
+        tools:layout="@layout/secure_note_data_fragment" >
         <argument
             android:name="id"
             app:argType="integer"
@@ -76,9 +76,9 @@
     </fragment>
 
     <fragment
-        android:id="@+id/nav_all_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
-        android:label="@string/drawer_title_all_items">
+            android:id="@+id/nav_all_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.all.AllInfoFragment"
+            android:label="@string/drawer_title_all_items" >
         <action
             android:id="@+id/action_nav_all_info_to_addNewUserPersonalDataDialogFragment"
             app:destination="@id/addNewUserPersonalDataDialogFragment" />
@@ -89,55 +89,55 @@
             android:id="@+id/action_nav_all_info_to_nav_backup_restore"
             app:destination="@id/nav_backup_restore" />
     </fragment>
-    <fragment
-        android:id="@+id/nav_login_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
-        android:label="@string/drawer_title_login">
-        <action
-            android:id="@+id/action_nav_login_info_to_addNewUserPersonalDataDialogFragment"
-            app:destination="@id/addNewUserPersonalDataDialogFragment" />
-        <action
-            android:id="@+id/action_nav_login_info_to_viewDataDetailsFragment"
-            app:destination="@id/viewDataDetailsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/nav_bank_account_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
-        android:label="@string/drawer_title_bank_account">
-        <action
-            android:id="@+id/action_nav_bank_account_info_to_addNewUserPersonalDataDialogFragment"
-            app:destination="@id/addNewUserPersonalDataDialogFragment" />
-        <action
-            android:id="@+id/action_nav_bank_account_info_to_viewDataDetailsFragment"
-            app:destination="@id/viewDataDetailsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/nav_bank_card_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragment"
-        android:label="@string/drawer_title_bank_card">
-        <action
-            android:id="@+id/action_nav_bank_card_info_to_addNewUserPersonalDataDialogFragment"
-            app:destination="@id/addNewUserPersonalDataDialogFragment" />
-        <action
-            android:id="@+id/action_nav_bank_card_info_to_viewDataDetailsFragment"
-            app:destination="@id/viewDataDetailsFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/nav_secure_note_info"
-        android:name="com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragment"
-        android:label="@string/drawer_title_secure_note">
-        <action
-            android:id="@+id/action_nav_secure_note_info_to_addNewUserPersonalDataDialogFragment"
-            app:destination="@id/addNewUserPersonalDataDialogFragment" />
-        <action
-            android:id="@+id/action_nav_secure_note_info_to_viewDataDetailsFragment"
-            app:destination="@id/viewDataDetailsFragment" />
-    </fragment>
+        <fragment
+            android:id="@+id/nav_login_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.loginInfo.LoginInfoFragment"
+            android:label="@string/drawer_title_login" >
+            <action
+                android:id="@+id/action_nav_login_info_to_addNewUserPersonalDataDialogFragment"
+                app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_login_info_to_viewDataDetailsFragment"
+                app:destination="@id/viewDataDetailsFragment" />
+        </fragment>
+        <fragment
+            android:id="@+id/nav_bank_account_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.bankAccountInfo.BankAccountInfoFragment"
+            android:label="@string/drawer_title_bank_account" >
+            <action
+                android:id="@+id/action_nav_bank_account_info_to_addNewUserPersonalDataDialogFragment"
+                app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_bank_account_info_to_viewDataDetailsFragment"
+                app:destination="@id/viewDataDetailsFragment" />
+        </fragment>
+        <fragment
+            android:id="@+id/nav_bank_card_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.bankCardInfo.BankCardInfoFragment"
+            android:label="@string/drawer_title_bank_card" >
+            <action
+                android:id="@+id/action_nav_bank_card_info_to_addNewUserPersonalDataDialogFragment"
+                app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_bank_card_info_to_viewDataDetailsFragment"
+                app:destination="@id/viewDataDetailsFragment" />
+        </fragment>
+        <fragment
+            android:id="@+id/nav_secure_note_info"
+            android:name="com.andryoga.safebox.ui.view.home.child.secureNoteInfo.SecureNoteInfoFragment"
+            android:label="@string/drawer_title_secure_note" >
+            <action
+                android:id="@+id/action_nav_secure_note_info_to_addNewUserPersonalDataDialogFragment"
+                app:destination="@id/addNewUserPersonalDataDialogFragment" />
+            <action
+                android:id="@+id/action_nav_secure_note_info_to_viewDataDetailsFragment"
+                app:destination="@id/viewDataDetailsFragment" />
+        </fragment>
     <dialog
         android:id="@+id/addNewUserPersonalDataDialogFragment"
         android:name="com.andryoga.safebox.ui.view.home.child.AddNewUserPersonalDataDialogFragment"
         android:label="AddNewUserPersonalDataDialogFragment"
-        tools:layout="@layout/add_new_user_personal_data_dialog">
+        tools:layout="@layout/add_new_user_personal_data_dialog" >
         <action
             android:id="@+id/action_addNewUserPersonalDataDialogFragment_to_loginDataFragment"
             app:destination="@id/loginDataFragment" />
@@ -154,7 +154,7 @@
     <fragment
         android:id="@+id/viewDataDetailsFragment"
         android:name="com.andryoga.safebox.ui.view.home.viewDataDetails.ViewDataDetailsFragment"
-        android:label="@string/title_view_data">
+        android:label="@string/title_view_data" >
         <argument
             android:name="id"
             app:argType="integer"

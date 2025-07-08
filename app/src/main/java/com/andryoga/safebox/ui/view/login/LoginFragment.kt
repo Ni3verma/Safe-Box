@@ -30,7 +30,7 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(inflater, R.layout.login_fragment, container, false)
         binding.viewModel = viewModel
@@ -91,13 +91,13 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
             Timber.i("showing biometric dialog")
             showBiometricsAuthDialog(
                 getString(R.string.biometric_title_text),
-                getString(R.string.biometric_negative_button_text),
+                getString(R.string.biometric_negative_button_text)
             )
         } else if (canUnlockWithBiometric && viewModel.loginCountWithBiometric >= MAX_CONT_BIOMETRIC_LOGINS) {
             Timber.i(
                 "not showing biometric dialog, cont. count" +
                     " with biometric = ${viewModel.loginCountWithBiometric}\n" +
-                    "showing enter password manually message",
+                    "showing enter password manually message"
             )
             binding.enterPasswordManuallyMessage.visibility = View.VISIBLE
         }
@@ -109,7 +109,6 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
                 Timber.i("User authenticated with biometric")
                 viewModel.onUnlockedWithBiometric()
             }
-
             else -> {
                 Timber.i("biometric event failed, name = ${event.name}")
             }

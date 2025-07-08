@@ -13,10 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
-class LoginDataRepositoryImpl
-@Inject
-constructor(
-    private val loginDataDaoSecure: LoginDataDaoSecure,
+class LoginDataRepositoryImpl @Inject constructor(
+    private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
     override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
         loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = true))

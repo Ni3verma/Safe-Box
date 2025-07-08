@@ -6,72 +6,45 @@ import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class PreferenceProviderImpl
-@Inject
-constructor(
-    @ApplicationContext context: Context,
+class PreferenceProviderImpl @Inject constructor(
+    @ApplicationContext context: Context
 ) :
     PreferenceProvider {
     private val appContext = context.applicationContext
-    private val sharedPref: SharedPreferences =
-        appContext.getSharedPreferences(
-            "SAFE_BOX_SHARED_PREF",
-            Context.MODE_PRIVATE,
-        )
+    private val sharedPref: SharedPreferences = appContext.getSharedPreferences(
+        "SAFE_BOX_SHARED_PREF",
+        Context.MODE_PRIVATE
+    )
 
-    override fun upsertBooleanPref(
-        key: String,
-        value: Boolean,
-    ) {
+    override fun upsertBooleanPref(key: String, value: Boolean) {
         sharedPref.edit().putBoolean(key, value).apply()
     }
 
-    override fun getBooleanPref(
-        key: String,
-        defValue: Boolean,
-    ): Boolean {
+    override fun getBooleanPref(key: String, defValue: Boolean): Boolean {
         return sharedPref.getBoolean(key, defValue)
     }
 
-    override fun upsertStringPref(
-        key: String,
-        value: String,
-    ) {
+    override fun upsertStringPref(key: String, value: String) {
         sharedPref.edit().putString(key, value).apply()
     }
 
-    override fun getStringPref(
-        key: String,
-        defValue: String?,
-    ): String? {
+    override fun getStringPref(key: String, defValue: String?): String? {
         return sharedPref.getString(key, defValue)
     }
 
-    override fun upsertLongPref(
-        key: String,
-        value: Long,
-    ) {
+    override fun upsertLongPref(key: String, value: Long) {
         sharedPref.edit().putLong(key, value).apply()
     }
 
-    override fun getLongPref(
-        key: String,
-        defValue: Long,
-    ): Long {
+    override fun getLongPref(key: String, defValue: Long): Long {
         return sharedPref.getLong(key, defValue)
     }
 
-    override fun getIntPref(
-        key: String,
-        defValue: Int,
-    ): Int {
+    override fun getIntPref(key: String, defValue: Int): Int {
         return sharedPref.getInt(key, defValue)
     }
 
-    override fun upsertIntPref(
-        key: String,
-        value: Int,
-    ) {
+    override fun upsertIntPref(key: String, value: Int) {
         sharedPref.edit().putInt(key, value).apply()
     }
 

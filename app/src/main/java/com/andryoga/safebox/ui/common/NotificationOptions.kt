@@ -9,5 +9,5 @@ data class NotificationOptions(
     val notificationSmallIcon: Int,
     val notificationTitle: String,
     val notificationContent: String,
-    val notificationPriority: Int,
+    val notificationPriority: Int
 )

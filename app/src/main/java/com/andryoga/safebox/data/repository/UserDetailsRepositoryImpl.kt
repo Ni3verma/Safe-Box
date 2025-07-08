@@ -9,26 +9,20 @@ import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 
-class UserDetailsRepositoryImpl
-@Inject
-constructor(
-    private val userDetailsDaoSecure: UserDetailsDaoSecure,
+class UserDetailsRepositoryImpl @Inject constructor(
+    private val userDetailsDaoSecure: UserDetailsDaoSecure
 ) : UserDetailsRepository {
-    override suspend fun insertUserDetailsData(
-        password: String,
-        hint: String?,
-    ) {
+    override suspend fun insertUserDetailsData(password: String, hint: String?) {
         val uid = UUID.randomUUID().toString()
         setCrashlyticsUid(uid)
 
-        val entity =
-            UserDetailsEntity(
-                password,
-                uid,
-                hint,
-                Date(),
-                Date(),
-            )
+        val entity = UserDetailsEntity(
+            password,
+            uid,
+            hint,
+            Date(),
+            Date()
+        )
         userDetailsDaoSecure.insertUserDetailsData(entity)
     }
 

@@ -11,24 +11,22 @@ import com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteScreen
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class SecureNoteDataRepositoryImpl
-@Inject
-constructor(
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+class SecureNoteDataRepositoryImpl @Inject constructor(
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : SecureNoteDataRepository {
     override suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
         secureNoteDataDaoSecure.insertSecretNoteData(
             secureNoteScreenData.toSecureNoteDataEntity(
-                getCurrentDate = true,
-            ),
+                getCurrentDate = true
+            )
         )
     }
 
     override suspend fun updateSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
         secureNoteDataDaoSecure.updateSecretNoteData(
             secureNoteScreenData.toSecureNoteDataEntity(
-                getCurrentDate = false,
-            ),
+                getCurrentDate = false
+            )
         )
     }
 

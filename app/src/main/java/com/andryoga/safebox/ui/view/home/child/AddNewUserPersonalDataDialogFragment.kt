@@ -18,14 +18,14 @@ class AddNewUserPersonalDataDialogFragment :
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         binding =
             DataBindingUtil.inflate(
                 inflater,
                 R.layout.add_new_user_personal_data_dialog,
                 container,
-                false,
+                false
             )
         binding.lifecycleOwner = this
 

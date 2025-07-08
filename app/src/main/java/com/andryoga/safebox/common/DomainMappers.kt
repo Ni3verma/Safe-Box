@@ -10,7 +10,7 @@ object DomainMappers {
             key, title, accountNumber, customerName, customerId,
             branchCode, branchName, branchAddress, ifscCode, micrCode, notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate),
+            getFormattedDate(updateDate)
         )
     }
 
@@ -18,7 +18,7 @@ object DomainMappers {
         return ViewBankCardData(
             key, title, name, number, pin, cvv, expiryDate, notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate),
+            getFormattedDate(updateDate)
         )
     }
 
@@ -31,7 +31,7 @@ object DomainMappers {
             userId,
             notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate),
+            getFormattedDate(updateDate)
         )
     }
 
@@ -41,7 +41,7 @@ object DomainMappers {
             title,
             notes,
             getFormattedDate(creationDate),
-            getFormattedDate(updateDate),
+            getFormattedDate(updateDate)
         )
     }
 
@@ -51,7 +51,7 @@ object DomainMappers {
             uriString,
             displayPath,
             if (lastBackupDate == null) "NA" else getFormattedDate(lastBackupDate),
-            getFormattedDate(createdOn),
+            getFormattedDate(createdOn)
         )
     }
 }

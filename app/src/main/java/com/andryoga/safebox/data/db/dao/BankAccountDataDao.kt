@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BankAccountDataDao {
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertBankAccountData(bankAccountDataEntity: BankAccountDataEntity)
 

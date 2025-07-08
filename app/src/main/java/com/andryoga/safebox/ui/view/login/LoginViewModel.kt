@@ -29,15 +29,14 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel
-@Inject
-constructor(
+class LoginViewModel @Inject constructor(
     encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val preferenceProvider: PreferenceProvider,
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : ViewModel() {
+
     object Constants {
         const val MAX_CONT_BIOMETRIC_LOGINS = 5
         const val ASK_FOR_REVIEW_AFTER_EVERY = 10
@@ -85,24 +84,22 @@ constructor(
                 val isPasswordCorrect = userDetailsRepository.checkPassword(pswrd.value)
                 if (isPasswordCorrect) {
                     Timber.i("pswrd is correct, preparing backup work")
-                    val backupDataRequest =
-                        OneTimeWorkRequestBuilder<BackupDataWorker>()
-                            .setInputData(
-                                Data(
-                                    mapOf(
-                                        BACKUP_PARAM_PASSWORD to
-                                            symmetricKeyUtils.encrypt(
-                                                pswrd.value,
-                                            ),
-                                        BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to false,
+                    val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
+                        .setInputData(
+                            Data(
+                                mapOf(
+                                    BACKUP_PARAM_PASSWORD to symmetricKeyUtils.encrypt(
+                                        pswrd.value
                                     ),
-                                ),
+                                    BACKUP_PARAM_IS_SHOW_START_NOTIFICATION to false
+                                )
                             )
-                            .build()
+                        )
+                        .build()
                     workManager.enqueueUniqueWork(
                         WORKER_NAME_BACKUP_DATA,
                         ExistingWorkPolicy.APPEND_OR_REPLACE,
-                        backupDataRequest,
+                        backupDataRequest
                     )
                     Timber.i("enqueued backup work")
                     canNavigateToHome(0)
@@ -124,15 +121,15 @@ constructor(
     private fun canNavigateToHome(newLoginCountWithBiometric: Int) {
         Timber.i(
             "setting login count with biometric to $newLoginCountWithBiometric" +
-                " and login count to ${totalLoginCount + 1}",
+                " and login count to ${totalLoginCount + 1}"
         )
         preferenceProvider.upsertIntPref(
             LOGIN_COUNT_WITH_BIOMETRIC,
-            newLoginCountWithBiometric,
+            newLoginCountWithBiometric
         )
         preferenceProvider.upsertIntPref(
             TOTAL_LOGIN_COUNT,
-            totalLoginCount + 1,
+            totalLoginCount + 1
         )
         _navigateToHome.value = true
     }

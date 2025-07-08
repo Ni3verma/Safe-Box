@@ -8,11 +8,9 @@ import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class SecureNoteDataDaoSecure
-@Inject
-constructor(
+class SecureNoteDataDaoSecure @Inject constructor(
     private val secureNoteDataDao: SecureNoteDataDao,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : SecureNoteDataDao {
     override suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
         secureNoteDataDao.insertSecretNoteData(encrypt(secureNoteDataEntity))
@@ -53,7 +51,7 @@ constructor(
                 it.title,
                 symmetricKeyUtils.encrypt(it.notes),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -65,7 +63,7 @@ constructor(
                 it.title,
                 symmetricKeyUtils.decrypt(it.notes),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -76,7 +74,7 @@ constructor(
                 it.title,
                 symmetricKeyUtils.decrypt(it.notes),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }

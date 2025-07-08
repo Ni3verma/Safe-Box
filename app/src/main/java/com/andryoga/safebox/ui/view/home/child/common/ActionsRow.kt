@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ActionsRow(
     actionIconSize: Dp = 56.dp,
-    onDelete: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(
         Modifier
@@ -23,7 +23,7 @@ fun ActionsRow(
             .padding(start = 4.dp, top = 8.dp)
             .fillMaxWidth()
             .background(Color.Red),
-        horizontalArrangement = Arrangement.End,
+        horizontalArrangement = Arrangement.End
     ) {
         IconButton(
             modifier = Modifier.size(actionIconSize),
@@ -34,9 +34,9 @@ fun ActionsRow(
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = Color.White
                 )
-            },
+            }
         )
     }
 }

@@ -19,11 +19,9 @@ object Utils {
                 View.VISIBLE -> {
                     view.visibility = View.INVISIBLE
                 }
-
                 View.INVISIBLE -> {
                     view.visibility = View.VISIBLE
                 }
-
                 View.GONE -> {
                     view.visibility = View.VISIBLE
                 }
@@ -42,7 +40,7 @@ object Utils {
         motionLayout: MotionLayout,
         endState: Int,
         startState: Int = motionLayout.currentState,
-        duration: Int = 500,
+        duration: Int = 500
     ) {
         if (motionLayout.currentState != endState) {
             motionLayout.setTransition(startState, endState)
@@ -51,14 +49,10 @@ object Utils {
         }
     }
 
-    fun longestCommonSubstring(
-        string1: String,
-        string2: String,
-    ): Int {
-        val matrix =
-            Array(string1.length + 1) {
-                IntArray(string2.length + 1)
-            }
+    fun longestCommonSubstring(string1: String, string2: String): Int {
+        val matrix = Array(string1.length + 1) {
+            IntArray(string2.length + 1)
+        }
         var maxLength = 0
         for (i in 1 until matrix.size) {
             for (j in 1 until matrix[0].size) {
@@ -84,20 +78,16 @@ object Utils {
         return this.get() ?: ""
     }
 
-    fun makeStatusNotification(
-        context: Context,
-        notificationOptions: NotificationOptions,
-    ) {
+    fun makeStatusNotification(context: Context, notificationOptions: NotificationOptions) {
         // Make a channel if necessary
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel, but only on API 26+ because
             // the NotificationChannel class is new and not in the support library
-            val channel =
-                NotificationChannel(
-                    notificationOptions.channelId,
-                    notificationOptions.channelName,
-                    notificationOptions.channelImportance,
-                )
+            val channel = NotificationChannel(
+                notificationOptions.channelId,
+                notificationOptions.channelName,
+                notificationOptions.channelImportance
+            )
             channel.description = notificationOptions.channelDescription
 
             // Add the channel
@@ -108,17 +98,15 @@ object Utils {
         }
 
         // Create the notification
-        val builder =
-            NotificationCompat.Builder(context, notificationOptions.channelId)
-                .setSmallIcon(notificationOptions.notificationSmallIcon)
-                .setContentTitle(notificationOptions.notificationTitle)
-                .setContentText(notificationOptions.notificationContent)
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(notificationOptions.notificationContent),
-                )
-                .setPriority(notificationOptions.notificationPriority)
-                .setVibrate(LongArray(0))
+        val builder = NotificationCompat.Builder(context, notificationOptions.channelId)
+            .setSmallIcon(notificationOptions.notificationSmallIcon)
+            .setContentTitle(notificationOptions.notificationTitle)
+            .setContentText(notificationOptions.notificationContent)
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(notificationOptions.notificationContent)
+            )
+            .setPriority(notificationOptions.notificationPriority)
+            .setVibrate(LongArray(0))
 
         // Show the notification
         NotificationManagerCompat.from(context)

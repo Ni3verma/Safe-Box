@@ -31,37 +31,36 @@ fun DraggableCard(
     cardOffset: Float = 56f.dp(),
     onExpand: () -> Unit,
     onCollapse: () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     val offsetX = remember { mutableStateOf(0f) }
-    val transitionState =
-        remember {
-            MutableTransitionState(isRevealed).apply {
-                targetState = !isRevealed
-            }
+    val transitionState = remember {
+        MutableTransitionState(isRevealed).apply {
+            targetState = !isRevealed
         }
+    }
     val transition = updateTransition(transitionState, "cardTransition")
     val cardBgColor by transition.animateColor(
         label = "cardBgColorTransition",
         transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
         targetValueByState = {
             if (isRevealed) Color.LightGray else Color.White
-        },
+        }
     )
     val offsetTransition by transition.animateFloat(
         label = "cardOffsetTransition",
         transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
         targetValueByState = { if (isRevealed) cardOffset - offsetX.value else -offsetX.value },
+
     )
     val cardElevation by transition.animateDp(
         label = "cardElevation",
         transitionSpec = { tween(durationMillis = ANIMATION_DURATION) },
-        targetValueByState = { if (isRevealed) 5.dp else 0.dp },
+        targetValueByState = { if (isRevealed) 5.dp else 0.dp }
     )
 
     Card(
-        modifier =
-        Modifier
+        modifier = Modifier
             .padding(start = 4.dp, top = 8.dp)
             .fillMaxWidth()
             .height(cardHeight)
@@ -78,6 +77,6 @@ fun DraggableCard(
         backgroundColor = cardBgColor,
         shape = RoundedCornerShape(0.dp),
         elevation = cardElevation,
-        content = content,
+        content = content
     )
 }

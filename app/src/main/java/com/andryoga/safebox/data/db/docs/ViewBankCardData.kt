@@ -10,5 +10,5 @@ data class ViewBankCardData(
     val expiryDate: String?,
     val notes: String?,
     val creationDate: String,
-    val updateDate: String,
+    val updateDate: String
 )

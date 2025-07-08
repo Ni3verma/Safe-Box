@@ -8,10 +8,7 @@ object RandomTestData {
     private const val nine = 9
     private const val nineLong = 9L
 
-    fun getRandomTestString(
-        minLength: Int,
-        maxLength: Int,
-    ): String {
+    fun getRandomTestString(minLength: Int, maxLength: Int): String {
         val randomLength = nextInt(minLength, maxLength)
         return (minLength..randomLength)
             .map { nextInt(0, charPool.size) }
@@ -19,20 +16,14 @@ object RandomTestData {
             .joinToString("")
     }
 
-    fun getRandomTestInt(
-        minLength: Int,
-        maxLength: Int,
-    ): String {
+    fun getRandomTestInt(minLength: Int, maxLength: Int): String {
         val randomLength = nextInt(minLength, maxLength)
         return (minLength..randomLength)
             .map { nextInt(0, nine) }
             .joinToString("")
     }
 
-    fun getRandomTestLong(
-        minLength: Int,
-        maxLength: Int,
-    ): String {
+    fun getRandomTestLong(minLength: Int, maxLength: Int): String {
         val randomLength = nextInt(minLength, maxLength)
         return (minLength..randomLength)
             .map { nextLong(0L, nineLong) }

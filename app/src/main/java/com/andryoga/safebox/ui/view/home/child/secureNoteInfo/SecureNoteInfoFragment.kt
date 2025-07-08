@@ -27,24 +27,23 @@ class SecureNoteInfoFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         setHasOptionsMenu(true)
         return ComposeView(requireContext()).apply {
             setContent {
                 val searchTextFilter by viewModel.searchTextFilter.collectAsState()
                 val listData by viewModel.listData.collectAsState(
-                    initial =
-                    Resource.loading(
-                        emptyList(),
-                    ),
+                    initial = Resource.loading(
+                        emptyList()
+                    )
                 )
                 BasicSafeBoxTheme {
                     UserDataList(
                         listResource = listData,
                         searchTextFilter = searchTextFilter,
                         onItemClick = { onListItemClick(it) },
-                        onDeleteItemClick = { viewModel.onDeleteItemClick(it) },
+                        onDeleteItemClick = { viewModel.onDeleteItemClick(it) }
                     )
                     AddNewDataFab {
                         findNavController()
@@ -55,25 +54,20 @@ class SecureNoteInfoFragment : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(
-        menu: Menu,
-        inflater: MenuInflater,
-    ) {
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.home_info_screen, menu)
         val searchView = menu.findItem(R.id.action_search).actionView as SearchView
 
-        searchView.setOnQueryTextListener(
-            object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return false
-                }
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return false
+            }
 
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    viewModel.setSearchText(newText)
-                    return true
-                }
-            },
-        )
+            override fun onQueryTextChange(newText: String?): Boolean {
+                viewModel.setSearchText(newText)
+                return true
+            }
+        })
     }
 
     private fun onListItemClick(item: UserListItemData) {
@@ -81,8 +75,8 @@ class SecureNoteInfoFragment : Fragment() {
         findNavController().navigate(
             SecureNoteInfoFragmentDirections.actionNavSecureNoteInfoToViewDataDetailsFragment(
                 item.type,
-                item.id,
-            ),
+                item.id
+            )
         )
     }
 }

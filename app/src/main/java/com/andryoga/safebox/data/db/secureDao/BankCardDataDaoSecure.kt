@@ -11,11 +11,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class BankCardDataDaoSecure
-@Inject
-constructor(
+class BankCardDataDaoSecure @Inject constructor(
     private val bankCardDataDao: BankCardDataDao,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : BankCardDataDao {
     override suspend fun insertBankCardData(bankCardDataEntity: BankCardDataEntity) {
         bankCardDataDao.insertBankCardData(encrypt(bankCardDataEntity))
@@ -63,7 +61,7 @@ constructor(
                 it.expiryDate.encryptNullableString(symmetricKeyUtils),
                 it.notes.encryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -80,7 +78,7 @@ constructor(
                 it.expiryDate.decryptNullableString(symmetricKeyUtils),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }
@@ -96,7 +94,7 @@ constructor(
                 it.expiryDate.decryptNullableString(symmetricKeyUtils),
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
-                it.updateDate,
+                it.updateDate
             )
         }
     }

@@ -7,9 +7,8 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 
 class SymmetricKeyUtilsImpl
-@Inject
-constructor(
-    private val secretKey: SecretKey,
+@Inject constructor(
+    private val secretKey: SecretKey
 ) : SymmetricKeyUtils {
     object Constants {
         const val separator = "|"

@@ -19,7 +19,7 @@ class BankCardScreenData(
     pPin: String? = null,
     pCvv: String? = null,
     pNotes: String? = null,
-    pCreationDate: Date = Date(),
+    pCreationDate: Date = Date()
 ) {
     var key = pKey
     var title: ObservableField<String> = ObservableField(pTitle)
@@ -48,13 +48,13 @@ class BankCardScreenData(
                 expiryDate.get(),
                 notes.get(),
                 if (getCurrentDate) Date() else creationDate,
-                Date(),
+                Date()
             )
         }
 
         fun BankCardDataEntity.toBankCardScreenData(): BankCardScreenData {
             return BankCardScreenData(
-                key, title, name, number, expiryDate, pin, cvv, notes, creationDate,
+                key, title, name, number, expiryDate, pin, cvv, notes, creationDate
             )
         }
     }

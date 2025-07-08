@@ -11,6 +11,7 @@ import com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteScreen
 import timber.log.Timber
 
 object RandomUserData {
+
     private const val numberOfEachRecord = 50
     private const val number20 = 20
     private const val number200 = 200
@@ -26,12 +27,14 @@ object RandomUserData {
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
-                RandomTestData.getRandomTestString(2, number200),
-            ),
+                RandomTestData.getRandomTestString(2, number200)
+            )
         )
     }
 
-    private suspend fun insertFakeBankAccountData(bankAccountDataRepository: BankAccountDataRepository) {
+    private suspend fun insertFakeBankAccountData(
+        bankAccountDataRepository: BankAccountDataRepository
+    ) {
         bankAccountDataRepository.insertBankAccountData(
             BankAccountScreenData(
                 0,
@@ -44,8 +47,8 @@ object RandomUserData {
                 RandomTestData.getRandomTestString(2, number30),
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestInt(2, number5),
-                RandomTestData.getRandomTestString(2, number200),
-            ),
+                RandomTestData.getRandomTestString(2, number200)
+            )
         )
     }
 
@@ -59,8 +62,8 @@ object RandomUserData {
                 "02/22",
                 RandomTestData.getRandomTestInt(2, number5),
                 RandomTestData.getRandomTestInt(2, number3),
-                RandomTestData.getRandomTestString(2, number200),
-            ),
+                RandomTestData.getRandomTestString(2, number200)
+            )
         )
     }
 
@@ -69,8 +72,8 @@ object RandomUserData {
             SecureNoteScreenData(
                 0,
                 RandomTestData.getRandomTestString(2, number20),
-                RandomTestData.getRandomTestString(2, number200),
-            ),
+                RandomTestData.getRandomTestString(2, number200)
+            )
         )
     }
 
@@ -78,7 +81,7 @@ object RandomUserData {
         loginDataRepository: LoginDataRepository,
         bankAccountDataRepository: BankAccountDataRepository,
         bankCardDataRepository: BankCardDataRepository,
-        secureNoteDataRepository: SecureNoteDataRepository,
+        secureNoteDataRepository: SecureNoteDataRepository
     ) {
         for (i in 1..numberOfEachRecord) {
             Timber.i("inserting $i fake record")

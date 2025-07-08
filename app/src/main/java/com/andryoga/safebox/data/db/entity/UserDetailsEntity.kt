@@ -12,20 +12,20 @@ data class UserDetailsEntity(
     val password: String,
     val hint: String?,
     val creationDate: Date,
-    val updateDate: Date,
+    val updateDate: Date
 ) {
     constructor(
         password: String,
         uid: String,
         hint: String?,
         creationDate: Date,
-        updateDate: Date,
+        updateDate: Date
     ) : this(
         0,
         uid,
         password,
         hint,
         creationDate,
-        updateDate,
+        updateDate
     )
 }

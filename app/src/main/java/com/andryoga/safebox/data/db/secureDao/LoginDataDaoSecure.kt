@@ -15,7 +15,7 @@ import javax.inject.Inject
 @ExperimentalCoroutinesApi
 class LoginDataDaoSecure @Inject constructor(
     private val loginDataDao: LoginDataDao,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val symmetricKeyUtils: SymmetricKeyUtils
 ) : LoginDataDao {
     override suspend fun insertLoginData(loginDataEntity: LoginDataEntity) {
         loginDataDao.insertLoginData(encrypt(loginDataEntity))
@@ -49,7 +49,6 @@ class LoginDataDaoSecure @Inject constructor(
     override fun deleteAllData() {
         loginDataDao.deleteAllData()
     }
-
     private fun encrypt(loginDataEntity: LoginDataEntity): LoginDataEntity {
         loginDataEntity.let {
             return LoginDataEntity(

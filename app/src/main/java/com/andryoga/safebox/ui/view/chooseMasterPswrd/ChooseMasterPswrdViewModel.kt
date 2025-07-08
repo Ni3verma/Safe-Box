@@ -21,12 +21,11 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class ChooseMasterPswrdViewModel
-@Inject
-constructor(
+class ChooseMasterPswrdViewModel @Inject constructor(
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
-    private val userDetailsRepository: UserDetailsRepository,
+    private val userDetailsRepository: UserDetailsRepository
 ) : ViewModel() {
+
     object Constants {
         const val minPasswordLength = 8
         const val maxHintSubsetLength = 5
@@ -56,55 +55,54 @@ constructor(
         if (evaluateValidationRuleJob.isActive) {
             evaluateValidationRuleJob.cancel()
         }
-        evaluateValidationRuleJob =
-            viewModelScope.launch(Dispatchers.IO) {
-                _validationFailureCode.value = null
-                val pswrd = pswrd.value
-                val hint = hint.value
+        evaluateValidationRuleJob = viewModelScope.launch(Dispatchers.IO) {
+            _validationFailureCode.value = null
+            val pswrd = pswrd.value
+            val hint = hint.value
 
-                if (longestCommonSubstring(
-                        pswrd.lowercase(),
-                        hint.lowercase(),
-                    ) >= maxHintSubsetLength
-                ) {
-                    _validationFailureCode.value = HINT_IS_SUBSET
-                    return@launch
-                }
-
-                var regex = Regex("[a-z]")
-                val containsLowerCase = regex.containsMatchIn(pswrd)
-
-                regex = Regex("[A-Z]")
-                val containsUpperCase = regex.containsMatchIn(pswrd)
-
-                if (!containsLowerCase || !containsUpperCase) {
-                    _validationFailureCode.value = NOT_MIX_CASE
-                    return@launch
-                }
-
-                regex = Regex("[0-9]")
-                var numericCount = 0
-                regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
-
-                if (numericCount <= 2) {
-                    _validationFailureCode.value = LESS_NUMERIC_COUNT
-                    return@launch
-                }
-
-                regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
-                var numOfSpecialChar = 0
-                regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
-
-                if (numOfSpecialChar < 2) {
-                    _validationFailureCode.value = LESS_SPECIAL_CHAR_COUNT
-                    return@launch
-                }
-
-                if (pswrd.length <= Constants.minPasswordLength) {
-                    _validationFailureCode.value = LOW_PASSWORD_LENGTH
-                    return@launch
-                }
+            if (longestCommonSubstring(
+                    pswrd.lowercase(),
+                    hint.lowercase()
+                ) >= maxHintSubsetLength
+            ) {
+                _validationFailureCode.value = HINT_IS_SUBSET
+                return@launch
             }
+
+            var regex = Regex("[a-z]")
+            val containsLowerCase = regex.containsMatchIn(pswrd)
+
+            regex = Regex("[A-Z]")
+            val containsUpperCase = regex.containsMatchIn(pswrd)
+
+            if (!containsLowerCase || !containsUpperCase) {
+                _validationFailureCode.value = NOT_MIX_CASE
+                return@launch
+            }
+
+            regex = Regex("[0-9]")
+            var numericCount = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numericCount++ }
+
+            if (numericCount <= 2) {
+                _validationFailureCode.value = LESS_NUMERIC_COUNT
+                return@launch
+            }
+
+            regex = Regex("[\$&+,:;=?@#|'<>.^*()%!-]")
+            var numOfSpecialChar = 0
+            regex.findAll(pswrd).iterator().forEach { _ -> numOfSpecialChar++ }
+
+            if (numOfSpecialChar < 2) {
+                _validationFailureCode.value = LESS_SPECIAL_CHAR_COUNT
+                return@launch
+            }
+
+            if (pswrd.length <= Constants.minPasswordLength) {
+                _validationFailureCode.value = LOW_PASSWORD_LENGTH
+                return@launch
+            }
+        }
     }
 
     /*

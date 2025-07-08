@@ -15,14 +15,12 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class AllInfoViewModel
-@Inject
-constructor(
+class AllInfoViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository,
     private val bankAccountDataRepository: BankAccountDataRepository,
     private val bankCardDataRepository: BankCardDataRepository,
     private val secureNoteDataRepository: SecureNoteDataRepository,
-    private val backupMetadataRepository: BackupMetadataRepository,
+    private val backupMetadataRepository: BackupMetadataRepository
 ) : ViewModel() {
     private val _isBackupPathSet = MutableStateFlow(true)
     val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
@@ -40,122 +38,117 @@ constructor(
 
     @Suppress("DestructuringDeclarationWithTooManyEntries")
     @ExperimentalCoroutinesApi
-    val allData =
-        flow {
-            combine(
-                loginData,
-                bankAccountData,
-                bankCardData,
-                secureNoteData,
-            ) { (login, bankAccount, bankCard, secureNote) ->
-                var allList = listOf<UserListItemData>()
-                allList = allList.plus(login)
-                allList = allList.plus(bankAccount)
-                allList = allList.plus(bankCard)
-                allList = allList.plus(secureNote)
-                allList
+    val allData = flow {
+        combine(
+            loginData,
+            bankAccountData,
+            bankCardData,
+            secureNoteData
+        ) { (login, bankAccount, bankCard, secureNote) ->
+            var allList = listOf<UserListItemData>()
+            allList = allList.plus(login)
+            allList = allList.plus(bankAccount)
+            allList = allList.plus(bankCard)
+            allList = allList.plus(secureNote)
+            allList
+        }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(Resource.success(it.sortedBy { data -> data.title.lowercase() }))
             }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(Resource.success(it.sortedBy { data -> data.title.lowercase() }))
-                }
-        }
+    }
 
-    private val loginData =
-        flow<List<UserListItemData>> {
-            loginDataRepository
-                .getAllLoginData()
-                .transform { searchData ->
-                    val adapterEntityList = mutableListOf<UserListItemData>()
-                    searchData.forEach {
-                        adapterEntityList.add(
-                            UserListItemData(
-                                it.key,
-                                it.title,
-                                it.userId,
-                                LOGIN_DATA,
-                            ),
+    private val loginData = flow<List<UserListItemData>> {
+        loginDataRepository
+            .getAllLoginData()
+            .transform { searchData ->
+                val adapterEntityList = mutableListOf<UserListItemData>()
+                searchData.forEach {
+                    adapterEntityList.add(
+                        UserListItemData(
+                            it.key,
+                            it.title,
+                            it.userId,
+                            LOGIN_DATA
                         )
-                    }
-                    emit(adapterEntityList)
+                    )
                 }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(it)
-                }
-        }
+                emit(adapterEntityList)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(it)
+            }
+    }
 
-    private val bankAccountData =
-        flow<List<UserListItemData>> {
-            bankAccountDataRepository
-                .getAllBankAccountData()
-                .transform { searchData ->
-                    val adapterEntityList = mutableListOf<UserListItemData>()
-                    searchData.forEach {
-                        adapterEntityList.add(
-                            UserListItemData(
-                                it.key,
-                                it.title,
-                                it.accountNumber,
-                                BANK_ACCOUNT,
-                            ),
+    private val bankAccountData = flow<List<UserListItemData>> {
+        bankAccountDataRepository
+            .getAllBankAccountData()
+            .transform { searchData ->
+                val adapterEntityList = mutableListOf<UserListItemData>()
+                searchData.forEach {
+                    adapterEntityList.add(
+                        UserListItemData(
+                            it.key,
+                            it.title,
+                            it.accountNumber,
+                            BANK_ACCOUNT
                         )
-                    }
-                    emit(adapterEntityList)
+                    )
                 }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(it)
-                }
-        }
+                emit(adapterEntityList)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(it)
+            }
+    }
 
-    private val bankCardData =
-        flow<List<UserListItemData>> {
-            bankCardDataRepository
-                .getAllBankCardData()
-                .transform { searchData ->
-                    val adapterEntityList = mutableListOf<UserListItemData>()
-                    searchData.forEach {
-                        adapterEntityList.add(
-                            UserListItemData(
-                                it.key,
-                                it.title,
-                                it.number,
-                                BANK_CARD,
-                            ),
+    private val bankCardData = flow<List<UserListItemData>> {
+        bankCardDataRepository
+            .getAllBankCardData()
+            .transform { searchData ->
+                val adapterEntityList = mutableListOf<UserListItemData>()
+                searchData.forEach {
+                    adapterEntityList.add(
+                        UserListItemData(
+                            it.key,
+                            it.title,
+                            it.number,
+                            BANK_CARD
                         )
-                    }
-                    emit(adapterEntityList)
+                    )
                 }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(it)
-                }
-        }
+                emit(adapterEntityList)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(it)
+            }
+    }
 
-    private val secureNoteData =
-        flow<List<UserListItemData>> {
-            secureNoteDataRepository
-                .getAllSecureNoteData()
-                .transform { searchData ->
-                    val adapterEntityList = mutableListOf<UserListItemData>()
-                    searchData.forEach {
-                        adapterEntityList.add(
-                            UserListItemData(
-                                it.key,
-                                it.title,
-                                null,
-                                SECURE_NOTE,
-                            ),
+    private val secureNoteData = flow<List<UserListItemData>> {
+        secureNoteDataRepository
+            .getAllSecureNoteData()
+            .transform { searchData ->
+                val adapterEntityList = mutableListOf<UserListItemData>()
+                searchData.forEach {
+                    adapterEntityList.add(
+                        UserListItemData(
+                            it.key,
+                            it.title,
+                            null,
+                            SECURE_NOTE
                         )
-                    }
-                    emit(adapterEntityList)
+                    )
                 }
-                .flowOn(Dispatchers.Default)
-                .collect {
-                    emit(it)
-                }
-        }
+                emit(adapterEntityList)
+            }
+            .flowOn(Dispatchers.Default)
+            .collect {
+                emit(it)
+            }
+    }
 
     fun onDeleteItemClick(itemData: UserListItemData) {
         val key = itemData.id
@@ -181,7 +174,7 @@ constructor(
                 loginDataRepository,
                 bankAccountDataRepository,
                 bankCardDataRepository,
-                secureNoteDataRepository,
+                secureNoteDataRepository
             )
         }
     }
