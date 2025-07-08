@@ -84,6 +84,7 @@ fun biometricableHandler() =
                              */
                             listener?.onBiometricEvent(BiometricableEventType.BIOMETRICS_ERROR)
                         }
+
                         ERROR_NEGATIVE_BUTTON,
                         ERROR_USER_CANCELED,
                         -> {
@@ -92,6 +93,7 @@ fun biometricableHandler() =
                              */
                             listener?.onBiometricEvent(BiometricableEventType.AUTHENTICATION_CANCELED)
                         }
+
                         ERROR_NO_DEVICE_CREDENTIAL,
                         ERROR_NO_BIOMETRICS,
                         -> {

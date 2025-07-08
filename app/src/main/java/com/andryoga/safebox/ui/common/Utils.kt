@@ -19,9 +19,11 @@ object Utils {
                 View.VISIBLE -> {
                     view.visibility = View.INVISIBLE
                 }
+
                 View.INVISIBLE -> {
                     view.visibility = View.VISIBLE
                 }
+
                 View.GONE -> {
                     view.visibility = View.VISIBLE
                 }
@@ -112,7 +114,8 @@ object Utils {
                 .setContentTitle(notificationOptions.notificationTitle)
                 .setContentText(notificationOptions.notificationContent)
                 .setStyle(
-                    NotificationCompat.BigTextStyle().bigText(notificationOptions.notificationContent),
+                    NotificationCompat.BigTextStyle()
+                        .bigText(notificationOptions.notificationContent),
                 )
                 .setPriority(notificationOptions.notificationPriority)
                 .setVibrate(LongArray(0))

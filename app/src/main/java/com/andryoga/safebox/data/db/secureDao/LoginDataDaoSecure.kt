@@ -13,9 +13,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 @ExperimentalCoroutinesApi
-class LoginDataDaoSecure
-@Inject
-constructor(
+class LoginDataDaoSecure @Inject constructor(
     private val loginDataDao: LoginDataDao,
     private val symmetricKeyUtils: SymmetricKeyUtils,
 ) : LoginDataDao {

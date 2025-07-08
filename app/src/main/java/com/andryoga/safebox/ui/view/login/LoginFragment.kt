@@ -109,6 +109,7 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
                 Timber.i("User authenticated with biometric")
                 viewModel.onUnlockedWithBiometric()
             }
+
             else -> {
                 Timber.i("biometric event failed, name = ${event.name}")
             }

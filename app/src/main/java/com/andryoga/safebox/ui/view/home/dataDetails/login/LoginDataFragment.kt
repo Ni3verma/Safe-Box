@@ -84,6 +84,7 @@ class LoginDataFragment : Fragment() {
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
             }
+
             Status.ERROR -> {
                 switchVisibility(binding.saveBtn, binding.loading)
                 showErrorSnackbar(

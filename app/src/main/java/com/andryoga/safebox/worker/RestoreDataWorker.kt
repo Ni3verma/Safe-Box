@@ -99,7 +99,8 @@ constructor(
         iv = importMap[CommonConstants.IV_KEY]!!
         recordTime("read salt and iv")
         val loginData = decryptLoginData(importMap[CommonConstants.LOGIN_DATA_KEY])
-        val bankAccountData = decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
+        val bankAccountData =
+            decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
         recordTime("all data decrypted")

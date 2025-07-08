@@ -60,6 +60,7 @@ fun UserDataList(
                 CircularProgressIndicator()
             }
         }
+
         Status.SUCCESS -> {
             // In success state, if there was no data then show empty view otherwise show list of data
             val list =
@@ -106,6 +107,7 @@ fun UserDataList(
                 }
             }
         }
+
         Status.ERROR -> {
             // In error state, show a error snackbar : Future feature
         }

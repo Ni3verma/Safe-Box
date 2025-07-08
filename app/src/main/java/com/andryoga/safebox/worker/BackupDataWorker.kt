@@ -68,7 +68,10 @@ constructor(
             if (backupMetadataEntity != null) {
                 Timber.i("backup metadata found")
                 val isShowStartNotification =
-                    inputData.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+                    inputData.getBoolean(
+                        CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                        false
+                    )
                 if (isShowStartNotification) {
                     makeStatusNotification(
                         applicationContext,

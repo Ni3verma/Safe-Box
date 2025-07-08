@@ -82,10 +82,12 @@ class BankAccountDataFragment : Fragment() {
                     binding.saveBtn,
                     binding.loading,
                 )
+
             Status.SUCCESS -> {
                 hideSoftKeyboard(requireActivity())
                 findNavController().navigateUp()
             }
+
             Status.ERROR -> {
                 com.andryoga.safebox.ui.common.Utils.switchVisibility(
                     binding.saveBtn,
