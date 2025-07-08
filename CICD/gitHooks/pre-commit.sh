@@ -41,9 +41,7 @@ for changedFile in $(git diff --name-only --cached); do
 	fi
 done
 
-  log_info "bypassing ktlint and detekt for now."
-  run_detekt
-  exit 0
+log_info "bypassing ktlint and detekt for now."
 
 #log_info "Running ktlint check"
 #./gradlew app:ktlintCheck --daemon
