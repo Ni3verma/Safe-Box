@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 
 # !!!!!!!!!!!!!!!!!!  IMPORTANT  !!!!!!!!!!!!!!!!!!!!!!!!
-# whenever this file is edited, ALWAYS run ./gradlew :app:copyGitHooks task
 # If you want to test your changes in pre commit script, do the changes and run below
-# ./gradlew :app:copyGitHooks && git hook run pre-commit
+# git add . && ./gradlew :app:copyGitHooks && git hook run pre-commit
 
 # Exit immediately if a command exits with a non-zero status
 set -e
@@ -23,13 +22,10 @@ DETEKT_REPORT_DIR="app/build/reports/detekt"
 DETEKT_HTML_REPORT_PATH="${DETEKT_REPORT_DIR}/detekt.html"
 
 # Prefix for log messages from this script
-LOG_PREFIX="[PRE-COMMIT HOOK]"
+LOG_PREFIX="[PRE-COMMIT-HOOK]"
 
 # --- Restricted Files Configuration ---
-# Define an array of restricted file patterns (glob patterns or exact paths)
-# Use relative paths from the Git repository root.
-# IMPORTANT: Use exact paths or very specific patterns to avoid false positives.
-# For directories, ensure you include a trailing slash, e.g., "secret_folder/"
+# These files should not be commited to VCS
 declare -a RESTRICTED_FILE_PATTERNS=(
   "releaseKeyStore.properties"
   "app/releaseKeyStore.jks"
