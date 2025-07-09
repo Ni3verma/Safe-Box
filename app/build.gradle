@@ -15,12 +15,12 @@ plugins {
 apply from: '../CICD/cicd.gradle'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.andryoga.safebox"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 8
         // majorVersion.minorVersion.dbVersion.fixVersion
         versionName "1.6.4.0"

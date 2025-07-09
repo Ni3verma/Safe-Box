@@ -105,7 +105,7 @@ jobs:
 
       - name: Run Detekt
         continue-on-error: true
-        run: ./gradlew detekt --debug
+        run: ./gradlew detekt
 
       - uses: github/codeql-action/upload-sarif@v3
         with:
