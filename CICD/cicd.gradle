@@ -44,8 +44,7 @@ afterEvaluate {
 detekt {
     buildUponDefaultConfig = true // preconfigure defaults
     allRules = false // activate all available (even unstable) rules.
-    config = files("$rootDir/CICD/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
-
+    config.setFrom("$rootDir/CICD/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
 
     reports {
         xml.enabled = false

@@ -214,7 +214,6 @@ class BackupAndRestoreFragment : Fragment() {
                 Column(
                     modifier = Modifier.padding(4.dp)
                 ) {
-
                     Text(
                         text = stringResource(R.string.restore_info),
                         modifier = Modifier.padding(8.dp),
@@ -448,8 +447,11 @@ class BackupAndRestoreFragment : Fragment() {
             var passwordValue by remember {
                 mutableStateOf(
                     TextFieldValue(
-                        if (BuildConfig.DEBUG) "Qwerty@@135"
-                        else ""
+                        if (BuildConfig.DEBUG) {
+                            "Qwerty@@135"
+                        } else {
+                            ""
+                        }
                     )
                 )
             }
@@ -475,12 +477,15 @@ class BackupAndRestoreFragment : Fragment() {
                                 .fillMaxWidth(),
                             label = { Text(stringResource(R.string.master_password)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            visualTransformation = if (isPasswordMasked) PasswordVisualTransformation()
-                            else VisualTransformation.None,
+                            visualTransformation = if (isPasswordMasked) {
+                                PasswordVisualTransformation()
+                            } else VisualTransformation.None,
                             trailingIcon = {
-                                val image = if (isPasswordMasked)
+                                val image = if (isPasswordMasked) {
                                     Visibility
-                                else VisibilityOff
+                                } else {
+                                    VisibilityOff
+                                }
                                 IconButton(
                                     onClick = {
                                         isPasswordMasked = !isPasswordMasked

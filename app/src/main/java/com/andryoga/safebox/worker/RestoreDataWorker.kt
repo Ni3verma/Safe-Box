@@ -69,8 +69,9 @@ class RestoreDataWorker @AssistedInject constructor(
             applicationContext.contentResolver.openInputStream(Uri.parse(fileUri))
         ).use {
             val fileObject = it.readObject()
-            if (fileObject !is Map<*, *>)
+            if (fileObject !is Map<*, *>) {
                 throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
+            }
 
             importMap = fileObject as Map<String, ByteArray?>
             val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
@@ -110,7 +111,9 @@ class RestoreDataWorker @AssistedInject constructor(
                 passwordBasedEncryption.encryptDecrypt(
                     symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                     loginDataByteArray,
-                    salt, iv, false
+                    salt,
+                    iv,
+                    false
                 )
             )
             Json.decodeFromString(ListSerializer(ExportLoginData.serializer()), json)
@@ -125,7 +128,9 @@ class RestoreDataWorker @AssistedInject constructor(
                 passwordBasedEncryption.encryptDecrypt(
                     symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                     bankAccountDataByteArray,
-                    salt, iv, false
+                    salt,
+                    iv,
+                    false
                 )
             )
             Json.decodeFromString(ListSerializer(ExportBankAccountData.serializer()), json)
@@ -140,7 +145,9 @@ class RestoreDataWorker @AssistedInject constructor(
                 passwordBasedEncryption.encryptDecrypt(
                     symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                     bankCardDataByteArray,
-                    salt, iv, false
+                    salt,
+                    iv,
+                    false
                 )
             )
             Json.decodeFromString(ListSerializer(ExportBankCardData.serializer()), json)
@@ -155,7 +162,9 @@ class RestoreDataWorker @AssistedInject constructor(
                 passwordBasedEncryption.encryptDecrypt(
                     symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                     secureNoteDataByteArray,
-                    salt, iv, false
+                    salt,
+                    iv,
+                    false
                 )
             )
             Json.decodeFromString(ListSerializer(ExportSecureNoteData.serializer()), json)
@@ -177,8 +186,14 @@ class RestoreDataWorker @AssistedInject constructor(
                 loginDataDaoSecure.insertMultipleLoginData(
                     loginData.map {
                         LoginDataEntity(
-                            0, it.title, it.url, it.password, it.notes,
-                            it.userId, Date(it.creationDate), Date(it.updateDate)
+                            0,
+                            it.title,
+                            it.url,
+                            it.password,
+                            it.notes,
+                            it.userId,
+                            Date(it.creationDate),
+                            Date(it.updateDate)
                         )
                     }
                 )
@@ -218,8 +233,11 @@ class RestoreDataWorker @AssistedInject constructor(
                 secureNoteDataDaoSecure.insertMultipleSecureNoteData(
                     secureNoteData.map {
                         SecureNoteDataEntity(
-                            0, it.title, it.notes,
-                            Date(it.creationDate), Date(it.updateDate)
+                            0,
+                            it.title,
+                            it.notes,
+                            Date(it.creationDate),
+                            Date(it.updateDate)
                         )
                     }
                 )

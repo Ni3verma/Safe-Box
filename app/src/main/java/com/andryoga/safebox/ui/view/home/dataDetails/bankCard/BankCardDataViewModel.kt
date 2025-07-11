@@ -39,9 +39,9 @@ class BankCardDataViewModel @Inject constructor(
         emit(Resource.loading(true))
         try {
             Timber.i("save clicked, edit mode = $isEditMode")
-            if (isEditMode)
+            if (isEditMode) {
                 bankCardDataRepository.updateBankCardData(bankCardScreenData)
-            else
+            } else
                 bankCardDataRepository.insertBankCardData(bankCardScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {

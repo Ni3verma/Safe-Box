@@ -39,9 +39,9 @@ class LoginDataViewModel @Inject constructor(
         emit(Resource.loading(true))
         try {
             Timber.i("save clicked, edit mode = $isEditMode")
-            if (isEditMode)
+            if (isEditMode) {
                 loginDataRepository.updateLoginData(loginScreenData)
-            else
+            } else
                 loginDataRepository.insertLoginData(loginScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {

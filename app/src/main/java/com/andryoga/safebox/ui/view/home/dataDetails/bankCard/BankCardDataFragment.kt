@@ -50,10 +50,10 @@ class BankCardDataFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         /* whenever two characters(basically month) are entered in expiry date
-        * then append "/" in the end.
-        * Here start = 1 means I am entering 2nd character and
-        * before = 0 means I am not deleting a character and moving backwards
-        * */
+         * then append "/" in the end.
+         * Here start = 1 means I am entering 2nd character and
+         * before = 0 means I am not deleting a character and moving backwards
+         * */
         binding.expiryDateText.doOnTextChanged { _, start, before, _ ->
             if (start == 1 && before == 0) {
                 binding.expiryDateText.append("/")

@@ -47,7 +47,8 @@ class PasswordBasedEncryptionImpl : PasswordBasedEncryption {
             } else {
                 Cipher.DECRYPT_MODE
             },
-            keySpec, ivSpec
+            keySpec,
+            ivSpec
         )
         return cipher.doFinal(data)
     }

@@ -17,7 +17,11 @@ class UserDetailsRepositoryImpl @Inject constructor(
         setCrashlyticsUid(uid)
 
         val entity = UserDetailsEntity(
-            password, uid, hint, Date(), Date()
+            password,
+            uid,
+            hint,
+            Date(),
+            Date()
         )
         userDetailsDaoSecure.insertUserDetailsData(entity)
     }

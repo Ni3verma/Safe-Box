@@ -24,8 +24,10 @@ class HashingUtilsImpl : HashingUtils {
         val base64EncodedSalt = SecurityUtils.encodeBase64(salt)
 
         val spec = PBEKeySpec(
-            password.toCharArray(), salt,
-            Constants.iterationCount, Constants.keyLength
+            password.toCharArray(),
+            salt,
+            Constants.iterationCount,
+            Constants.keyLength
         )
         val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
             keyFactory.generateSecret(spec).encoded
@@ -46,8 +48,10 @@ class HashingUtilsImpl : HashingUtils {
         val salt = SecurityUtils.decodeBase64(hashInfo[1])
 
         val spec = PBEKeySpec(
-            toCompareText.toCharArray(), salt,
-            Constants.iterationCount, Constants.keyLength
+            toCompareText.toCharArray(),
+            salt,
+            Constants.iterationCount,
+            Constants.keyLength
         )
         val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
             keyFactory.generateSecret(spec).encoded

@@ -72,8 +72,8 @@ object Utils {
     }
 
     /* This is an extension function to get observable field data
-    * Use it only if you know that data will never be null
-    * instead of using !!, use this util function*/
+     * Use it only if you know that data will never be null
+     * instead of using !!, use this util function*/
     fun ObservableField<String>.getValueOrEmpty(): String {
         return this.get() ?: ""
     }

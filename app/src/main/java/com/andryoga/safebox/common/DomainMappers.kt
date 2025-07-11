@@ -24,7 +24,12 @@ object DomainMappers {
 
     fun LoginDataEntity.toViewLoginData(): ViewLoginData {
         return ViewLoginData(
-            key, title, url, password, userId, notes,
+            key,
+            title,
+            url,
+            password,
+            userId,
+            notes,
             getFormattedDate(creationDate),
             getFormattedDate(updateDate)
         )
@@ -32,7 +37,9 @@ object DomainMappers {
 
     fun SecureNoteDataEntity.toViewSecureNoteData(): ViewSecureNoteData {
         return ViewSecureNoteData(
-            key, title, notes,
+            key,
+            title,
+            notes,
             getFormattedDate(creationDate),
             getFormattedDate(updateDate)
         )
@@ -40,7 +47,9 @@ object DomainMappers {
 
     fun BackupMetadataEntity.toBackupAndRestoreData(): BackupData {
         return BackupData(
-            key, uriString, displayPath,
+            key,
+            uriString,
+            displayPath,
             if (lastBackupDate == null) "NA" else getFormattedDate(lastBackupDate),
             getFormattedDate(createdOn)
         )

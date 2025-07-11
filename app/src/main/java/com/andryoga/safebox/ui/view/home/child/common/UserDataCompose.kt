@@ -72,7 +72,7 @@ fun UserDataList(
                 EmptyUserData()
             } else {
                 var revealedCardId by remember { mutableStateOf("") }
-                LazyColumn() {
+                LazyColumn {
                     items(
                         items = list,
                         key = {

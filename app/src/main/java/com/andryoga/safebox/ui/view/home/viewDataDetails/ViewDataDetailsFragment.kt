@@ -442,10 +442,10 @@ class ViewDataDetailsFragment : Fragment() {
             }
         dataStringBuffer.append(
             "---------------\n${
-            getString(
-                R.string.common_app_playstore_download,
-                APP_PLAYSTORE_LINK
-            )
+                getString(
+                    R.string.common_app_playstore_download,
+                    APP_PLAYSTORE_LINK
+                )
             }"
         )
         return dataStringBuffer.toString()

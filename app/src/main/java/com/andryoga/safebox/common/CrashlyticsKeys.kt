@@ -23,6 +23,7 @@ class CrashlyticsKeys(
             key("Preferred ABI", preferredAbi)
         }
     }
+
     /**
      * Retrieve the locale information for the app.
      *
@@ -54,9 +55,13 @@ class CrashlyticsKeys(
      */
     private val googlePlayServicesAvailability: String
         get() = if (GoogleApiAvailabilityLight
-            .getInstance()
-            .isGooglePlayServicesAvailable(context) == 0
-        ) "Unavailable" else "Available"
+                .getInstance()
+                .isGooglePlayServicesAvailable(context) == 0
+        ) {
+            "Unavailable"
+        } else {
+            "Available"
+        }
 
     /**
      * Return the underlying kernel version of the Android device.

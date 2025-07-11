@@ -39,9 +39,9 @@ class SecureNoteDataViewModel @Inject constructor(
         emit(Resource.loading(true))
         try {
             Timber.i("save clicked, edit mode = $isEditMode")
-            if (isEditMode)
+            if (isEditMode) {
                 secureNoteDataRepository.updateSecureNoteData(secureNoteScreenData)
-            else
+            } else
                 secureNoteDataRepository.insertSecureNoteData(secureNoteScreenData)
             emit(Resource.success(true))
         } catch (ex: Exception) {

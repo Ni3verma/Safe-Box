@@ -193,13 +193,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     /*Check if user is away for too long
-    * @returns true if timeout has happened
-    * */
+     * @returns true if timeout has happened
+     * */
     fun checkUserAwayTimeout(): Boolean {
         /*
-        * if timeout was not suspended manually and user was away for too long
-        * then show non-cancelable dialog
-        * */
+         * if timeout was not suspended manually and user was away for too long
+         * then show non-cancelable dialog
+         * */
         return if (!isUserAwayTimeoutSuspended &&
             ((System.currentTimeMillis() - lastInteractionTime) > Constants.MAX_USER_AWAY_MILLI_SECONDS)
         ) {
@@ -215,20 +215,22 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 }.show()
             true
-        } else false
+        } else {
+            false
+        }
     }
 
     /*
-    * Used to suspend user away timeout feature
-    * */
+     * Used to suspend user away timeout feature
+     * */
     fun suspendUserAwayTimeout() {
         Timber.i("suspending away timeout")
         isUserAwayTimeoutSuspended = true
     }
 
     /*
-    * Used to again continue user away timeout feature
-    * */
+     * Used to again continue user away timeout feature
+     * */
     fun continueUserAwayTimeout() {
         Timber.i("continuing away timeout")
         lastInteractionTime = System.currentTimeMillis()

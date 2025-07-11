@@ -58,17 +58,15 @@ git commit -m'a descriptive message here'
 * (Recommended way) In case you are committing from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
 
 <img src="./screenshots/contributing/commit_from_android_studio.png">
-On commit detekt and ktlint will run automatically to verify code quality.
+On commit detekt will run automatically to verify code quality.
 
-### 8. Solve detekt, ktlint errors
-In case your commit failed, then correct issues in detekt and ktlint reports found in below locations respectively and re-commit:
+### 8. Solve detekt errors
+In case your commit failed, errors can be found in the below file.
 ```
 app/build/reports/detekt/detekt.html
-app/build/reports/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.txt
 ```
-INFO : For ktlint, errors can also be found in the terminal.
 INFO : Incase Detekt fails, then report will automatically open in browser
-NOTE : until ktlint and detekt issues are fixed, you will not be able to commit your changes.
+NOTE : until detekt issues are fixed, you will not be able to commit your changes.
 
 Once commit is done, push your changes.
 

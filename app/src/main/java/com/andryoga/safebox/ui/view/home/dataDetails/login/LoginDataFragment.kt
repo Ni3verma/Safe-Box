@@ -36,8 +36,10 @@ class LoginDataFragment : Fragment() {
     ): View {
         binding =
             DataBindingUtil.inflate(
-                inflater, R.layout.login_data_fragment,
-                container, false
+                inflater,
+                R.layout.login_data_fragment,
+                container,
+                false
             )
         binding.screenData = viewModel.loginScreenData
         binding.lifecycleOwner = this

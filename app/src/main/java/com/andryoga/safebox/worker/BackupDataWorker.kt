@@ -232,7 +232,9 @@ class BackupDataWorker
             return passwordBasedEncryption.encryptDecrypt(
                 symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                 json.toByteArray(),
-                salt, iv, true
+                salt,
+                iv,
+                true
             )
         }
         return null
@@ -247,7 +249,9 @@ class BackupDataWorker
             return passwordBasedEncryption.encryptDecrypt(
                 symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                 json.toByteArray(),
-                salt, iv, true
+                salt,
+                iv,
+                true
             )
         }
         return null
@@ -262,7 +266,9 @@ class BackupDataWorker
             return passwordBasedEncryption.encryptDecrypt(
                 symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                 json.toByteArray(),
-                salt, iv, true
+                salt,
+                iv,
+                true
             )
         }
         return null
@@ -277,7 +283,9 @@ class BackupDataWorker
             return passwordBasedEncryption.encryptDecrypt(
                 symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
                 json.toByteArray(),
-                salt, iv, true
+                salt,
+                iv,
+                true
             )
         }
         return null

@@ -64,7 +64,10 @@ class BackupAndRestoreViewModel @Inject constructor(
         viewModelScope.launch {
             Timber.i("adding backup metadata in db")
             val backupMetadataEntity = BackupMetadataEntity(
-                1, uri.toString(), uri.path!!, null,
+                1,
+                uri.toString(),
+                uri.path!!,
+                null,
                 Date()
             )
             backupMetadataRepository.insertBackupMetadata(backupMetadataEntity)

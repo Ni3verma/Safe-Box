@@ -106,9 +106,9 @@ class ChooseMasterPswrdViewModel @Inject constructor(
     }
 
     /*
-    * Add password in DB and update pref flag so that next time app asks user to login
-    * instead of sign up
-    * */
+     * Add password in DB and update pref flag so that next time app asks user to login
+     * instead of sign up
+     * */
     fun onSaveClick() {
         Timber.i("save password clicked")
         viewModelScope.launch {

@@ -27,7 +27,7 @@ jobs:
         run: ./gradlew assembleDebug --info
 
       - name: upload debug apk
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: debug.apk
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
@@ -36,13 +36,10 @@ jobs:
         run: ./gradlew lint
 
       - name: upload html lint report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: lint.html
           path: app/build/reports/lint-results-debug.html
-
-      - name: Run ktlint
-        run: ./gradlew app:ktlintCheck --daemon
 
       - name: Build QA apk
         env:
@@ -50,7 +47,7 @@ jobs:
         run: ./gradlew assembleQa --info
 
       - name: upload QA apk
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: qa.apk
           path: app/build/outputs/apk/qa/SafeBox-qa.apk
@@ -69,7 +66,7 @@ jobs:
   #        run: ./gradlew test
   #
   #      - name: upload test result
-  #        uses: actions/upload-artifact@v2
+  #        uses: actions/upload-artifact@v4
   #        with:
   #          name: Unit test result
   #          path: app/build/reports/tests/testDebugUnitTest/
@@ -91,7 +88,7 @@ jobs:
   #           script: ./gradlew connectedCheck
 
   #       - name: upload test result
-  #         uses: actions/upload-artifact@v2
+  #         uses: actions/upload-artifact@v4
   #         with:
   #           name: Instrumentation test result
   #           path: app/build/reports/androidTests/connected/
@@ -110,13 +107,13 @@ jobs:
         continue-on-error: true
         run: ./gradlew detekt
 
-      - uses: github/codeql-action/upload-sarif@v1
+      - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: app/build/reports/detekt/detekt.sarif
           checkout_path: ${{ github.workspace }}
 
       - name: upload detekt html report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: detektReport.html
           path: app/build/reports/detekt/detekt.html

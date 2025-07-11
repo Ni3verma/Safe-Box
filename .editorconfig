@@ -1,5 +1,0 @@
-root = true
-
-[*.{kt, kts}]
-# Although Android studio thinks it's not a valid key, but ktlint will parse it and disable this rule
-disabled_rules = no-wildcard-imports

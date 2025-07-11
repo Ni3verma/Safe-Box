@@ -33,8 +33,10 @@ class SecureNoteDataFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         binding = DataBindingUtil.inflate(
-            inflater, R.layout.secure_note_data_fragment,
-            container, false
+            inflater,
+            R.layout.secure_note_data_fragment,
+            container,
+            false
         )
         binding.viewModel = viewModel
         binding.lifecycleOwner = this

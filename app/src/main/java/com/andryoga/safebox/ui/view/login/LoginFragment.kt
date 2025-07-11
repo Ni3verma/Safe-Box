@@ -79,9 +79,9 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
     override fun onResume() {
         super.onResume()
         /* show biometric dialog only if device can authenticate with biometric
-        * and login count with biometric has not crossed threshold
-        * and user away timeout has not happened
-        * */
+         * and login count with biometric has not crossed threshold
+         * and user away timeout has not happened
+         * */
         val canUnlockWithBiometric = canUseBiometrics()
         Timber.i("can unlock with biometric = $canUnlockWithBiometric")
         if (canUnlockWithBiometric &&

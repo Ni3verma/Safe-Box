@@ -1,31 +1,31 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.8.10'
+    ext.kotlin_version = '1.8.22'
     ext.navigationVersion = '2.5.3'
     ext.hilt_version = '2.43.2'
+    ext.detekt_version = '1.23.0'
 
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.7.3'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$navigationVersion"
         classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
-        classpath 'com.google.gms:google-services:4.4.0'
+        classpath 'com.google.gms:google-services:4.4.2'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
 }
 
 plugins {
-    id "org.jlleitschuh.gradle.ktlint" version "10.1.0"
-    id "io.gitlab.arturbosch.detekt" version "1.17.1"
+    id "io.gitlab.arturbosch.detekt" version "$detekt_version"
 }
 
 ext{
@@ -34,7 +34,7 @@ ext{
     timber_version = '5.0.1'
     biometric_version='1.1.0'
     room_version='2.6.1'
-    compose_version = '1.1.1'
+    compose_version = '1.6.0'
     work_version = '2.7.0'
 }
 

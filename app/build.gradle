@@ -1,10 +1,11 @@
+import io.gitlab.arturbosch.detekt.Detekt
+
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
     id 'androidx.navigation.safeargs.kotlin'
     id 'dagger.hilt.android.plugin'
-    id 'org.jlleitschuh.gradle.ktlint'
     id "io.gitlab.arturbosch.detekt"
     id "com.google.gms.google-services"
     id "com.google.firebase.crashlytics"
@@ -14,12 +15,12 @@ plugins {
 apply from: '../CICD/cicd.gradle'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.andryoga.safebox"
         minSdkVersion 23
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 8
         // majorVersion.minorVersion.dbVersion.fixVersion
         versionName "1.6.4.0"
@@ -92,23 +93,31 @@ android {
         }
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
     buildFeatures {
         viewBinding true
         dataBinding true
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.3'
+        kotlinCompilerExtensionVersion '1.4.8'
     }
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-
-    lintOptions {
-        disable 'UnusedResources', 'FragmentTagUsage'
-        disable 'Correctness', 'Messages'
+    namespace 'com.andryoga.safebox'
+    lint {
+        disable 'UnusedResources', 'FragmentTagUsage', 'Correctness', 'Messages'
     }
 }
 
@@ -117,6 +126,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.10.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+
+    // test dep
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     // common
     implementation 'com.google.android.material:material:1.9.0'
@@ -173,8 +187,8 @@ dependencies {
     //biometric
     implementation "androidx.biometric:biometric:$biometric_version"
 
-    // play core
-    implementation("com.google.android.play:core:1.10.2")
+    // in app review
+    implementation("com.google.android.play:review:2.0.2")
 
     // serialization
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
@@ -183,4 +197,11 @@ dependencies {
     implementation "androidx.work:work-runtime-ktx:$work_version"
     implementation "androidx.hilt:hilt-work:1.0.0"
     kapt("androidx.hilt:hilt-compiler:1.0.0")
+
+    // detekt plugins
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detekt_version")
+}
+
+tasks.withType(Detekt).configureEach {
+    jvmTarget = "17"
 }

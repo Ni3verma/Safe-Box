@@ -36,6 +36,7 @@ class AllInfoViewModel @Inject constructor(
         }
     }
 
+    @Suppress("DestructuringDeclarationWithTooManyEntries")
     @ExperimentalCoroutinesApi
     val allData = flow {
         combine(
