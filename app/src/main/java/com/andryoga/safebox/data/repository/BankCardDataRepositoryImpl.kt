@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.common.AnalyticsKeys.NEW_BANK_CARD
 import com.andryoga.safebox.common.DomainMappers.toViewBankCardData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
 import com.andryoga.safebox.data.db.docs.ViewBankCardData
@@ -8,6 +9,8 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData
 import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData.Companion.toBankCardDataEntity
 import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData.Companion.toBankCardScreenData
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -15,6 +18,7 @@ class BankCardDataRepositoryImpl @Inject constructor(
     private val bankCardDataDaoSecure: BankCardDataDaoSecure
 ) : BankCardDataRepository {
     override suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData) {
+        Firebase.analytics.logEvent(NEW_BANK_CARD, null)
         bankCardDataDaoSecure.insertBankCardData(bankCardScreenData.toBankCardDataEntity(getCurrentDate = true))
     }
 

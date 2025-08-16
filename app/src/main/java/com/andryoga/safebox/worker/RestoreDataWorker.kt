@@ -5,6 +5,9 @@ import android.net.Uri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.andryoga.safebox.common.AnalyticsKeys.RESTORE_FAILED
+import com.andryoga.safebox.common.AnalyticsKeys.RESTORE_SUCCESS
+import com.andryoga.safebox.common.AnalyticsKeys.VERSION
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils.getFormattedDate
 import com.andryoga.safebox.data.db.SafeBoxDatabase
@@ -22,6 +25,9 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,7 +36,7 @@ import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.InvalidObjectException
 import java.io.ObjectInputStream
-import java.util.*
+import java.util.Date
 import javax.crypto.BadPaddingException
 
 @HiltWorker
@@ -85,6 +91,9 @@ class RestoreDataWorker @AssistedInject constructor(
                 startRestore()
             } catch (badPaddingException: BadPaddingException) {
                 Timber.w("wrong password entered for restore", badPaddingException)
+                Firebase.analytics.logEvent(RESTORE_FAILED) {
+                    param(VERSION, version.toDouble())
+                }
                 return Result.failure()
             }
         }
@@ -103,6 +112,7 @@ class RestoreDataWorker @AssistedInject constructor(
         recordTime("all data decrypted")
 
         restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
+        Firebase.analytics.logEvent(RESTORE_SUCCESS, null)
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {
