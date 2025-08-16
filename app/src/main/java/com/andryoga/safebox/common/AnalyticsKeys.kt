@@ -29,7 +29,7 @@ object AnalyticsKeys {
     const val NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK =
         "notification_permission_rationale_dialog_cancel_click"
 
-    // keys
+    // param names
     const val BIOMETRIC_LOGIN_COUNT = "biometric_login_count"
     const val VERSION = "version"
     const val RESULT = "result"
