@@ -16,6 +16,8 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsKeys.OPEN_GITHUB
+import com.andryoga.safebox.common.AnalyticsKeys.OPEN_PLAY_STORE
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
@@ -25,6 +27,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -171,6 +175,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openGithubPage() {
         Timber.i("opening app github page")
+        Firebase.analytics.logEvent(OPEN_GITHUB, null)
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_GITHUB_URL))
         if (intent.resolveActivity(packageManager) != null) {
             startActivity(intent)
@@ -179,6 +184,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun openPlayStore() {
         Timber.i("opening playstore")
+        Firebase.analytics.logEvent(OPEN_PLAY_STORE, null)
         val marketIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
         if (marketIntent.resolveActivity(packageManager) != null) {
             startActivity(marketIntent)

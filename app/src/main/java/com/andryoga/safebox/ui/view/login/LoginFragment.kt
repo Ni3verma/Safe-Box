@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsKeys.DEVICE_DOES_NOT_SUPPORT_BIOMETRIC
 import com.andryoga.safebox.databinding.LoginFragmentBinding
 import com.andryoga.safebox.ui.common.Biometricable
 import com.andryoga.safebox.ui.common.BiometricableEventType
@@ -18,6 +19,8 @@ import com.andryoga.safebox.ui.common.biometricableHandler
 import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.login.LoginViewModel.Constants.ASK_FOR_REVIEW_AFTER_EVERY
 import com.andryoga.safebox.ui.view.login.LoginViewModel.Constants.MAX_CONT_BIOMETRIC_LOGINS
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
@@ -84,6 +87,9 @@ class LoginFragment : Fragment(), Biometricable by biometricableHandler() {
          * */
         val canUnlockWithBiometric = canUseBiometrics()
         Timber.i("can unlock with biometric = $canUnlockWithBiometric")
+        if (canUnlockWithBiometric.not()) {
+            Firebase.analytics.logEvent(DEVICE_DOES_NOT_SUPPORT_BIOMETRIC, null)
+        }
         if (canUnlockWithBiometric &&
             viewModel.loginCountWithBiometric < MAX_CONT_BIOMETRIC_LOGINS &&
             !(requireActivity() as MainActivity).checkUserAwayTimeout()

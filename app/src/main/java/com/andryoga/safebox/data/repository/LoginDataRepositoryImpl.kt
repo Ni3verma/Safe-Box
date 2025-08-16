@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.common.AnalyticsKeys.NEW_LOGIN
 import com.andryoga.safebox.common.DomainMappers.toViewLoginData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.ViewLoginData
@@ -8,6 +9,8 @@ import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginDataEntity
 import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginScreenData
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -17,6 +20,7 @@ class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
     override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
+        Firebase.analytics.logEvent(NEW_LOGIN, null)
         loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = true))
     }
 

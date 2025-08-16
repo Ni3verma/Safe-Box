@@ -60,12 +60,21 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsKeys.DO_NOT_ASK_AGAIN
+import com.andryoga.safebox.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK
+import com.andryoga.safebox.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK
+import com.andryoga.safebox.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_DISMISS
+import com.andryoga.safebox.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_SHOWN
+import com.andryoga.safebox.common.AnalyticsKeys.PERMISSION_ASKED_BEFORE
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.ui.theme.BasicSafeBoxTheme
 import com.andryoga.safebox.ui.view.MainActivity
 import com.andryoga.safebox.ui.view.home.child.common.AddNewDataFab
 import com.andryoga.safebox.ui.view.home.child.common.UserDataList
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import timber.log.Timber
@@ -105,6 +114,10 @@ class AllInfoFragment : Fragment() {
                                 isDisplayDialog
                             )
                         ) {
+                            Firebase.analytics.logEvent(
+                                NOTIFICATION_PERMISSION_RATIONALE_DIALOG_SHOWN,
+                                null
+                            )
                             val permissionResultLauncher = rememberLauncherForActivityResult(
                                 contract = ActivityResultContracts.RequestPermission(),
                                 onResult = {}
@@ -303,6 +316,9 @@ class AllInfoFragment : Fragment() {
         Timber.i(
             "notification permission dialog cancelled, do not ask again: $doNotAskAgain"
         )
+        Firebase.analytics.logEvent(NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK) {
+            param(DO_NOT_ASK_AGAIN, doNotAskAgain.toString())
+        }
         if (doNotAskAgain) {
             viewModel.isNeverAskForNotificationPermission = true
         }
@@ -312,6 +328,9 @@ class AllInfoFragment : Fragment() {
         permissionResultLauncher: ManagedActivityResultLauncher<String, Boolean>
     ) {
         Timber.i("notification permission dialog allowed")
+        Firebase.analytics.logEvent(NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK) {
+            param(PERMISSION_ASKED_BEFORE, viewModel.isNotificationPermissionAskedBefore.toString())
+        }
         if (viewModel.isNotificationPermissionAskedBefore) {
             if (shouldShowRequestPermissionRationale(
                     Manifest.permission.POST_NOTIFICATIONS
@@ -341,6 +360,7 @@ class AllInfoFragment : Fragment() {
 
     private fun onNotificationPermissionRationaleDialogDismiss() {
         Timber.i("notification permission dialog dismissed")
+        Firebase.analytics.logEvent(NOTIFICATION_PERMISSION_RATIONALE_DIALOG_DISMISS, null)
     }
 
     private fun shouldShowNotificationPermissionRationaleDialog(

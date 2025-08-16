@@ -9,6 +9,8 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.andryoga.safebox.BuildConfig
+import com.andryoga.safebox.common.AnalyticsKeys.BIOMETRIC_LOGIN_COUNT
+import com.andryoga.safebox.common.AnalyticsKeys.LOGIN_FAILED
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.CommonConstants.IS_SIGN_UP_REQUIRED
@@ -20,6 +22,10 @@ import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,6 +111,7 @@ class LoginViewModel @Inject constructor(
                     canNavigateToHome(0)
                 } else {
                     Timber.i("wrong pswrd entered")
+                    Firebase.analytics.logEvent(LOGIN_FAILED, null)
                     _isWrongPswrdEntered.value = true
                 }
             }
@@ -119,6 +126,9 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun canNavigateToHome(newLoginCountWithBiometric: Int) {
+        Firebase.analytics.logEvent(FirebaseAnalytics.Event.LOGIN) {
+            param(BIOMETRIC_LOGIN_COUNT, newLoginCountWithBiometric.toDouble())
+        }
         Timber.i(
             "setting login count with biometric to $newLoginCountWithBiometric" +
                 " and login count to ${totalLoginCount + 1}"

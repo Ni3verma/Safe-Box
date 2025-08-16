@@ -9,8 +9,15 @@ import com.andryoga.safebox.common.CommonConstants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.common.Utils.longestCommonSubstring
-import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.*
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.HINT_IS_SUBSET
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.LESS_NUMERIC_COUNT
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.LESS_SPECIAL_CHAR_COUNT
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.LOW_PASSWORD_LENGTH
+import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdValidationFailureCode.NOT_MIX_CASE
 import com.andryoga.safebox.ui.view.chooseMasterPswrd.ChooseMasterPswrdViewModel.Constants.maxHintSubsetLength
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -111,6 +118,7 @@ class ChooseMasterPswrdViewModel @Inject constructor(
      * */
     fun onSaveClick() {
         Timber.i("save password clicked")
+        Firebase.analytics.logEvent(FirebaseAnalytics.Event.SIGN_UP, null)
         viewModelScope.launch {
             userDetailsRepository.insertUserDetailsData(pswrd.value, hint.value)
             encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)

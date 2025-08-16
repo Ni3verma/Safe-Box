@@ -9,6 +9,7 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsKeys.BACKUP_FAILED
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.time1Sec
 import com.andryoga.safebox.common.Utils
@@ -25,11 +26,14 @@ import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.NotificationOptions
 import com.andryoga.safebox.ui.common.Utils.makeStatusNotification
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
+import com.google.firebase.ktx.Firebase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -37,7 +41,7 @@ import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
-import java.util.*
+import java.util.Date
 
 @HiltWorker
 @ExperimentalCoroutinesApi
@@ -142,6 +146,9 @@ class BackupDataWorker
             exception,
             "$localTag exception occurred : ${exception.localizedMessage}"
         )
+        Firebase.analytics.logEvent(BACKUP_FAILED) {
+            param(FirebaseAnalytics.Param.SOURCE, exception.message.orEmpty())
+        }
         Timber.i("removing backup metadata")
         backupMetadataRepository.deleteBackupMetadata()
         makeStatusNotification(

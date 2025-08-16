@@ -7,6 +7,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import com.andryoga.safebox.common.AnalyticsKeys.RESTORE_STARTED
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.CommonConstants.RESTORE_PARAM_FILE_URI
@@ -20,15 +21,17 @@ import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.Resource
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.*
+import java.util.Date
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -106,6 +109,7 @@ class BackupAndRestoreViewModel @Inject constructor(
 
     @ExperimentalCoroutinesApi
     fun restoreData(password: String) {
+        Firebase.analytics.logEvent(RESTORE_STARTED, null)
         viewModelScope.launch {
             _restoreScreenState.value = RestoreScreenState.IN_PROGRESS
             Timber.i("preparing restore work")
