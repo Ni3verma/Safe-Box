@@ -2,15 +2,30 @@ package com.andryoga.safebox.ui.view.home.child.all
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.safebox.common.CommonConstants.IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION
+import com.andryoga.safebox.common.CommonConstants.IS_NOTIFICATION_PERMISSION_ASKED_BEFORE
 import com.andryoga.safebox.common.sampleData.RandomUserData.insertRandomData
-import com.andryoga.safebox.data.repository.interfaces.*
+import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
+import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.common.Resource
-import com.andryoga.safebox.ui.common.UserDataType.*
+import com.andryoga.safebox.ui.common.UserDataType.BANK_ACCOUNT
+import com.andryoga.safebox.ui.common.UserDataType.BANK_CARD
+import com.andryoga.safebox.ui.common.UserDataType.LOGIN_DATA
+import com.andryoga.safebox.ui.common.UserDataType.SECURE_NOTE
 import com.andryoga.safebox.ui.view.home.child.common.UserListItemData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,13 +35,26 @@ class AllInfoViewModel @Inject constructor(
     private val bankAccountDataRepository: BankAccountDataRepository,
     private val bankCardDataRepository: BankCardDataRepository,
     private val secureNoteDataRepository: SecureNoteDataRepository,
-    private val backupMetadataRepository: BackupMetadataRepository
+    private val backupMetadataRepository: BackupMetadataRepository,
+    private val preferenceProvider: PreferenceProvider
 ) : ViewModel() {
     private val _isBackupPathSet = MutableStateFlow(true)
     val isBackupPathSet: StateFlow<Boolean> = _isBackupPathSet
 
     private val _searchTextFilter = MutableStateFlow<String?>(null)
     val searchTextFilter: StateFlow<String?> = _searchTextFilter
+
+    var isNotificationPermissionAskedBefore: Boolean
+        get() = preferenceProvider.getBooleanPref(IS_NOTIFICATION_PERMISSION_ASKED_BEFORE, false)
+        set(value) {
+            preferenceProvider.upsertBooleanPref(IS_NOTIFICATION_PERMISSION_ASKED_BEFORE, value)
+        }
+
+    var isNeverAskForNotificationPermission: Boolean
+        get() = preferenceProvider.getBooleanPref(IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION, false)
+        set(value) {
+            preferenceProvider.upsertBooleanPref(IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION, value)
+        }
 
     init {
         viewModelScope.launch(Dispatchers.IO) {

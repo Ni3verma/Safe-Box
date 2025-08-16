@@ -4,6 +4,8 @@ object CommonConstants {
     //        SHOULD ONLY be user for simple shared preference
     const val TOTAL_LOGIN_COUNT = "total_login_count"
     const val LOGIN_COUNT_WITH_BIOMETRIC = "login_count_with_biometric"
+    const val IS_NOTIFICATION_PERMISSION_ASKED_BEFORE = "is_notification_permission_asked_before"
+    const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
 
     //        SHOULD ONLY be user for encrypted shared preference
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
