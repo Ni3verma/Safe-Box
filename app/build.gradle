@@ -1,202 +1,202 @@
-import io.gitlab.arturbosch.detekt.Detekt
-
-plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-    id 'dagger.hilt.android.plugin'
-    id "io.gitlab.arturbosch.detekt"
-    id "com.google.gms.google-services"
-    id "com.google.firebase.crashlytics"
-    id "kotlinx-serialization"
-    alias(libs.plugins.ksp)
-}
-
-apply from: '../CICD/cicd.gradle'
-
-android {
-    compileSdk 35
-    buildFeatures {
-        buildConfig = true
-    }
-    defaultConfig {
-        applicationId "com.andryoga.safebox"
-        minSdkVersion 23
-        targetSdkVersion 35
-        versionCode 10
-        // majorVersion.minorVersion.dbVersion.fixVersion
-        versionName "1.7.4.1"
-
-        //room.incremental: Enables Gradle incremental annotation processor
-        //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += [
-                        "room.incremental"     : "true",
-                        "room.expandProjection": "true",
-                        "room.schemaLocation"  : "$projectDir/schemas".toString()
-                ]
-            }
-        }
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    signingConfigs {
-        release {
-            // Load releaseKeyStore.properties in an object
-            // if you want to make release build in your local then make a releaseKeyStore.properties file with below keys at root level
-            // also store your release key store (*.jks) file and mention path in STORE_FILE property
-            // both these files are meant to be stored only locally and not committed to VCS
-            def localReleaseKeyStoreProperties = new Properties()
-            localReleaseKeyStoreProperties.load(new FileInputStream(rootProject.file("releaseKeyStore.properties")))
-            storeFile file(localReleaseKeyStoreProperties['STORE_FILE'])
-            storePassword localReleaseKeyStoreProperties['STORE_PASSWORD']
-            keyPassword localReleaseKeyStoreProperties['KEY_PASSWORD']
-            keyAlias localReleaseKeyStoreProperties['KEY_ALIAS']
-        }
-        qa {
-            def nonProdKeyStoreProperties = new Properties()
-            nonProdKeyStoreProperties.load(new FileInputStream(rootProject.file("nonProdReleaseKeyStore.properties")))
-            storeFile file(nonProdKeyStoreProperties['STORE_FILE'])
-            storePassword nonProdKeyStoreProperties['STORE_PASSWORD']
-            keyPassword nonProdKeyStoreProperties['KEY_PASSWORD']
-            keyAlias nonProdKeyStoreProperties['KEY_ALIAS']
-        }
-    }
-
-    android.applicationVariants.configureEach { variant ->
-        variant.outputs.configureEach {
-            // if you are changing apk name then also change name in git workflow file
-            outputFileName = "SafeBox-${variant.name}.apk"
-        }
-    }
-
-    buildTypes {
-        debug {
-            applicationIdSuffix ".debug"
-            debuggable true
-            minifyEnabled false
-        }
-        release {
-            minifyEnabled true
-            shrinkResources true
-            debuggable false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
-            firebaseCrashlytics {
-                mappingFileUploadEnabled true
-            }
-        }
-        qa {
-            initWith(buildTypes["release"])
-            applicationIdSuffix ".qa"
-            signingConfig signingConfigs.qa
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
-    buildFeatures {
-        viewBinding true
-        dataBinding true
-        compose true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.4.8'
-    }
-    packagingOptions {
-        resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
-        }
-    }
-    namespace 'com.andryoga.safebox'
-    lint {
-        disable 'UnusedResources', 'FragmentTagUsage', 'Correctness', 'Messages'
-    }
-}
-
-dependencies {
-    implementation libs.kotlin.stdlib
-    implementation libs.core.ktx
-    implementation libs.appcompat
-
-    // test dep
-    testImplementation libs.junit
-    androidTestImplementation libs.ext.junit
-    androidTestImplementation libs.espresso.core
-    androidTestImplementation libs.androidx.ui.test.junit4
-
-    // common
-    implementation libs.material
-    implementation libs.security.crypto
-
-    // coroutines
-    implementation libs.kotlinx.coroutines.play.services
-    implementation libs.kotlinx.coroutines.android
-
-    //lifecycle
-    implementation libs.lifecycle.runtime.ktx
-    implementation libs.lifecycle.extensions
-    implementation libs.lifecycle.viewmodel.ktx
-    implementation libs.lifecycle.livedata.ktx
-    implementation libs.lifecycle.common
-
-    //timber
-    implementation libs.timber
-
-    //hilt
-    implementation libs.hilt.android
-    kapt libs.hilt.android.compiler
-
-    //room
-    implementation libs.room.runtime
-    implementation libs.room.ktx
-    ksp libs.androidx.room.compiler
-
-    //compose
-    implementation libs.ui
-    implementation libs.androidx.material
-    implementation libs.androidx.ui.tooling.preview
-    implementation libs.androidx.runtime.livedata
-    implementation libs.androidx.activity.compose
-    debugImplementation libs.androidx.ui.tooling
-
-    // only enable next dependency to copy icon to MaterialIconsCopy file at
-    // src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt
-    // don't enable this as app size increases drastically for debug builds
-//    implementation "androidx.compose.material:material-icons-extended:1.6.0"
-
-    //crashlytics and analytics
-    implementation platform(libs.firebase.bom)
-    implementation libs.firebase.crashlytics.ktx
-    implementation libs.firebase.analytics
-
-    //biometric
-    implementation libs.biometric
-
-    // in app review
-    implementation(libs.review)
-
-    // serialization
-    implementation(libs.kotlinx.serialization.json)
-
-    // work manager
-    implementation libs.work.runtime.ktx
-    implementation libs.hilt.work
-    kapt(libs.hilt.compiler)
-
-    // detekt plugins
-    detektPlugins(libs.detekt.formatting)
-}
-
-tasks.withType(Detekt).configureEach {
-    jvmTarget = "17"
-}
+//import io.gitlab.arturbosch.detekt.Detekt
+//
+//plugins {
+//    id 'com.android.application'
+//    id 'kotlin-android'
+//    id 'kotlin-kapt'
+//    id 'dagger.hilt.android.plugin'
+//    id "io.gitlab.arturbosch.detekt"
+//    id "com.google.gms.google-services"
+//    id "com.google.firebase.crashlytics"
+//    id "kotlinx-serialization"
+//    alias(libs.plugins.ksp)
+//}
+//
+//apply from: '../CICD/cicd.gradle'
+//
+//android {
+//    compileSdk 35
+//    buildFeatures {
+//        buildConfig = true
+//    }
+//    defaultConfig {
+//        applicationId "com.andryoga.safebox"
+//        minSdkVersion 23
+//        targetSdkVersion 35
+//        versionCode 10
+//        // majorVersion.minorVersion.dbVersion.fixVersion
+//        versionName "1.7.4.1"
+//
+//        //room.incremental: Enables Gradle incremental annotation processor
+//        //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.
+//        javaCompileOptions {
+//            annotationProcessorOptions {
+//                arguments += [
+//                        "room.incremental"     : "true",
+//                        "room.expandProjection": "true",
+//                        "room.schemaLocation"  : "$projectDir/schemas".toString()
+//                ]
+//            }
+//        }
+//
+//        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+//    }
+//
+//    signingConfigs {
+//        release {
+//            // Load releaseKeyStore.properties in an object
+//            // if you want to make release build in your local then make a releaseKeyStore.properties file with below keys at root level
+//            // also store your release key store (*.jks) file and mention path in STORE_FILE property
+//            // both these files are meant to be stored only locally and not committed to VCS
+//            def localReleaseKeyStoreProperties = new Properties()
+//            localReleaseKeyStoreProperties.load(new FileInputStream(rootProject.file("releaseKeyStore.properties")))
+//            storeFile file(localReleaseKeyStoreProperties['STORE_FILE'])
+//            storePassword localReleaseKeyStoreProperties['STORE_PASSWORD']
+//            keyPassword localReleaseKeyStoreProperties['KEY_PASSWORD']
+//            keyAlias localReleaseKeyStoreProperties['KEY_ALIAS']
+//        }
+//        qa {
+//            def nonProdKeyStoreProperties = new Properties()
+//            nonProdKeyStoreProperties.load(new FileInputStream(rootProject.file("nonProdReleaseKeyStore.properties")))
+//            storeFile file(nonProdKeyStoreProperties['STORE_FILE'])
+//            storePassword nonProdKeyStoreProperties['STORE_PASSWORD']
+//            keyPassword nonProdKeyStoreProperties['KEY_PASSWORD']
+//            keyAlias nonProdKeyStoreProperties['KEY_ALIAS']
+//        }
+//    }
+//
+//    android.applicationVariants.configureEach { variant ->
+//        variant.outputs.configureEach {
+//            // if you are changing apk name then also change name in git workflow file
+//            outputFileName = "SafeBox-${variant.name}.apk"
+//        }
+//    }
+//
+//    buildTypes {
+//        debug {
+//            applicationIdSuffix ".debug"
+//            debuggable true
+//            minifyEnabled false
+//        }
+//        release {
+//            minifyEnabled true
+//            shrinkResources true
+//            debuggable false
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//            signingConfig signingConfigs.release
+//            firebaseCrashlytics {
+//                mappingFileUploadEnabled true
+//            }
+//        }
+//        qa {
+//            initWith(buildTypes["release"])
+//            applicationIdSuffix ".qa"
+//            signingConfig signingConfigs.qa
+//        }
+//    }
+//
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_17
+//        targetCompatibility JavaVersion.VERSION_17
+//    }
+//
+//    kotlinOptions {
+//        jvmTarget = '17'
+//    }
+//
+//    buildFeatures {
+//        viewBinding true
+//        dataBinding true
+//        compose true
+//    }
+//    composeOptions {
+//        kotlinCompilerExtensionVersion '1.4.8'
+//    }
+//    packagingOptions {
+//        resources {
+//            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+//        }
+//    }
+//    namespace 'com.andryoga.safebox'
+//    lint {
+//        disable 'UnusedResources', 'FragmentTagUsage', 'Correctness', 'Messages'
+//    }
+//}
+//
+//dependencies {
+//    implementation libs.kotlin.stdlib
+//    implementation libs.core.ktx
+//    implementation libs.appcompat
+//
+//    // test dep
+//    testImplementation libs.junit
+//    androidTestImplementation libs.ext.junit
+//    androidTestImplementation libs.espresso.core
+//    androidTestImplementation libs.androidx.ui.test.junit4
+//
+//    // common
+//    implementation libs.material
+//    implementation libs.security.crypto
+//
+//    // coroutines
+//    implementation libs.kotlinx.coroutines.play.services
+//    implementation libs.kotlinx.coroutines.android
+//
+//    //lifecycle
+//    implementation libs.lifecycle.runtime.ktx
+//    implementation libs.lifecycle.extensions
+//    implementation libs.lifecycle.viewmodel.ktx
+//    implementation libs.lifecycle.livedata.ktx
+//    implementation libs.lifecycle.common
+//
+//    //timber
+//    implementation libs.timber
+//
+//    //hilt
+//    implementation libs.hilt.android
+//    kapt libs.hilt.android.compiler
+//
+//    //room
+//    implementation libs.room.runtime
+//    implementation libs.room.ktx
+//    ksp libs.androidx.room.compiler
+//
+//    //compose
+//    implementation libs.ui
+//    implementation libs.androidx.material
+//    implementation libs.androidx.ui.tooling.preview
+//    implementation libs.androidx.runtime.livedata
+//    implementation libs.androidx.activity.compose
+//    debugImplementation libs.androidx.ui.tooling
+//
+//    // only enable next dependency to copy icon to MaterialIconsCopy file at
+//    // src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt
+//    // don't enable this as app size increases drastically for debug builds
+////    implementation "androidx.compose.material:material-icons-extended:1.6.0"
+//
+//    //crashlytics and analytics
+//    implementation platform(libs.firebase.bom)
+//    implementation libs.firebase.crashlytics.ktx
+//    implementation libs.firebase.analytics
+//
+//    //biometric
+//    implementation libs.biometric
+//
+//    // in app review
+//    implementation(libs.review)
+//
+//    // serialization
+//    implementation(libs.kotlinx.serialization.json)
+//
+//    // work manager
+//    implementation libs.work.runtime.ktx
+//    implementation libs.hilt.work
+//    kapt(libs.hilt.compiler)
+//
+//    // detekt plugins
+//    detektPlugins(libs.detekt.formatting)
+//}
+//
+//tasks.withType(Detekt).configureEach {
+//    jvmTarget = "17"
+//}

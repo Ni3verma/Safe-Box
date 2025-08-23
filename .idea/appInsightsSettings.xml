@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.andryoga.safebox.debug" />
-                  <option name="mobileSdkAppId" value="1:123456789456:android:abcdef" />
-                  <option name="projectId" value="andryoga-safe-box" />
-                  <option name="projectNumber" value="123456789456_THIS_IS_DUMMY_" />
+                  <option name="appId" value="PLACEHOLDER" />
+                  <option name="mobileSdkAppId" value="" />
+                  <option name="projectId" value="" />
+                  <option name="projectNumber" value="" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
