@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.databinding.DataBindingUtil
@@ -22,8 +23,17 @@ import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.databinding.ActivityMainBinding
 import com.andryoga.safebox.ui.common.Utils.hideSoftKeyboard
+import com.andryoga.safebox.ui.view.MainActivity.Constants.AUTO_UPDATE_REQUEST_CODE
+import com.andryoga.safebox.ui.view.MainActivity.Constants.DAYS_FOR_UPDATE
 import com.andryoga.safebox.ui.view.MainActivity.Constants.LAST_INTERACTED_TIME
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.InstallStateUpdatedListener
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.android.play.core.review.ReviewInfo
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
@@ -42,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var reviewManager: ReviewManager
+    private lateinit var appUpdateManager: AppUpdateManager
 
     private val navController by lazy {
         Navigation.findNavController(this, R.id.nav_host_fragment)
@@ -57,9 +68,17 @@ class MainActivity : AppCompatActivity() {
     )
     private val drawerLayoutFirstScreen = R.id.nav_all_info
 
+    private val listener = InstallStateUpdatedListener { state ->
+        if (state.installStatus() == InstallStatus.DOWNLOADED) {
+            snackbarForCompleteUpdate()
+        }
+    }
+
     object Constants {
         const val LAST_INTERACTED_TIME = "last_interacted_time"
         const val MAX_USER_AWAY_MILLI_SECONDS = 20000L
+        const val AUTO_UPDATE_REQUEST_CODE = 11
+        const val DAYS_FOR_UPDATE = 2
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         // could be USER_PREFERENCE in future
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
+        appUpdateManager = AppUpdateManagerFactory.create(this)
 
         lastInteractionTime = savedInstanceState?.getLong(LAST_INTERACTED_TIME)
             ?: System.currentTimeMillis()
@@ -112,6 +132,15 @@ class MainActivity : AppCompatActivity() {
 
         CrashlyticsKeys(this).setDefaultKeys()
         prefetchReviewInfo()
+
+        appUpdate()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == AUTO_UPDATE_REQUEST_CODE) {
+            if (resultCode != RESULT_OK)
+                Toast.makeText(this, getString(R.string.update_failed), Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onPause() {
@@ -266,5 +295,28 @@ class MainActivity : AppCompatActivity() {
         } else {
             nextFunction()
         }
+    }
+
+    private fun appUpdate() {
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                (appUpdateInfo.clientVersionStalenessDays() ?: -1) >= DAYS_FOR_UPDATE
+            ) {
+                Timber.i("Update Available")
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    AppUpdateType.FLEXIBLE, this, AUTO_UPDATE_REQUEST_CODE
+                )
+                appUpdateManager.registerListener(listener)
+            }
+        }
+    }
+
+    private fun snackbarForCompleteUpdate() {
+        Snackbar.make(findViewById(R.id.content), "App update has been downloaded", Snackbar.LENGTH_INDEFINITE)
+            .setAction(getString(R.string.install)) {
+                appUpdateManager.completeUpdate()
+            }.show()
     }
 }

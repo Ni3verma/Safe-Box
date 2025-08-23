@@ -157,4 +157,6 @@
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
     <string name="enter_password_manually">For security reason, Please manually enter password</string>
+    <string name="update_failed">Update Failed</string>
+    <string name="install">Install</string>
 </resources>
