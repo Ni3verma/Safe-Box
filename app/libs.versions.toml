@@ -1,0 +1,96 @@
+[versions]
+activityComposeVersion = "1.10.1"
+appcompatVersion = "1.7.1"
+biometricVersion = "1.1.0"
+coreKtxVersion = "1.17.0"
+detektFormattingVersion = "1.23.0"
+espressoCoreVersion = "3.7.0"
+firebaseBomVersion = "34.1.0"
+gradleVersion = "8.7.3"
+hiltAndroidCompilerVersion = "2.43.2"
+hiltAndroidGradlePluginVersion = "2.43.2"
+hiltAndroidVersion = "2.49"
+hiltCompilerVersion = "1.2.0"
+hiltWorkVersion = "1.2.0"
+junit = "1.3.0"
+junitVersion = "4.13.2"
+kotlinGradlePluginVersion = "1.9.24"
+kotlinSerializationVersion = "1.9.24"
+kotlinStdlibVersion = "2.1.10"
+kotlinxCoroutinesPlayServicesVersion = "1.9.0"
+kotlinxSerializationJsonVersion = "1.7.3"
+lifecycleCommonVersion = "2.9.2"
+lifecycleExtensionsVersion = "2.2.0"
+material = "1.9.0"
+materialVersion = "1.12.0"
+reviewVersion = "2.0.2"
+roomCompilerVersion = "2.7.2"
+roomRuntimeVersion = "2.7.2"
+runtimeLivedataVersion = "1.9.0"
+securityCryptoVersion = "1.1.0"
+timberVersion = "5.0.1"
+uiTestJunit4Version = "1.9.0"
+uiToolingPreviewVersion = "1.9.0"
+uiToolingVersion = "1.9.0"
+uiVersion = "1.9.0"
+workRuntimeKtxVersion = "2.10.3"
+ksp = "1.9.24-1.0.20"
+agpVersion = "8.7.3"
+kotlinVersion = "1.9.24"
+composeBomVersion = "2025.08.00"
+kotlinPluginCompose = "2.2.10"
+
+[libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityComposeVersion" }
+androidx-material = { module = "androidx.compose.material:material", version.ref = "material" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompilerVersion" }
+androidx-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "runtimeLivedataVersion" }
+androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "uiTestJunit4Version" }
+androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "uiToolingVersion" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreviewVersion" }
+appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
+biometric = { module = "androidx.biometric:biometric", version.ref = "biometricVersion" }
+core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detektFormattingVersion" }
+espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+ext-junit = { module = "androidx.test.ext:junit", version.ref = "junit" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBomVersion" }
+firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ndk" }
+gradle = { module = "com.android.tools.build:gradle", version.ref = "gradleVersion" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroidVersion" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroidCompilerVersion" }
+hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroidGradlePluginVersion" }
+hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltCompilerVersion" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltWorkVersion" }
+junit = { module = "junit:junit", version.ref = "junitVersion" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePluginVersion" }
+kotlin-serialization = { module = "org.jetbrains.kotlin:kotlin-serialization", version.ref = "kotlinSerializationVersion" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlibVersion" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesPlayServicesVersion" }
+kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServicesVersion" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJsonVersion" }
+lifecycle-common = { module = "androidx.lifecycle:lifecycle-common", version.ref = "lifecycleCommonVersion" }
+lifecycle-extensions = { module = "androidx.lifecycle:lifecycle-extensions", version.ref = "lifecycleExtensionsVersion" }
+lifecycle-livedata-ktx = { module = "androidx.lifecycle:lifecycle-livedata-ktx", version.ref = "lifecycleCommonVersion" }
+lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleCommonVersion" }
+lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleCommonVersion" }
+material = { module = "com.google.android.material:material", version.ref = "materialVersion" }
+review = { module = "com.google.android.play:review", version.ref = "reviewVersion" }
+room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntimeVersion" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntimeVersion" }
+security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCryptoVersion" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timberVersion" }
+ui = { module = "androidx.compose.ui:ui", version.ref = "uiVersion" }
+work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtxVersion" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBomVersion" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+[plugins]
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+android-library = { id = "com.android.library", version.ref = "agpVersion" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlinVersion" }
+android-application = { id = "com.android.application", version.ref = "agpVersion" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinPluginCompose" }
