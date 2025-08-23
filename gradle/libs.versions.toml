@@ -1,11 +1,15 @@
 [versions]
-androidGradlePlugin = "8.7.3"
+androidGradlePlugin = "8.9.3"
 kotlinGradlePlugin = "1.9.24"
-kotlin = "2.0.0"
+googleServicesGradlePlugin = "4.4.3"
+crashlyticsGradlePlugin = "3.0.6"
+detektGradlePlugin = "1.23.8"
+
+kotlin = "2.2.10"
 kotlinComposeCompiler = "2.2.10"
 ksp = "1.9.24-1.0.20"
 kotlinSerialization = "2.2.10"
-coreKtx = "1.15.0"
+coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.08.00"
@@ -48,6 +52,9 @@ androidx-test = ["androidx-test-ext-junit", "androidx-test-espresso-core"]
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServicesGradlePlugin" }
+crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsGradlePlugin" }
 android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinComposeCompiler" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detektGradlePlugin" }
