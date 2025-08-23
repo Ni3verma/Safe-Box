@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "8.9.3"
+androidGradlePlugin = "8.12.1"
 kotlinGradlePlugin = "1.9.24"
 googleServicesGradlePlugin = "4.4.3"
 crashlyticsGradlePlugin = "3.0.6"
