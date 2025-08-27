@@ -31,6 +31,7 @@ androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graph
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-compose-icons = { group = "androidx.compose.material", name = "material-icons-extended" }
 
 gradle = { module = "com.android.tools.build:gradle", version.ref = "androidGradlePlugin" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlinGradlePlugin" }
@@ -45,7 +46,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose"]
-compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3"]
+compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
 compose-debug = ["androidx-compose-ui-tooling", "androidx-compose-ui-test-manifest"]
 androidx-test = ["androidx-test-ext-junit", "androidx-test-espresso-core"]
 
