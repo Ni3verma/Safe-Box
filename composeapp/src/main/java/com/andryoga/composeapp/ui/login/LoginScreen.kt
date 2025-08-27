@@ -61,7 +61,10 @@ fun LoginScreen() {
 
         Card(
             shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(12.dp),
+            elevation = CardDefaults.cardElevation(8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = colorScheme.surfaceContainerLow
+            ),
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(24.dp)

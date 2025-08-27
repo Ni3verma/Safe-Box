@@ -1,16 +1,21 @@
 plugins {
+    alias(libs.plugins.google.services)
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.crashlytics)
 }
 
 android {
     namespace 'com.andryoga.composeapp'
-    compileSdk 36
+    compileSdk = 36
 
     defaultConfig {
         applicationId "com.andryoga.composeapp"
-        minSdk 24
+        minSdk 23
         targetSdk 36
         versionCode 1
         versionName "1.0"
@@ -33,27 +38,35 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
 }
 
 dependencies {
-    // This single line replaces 3 separate implementation lines
-    implementation libs.bundles.androidx
-
-    // Import the Compose Bill of Materials (BoM) to manage versions
-    implementation platform(libs.androidx.compose.bom)
-    // This bundle includes all the necessary Compose UI libraries
-    implementation libs.bundles.compose.ui
-
-    // Unit Testing
+    // test deps
     testImplementation libs.androidx.test.junit
-
-    // Android Instrumented Testing
     androidTestImplementation platform(libs.androidx.compose.bom)
     androidTestImplementation libs.bundles.androidx.test
-    // Compose-specific testing
     androidTestImplementation libs.androidx.compose.ui.test.junit4
 
-    // Debug-only dependencies for Compose tooling and inspection
+    // debug deps
     debugImplementation libs.bundles.compose.debug
+
+    implementation libs.bundles.androidx
+    implementation libs.bundles.work
+    implementation libs.timber
+    implementation libs.security.crypto
+    implementation libs.kotlinx.serialization.json
+
+    ksp(libs.room.compiler)
+    implementation libs.bundles.room
+
+    ksp(libs.hilt.compiler)
+    implementation libs.bundles.hilt
+
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.bundles.compose.ui
+
+    implementation platform(libs.firebase.bom)
+    implementation libs.bundles.firebase
 }

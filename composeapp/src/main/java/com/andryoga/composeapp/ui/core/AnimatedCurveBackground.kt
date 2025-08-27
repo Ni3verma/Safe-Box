@@ -69,7 +69,7 @@ fun AnimatedCurveBackground() {
         // Wave Path
         val path1 = Path().apply {
             moveTo(0f, height * 0.3f)
-            quadraticBezierTo(
+            quadraticTo(
                 width * 0.5f,
                 height * 0.15f + waveShift,
                 width,
@@ -83,7 +83,7 @@ fun AnimatedCurveBackground() {
 
         val path2 = Path().apply {
             moveTo(0.5f, height)
-            quadraticBezierTo(
+            quadraticTo(
                 width * 0.5f,
                 height * 0.15f + waveShift,
                 width,

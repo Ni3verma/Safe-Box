@@ -1,0 +1,38 @@
+package com.andryoga.composeapp.data.db.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.andryoga.composeapp.data.db.docs.SearchLoginData
+import com.andryoga.composeapp.data.db.docs.export.ExportLoginData
+import com.andryoga.composeapp.data.db.entity.LoginDataEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface LoginDataDao {
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertLoginData(loginDataEntity: LoginDataEntity)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>)
+
+    @Update
+    suspend fun updateLoginData(loginDataEntity: LoginDataEntity)
+
+    @Query("select * from login_data order by title")
+    fun getAllLoginData(): Flow<List<SearchLoginData>>
+
+    @Query("select * from login_data where `key` = :key limit 1")
+    suspend fun getLoginDataByKey(key: Int): LoginDataEntity
+
+    @Query("Delete from login_data where `key` = :key")
+    suspend fun deleteLoginDataByKey(key: Int)
+
+    @Query("select * from login_data")
+    suspend fun exportAllData(): List<ExportLoginData>
+
+    @Query("delete from login_data")
+    fun deleteAllData()
+}
