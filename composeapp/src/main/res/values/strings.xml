@@ -117,11 +117,11 @@
     <!--    <string name="app_name">Safe Box</string>-->
     <string name="app_subtitle">Safely store your private data</string>
     <string name="enter_password">Enter password <font color='#FF0000'>̽</font></string>
-    <string name="length_validation_text">Must be more than 8 characters</string>
-    <string name="special_char_validation_text">Must contain more than 1 special char</string>
-    <string name="case_validation_text">Must be a mix of upper and lower case letters</string>
-    <string name="numeric_validation_text">Must contain more than 2 numeric char</string>
-    <string name="hint_subset_validation_text">User Password subset not allowed</string>
+    <string name="blank_validation_text">Enter something !</string>
+    <string name="length_validation_text">Too short !</string>
+    <string name="special_char_validation_text">Enter a special character (e.g. @, *, $)</string>
+    <string name="case_validation_text">Must include at least one uppercase(A) and one lowercase letter(a).</string>
+    <string name="numeric_validation_text">Enter at least two numbers (e.g. 1, 2, 3)</string>
     <string name="save">Save</string>
     <string name="password">Password</string>
     <string name="unlock">unlock</string>

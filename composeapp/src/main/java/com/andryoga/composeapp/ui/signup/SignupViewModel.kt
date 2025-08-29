@@ -4,10 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.composeapp.common.AnalyticsKeys.SIGNUP_BLOCKED
 import com.andryoga.composeapp.common.CommonConstants.IS_SIGN_UP_REQUIRED
-import com.andryoga.composeapp.common.Utils.longestCommonSubstring
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.composeapp.providers.interfaces.EncryptedPreferenceProvider
-import com.andryoga.composeapp.ui.signup.SignupViewModel.Constants.MAX_HINT_SUBSET_LENGTH
 import com.andryoga.composeapp.ui.signup.SignupViewModel.Constants.MIN_NUMERIC_COUNT
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -104,12 +102,6 @@ class SignupViewModel @Inject constructor(
                 PasswordValidatorState.SHORT_PASSWORD_LENGTH
             }
 
-            longestCommonSubstring(
-                password.lowercase(), hint.lowercase()
-            ) >= MAX_HINT_SUBSET_LENGTH -> {
-                PasswordValidatorState.HINT_IS_SUBSET
-            }
-
             else -> {
                 PasswordValidatorState.PASSWORD_IS_OK
             }
@@ -145,7 +137,7 @@ class SignupViewModel @Inject constructor(
     }
 
     object Constants {
-        const val MIN_PASSWORD_LENGTH = 8
+        const val MIN_PASSWORD_LENGTH = 7
         const val MAX_HINT_SUBSET_LENGTH = 5
         const val MIN_NUMERIC_COUNT = 2
     }

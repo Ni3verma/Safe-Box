@@ -44,7 +44,7 @@ fun PasswordTextField(
         isError = uiState.isPasswordFieldError,
         supportingText = {
             if (uiState.isPasswordFieldError) {
-                Text(uiState.passwordValidatorState.toString())
+                Text(uiState.passwordValidatorState.getUiText())
             }
         },
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
