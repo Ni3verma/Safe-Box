@@ -26,7 +26,7 @@ fun AnimatedCurveBackground() {
         initialValue = -50f,
         targetValue = 50f,
         animationSpec = infiniteRepeatable(
-            animation = tween(6000, easing = LinearEasing),
+            animation = tween(4000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "waveShift"
@@ -51,7 +51,6 @@ fun AnimatedCurveBackground() {
         val width = size.width
         val height = size.height
 
-        // 🎨 Animated rainbow gradient
         val gradientBrush = Brush.linearGradient(
             colors = listOf(
                 primaryColor.lighten(0.3f),
@@ -80,18 +79,5 @@ fun AnimatedCurveBackground() {
             close()
         }
         drawPath(path1, brush = gradientBrush)
-
-        val path2 = Path().apply {
-            moveTo(0.5f, height)
-            quadraticTo(
-                width * 0.5f,
-                height * 0.15f + waveShift,
-                width,
-                height * 0.3f
-            )
-            lineTo(width, 0f)
-            lineTo(0f, 0f)
-            close()
-        }
     }
 }

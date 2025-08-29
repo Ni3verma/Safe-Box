@@ -4,6 +4,7 @@ object AnalyticsKeys {
     // event names
     const val LOGIN_FAILED = "login_failed"
     const val DEVICE_DOES_NOT_SUPPORT_BIOMETRIC = "device_does_not_support_biometric"
+    const val SIGNUP_BLOCKED = "signup_blocked"
 
     const val BACKUP_SELECT_DIR_RESULT = "backup_select_dir_result"
     const val BACKUP_FAILED = "backup_failed"
