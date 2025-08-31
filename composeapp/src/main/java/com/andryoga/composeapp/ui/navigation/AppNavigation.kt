@@ -8,7 +8,7 @@ import com.andryoga.composeapp.ui.LoadingRoute
 import com.andryoga.composeapp.ui.LoadingScreen
 import com.andryoga.composeapp.ui.StartDestination
 import com.andryoga.composeapp.ui.login.LoginRoute
-import com.andryoga.composeapp.ui.login.LoginScreen
+import com.andryoga.composeapp.ui.login.LoginScreenRoot
 import com.andryoga.composeapp.ui.signup.SignupRoute
 import com.andryoga.composeapp.ui.signup.SignupScreenRoot
 
@@ -31,7 +31,7 @@ fun AppNavigation(startDestinationState: StartDestination) {
             LoadingScreen()
         }
         composable<LoginRoute> {
-            LoginScreen()
+            LoginScreenRoot()
         }
 
         composable<SignupRoute> {

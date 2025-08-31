@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,12 +38,27 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 
 @Composable
-fun LoginScreen() {
+fun LoginScreenRoot(modifier: Modifier = Modifier) {
+    val viewModel = hiltViewModel<LoginViewModel>()
+    val uiState by viewModel.uiState.collectAsState()
+
+    LoginScreen(
+        uiState = uiState,
+        screenAction = viewModel::onAction
+    )
+}
+@Composable
+private fun LoginScreen(
+    uiState: LoginUiState,
+    screenAction: (LoginScreenAction) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -69,14 +85,24 @@ fun LoginScreen() {
                 .align(Alignment.Center)
                 .padding(24.dp)
         ) {
-            LoginCardContent()
+            LoginCardContent(
+                uiState = uiState,
+                screenAction = screenAction
+            )
         }
     }
 }
 
 @Composable
-private fun LoginCardContent() {
-    var password by remember { mutableStateOf("") }
+private fun LoginCardContent(
+    uiState: LoginUiState,
+    screenAction: (LoginScreenAction) -> Unit
+) {
+    var password by remember {
+        mutableStateOf(
+            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
+        )
+    }
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
 
@@ -116,20 +142,23 @@ private fun LoginCardContent() {
                 .fillMaxWidth()
         )
 
-        TextButton(onClick = { showHint = !showHint }) {
+        TextButton(onClick = {
+            showHint = !showHint
+            screenAction(LoginScreenAction.ShowHintClicked)
+        }) {
             Text("Show Hint")
         }
 
         if (showHint) {
             Text(
-                text = "This is hint",
+                text = uiState.hint,
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
                 textAlign = TextAlign.Center
             )
         }
 
         Button(
-            onClick = { /* TODO: Handle Login */ },
+            onClick = { screenAction(LoginScreenAction.LoginClicked(password = password)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
         ) {
@@ -143,6 +172,9 @@ private fun LoginCardContent() {
 @Composable
 private fun GreetingPreview() {
     SafeBoxTheme {
-        LoginScreen()
+        LoginScreen(
+            uiState = LoginUiState(),
+            screenAction = {}
+        )
     }
 }
