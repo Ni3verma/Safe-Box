@@ -28,11 +28,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SafeBoxTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
                     val viewModel = hiltViewModel<MainActivityViewModel>()
                     val startDestinationState by viewModel.startDestination.collectAsState()
                     AppNavigation(
-                        startDestinationState = startDestinationState
+                        startDestinationState = startDestinationState,
+//                        modifier = Modifier.padding(innerPadding)
                     )
                 }
             }

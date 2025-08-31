@@ -3,6 +3,7 @@ package com.andryoga.composeapp.providers.interfaces
 /**
  * This provider interacts with encrypted preferences. It is safe to call the methods from main thread.
  * */
+@Deprecated("do not use this, this will be replaced with data store in future. This library is now deprecated by jetpack as well")
 interface EncryptedPreferenceProvider {
     suspend fun upsertBooleanPref(key: String, value: Boolean)
     suspend fun getBooleanPref(key: String, defValue: Boolean): Boolean

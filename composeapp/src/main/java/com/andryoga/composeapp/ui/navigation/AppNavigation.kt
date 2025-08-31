@@ -16,7 +16,9 @@ import com.andryoga.composeapp.ui.signup.SignupRoute
 import com.andryoga.composeapp.ui.signup.SignupScreenRoot
 
 @Composable
-fun AppNavigation(startDestinationState: StartDestination) {
+fun AppNavigation(
+    startDestinationState: StartDestination,
+) {
     val navController = rememberNavController()
     val startDestination = when (startDestinationState) {
         StartDestination.Loading -> LoadingRoute
@@ -43,9 +45,7 @@ fun AppNavigation(startDestinationState: StartDestination) {
             SignupScreenRoot()
         }
 
-        composable<HomeRoute> {
-            HomeScreen()
-        }
+        composable<HomeRoute> { HomeScreen() }
     }
 }
 
