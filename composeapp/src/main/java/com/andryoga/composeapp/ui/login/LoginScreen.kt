@@ -47,9 +47,13 @@ import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 
 @Composable
-fun LoginScreenRoot(modifier: Modifier = Modifier) {
+fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.passwordValidatorState == PasswordValidatorState.VERIFIED) {
+        onLoginSuccess()
+    }
 
     LoginScreen(
         uiState = uiState,

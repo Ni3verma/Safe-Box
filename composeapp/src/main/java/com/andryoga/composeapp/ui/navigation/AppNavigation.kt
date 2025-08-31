@@ -1,12 +1,15 @@
 package com.andryoga.composeapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.andryoga.composeapp.ui.LoadingRoute
 import com.andryoga.composeapp.ui.LoadingScreen
 import com.andryoga.composeapp.ui.StartDestination
+import com.andryoga.composeapp.ui.home.HomeRoute
+import com.andryoga.composeapp.ui.home.HomeScreen
 import com.andryoga.composeapp.ui.login.LoginRoute
 import com.andryoga.composeapp.ui.login.LoginScreenRoot
 import com.andryoga.composeapp.ui.signup.SignupRoute
@@ -31,11 +34,25 @@ fun AppNavigation(startDestinationState: StartDestination) {
             LoadingScreen()
         }
         composable<LoginRoute> {
-            LoginScreenRoot()
+            LoginScreenRoot(onLoginSuccess = {
+                navigateToHome(navController)
+            })
         }
 
         composable<SignupRoute> {
             SignupScreenRoot()
+        }
+
+        composable<HomeRoute> {
+            HomeScreen()
+        }
+    }
+}
+
+private fun navigateToHome(navController: NavHostController) {
+    navController.navigate(HomeRoute) {
+        popUpTo(LoginRoute) {
+            inclusive = true
         }
     }
 }

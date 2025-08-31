@@ -32,6 +32,9 @@
     <string name="title_bank_card_data">Bank Card Data</string>
     <string name="title_secure_note_data">Secure Note Data</string>
     <string name="title_view_data">View Data</string>
+    <string name="bottom_nav_records">Records</string>
+    <string name="bottom_nav_backup_and_restore">Backup &amp; Restore</string>
+    <string name="bottom_nav_settings">Settings</string>
 
     <!--    Snackbar -->
     <string name="snackbar_common_data_saved">Data saved</string>
