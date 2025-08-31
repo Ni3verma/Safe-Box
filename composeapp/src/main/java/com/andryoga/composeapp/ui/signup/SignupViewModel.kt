@@ -2,6 +2,7 @@ package com.andryoga.composeapp.ui.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.common.AnalyticsKeys.SIGNUP_BLOCKED
 import com.andryoga.composeapp.common.CommonConstants.IS_SIGN_UP_REQUIRED
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
@@ -30,6 +31,15 @@ class SignupViewModel @Inject constructor(
     val uiState = _uiState.asStateFlow()
 
     init {
+        if (BuildConfig.DEBUG) {
+            _uiState.value = _uiState.value.copy(
+                password = "Qwerty@@135",
+                hint = "This is a hint",
+                passwordValidatorState = PasswordValidatorState.PASSWORD_IS_OK,
+                isSignupButtonEnabled = true
+            )
+        }
+
         uiState.map {
             SignupButtonEnableParams(
                 passwordValidatorState = it.passwordValidatorState, hint = it.hint
@@ -128,7 +138,6 @@ class SignupViewModel @Inject constructor(
         viewModelScope.launch {
             userDetailsRepository.insertUserDetailsData(password, hint)
 
-            // todo: do we need this? - db check should be enough in place of this
             encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
             Timber.i("Added pswrd in db")
 

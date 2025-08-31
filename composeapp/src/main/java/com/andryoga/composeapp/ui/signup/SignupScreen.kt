@@ -160,7 +160,24 @@ private fun SignupCardContent(
 private fun GreetingPreview() {
     SafeBoxTheme {
         SignupScreen(
-            uiState = SignupUiState(),
+            uiState = SignupUiState(isSignupButtonEnabled = true),
+            screenAction = { }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun GreetingPreviewWithPasswordError() {
+    SafeBoxTheme {
+        SignupScreen(
+            uiState = SignupUiState(
+                password = "Hey",
+                hint = "this is hint",
+                isPasswordFieldError = true,
+                passwordValidatorState = PasswordValidatorState.SHORT_PASSWORD_LENGTH
+            ),
             screenAction = { }
         )
     }
