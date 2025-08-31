@@ -31,11 +31,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
 import com.andryoga.composeapp.ui.core.MandatoryText
 import com.andryoga.composeapp.ui.signup.components.PasswordTextField
@@ -66,7 +68,7 @@ private fun SignupScreen(
         AnimatedCurveBackground()
 
         Text(
-            text = "Welcome !",
+            text = stringResource(R.string.welcome),
             color = colorScheme.onPrimary,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
@@ -130,8 +132,8 @@ private fun SignupCardContent(
         OutlinedTextField(
             value = uiState.hint,
             onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
-            label = { MandatoryText("Hint") },
-            placeholder = { Text("Enter a hint") },
+            label = { MandatoryText(stringResource(R.string.hint)) },
+            placeholder = { Text(stringResource(R.string.enter_hint)) },
             singleLine = true,
             modifier = Modifier
                 .padding(bottom = 16.dp)
@@ -149,7 +151,7 @@ private fun SignupCardContent(
             shape = RoundedCornerShape(10.dp),
             enabled = uiState.isSignupButtonEnabled,
         ) {
-            Text("Sign up")
+            Text(stringResource(R.string.signup))
         }
     }
 }

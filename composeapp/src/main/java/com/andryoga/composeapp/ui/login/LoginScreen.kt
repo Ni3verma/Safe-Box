@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -40,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.BuildConfig
+import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
@@ -66,7 +68,7 @@ private fun LoginScreen(
         AnimatedCurveBackground()
 
         Text(
-            text = "Welcome Back!",
+            text = stringResource(R.string.welcome_back),
             color = colorScheme.onPrimary,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
@@ -105,6 +107,7 @@ private fun LoginCardContent(
     }
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
+    val isPasswordFieldError = uiState.passwordValidatorState == PasswordValidatorState.INCORRECT
 
     Column(
         modifier = Modifier
@@ -127,14 +130,24 @@ private fun LoginCardContent(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            placeholder = { Text("Password") },
+            label = { Text(stringResource(R.string.password)) },
+            placeholder = { Text(stringResource(R.string.password)) },
             singleLine = true,
+            isError = isPasswordFieldError,
+            supportingText = {
+                if (isPasswordFieldError) {
+                    Text(text = stringResource(R.string.incorrect_pswrd_message))
+                }
+            },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 val image =
                     if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(image, contentDescription = "Toggle Password")
+                    Icon(
+                        image,
+                        contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility)
+                    )
                 }
             },
             modifier = Modifier
@@ -146,7 +159,11 @@ private fun LoginCardContent(
             showHint = !showHint
             screenAction(LoginScreenAction.ShowHintClicked)
         }) {
-            Text("Show Hint")
+            if (showHint) {
+                Text(stringResource(R.string.hide_hint))
+            } else {
+                Text(stringResource(R.string.show_hint))
+            }
         }
 
         if (showHint) {
@@ -162,7 +179,7 @@ private fun LoginCardContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp)
         ) {
-            Text("Login")
+            Text(stringResource(R.string.login))
         }
     }
 }
@@ -170,10 +187,25 @@ private fun LoginCardContent(
 @Preview(showBackground = true)
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun GreetingPreview() {
+private fun LoginPreview() {
     SafeBoxTheme {
         LoginScreen(
             uiState = LoginUiState(),
+            screenAction = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun LoginPreviewWrongPassword() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                hint = "This is hint",
+                passwordValidatorState = PasswordValidatorState.INCORRECT
+            ),
             screenAction = {}
         )
     }
