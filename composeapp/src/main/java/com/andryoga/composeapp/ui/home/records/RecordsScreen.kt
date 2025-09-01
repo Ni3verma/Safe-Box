@@ -1,32 +1,54 @@
 package com.andryoga.composeapp.ui.home.records
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Note
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.previewHelper.getBankAccountRecordItem
+import com.andryoga.composeapp.ui.previewHelper.getCardRecordItem
+import com.andryoga.composeapp.ui.previewHelper.getLoginRecordItem
+import com.andryoga.composeapp.ui.previewHelper.getNoteRecordItem
+import com.andryoga.composeapp.ui.previewHelper.getRecordList
 
 @Composable
 fun RecordsScreenRoot() {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
-    viewModel.loadRecords()
     RecordsScreen(
         uiState = uiState
     )
@@ -59,39 +81,126 @@ private fun RecordsScreen(
 
 @Composable
 fun RecordItem(item: RecordListItem) {
+    val icon: ImageVector = when (item.type) {
+        RecordListItem.Type.LOGIN -> Icons.AutoMirrored.Filled.Login
+        RecordListItem.Type.CARD -> Icons.Filled.CreditCard
+        RecordListItem.Type.BANK_ACCOUNT -> Icons.Filled.AccountBalance
+        RecordListItem.Type.NOTE -> Icons.AutoMirrored.Filled.Note
+    }
+
+    val typeText: String = when (item.type) {
+        RecordListItem.Type.LOGIN -> stringResource(R.string.login)
+        RecordListItem.Type.CARD -> stringResource(R.string.card)
+        RecordListItem.Type.BANK_ACCOUNT -> stringResource(R.string.bank)
+        RecordListItem.Type.NOTE -> stringResource(R.string.note)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = item.title, style = MaterialTheme.typography.titleMedium)
-            Text(text = item.subTitle ?: "", style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            shape = CircleShape
+                        )
+                        .padding(8.dp)
+                        .size(40.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(Modifier.size(16.dp))
+            Column(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                )
+                Text(
+                    text = item.subTitle ?: "", style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
+                )
+            }
+
+            Text(
+                text = typeText,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier
+                    .padding(top = 4.dp, start = 30.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary.copy(0.3f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(start = 8.dp, end = 8.dp)
+            )
         }
     }
 }
 
-@Preview(showSystemUi = true)
-@Preview(showSystemUi = true, uiMode = UI_MODE_NIGHT_YES)
+@Preview
+@Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
 fun RecordsScreenPreview() {
-    val records = mutableListOf<RecordListItem>()
-    repeat(30) {
-        records.add(
-            RecordListItem(
-                it,
-                "$it - title", "$it - subtitle", RecordListItem.Type.LOGIN
-            )
-        )
-    }
     RecordsScreen(
-        uiState = RecordsUiState(isLoading = false, records = records),
+        uiState = RecordsUiState(isLoading = false, records = getRecordList()),
     )
 }
 
 @Preview
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-fun RecordItemPreview() {
-    RecordItem(item = RecordListItem(1, "title", "subtitle", RecordListItem.Type.LOGIN))
+fun LoginRecordItemPreview() {
+    RecordItem(item = getLoginRecordItem())
+}
 
+@Preview
+@Composable
+fun BankAccountRecordItemPreview() {
+    RecordItem(item = getBankAccountRecordItem())
+}
+
+@Preview
+@Composable
+fun CardRecordItemPreview() {
+    RecordItem(item = getCardRecordItem())
+}
+
+@Preview
+@Composable
+fun NoteRecordItemPreview() {
+    RecordItem(item = getNoteRecordItem())
+}
+
+@Preview
+@Composable
+fun LongRecordItemPreview() {
+    RecordItem(
+        item = RecordListItem(
+            1,
+            "titletitletitletitletitletitle titletitletitletitle",
+            "subtitle subtitle subtitle subtitle  subtitle",
+            RecordListItem.Type.LOGIN
+        )
+    )
 }

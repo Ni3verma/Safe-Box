@@ -3,6 +3,7 @@ package com.andryoga.composeapp.ui.home.records
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.composeapp.ui.previewHelper.getRecordList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -19,22 +20,17 @@ class RecordsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun loadRecords() {
+    init {
+        loadRecords()
+    }
+
+    private fun loadRecords() {
         viewModelScope.launch(Dispatchers.IO) {
             delay(1000)
-            val records = mutableListOf<RecordListItem>()
-            repeat(30) {
-                records.add(
-                    RecordListItem(
-                        it,
-                        "$it - title", "$it - subtitle", RecordListItem.Type.LOGIN
-                    )
-                )
-            }
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    records = records
+                    records = getRecordList()
                 )
             }
         }
