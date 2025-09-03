@@ -22,13 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.ui.home.records.RecordListItem
+import com.andryoga.composeapp.ui.core.models.RecordType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddNewRecordBottomSheet(
     onDismiss: () -> Unit,
-    onAddNewRecord: (RecordListItem.Type) -> Unit
+    onAddNewRecord: (RecordType) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -45,7 +45,7 @@ fun AddNewRecordBottomSheet(
                 modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
             )
 
-            RecordListItem.Type.entries.forEach {
+            RecordType.entries.forEach {
                 AddRecordItem(
                     text = stringResource(it.titleResId),
                     icon = it.icon,

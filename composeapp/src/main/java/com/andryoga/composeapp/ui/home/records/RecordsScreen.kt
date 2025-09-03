@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.ui.core.models.RecordType
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
@@ -23,7 +24,7 @@ import com.andryoga.composeapp.ui.previewHelper.getRecordList
 fun RecordsScreenRoot(
     showAddNewRecordBottomSheet: Boolean,
     onDismissAddNewRecordBottomSheet: () -> Unit,
-    onAddNewRecord: (RecordListItem.Type) -> Unit,
+    onAddNewRecord: (RecordType) -> Unit,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
@@ -42,7 +43,7 @@ fun RecordsScreenRoot(
 private fun RecordsScreen(
     uiState: RecordsUiState,
     onDismissAddNewRecordBottomSheet: () -> Unit,
-    onAddNewRecord: (RecordListItem.Type) -> Unit,
+    onAddNewRecord: (RecordType) -> Unit,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),

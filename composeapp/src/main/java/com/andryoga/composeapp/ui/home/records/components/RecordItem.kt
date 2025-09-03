@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.models.RecordType
 import com.andryoga.composeapp.ui.home.records.RecordListItem
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getCardRecordItem
@@ -39,18 +40,18 @@ import com.andryoga.composeapp.ui.previewHelper.getNoteRecordItem
 
 @Composable
 fun RecordItem(item: RecordListItem) {
-    val icon: ImageVector = when (item.type) {
-        RecordListItem.Type.LOGIN -> Icons.AutoMirrored.Filled.Login
-        RecordListItem.Type.CARD -> Icons.Filled.CreditCard
-        RecordListItem.Type.BANK_ACCOUNT -> Icons.Filled.AccountBalance
-        RecordListItem.Type.NOTE -> Icons.AutoMirrored.Filled.Note
+    val icon: ImageVector = when (item.recordType) {
+        RecordType.LOGIN -> Icons.AutoMirrored.Filled.Login
+        RecordType.CARD -> Icons.Filled.CreditCard
+        RecordType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
+        RecordType.NOTE -> Icons.AutoMirrored.Filled.Note
     }
 
-    val typeText: String = when (item.type) {
-        RecordListItem.Type.LOGIN -> stringResource(R.string.login)
-        RecordListItem.Type.CARD -> stringResource(R.string.card)
-        RecordListItem.Type.BANK_ACCOUNT -> stringResource(R.string.bank)
-        RecordListItem.Type.NOTE -> stringResource(R.string.note)
+    val recordTypeText: String = when (item.recordType) {
+        RecordType.LOGIN -> stringResource(R.string.login)
+        RecordType.CARD -> stringResource(R.string.card)
+        RecordType.BANK_ACCOUNT -> stringResource(R.string.bank)
+        RecordType.NOTE -> stringResource(R.string.note)
     }
 
     Card(
@@ -97,7 +98,7 @@ fun RecordItem(item: RecordListItem) {
             }
 
             Text(
-                text = typeText,
+                text = recordTypeText,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
@@ -146,7 +147,7 @@ private fun LongRecordItemPreview() {
             1,
             "long titletitletitletitletitletitle titletitletitletitle",
             "long subtitle subtitle subtitle subtitle  subtitle",
-            RecordListItem.Type.LOGIN
+            RecordType.LOGIN
         )
     )
 }
