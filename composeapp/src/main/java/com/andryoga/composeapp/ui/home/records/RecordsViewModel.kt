@@ -35,4 +35,12 @@ class RecordsViewModel @Inject constructor(
             }
         }
     }
+
+    fun updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet: Boolean) {
+        _uiState.update {
+            it.copy(
+                isShowAddNewRecordsBottomSheet = showAddNewRecordBottomSheet
+            )
+        }
+    }
 }

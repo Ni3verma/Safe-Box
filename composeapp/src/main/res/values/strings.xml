@@ -16,6 +16,7 @@
     <string name="cd_action_edit">Edit data</string>
     <string name="cd_action_share">Share data</string>
     <string name="cd_toggle_sensitive_data_visibility">Toggle sensitive data visibility</string>
+    <string name="cd_add_new_record_button">Add new record button</string>
 
     <!--    Screen title-->
     <string name="drawer_group_my_data">My Data</string>
@@ -66,7 +67,7 @@
 
 
     <!--    User data type text-->
-    <string name="bank">Bank</string>
+    <string name="bank">Bank Account</string>
     <string name="card">Card</string>
     <string name="note">Note</string>
 
@@ -163,4 +164,5 @@
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
     <string name="enter_password_manually">For security reason, Please manually enter password</string>
+    <string name="add_a_new_record">Add a new record</string>
 </resources>

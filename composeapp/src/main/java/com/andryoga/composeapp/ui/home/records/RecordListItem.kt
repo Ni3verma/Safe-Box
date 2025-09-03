@@ -13,7 +13,7 @@ data class RecordListItem(
     val id: Int,
     val title: String,
     val subTitle: String?,
-    val type: RecordListItem.Type
+    val type: Type
 ) {
     enum class Type(
         val icon: ImageVector,
