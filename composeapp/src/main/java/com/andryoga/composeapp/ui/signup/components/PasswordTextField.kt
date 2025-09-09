@@ -23,7 +23,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.andryoga.composeapp.ui.core.MandatoryText
+import com.andryoga.composeapp.ui.core.MandatoryLabelText
 import com.andryoga.composeapp.ui.signup.SignupScreenAction
 import com.andryoga.composeapp.ui.signup.SignupUiState
 
@@ -38,7 +38,7 @@ fun PasswordTextField(
     OutlinedTextField(
         value = uiState.password,
         onValueChange = { screenAction(SignupScreenAction.OnPasswordUpdate(it)) },
-        label = { MandatoryText("Password") },
+        label = { MandatoryLabelText("Password") },
         placeholder = { Text("Enter a strong password") },
         singleLine = true,
         isError = uiState.isPasswordFieldError,

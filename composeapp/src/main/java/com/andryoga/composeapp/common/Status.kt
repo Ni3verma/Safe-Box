@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.common
+package com.andryoga.composeapp.common
 
 enum class Status {
     SUCCESS,

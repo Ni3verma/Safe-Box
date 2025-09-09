@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
-import com.andryoga.composeapp.ui.core.MandatoryText
+import com.andryoga.composeapp.ui.core.MandatoryLabelText
 import com.andryoga.composeapp.ui.signup.components.PasswordTextField
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
@@ -132,7 +132,7 @@ private fun SignupCardContent(
         OutlinedTextField(
             value = uiState.hint,
             onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
-            label = { MandatoryText(stringResource(R.string.hint)) },
+            label = { MandatoryLabelText(stringResource(R.string.hint)) },
             placeholder = { Text(stringResource(R.string.enter_hint)) },
             singleLine = true,
             modifier = Modifier

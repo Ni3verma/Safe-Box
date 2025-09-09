@@ -17,12 +17,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupAndRestoreScreen
 import com.andryoga.composeapp.ui.home.components.BottomNavBar
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
 import com.andryoga.composeapp.ui.home.records.RecordsScreenRoot
 import com.andryoga.composeapp.ui.home.settings.SettingsScreen
+import com.andryoga.composeapp.ui.record.SingleRecordScreenRoot
+import com.andryoga.composeapp.ui.record.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
 
 @Composable
@@ -59,12 +62,17 @@ fun HomeScreen() {
                 RecordsScreenRoot(
                     showAddNewRecordBottomSheet = showAddNewRecordBottomSheet,
                     onDismissAddNewRecordBottomSheet = { showAddNewRecordBottomSheet = false },
-                    onAddNewRecord = {
+                    onAddNewRecord = { recordType ->
+                        nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
                     }
                 )
             }
             composable<HomeRouteType.BackupAndRestoreRoute> { BackupAndRestoreScreen() }
             composable<HomeRouteType.SettingsRoute> { SettingsScreen() }
+            composable<SingleRecordScreenRoute> { backStackEntry ->
+                val args = backStackEntry.toRoute<SingleRecordScreenRoute>()
+                SingleRecordScreenRoot(args = args)
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.common
+package com.andryoga.composeapp.common
 
 data class Resource<out T>(val status: Status, val data: T?, val message: String?) {
 

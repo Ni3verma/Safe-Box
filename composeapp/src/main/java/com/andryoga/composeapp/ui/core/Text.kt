@@ -9,11 +9,12 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun MandatoryText(text: String, modifier: Modifier = Modifier) {
+fun MandatoryLabelText(text: String, modifier: Modifier = Modifier) {
     Text(
         text = buildAnnotatedString {
             append(text)
@@ -28,12 +29,14 @@ fun MandatoryText(text: String, modifier: Modifier = Modifier) {
                 append("*")
             }
         },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = modifier
     )
 }
 
 @Preview
 @Composable
-fun MandatoryTextPreview() {
-    MandatoryText(text = "Mandatory text")
+fun MandatoryLabelTextPreview() {
+    MandatoryLabelText(text = "Mandatory text")
 }

@@ -8,7 +8,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.NotificationOptions
-import com.andryoga.safebox.ui.common.Resource
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
