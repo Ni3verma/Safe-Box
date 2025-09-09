@@ -105,6 +105,7 @@ object LayoutFactory {
                                 label = R.string.customer_id,
                             )
                         ),
+                        weight = 0.5f
                     ),
                     Layout.Field(
                         uiState = Layout.Field.UiState(
@@ -112,6 +113,7 @@ object LayoutFactory {
                                 label = R.string.branch_code,
                             )
                         ),
+                        weight = 0.5f
                     )
                 ),
                 mapIndex++ to listOf(
@@ -138,14 +140,16 @@ object LayoutFactory {
                             cell = Layout.Field.UiState.Cell(
                                 label = R.string.ifsc_code,
                             )
-                        )
+                        ),
+                        weight = 0.5f
                     ),
                     Layout.Field(
                         uiState = Layout.Field.UiState(
                             cell = Layout.Field.UiState.Cell(
                                 label = R.string.micr_code,
                             )
-                        )
+                        ),
+                        weight = 0.5f
                     )
                 ),
                 mapIndex++ to listOf(
@@ -205,7 +209,8 @@ object LayoutFactory {
                                 label = R.string.pin,
                                 keyboardType = KeyboardType.Number,
                             )
-                        )
+                        ),
+                        weight = 0.5f
                     ),
                     Layout.Field(
                         uiState = Layout.Field.UiState(
@@ -214,7 +219,8 @@ object LayoutFactory {
                                 isPasswordField = true,
                                 keyboardType = KeyboardType.Number,
                             )
-                        )
+                        ),
+                        weight = 0.5f
                     )
                 ),
                 mapIndex++ to listOf(
