@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.record.dynamicLayout
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable

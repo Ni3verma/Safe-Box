@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.record.dynamicLayout
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.MandatoryLabelText
-import com.andryoga.composeapp.ui.record.SingleRecordScreenAction
+import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenAction
 
 @Composable
 fun RowField(

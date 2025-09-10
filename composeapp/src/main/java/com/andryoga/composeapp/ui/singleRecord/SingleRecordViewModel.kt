@@ -1,10 +1,12 @@
-package com.andryoga.composeapp.ui.record
+package com.andryoga.composeapp.ui.singleRecord
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.navigation.toRoute
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.composeapp.ui.core.models.RecordType
-import com.andryoga.composeapp.ui.record.dynamicLayout.Layout
-import com.andryoga.composeapp.ui.record.dynamicLayout.LayoutFactory
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.Layout
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,15 +15,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
-    private val bankAccountDataRepository: BankAccountDataRepository
+    private val bankAccountDataRepository: BankAccountDataRepository,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun initVM(args: SingleRecordScreenRoute) {
-        if (!_uiState.value.isLoading) return
-
+    init {
+        val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
         val layout = when (args.recordType) {
             RecordType.LOGIN -> LayoutFactory.getLoginRecordLayout()
             RecordType.CARD -> LayoutFactory.getCardRecordLayout()

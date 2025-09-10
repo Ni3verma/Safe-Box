@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.record.dynamicLayout
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
 import androidx.compose.ui.text.input.KeyboardType
 import com.andryoga.composeapp.R

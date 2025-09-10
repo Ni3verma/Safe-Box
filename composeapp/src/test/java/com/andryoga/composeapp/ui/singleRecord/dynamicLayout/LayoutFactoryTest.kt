@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.record.dynamicLayout
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
 import org.junit.Before
 import org.junit.Test

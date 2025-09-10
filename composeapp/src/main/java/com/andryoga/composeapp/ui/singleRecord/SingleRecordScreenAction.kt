@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.record
+package com.andryoga.composeapp.ui.singleRecord
 
 sealed interface SingleRecordScreenAction {
     data class onCellValueUdate(
