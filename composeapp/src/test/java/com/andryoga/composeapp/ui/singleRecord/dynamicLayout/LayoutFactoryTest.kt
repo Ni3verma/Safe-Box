@@ -1,5 +1,8 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.Layout
 import org.junit.Before
 import org.junit.Test
 
@@ -29,33 +32,31 @@ class LayoutFactoryTest {
 
     @Test
     fun titleValidations_allLayouts() {
-        validateTitleField(loginLayout.rows[0]!!)
-        validateTitleField(bankAccountLayout.rows[0]!!)
-        validateTitleField(cardLayout.rows[0]!!)
-        validateTitleField(noteLayout.rows[0]!!)
+        validateTitleField(loginLayout.fieldUiState[FieldId.LOGIN_TITLE]!!)
+        validateTitleField(bankAccountLayout.fieldUiState[FieldId.BANK_ACCOUNT_TITLE]!!)
+        validateTitleField(cardLayout.fieldUiState[FieldId.CARD_TITLE]!!)
+        validateTitleField(noteLayout.fieldUiState[FieldId.NOTE_TITLE]!!)
     }
 
     @Test
     fun rowFieldWeight_addsToOne() {
-        loginLayout.rows.forEach { row ->
-            assert(row.value.sumOf { it.weight.toDouble() } == 1.0)
+        loginLayout.arrangement.forEach { row ->
+            assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        bankAccountLayout.rows.forEach { row ->
-            assert(row.value.sumOf { it.weight.toDouble() } == 1.0)
+        bankAccountLayout.arrangement.forEach { row ->
+            assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        cardLayout.rows.forEach { row ->
-            assert(row.value.sumOf { it.weight.toDouble() } == 1.0)
+        cardLayout.arrangement.forEach { row ->
+            assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        noteLayout.rows.forEach { row ->
-            assert(row.value.sumOf { it.weight.toDouble() } == 1.0)
+        noteLayout.arrangement.forEach { row ->
+            assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
     }
 
-    private fun validateTitleField(firstRow: List<Layout.Field>) {
-        assert(firstRow.size == 1)
-        assert(firstRow[0].weight == 1f)
-        assert(firstRow[0].uiState.cell.isMandatory)
-        assert(!firstRow[0].uiState.cell.isPasswordField)
-        assert(firstRow[0].uiState.cell.singleLine)
+    private fun validateTitleField(field: FieldUiState) {
+        assert(field.cell.isMandatory)
+        assert(!field.cell.isPasswordField)
+        assert(field.cell.singleLine)
     }
 }

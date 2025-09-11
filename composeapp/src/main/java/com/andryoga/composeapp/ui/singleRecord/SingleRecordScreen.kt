@@ -52,18 +52,17 @@ fun SingleRecordScreen(
                 .fillMaxWidth()
                 .verticalScroll(scrollState)
         ) {
-            uiState.layout.rows.forEach { (rowIndex, row) ->
+            uiState.layout.arrangement.forEachIndexed { rowIndex, fields ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    row.forEachIndexed { columnIndex, field ->
+                    fields.forEachIndexed { columnIndex, field ->
                         Box(Modifier.weight(field.weight)) {
                             RowField(
-                                rowIndex = rowIndex,
-                                columnIndex = columnIndex,
-                                field = field,
+                                fieldId = field.fieldId,
+                                uiState = uiState.layout.fieldUiState[field.fieldId]!!,
                                 screenAction = screenAction
                             )
                         }

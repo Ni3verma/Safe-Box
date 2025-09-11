@@ -25,47 +25,47 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.MandatoryLabelText
 import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenAction
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 
 @Composable
 fun RowField(
-    rowIndex: Int,
-    columnIndex: Int,
-    field: Layout.Field,
+    fieldId: FieldId,
+    uiState: FieldUiState,
     screenAction: (SingleRecordScreenAction) -> Unit
 ) {
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     OutlinedTextField(
-        value = field.uiState.data,
+        value = uiState.data,
         onValueChange = {
             screenAction(
-                SingleRecordScreenAction.onCellValueUdate(
+                SingleRecordScreenAction.OnCellValueUpdate(
+                    fieldId = fieldId,
                     data = it,
-                    rowIndex = rowIndex,
-                    columnIndex = columnIndex
                 )
             )
         },
         label = {
-            if (field.uiState.cell.isMandatory) {
-                MandatoryLabelText(text = stringResource(field.uiState.cell.label))
+            if (uiState.cell.isMandatory) {
+                MandatoryLabelText(text = stringResource(uiState.cell.label))
             } else {
                 Text(
-                    text = stringResource(field.uiState.cell.label),
+                    text = stringResource(uiState.cell.label),
                     maxLines = 1,
                     overflow = TextOverflow.Companion.Ellipsis
                 )
             }
         },
-        singleLine = field.uiState.cell.singleLine,
-        minLines = field.uiState.cell.minLines,
-        visualTransformation = if (field.uiState.cell.isPasswordField && !isPasswordVisible) {
+        singleLine = uiState.cell.singleLine,
+        minLines = uiState.cell.minLines,
+        visualTransformation = if (uiState.cell.isPasswordField && !isPasswordVisible) {
             PasswordVisualTransformation()
         } else {
             VisualTransformation.Companion.None
         },
         trailingIcon = {
-            if (field.uiState.cell.isPasswordField) {
+            if (uiState.cell.isPasswordField) {
                 val image =
                     if (isPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
                 IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
@@ -77,7 +77,7 @@ fun RowField(
             }
         },
         keyboardOptions = KeyboardOptions(
-            keyboardType = field.uiState.cell.keyboardType
+            keyboardType = uiState.cell.keyboardType
         ),
         modifier = Modifier.Companion
             .padding(top = 16.dp)
@@ -89,14 +89,11 @@ fun RowField(
 @Composable
 private fun MandatoryRowFieldPreview() {
     RowField(
-        rowIndex = 0,
-        columnIndex = 0,
-        field = Layout.Field(
-            uiState = Layout.Field.UiState(
-                cell = Layout.Field.UiState.Cell(
-                    label = R.string.title,
-                    isMandatory = true
-                )
+        fieldId = FieldId.UNKNOWN,
+        uiState = FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.title,
+                isMandatory = true
             )
         ),
         screenAction = {}
@@ -107,13 +104,10 @@ private fun MandatoryRowFieldPreview() {
 @Composable
 private fun NonMandatoryRowFieldPreview() {
     RowField(
-        rowIndex = 0,
-        columnIndex = 0,
-        field = Layout.Field(
-            uiState = Layout.Field.UiState(
-                cell = Layout.Field.UiState.Cell(
-                    label = R.string.title,
-                )
+        fieldId = FieldId.UNKNOWN,
+        uiState = FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.title,
             )
         ),
         screenAction = {}
@@ -124,14 +118,11 @@ private fun NonMandatoryRowFieldPreview() {
 @Composable
 private fun PasswordRowFieldPreview() {
     RowField(
-        rowIndex = 0,
-        columnIndex = 0,
-        field = Layout.Field(
-            uiState = Layout.Field.UiState(
-                cell = Layout.Field.UiState.Cell(
-                    label = R.string.title,
-                    isPasswordField = true
-                )
+        fieldId = FieldId.UNKNOWN,
+        uiState = FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.title,
+                isPasswordField = true
             )
         ),
         screenAction = {}
@@ -142,15 +133,12 @@ private fun PasswordRowFieldPreview() {
 @Composable
 private fun BigRowFieldPreview() {
     RowField(
-        rowIndex = 0,
-        columnIndex = 0,
-        field = Layout.Field(
-            uiState = Layout.Field.UiState(
-                cell = Layout.Field.UiState.Cell(
-                    label = R.string.title,
-                    minLines = 5,
-                    singleLine = false
-                )
+        fieldId = FieldId.UNKNOWN,
+        uiState = FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.title,
+                minLines = 5,
+                singleLine = false
             )
         ),
         screenAction = {}

@@ -1,0 +1,23 @@
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models
+
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.text.input.KeyboardType
+
+data class FieldUiState(
+    val cell: Cell = Cell(),
+    val data: String = "",
+) {
+    /*
+     * This holds the static properties of the cell.
+     * */
+    @Immutable
+    data class Cell(
+        @param:StringRes val label: Int = -1,
+        val isMandatory: Boolean = false,
+        val isPasswordField: Boolean = false,
+        val singleLine: Boolean = true,
+        val minLines: Int = 1,
+        val keyboardType: KeyboardType = KeyboardType.Unspecified
+    )
+}

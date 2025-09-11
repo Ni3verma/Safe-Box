@@ -3,9 +3,7 @@ package com.andryoga.composeapp.ui.singleRecord
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.navigation.toRoute
-import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.composeapp.ui.core.models.RecordType
-import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.Layout
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +13,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
-    private val bankAccountDataRepository: BankAccountDataRepository,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
@@ -41,30 +38,21 @@ class SingleRecordViewModel @Inject constructor(
 
     fun onAction(action: SingleRecordScreenAction) {
         when (action) {
-            is SingleRecordScreenAction.onCellValueUdate -> {
+            is SingleRecordScreenAction.OnCellValueUpdate -> {
                 _uiState.update { currentState ->
-                    val rowToUpdate =
-                        currentState.layout.rows[action.rowIndex] ?: return@update currentState
-
+                    val fieldToUpdate = currentState.layout.fieldUiState[action.fieldId]
+                        ?: return@update currentState
+                    val updatedField = fieldToUpdate.copy(data = action.data)
                     val updatedUiState =
-                        rowToUpdate[action.columnIndex].uiState.copy(data = action.data)
-                    val updatedRow = rowToUpdate[action.columnIndex].copy(
-                        uiState = updatedUiState
-                    )
+                        currentState.layout.fieldUiState + (action.fieldId to updatedField)
 
-                    val newRow: List<Layout.Field> = rowToUpdate.toMutableList().apply {
-                        set(action.columnIndex, updatedRow)
-                    }
-
-                    val newRows = currentState.layout.rows + (action.rowIndex to newRow)
 
                     currentState.copy(
                         layout = currentState.layout.copy(
-                            rows = newRows
+                            fieldUiState = updatedUiState
                         )
                     )
                 }
-
             }
         }
     }

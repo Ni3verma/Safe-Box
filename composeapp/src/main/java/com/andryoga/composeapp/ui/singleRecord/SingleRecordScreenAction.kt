@@ -1,9 +1,10 @@
 package com.andryoga.composeapp.ui.singleRecord
 
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
+
 sealed interface SingleRecordScreenAction {
-    data class onCellValueUdate(
+    data class OnCellValueUpdate(
+        val fieldId: FieldId,
         val data: String,
-        val rowIndex: Int,
-        val columnIndex: Int,
     ) : SingleRecordScreenAction
 }

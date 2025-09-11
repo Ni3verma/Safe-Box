@@ -1,6 +1,6 @@
 package com.andryoga.composeapp.ui.singleRecord
 
-import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.Layout
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.Layout
 
 data class SingleRecordScreenUiState(
     val isLoading: Boolean = true,
