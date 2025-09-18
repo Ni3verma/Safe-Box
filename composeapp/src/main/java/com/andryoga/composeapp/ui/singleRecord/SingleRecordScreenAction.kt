@@ -7,4 +7,6 @@ sealed interface SingleRecordScreenAction {
         val fieldId: FieldId,
         val data: String,
     ) : SingleRecordScreenAction
+
+    object OnSaveClicked : SingleRecordScreenAction
 }

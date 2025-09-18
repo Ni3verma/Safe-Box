@@ -25,6 +25,17 @@ object Utils {
         return if (this.isNullOrBlank()) null else symmetricKeyUtils.decrypt(this)
     }
 
+    /**
+     * returns true if integer is non null and greater than 0, false otherwise
+     */
+    fun Int?.isPositive(): Boolean = (this ?: 0) > 0
+
+    /**
+     * returns true if integer is non null and equal to 0, false otherwise
+     */
+    fun Int?.isZero(): Boolean = (this ?: 0) == 0
+
+
     fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
         return SimpleDateFormat(pattern).format(date)
     }

@@ -2,54 +2,54 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
-import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.Layout
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import org.junit.Before
 import org.junit.Test
 
 
 class LayoutFactoryTest {
-    lateinit var loginLayout: Layout
-    lateinit var bankAccountLayout: Layout
-    lateinit var cardLayout: Layout
-    lateinit var noteLayout: Layout
+    lateinit var loginLayoutPlan: LayoutPlan
+    lateinit var bankAccountLayoutPlan: LayoutPlan
+    lateinit var cardLayoutPlan: LayoutPlan
+    lateinit var noteLayoutPlan: LayoutPlan
 
     @Before
     fun setUp() {
-        loginLayout = LayoutFactory.getLoginRecordLayout()
-        cardLayout = LayoutFactory.getCardRecordLayout()
-        noteLayout = LayoutFactory.getNoteRecordLayout()
-        bankAccountLayout = LayoutFactory.getBankAccountRecordLayout()
+        loginLayoutPlan = LayoutFactory.getLoginRecordLayout()
+        cardLayoutPlan = LayoutFactory.getCardRecordLayout()
+        noteLayoutPlan = LayoutFactory.getNoteRecordLayout()
+        bankAccountLayoutPlan = LayoutFactory.getBankAccountRecordLayout()
 
     }
 
     @Test
     fun eachRecordLayout_hasUniqueLayoutId() {
-        assert(loginLayout.id == LayoutId.LOGIN)
-        assert(bankAccountLayout.id == LayoutId.BANK_ACCOUNT)
-        assert(cardLayout.id == LayoutId.CARD)
-        assert(noteLayout.id == LayoutId.NOTE)
+        assert(loginLayoutPlan.id == LayoutId.LOGIN)
+        assert(bankAccountLayoutPlan.id == LayoutId.BANK_ACCOUNT)
+        assert(cardLayoutPlan.id == LayoutId.CARD)
+        assert(noteLayoutPlan.id == LayoutId.NOTE)
     }
 
     @Test
     fun titleValidations_allLayouts() {
-        validateTitleField(loginLayout.fieldUiState[FieldId.LOGIN_TITLE]!!)
-        validateTitleField(bankAccountLayout.fieldUiState[FieldId.BANK_ACCOUNT_TITLE]!!)
-        validateTitleField(cardLayout.fieldUiState[FieldId.CARD_TITLE]!!)
-        validateTitleField(noteLayout.fieldUiState[FieldId.NOTE_TITLE]!!)
+        validateTitleField(loginLayoutPlan.fieldUiState[FieldId.LOGIN_TITLE]!!)
+        validateTitleField(bankAccountLayoutPlan.fieldUiState[FieldId.BANK_ACCOUNT_TITLE]!!)
+        validateTitleField(cardLayoutPlan.fieldUiState[FieldId.CARD_TITLE]!!)
+        validateTitleField(noteLayoutPlan.fieldUiState[FieldId.NOTE_TITLE]!!)
     }
 
     @Test
     fun rowFieldWeight_addsToOne() {
-        loginLayout.arrangement.forEach { row ->
+        loginLayoutPlan.arrangement.forEach { row ->
             assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        bankAccountLayout.arrangement.forEach { row ->
+        bankAccountLayoutPlan.arrangement.forEach { row ->
             assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        cardLayout.arrangement.forEach { row ->
+        cardLayoutPlan.arrangement.forEach { row ->
             assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
-        noteLayout.arrangement.forEach { row ->
+        noteLayoutPlan.arrangement.forEach { row ->
             assert(row.sumOf { it.weight.toDouble() } == 1.0)
         }
     }

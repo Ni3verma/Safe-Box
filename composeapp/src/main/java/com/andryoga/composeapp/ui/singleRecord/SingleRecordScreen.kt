@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.ui.core.models.RecordType
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 
@@ -53,7 +54,7 @@ fun SingleRecordScreenRoot(
                 actions = {
                     TextButton(
                         onClick = {
-//                            viewModel.onSaveClicked()
+                            viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
                             onScreenClose()
                         },
                         enabled = uiState.isSaveEnabled
@@ -92,7 +93,7 @@ fun SingleRecordScreen(
                 .fillMaxWidth()
                 .verticalScroll(scrollState)
         ) {
-            uiState.layout.arrangement.forEachIndexed { rowIndex, fields ->
+            uiState.layoutPlan.arrangement.forEachIndexed { rowIndex, fields ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
@@ -102,7 +103,7 @@ fun SingleRecordScreen(
                         Box(Modifier.weight(field.weight)) {
                             RowField(
                                 fieldId = field.fieldId,
-                                uiState = uiState.layout.fieldUiState[field.fieldId]!!,
+                                uiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!,
                                 screenAction = screenAction
                             )
                         }
@@ -119,7 +120,7 @@ private fun SingleRecordScreenLoginPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layout = LayoutFactory.getLoginRecordLayout()
+            layoutPlan = LayoutFactory.getLayout(RecordType.LOGIN).getLayoutPlan()
         ),
         {}
     )
@@ -131,7 +132,7 @@ private fun SingleRecordScreenBankAccountPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layout = LayoutFactory.getBankAccountRecordLayout()
+            layoutPlan = LayoutFactory.getLayout(RecordType.BANK_ACCOUNT).getLayoutPlan()
         ),
         {}
     )
@@ -143,7 +144,7 @@ private fun SingleRecordScreenCardPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layout = LayoutFactory.getCardRecordLayout()
+            layoutPlan = LayoutFactory.getLayout(RecordType.CARD).getLayoutPlan()
         ),
         {}
     )
@@ -155,7 +156,7 @@ private fun SingleRecordScreenNotePreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layout = LayoutFactory.getNoteRecordLayout()
+            layoutPlan = LayoutFactory.getLayout(RecordType.NOTE).getLayoutPlan()
         ),
         {}
     )

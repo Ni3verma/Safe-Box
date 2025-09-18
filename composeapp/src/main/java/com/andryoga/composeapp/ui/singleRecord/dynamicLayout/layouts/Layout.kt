@@ -1,0 +1,20 @@
+package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
+
+import com.andryoga.composeapp.common.Utils.isZero
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+
+interface Layout {
+
+    fun getLayoutPlan(): LayoutPlan
+
+    /**
+     * Validate that all the mandatory fields are filled in the layout
+     *
+     * @return true if all mandatory fields have values, false otherwise
+     */
+    fun checkMandatoryFields(fieldUiState: Collection<FieldUiState>): Boolean {
+        return fieldUiState.filter { it.cell.isMandatory }
+            .count { it.data.isBlank() }.isZero()
+    }
+}
