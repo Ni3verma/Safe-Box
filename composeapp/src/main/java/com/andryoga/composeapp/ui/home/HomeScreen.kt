@@ -7,12 +7,15 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -34,11 +37,17 @@ fun HomeScreen() {
     val currentRoute = navBackStackEntry?.destination
 
     var showAddNewRecordBottomSheet by rememberSaveable { mutableStateOf(false) }
+    var topBar by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
 
     Scaffold(
+        topBar = {
+            // each screen has it's own top bar and is responsible for either setting its own top bar
+            // or set it null if they don't want an app bar
+            topBar?.invoke()
+        },
         floatingActionButton = {
             // Only show the FAB if we are on the HomeRouteType.RecordRoute tab
-            if (currentRoute?.route == HomeRouteType.RecordRoute::class.qualifiedName) {
+            if (isUserOnRecordsScreen(currentRoute)) {
                 FloatingActionButton(onClick = { showAddNewRecordBottomSheet = true }) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -49,7 +58,9 @@ fun HomeScreen() {
             }
         },
         bottomBar = {
-            BottomNavBar(nestedNavController)
+            if (isUserOnHomeRouteScreen(currentRoute?.route)) {
+                BottomNavBar(nestedNavController)
+            }
         }
     ) { innerPadding ->
         NavHost(
@@ -58,6 +69,9 @@ fun HomeScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<HomeRouteType.RecordRoute> {
+                LaunchedEffect(Unit) {
+                    topBar = null
+                }
                 RecordsScreenRoot(
                     showAddNewRecordBottomSheet = showAddNewRecordBottomSheet,
                     onDismissAddNewRecordBottomSheet = { showAddNewRecordBottomSheet = false },
@@ -66,11 +80,37 @@ fun HomeScreen() {
                     }
                 )
             }
-            composable<HomeRouteType.BackupAndRestoreRoute> { BackupAndRestoreScreen() }
-            composable<HomeRouteType.SettingsRoute> { SettingsScreen() }
-            composable<SingleRecordScreenRoute> { SingleRecordScreenRoot() }
+            composable<HomeRouteType.BackupAndRestoreRoute> {
+                LaunchedEffect(Unit) {
+                    topBar = null
+                }
+                BackupAndRestoreScreen()
+            }
+            composable<HomeRouteType.SettingsRoute> {
+                LaunchedEffect(Unit) {
+                    topBar = null
+                }
+                SettingsScreen()
+            }
+            composable<SingleRecordScreenRoute> {
+                SingleRecordScreenRoot(
+                    setTopBar = { topBar = it },
+                    onScreenClose = {
+                        nestedNavController.popBackStack()
+                    }
+                )
+            }
         }
     }
+}
+
+private fun isUserOnRecordsScreen(currentRoute: NavDestination?): Boolean =
+    currentRoute?.route == HomeRouteType.RecordRoute::class.qualifiedName
+
+private fun isUserOnHomeRouteScreen(route: String?): Boolean {
+    return HomeRouteType.RecordRoute::class.qualifiedName == route ||
+            HomeRouteType.BackupAndRestoreRoute::class.qualifiedName == route ||
+            HomeRouteType.SettingsRoute::class.qualifiedName == route
 }
 
 @Serializable
