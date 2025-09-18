@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.PulseButton
 import com.andryoga.composeapp.ui.core.models.RecordType
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
@@ -52,15 +53,14 @@ fun SingleRecordScreenRoot(
                     }
                 },
                 actions = {
-                    TextButton(
+                    PulseButton(
+                        textResId = R.string.save,
+                        enabled = uiState.isSaveEnabled,
                         onClick = {
                             viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
                             onScreenClose()
-                        },
-                        enabled = uiState.isSaveEnabled
-                    ) {
-                        Text("SAVE")
-                    }
+                        }
+                    )
                 }
             )
         }
