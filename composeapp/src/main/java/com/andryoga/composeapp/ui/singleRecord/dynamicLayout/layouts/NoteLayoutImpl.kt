@@ -1,16 +1,34 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.data.repository.SecureNoteDataRepositoryImpl
+import com.andryoga.composeapp.ui.core.models.NoteData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import java.util.Date
+import javax.inject.Inject
 
-class NoteLayoutImpl : Layout {
+class NoteLayoutImpl @Inject constructor(
+    private val secureNoteDataRepositoryImpl: SecureNoteDataRepositoryImpl
+) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
     override fun getLayoutPlan(): LayoutPlan {
         return layoutPlan ?: getLayoutPlanInternal()
+    }
+
+    override suspend fun saveLayout(data: Map<FieldId, String>) {
+        secureNoteDataRepositoryImpl.upsertSecureNoteData(
+            NoteData(
+                id = null,
+                title = data[FieldId.NOTE_TITLE] ?: "",
+                notes = data[FieldId.NOTE_NOTES] ?: "",
+                creationDate = Date(),
+                updateDate = Date()
+            )
+        )
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {
@@ -30,7 +48,7 @@ class NoteLayoutImpl : Layout {
                 ),
                 FieldId.NOTE_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.notes, singleLine = false, minLines = 5
+                        label = R.string.notes, singleLine = true, minLines = 5
                     )
                 )
             )

@@ -7,10 +7,8 @@ package com.andryoga.composeapp.data.repository
 //import com.google.firebase.ktx.Firebase
 import com.andryoga.composeapp.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {

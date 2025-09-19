@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
 import com.andryoga.composeapp.data.db.docs.SearchSecureNoteData
 import com.andryoga.composeapp.data.db.docs.export.ExportSecureNoteData
 import com.andryoga.composeapp.data.db.entity.SecureNoteDataEntity
@@ -12,14 +12,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SecureNoteDataDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
+    @Upsert
+    suspend fun upsertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>)
-
-    @Update
-    suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity)
 
     @Query("select * from secure_note_data order by title")
     fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>>

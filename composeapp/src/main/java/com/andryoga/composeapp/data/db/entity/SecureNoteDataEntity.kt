@@ -7,7 +7,7 @@ import java.util.Date
 @Entity(tableName = "secure_note_data")
 data class SecureNoteDataEntity(
     @PrimaryKey(autoGenerate = true)
-    val key: Int,
+    val key: Int = 0,
     val title: String,
     val notes: String,
     val creationDate: Date,

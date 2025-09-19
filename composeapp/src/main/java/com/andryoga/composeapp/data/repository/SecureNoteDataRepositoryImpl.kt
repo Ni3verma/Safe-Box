@@ -1,18 +1,17 @@
 package com.andryoga.composeapp.data.repository
 
-//import com.andryoga.composeapp.ui.view.home.dataDetails.secureNote.SecureNoteScreenData
-//import com.andryoga.composeapp.ui.view.home.dataDetails.secureNote.SecureNoteScreenData.Companion.toSecureNoteDataEntity
-//import com.andryoga.composeapp.ui.view.home.dataDetails.secureNote.SecureNoteScreenData.Companion.toSecureNoteScreenData
 //import com.google.firebase.analytics.ktx.analytics
 //import com.google.firebase.ktx.Firebase
 import com.andryoga.composeapp.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.composeapp.domain.toDbEntity
+import com.andryoga.composeapp.ui.core.models.NoteData
 import javax.inject.Inject
 
 class SecureNoteDataRepositoryImpl @Inject constructor(
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 ) : SecureNoteDataRepository {
-//    override suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
+    //    override suspend fun insertSecureNoteData(secureNoteScreenData: SecureNoteScreenData) {
 //        Firebase.analytics.logEvent(NEW_SECURE_NOTE, null)
 //        secureNoteDataDaoSecure.insertSecretNoteData(
 //            secureNoteScreenData.toSecureNoteDataEntity(
@@ -44,4 +43,7 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
 //    override suspend fun getViewSecureNoteDataByKey(key: Int): ViewSecureNoteData {
 //        return secureNoteDataDaoSecure.getSecretNoteDataByKey(key).toViewSecureNoteData()
 //    }
+    override suspend fun upsertSecureNoteData(noteData: NoteData) {
+        secureNoteDataDaoSecure.upsertSecretNoteData(noteData.toDbEntity())
+    }
 }

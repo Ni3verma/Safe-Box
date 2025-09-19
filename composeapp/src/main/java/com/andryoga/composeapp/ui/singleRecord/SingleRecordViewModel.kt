@@ -2,6 +2,7 @@ package com.andryoga.composeapp.ui.singleRecord
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
@@ -9,12 +10,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    layoutFactory: LayoutFactory
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
@@ -25,7 +28,7 @@ class SingleRecordViewModel @Inject constructor(
 
     init {
         val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
-        layout = LayoutFactory.getLayout(args.recordType)
+        layout = layoutFactory.getLayout(args.recordType)
 
         _uiState.update {
             it.copy(
@@ -57,6 +60,11 @@ class SingleRecordViewModel @Inject constructor(
 
             is SingleRecordScreenAction.OnSaveClicked -> {
                 Timber.i("save clicked")
+                viewModelScope.launch {
+                    layout.saveLayout(
+                        _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
+                    )
+                }
             }
         }
     }

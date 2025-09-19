@@ -27,8 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.PulseButton
-import com.andryoga.composeapp.ui.core.models.RecordType
-import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
+import com.andryoga.composeapp.ui.previewHelper.getBankAccountLayoutPlan
+import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
+import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
+import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +122,7 @@ private fun SingleRecordScreenLoginPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layoutPlan = LayoutFactory.getLayout(RecordType.LOGIN).getLayoutPlan()
+            layoutPlan = getLoginLayoutPlan()
         ),
         {}
     )
@@ -132,7 +134,7 @@ private fun SingleRecordScreenBankAccountPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layoutPlan = LayoutFactory.getLayout(RecordType.BANK_ACCOUNT).getLayoutPlan()
+            layoutPlan = getBankAccountLayoutPlan()
         ),
         {}
     )
@@ -144,7 +146,7 @@ private fun SingleRecordScreenCardPreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layoutPlan = LayoutFactory.getLayout(RecordType.CARD).getLayoutPlan()
+            layoutPlan = getCardLayoutPlan()
         ),
         {}
     )
@@ -156,7 +158,7 @@ private fun SingleRecordScreenNotePreview() {
     SingleRecordScreen(
         SingleRecordScreenUiState(
             isLoading = false,
-            layoutPlan = LayoutFactory.getLayout(RecordType.NOTE).getLayoutPlan()
+            layoutPlan = getNoteLayoutPlan()
         ),
         {}
     )

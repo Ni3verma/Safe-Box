@@ -2,16 +2,24 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import androidx.compose.ui.text.input.KeyboardType
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.data.repository.BankCardDataRepositoryImpl
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import javax.inject.Inject
 
-class BankAccountLayoutImpl : Layout {
+class BankAccountLayoutImpl @Inject constructor(
+    private val BankCardDataRepositoryImpl: BankCardDataRepositoryImpl
+) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
     override fun getLayoutPlan(): LayoutPlan {
         return layoutPlan ?: getLayoutPlanInternal()
+    }
+
+    override suspend fun saveLayout(data: Map<FieldId, String>) {
+
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {
@@ -77,4 +85,5 @@ class BankAccountLayoutImpl : Layout {
         layoutPlan = plan
         return plan
     }
+
 }
