@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
 import com.andryoga.composeapp.data.db.docs.SearchBankCardData
 import com.andryoga.composeapp.data.db.docs.export.ExportBankCardData
 import com.andryoga.composeapp.data.db.entity.BankCardDataEntity
@@ -12,14 +12,11 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BankCardDataDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertBankCardData(bankCardDataEntity: BankCardDataEntity)
+    @Upsert
+    suspend fun upsertBankCardData(bankCardDataEntity: BankCardDataEntity)
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertMultipleBankCardData(bankCardDataEntity: List<BankCardDataEntity>)
-
-    @Update
-    suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity)
 
     @Query("select * from bank_card_data order by title")
     fun getAllBankCardData(): Flow<List<SearchBankCardData>>

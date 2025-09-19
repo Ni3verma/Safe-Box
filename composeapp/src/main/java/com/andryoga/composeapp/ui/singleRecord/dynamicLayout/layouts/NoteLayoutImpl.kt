@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.data.repository.SecureNoteDataRepositoryImpl
+import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.ui.core.models.NoteData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
@@ -11,7 +11,7 @@ import java.util.Date
 import javax.inject.Inject
 
 class NoteLayoutImpl @Inject constructor(
-    private val secureNoteDataRepositoryImpl: SecureNoteDataRepositoryImpl
+    private val secureNoteDataRepositoryImpl: SecureNoteDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
@@ -26,7 +26,6 @@ class NoteLayoutImpl @Inject constructor(
                 title = data[FieldId.NOTE_TITLE] ?: "",
                 notes = data[FieldId.NOTE_NOTES] ?: "",
                 creationDate = Date(),
-                updateDate = Date()
             )
         )
     }

@@ -7,11 +7,16 @@ package com.andryoga.composeapp.data.repository
 //import com.google.firebase.ktx.Firebase
 import com.andryoga.composeapp.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
+import com.andryoga.composeapp.domain.toDbEntity
+import com.andryoga.composeapp.ui.core.models.LoginData
 import javax.inject.Inject
 
 class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
+    override suspend fun upsertLoginData(loginData: LoginData) {
+        loginDataDaoSecure.upsertLoginData(loginData.toDbEntity())
+    }
 //    override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
 //        Firebase.analytics.logEvent(NEW_LOGIN, null)
 //        loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = true))

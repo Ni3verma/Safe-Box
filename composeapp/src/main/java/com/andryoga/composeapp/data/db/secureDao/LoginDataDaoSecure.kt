@@ -7,26 +7,20 @@ import com.andryoga.composeapp.data.db.docs.SearchLoginData
 import com.andryoga.composeapp.data.db.docs.export.ExportLoginData
 import com.andryoga.composeapp.data.db.entity.LoginDataEntity
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class LoginDataDaoSecure @Inject constructor(
     private val loginDataDao: LoginDataDao,
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : LoginDataDao {
-    override suspend fun insertLoginData(loginDataEntity: LoginDataEntity) {
-        loginDataDao.insertLoginData(encrypt(loginDataEntity))
+    override suspend fun upsertLoginData(loginDataEntity: LoginDataEntity) {
+        loginDataDao.upsertLoginData(encrypt(loginDataEntity))
     }
 
     override fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>) {
         loginDataDao.insertMultipleLoginData(loginDataEntity.map { encrypt(it) })
-    }
-
-    override suspend fun updateLoginData(loginDataEntity: LoginDataEntity) {
-        loginDataDao.updateLoginData(encrypt(loginDataEntity))
     }
 
     override fun getAllLoginData(): Flow<List<SearchLoginData>> {

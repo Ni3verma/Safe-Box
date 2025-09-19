@@ -1,10 +1,9 @@
 package com.andryoga.composeapp.data.repository.interfaces
 
-//import com.andryoga.composeapp.ui.view.home.dataDetails.bankCard.BankCardScreenData
+import com.andryoga.composeapp.ui.core.models.CardData
 
 interface BankCardDataRepository {
-//    suspend fun insertBankCardData(bankCardScreenData: BankCardScreenData)
-//    suspend fun updateBankCardData(bankCardScreenData: BankCardScreenData)
+    suspend fun upsertBankCardData(cardData: CardData)
 //    fun getAllBankCardData(): Flow<List<SearchBankCardData>>
 //    suspend fun getBankCardDataByKey(key: Int): BankCardScreenData
 //    suspend fun deleteBankCardDataByKey(key: Int)

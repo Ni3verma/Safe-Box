@@ -1,15 +1,17 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.data.repository.LoginDataRepositoryImpl
+import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
+import com.andryoga.composeapp.ui.core.models.LoginData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import java.util.Date
 import javax.inject.Inject
 
 class LoginLayoutImpl @Inject constructor(
-    private val loginDataRepository: LoginDataRepositoryImpl
+    private val loginDataRepository: LoginDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
@@ -18,6 +20,17 @@ class LoginLayoutImpl @Inject constructor(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
+        loginDataRepository.upsertLoginData(
+            LoginData(
+                id = 0,
+                title = data[FieldId.LOGIN_TITLE] ?: "",
+                url = data[FieldId.LOGIN_URL],
+                userId = data[FieldId.LOGIN_USER_ID] ?: "",
+                password = data[FieldId.LOGIN_PASSWORD],
+                notes = data[FieldId.LOGIN_NOTES],
+                creationDate = Date()
+            )
+        )
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {

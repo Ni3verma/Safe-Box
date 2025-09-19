@@ -2,15 +2,17 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import androidx.compose.ui.text.input.KeyboardType
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.data.repository.BankCardDataRepositoryImpl
+import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.composeapp.ui.core.models.BankAccountData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import java.util.Date
 import javax.inject.Inject
 
 class BankAccountLayoutImpl @Inject constructor(
-    private val BankCardDataRepositoryImpl: BankCardDataRepositoryImpl
+    private val bankAccountDataRepository: BankAccountDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
@@ -19,7 +21,22 @@ class BankAccountLayoutImpl @Inject constructor(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
-
+        bankAccountDataRepository.upsertBankAccountData(
+            BankAccountData(
+                id = 0,
+                title = data[FieldId.BANK_ACCOUNT_TITLE] ?: "",
+                accountNo = data[FieldId.BANK_ACCOUNT_ACCOUNT_NUMBER] ?: "",
+                customerName = data[FieldId.BANK_ACCOUNT_CUSTOMER_NAME],
+                customerId = data[FieldId.BANK_ACCOUNT_CUSTOMER_ID],
+                branchCode = data[FieldId.BANK_ACCOUNT_BRANCH_CODE],
+                branchName = data[FieldId.BANK_ACCOUNT_BRANCH_NAME],
+                branchAddress = data[FieldId.BANK_ACCOUNT_BRANCH_ADDRESS],
+                ifscCode = data[FieldId.BANK_ACCOUNT_IFSC_CODE],
+                micrCode = data[FieldId.BANK_ACCOUNT_MICR_CODE],
+                notes = data[FieldId.BANK_ACCOUNT_NOTES],
+                creationDate = Date(),
+            )
+        )
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {

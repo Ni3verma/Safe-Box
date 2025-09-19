@@ -2,15 +2,17 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import androidx.compose.ui.text.input.KeyboardType
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.data.repository.BankAccountDataRepositoryImpl
+import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.composeapp.ui.core.models.CardData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import java.util.Date
 import javax.inject.Inject
 
 class BankCardLayoutImpl @Inject constructor(
-    private val bankAccountDataRepositoryImpl: BankAccountDataRepositoryImpl
+    private val bankCardDataRepository: BankCardDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
@@ -19,7 +21,19 @@ class BankCardLayoutImpl @Inject constructor(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
-
+        bankCardDataRepository.upsertBankCardData(
+            CardData(
+                id = 0,
+                title = data[FieldId.CARD_TITLE] ?: "",
+                name = data[FieldId.CARD_NAME],
+                number = data[FieldId.CARD_NUMBER] ?: "",
+                expiryDate = data[FieldId.CARD_EXPIRY_DATE],
+                cvv = data[FieldId.CARD_CVV],
+                pin = data[FieldId.CARD_PIN],
+                notes = data[FieldId.CARD_NOTES],
+                creationDate = Date(),
+            )
+        )
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {

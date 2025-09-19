@@ -7,11 +7,16 @@ package com.andryoga.composeapp.data.repository
 //import com.google.firebase.ktx.Firebase
 import com.andryoga.composeapp.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.composeapp.domain.toDbEntity
+import com.andryoga.composeapp.ui.core.models.BankAccountData
 import javax.inject.Inject
 
 class BankAccountDataRepositoryImpl @Inject constructor(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure
 ) : BankAccountDataRepository {
+    override suspend fun upsertBankAccountData(accountData: BankAccountData) {
+        bankAccountDataDaoSecure.upsertBankAccountData(accountData.toDbEntity())
+    }
 //    override suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData) {
 //        Firebase.analytics.logEvent(NEW_BANK_ACCOUNT, null)
 //        val entity = bankAccountScreenData.toBankAccountDataEntity(getCurrentDate = true)

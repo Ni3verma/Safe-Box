@@ -15,16 +15,12 @@ class BankAccountDataDaoSecure @Inject constructor(
     private val bankAccountDataDao: BankAccountDataDao,
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : BankAccountDataDao {
-    override suspend fun insertBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
-        bankAccountDataDao.insertBankAccountData(encrypt(bankAccountDataEntity))
+    override suspend fun upsertBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
+        bankAccountDataDao.upsertBankAccountData(encrypt(bankAccountDataEntity))
     }
 
     override fun insertMultipleBankAccountData(bankAccountDataEntity: List<BankAccountDataEntity>) {
         bankAccountDataDao.insertMultipleBankAccountData(bankAccountDataEntity.map { encrypt(it) })
-    }
-
-    override suspend fun updateBankAccountData(bankAccountDataEntity: BankAccountDataEntity) {
-        bankAccountDataDao.updateBankAccountData(encrypt(bankAccountDataEntity))
     }
 
     override suspend fun getBankAccountDataByKey(key: Int): BankAccountDataEntity {
