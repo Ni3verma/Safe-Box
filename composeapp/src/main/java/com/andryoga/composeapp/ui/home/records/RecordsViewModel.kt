@@ -9,7 +9,6 @@ import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataReposito
 import com.andryoga.composeapp.domain.mappers.record.toRecordListItem
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -28,13 +27,15 @@ class RecordsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _searchText = MutableStateFlow("")
+    val searchText = _searchText.asStateFlow()
+
     init {
         loadRecords()
     }
 
     private fun loadRecords() {
-        viewModelScope.launch(Dispatchers.IO) {
-            delay(1000)
+        viewModelScope.launch {
             val combinedListItemFlow = combine(
                 bankAccountDataRepository.getAllBankAccountData(),
                 secureNoteDataRepository.getAllSecureNoteData(),
@@ -48,14 +49,23 @@ class RecordsViewModel @Inject constructor(
                 combinedList.sortedBy { it.title.lowercase() }
             }.flowOn(Dispatchers.Default)
 
-            viewModelScope.launch {
-                combinedListItemFlow.collect { newCombinedList ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            records = newCombinedList
-                        )
-                    }
+            val filteredListItemFlow = combine(
+                combinedListItemFlow,
+                searchText
+            ) { combinedList, searchText ->
+                if (searchText.isEmpty()) {
+                    combinedList
+                } else {
+                    combinedList.filter { it.title.contains(searchText, ignoreCase = true) }
+                }
+            }
+
+            filteredListItemFlow.collect { newCombinedList ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        records = newCombinedList
+                    )
                 }
             }
         }
@@ -67,5 +77,13 @@ class RecordsViewModel @Inject constructor(
                 isShowAddNewRecordsBottomSheet = showAddNewRecordBottomSheet
             )
         }
+    }
+
+    fun onSearchTextUpdate(searchText: String) {
+        _searchText.value = searchText
+    }
+
+    fun onClearSearchText() {
+        _searchText.value = ""
     }
 }

@@ -17,6 +17,8 @@
     <string name="cd_action_share">Share data</string>
     <string name="cd_toggle_sensitive_data_visibility">Toggle sensitive data visibility</string>
     <string name="cd_add_new_record_button">Add new record button</string>
+    <string name="cd_search_bar">Search records by title</string>
+    <string name="cd_clear_search_bar">Clear search bar</string>"
 
     <!--    Screen title-->
     <string name="drawer_group_my_data">My Data</string>
@@ -51,7 +53,6 @@
     <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_ok">OK</string>
-    <string name="common_search">Search</string>
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
@@ -164,4 +165,5 @@
     <string name="updated_on">Updated on</string>
     <string name="enter_password_manually">For security reason, Please manually enter password</string>
     <string name="add_a_new_record">Add a new record</string>
+    <string name="search_bar_placeholder">Search …</string>
 </resources>

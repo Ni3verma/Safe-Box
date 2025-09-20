@@ -69,10 +69,8 @@ fun HomeScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable<HomeRouteType.RecordRoute> {
-                LaunchedEffect(Unit) {
-                    topBar = null
-                }
                 RecordsScreenRoot(
+                    setTopBar = { topBar = it },
                     showAddNewRecordBottomSheet = showAddNewRecordBottomSheet,
                     onDismissAddNewRecordBottomSheet = { showAddNewRecordBottomSheet = false },
                     onAddNewRecord = { recordType ->

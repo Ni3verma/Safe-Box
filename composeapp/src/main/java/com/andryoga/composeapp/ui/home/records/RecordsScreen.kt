@@ -18,18 +18,31 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
+import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBar
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
 
 @Composable
 fun RecordsScreenRoot(
+    setTopBar: ((@Composable () -> Unit)?) -> Unit,
     showAddNewRecordBottomSheet: Boolean,
     onDismissAddNewRecordBottomSheet: () -> Unit,
     onAddNewRecord: (RecordType) -> Unit,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+    val searchText by viewModel.searchText.collectAsState()
     LaunchedEffect(showAddNewRecordBottomSheet) {
         viewModel.updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet)
+    }
+
+    LaunchedEffect(searchText) {
+        setTopBar {
+            RecordsSearchBar(
+                query = searchText,
+                onSearchTextUpdate = { viewModel.onSearchTextUpdate(it) },
+                onClearSearchText = { viewModel.onClearSearchText() }
+            )
+        }
     }
 
     RecordsScreen(
