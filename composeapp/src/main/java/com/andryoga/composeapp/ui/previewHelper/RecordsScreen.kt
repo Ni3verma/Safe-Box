@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.ui.previewHelper
 
-import com.andryoga.composeapp.ui.core.models.RecordType
-import com.andryoga.composeapp.ui.home.records.RecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordType
 import kotlin.random.Random
 
 fun getRecordList(): List<RecordListItem> {

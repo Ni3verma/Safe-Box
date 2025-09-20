@@ -18,7 +18,7 @@ interface LoginDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertMultipleLoginData(loginDataEntity: List<LoginDataEntity>)
 
-    @Query("select * from login_data order by title")
+    @Query("select * from login_data")
     fun getAllLoginData(): Flow<List<SearchLoginData>>
 
     @Query("select * from login_data where `key` = :key limit 1")

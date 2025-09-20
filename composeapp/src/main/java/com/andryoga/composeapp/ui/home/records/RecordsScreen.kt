@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.andryoga.composeapp.ui.core.models.RecordType
+import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
@@ -56,7 +56,9 @@ private fun RecordsScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(
-                    items = records, key = { it.id }) { record ->
+                    items = records,
+                    key = { it.key }
+                ) { record ->
                     RecordItem(item = record)
                 }
             }
@@ -74,7 +76,6 @@ private fun RecordsScreen(
     }
 }
 
-
 @Preview
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
@@ -86,7 +87,7 @@ fun RecordsScreenPreview() {
     )
 }
 
-//todo: see why this doesnt work
+// todo: see why this doesnt work
 @Preview
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable

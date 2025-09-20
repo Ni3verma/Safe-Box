@@ -1,6 +1,6 @@
 package com.andryoga.composeapp.ui.singleRecord
 
-import com.andryoga.composeapp.ui.core.models.RecordType
+import com.andryoga.composeapp.domain.models.record.RecordType
 import kotlinx.serialization.Serializable
 
 @Serializable

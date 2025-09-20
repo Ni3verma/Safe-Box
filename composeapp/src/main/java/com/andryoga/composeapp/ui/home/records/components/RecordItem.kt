@@ -31,8 +31,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.ui.core.models.RecordType
-import com.andryoga.composeapp.ui.home.records.RecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getCardRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getLoginRecordItem

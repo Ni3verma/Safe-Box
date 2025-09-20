@@ -18,7 +18,7 @@ interface SecureNoteDataDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>)
 
-    @Query("select * from secure_note_data order by title")
+    @Query("select * from secure_note_data")
     fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>>
 
     @Query("select * from secure_note_data where `key` = :key limit 1")

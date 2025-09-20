@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.domain
+package com.andryoga.composeapp.domain.mappers.record
 
 import com.andryoga.composeapp.data.db.entity.BankAccountDataEntity
 import com.andryoga.composeapp.data.db.entity.BankCardDataEntity

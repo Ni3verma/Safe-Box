@@ -4,7 +4,7 @@ import com.andryoga.composeapp.data.repository.BankAccountDataRepositoryImpl
 import com.andryoga.composeapp.data.repository.BankCardDataRepositoryImpl
 import com.andryoga.composeapp.data.repository.LoginDataRepositoryImpl
 import com.andryoga.composeapp.data.repository.SecureNoteDataRepositoryImpl
-import com.andryoga.composeapp.ui.core.models.RecordType
+import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout

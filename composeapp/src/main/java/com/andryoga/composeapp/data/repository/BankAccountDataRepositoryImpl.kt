@@ -1,39 +1,29 @@
 package com.andryoga.composeapp.data.repository
 
-//import com.andryoga.composeapp.ui.view.home.dataDetails.bankAccount.BankAccountScreenData
-//import com.andryoga.composeapp.ui.view.home.dataDetails.bankAccount.BankAccountScreenData.Companion.toBankAccountDataEntity
-//import com.andryoga.composeapp.ui.view.home.dataDetails.bankAccount.BankAccountScreenData.Companion.toBankAccountScreenData
-//import com.google.firebase.analytics.ktx.analytics
-//import com.google.firebase.ktx.Firebase
+import com.andryoga.composeapp.common.AnalyticsKeys.NEW_BANK_ACCOUNT
+import com.andryoga.composeapp.data.db.docs.SearchBankAccountData
 import com.andryoga.composeapp.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
-import com.andryoga.composeapp.domain.toDbEntity
+import com.andryoga.composeapp.domain.mappers.record.toDbEntity
 import com.andryoga.composeapp.ui.core.models.BankAccountData
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class BankAccountDataRepositoryImpl @Inject constructor(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure
 ) : BankAccountDataRepository {
     override suspend fun upsertBankAccountData(accountData: BankAccountData) {
+        if (accountData.id == null || accountData.id == 0) {
+            Firebase.analytics.logEvent(NEW_BANK_ACCOUNT, null)
+        }
         bankAccountDataDaoSecure.upsertBankAccountData(accountData.toDbEntity())
     }
-//    override suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData) {
-//        Firebase.analytics.logEvent(NEW_BANK_ACCOUNT, null)
-//        val entity = bankAccountScreenData.toBankAccountDataEntity(getCurrentDate = true)
-//        bankAccountDataDaoSecure.insertBankAccountData(entity)
-//    }
-//
-//    override suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData) {
-//        bankAccountDataDaoSecure.updateBankAccountData(
-//            bankAccountScreenData.toBankAccountDataEntity(
-//                getCurrentDate = false
-//            )
-//        )
-//    }
-//
-//    override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
-//        return bankAccountDataDaoSecure.getAllBankAccountData()
-//    }
+
+    override fun getAllBankAccountData(): Flow<List<SearchBankAccountData>> {
+        return bankAccountDataDaoSecure.getAllBankAccountData()
+    }
 //
 //    override suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData {
 //        return bankAccountDataDaoSecure.getBankAccountDataByKey(key).toBankAccountScreenData()

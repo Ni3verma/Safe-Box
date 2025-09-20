@@ -1,34 +1,29 @@
 package com.andryoga.composeapp.data.repository
 
-//import com.andryoga.composeapp.ui.view.home.dataDetails.login.LoginScreenData
-//import com.andryoga.composeapp.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginDataEntity
-//import com.andryoga.composeapp.ui.view.home.dataDetails.login.LoginScreenData.Companion.toLoginScreenData
-//import com.google.firebase.analytics.ktx.analytics
-//import com.google.firebase.ktx.Firebase
+import com.andryoga.composeapp.common.AnalyticsKeys.NEW_LOGIN
+import com.andryoga.composeapp.data.db.docs.SearchLoginData
 import com.andryoga.composeapp.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
-import com.andryoga.composeapp.domain.toDbEntity
+import com.andryoga.composeapp.domain.mappers.record.toDbEntity
 import com.andryoga.composeapp.ui.core.models.LoginData
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class LoginDataRepositoryImpl @Inject constructor(
     private val loginDataDaoSecure: LoginDataDaoSecure
 ) : LoginDataRepository {
     override suspend fun upsertLoginData(loginData: LoginData) {
+        if (loginData.id == null || loginData.id == 0) {
+            Firebase.analytics.logEvent(NEW_LOGIN, null)
+        }
         loginDataDaoSecure.upsertLoginData(loginData.toDbEntity())
     }
-//    override suspend fun insertLoginData(loginScreenData: LoginScreenData) {
-//        Firebase.analytics.logEvent(NEW_LOGIN, null)
-//        loginDataDaoSecure.insertLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = true))
-//    }
-//
-//    override suspend fun updateLoginData(loginScreenData: LoginScreenData) {
-//        loginDataDaoSecure.updateLoginData(loginScreenData.toLoginDataEntity(getCurrentDate = false))
-//    }
-//
-//    override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
-//        return loginDataDaoSecure.getAllLoginData()
-//    }
+
+    override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
+        return loginDataDaoSecure.getAllLoginData()
+    }
 //
 //    override suspend fun getLoginDataByKey(key: Int): LoginScreenData {
 //        return loginDataDaoSecure.getLoginDataByKey(key).toLoginScreenData()
