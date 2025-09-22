@@ -2,7 +2,6 @@
 
 package com.andryoga.composeapp.ui.home.records
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,7 +16,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordType
@@ -25,7 +23,9 @@ import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBar
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
+import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @Composable
 fun RecordsScreenRoot(
@@ -108,29 +108,30 @@ private fun RecordsScreen(
     }
 }
 
-@Preview
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@LightDarkModePreview
 @Composable
 fun RecordsScreenPreview() {
-    RecordsScreen(
-        uiState = RecordsUiState(isLoading = false, records = getRecordList()),
-        onDismissAddNewRecordBottomSheet = {},
-        onAddNewRecord = {}
-    )
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(isLoading = false, records = getRecordList()),
+            onDismissAddNewRecordBottomSheet = {},
+            onAddNewRecord = {}
+        )
+    }
 }
 
-// todo: see why this doesnt work
-@Preview
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@LightDarkModePreview
 @Composable
 fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
-    RecordsScreen(
-        uiState = RecordsUiState(
-            isLoading = false,
-            records = getRecordList(),
-            isShowAddNewRecordsBottomSheet = true
-        ),
-        onDismissAddNewRecordBottomSheet = {},
-        onAddNewRecord = {}
-    )
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(
+                isLoading = false,
+                records = getRecordList(),
+                isShowAddNewRecordsBottomSheet = true
+            ),
+            onDismissAddNewRecordBottomSheet = {},
+            onAddNewRecord = {}
+        )
+    }
 }

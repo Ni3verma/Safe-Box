@@ -22,16 +22,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.PulseButton
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
+import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,50 +116,58 @@ fun SingleRecordScreen(
     }
 }
 
-@Preview
+@LightDarkModePreview
 @Composable
 private fun SingleRecordScreenLoginPreview() {
-    SingleRecordScreen(
-        SingleRecordScreenUiState(
-            isLoading = false,
-            layoutPlan = getLoginLayoutPlan()
-        ),
-        {}
-    )
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getLoginLayoutPlan()
+            ),
+            {}
+        )
+    }
 }
 
-@Preview
+@LightDarkModePreview
 @Composable
 private fun SingleRecordScreenBankAccountPreview() {
-    SingleRecordScreen(
-        SingleRecordScreenUiState(
-            isLoading = false,
-            layoutPlan = getBankAccountLayoutPlan()
-        ),
-        {}
-    )
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getBankAccountLayoutPlan()
+            ),
+            {}
+        )
+    }
 }
 
-@Preview
+@LightDarkModePreview
 @Composable
 private fun SingleRecordScreenCardPreview() {
-    SingleRecordScreen(
-        SingleRecordScreenUiState(
-            isLoading = false,
-            layoutPlan = getCardLayoutPlan()
-        ),
-        {}
-    )
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getCardLayoutPlan()
+            ),
+            {}
+        )
+    }
 }
 
-@Preview
+@LightDarkModePreview
 @Composable
 private fun SingleRecordScreenNotePreview() {
-    SingleRecordScreen(
-        SingleRecordScreenUiState(
-            isLoading = false,
-            layoutPlan = getNoteLayoutPlan()
-        ),
-        {}
-    )
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getNoteLayoutPlan()
+            ),
+            {}
+        )
+    }
 }

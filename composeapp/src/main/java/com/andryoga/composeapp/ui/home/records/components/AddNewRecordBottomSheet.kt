@@ -1,7 +1,5 @@
 package com.andryoga.composeapp.ui.home.records.components
 
-import android.content.res.Configuration
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -17,16 +15,17 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
+import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +33,9 @@ fun AddNewRecordBottomSheet(
     onDismiss: () -> Unit,
     onAddNewRecord: (RecordType) -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    val sheetState = rememberStandardBottomSheetState(
+        skipHiddenState = false
+    )
 
     ModalBottomSheet(
         onDismissRequest = { onDismiss() },
@@ -92,18 +93,21 @@ private fun AddRecordItem(text: String, icon: ImageVector, onClick: () -> Unit) 
     )
 }
 
-// todo: see why this doesnt work
-@Preview(uiMode = UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@LightDarkModePreview
 @Composable
 private fun AddNewRecordBottomSheetPreview() {
-    AddNewRecordBottomSheet(
-        onDismiss = {},
-        onAddNewRecord = {}
-    )
+    SafeBoxTheme {
+        AddNewRecordBottomSheet(
+            onDismiss = {},
+            onAddNewRecord = {}
+        )
+    }
 }
 
-@Preview
+@LightDarkModePreview
 @Composable
 private fun AddRecordItemPreview() {
-    AddRecordItem(text = "Login", icon = Icons.Filled.VpnKey, onClick = {})
+    SafeBoxTheme {
+        AddRecordItem(text = "Login", icon = Icons.Filled.VpnKey, onClick = {})
+    }
 }

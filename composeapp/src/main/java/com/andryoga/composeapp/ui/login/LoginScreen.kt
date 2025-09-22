@@ -1,6 +1,5 @@
 package com.andryoga.composeapp.ui.login
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,12 +36,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 
@@ -188,8 +187,7 @@ private fun LoginCardContent(
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightDarkModePreview
 @Composable
 private fun LoginPreview() {
     SafeBoxTheme {
@@ -200,8 +198,7 @@ private fun LoginPreview() {
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@LightDarkModePreview
 @Composable
 private fun LoginPreviewWrongPassword() {
     SafeBoxTheme {
