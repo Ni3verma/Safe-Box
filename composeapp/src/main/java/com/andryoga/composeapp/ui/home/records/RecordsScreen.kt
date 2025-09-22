@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.andryoga.composeapp.ui.home.records
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -7,15 +9,19 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBar
@@ -24,31 +30,38 @@ import com.andryoga.composeapp.ui.previewHelper.getRecordList
 @Composable
 fun RecordsScreenRoot(
     setTopBar: ((@Composable () -> Unit)?) -> Unit,
-    showAddNewRecordBottomSheet: Boolean,
-    onDismissAddNewRecordBottomSheet: () -> Unit,
     onAddNewRecord: (RecordType) -> Unit,
+    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
-    LaunchedEffect(showAddNewRecordBottomSheet) {
-        viewModel.updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet)
-    }
 
     LaunchedEffect(searchText) {
         setTopBar {
             RecordsSearchBar(
                 query = searchText,
                 onSearchTextUpdate = { viewModel.onSearchTextUpdate(it) },
-                onClearSearchText = { viewModel.onClearSearchText() }
+                onClearSearchText = { viewModel.onClearSearchText() },
+                onAddNewRecordButtonTap = {
+                    viewModel.updateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = true
+                    )
+                },
+                topAppBarScrollBehavior
             )
         }
     }
 
     RecordsScreen(
         uiState = uiState,
-        onDismissAddNewRecordBottomSheet = onDismissAddNewRecordBottomSheet,
-        onAddNewRecord = onAddNewRecord
+        onDismissAddNewRecordBottomSheet = {
+            viewModel.updateShowAddNewRecordBottomSheet(
+                showAddNewRecordBottomSheet = false
+            )
+        },
+        onAddNewRecord = onAddNewRecord,
+        topAppBarScrollBehavior = topAppBarScrollBehavior
     )
 }
 
@@ -57,6 +70,7 @@ private fun RecordsScreen(
     uiState: RecordsUiState,
     onDismissAddNewRecordBottomSheet: () -> Unit,
     onAddNewRecord: (RecordType) -> Unit,
+    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -64,7 +78,12 @@ private fun RecordsScreen(
         if (uiState.isLoading.not() && uiState.records.isNullOrEmpty().not()) {
             val records = uiState.records
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .ifNotNull(
+                        value = topAppBarScrollBehavior,
+                        ifTrue = { Modifier.nestedScroll(it.nestedScrollConnection) }
+                    ),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {

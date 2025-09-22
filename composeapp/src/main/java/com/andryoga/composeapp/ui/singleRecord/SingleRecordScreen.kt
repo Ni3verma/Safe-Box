@@ -48,7 +48,6 @@ fun SingleRecordScreenRoot(
                 title = { Text("Add new record") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        setTopBar(null)
                         onScreenClose()
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

@@ -6,14 +6,15 @@ import kotlin.random.Random
 
 fun getRecordList(): List<RecordListItem> {
     val records = mutableListOf<RecordListItem>()
-    repeat(30) {
+    // i is chosen in this range so that id doesn't conflict with existing records if this is ever used for fake data while debugging issues
+    for (i in 1000..1100) {
         val randomTypeIndex = Random.nextInt(0, 4)
         val isSubtitlePresent = Random.nextBoolean()
         records.add(
             RecordListItem(
-                id = it,
-                title = "$it - title",
-                subTitle = if (isSubtitlePresent) "$it - subtitle" else null,
+                id = i,
+                title = "$i - title",
+                subTitle = if (isSubtitlePresent) "$i - subtitle" else null,
                 recordType = RecordType.entries[randomTypeIndex]
             )
         )
