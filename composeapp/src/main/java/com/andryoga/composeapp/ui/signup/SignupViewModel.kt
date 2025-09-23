@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -141,7 +142,11 @@ class SignupViewModel @Inject constructor(
             encryptedPreferenceProvider.upsertBooleanPref(IS_SIGN_UP_REQUIRED, false)
             Timber.i("Added pswrd in db")
 
-            // todo: navigate to home screen
+            _uiState.update {
+                it.copy(
+                    navigateToHome = true
+                )
+            }
         }
     }
 

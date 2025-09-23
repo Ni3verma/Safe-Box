@@ -7,7 +7,6 @@ import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toRecordListItem
-import com.andryoga.composeapp.ui.previewHelper.getRecordList
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,8 +45,7 @@ class RecordsViewModel @Inject constructor(
                 val combinedList = bankAccountData.map { it.toRecordListItem() } +
                         secureNoteData.map { it.toRecordListItem() } +
                         loginData.map { it.toRecordListItem() } +
-                        cardData.map { it.toRecordListItem() } +
-                        getRecordList()
+                        cardData.map { it.toRecordListItem() }
                 combinedList.sortedBy { it.title.lowercase() }
             }.flowOn(Dispatchers.Default)
 

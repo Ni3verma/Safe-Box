@@ -9,6 +9,12 @@ plugins {
     alias(libs.plugins.crashlytics)
 }
 
+ksp {
+    arg "room.schemaLocation", "${projectDir}/schemas"
+    arg "room.incremental", "true"
+    arg "room.expandProjection", "true"
+}
+
 android {
     namespace 'com.andryoga.composeapp'
     compileSdk = 36
@@ -17,8 +23,9 @@ android {
         applicationId "com.andryoga.composeapp"
         minSdk 23
         targetSdk 36
-        versionCode 1
-        versionName "1.0"
+        versionCode 10
+        // majorVersion.minorVersion.dbVersion.fixVersion
+        versionName "1.7.4.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,6 +36,59 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    signingConfigs {
+        release {
+            // Load releaseKeyStore.properties in an object
+            // if you want to make release build in your local then make a releaseKeyStore.properties file with below keys at root level
+            // also store your release key store (*.jks) file and mention path in STORE_FILE property
+            // both these files are meant to be stored only locally and not committed to VCS
+            def localReleaseKeyStoreProperties = new Properties()
+            localReleaseKeyStoreProperties.load(new FileInputStream(rootProject.file("releaseKeyStore.properties")))
+            storeFile file(localReleaseKeyStoreProperties['STORE_FILE'])
+            storePassword localReleaseKeyStoreProperties['STORE_PASSWORD']
+            keyPassword localReleaseKeyStoreProperties['KEY_PASSWORD']
+            keyAlias localReleaseKeyStoreProperties['KEY_ALIAS']
+        }
+        qa {
+            def nonProdKeyStoreProperties = new Properties()
+            nonProdKeyStoreProperties.load(new FileInputStream(rootProject.file("nonProdReleaseKeyStore.properties")))
+            storeFile file(nonProdKeyStoreProperties['STORE_FILE'])
+            storePassword nonProdKeyStoreProperties['STORE_PASSWORD']
+            keyPassword nonProdKeyStoreProperties['KEY_PASSWORD']
+            keyAlias nonProdKeyStoreProperties['KEY_ALIAS']
+        }
+    }
+
+    android.applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            // if you are changing apk name then also change name in git workflow file
+            outputFileName = "SafeBox-${variant.name}.apk"
+        }
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+            firebaseCrashlytics {
+                mappingFileUploadEnabled true
+            }
+        }
+        qa {
+            initWith(buildTypes["release"])
+            applicationIdSuffix ".qa"
+            signingConfig signingConfigs.qa
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11

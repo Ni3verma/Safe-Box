@@ -43,14 +43,17 @@ import com.andryoga.composeapp.ui.signup.components.PasswordTextField
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @Composable
-fun SignupScreenRoot(modifier: Modifier = Modifier) {
+fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
     val viewModel = hiltViewModel<SignupViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.navigateToHome) {
+        onSignupSuccess()
+    }
 
     SignupScreen(
         uiState = uiState,
         screenAction = viewModel::onAction,
-        modifier = modifier
     )
 }
 
@@ -58,7 +61,6 @@ fun SignupScreenRoot(modifier: Modifier = Modifier) {
 private fun SignupScreen(
     uiState: SignupUiState,
     screenAction: (SignupScreenAction) -> Unit,
-    modifier: Modifier = Modifier
 ) {
     Box(
         modifier = Modifier

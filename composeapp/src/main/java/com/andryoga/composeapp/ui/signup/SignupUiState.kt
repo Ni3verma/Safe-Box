@@ -8,4 +8,5 @@ data class SignupUiState(
     val hint: String = "",
 
     val isSignupButtonEnabled: Boolean = false,
+    val navigateToHome: Boolean = false
 )

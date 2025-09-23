@@ -1,6 +1,7 @@
 package com.andryoga.composeapp.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,7 +23,8 @@ fun AppNavigation(
     val navController = rememberNavController()
     val startDestination = when (startDestinationState) {
         StartDestination.Loading -> LoadingRoute
-        // todo: should be changed to LoginRoute
+//        StartDestination.Login -> LoginRoute
+        // todo: remove below line
         StartDestination.Login -> HomeRoute
         StartDestination.Signup -> SignupRoute
     }
@@ -43,7 +45,11 @@ fun AppNavigation(
         }
 
         composable<SignupRoute> {
-            SignupScreenRoot()
+            SignupScreenRoot(
+                onSignupSuccess = {
+                    navigateToHome(navController)
+                }
+            )
         }
 
         composable<HomeRoute> { HomeScreen() }
@@ -52,8 +58,9 @@ fun AppNavigation(
 
 private fun navigateToHome(navController: NavHostController) {
     navController.navigate(HomeRoute) {
-        popUpTo(LoginRoute) {
+        popUpTo(navController.graph.findStartDestination().id) {
             inclusive = true
         }
+        launchSingleTop = true
     }
 }
