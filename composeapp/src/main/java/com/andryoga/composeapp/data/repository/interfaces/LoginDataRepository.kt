@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.data.repository.interfaces
 
 import com.andryoga.composeapp.data.db.docs.SearchLoginData
-import com.andryoga.composeapp.ui.core.models.LoginData
+import com.andryoga.composeapp.domain.models.record.LoginData
 import kotlinx.coroutines.flow.Flow
 
 

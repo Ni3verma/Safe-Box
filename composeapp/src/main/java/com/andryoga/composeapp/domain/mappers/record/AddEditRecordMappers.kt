@@ -4,10 +4,10 @@ import com.andryoga.composeapp.data.db.entity.BankAccountDataEntity
 import com.andryoga.composeapp.data.db.entity.BankCardDataEntity
 import com.andryoga.composeapp.data.db.entity.LoginDataEntity
 import com.andryoga.composeapp.data.db.entity.SecureNoteDataEntity
-import com.andryoga.composeapp.ui.core.models.BankAccountData
-import com.andryoga.composeapp.ui.core.models.CardData
-import com.andryoga.composeapp.ui.core.models.LoginData
-import com.andryoga.composeapp.ui.core.models.NoteData
+import com.andryoga.composeapp.domain.models.record.BankAccountData
+import com.andryoga.composeapp.domain.models.record.CardData
+import com.andryoga.composeapp.domain.models.record.LoginData
+import com.andryoga.composeapp.domain.models.record.NoteData
 import java.util.Date
 
 fun NoteData.toDbEntity(): SecureNoteDataEntity {

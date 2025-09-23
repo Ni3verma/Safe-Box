@@ -5,7 +5,7 @@ import com.andryoga.composeapp.data.db.docs.SearchBankCardData
 import com.andryoga.composeapp.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toDbEntity
-import com.andryoga.composeapp.ui.core.models.CardData
+import com.andryoga.composeapp.domain.models.record.CardData
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
 import kotlinx.coroutines.flow.Flow

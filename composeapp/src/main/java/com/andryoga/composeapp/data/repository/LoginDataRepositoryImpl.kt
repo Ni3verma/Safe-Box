@@ -5,7 +5,7 @@ import com.andryoga.composeapp.data.db.docs.SearchLoginData
 import com.andryoga.composeapp.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toDbEntity
-import com.andryoga.composeapp.ui.core.models.LoginData
+import com.andryoga.composeapp.domain.models.record.LoginData
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
 import kotlinx.coroutines.flow.Flow

@@ -2,7 +2,7 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
-import com.andryoga.composeapp.ui.core.models.LoginData
+import com.andryoga.composeapp.domain.models.record.LoginData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState

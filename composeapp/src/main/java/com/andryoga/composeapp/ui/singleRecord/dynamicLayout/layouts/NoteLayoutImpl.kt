@@ -2,7 +2,7 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
-import com.andryoga.composeapp.ui.core.models.NoteData
+import com.andryoga.composeapp.domain.models.record.NoteData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState

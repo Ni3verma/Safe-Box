@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.data.repository.interfaces
 
 import com.andryoga.composeapp.data.db.docs.SearchBankCardData
-import com.andryoga.composeapp.ui.core.models.CardData
+import com.andryoga.composeapp.domain.models.record.CardData
 import kotlinx.coroutines.flow.Flow
 
 interface BankCardDataRepository {

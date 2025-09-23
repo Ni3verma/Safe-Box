@@ -1,4 +1,4 @@
-package com.andryoga.composeapp.ui.core.models
+package com.andryoga.composeapp.domain.models.record
 
 import java.util.Date
 

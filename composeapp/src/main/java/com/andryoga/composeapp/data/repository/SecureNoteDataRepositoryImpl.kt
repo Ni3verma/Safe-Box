@@ -5,7 +5,7 @@ import com.andryoga.composeapp.data.db.docs.SearchSecureNoteData
 import com.andryoga.composeapp.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toDbEntity
-import com.andryoga.composeapp.ui.core.models.NoteData
+import com.andryoga.composeapp.domain.models.record.NoteData
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
 import kotlinx.coroutines.flow.Flow

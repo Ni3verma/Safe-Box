@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.data.repository.interfaces
 
 import com.andryoga.composeapp.data.db.docs.SearchSecureNoteData
-import com.andryoga.composeapp.ui.core.models.NoteData
+import com.andryoga.composeapp.domain.models.record.NoteData
 import kotlinx.coroutines.flow.Flow
 
 interface SecureNoteDataRepository {
