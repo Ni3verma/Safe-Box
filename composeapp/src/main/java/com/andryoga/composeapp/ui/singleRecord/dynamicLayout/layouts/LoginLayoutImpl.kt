@@ -15,7 +15,7 @@ class LoginLayoutImpl @Inject constructor(
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
-    override fun getLayoutPlan(): LayoutPlan {
+    override suspend fun getLayoutPlan(): LayoutPlan {
         return layoutPlan ?: getLayoutPlanInternal()
     }
 

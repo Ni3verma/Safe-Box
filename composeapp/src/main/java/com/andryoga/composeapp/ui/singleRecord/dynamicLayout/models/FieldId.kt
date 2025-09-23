@@ -34,4 +34,10 @@ enum class FieldId {
     // NOTE field ids
     NOTE_TITLE,
     NOTE_NOTES,
+
+    // common field ids
+    CREATION_DATE,
+    UPDATE_DATE
+
+    // todo: title and notes can also be common field ids ideally. see if possible
 }

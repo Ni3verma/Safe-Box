@@ -2,6 +2,7 @@ package com.andryoga.composeapp.ui.home.records.components
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -39,7 +40,7 @@ import com.andryoga.composeapp.ui.previewHelper.getLoginRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getNoteRecordItem
 
 @Composable
-fun RecordItem(item: RecordListItem) {
+fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: RecordType) -> Unit) {
     val icon: ImageVector = when (item.recordType) {
         RecordType.LOGIN -> Icons.AutoMirrored.Filled.Login
         RecordType.CARD -> Icons.Filled.CreditCard
@@ -55,7 +56,12 @@ fun RecordItem(item: RecordListItem) {
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClickLabel = "View details for ${item.title}",
+                onClick = { onRecordClick(item.id, item.recordType) }
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -118,25 +124,25 @@ fun RecordItem(item: RecordListItem) {
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
 private fun LoginRecordItemPreview() {
-    RecordItem(item = getLoginRecordItem())
+    RecordItem(item = getLoginRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview
 @Composable
 private fun BankAccountRecordItemPreview() {
-    RecordItem(item = getBankAccountRecordItem())
+    RecordItem(item = getBankAccountRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview
 @Composable
 private fun CardRecordItemPreview() {
-    RecordItem(item = getCardRecordItem())
+    RecordItem(item = getCardRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview
 @Composable
 private fun NoteRecordItemPreview() {
-    RecordItem(item = getNoteRecordItem())
+    RecordItem(item = getNoteRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview
@@ -148,6 +154,6 @@ private fun LongRecordItemPreview() {
             "long titletitletitletitletitletitle titletitletitletitle",
             "long subtitle subtitle subtitle subtitle  subtitle",
             RecordType.LOGIN
-        )
+        ), onRecordClick = { _, _ -> }
     )
 }

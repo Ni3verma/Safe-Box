@@ -7,4 +7,5 @@ data class NoteData(
     val title: String,
     val notes: String,
     val creationDate: Date,
+    val updateDate: Date
 )

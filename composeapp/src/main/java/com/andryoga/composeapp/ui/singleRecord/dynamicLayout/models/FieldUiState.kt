@@ -18,6 +18,9 @@ data class FieldUiState(
         val isPasswordField: Boolean = false,
         val singleLine: Boolean = true,
         val minLines: Int = 1,
-        val keyboardType: KeyboardType = KeyboardType.Unspecified
+        val keyboardType: KeyboardType = KeyboardType.Unspecified,
+
+        // If set to true, this cell will be visible only in view mode. e.g creation date
+        val isVisibleOnlyInViewMode: Boolean = false
     )
 }

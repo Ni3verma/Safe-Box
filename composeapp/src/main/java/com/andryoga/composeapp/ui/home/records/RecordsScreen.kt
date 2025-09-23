@@ -17,7 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
@@ -31,6 +31,7 @@ import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 fun RecordsScreenRoot(
     setTopBar: ((@Composable () -> Unit)?) -> Unit,
     onAddNewRecord: (RecordType) -> Unit,
+    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
     topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
@@ -61,6 +62,7 @@ fun RecordsScreenRoot(
             )
         },
         onAddNewRecord = onAddNewRecord,
+        onRecordClick = onRecordClick,
         topAppBarScrollBehavior = topAppBarScrollBehavior
     )
 }
@@ -70,6 +72,7 @@ private fun RecordsScreen(
     uiState: RecordsUiState,
     onDismissAddNewRecordBottomSheet: () -> Unit,
     onAddNewRecord: (RecordType) -> Unit,
+    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
     topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     Box(
@@ -91,7 +94,7 @@ private fun RecordsScreen(
                     items = records,
                     key = { it.key }
                 ) { record ->
-                    RecordItem(item = record)
+                    RecordItem(item = record, onRecordClick = onRecordClick)
                 }
             }
         }
@@ -115,7 +118,8 @@ fun RecordsScreenPreview() {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false, records = getRecordList()),
             onDismissAddNewRecordBottomSheet = {},
-            onAddNewRecord = {}
+            onAddNewRecord = {},
+            onRecordClick = { _, _ -> }
         )
     }
 }
@@ -131,7 +135,8 @@ fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
                 isShowAddNewRecordsBottomSheet = true
             ),
             onDismissAddNewRecordBottomSheet = {},
-            onAddNewRecord = {}
+            onAddNewRecord = {},
+            onRecordClick = { _, _ -> }
         )
     }
 }

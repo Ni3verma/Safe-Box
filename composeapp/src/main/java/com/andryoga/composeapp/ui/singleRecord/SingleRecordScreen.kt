@@ -23,7 +23,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.PulseButton
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
@@ -32,6 +32,7 @@ import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,12 +103,27 @@ fun SingleRecordScreen(
                         .fillMaxWidth()
                 ) {
                     fields.forEachIndexed { columnIndex, field ->
-                        Box(Modifier.weight(field.weight)) {
-                            RowField(
-                                fieldId = field.fieldId,
-                                uiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!,
-                                screenAction = screenAction
-                            )
+                        val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
+                        val isVisibleOnlyInViewMode = fieldUiState.cell.isVisibleOnlyInViewMode
+
+                        /**
+                         * two conditions to show the field:
+                         * 1. field is not visible "only" in view mode. e.g. title field.
+                         * i.e we can edit it and it was entered by user while saving
+                         *
+                         * 2. we have opened the screen in view mode. i.e. user clicked on a saved record.
+                         * in this case all of the fields should be visible including fields such as creation date
+                         * */
+
+                        if (!isVisibleOnlyInViewMode || uiState.viewMode == ViewMode.VIEW) {
+                            Box(Modifier.weight(field.weight)) {
+                                RowField(
+                                    fieldId = field.fieldId,
+                                    uiState = fieldUiState,
+                                    viewMode = uiState.viewMode,
+                                    screenAction = screenAction
+                                )
+                            }
                         }
                     }
                 }
@@ -166,6 +182,21 @@ private fun SingleRecordScreenNotePreview() {
             SingleRecordScreenUiState(
                 isLoading = false,
                 layoutPlan = getNoteLayoutPlan()
+            ),
+            {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenNoteReadOnlyPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getNoteLayoutPlan(withData = true),
+                viewMode = ViewMode.VIEW
             ),
             {}
         )

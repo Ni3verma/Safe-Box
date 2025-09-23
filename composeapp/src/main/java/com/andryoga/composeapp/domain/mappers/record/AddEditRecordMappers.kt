@@ -16,7 +16,17 @@ fun NoteData.toDbEntity(): SecureNoteDataEntity {
         title = title,
         notes = notes,
         creationDate = creationDate,
-        updateDate = Date()
+        updateDate = updateDate
+    )
+}
+
+fun SecureNoteDataEntity.toNoteData(): NoteData {
+    return NoteData(
+        id = key,
+        title = title,
+        notes = notes,
+        creationDate = creationDate,
+        updateDate = updateDate
     )
 }
 

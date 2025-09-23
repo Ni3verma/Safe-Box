@@ -7,10 +7,8 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
 
 interface Layout {
 
-    fun getLayoutPlan(): LayoutPlan
-
+    suspend fun getLayoutPlan(): LayoutPlan
     suspend fun saveLayout(data: Map<FieldId, String>)
-
     /**
      * Validate that all the mandatory fields are filled in the layout
      *

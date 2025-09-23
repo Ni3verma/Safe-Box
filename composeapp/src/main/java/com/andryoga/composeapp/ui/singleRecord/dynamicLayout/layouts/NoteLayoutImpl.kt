@@ -11,12 +11,15 @@ import java.util.Date
 import javax.inject.Inject
 
 class NoteLayoutImpl @Inject constructor(
+    private val recordId: Int?,
     private val secureNoteDataRepositoryImpl: SecureNoteDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
-    override fun getLayoutPlan(): LayoutPlan {
-        return layoutPlan ?: getLayoutPlanInternal()
+    override suspend fun getLayoutPlan(): LayoutPlan {
+        val recordData =
+            recordId?.let { secureNoteDataRepositoryImpl.getSecureNoteDataByKey(recordId) }
+        return layoutPlan ?: getLayoutPlanInternal(recordData)
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
@@ -26,29 +29,44 @@ class NoteLayoutImpl @Inject constructor(
                 title = data[FieldId.NOTE_TITLE] ?: "",
                 notes = data[FieldId.NOTE_NOTES] ?: "",
                 creationDate = Date(),
+                updateDate = Date()
             )
         )
     }
 
-    private fun getLayoutPlanInternal(): LayoutPlan {
+    private fun getLayoutPlanInternal(recordData: NoteData?): LayoutPlan {
         val plan = LayoutPlan(
             id = LayoutId.NOTE,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.NOTE_TITLE)),
-                listOf(
-                    LayoutPlan.Field(fieldId = FieldId.NOTE_NOTES)
-                )
+                listOf(LayoutPlan.Field(fieldId = FieldId.NOTE_NOTES)),
+                listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
+                listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE))
             ),
             fieldUiState = mapOf(
                 FieldId.NOTE_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.title, isMandatory = true
-                    )
+                    ),
+                    data = recordData?.title.orEmpty()
                 ),
                 FieldId.NOTE_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.notes, singleLine = true, minLines = 5
-                    )
+                        label = R.string.notes, isMandatory = true, singleLine = true, minLines = 5
+                    ),
+                    data = recordData?.notes.orEmpty()
+                ),
+                FieldId.CREATION_DATE to FieldUiState(
+                    cell = FieldUiState.Cell(
+                        label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    ),
+                    data = recordData?.creationDate?.toString().orEmpty()
+                ),
+                FieldId.UPDATE_DATE to FieldUiState(
+                    cell = FieldUiState.Cell(
+                        label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    ),
+                    data = recordData?.updateDate?.toString().orEmpty()
                 )
             )
         )

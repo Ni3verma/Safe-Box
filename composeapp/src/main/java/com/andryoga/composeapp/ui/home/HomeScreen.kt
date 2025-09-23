@@ -57,6 +57,14 @@ fun HomeScreen() {
                     onAddNewRecord = { recordType ->
                         nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
                     },
+                    onRecordClick = { id, recordType ->
+                        nestedNavController.navigate(
+                            route = SingleRecordScreenRoute(
+                                recordType,
+                                id
+                            )
+                        )
+                    },
                     topAppBarScrollBehavior = enterAlwaysScrollBehavior
                 )
             }

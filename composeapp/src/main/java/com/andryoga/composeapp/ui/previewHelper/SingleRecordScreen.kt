@@ -159,25 +159,39 @@ fun getCardLayoutPlan(): LayoutPlan {
     )
 }
 
-fun getNoteLayoutPlan(): LayoutPlan {
+fun getNoteLayoutPlan(withData: Boolean = false): LayoutPlan {
     return LayoutPlan(
         id = LayoutId.NOTE,
         arrangement = listOf(
             listOf(LayoutPlan.Field(fieldId = FieldId.NOTE_TITLE)),
-            listOf(
-                LayoutPlan.Field(fieldId = FieldId.NOTE_NOTES)
-            )
+            listOf(LayoutPlan.Field(fieldId = FieldId.NOTE_NOTES)),
+            listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
+            listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE))
         ),
         fieldUiState = mapOf(
             FieldId.NOTE_TITLE to FieldUiState(
                 cell = FieldUiState.Cell(
                     label = R.string.title, isMandatory = true
-                )
+                ),
+                data = if (withData) "Android learning" else ""
             ),
             FieldId.NOTE_NOTES to FieldUiState(
                 cell = FieldUiState.Cell(
                     label = R.string.notes, singleLine = false, minLines = 5
-                )
+                ),
+                data = if (withData) "Keep on learning compose !!" else ""
+            ),
+            FieldId.CREATION_DATE to FieldUiState(
+                cell = FieldUiState.Cell(
+                    label = R.string.created_on, isVisibleOnlyInViewMode = true
+                ),
+                data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
+            ),
+            FieldId.UPDATE_DATE to FieldUiState(
+                cell = FieldUiState.Cell(
+                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                ),
+                data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
             )
         )
     )

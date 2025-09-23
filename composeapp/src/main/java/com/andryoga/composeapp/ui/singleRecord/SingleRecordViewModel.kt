@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,13 +29,16 @@ class SingleRecordViewModel @Inject constructor(
 
     init {
         val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
-        layout = layoutFactory.getLayout(args.recordType)
+        layout = layoutFactory.getLayout(args.id, args.recordType)
 
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                layoutPlan = layout.getLayoutPlan()
-            )
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    layoutPlan = layout.getLayoutPlan(),
+                    viewMode = if (args.id != null) ViewMode.VIEW else ViewMode.NEW
+                )
+            }
         }
     }
 
