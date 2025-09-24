@@ -15,4 +15,5 @@ data class BankAccountData(
     val micrCode: String?,
     val notes: String?,
     val creationDate: Date,
+    val updateDate: Date
 )

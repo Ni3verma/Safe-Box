@@ -32,9 +32,12 @@ class LayoutFactory @Inject constructor(
      * */
     fun getLayout(recordId: Int?, recordType: RecordType): Layout {
         return when (recordType) {
-            RecordType.LOGIN -> LoginLayoutImpl(loginDataRepository.get())
-            RecordType.CARD -> BankCardLayoutImpl(bankCardDataRepository.get())
-            RecordType.BANK_ACCOUNT -> BankAccountLayoutImpl(bankAccountDataRepository.get())
+            RecordType.LOGIN -> LoginLayoutImpl(recordId, loginDataRepository.get())
+            RecordType.CARD -> BankCardLayoutImpl(recordId, bankCardDataRepository.get())
+            RecordType.BANK_ACCOUNT -> BankAccountLayoutImpl(
+                recordId,
+                bankAccountDataRepository.get()
+            )
             RecordType.NOTE -> NoteLayoutImpl(recordId, noteDataRepository.get())
         }
     }

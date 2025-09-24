@@ -8,15 +8,17 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import java.util.Date
-import javax.inject.Inject
 
-class LoginLayoutImpl @Inject constructor(
+class LoginLayoutImpl(
+    private val recordId: Int?,
     private val loginDataRepository: LoginDataRepository
 ) : Layout {
     private var layoutPlan: LayoutPlan? = null
 
     override suspend fun getLayoutPlan(): LayoutPlan {
-        return layoutPlan ?: getLayoutPlanInternal()
+        val recordData =
+            recordId?.let { loginDataRepository.getLoginDataByKey(recordId) }
+        return layoutPlan ?: getLayoutPlanInternal(recordData)
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
@@ -28,12 +30,13 @@ class LoginLayoutImpl @Inject constructor(
                 userId = data[FieldId.LOGIN_USER_ID] ?: "",
                 password = data[FieldId.LOGIN_PASSWORD],
                 notes = data[FieldId.LOGIN_NOTES],
-                creationDate = Date()
+                creationDate = Date(),
+                updateDate = Date(),
             )
         )
     }
 
-    private fun getLayoutPlanInternal(): LayoutPlan {
+    private fun getLayoutPlanInternal(recordData: LoginData?): LayoutPlan {
         val plan = LayoutPlan(
             id = LayoutId.LOGIN,
             arrangement = listOf(
@@ -41,30 +44,51 @@ class LoginLayoutImpl @Inject constructor(
                 listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_URL)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_USER_ID)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_PASSWORD)),
-                listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_NOTES))
+                listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_NOTES)),
+                listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
+                listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE)),
             ),
             fieldUiState = mapOf(
                 FieldId.LOGIN_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.title, isMandatory = true
-                    )
+                    ),
+                    data = recordData?.title.orEmpty()
                 ),
-                FieldId.LOGIN_URL to FieldUiState(cell = FieldUiState.Cell(label = R.string.url)),
+                FieldId.LOGIN_URL to FieldUiState(
+                    cell = FieldUiState.Cell(label = R.string.url),
+                    data = recordData?.url.orEmpty()
+                ),
                 FieldId.LOGIN_USER_ID to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.user_id, isMandatory = true
-                    )
+                    ),
+                    data = recordData?.userId.orEmpty()
                 ),
                 FieldId.LOGIN_PASSWORD to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.password, isPasswordField = true
-                    )
+                    ),
+                    data = recordData?.password.orEmpty()
                 ),
                 FieldId.LOGIN_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.notes, singleLine = false, minLines = 5
-                    )
-                )
+                    ),
+                    data = recordData?.notes.orEmpty()
+                ),
+                FieldId.CREATION_DATE to FieldUiState(
+                    cell = FieldUiState.Cell(
+                        label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    ),
+                    data = recordData?.creationDate?.toString().orEmpty()
+                ),
+                FieldId.UPDATE_DATE to FieldUiState(
+                    cell = FieldUiState.Cell(
+                        label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    ),
+                    data = recordData?.updateDate?.toString().orEmpty()
+                ),
             )
         )
 

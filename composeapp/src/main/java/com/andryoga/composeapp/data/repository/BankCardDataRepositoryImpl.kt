@@ -4,6 +4,7 @@ import com.andryoga.composeapp.common.AnalyticsKeys.NEW_BANK_CARD
 import com.andryoga.composeapp.data.db.docs.SearchBankCardData
 import com.andryoga.composeapp.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.composeapp.domain.mappers.record.toCardData
 import com.andryoga.composeapp.domain.mappers.record.toDbEntity
 import com.andryoga.composeapp.domain.models.record.CardData
 import com.google.firebase.Firebase
@@ -24,15 +25,14 @@ class BankCardDataRepositoryImpl @Inject constructor(
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
         return bankCardDataDaoSecure.getAllBankCardData()
     }
-//
-//    override suspend fun getBankCardDataByKey(key: Int): BankCardScreenData {
-//        return bankCardDataDaoSecure.getBankCardDataByKey(key).toBankCardScreenData()
-//    }
-//
-//    override suspend fun deleteBankCardDataByKey(key: Int) {
-//        bankCardDataDaoSecure.deleteBankCardDataByKey(key)
-//    }
-//
+
+    override suspend fun getBankCardDataByKey(key: Int): CardData {
+        return bankCardDataDaoSecure.getBankCardDataByKey(key).toCardData()
+    }
+
+    override suspend fun deleteBankCardDataByKey(key: Int) {
+        bankCardDataDaoSecure.deleteBankCardDataByKey(key)
+    }
 //    override suspend fun getViewBankCardDataByKey(key: Int): ViewBankCardData {
 //        return bankCardDataDaoSecure.getBankCardDataByKey(key).toViewBankCardData()
 //    }

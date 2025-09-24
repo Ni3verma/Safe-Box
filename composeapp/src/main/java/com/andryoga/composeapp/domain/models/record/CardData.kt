@@ -12,4 +12,5 @@ data class CardData(
     val pin: String?,
     val notes: String?,
     val creationDate: Date,
+    val updateDate: Date
 )

@@ -8,9 +8,8 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import java.util.Date
-import javax.inject.Inject
 
-class NoteLayoutImpl @Inject constructor(
+class NoteLayoutImpl(
     private val recordId: Int?,
     private val secureNoteDataRepositoryImpl: SecureNoteDataRepository
 ) : Layout {
@@ -29,7 +28,7 @@ class NoteLayoutImpl @Inject constructor(
                 title = data[FieldId.NOTE_TITLE] ?: "",
                 notes = data[FieldId.NOTE_NOTES] ?: "",
                 creationDate = Date(),
-                updateDate = Date()
+                updateDate = Date(),
             )
         )
     }
@@ -67,7 +66,7 @@ class NoteLayoutImpl @Inject constructor(
                         label = R.string.updated_on, isVisibleOnlyInViewMode = true
                     ),
                     data = recordData?.updateDate?.toString().orEmpty()
-                )
+                ),
             )
         )
         layoutPlan = plan

@@ -10,4 +10,5 @@ data class LoginData(
     val password: String?,
     val notes: String?,
     val creationDate: Date,
+    val updateDate: Date
 )

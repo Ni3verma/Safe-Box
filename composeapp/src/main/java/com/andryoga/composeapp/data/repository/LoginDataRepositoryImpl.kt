@@ -5,6 +5,7 @@ import com.andryoga.composeapp.data.db.docs.SearchLoginData
 import com.andryoga.composeapp.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toDbEntity
+import com.andryoga.composeapp.domain.mappers.record.toLoginData
 import com.andryoga.composeapp.domain.models.record.LoginData
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
@@ -24,14 +25,14 @@ class LoginDataRepositoryImpl @Inject constructor(
     override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
         return loginDataDaoSecure.getAllLoginData()
     }
-//
-//    override suspend fun getLoginDataByKey(key: Int): LoginScreenData {
-//        return loginDataDaoSecure.getLoginDataByKey(key).toLoginScreenData()
-//    }
-//
-//    override suspend fun deleteLoginDataByKey(key: Int) {
-//        loginDataDaoSecure.deleteLoginDataByKey(key)
-//    }
+
+    override suspend fun getLoginDataByKey(key: Int): LoginData {
+        return loginDataDaoSecure.getLoginDataByKey(key).toLoginData()
+    }
+
+    override suspend fun deleteLoginDataByKey(key: Int) {
+        loginDataDaoSecure.deleteLoginDataByKey(key)
+    }
 //
 //    override suspend fun getViewLoginDataByKey(key: Int): ViewLoginData {
 //        return loginDataDaoSecure.getLoginDataByKey(key).toViewLoginData()

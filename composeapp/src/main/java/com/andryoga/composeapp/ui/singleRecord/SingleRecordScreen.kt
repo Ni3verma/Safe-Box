@@ -202,3 +202,48 @@ private fun SingleRecordScreenNoteReadOnlyPreview() {
         )
     }
 }
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenLoginReadOnlyPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getLoginLayoutPlan(withData = true),
+                viewMode = ViewMode.VIEW
+            ),
+            {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenBankAccountReadOnlyPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getBankAccountLayoutPlan(withData = true),
+                viewMode = ViewMode.VIEW
+            ),
+            {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenCardReadOnlyPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getCardLayoutPlan(withData = true),
+                viewMode = ViewMode.VIEW
+            ),
+            {}
+        )
+    }
+}

@@ -43,6 +43,19 @@ fun LoginData.toDbEntity(): LoginDataEntity {
     )
 }
 
+fun LoginDataEntity.toLoginData(): LoginData {
+    return LoginData(
+        id = key,
+        title = title,
+        url = url,
+        userId = userId,
+        password = password,
+        notes = notes,
+        creationDate = creationDate,
+        updateDate = updateDate
+    )
+}
+
 fun BankAccountData.toDbEntity(): BankAccountDataEntity {
     return BankAccountDataEntity(
         key = id ?: 0,
@@ -61,6 +74,24 @@ fun BankAccountData.toDbEntity(): BankAccountDataEntity {
     )
 }
 
+fun BankAccountDataEntity.toBankAccountData(): BankAccountData {
+    return BankAccountData(
+        id = key,
+        title = title,
+        accountNo = accountNumber,
+        customerName = customerName,
+        customerId = customerId,
+        branchCode = branchCode,
+        branchName = branchName,
+        branchAddress = branchAddress,
+        ifscCode = ifscCode,
+        micrCode = micrCode,
+        notes = notes,
+        creationDate = creationDate,
+        updateDate = updateDate
+    )
+}
+
 fun CardData.toDbEntity(): BankCardDataEntity {
     return BankCardDataEntity(
         key = id ?: 0,
@@ -73,5 +104,20 @@ fun CardData.toDbEntity(): BankCardDataEntity {
         notes = notes,
         creationDate = creationDate,
         updateDate = Date()
+    )
+}
+
+fun BankCardDataEntity.toCardData(): CardData {
+    return CardData(
+        id = key,
+        title = title,
+        name = name,
+        number = number,
+        pin = pin,
+        cvv = cvv,
+        expiryDate = expiryDate,
+        notes = notes,
+        creationDate = creationDate,
+        updateDate = updateDate
     )
 }
