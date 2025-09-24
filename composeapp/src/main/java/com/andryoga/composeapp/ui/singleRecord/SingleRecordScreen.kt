@@ -9,14 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,19 +17,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.composeapp.R
-import com.andryoga.composeapp.ui.core.PulseButton
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.composeapp.ui.singleRecord.components.ActionButtonRow
+import com.andryoga.composeapp.ui.singleRecord.components.TopBar
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleRecordScreenRoot(
     setTopBar: ((@Composable () -> Unit)?) -> Unit,
@@ -45,26 +36,20 @@ fun SingleRecordScreenRoot(
     val viewModel = hiltViewModel<SingleRecordViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(uiState.topAppBarUiState) {
         setTopBar {
-            TopAppBar(
-                title = { Text("Add new record") },
-                navigationIcon = {
-                    IconButton(onClick = {
+            TopBar(
+                uiState = uiState.topAppBarUiState,
+                onBackClick = {
+                    if (uiState.viewMode == ViewMode.EDIT) {
+                        viewModel.goBackToViewMode()
+                    } else {
                         onScreenClose()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                actions = {
-                    PulseButton(
-                        textResId = R.string.save,
-                        enabled = uiState.isSaveEnabled,
-                        onClick = {
-                            viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
-                            onScreenClose()
-                        }
-                    )
+                onSaveClick = {
+                    viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+                    onScreenClose()
                 }
             )
         }

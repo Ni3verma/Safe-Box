@@ -1,13 +1,17 @@
 package com.andryoga.composeapp.ui.singleRecord
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.andryoga.composeapp.R
+import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
     layoutFactory: LayoutFactory
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
@@ -36,7 +41,14 @@ class SingleRecordViewModel @Inject constructor(
                 it.copy(
                     isLoading = false,
                     layoutPlan = layout.getLayoutPlan(),
-                    viewMode = if (args.id != null) ViewMode.VIEW else ViewMode.NEW
+                    viewMode = if (args.id != null) ViewMode.VIEW else ViewMode.NEW,
+                    topAppBarUiState = if (args.id != null) SingleRecordScreenUiState.TopAppBarUiState(
+                        isSaveButtonVisible = false,
+                        title = getTitleForTopAppBar(args.recordType)
+                    ) else SingleRecordScreenUiState.TopAppBarUiState(
+                        isSaveButtonVisible = true,
+                        title = getTitleForTopAppBar(args.recordType)
+                    )
                 )
             }
         }
@@ -57,7 +69,9 @@ class SingleRecordViewModel @Inject constructor(
                         layoutPlan = currentState.layoutPlan.copy(
                             fieldUiState = updatedUiState,
                         ),
-                        isSaveEnabled = layout.checkMandatoryFields(updatedUiState.values)
+                        topAppBarUiState = currentState.topAppBarUiState.copy(
+                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState.values)
+                        )
                     )
                 }
             }
@@ -75,12 +89,34 @@ class SingleRecordViewModel @Inject constructor(
             SingleRecordScreenAction.OnEditClicked -> {
                 _uiState.update {
                     it.copy(
-                        viewMode = ViewMode.EDIT
+                        viewMode = ViewMode.EDIT,
+                        topAppBarUiState = it.topAppBarUiState.copy(
+                            isSaveButtonVisible = true
+                        )
                     )
                 }
             }
 
             SingleRecordScreenAction.OnShareClicked -> TODO()
         }
+    }
+
+    fun goBackToViewMode() {
+        _uiState.update {
+            it.copy(
+                viewMode = ViewMode.VIEW
+            )
+        }
+    }
+
+    private fun getTitleForTopAppBar(recordType: RecordType): String {
+        return context.getString(
+            when (recordType) {
+                RecordType.LOGIN -> R.string.type_display_login
+                RecordType.CARD -> R.string.type_display_card
+                RecordType.BANK_ACCOUNT -> R.string.type_display_account
+                RecordType.NOTE -> R.string.type_display_note
+            }
+        )
     }
 }

@@ -5,10 +5,13 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 
 data class SingleRecordScreenUiState(
     val isLoading: Boolean = true,
-    /**
-     * whether save button on the top app bar is enabled or not
-     * */
-    val isSaveEnabled: Boolean = false,
+    val topAppBarUiState: TopAppBarUiState = TopAppBarUiState(),
     val layoutPlan: LayoutPlan = LayoutPlan(),
     val viewMode: ViewMode = ViewMode.NEW
-)
+) {
+    data class TopAppBarUiState(
+        val title: String = "",
+        val isSaveButtonEnabled: Boolean = false,
+        val isSaveButtonVisible: Boolean = false
+    )
+}

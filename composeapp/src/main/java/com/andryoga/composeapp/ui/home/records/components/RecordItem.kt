@@ -48,12 +48,14 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
         RecordType.NOTE -> Icons.AutoMirrored.Filled.Note
     }
 
-    val recordTypeText: String = when (item.recordType) {
-        RecordType.LOGIN -> stringResource(R.string.login)
-        RecordType.CARD -> stringResource(R.string.card)
-        RecordType.BANK_ACCOUNT -> stringResource(R.string.bank)
-        RecordType.NOTE -> stringResource(R.string.note)
-    }
+    val recordTypeText: String = stringResource(
+        when (item.recordType) {
+            RecordType.LOGIN -> R.string.type_display_login
+            RecordType.CARD -> R.string.type_display_card
+            RecordType.BANK_ACCOUNT -> R.string.type_display_account
+            RecordType.NOTE -> R.string.type_display_note
+        }
+    )
 
     Card(
         modifier = Modifier

@@ -67,10 +67,10 @@ fun AddNewRecordBottomSheet(
 private fun getTitleForRecordType(recordType: RecordType): String {
     return stringResource(
         when (recordType) {
-            RecordType.LOGIN -> R.string.login
-            RecordType.CARD -> R.string.card
-            RecordType.BANK_ACCOUNT -> R.string.bank
-            RecordType.NOTE -> R.string.note
+            RecordType.LOGIN -> R.string.type_display_login
+            RecordType.CARD -> R.string.type_display_card
+            RecordType.BANK_ACCOUNT -> R.string.type_display_account
+            RecordType.NOTE -> R.string.type_display_note
         }
     )
 }

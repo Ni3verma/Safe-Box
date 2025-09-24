@@ -19,6 +19,8 @@
     <string name="cd_add_new_record_button">Add new record button</string>
     <string name="cd_search_bar">Search records by title</string>
     <string name="cd_clear_search_bar">Clear search bar</string>"
+    <string name="cd_back_button">Back button</string>
+
 
     <!--    Screen title-->
     <string name="drawer_group_my_data">My Data</string>
@@ -68,9 +70,10 @@
 
 
     <!--    User data type text-->
-    <string name="bank">Bank Account</string>
-    <string name="card">Card</string>
-    <string name="note">Note</string>
+    <string name="type_display_account">Bank Account</string>
+    <string name="type_display_card">Card</string>
+    <string name="type_display_note">Note</string>
+    <string name="type_display_login">Login</string>
 
     <!--    Bank card dialog-->
     <string name="number">Number </string>

@@ -51,7 +51,7 @@ class NoteLayoutImpl(
                 ),
                 FieldId.NOTE_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.notes, isMandatory = true, singleLine = true, minLines = 5
+                        label = R.string.notes, isMandatory = true, singleLine = false, minLines = 5
                     ),
                     data = recordData?.notes.orEmpty()
                 ),
