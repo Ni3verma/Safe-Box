@@ -9,4 +9,8 @@ sealed interface SingleRecordScreenAction {
     ) : SingleRecordScreenAction
 
     object OnSaveClicked : SingleRecordScreenAction
+
+    object OnEditClicked : SingleRecordScreenAction
+    object OnShareClicked : SingleRecordScreenAction
+    object OnDeleteClicked : SingleRecordScreenAction
 }

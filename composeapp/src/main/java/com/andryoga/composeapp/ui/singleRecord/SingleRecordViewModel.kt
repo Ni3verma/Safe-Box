@@ -70,6 +70,17 @@ class SingleRecordViewModel @Inject constructor(
                     )
                 }
             }
+
+            SingleRecordScreenAction.OnDeleteClicked -> TODO()
+            SingleRecordScreenAction.OnEditClicked -> {
+                _uiState.update {
+                    it.copy(
+                        viewMode = ViewMode.EDIT
+                    )
+                }
+            }
+
+            SingleRecordScreenAction.OnShareClicked -> TODO()
         }
     }
 }

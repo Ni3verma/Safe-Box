@@ -31,6 +31,7 @@ import com.andryoga.composeapp.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
+import com.andryoga.composeapp.ui.singleRecord.components.ActionButtonRow
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
@@ -96,6 +97,12 @@ fun SingleRecordScreen(
                 .fillMaxWidth()
                 .verticalScroll(scrollState)
         ) {
+            if (uiState.viewMode == ViewMode.VIEW) {
+                ActionButtonRow(
+                    screenAction = screenAction
+                )
+            }
+
             uiState.layoutPlan.arrangement.forEachIndexed { rowIndex, fields ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
