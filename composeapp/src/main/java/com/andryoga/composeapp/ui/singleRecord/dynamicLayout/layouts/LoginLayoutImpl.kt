@@ -13,31 +13,31 @@ class LoginLayoutImpl(
     private val recordId: Int?,
     private val loginDataRepository: LoginDataRepository
 ) : Layout {
-    private var layoutPlan: LayoutPlan? = null
+    private var recordData: LoginData? = null
 
     override suspend fun getLayoutPlan(): LayoutPlan {
-        val recordData =
+        recordData =
             recordId?.let { loginDataRepository.getLoginDataByKey(recordId) }
-        return layoutPlan ?: getLayoutPlanInternal(recordData)
+        return getLayoutPlanInternal()
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
         loginDataRepository.upsertLoginData(
             LoginData(
-                id = 0,
+                id = recordId,
                 title = data[FieldId.LOGIN_TITLE] ?: "",
                 url = data[FieldId.LOGIN_URL],
                 userId = data[FieldId.LOGIN_USER_ID] ?: "",
                 password = data[FieldId.LOGIN_PASSWORD],
                 notes = data[FieldId.LOGIN_NOTES],
-                creationDate = Date(),
+                creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             )
         )
     }
 
-    private fun getLayoutPlanInternal(recordData: LoginData?): LayoutPlan {
-        val plan = LayoutPlan(
+    private fun getLayoutPlanInternal(): LayoutPlan {
+        return LayoutPlan(
             id = LayoutId.LOGIN,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.LOGIN_TITLE)),
@@ -91,8 +91,5 @@ class LoginLayoutImpl(
                 ),
             )
         )
-
-        layoutPlan = plan
-        return plan
     }
 }

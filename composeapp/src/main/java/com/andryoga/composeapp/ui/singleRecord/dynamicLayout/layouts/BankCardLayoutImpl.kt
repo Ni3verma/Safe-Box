@@ -14,18 +14,18 @@ class BankCardLayoutImpl(
     private val recordId: Int?,
     private val bankCardDataRepository: BankCardDataRepository
 ) : Layout {
-    private var layoutPlan: LayoutPlan? = null
+    private var recordData: CardData? = null
 
     override suspend fun getLayoutPlan(): LayoutPlan {
-        val recordData =
+        recordData =
             recordId?.let { bankCardDataRepository.getBankCardDataByKey(recordId) }
-        return layoutPlan ?: getLayoutPlanInternal(recordData)
+        return getLayoutPlanInternal()
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
         bankCardDataRepository.upsertBankCardData(
             CardData(
-                id = 0,
+                id = recordId,
                 title = data[FieldId.CARD_TITLE] ?: "",
                 name = data[FieldId.CARD_NAME],
                 number = data[FieldId.CARD_NUMBER] ?: "",
@@ -33,14 +33,14 @@ class BankCardLayoutImpl(
                 cvv = data[FieldId.CARD_CVV],
                 pin = data[FieldId.CARD_PIN],
                 notes = data[FieldId.CARD_NOTES],
-                creationDate = Date(),
+                creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             )
         )
     }
 
-    private fun getLayoutPlanInternal(recordData: CardData?): LayoutPlan {
-        val plan = LayoutPlan(
+    private fun getLayoutPlanInternal(): LayoutPlan {
+        return LayoutPlan(
             id = LayoutId.CARD,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.CARD_TITLE)),
@@ -114,7 +114,5 @@ class BankCardLayoutImpl(
                 ),
             )
         )
-        layoutPlan = plan
-        return plan
     }
 }

@@ -13,28 +13,28 @@ class NoteLayoutImpl(
     private val recordId: Int?,
     private val secureNoteDataRepositoryImpl: SecureNoteDataRepository
 ) : Layout {
-    private var layoutPlan: LayoutPlan? = null
+    private var recordData: NoteData? = null
 
     override suspend fun getLayoutPlan(): LayoutPlan {
-        val recordData =
+        recordData =
             recordId?.let { secureNoteDataRepositoryImpl.getSecureNoteDataByKey(recordId) }
-        return layoutPlan ?: getLayoutPlanInternal(recordData)
+        return getLayoutPlanInternal()
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
         secureNoteDataRepositoryImpl.upsertSecureNoteData(
             NoteData(
-                id = null,
+                id = recordId,
                 title = data[FieldId.NOTE_TITLE] ?: "",
                 notes = data[FieldId.NOTE_NOTES] ?: "",
-                creationDate = Date(),
+                creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             )
         )
     }
 
-    private fun getLayoutPlanInternal(recordData: NoteData?): LayoutPlan {
-        val plan = LayoutPlan(
+    private fun getLayoutPlanInternal(): LayoutPlan {
+        return LayoutPlan(
             id = LayoutId.NOTE,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.NOTE_TITLE)),
@@ -69,7 +69,5 @@ class NoteLayoutImpl(
                 ),
             )
         )
-        layoutPlan = plan
-        return plan
     }
 }

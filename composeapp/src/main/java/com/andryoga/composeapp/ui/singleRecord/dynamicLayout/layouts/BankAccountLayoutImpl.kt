@@ -14,18 +14,18 @@ class BankAccountLayoutImpl(
     private val recordId: Int?,
     private val bankAccountDataRepository: BankAccountDataRepository
 ) : Layout {
-    private var layoutPlan: LayoutPlan? = null
+    private var recordData: BankAccountData? = null
 
     override suspend fun getLayoutPlan(): LayoutPlan {
-        val recordData =
+        recordData =
             recordId?.let { bankAccountDataRepository.getBankAccountDataByKey(recordId) }
-        return layoutPlan ?: getLayoutPlanInternal(recordData)
+        return getLayoutPlanInternal()
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
         bankAccountDataRepository.upsertBankAccountData(
             BankAccountData(
-                id = 0,
+                id = recordId,
                 title = data[FieldId.BANK_ACCOUNT_TITLE] ?: "",
                 accountNo = data[FieldId.BANK_ACCOUNT_ACCOUNT_NUMBER] ?: "",
                 customerName = data[FieldId.BANK_ACCOUNT_CUSTOMER_NAME],
@@ -36,14 +36,14 @@ class BankAccountLayoutImpl(
                 ifscCode = data[FieldId.BANK_ACCOUNT_IFSC_CODE],
                 micrCode = data[FieldId.BANK_ACCOUNT_MICR_CODE],
                 notes = data[FieldId.BANK_ACCOUNT_NOTES],
-                creationDate = Date(),
+                creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             )
         )
     }
 
-    private fun getLayoutPlanInternal(recordData: BankAccountData?): LayoutPlan {
-        val plan = LayoutPlan(
+    private fun getLayoutPlanInternal(): LayoutPlan {
+        return LayoutPlan(
             id = LayoutId.BANK_ACCOUNT,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_TITLE)),
@@ -126,8 +126,6 @@ class BankAccountLayoutImpl(
                 ),
             )
         )
-        layoutPlan = plan
-        return plan
     }
 
 }

@@ -104,7 +104,10 @@ class SingleRecordViewModel @Inject constructor(
     fun goBackToViewMode() {
         _uiState.update {
             it.copy(
-                viewMode = ViewMode.VIEW
+                viewMode = ViewMode.VIEW,
+                topAppBarUiState = it.topAppBarUiState.copy(
+                    isSaveButtonVisible = false
+                )
             )
         }
     }
