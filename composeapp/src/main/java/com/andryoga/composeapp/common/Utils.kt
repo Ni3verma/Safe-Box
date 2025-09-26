@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.common.NotificationOptions
 import timber.log.Timber
@@ -34,7 +35,6 @@ object Utils {
      * returns true if integer is non null and equal to 0, false otherwise
      */
     fun Int?.isZero(): Boolean = (this ?: 0) == 0
-
 
     fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
         return SimpleDateFormat(pattern).format(date)
@@ -95,5 +95,20 @@ object Utils {
             }
         }
         return maxLength
+    }
+
+    /**
+     * Use this in all the scenarios which should not happen.
+     * this method will crash the app in debug builds and give us early signal that something is wrong.
+     * */
+    fun crashInDebugBuild(errorMessage: String) {
+        val message = "Ooooppsss, this should not have happened," +
+                " Note that this is a debug build exclusive crash but this must be addressed !! \n" +
+                " Error: $errorMessage"
+        Timber.e(message)
+
+        if (BuildConfig.DEBUG) {
+            throw Exceptions.DebugFatalException(message)
+        }
     }
 }

@@ -9,6 +9,7 @@ interface Layout {
 
     suspend fun getLayoutPlan(): LayoutPlan
     suspend fun saveLayout(data: Map<FieldId, String>)
+    suspend fun deleteLayout()
     /**
      * Validate that all the mandatory fields are filled in the layout
      *

@@ -2,6 +2,7 @@ package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import androidx.compose.ui.text.input.KeyboardType
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.common.Exceptions
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.domain.models.record.CardData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
@@ -37,6 +38,14 @@ class BankCardLayoutImpl(
                 updateDate = Date(),
             )
         )
+    }
+
+    override suspend fun deleteLayout() {
+        if (recordId != null) {
+            bankCardDataRepository.deleteBankCardDataByKey(recordId)
+        } else {
+            throw Exceptions.DebugFatalException("recordId is null, cannot delete")
+        }
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {

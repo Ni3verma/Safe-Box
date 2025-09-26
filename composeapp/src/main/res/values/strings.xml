@@ -54,6 +54,7 @@
     <string name="common_data">Data</string>
     <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
     <string name="common_ok">OK</string>
     <string name="close">Close</string>
     <string name="error">Error!</string>

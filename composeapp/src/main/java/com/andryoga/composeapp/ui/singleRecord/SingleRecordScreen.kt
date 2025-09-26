@@ -40,18 +40,17 @@ fun SingleRecordScreenRoot(
         setTopBar {
             TopBar(
                 uiState = uiState.topAppBarUiState,
-                onBackClick = {
-                    if (uiState.viewMode == ViewMode.EDIT) {
-                        viewModel.goBackToViewMode()
-                    } else {
-                        onScreenClose()
-                    }
-                },
+                onBackClick = viewModel::onBackClick,
                 onSaveClick = {
                     viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
-                    onScreenClose()
                 }
             )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.screenCloseEvent.collect {
+            onScreenClose()
         }
     }
 

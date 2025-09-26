@@ -12,7 +12,9 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -22,15 +24,16 @@ import javax.inject.Inject
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     layoutFactory: LayoutFactory
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _screenCloseEvent = MutableSharedFlow<Unit>()
+    val screenCloseEvent = _screenCloseEvent.asSharedFlow()
     private val layout: Layout
-
 
     init {
         val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
@@ -82,10 +85,16 @@ class SingleRecordViewModel @Inject constructor(
                     layout.saveLayout(
                         _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
                     )
+                    _screenCloseEvent.emit(Unit)
                 }
             }
 
-            SingleRecordScreenAction.OnDeleteClicked -> TODO()
+            SingleRecordScreenAction.OnDeleteClicked -> {
+                viewModelScope.launch {
+                    layout.deleteLayout()
+                    _screenCloseEvent.emit(Unit)
+                }
+            }
             SingleRecordScreenAction.OnEditClicked -> {
                 _uiState.update {
                     it.copy(
@@ -101,7 +110,17 @@ class SingleRecordViewModel @Inject constructor(
         }
     }
 
-    fun goBackToViewMode() {
+    fun onBackClick() {
+        if (uiState.value.viewMode == ViewMode.EDIT) {
+            goBackToViewMode()
+        } else {
+            viewModelScope.launch {
+                _screenCloseEvent.emit(Unit)
+            }
+        }
+    }
+
+    private fun goBackToViewMode() {
         _uiState.update {
             it.copy(
                 viewMode = ViewMode.VIEW,

@@ -1,6 +1,7 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.common.Exceptions
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.domain.models.record.LoginData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
@@ -34,6 +35,14 @@ class LoginLayoutImpl(
                 updateDate = Date(),
             )
         )
+    }
+
+    override suspend fun deleteLayout() {
+        if (recordId != null) {
+            loginDataRepository.deleteLoginDataByKey(recordId)
+        } else {
+            throw Exceptions.DebugFatalException("recordId is null, cannot delete")
+        }
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {
