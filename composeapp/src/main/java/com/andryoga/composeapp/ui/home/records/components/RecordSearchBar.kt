@@ -29,13 +29,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.home.records.RecordScreenAction
 
 @Composable
 fun RecordsSearchBar(
     query: String,
-    onSearchTextUpdate: (String) -> Unit,
-    onClearSearchText: () -> Unit,
-    onAddNewRecordButtonTap: () -> Unit,
+    onScreenAction: (RecordScreenAction) -> Unit,
     topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -45,7 +44,13 @@ fun RecordsSearchBar(
         title = {
             TextField(
                 value = query,
-                onValueChange = onSearchTextUpdate,
+                onValueChange = {
+                    onScreenAction(
+                        RecordScreenAction.OnSearchTextUpdate(
+                            searchText = it
+                        )
+                    )
+                },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text(stringResource(R.string.search_bar_placeholder)) },
                 singleLine = true,
@@ -70,7 +75,11 @@ fun RecordsSearchBar(
                 IconButton(onClick = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
-                    onClearSearchText()
+                    onScreenAction(
+                        RecordScreenAction.OnSearchTextUpdate(
+                            searchText = ""
+                        )
+                    )
                 }) {
                     Icon(
                         Icons.Default.Clear,
@@ -79,7 +88,13 @@ fun RecordsSearchBar(
                 }
             }
             IconButton(
-                onClick = onAddNewRecordButtonTap,
+                onClick = {
+                    onScreenAction(
+                        RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                            showAddNewRecordBottomSheet = true
+                        )
+                    )
+                },
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -101,9 +116,7 @@ fun RecordsSearchBar(
 private fun RecordsSearchBarEmptyPreview() {
     RecordsSearchBar(
         query = "",
-        onSearchTextUpdate = {},
-        onAddNewRecordButtonTap = {},
-        onClearSearchText = {},
+        onScreenAction = {},
     )
 }
 
@@ -112,8 +125,6 @@ private fun RecordsSearchBarEmptyPreview() {
 private fun RecordsSearchBarWithSearchTextPreview() {
     RecordsSearchBar(
         query = "abc",
-        onSearchTextUpdate = {},
-        onAddNewRecordButtonTap = {},
-        onClearSearchText = {},
+        onScreenAction = {},
     )
 }

@@ -3,7 +3,6 @@
 package com.andryoga.composeapp.ui.home.records
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,6 +21,7 @@ import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
+import com.andryoga.composeapp.ui.home.records.components.RecordTypeFilterRow
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBar
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
@@ -42,27 +42,21 @@ fun RecordsScreenRoot(
         setTopBar {
             RecordsSearchBar(
                 query = searchText,
-                onSearchTextUpdate = { viewModel.onSearchTextUpdate(it) },
-                onClearSearchText = { viewModel.onClearSearchText() },
-                onAddNewRecordButtonTap = {
-                    viewModel.updateShowAddNewRecordBottomSheet(
-                        showAddNewRecordBottomSheet = true
-                    )
-                },
-                topAppBarScrollBehavior
+                onScreenAction = viewModel::onScreenAction,
+                topAppBarScrollBehavior = topAppBarScrollBehavior
             )
         }
     }
 
     RecordsScreen(
         uiState = uiState,
-        onDismissAddNewRecordBottomSheet = {
-            viewModel.updateShowAddNewRecordBottomSheet(
-                showAddNewRecordBottomSheet = false
-            )
+        onScreenAction = { action ->
+            when (action) {
+                is RecordScreenAction.OnAddNewRecord -> onAddNewRecord(action.recordType)
+                is RecordScreenAction.OnRecordClick -> onRecordClick(action.id, action.recordType)
+                else -> viewModel.onScreenAction(action)
+            }
         },
-        onAddNewRecord = onAddNewRecord,
-        onRecordClick = onRecordClick,
         topAppBarScrollBehavior = topAppBarScrollBehavior
     )
 }
@@ -70,42 +64,63 @@ fun RecordsScreenRoot(
 @Composable
 private fun RecordsScreen(
     uiState: RecordsUiState,
-    onDismissAddNewRecordBottomSheet: () -> Unit,
-    onAddNewRecord: (RecordType) -> Unit,
-    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
+    onScreenAction: (RecordScreenAction) -> Unit,
     topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        if (uiState.isLoading.not() && uiState.records.isNullOrEmpty().not()) {
-            val records = uiState.records
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .ifNotNull(
-                        value = topAppBarScrollBehavior,
-                        ifTrue = { Modifier.nestedScroll(it.nestedScrollConnection) }
-                    ),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(
-                    items = records,
-                    key = { it.key }
-                ) { record ->
-                    RecordItem(item = record, onRecordClick = onRecordClick)
-                }
+    if (uiState.isLoading.not() && uiState.records.isNullOrEmpty().not()) {
+        val records = uiState.records
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .ifNotNull(
+                    value = topAppBarScrollBehavior,
+                    ifTrue = { Modifier.nestedScroll(it.nestedScrollConnection) }
+                ),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                RecordTypeFilterRow(
+                    filters = uiState.recordTypeFilters,
+                    onFilterToggle = {
+                        onScreenAction(
+                            RecordScreenAction.OnToggleRecordTypeFilter(recordType = it)
+                        )
+                    })
             }
+            items(
+                items = records,
+                key = { it.key }
+            ) { record ->
+                RecordItem(item = record, onRecordClick = { id, recordType ->
+                    onScreenAction(
+                        RecordScreenAction.OnRecordClick(id, recordType)
+                    )
+                }
+                )
+            }
+
         }
+    } else {
+        //todo: show no records view
     }
 
     if (uiState.isShowAddNewRecordsBottomSheet) {
         AddNewRecordBottomSheet(
-            onDismiss = { onDismissAddNewRecordBottomSheet() },
+            onDismiss = {
+                onScreenAction(
+                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = false
+                    )
+                )
+            },
             onAddNewRecord = {
-                onAddNewRecord(it)
-                onDismissAddNewRecordBottomSheet()
+                onScreenAction(RecordScreenAction.OnAddNewRecord(it))
+                onScreenAction(
+                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = false
+                    )
+                )
             }
         )
     }
@@ -117,9 +132,7 @@ fun RecordsScreenPreview() {
     SafeBoxTheme {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false, records = getRecordList()),
-            onDismissAddNewRecordBottomSheet = {},
-            onAddNewRecord = {},
-            onRecordClick = { _, _ -> }
+            onScreenAction = {}
         )
     }
 }
@@ -134,9 +147,7 @@ fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
                 records = getRecordList(),
                 isShowAddNewRecordsBottomSheet = true
             ),
-            onDismissAddNewRecordBottomSheet = {},
-            onAddNewRecord = {},
-            onRecordClick = { _, _ -> }
+            onScreenAction = {}
         )
     }
 }

@@ -2,13 +2,17 @@ package com.andryoga.composeapp.ui.home.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.domain.mappers.record.toRecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordListItem
+import com.andryoga.composeapp.domain.models.record.RecordType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,6 +34,8 @@ class RecordsViewModel @Inject constructor(
     private val _searchText = MutableStateFlow("")
     val searchText = _searchText.asStateFlow()
 
+    private val appliedRecordTypeFilters = MutableStateFlow<List<RecordType>>(emptyList())
+
     init {
         loadRecords()
     }
@@ -49,14 +55,16 @@ class RecordsViewModel @Inject constructor(
                 combinedList.sortedBy { it.title.lowercase() }
             }.flowOn(Dispatchers.Default)
 
-            val filteredListItemFlow = combine(
+            val filteredListItemFlow: Flow<List<RecordListItem>> = combine(
                 combinedListItemFlow,
-                searchText
-            ) { combinedList, searchText ->
-                if (searchText.isEmpty()) {
-                    combinedList
-                } else {
-                    combinedList.filter { it.title.contains(searchText, ignoreCase = true) }
+                searchText,
+                appliedRecordTypeFilters
+            ) { combinedList, searchText, appliedRecordTypeFilters ->
+                combinedList.filter {
+                    it.title.contains(
+                        searchText,
+                        ignoreCase = true
+                    ) && (appliedRecordTypeFilters.isEmpty() || it.recordType in appliedRecordTypeFilters)
                 }
             }
 
@@ -71,7 +79,28 @@ class RecordsViewModel @Inject constructor(
         }
     }
 
-    fun updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet: Boolean) {
+    fun onScreenAction(action: RecordScreenAction) {
+        when (action) {
+            is RecordScreenAction.OnSearchTextUpdate -> {
+                onSearchTextUpdate(searchText = action.searchText)
+            }
+
+            is RecordScreenAction.OnToggleRecordTypeFilter -> {
+                onToggleRecordTypeFilter(recordType = action.recordType)
+            }
+
+            is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet -> {
+                updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
+            }
+
+            // these are handled in UI layer and flow should ideally never come here
+            is RecordScreenAction.OnAddNewRecord, is RecordScreenAction.OnRecordClick -> {
+                crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
+            }
+        }
+    }
+
+    private fun updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet: Boolean) {
         _uiState.update {
             it.copy(
                 isShowAddNewRecordsBottomSheet = showAddNewRecordBottomSheet
@@ -79,11 +108,27 @@ class RecordsViewModel @Inject constructor(
         }
     }
 
-    fun onSearchTextUpdate(searchText: String) {
+    private fun onSearchTextUpdate(searchText: String) {
         _searchText.value = searchText
     }
 
-    fun onClearSearchText() {
-        _searchText.value = ""
+    private fun onToggleRecordTypeFilter(recordType: RecordType) {
+        _uiState.update {
+            val newFilterState: List<RecordsUiState.RecordTypeFilter> =
+                it.recordTypeFilters.map { filter ->
+                    val newFilter = if (filter.recordType == recordType) {
+                        filter.copy(isSelected = !filter.isSelected)
+                    } else {
+                        filter
+                    }
+
+                    newFilter
+                }
+
+            appliedRecordTypeFilters.value =
+                newFilterState.filter { it.isSelected }.map { it.recordType }
+
+            it.copy(recordTypeFilters = newFilterState)
+        }
     }
 }

@@ -4,10 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.automirrored.filled.Note
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,6 +22,8 @@ import com.andryoga.composeapp.R
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import com.andryoga.composeapp.ui.utils.getIcon
+import com.andryoga.composeapp.ui.utils.getTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,35 +50,14 @@ fun AddNewRecordBottomSheet(
 
             RecordType.entries.forEach {
                 AddRecordItem(
-                    text = getTitleForRecordType(it),
-                    icon = getIconForRecordType(it),
+                    text = it.getTitle(),
+                    icon = it.getIcon(),
                     onClick = {
                         onAddNewRecord(it)
                     }
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun getTitleForRecordType(recordType: RecordType): String {
-    return stringResource(
-        when (recordType) {
-            RecordType.LOGIN -> R.string.type_display_login
-            RecordType.CARD -> R.string.type_display_card
-            RecordType.BANK_ACCOUNT -> R.string.type_display_account
-            RecordType.NOTE -> R.string.type_display_note
-        }
-    )
-}
-
-private fun getIconForRecordType(recordType: RecordType): ImageVector {
-    return when (recordType) {
-        RecordType.LOGIN -> Icons.AutoMirrored.Filled.Login
-        RecordType.CARD -> Icons.Filled.CreditCard
-        RecordType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
-        RecordType.NOTE -> Icons.AutoMirrored.Filled.Note
     }
 }
 

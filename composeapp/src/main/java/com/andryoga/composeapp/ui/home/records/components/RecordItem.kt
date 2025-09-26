@@ -12,11 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.material.icons.automirrored.filled.Note
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,38 +20,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.andryoga.composeapp.R
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getCardRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getLoginRecordItem
 import com.andryoga.composeapp.ui.previewHelper.getNoteRecordItem
+import com.andryoga.composeapp.ui.utils.getIcon
+import com.andryoga.composeapp.ui.utils.getTitle
 
 @Composable
 fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: RecordType) -> Unit) {
-    val icon: ImageVector = when (item.recordType) {
-        RecordType.LOGIN -> Icons.AutoMirrored.Filled.Login
-        RecordType.CARD -> Icons.Filled.CreditCard
-        RecordType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
-        RecordType.NOTE -> Icons.AutoMirrored.Filled.Note
-    }
-
-    val recordTypeText: String = stringResource(
-        when (item.recordType) {
-            RecordType.LOGIN -> R.string.type_display_login
-            RecordType.CARD -> R.string.type_display_card
-            RecordType.BANK_ACCOUNT -> R.string.type_display_account
-            RecordType.NOTE -> R.string.type_display_note
-        }
-    )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -75,7 +53,9 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(
-                    imageVector = icon, contentDescription = null, modifier = Modifier
+                    imageVector = item.recordType.getIcon(),
+                    contentDescription = null,
+                    modifier = Modifier
                         .background(
                             color = MaterialTheme.colorScheme.onPrimary, shape = CircleShape
                         )
@@ -106,7 +86,7 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
             }
 
             Text(
-                text = recordTypeText,
+                text = item.recordType.getTitle(),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier

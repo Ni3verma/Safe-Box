@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.common.Exceptions
+import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.domain.models.record.NoteData
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
@@ -38,7 +38,7 @@ class NoteLayoutImpl(
         if (recordId != null) {
             secureNoteDataRepositoryImpl.deleteSecureNoteDataByKey(recordId)
         } else {
-            throw Exceptions.DebugFatalException("recordId is null, cannot delete")
+            crashInDebugBuild("recordId is null, cannot delete")
         }
     }
 
