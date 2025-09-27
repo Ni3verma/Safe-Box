@@ -31,10 +31,8 @@ class RecordsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _searchText = MutableStateFlow("")
-    val searchText = _searchText.asStateFlow()
-
-    private val appliedRecordTypeFilters = MutableStateFlow<List<RecordType>>(emptyList())
+    private val _records = MutableStateFlow(emptyList<RecordListItem>())
+    val records = _records.asStateFlow()
 
     init {
         loadRecords()
@@ -57,24 +55,31 @@ class RecordsViewModel @Inject constructor(
 
             val filteredListItemFlow: Flow<List<RecordListItem>> = combine(
                 combinedListItemFlow,
-                searchText,
-                appliedRecordTypeFilters
-            ) { combinedList, searchText, appliedRecordTypeFilters ->
-                combinedList.filter {
+                _uiState
+            ) { combinedList, currUiState ->
+                val textFilteredList = combinedList.filter {
                     it.title.contains(
-                        searchText,
+                        currUiState.searchText,
                         ignoreCase = true
-                    ) && (appliedRecordTypeFilters.isEmpty() || it.recordType in appliedRecordTypeFilters)
+                    )
+                }
+
+                val selectedFilters = currUiState.recordTypeFilters.filter { it.isSelected }
+                if (selectedFilters.isNotEmpty()) {
+                    val recordTypeToFilterOn = selectedFilters.map { it.recordType }
+                    textFilteredList.filter { it.recordType in recordTypeToFilterOn }
+                } else {
+                    textFilteredList
                 }
             }
 
-            filteredListItemFlow.collect { newCombinedList ->
+            filteredListItemFlow.collect { filteredList ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        records = newCombinedList
                     )
                 }
+                _records.value = filteredList
             }
         }
     }
@@ -109,7 +114,11 @@ class RecordsViewModel @Inject constructor(
     }
 
     private fun onSearchTextUpdate(searchText: String) {
-        _searchText.value = searchText
+        _uiState.update {
+            it.copy(
+                searchText = searchText
+            )
+        }
     }
 
     private fun onToggleRecordTypeFilter(recordType: RecordType) {
@@ -124,9 +133,6 @@ class RecordsViewModel @Inject constructor(
 
                     newFilter
                 }
-
-            appliedRecordTypeFilters.value =
-                newFilterState.filter { it.isSelected }.map { it.recordType }
 
             it.copy(recordTypeFilters = newFilterState)
         }

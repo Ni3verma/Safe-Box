@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
@@ -36,12 +37,12 @@ fun RecordsScreenRoot(
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
-    val searchText by viewModel.searchText.collectAsState()
+    val records by viewModel.records.collectAsState()
 
-    LaunchedEffect(searchText) {
+    LaunchedEffect(uiState.searchText) {
         setTopBar {
             RecordsSearchBar(
-                query = searchText,
+                query = uiState.searchText,
                 onScreenAction = viewModel::onScreenAction,
                 topAppBarScrollBehavior = topAppBarScrollBehavior
             )
@@ -50,6 +51,7 @@ fun RecordsScreenRoot(
 
     RecordsScreen(
         uiState = uiState,
+        records = records,
         onScreenAction = { action ->
             when (action) {
                 is RecordScreenAction.OnAddNewRecord -> onAddNewRecord(action.recordType)
@@ -64,11 +66,17 @@ fun RecordsScreenRoot(
 @Composable
 private fun RecordsScreen(
     uiState: RecordsUiState,
+    records: List<RecordListItem>,
     onScreenAction: (RecordScreenAction) -> Unit,
     topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
-    if (uiState.isLoading.not() && uiState.records.isNullOrEmpty().not()) {
-        val records = uiState.records
+    if (uiState.isLoading) {
+        // todo: show loading screen
+    } else if (records.isEmpty()) {
+        // todo: show empty view
+        FilterRow(uiState, onScreenAction)
+    } else {
+        val records = records
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,15 +87,7 @@ private fun RecordsScreen(
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item {
-                RecordTypeFilterRow(
-                    filters = uiState.recordTypeFilters,
-                    onFilterToggle = {
-                        onScreenAction(
-                            RecordScreenAction.OnToggleRecordTypeFilter(recordType = it)
-                        )
-                    })
-            }
+            item { FilterRow(uiState, onScreenAction) }
             items(
                 items = records,
                 key = { it.key }
@@ -101,8 +101,6 @@ private fun RecordsScreen(
             }
 
         }
-    } else {
-        //todo: show no records view
     }
 
     if (uiState.isShowAddNewRecordsBottomSheet) {
@@ -126,12 +124,28 @@ private fun RecordsScreen(
     }
 }
 
+@Composable
+private fun FilterRow(
+    uiState: RecordsUiState,
+    onScreenAction: (RecordScreenAction) -> Unit
+) {
+    RecordTypeFilterRow(
+        filters = uiState.recordTypeFilters,
+        onFilterToggle = {
+            onScreenAction(
+                RecordScreenAction.OnToggleRecordTypeFilter(recordType = it)
+            )
+        }
+    )
+}
+
 @LightDarkModePreview
 @Composable
-fun RecordsScreenPreview() {
+private fun RecordsScreenPreview() {
     SafeBoxTheme {
         RecordsScreen(
-            uiState = RecordsUiState(isLoading = false, records = getRecordList()),
+            uiState = RecordsUiState(isLoading = false),
+            records = getRecordList(),
             onScreenAction = {}
         )
     }
@@ -139,14 +153,38 @@ fun RecordsScreenPreview() {
 
 @LightDarkModePreview
 @Composable
-fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
+private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
     SafeBoxTheme {
         RecordsScreen(
             uiState = RecordsUiState(
                 isLoading = false,
-                records = getRecordList(),
                 isShowAddNewRecordsBottomSheet = true
             ),
+            records = getRecordList(),
+            onScreenAction = {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+fun RecordsScreenNoRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(isLoading = false),
+            records = emptyList(),
+            onScreenAction = {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+fun RecordsScreenLoadingRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(isLoading = true),
+            records = emptyList(),
             onScreenAction = {}
         )
     }
