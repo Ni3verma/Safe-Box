@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -44,12 +45,13 @@ fun HomeScreen() {
             if (isUserOnHomeRouteScreen(currentRoute?.route)) {
                 BottomNavBar(nestedNavController)
             }
-        }
+        },
+        modifier = Modifier.nestedScroll(enterAlwaysScrollBehavior.nestedScrollConnection)
     ) { innerPadding ->
         NavHost(
             navController = nestedNavController,
             startDestination = HomeRouteType.RecordRoute,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
         ) {
             composable<HomeRouteType.RecordRoute> {
                 RecordsScreenRoot(

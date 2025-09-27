@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
@@ -35,6 +36,7 @@ fun SingleRecordScreenRoot(
 ) {
     val viewModel = hiltViewModel<SingleRecordViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(uiState.topAppBarUiState) {
         setTopBar {
@@ -42,6 +44,7 @@ fun SingleRecordScreenRoot(
                 uiState = uiState.topAppBarUiState,
                 onBackClick = viewModel::onBackClick,
                 onSaveClick = {
+                    keyboardController?.hide()
                     viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
                 }
             )

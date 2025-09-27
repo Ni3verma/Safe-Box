@@ -23,13 +23,14 @@ import com.andryoga.composeapp.ui.utils.getTitle
 @Composable
 fun RecordTypeFilterRow(
     filters: List<RecordTypeFilter>,
-    onFilterToggle: (RecordType) -> Unit
+    onFilterToggle: (RecordType) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.horizontalScroll(scrollState)
+        modifier = modifier.horizontalScroll(scrollState)
     ) {
         filters.forEach {
             RecordTypeFilterChip(

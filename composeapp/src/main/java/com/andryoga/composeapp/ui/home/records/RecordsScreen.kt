@@ -5,6 +5,7 @@ package com.andryoga.composeapp.ui.home.records
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,12 +15,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
-import com.andryoga.composeapp.ui.core.ifNotNull
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.home.records.components.RecordTypeFilterRow
@@ -74,16 +73,12 @@ private fun RecordsScreen(
         // todo: show loading screen
     } else if (records.isEmpty()) {
         // todo: show empty view
-        FilterRow(uiState, onScreenAction)
+        FilterRow(uiState, onScreenAction, Modifier.padding(horizontal = 16.dp))
     } else {
         val records = records
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .ifNotNull(
-                    value = topAppBarScrollBehavior,
-                    ifTrue = { Modifier.nestedScroll(it.nestedScrollConnection) }
-                ),
+                .fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -127,7 +122,8 @@ private fun RecordsScreen(
 @Composable
 private fun FilterRow(
     uiState: RecordsUiState,
-    onScreenAction: (RecordScreenAction) -> Unit
+    onScreenAction: (RecordScreenAction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     RecordTypeFilterRow(
         filters = uiState.recordTypeFilters,
@@ -135,7 +131,8 @@ private fun FilterRow(
             onScreenAction(
                 RecordScreenAction.OnToggleRecordTypeFilter(recordType = it)
             )
-        }
+        },
+        modifier = modifier
     )
 }
 
