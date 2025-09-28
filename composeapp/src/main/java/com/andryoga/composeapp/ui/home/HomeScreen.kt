@@ -5,17 +5,20 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.MyAppTopAppBar
+import com.andryoga.composeapp.ui.core.ScrollBehaviorType
+import com.andryoga.composeapp.ui.core.TopBarState
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupAndRestoreScreen
 import com.andryoga.composeapp.ui.home.components.BottomNavBar
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
@@ -31,22 +34,38 @@ fun HomeScreen() {
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination
+    val mainViewModel = hiltViewModel<MainViewModel>()
 
-    val enterAlwaysScrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    var topBar by remember { mutableStateOf<(@Composable () -> Unit)?>(null) }
+    val enterAlwaysScrollBehavior =
+        TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val exitUntilCollapsedScrollBehavior =
+        TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    val topBarState by mainViewModel.topBarState.collectAsState()
+    val currentConfig = (topBarState as? TopBarState.Visible)?.config
+
+    // Use a 'when' block to select the BEHAVIOR and its CONNECTION for the current screen.
+    val (scrollBehavior, nestedScrollConnection) = when (currentConfig?.scrollBehaviorType) {
+        ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
+        ScrollBehaviorType.EXIT_UNTIL_COLLAPSED -> exitUntilCollapsedScrollBehavior to exitUntilCollapsedScrollBehavior.nestedScrollConnection
+        else -> null to object : NestedScrollConnection {} // For NONE or when hidden
+    }
 
     Scaffold(
         topBar = {
-            // each screen has it's own top bar and is responsible for either setting its own top bar
-            // or set it null if they don't want an app bar
-            topBar?.invoke()
+            if (currentConfig != null) {
+                MyAppTopAppBar(
+                    config = currentConfig,
+                    scrollBehavior = scrollBehavior
+                )
+            }
         },
         bottomBar = {
             if (isUserOnHomeRouteScreen(currentRoute?.route)) {
                 BottomNavBar(nestedNavController)
             }
         },
-        modifier = Modifier.nestedScroll(enterAlwaysScrollBehavior.nestedScrollConnection)
+        modifier = Modifier.nestedScroll(nestedScrollConnection)
     ) { innerPadding ->
         NavHost(
             navController = nestedNavController,
@@ -55,7 +74,7 @@ fun HomeScreen() {
         ) {
             composable<HomeRouteType.RecordRoute> {
                 RecordsScreenRoot(
-                    setTopBar = { topBar = it },
+                    mainViewModel = mainViewModel,
                     onAddNewRecord = { recordType ->
                         nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
                     },
@@ -67,24 +86,17 @@ fun HomeScreen() {
                             )
                         )
                     },
-                    topAppBarScrollBehavior = enterAlwaysScrollBehavior
                 )
             }
             composable<HomeRouteType.BackupAndRestoreRoute> {
-                LaunchedEffect(Unit) {
-                    topBar = null
-                }
                 BackupAndRestoreScreen()
             }
             composable<HomeRouteType.SettingsRoute> {
-                LaunchedEffect(Unit) {
-                    topBar = null
-                }
                 SettingsScreen()
             }
             composable<SingleRecordScreenRoute> {
                 SingleRecordScreenRoot(
-                    setTopBar = { topBar = it },
+                    mainViewModel = mainViewModel,
                     onScreenClose = {
                         nestedNavController.popBackStack()
                     }

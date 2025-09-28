@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,33 +17,38 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.ScrollBehaviorType
+import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.home.records.components.RecordTypeFilterRow
-import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBar
+import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarActions
+import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarNavIcon
+import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarTitle
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import com.andryoga.composeapp.ui.utils.OnStart
 
 @Composable
 fun RecordsScreenRoot(
-    setTopBar: ((@Composable () -> Unit)?) -> Unit,
+    mainViewModel: MainViewModel,
     onAddNewRecord: (RecordType) -> Unit,
     onRecordClick: (id: Int, recordType: RecordType) -> Unit,
-    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val records by viewModel.records.collectAsState()
 
-    LaunchedEffect(uiState.searchText) {
-        setTopBar {
-            RecordsSearchBar(
-                query = uiState.searchText,
-                onScreenAction = viewModel::onScreenAction,
-                topAppBarScrollBehavior = topAppBarScrollBehavior
-            )
-        }
+    OnStart {
+        val config = TopAppBarConfig(
+            title = { RecordsSearchBarTitle(uiState.searchText, viewModel::onScreenAction) },
+            navigationIcon = { RecordsSearchBarNavIcon() },
+            actions = { RecordsSearchBarActions(uiState.searchText, viewModel::onScreenAction) },
+            scrollBehaviorType = ScrollBehaviorType.ENTER_ALWAYS
+        )
+        mainViewModel.updateTopBar(config)
     }
 
     RecordsScreen(
@@ -58,7 +61,6 @@ fun RecordsScreenRoot(
                 else -> viewModel.onScreenAction(action)
             }
         },
-        topAppBarScrollBehavior = topAppBarScrollBehavior
     )
 }
 
@@ -67,7 +69,6 @@ private fun RecordsScreen(
     uiState: RecordsUiState,
     records: List<RecordListItem>,
     onScreenAction: (RecordScreenAction) -> Unit,
-    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     if (uiState.isLoading) {
         // todo: show loading screen

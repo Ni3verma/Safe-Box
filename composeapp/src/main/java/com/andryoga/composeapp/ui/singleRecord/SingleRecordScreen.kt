@@ -18,37 +18,43 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.composeapp.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.composeapp.ui.singleRecord.components.ActionButtonRow
-import com.andryoga.composeapp.ui.singleRecord.components.TopBar
+import com.andryoga.composeapp.ui.singleRecord.components.SingleRecordTopBarActions
+import com.andryoga.composeapp.ui.singleRecord.components.SingleRecordTopBarNavIcon
+import com.andryoga.composeapp.ui.singleRecord.components.SingleRecordTopBarTitle
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import com.andryoga.composeapp.ui.utils.OnStart
 
 @Composable
 fun SingleRecordScreenRoot(
-    setTopBar: ((@Composable () -> Unit)?) -> Unit,
-    onScreenClose: () -> Unit
+    mainViewModel: MainViewModel,
+    onScreenClose: () -> Unit,
 ) {
     val viewModel = hiltViewModel<SingleRecordViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(uiState.topAppBarUiState) {
-        setTopBar {
-            TopBar(
-                uiState = uiState.topAppBarUiState,
-                onBackClick = viewModel::onBackClick,
-                onSaveClick = {
+    OnStart {
+        val config = TopAppBarConfig(
+            title = { SingleRecordTopBarTitle(uiState.topAppBarUiState.title) },
+            navigationIcon = { SingleRecordTopBarNavIcon(onScreenClose) },
+            actions = {
+                SingleRecordTopBarActions(uiState.topAppBarUiState, onSaveClick = {
                     keyboardController?.hide()
                     viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
-                }
-            )
-        }
+                })
+            },
+        )
+        mainViewModel.updateTopBar(config)
     }
 
     LaunchedEffect(Unit) {

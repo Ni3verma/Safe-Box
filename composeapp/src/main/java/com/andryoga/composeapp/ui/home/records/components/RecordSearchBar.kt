@@ -1,11 +1,7 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.andryoga.composeapp.ui.home.records.components
 
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -18,113 +14,135 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.MyAppTopAppBar
+import com.andryoga.composeapp.ui.core.ScrollBehaviorType
+import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.records.RecordScreenAction
+import com.andryoga.composeapp.ui.home.records.RecordsUiState
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
+import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
 @Composable
-fun RecordsSearchBar(
+fun RecordsSearchBarTitle(
     query: String,
     onScreenAction: (RecordScreenAction) -> Unit,
-    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
+) {
+    TextField(
+        value = query,
+        onValueChange = {
+            onScreenAction(
+                RecordScreenAction.OnSearchTextUpdate(
+                    searchText = it
+                )
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text(stringResource(R.string.search_bar_placeholder)) },
+        singleLine = true,
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = Color.Transparent
+        ),
+    )
+}
+
+@Composable
+fun RecordsSearchBarNavIcon() {
+    Icon(
+        Icons.Default.Search,
+        contentDescription = stringResource(R.string.cd_search_bar),
+        modifier = Modifier.padding(start = 16.dp)
+    )
+}
+
+@Composable
+fun RecordsSearchBarActions(
+    query: String,
+    onScreenAction: (RecordScreenAction) -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-
-    TopAppBar(
-        title = {
-            TextField(
-                value = query,
-                onValueChange = {
-                    onScreenAction(
-                        RecordScreenAction.OnSearchTextUpdate(
-                            searchText = it
-                        )
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text(stringResource(R.string.search_bar_placeholder)) },
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = Color.Transparent
-                ),
-            )
-        },
-        navigationIcon = {
-            Icon(
-                Icons.Default.Search,
-                contentDescription = stringResource(R.string.cd_search_bar),
-                modifier = Modifier.padding(start = 16.dp)
-            )
-        },
-        actions = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = {
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                    onScreenAction(
-                        RecordScreenAction.OnSearchTextUpdate(
-                            searchText = ""
-                        )
-                    )
-                }) {
-                    Icon(
-                        Icons.Default.Clear,
-                        contentDescription = stringResource(R.string.cd_clear_search_bar)
-                    )
-                }
-            }
-            IconButton(
-                onClick = {
-                    onScreenAction(
-                        RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
-                            showAddNewRecordBottomSheet = true
-                        )
-                    )
-                },
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ),
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = stringResource(R.string.cd_add_new_record_button)
+    if (query.isNotEmpty()) {
+        IconButton(onClick = {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            onScreenAction(
+                RecordScreenAction.OnSearchTextUpdate(
+                    searchText = ""
                 )
-            }
+            )
+        }) {
+            Icon(
+                Icons.Default.Clear,
+                contentDescription = stringResource(R.string.cd_clear_search_bar)
+            )
+        }
+    }
+    IconButton(
+        onClick = {
+            onScreenAction(
+                RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                    showAddNewRecordBottomSheet = true
+                )
+            )
         },
-        windowInsets = WindowInsets.statusBars,
-        scrollBehavior = topAppBarScrollBehavior,
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
+    ) {
+        Icon(
+            Icons.Default.Add,
+            contentDescription = stringResource(R.string.cd_add_new_record_button)
+        )
+    }
+}
+
+private fun getAppBarConfig(
+    uiState: RecordsUiState,
+    onScreenAction: (RecordScreenAction) -> Unit,
+): TopAppBarConfig {
+    return TopAppBarConfig(
+        title = { RecordsSearchBarTitle(uiState.searchText, onScreenAction) },
+        navigationIcon = { RecordsSearchBarNavIcon() },
+        actions = { RecordsSearchBarActions(uiState.searchText, onScreenAction) },
+        scrollBehaviorType = ScrollBehaviorType.ENTER_ALWAYS
     )
 }
 
+@LightDarkModePreview
 @Composable
-@Preview
+@OptIn(ExperimentalMaterial3Api::class)
 private fun RecordsSearchBarEmptyPreview() {
-    RecordsSearchBar(
-        query = "",
-        onScreenAction = {},
-    )
+    SafeBoxTheme {
+        MyAppTopAppBar(
+            config = getAppBarConfig(
+                uiState = RecordsUiState(searchText = ""),
+                onScreenAction = {}
+            )
+        )
+    }
 }
 
+@LightDarkModePreview
 @Composable
-@Preview
+@OptIn(ExperimentalMaterial3Api::class)
 private fun RecordsSearchBarWithSearchTextPreview() {
-    RecordsSearchBar(
-        query = "abc",
-        onScreenAction = {},
+    MyAppTopAppBar(
+        config = getAppBarConfig(
+            uiState = RecordsUiState(searchText = "abc"),
+            onScreenAction = {}
+        )
     )
 }

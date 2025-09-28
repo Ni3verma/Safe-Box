@@ -6,105 +6,130 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.MyAppTopAppBar
 import com.andryoga.composeapp.ui.core.PulseButton
+import com.andryoga.composeapp.ui.core.ScrollBehaviorType
+import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenUiState
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(
+fun SingleRecordTopBarTitle(title: String) {
+    Text(text = title)
+}
+
+@Composable
+fun SingleRecordTopBarNavIcon(onClick: () -> Unit) {
+    IconButton(onClick = onClick) {
+        Icon(
+            Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = stringResource(R.string.cd_back_button)
+        )
+    }
+}
+
+@Composable
+fun SingleRecordTopBarActions(
     uiState: SingleRecordScreenUiState.TopAppBarUiState,
-    onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
 ) {
-    TopAppBar(
-        title = {
-            Text(text = uiState.title)
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.cd_back_button)
-                )
-            }
-        },
-        actions = {
-            if (uiState.isSaveButtonVisible) {
-                PulseButton(
-                    textResId = R.string.save,
-                    enabled = uiState.isSaveButtonEnabled,
-                    onClick = onSaveClick
-                )
-            }
-        }
+    if (uiState.isSaveButtonVisible) {
+        PulseButton(
+            textResId = R.string.save,
+            enabled = uiState.isSaveButtonEnabled,
+            onClick = onSaveClick
+        )
+    }
+}
+
+private fun getTopAppBarConfig(
+    uiState: SingleRecordScreenUiState.TopAppBarUiState,
+    onSaveClick: () -> Unit,
+    onBackClick: () -> Unit
+): TopAppBarConfig {
+    return TopAppBarConfig(
+        title = { SingleRecordTopBarTitle(uiState.title) },
+        navigationIcon = { SingleRecordTopBarNavIcon(onBackClick) },
+        actions = { SingleRecordTopBarActions(uiState, onSaveClick) },
+        scrollBehaviorType = ScrollBehaviorType.NONE
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @LightDarkModePreview
 @Composable
 private fun TopBarHappyCasePreview() {
     SafeBoxTheme {
-        TopBar(
-            uiState = SingleRecordScreenUiState.TopAppBarUiState(
-                title = "Login",
-                isSaveButtonEnabled = true,
-                isSaveButtonVisible = true
-            ),
-            onBackClick = {},
-            onSaveClick = {}
+        MyAppTopAppBar(
+            config = getTopAppBarConfig(
+                uiState = SingleRecordScreenUiState.TopAppBarUiState(
+                    title = "Login",
+                    isSaveButtonVisible = true,
+                    isSaveButtonEnabled = true
+                ),
+                onSaveClick = {},
+                onBackClick = {}
+            )
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @LightDarkModePreview
 @Composable
 private fun TopBarWithoutSaveButtonPreview() {
     SafeBoxTheme {
-        TopBar(
-            uiState = SingleRecordScreenUiState.TopAppBarUiState(
-                title = "Login",
-                isSaveButtonVisible = false
-            ),
-            onBackClick = {},
-            onSaveClick = {}
+        MyAppTopAppBar(
+            config = getTopAppBarConfig(
+                uiState = SingleRecordScreenUiState.TopAppBarUiState(
+                    title = "Login",
+                    isSaveButtonVisible = false,
+                ),
+                onSaveClick = {},
+                onBackClick = {}
+            )
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @LightDarkModePreview
 @Composable
 private fun TopBarWithDisabledSaveButtonPreview() {
     SafeBoxTheme {
-        TopBar(
-            uiState = SingleRecordScreenUiState.TopAppBarUiState(
-                title = "Login",
-                isSaveButtonEnabled = false,
-                isSaveButtonVisible = true
-            ),
-            onBackClick = {},
-            onSaveClick = {}
+        MyAppTopAppBar(
+            config = getTopAppBarConfig(
+                uiState = SingleRecordScreenUiState.TopAppBarUiState(
+                    title = "Login",
+                    isSaveButtonVisible = false,
+                    isSaveButtonEnabled = true
+                ),
+                onSaveClick = {},
+                onBackClick = {}
+            )
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @LightDarkModePreview
 @Composable
 private fun TopBarWithoutTitlePreview() {
     SafeBoxTheme {
-        TopBar(
-            uiState = SingleRecordScreenUiState.TopAppBarUiState(
-                title = "",
-                isSaveButtonEnabled = false,
-                isSaveButtonVisible = true
-            ),
-            onBackClick = {},
-            onSaveClick = {}
+        MyAppTopAppBar(
+            config = getTopAppBarConfig(
+                uiState = SingleRecordScreenUiState.TopAppBarUiState(
+                    title = "",
+                    isSaveButtonVisible = false,
+                    isSaveButtonEnabled = true
+                ),
+                onSaveClick = {},
+                onBackClick = {}
+            )
         )
     }
 }
