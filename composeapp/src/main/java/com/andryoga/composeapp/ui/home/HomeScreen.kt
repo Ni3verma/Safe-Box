@@ -19,7 +19,7 @@ import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.MyAppTopAppBar
 import com.andryoga.composeapp.ui.core.ScrollBehaviorType
 import com.andryoga.composeapp.ui.core.TopBarState
-import com.andryoga.composeapp.ui.home.backupAndRestore.BackupAndRestoreScreen
+import com.andryoga.composeapp.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.composeapp.ui.home.components.BottomNavBar
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
 import com.andryoga.composeapp.ui.home.records.RecordsScreenRoot
@@ -89,7 +89,9 @@ fun HomeScreen() {
                 )
             }
             composable<HomeRouteType.BackupAndRestoreRoute> {
-                BackupAndRestoreScreen()
+                BackupAndRestoreScreenRoot(
+                    mainViewModel = mainViewModel
+                )
             }
             composable<HomeRouteType.SettingsRoute> {
                 SettingsScreen()

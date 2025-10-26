@@ -1,10 +1,18 @@
 package com.andryoga.composeapp.ui.core
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.andryoga.composeapp.R
 
 /**
  * Defines the types of scroll behavior a screen's TopAppBar can have.
@@ -30,6 +38,25 @@ data class TopAppBarConfig(
     val actions: @Composable RowScope.() -> Unit = {},
     val scrollBehaviorType: ScrollBehaviorType = ScrollBehaviorType.NONE
 )
+
+fun getBasicTopAppBarConfig(
+    @StringRes title: Int,
+    onBack: () -> Unit,
+): TopAppBarConfig {
+    return TopAppBarConfig(
+        title = { Text(stringResource(title)) },
+        navigationIcon = {
+            IconButton(
+                onClick = onBack
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.cd_back_button),
+                )
+            }
+        },
+    )
+}
 
 /**
  * The state that the MainViewModel will hold. It's either hidden

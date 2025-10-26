@@ -67,8 +67,8 @@ class BackupDataWorker
     private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
-        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadataEntity ->
-            if (backupMetadataEntity != null) {
+        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadata ->
+            if (backupMetadata != null) {
                 Timber.i("backup metadata found")
                 val isShowStartNotification =
                     inputData.getBoolean(
@@ -125,7 +125,7 @@ class BackupDataWorker
                     try {
                         val pickedDir = DocumentFile.fromTreeUri(
                             applicationContext,
-                            Uri.parse(backupMetadataEntity.uriString)
+                            Uri.parse(backupMetadata.uriString)
                         )!!
 
                         deleteExtraBackupFiles(pickedDir)

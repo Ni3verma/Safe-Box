@@ -1,17 +1,91 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.TopAppBarConfig
+import com.andryoga.composeapp.ui.home.backupAndRestore.components.BackupView
+import com.andryoga.composeapp.ui.home.backupAndRestore.components.RestoreView
+import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
+import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import com.andryoga.composeapp.ui.utils.OnStart
 
 @Composable
-fun BackupAndRestoreScreen(modifier: Modifier = Modifier) {
-    val mainViewModel = hiltViewModel<MainViewModel>()
-    LaunchedEffect(Unit) {
-        mainViewModel.hideTopBar()
+fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
+    val viewModel = hiltViewModel<BackupAndRestoreVM>()
+    val uiState by viewModel.uiState.collectAsState()
+    OnStart {
+        val config = TopAppBarConfig(
+            title = { Text(stringResource(R.string.bottom_nav_backup_and_restore)) },
+        )
+        mainViewModel.updateTopBar(config)
     }
-    Text("back and restore")
+
+    BackupAndRestoreScreen(
+        uiState = uiState,
+        onScreenAction = { action ->
+            viewModel.onScreenAction(action)
+        }
+    )
+}
+
+@Composable
+private fun BackupAndRestoreScreen(
+    uiState: ScreenState,
+    onScreenAction: (ScreenAction) -> Unit,
+) {
+    Column {
+        BackupView(
+            uiState = uiState,
+            onScreenAction = onScreenAction
+        )
+        RestoreView(
+            uiState = uiState,
+            onScreenAction = onScreenAction
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun BackupAndRestorePathLoadingPreview() {
+    SafeBoxTheme {
+        BackupAndRestoreScreen(
+            uiState = ScreenState(),
+            onScreenAction = {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun BackupAndRestorePathNotSetPreview() {
+    SafeBoxTheme {
+        BackupAndRestoreScreen(
+            uiState = ScreenState(backupState = BackupNotSet()),
+            onScreenAction = {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun BackupAndRestorePathSetPreview() {
+    SafeBoxTheme {
+        BackupAndRestoreScreen(
+            uiState = ScreenState(
+                backupState = BackupSet(
+                    backupPath = "/tree/primary:Safebox debug",
+                    backupTime = "28 Sep 2025 05:04 PM"
+                )
+            ),
+            onScreenAction = {}
+        )
+    }
 }

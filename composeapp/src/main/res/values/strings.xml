@@ -23,15 +23,6 @@
 
 
     <!--    Screen title-->
-    <string name="drawer_group_my_data">My Data</string>
-    <string name="drawer_group_contact_us">Contact Us</string>
-    <string name="drawer_title_all_items">All Items</string>
-    <string name="drawer_title_login">Login</string>
-    <string name="drawer_title_bank_account">Bank Account</string>
-    <string name="drawer_title_bank_card">Bank Card</string>
-    <string name="drawer_title_secure_note">Secure Note</string>
-    <string name="drawer_title_backup_and_restore">Backup and Restore</string>
-    <string name="drawer_title_playstore">Play Store</string>
     <string name="title_login_data">Login Data</string>
     <string name="title_bank_account_data">Bank Account Data</string>
     <string name="title_bank_card_data">Bank Card Data</string>
@@ -91,7 +82,7 @@
 
     <!--     backup-->
     <string name="backup">Backup</string>
-    <string name="backup_path_not_set_message">"Backup location is not set. Click below button to set. It is recommended that while selecting location, add a new folder (e.g. Safe Box backup) in local Storage and then select same."</string>
+    <string name="backup_path_not_set_message">"Your backup location isn't set!! Use the button below to choose one.\nTip: It's a good idea to create a new folder for your backups (e.g., 'Safe Box Backup')."</string>
     <string name="backup_set_location">Set Location</string>
     <string name="backup_set_message">Backup location is set</string>
     <string name="backup_path">Backup path is %1$s</string>
@@ -103,7 +94,7 @@
 
     <!--     restore-->
     <string name="restore">Restore</string>
-    <string name="restore_info">"Click below button to select a valid backup file. Please note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
+    <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
     <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
     <string name="restore_success_message">Successfully restored data</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
