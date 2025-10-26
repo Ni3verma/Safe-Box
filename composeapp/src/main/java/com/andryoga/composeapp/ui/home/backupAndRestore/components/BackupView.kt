@@ -1,5 +1,8 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +39,7 @@ import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenAction
 import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenState
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import timber.log.Timber
 
 
 @Composable
@@ -84,6 +88,14 @@ private fun BackupPathLoading() {
 
 @Composable
 private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+        onResult = { uri: Uri? ->
+            Timber.i("uri selected for backup = $uri")
+            onScreenAction(ScreenAction.BackupPathSelected(uri))
+        }
+    )
+
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(
@@ -109,7 +121,7 @@ private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
                 style = MaterialTheme.typography.bodyLarge
             )
             Button(
-                onClick = {},
+                onClick = { launcher.launch(null) },
             ) {
                 Text(text = stringResource(R.string.backup_set_location))
             }
@@ -180,15 +192,6 @@ private fun BackupPathSet(backupState: BackupSet, onScreenAction: (ScreenAction)
                 ) {
                     Text(text = stringResource(R.string.backup))
                 }
-            }
-            // if backup is in progress
-            if (true) {
-                Text(
-                    text = stringResource(R.string.backup_in_progress_message),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Thin
-                )
             }
         }
     }

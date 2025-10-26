@@ -1,19 +1,49 @@
 package com.andryoga.composeapp.data.repository
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import com.andryoga.composeapp.common.AnalyticsKeys.BACKUP_SELECT_DIR_RESULT
+import com.andryoga.composeapp.common.AnalyticsKeys.RESULT
 import com.andryoga.composeapp.common.Utils.getFormattedDate
 import com.andryoga.composeapp.data.db.dao.BackupMetadataDao
 import com.andryoga.composeapp.data.db.entity.BackupMetadataEntity
 import com.andryoga.composeapp.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.composeapp.domain.models.backup.BackupPathData
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.analytics.logEvent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Date
 import javax.inject.Inject
 
 class BackupMetadataRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val backupMetadataDao: BackupMetadataDao
 ) : BackupMetadataRepository {
-    override suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity) {
-        backupMetadataDao.insertBackupMetadata(backupMetadataEntity)
+    private val contentResolver = context.contentResolver
+
+    override suspend fun insertBackupMetadata(uriPath: Uri?) {
+        Firebase.analytics.logEvent(BACKUP_SELECT_DIR_RESULT) {
+            param(RESULT, (uriPath != null && uriPath.path != null).toString())
+        }
+
+        if (uriPath != null) {
+            val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            contentResolver.takePersistableUriPermission(uriPath, flags)
+            backupMetadataDao.insertBackupMetadata(
+                BackupMetadataEntity(
+                    key = 1,
+                    uriString = uriPath.toString(),
+                    displayPath = uriPath.path!!,
+                    lastBackupDate = null,
+                    createdOn = Date()
+                )
+            )
+        }
     }
 
     override suspend fun deleteBackupMetadata() {

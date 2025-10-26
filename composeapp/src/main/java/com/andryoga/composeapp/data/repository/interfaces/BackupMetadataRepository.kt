@@ -1,11 +1,11 @@
 package com.andryoga.composeapp.data.repository.interfaces
 
-import com.andryoga.composeapp.data.db.entity.BackupMetadataEntity
+import android.net.Uri
 import com.andryoga.composeapp.domain.models.backup.BackupPathData
 import kotlinx.coroutines.flow.Flow
 
 interface BackupMetadataRepository {
-    suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
+    suspend fun insertBackupMetadata(uriPath: Uri?)
     suspend fun deleteBackupMetadata()
     suspend fun updateLastBackupDate(date: Long)
     fun getBackupMetadata(): Flow<BackupPathData?>

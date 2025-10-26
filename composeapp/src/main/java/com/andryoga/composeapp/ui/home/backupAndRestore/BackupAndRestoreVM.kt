@@ -1,5 +1,6 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,6 +44,17 @@ class BackupAndRestoreVM @Inject constructor(
     }
 
     fun onScreenAction(action: ScreenAction) {
+        when (action) {
+            ScreenAction.BackupClick -> TODO()
+            is ScreenAction.BackupPathSelected -> handleBackupPathSelected(action.uri)
+            ScreenAction.EditBackupPathClick -> TODO()
+            ScreenAction.RestoreClick -> TODO()
+        }
+    }
 
+    private fun handleBackupPathSelected(uri: Uri?) {
+        viewModelScope.launch {
+            backupMetadataRepository.insertBackupMetadata(uriPath = uri)
+        }
     }
 }

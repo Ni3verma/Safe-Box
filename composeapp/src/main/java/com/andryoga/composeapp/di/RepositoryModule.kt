@@ -1,5 +1,6 @@
 package com.andryoga.composeapp.di
 
+import android.content.Context
 import com.andryoga.composeapp.data.db.dao.BackupMetadataDao
 import com.andryoga.composeapp.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.composeapp.data.db.secureDao.BankCardDataDaoSecure
@@ -21,6 +22,7 @@ import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Singleton
@@ -74,8 +76,9 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideBackupMetadataRepo(
+        @ApplicationContext context: Context,
         backupMetadataDao: BackupMetadataDao
     ): BackupMetadataRepository {
-        return BackupMetadataRepositoryImpl(backupMetadataDao)
+        return BackupMetadataRepositoryImpl(context, backupMetadataDao)
     }
 }
