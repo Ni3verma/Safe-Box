@@ -59,6 +59,7 @@
     <string name="allow">Allow</string>
     <string name="login">Login</string>
     <string name="signup">Sign Up</string>
+    <string name="retry">Retry</string>
 
 
     <!--    User data type text-->
@@ -89,7 +90,8 @@
     <string name="backup_time">Backup was last taken on %1$s</string>
     <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken everytime you login with password</string>
     <string name="backup_edit_path">Edit Path</string>
-    <string name="backup_in_progress_message">Backup is in-progress</string>
+    <string name="backup_in_progress_message">Backup is in-progress. Sit back and relax !</string>
+    <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
     <string name="backup_not_set_banner_message">Click here to set backup path</string>
 
     <!--     restore-->

@@ -1,6 +1,7 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore.components
 
 import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -45,8 +46,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupNotSet
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupSet
 import com.andryoga.composeapp.ui.home.backupAndRestore.Loading
@@ -57,12 +60,19 @@ import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import timber.log.Timber
 
-
 @Composable
 fun BackupView(
     uiState: ScreenState,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
+    val selectBackupPathLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+        onResult = { uri: Uri? ->
+            Timber.i("uri selected for backup = $uri")
+            onScreenAction(ScreenAction.BackupPathSelected(uri))
+        }
+    )
+
     Column(
         modifier = Modifier.padding(8.dp)
     ) {
@@ -76,14 +86,17 @@ fun BackupView(
 
         when (uiState.backupState) {
             is Loading -> BackupPathLoading()
-            is BackupNotSet -> BackupPathNotSet(onScreenAction = onScreenAction)
+            is BackupNotSet -> BackupPathNotSet(
+                onScreenAction = onScreenAction,
+                selectBackupPathLauncher = selectBackupPathLauncher
+            )
             is BackupSet -> BackupPathSet(
                 newBackupState = uiState.newBackupState,
+                selectBackupPathLauncher = selectBackupPathLauncher,
                 backupState = uiState.backupState,
                 onScreenAction = onScreenAction
             )
         }
-
     }
 }
 
@@ -98,21 +111,15 @@ private fun BackupPathLoading() {
             modifier = Modifier
                 .fillMaxWidth() // Important: Make the Box fill the Card's bounds
                 .padding(16.dp)
-        )
-        { CircularProgressIndicator() }
+        ) { CircularProgressIndicator() }
     }
 }
 
 @Composable
-private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree(),
-        onResult = { uri: Uri? ->
-            Timber.i("uri selected for backup = $uri")
-            onScreenAction(ScreenAction.BackupPathSelected(uri))
-        }
-    )
-
+private fun BackupPathNotSet(
+    onScreenAction: (ScreenAction) -> Unit,
+    selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>
+) {
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(
@@ -138,7 +145,7 @@ private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
                 style = MaterialTheme.typography.bodyLarge
             )
             Button(
-                onClick = { launcher.launch(null) },
+                onClick = { selectBackupPathLauncher.launch(null) },
             ) {
                 Text(text = stringResource(R.string.backup_set_location))
             }
@@ -149,8 +156,9 @@ private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
 @Composable
 private fun BackupPathSet(
     newBackupState: NewBackupState,
+    selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>,
     backupState: BackupSet,
-    onScreenAction: (ScreenAction) -> Unit
+    onScreenAction: (ScreenAction) -> Unit,
 ) {
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
@@ -166,7 +174,6 @@ private fun BackupPathSet(
                 modifier = Modifier.padding(bottom = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = stringResource(R.string.backup_set_message),
                     color = MaterialTheme.colorScheme.onSurface,
@@ -204,7 +211,9 @@ private fun BackupPathSet(
                     .fillMaxWidth()
             ) {
                 Button(
-                    onClick = { }
+                    onClick = {
+                        selectBackupPathLauncher.launch(null)
+                    }
                 ) {
                     Text(text = stringResource(R.string.backup_edit_path))
                 }
@@ -221,7 +230,7 @@ private fun BackupPathSet(
         NewBackupDialog(
             newBackupState = newBackupState,
             onScreenAction = onScreenAction,
-            onDismiss = { onScreenAction(ScreenAction.NewBackupCancel) }
+            onDismiss = { onScreenAction(ScreenAction.NewBackupDismiss) }
         )
     }
 }
@@ -233,11 +242,97 @@ private fun NewBackupDialog(
     onScreenAction: (ScreenAction) -> Unit,
     onDismiss: () -> Unit
 ) {
+    if (newBackupState == NewBackupState.NOT_STARTED) {
+        crashInDebugBuild("new backup dialog called in not started state")
+    }
+
     var password by remember {
         mutableStateOf(
             if (BuildConfig.DEBUG) "Qwerty@@135" else ""
         )
     }
+
+    val confirmButton: @Composable (() -> Unit) = when (newBackupState) {
+        NewBackupState.WRONG_PASSWORD, NewBackupState.FAILED, NewBackupState.ASK_FOR_PASSWORD -> {
+            {
+                val textResId = when (newBackupState) {
+                    NewBackupState.FAILED -> R.string.retry
+                    else -> R.string.confirm
+                }
+
+                TextButton(
+                    onClick = {
+                        onScreenAction(ScreenAction.NewBackupRequest(password))
+                    }
+                ) {
+                    Text(stringResource(textResId))
+                }
+            }
+        }
+
+        else -> {
+            {}
+        }
+    }
+
+    val cancelButton: @Composable (() -> Unit) = when (newBackupState) {
+        NewBackupState.WRONG_PASSWORD, NewBackupState.FAILED, NewBackupState.ASK_FOR_PASSWORD, NewBackupState.SUCCESS -> {
+            {
+                val textResId = when (newBackupState) {
+                    NewBackupState.SUCCESS -> R.string.common_ok
+                    else -> R.string.common_cancel
+                }
+
+                TextButton(
+                    onClick = onDismiss
+                ) {
+                    Text(stringResource(textResId))
+                }
+            }
+        }
+
+        else -> {
+            {}
+        }
+    }
+
+    val alertDialogText: @Composable (() -> Unit) = when (newBackupState) {
+        NewBackupState.WRONG_PASSWORD,
+        NewBackupState.FAILED,
+        NewBackupState.ASK_FOR_PASSWORD -> {
+            {
+                EnterPasswordView(
+                    newBackupState = newBackupState,
+                    password = password,
+                    onPasswordChange = { password = it }
+                )
+            }
+        }
+
+        NewBackupState.VALIDATING_PASSWORD, NewBackupState.IN_PROGRESS -> {
+            {
+                Text(
+                    text = stringResource(R.string.backup_in_progress_message),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        NewBackupState.SUCCESS -> {
+            {
+                Text(
+                    text = stringResource(R.string.backup_complete_message),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        NewBackupState.NOT_STARTED -> {
+            // ideally should never happen
+            {}
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
@@ -247,29 +342,12 @@ private fun NewBackupDialog(
                 modifier = Modifier.size(50.dp)
             )
         },
-        text = {
-            EnterPasswordView(
-                newBackupState = newBackupState,
-                password = password,
-                onPasswordChange = { password = it }
-            )
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onScreenAction(ScreenAction.NewBackupRequest(password))
-                }
-            ) {
-                Text(stringResource(R.string.confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss
-            ) {
-                Text(stringResource(R.string.common_cancel))
-            }
-        }
+        text = alertDialogText,
+        confirmButton = confirmButton,
+        dismissButton = cancelButton,
+        properties = DialogProperties(
+            dismissOnClickOutside = false,
+        )
     )
 }
 
@@ -294,7 +372,9 @@ fun EnterPasswordView(
                 )
             )
         }
-    } else null
+    } else {
+        null
+    }
 
     Column {
         Text("Please enter your current master password to create a new backup file.")

@@ -56,10 +56,9 @@ class BackupAndRestoreVM @Inject constructor(
         when (action) {
             ScreenAction.NewBackupClick -> updateNewBackupState(newBackupState = NewBackupState.ASK_FOR_PASSWORD)
             is ScreenAction.BackupPathSelected -> handleBackupPathSelected(action.uri)
-            ScreenAction.EditBackupPathClick -> TODO()
-            ScreenAction.RestoreClick -> TODO()
-            ScreenAction.NewBackupCancel -> updateNewBackupState(newBackupState = NewBackupState.NOT_STARTED)
+            ScreenAction.NewBackupDismiss -> updateNewBackupState(newBackupState = NewBackupState.NOT_STARTED)
             is ScreenAction.NewBackupRequest -> handleNewBackupRequest(action.password)
+            ScreenAction.RestoreClick -> TODO()
         }
     }
 

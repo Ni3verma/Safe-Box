@@ -2,7 +2,7 @@ package com.andryoga.composeapp.ui.home.backupAndRestore
 
 data class ScreenState(
     val backupState: BackupState = Loading(),
-    val newBackupState: NewBackupState = NewBackupState.ASK_FOR_PASSWORD,
+    val newBackupState: NewBackupState = NewBackupState.NOT_STARTED,
     val restoreState: RestoreState = RestoreState.NOT_STARTED
 )
 
