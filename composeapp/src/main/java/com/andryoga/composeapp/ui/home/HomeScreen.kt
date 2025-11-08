@@ -69,7 +69,8 @@ fun HomeScreen() {
     ) { innerPadding ->
         NavHost(
             navController = nestedNavController,
-            startDestination = HomeRouteType.RecordRoute,
+//            startDestination = HomeRouteType.RecordRoute,
+            startDestination = HomeRouteType.BackupAndRestoreRoute, //todo: revert
             modifier = Modifier.padding(innerPadding),
         ) {
             composable<HomeRouteType.RecordRoute> {

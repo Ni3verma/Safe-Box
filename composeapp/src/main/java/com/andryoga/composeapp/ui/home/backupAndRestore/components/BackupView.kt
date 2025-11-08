@@ -13,28 +13,44 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupNotSet
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupSet
 import com.andryoga.composeapp.ui.home.backupAndRestore.Loading
+import com.andryoga.composeapp.ui.home.backupAndRestore.NewBackupState
 import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenAction
 import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenState
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
@@ -62,6 +78,7 @@ fun BackupView(
             is Loading -> BackupPathLoading()
             is BackupNotSet -> BackupPathNotSet(onScreenAction = onScreenAction)
             is BackupSet -> BackupPathSet(
+                newBackupState = uiState.newBackupState,
                 backupState = uiState.backupState,
                 onScreenAction = onScreenAction
             )
@@ -130,7 +147,11 @@ private fun BackupPathNotSet(onScreenAction: (ScreenAction) -> Unit) {
 }
 
 @Composable
-private fun BackupPathSet(backupState: BackupSet, onScreenAction: (ScreenAction) -> Unit) {
+private fun BackupPathSet(
+    newBackupState: NewBackupState,
+    backupState: BackupSet,
+    onScreenAction: (ScreenAction) -> Unit
+) {
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
         colors = CardDefaults.cardColors(
@@ -188,12 +209,118 @@ private fun BackupPathSet(backupState: BackupSet, onScreenAction: (ScreenAction)
                     Text(text = stringResource(R.string.backup_edit_path))
                 }
                 Button(
-                    onClick = { }
+                    onClick = { onScreenAction(ScreenAction.NewBackupClick) }
                 ) {
                     Text(text = stringResource(R.string.backup))
                 }
             }
         }
+    }
+
+    if (newBackupState != NewBackupState.NOT_STARTED) {
+        NewBackupDialog(
+            newBackupState = newBackupState,
+            onScreenAction = onScreenAction,
+            onDismiss = { onScreenAction(ScreenAction.NewBackupCancel) }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NewBackupDialog(
+    newBackupState: NewBackupState,
+    onScreenAction: (ScreenAction) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var password by remember {
+        mutableStateOf(
+            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
+        )
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.SettingsBackupRestore,
+                contentDescription = null,
+                modifier = Modifier.size(50.dp)
+            )
+        },
+        text = {
+            EnterPasswordView(
+                newBackupState = newBackupState,
+                password = password,
+                onPasswordChange = { password = it }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onScreenAction(ScreenAction.NewBackupRequest(password))
+                }
+            ) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text(stringResource(R.string.common_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+fun EnterPasswordView(
+    newBackupState: NewBackupState,
+    password: String,
+    onPasswordChange: (String) -> Unit
+) {
+    var passwordVisible by remember { mutableStateOf(false) }
+    val isError =
+        newBackupState == NewBackupState.WRONG_PASSWORD || newBackupState == NewBackupState.FAILED
+    val supportingText: @Composable (() -> Unit)? = if (isError) {
+        {
+            Text(
+                text = stringResource(
+                    if (newBackupState == NewBackupState.WRONG_PASSWORD) {
+                        R.string.incorrect_pswrd_message
+                    } else {
+                        R.string.backup_failed_message
+                    }
+                )
+            )
+        }
+    } else null
+
+    Column {
+        Text("Please enter your current master password to create a new backup file.")
+
+        OutlinedTextField(
+            value = password,
+            onValueChange = { onPasswordChange(it) },
+            label = { Text(stringResource(R.string.password)) },
+            singleLine = true,
+            isError = isError,
+            supportingText = supportingText,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val image =
+                    if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        image,
+                        contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility)
+                    )
+                }
+            },
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .fillMaxWidth()
+        )
     }
 }
 

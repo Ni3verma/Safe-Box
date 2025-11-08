@@ -2,7 +2,6 @@ package com.andryoga.composeapp.worker
 
 import android.content.Context
 import android.net.Uri
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.composeapp.common.AnalyticsKeys.RESTORE_FAILED
@@ -30,7 +29,6 @@ import com.google.firebase.analytics.analytics
 import com.google.firebase.analytics.logEvent
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -39,8 +37,7 @@ import java.io.ObjectInputStream
 import java.util.Date
 import javax.crypto.BadPaddingException
 
-@HiltWorker
-@ExperimentalCoroutinesApi
+//@HiltWorker
 class RestoreDataWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,

@@ -102,6 +102,7 @@
     <!--     master password dialog-->
     <string name="master_password">Master Password</string>
     <string name="incorrect_pswrd_message">Password is incorrect !</string>
+    <string name="backup_failed_message">Something went wrong! Please try again later.</string>
 
     <!--    Notification-->
     <string name="notification_backup_channel_id">backup data safebox</string>

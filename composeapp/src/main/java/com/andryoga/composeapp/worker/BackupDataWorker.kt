@@ -2,11 +2,12 @@ package com.andryoga.composeapp.worker
 
 import android.app.NotificationManager
 import android.content.Context
-import android.net.Uri
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.ListenableWorker
+import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.AnalyticsKeys.BACKUP_FAILED
@@ -30,10 +31,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.analytics
 import com.google.firebase.analytics.logEvent
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -42,20 +40,46 @@ import timber.log.Timber
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.util.Date
+import javax.inject.Inject
 
-@HiltWorker
-@ExperimentalCoroutinesApi
-class BackupDataWorker
-@AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
+class BackupDataWorkerFactory @Inject constructor(
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+) : WorkerFactory() {
+    override fun createWorker(
+        appContext: Context,
+        workerClassName: String,
+        workerParameters: WorkerParameters
+    ): ListenableWorker? {
+        return BackupDataWorker(
+            appContext,
+            workerParameters,
+            symmetricKeyUtils,
+            backupMetadataRepository,
+            passwordBasedEncryption,
+            loginDataDaoSecure,
+            bankAccountDataDaoSecure,
+            bankCardDataDaoSecure,
+            secureNoteDataDaoSecure
+        )
+    }
+}
+
+class BackupDataWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupMetadataRepository: BackupMetadataRepository,
+    private val passwordBasedEncryption: PasswordBasedEncryption,
+    private val loginDataDaoSecure: LoginDataDaoSecure,
+    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
+    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -125,7 +149,7 @@ class BackupDataWorker
                     try {
                         val pickedDir = DocumentFile.fromTreeUri(
                             applicationContext,
-                            Uri.parse(backupMetadata.uriString)
+                            backupMetadata.uriString.toUri()
                         )!!
 
                         deleteExtraBackupFiles(pickedDir)
@@ -141,7 +165,7 @@ class BackupDataWorker
             }
         }
 
-        return Result.Success()
+        return Result.success()
     }
 
     private suspend fun onBackupError(exception: Exception) {
