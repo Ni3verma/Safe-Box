@@ -5,6 +5,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -26,14 +28,29 @@ private val items = listOf(
 )
 
 @Composable
-fun BottomNavBar(nestedNavController: NavHostController) {
+fun BottomNavBar(nestedNavController: NavHostController, isBackupPathSet: Boolean) {
     NavigationBar {
         val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = stringResource(item.titleRes)) },
+                icon = {
+                    // for the backup and restore icon, show a warning badge if backup path is not set
+                    if (item == BottomNavItem.BackupAndRestore) {
+                        BadgedBox(
+                            badge = {
+                                if (!isBackupPathSet) {
+                                    Badge(content = { Text("!") })
+                                }
+                            }
+                        ) {
+                            Icon(item.icon, contentDescription = stringResource(item.titleRes))
+                        }
+                    } else {
+                        Icon(item.icon, contentDescription = stringResource(item.titleRes))
+                    }
+                },
                 label = { Text(stringResource(item.titleRes)) },
                 selected = currentRoute == item.route::class.qualifiedName,
                 onClick = {

@@ -44,6 +44,8 @@ fun HomeScreen() {
     val topBarState by mainViewModel.topBarState.collectAsState()
     val currentConfig = (topBarState as? TopBarState.Visible)?.config
 
+    val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
+
     // Use a 'when' block to select the BEHAVIOR and its CONNECTION for the current screen.
     val (scrollBehavior, nestedScrollConnection) = when (currentConfig?.scrollBehaviorType) {
         ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
@@ -62,7 +64,7 @@ fun HomeScreen() {
         },
         bottomBar = {
             if (isUserOnHomeRouteScreen(currentRoute?.route)) {
-                BottomNavBar(nestedNavController)
+                BottomNavBar(nestedNavController, isBackupPathSet)
             }
         },
         modifier = Modifier.nestedScroll(nestedScrollConnection)
