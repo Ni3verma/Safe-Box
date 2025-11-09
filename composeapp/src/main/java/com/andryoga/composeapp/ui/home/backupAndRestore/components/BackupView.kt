@@ -14,55 +14,37 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.SettingsBackupRestore
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
-import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.common.Utils.crashInDebugBuild
-import com.andryoga.composeapp.ui.home.backupAndRestore.BackupNotSet
-import com.andryoga.composeapp.ui.home.backupAndRestore.BackupSet
+import com.andryoga.composeapp.ui.home.backupAndRestore.BackupPathNotSet
+import com.andryoga.composeapp.ui.home.backupAndRestore.BackupPathSet
+import com.andryoga.composeapp.ui.home.backupAndRestore.BackupState
 import com.andryoga.composeapp.ui.home.backupAndRestore.Loading
-import com.andryoga.composeapp.ui.home.backupAndRestore.NewBackupState
 import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenAction
-import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenState
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import timber.log.Timber
 
 @Composable
 fun BackupView(
-    uiState: ScreenState,
+    backupState: BackupState,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
     val selectBackupPathLauncher = rememberLauncherForActivityResult(
@@ -84,16 +66,16 @@ fun BackupView(
         )
         HorizontalDivider()
 
-        when (uiState.backupState) {
+        when (backupState) {
             is Loading -> BackupPathLoading()
-            is BackupNotSet -> BackupPathNotSet(
+            is BackupPathNotSet -> BackupPathNotSet(
                 onScreenAction = onScreenAction,
                 selectBackupPathLauncher = selectBackupPathLauncher
             )
-            is BackupSet -> BackupPathSet(
-                newBackupState = uiState.newBackupState,
+
+            is BackupPathSet -> BackupPathSet(
                 selectBackupPathLauncher = selectBackupPathLauncher,
-                backupState = uiState.backupState,
+                backupState = backupState,
                 onScreenAction = onScreenAction
             )
         }
@@ -155,9 +137,8 @@ private fun BackupPathNotSet(
 
 @Composable
 private fun BackupPathSet(
-    newBackupState: NewBackupState,
     selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>,
-    backupState: BackupSet,
+    backupState: BackupPathSet,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
     Card(
@@ -225,183 +206,6 @@ private fun BackupPathSet(
             }
         }
     }
-
-    if (newBackupState != NewBackupState.NOT_STARTED) {
-        NewBackupDialog(
-            newBackupState = newBackupState,
-            onScreenAction = onScreenAction,
-            onDismiss = { onScreenAction(ScreenAction.NewBackupDismiss) }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NewBackupDialog(
-    newBackupState: NewBackupState,
-    onScreenAction: (ScreenAction) -> Unit,
-    onDismiss: () -> Unit
-) {
-    if (newBackupState == NewBackupState.NOT_STARTED) {
-        crashInDebugBuild("new backup dialog called in not started state")
-    }
-
-    var password by remember {
-        mutableStateOf(
-            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
-        )
-    }
-
-    val confirmButton: @Composable (() -> Unit) = when (newBackupState) {
-        NewBackupState.WRONG_PASSWORD, NewBackupState.FAILED, NewBackupState.ASK_FOR_PASSWORD -> {
-            {
-                val textResId = when (newBackupState) {
-                    NewBackupState.FAILED -> R.string.retry
-                    else -> R.string.confirm
-                }
-
-                TextButton(
-                    onClick = {
-                        onScreenAction(ScreenAction.NewBackupRequest(password))
-                    }
-                ) {
-                    Text(stringResource(textResId))
-                }
-            }
-        }
-
-        else -> {
-            {}
-        }
-    }
-
-    val cancelButton: @Composable (() -> Unit) = when (newBackupState) {
-        NewBackupState.WRONG_PASSWORD, NewBackupState.FAILED, NewBackupState.ASK_FOR_PASSWORD, NewBackupState.SUCCESS -> {
-            {
-                val textResId = when (newBackupState) {
-                    NewBackupState.SUCCESS -> R.string.common_ok
-                    else -> R.string.common_cancel
-                }
-
-                TextButton(
-                    onClick = onDismiss
-                ) {
-                    Text(stringResource(textResId))
-                }
-            }
-        }
-
-        else -> {
-            {}
-        }
-    }
-
-    val alertDialogText: @Composable (() -> Unit) = when (newBackupState) {
-        NewBackupState.WRONG_PASSWORD,
-        NewBackupState.FAILED,
-        NewBackupState.ASK_FOR_PASSWORD -> {
-            {
-                EnterPasswordView(
-                    newBackupState = newBackupState,
-                    password = password,
-                    onPasswordChange = { password = it }
-                )
-            }
-        }
-
-        NewBackupState.VALIDATING_PASSWORD, NewBackupState.IN_PROGRESS -> {
-            {
-                Text(
-                    text = stringResource(R.string.backup_in_progress_message),
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
-        NewBackupState.SUCCESS -> {
-            {
-                Text(
-                    text = stringResource(R.string.backup_complete_message),
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-
-        NewBackupState.NOT_STARTED -> {
-            // ideally should never happen
-            {}
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                Icons.Default.SettingsBackupRestore,
-                contentDescription = null,
-                modifier = Modifier.size(50.dp)
-            )
-        },
-        text = alertDialogText,
-        confirmButton = confirmButton,
-        dismissButton = cancelButton,
-        properties = DialogProperties(
-            dismissOnClickOutside = false,
-        )
-    )
-}
-
-@Composable
-fun EnterPasswordView(
-    newBackupState: NewBackupState,
-    password: String,
-    onPasswordChange: (String) -> Unit
-) {
-    var passwordVisible by remember { mutableStateOf(false) }
-    val isError =
-        newBackupState == NewBackupState.WRONG_PASSWORD || newBackupState == NewBackupState.FAILED
-    val supportingText: @Composable (() -> Unit)? = if (isError) {
-        {
-            Text(
-                text = stringResource(
-                    if (newBackupState == NewBackupState.WRONG_PASSWORD) {
-                        R.string.incorrect_pswrd_message
-                    } else {
-                        R.string.backup_failed_message
-                    }
-                )
-            )
-        }
-    } else {
-        null
-    }
-
-    Column {
-        Text("Please enter your current master password to create a new backup file.")
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = { onPasswordChange(it) },
-            label = { Text(stringResource(R.string.password)) },
-            singleLine = true,
-            isError = isError,
-            supportingText = supportingText,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                val image =
-                    if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        image,
-                        contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility)
-                    )
-                }
-            },
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth()
-        )
-    }
 }
 
 @LightDarkModePreview
@@ -409,7 +213,7 @@ fun EnterPasswordView(
 private fun BackupScreenLoadingPreview() {
     SafeBoxTheme {
         BackupView(
-            uiState = ScreenState(),
+            backupState = Loading,
             onScreenAction = {}
         )
     }
@@ -420,11 +224,9 @@ private fun BackupScreenLoadingPreview() {
 private fun BackupScreenPathSetPreview() {
     SafeBoxTheme {
         BackupView(
-            uiState = ScreenState(
-                backupState = BackupSet(
-                    backupPath = "/tree/primary:Safebox debug",
-                    backupTime = "28 Sep 2025 05:04 PM"
-                )
+            backupState = BackupPathSet(
+                backupPath = "/tree/primary:Safebox debug",
+                backupTime = "28 Sep 2025 05:04 PM"
             ),
             onScreenAction = {}
         )
@@ -436,7 +238,7 @@ private fun BackupScreenPathSetPreview() {
 private fun BackupScreenPathNotSetPreview() {
     SafeBoxTheme {
         BackupView(
-            uiState = ScreenState(backupState = BackupNotSet()),
+            backupState = BackupPathNotSet(),
             onScreenAction = {}
         )
     }

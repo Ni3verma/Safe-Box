@@ -1,5 +1,8 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore.components
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -14,15 +17,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenAction
-import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenState
+import timber.log.Timber
 
 
 @Composable
 fun RestoreView(
-    uiState: ScreenState,
-    onScreenAction: (ScreenAction) -> Unit,
+    onRestoreFileSelected: (uri: Uri?) -> Unit
 ) {
+    val selectRestoreFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri: Uri? ->
+            Timber.i("uri selected for restore = $uri")
+            onRestoreFileSelected(uri)
+        }
+    )
+
     Column(
         modifier = Modifier.padding(8.dp)
     ) {
@@ -47,7 +56,7 @@ fun RestoreView(
                 Button(
                     onClick = {
 //                        setIsUserAwayTimeoutSuspended(true)
-//                        selectFileReq.launch(arrayOf("*/*"))
+                        selectRestoreFileLauncher.launch(arrayOf("*/*"))
                     },
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)

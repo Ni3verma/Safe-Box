@@ -6,8 +6,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
-import androidx.work.ListenableWorker
-import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.AnalyticsKeys.BACKUP_FAILED
@@ -40,35 +38,6 @@ import timber.log.Timber
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.util.Date
-import javax.inject.Inject
-
-class BackupDataWorkerFactory @Inject constructor(
-    private val symmetricKeyUtils: SymmetricKeyUtils,
-    private val backupMetadataRepository: BackupMetadataRepository,
-    private val passwordBasedEncryption: PasswordBasedEncryption,
-    private val loginDataDaoSecure: LoginDataDaoSecure,
-    private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
-    private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
-) : WorkerFactory() {
-    override fun createWorker(
-        appContext: Context,
-        workerClassName: String,
-        workerParameters: WorkerParameters
-    ): ListenableWorker? {
-        return BackupDataWorker(
-            appContext,
-            workerParameters,
-            symmetricKeyUtils,
-            backupMetadataRepository,
-            passwordBasedEncryption,
-            loginDataDaoSecure,
-            bankAccountDataDaoSecure,
-            bankCardDataDaoSecure,
-            secureNoteDataDaoSecure
-        )
-    }
-}
 
 class BackupDataWorker(
     context: Context,

@@ -3,7 +3,7 @@ package com.andryoga.composeapp
 import android.app.Application
 import android.util.Log
 import androidx.work.Configuration
-import com.andryoga.composeapp.worker.BackupDataWorkerFactory
+import com.andryoga.composeapp.worker.SafeBoxWorkerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
@@ -12,16 +12,15 @@ import java.util.Locale
 import javax.inject.Inject
 
 @HiltAndroidApp
-class MainApplication : Application(),
-    Configuration.Provider {
+class MainApplication : Application(), Configuration.Provider {
 
     @Inject
-    lateinit var workerFactory: BackupDataWorkerFactory
+    lateinit var safeBoxWorkerFactory: SafeBoxWorkerFactory
 
     override val workManagerConfiguration: Configuration
         get() =
             Configuration.Builder()
-                .setWorkerFactory(workerFactory)
+                .setWorkerFactory(safeBoxWorkerFactory)
                 .setMinimumLoggingLevel(Log.INFO)
                 .build()
 

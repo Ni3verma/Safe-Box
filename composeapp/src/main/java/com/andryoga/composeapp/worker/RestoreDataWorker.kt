@@ -27,8 +27,6 @@ import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
 import com.google.firebase.analytics.logEvent
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -37,10 +35,9 @@ import java.io.ObjectInputStream
 import java.util.Date
 import javax.crypto.BadPaddingException
 
-//@HiltWorker
-class RestoreDataWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
+class RestoreDataWorker constructor(
+    context: Context,
+    params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val safeBoxDatabase: SafeBoxDatabase,

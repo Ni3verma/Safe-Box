@@ -1,30 +1,35 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore
 
+import android.net.Uri
+
 data class ScreenState(
-    val backupState: BackupState = Loading(),
-    val newBackupState: NewBackupState = NewBackupState.NOT_STARTED,
-    val restoreState: RestoreState = RestoreState.NOT_STARTED
+    // this controls what to show on the UI in the backup section.
+    val backupState: BackupState = Loading,
+
+    // this controls when to start the new backup or restore workflow.
+    val newBackupOrRestoreScreenState: NewBackupOrRestoreScreenState = NewBackupOrRestoreScreenState.NotStarted,
 )
 
 sealed class BackupState
-class Loading : BackupState()
-class BackupNotSet : BackupState()
-class BackupSet(val backupPath: String, val backupTime: String) : BackupState()
 
-enum class NewBackupState {
-    NOT_STARTED,
-    ASK_FOR_PASSWORD,
-    VALIDATING_PASSWORD,
-    WRONG_PASSWORD,
-    IN_PROGRESS,
-    SUCCESS,
-    FAILED
-}
+// initial state. we are checking if backup path is set or not.
+object Loading : BackupState()
 
-enum class RestoreState {
-    NOT_STARTED,
-    ASK_FOR_PASSWORD,
-    IN_PROGRESS,
-    SUCCESS,
-    FAILED
+// backup path is not set, so show UI where user can set a new backup path.
+class BackupPathNotSet : BackupState()
+
+// backup path is already set by the user.
+class BackupPathSet(val backupPath: String, val backupTime: String) : BackupState()
+
+sealed class NewBackupOrRestoreScreenState {
+    // workflow is not yet started. This is the default state.
+    object NotStarted : NewBackupOrRestoreScreenState()
+
+    // workflow needs to be started to take a new backup.
+    object StartedForBackup : NewBackupOrRestoreScreenState()
+
+    // workflow needs to be started to restore a file.
+    data class StartedForRestore(
+        val fileUri: Uri?
+    ) : NewBackupOrRestoreScreenState()
 }
