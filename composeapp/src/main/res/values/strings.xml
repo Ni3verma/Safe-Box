@@ -100,7 +100,7 @@
     <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
     <string name="new_restore_dialog_body_text">Please enter the password that was used to make the backup file.</string>
     <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
-    <string name="restore_complete_message">Successfully restored data.</string>
+    <string name="restore_complete_message">Data has been successfully restored.</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
 
     <!--     master password dialog-->

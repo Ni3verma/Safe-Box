@@ -35,7 +35,7 @@ import java.io.ObjectInputStream
 import java.util.Date
 import javax.crypto.BadPaddingException
 
-class RestoreDataWorker constructor(
+class RestoreDataWorker(
     context: Context,
     params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,

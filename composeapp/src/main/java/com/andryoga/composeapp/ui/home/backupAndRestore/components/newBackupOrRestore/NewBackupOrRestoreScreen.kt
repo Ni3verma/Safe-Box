@@ -5,12 +5,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircleOutline
+import androidx.compose.material.icons.filled.Downloading
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,13 +74,7 @@ private fun NewBackupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                Icons.Default.SettingsBackupRestore,
-                contentDescription = null,
-                modifier = Modifier.size(50.dp)
-            )
-        },
+        icon = dialogIconComposable(workflowState),
         text = dialogBodyText(operation, workflowState, password) { password = it },
         confirmButton = confirmButtonComposable(workflowState, onScreenAction, password),
         dismissButton = cancelButtonComposable(workflowState, onDismiss),
@@ -86,11 +85,56 @@ private fun NewBackupDialog(
 }
 
 @Composable
+private fun dialogIconComposable(
+    workflowState: WorkflowState,
+): @Composable (() -> Unit) {
+    val modifier = Modifier.size(50.dp)
+    return {
+        when (workflowState) {
+            WorkflowState.ASK_FOR_PASSWORD -> Icon(
+                Icons.Filled.SettingsBackupRestore,
+                contentDescription = null,
+                modifier = modifier,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            WorkflowState.WRONG_PASSWORD -> Icon(
+                Icons.Filled.WarningAmber,
+                contentDescription = null,
+                modifier = modifier,
+                tint = MaterialTheme.colorScheme.error
+            )
+
+            WorkflowState.IN_PROGRESS -> Icon(
+                Icons.Filled.Downloading,
+                contentDescription = null,
+                modifier = modifier,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            WorkflowState.SUCCESS -> Icon(
+                Icons.Filled.CheckCircleOutline,
+                contentDescription = null,
+                modifier = modifier,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            WorkflowState.FAILED -> Icon(
+                Icons.Filled.ErrorOutline,
+                contentDescription = null,
+                modifier = modifier,
+                tint = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
 private fun cancelButtonComposable(
     workflowState: WorkflowState,
     onDismiss: () -> Unit
 ): @Composable (() -> Unit) {
-    val cancelButton: @Composable (() -> Unit) = when (workflowState) {
+    return when (workflowState) {
         WorkflowState.WRONG_PASSWORD, WorkflowState.FAILED, WorkflowState.ASK_FOR_PASSWORD, WorkflowState.SUCCESS -> {
             {
                 val textResId = when (workflowState) {
@@ -110,7 +154,6 @@ private fun cancelButtonComposable(
             {}
         }
     }
-    return cancelButton
 }
 
 @Composable
