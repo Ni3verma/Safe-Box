@@ -15,8 +15,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ShareCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.TopAppBarConfig
@@ -33,6 +35,7 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import com.andryoga.composeapp.ui.utils.OnStart
+import timber.log.Timber
 
 @Composable
 fun SingleRecordScreenRoot(
@@ -42,6 +45,7 @@ fun SingleRecordScreenRoot(
     val viewModel = hiltViewModel<SingleRecordViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val context = LocalContext.current
 
     OnStart {
         val config = TopAppBarConfig(
@@ -60,6 +64,16 @@ fun SingleRecordScreenRoot(
     LaunchedEffect(Unit) {
         viewModel.screenCloseEvent.collect {
             onScreenClose()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.shareContentEvent.collect { dataToShare ->
+            Timber.i("starting intent to share data")
+            ShareCompat.IntentBuilder(context)
+                .setType("text/plain")
+                .setText(dataToShare)
+                .startChooser()
         }
     }
 

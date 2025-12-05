@@ -60,17 +60,17 @@ class LoginLayoutImpl(
             fieldUiState = mapOf(
                 FieldId.LOGIN_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.title, isMandatory = true
+                        label = R.string.title, isMandatory = true, isCopyable = true,
                     ),
                     data = recordData?.title.orEmpty()
                 ),
                 FieldId.LOGIN_URL to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.url),
+                    cell = FieldUiState.Cell(label = R.string.url, isCopyable = true),
                     data = recordData?.url.orEmpty()
                 ),
                 FieldId.LOGIN_USER_ID to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.user_id, isMandatory = true
+                        label = R.string.user_id, isMandatory = true, isCopyable = true,
                     ),
                     data = recordData?.userId.orEmpty()
                 ),

@@ -54,13 +54,17 @@ class NoteLayoutImpl(
             fieldUiState = mapOf(
                 FieldId.NOTE_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.title, isMandatory = true
+                        label = R.string.title, isMandatory = true, isCopyable = true,
                     ),
                     data = recordData?.title.orEmpty()
                 ),
                 FieldId.NOTE_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.notes, isMandatory = true, singleLine = false, minLines = 5
+                        label = R.string.notes,
+                        isMandatory = true,
+                        singleLine = false,
+                        minLines = 5,
+                        isCopyable = true,
                     ),
                     data = recordData?.notes.orEmpty()
                 ),

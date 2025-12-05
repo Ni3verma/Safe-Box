@@ -67,19 +67,19 @@ class BankCardLayoutImpl(
             fieldUiState = mapOf(
                 FieldId.CARD_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.title, isMandatory = true
+                        label = R.string.title, isMandatory = true, isCopyable = true,
                     ),
                     data = recordData?.title.orEmpty()
                 ),
                 FieldId.CARD_NAME to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.name),
+                    cell = FieldUiState.Cell(label = R.string.name, isCopyable = true),
                     data = recordData?.name.orEmpty()
                 ),
                 FieldId.CARD_NUMBER to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.number,
                         isMandatory = true,
-                        keyboardType = KeyboardType.Number,
+                        keyboardType = KeyboardType.Number, isCopyable = true,
                     ),
                     data = recordData?.number.orEmpty()
                 ),
@@ -99,7 +99,9 @@ class BankCardLayoutImpl(
                 ),
                 FieldId.CARD_EXPIRY_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.expiryDate, keyboardType = KeyboardType.Number
+                        label = R.string.expiryDate,
+                        keyboardType = KeyboardType.Number,
+                        isCopyable = true,
                     ),
                     data = recordData?.expiryDate.orEmpty()
                 ),

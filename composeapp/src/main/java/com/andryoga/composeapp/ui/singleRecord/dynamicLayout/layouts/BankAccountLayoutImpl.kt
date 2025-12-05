@@ -75,7 +75,7 @@ class BankAccountLayoutImpl(
             fieldUiState = mapOf(
                 FieldId.BANK_ACCOUNT_TITLE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.title, isMandatory = true
+                        label = R.string.title, isMandatory = true, isCopyable = true,
                     ),
                     data = recordData?.title.orEmpty()
                 ),
@@ -83,12 +83,12 @@ class BankAccountLayoutImpl(
                     cell = FieldUiState.Cell(
                         label = R.string.account_number,
                         isMandatory = true,
-                        keyboardType = KeyboardType.Number
+                        keyboardType = KeyboardType.Number, isCopyable = true,
                     ),
                     data = recordData?.accountNo.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_CUSTOMER_NAME to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.customer_name),
+                    cell = FieldUiState.Cell(label = R.string.customer_name, isCopyable = true),
                     data = recordData?.customerName.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_CUSTOMER_ID to FieldUiState(
@@ -96,19 +96,19 @@ class BankAccountLayoutImpl(
                     data = recordData?.customerId.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_BRANCH_CODE to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.branch_code),
+                    cell = FieldUiState.Cell(label = R.string.branch_code, isCopyable = true),
                     data = recordData?.branchCode.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_BRANCH_NAME to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.branch_name),
+                    cell = FieldUiState.Cell(label = R.string.branch_name, isCopyable = true),
                     data = recordData?.branchName.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_BRANCH_ADDRESS to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.branch_address),
+                    cell = FieldUiState.Cell(label = R.string.branch_address, isCopyable = true),
                     data = recordData?.branchAddress.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_IFSC_CODE to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.ifsc_code),
+                    cell = FieldUiState.Cell(label = R.string.ifsc_code, isCopyable = true),
                     data = recordData?.ifscCode.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_MICR_CODE to FieldUiState(

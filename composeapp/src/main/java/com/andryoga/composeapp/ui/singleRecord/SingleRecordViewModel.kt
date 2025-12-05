@@ -6,14 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -33,6 +36,9 @@ class SingleRecordViewModel @Inject constructor(
 
     private val _screenCloseEvent = MutableSharedFlow<Unit>()
     val screenCloseEvent = _screenCloseEvent.asSharedFlow()
+
+    private val _shareContentEvent = MutableSharedFlow<String>()
+    val shareContentEvent: SharedFlow<String> = _shareContentEvent.asSharedFlow()
     private val layout: Layout
 
     init {
@@ -106,7 +112,7 @@ class SingleRecordViewModel @Inject constructor(
                 }
             }
 
-            SingleRecordScreenAction.OnShareClicked -> TODO()
+            SingleRecordScreenAction.OnShareClicked -> handleShareRecord()
         }
     }
 
@@ -118,6 +124,34 @@ class SingleRecordViewModel @Inject constructor(
                 _screenCloseEvent.emit(Unit)
             }
         }
+    }
+
+    private fun handleShareRecord() {
+        viewModelScope.launch(Dispatchers.IO) {
+            Timber.i("making copyable content")
+            val dataStringBuffer = StringBuffer()
+
+            layout.getLayoutPlan().fieldUiState.filter { (_, uiState) ->
+                uiState.data.isEmpty().not() &&
+                        uiState.cell.isCopyable &&
+                        uiState.cell.isPasswordField.not()
+            }.forEach { _, uiState ->
+                val cellTitle = context.getString(uiState.cell.label)
+                dataStringBuffer.append("$cellTitle : ${uiState.data}\n")
+            }
+
+            dataStringBuffer.append(
+                "---------------\n${
+                    context.getString(
+                        R.string.common_app_playstore_download,
+                        APP_PLAYSTORE_LINK
+                    )
+                }"
+            )
+
+            _shareContentEvent.emit(dataStringBuffer.toString())
+        }
+
     }
 
     private fun goBackToViewMode() {
