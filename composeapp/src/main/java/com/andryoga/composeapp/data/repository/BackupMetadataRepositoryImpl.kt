@@ -54,6 +54,10 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         backupMetadataDao.updateLastBackupDate(date)
     }
 
+    override suspend fun isBackupPathSet(): Boolean {
+        return backupMetadataDao.isBackupPathSet() != 0
+    }
+
     override fun getBackupMetadata(): Flow<BackupPathData?> {
         return backupMetadataDao.getBackupMetadata().map { entity ->
             entity?.let {

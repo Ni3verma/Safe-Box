@@ -8,5 +8,6 @@ interface BackupMetadataRepository {
     suspend fun insertBackupMetadata(uriPath: Uri?)
     suspend fun deleteBackupMetadata()
     suspend fun updateLastBackupDate(date: Long)
+    suspend fun isBackupPathSet(): Boolean
     fun getBackupMetadata(): Flow<BackupPathData?>
 }

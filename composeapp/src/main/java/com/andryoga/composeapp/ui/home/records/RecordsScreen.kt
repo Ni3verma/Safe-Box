@@ -2,6 +2,7 @@
 
 package com.andryoga.composeapp.ui.home.records
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,7 +13,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.domain.models.record.RecordListItem
@@ -21,15 +26,19 @@ import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.ScrollBehaviorType
 import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
+import com.andryoga.composeapp.ui.home.records.components.NotificationPermissionRationaleDialog
 import com.andryoga.composeapp.ui.home.records.components.RecordItem
 import com.andryoga.composeapp.ui.home.records.components.RecordTypeFilterRow
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarActions
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarNavIcon
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarTitle
+import com.andryoga.composeapp.ui.home.records.components.shouldShowNotificationPermissionRationaleDialog
+import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import com.andryoga.composeapp.ui.utils.OnStart
+import timber.log.Timber
 
 @Composable
 fun RecordsScreenRoot(
@@ -40,6 +49,7 @@ fun RecordsScreenRoot(
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val records by viewModel.records.collectAsState()
+    val notificationPermissionState by viewModel.notificationPermissionState.collectAsState()
 
     OnStart {
         val config = TopAppBarConfig(
@@ -53,6 +63,7 @@ fun RecordsScreenRoot(
 
     RecordsScreen(
         uiState = uiState,
+        notificationPermissionState = notificationPermissionState,
         records = records,
         onScreenAction = { action ->
             when (action) {
@@ -67,6 +78,7 @@ fun RecordsScreenRoot(
 @Composable
 private fun RecordsScreen(
     uiState: RecordsUiState,
+    notificationPermissionState: NotificationPermissionState,
     records: List<RecordListItem>,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
@@ -88,14 +100,43 @@ private fun RecordsScreen(
                 items = records,
                 key = { it.key }
             ) { record ->
-                RecordItem(item = record, onRecordClick = { id, recordType ->
-                    onScreenAction(
-                        RecordScreenAction.OnRecordClick(id, recordType)
-                    )
-                }
+                RecordItem(
+                    item = record,
+                    onRecordClick = { id, recordType ->
+                        onScreenAction(
+                            RecordScreenAction.OnRecordClick(id, recordType)
+                        )
+                    }
                 )
             }
+        }
 
+        var showNotificationPermissionRationaleDialog by rememberSaveable { mutableStateOf(true) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shouldShowNotificationPermissionRationaleDialog(
+                showNotificationPermissionRationaleDialog,
+                notificationPermissionState,
+                LocalContext.current
+            )
+        ) {
+            NotificationPermissionRationaleDialog(
+                isNotificationPermissionAskedBefore = notificationPermissionState.isNotificationPermissionAskedBefore,
+                onPermissionAskedFirstTime = {
+                    // update is notification asked before in pref
+                    showNotificationPermissionRationaleDialog = false
+                    onScreenAction(RecordScreenAction.OnNotificationPermissionAskedForFirstTime)
+                },
+                onCancelClick = { neverAsk ->
+                    showNotificationPermissionRationaleDialog = false
+                    Timber.i("notification permission rationale dialog cancelled, never ask = $neverAsk")
+                    if (neverAsk) {
+                        onScreenAction(RecordScreenAction.OnNeverAskForNotificationPermission)
+                    }
+                },
+                dismissDialogAction = {
+                    showNotificationPermissionRationaleDialog = false
+                }
+            )
         }
     }
 
@@ -143,8 +184,9 @@ private fun RecordsScreenPreview() {
     SafeBoxTheme {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false),
+            notificationPermissionState = NotificationPermissionState(),
             records = getRecordList(),
-            onScreenAction = {}
+            onScreenAction = {},
         )
     }
 }
@@ -158,8 +200,9 @@ private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
                 isLoading = false,
                 isShowAddNewRecordsBottomSheet = true
             ),
+            notificationPermissionState = NotificationPermissionState(),
             records = getRecordList(),
-            onScreenAction = {}
+            onScreenAction = {},
         )
     }
 }
@@ -170,8 +213,9 @@ fun RecordsScreenNoRecordsPreview() {
     SafeBoxTheme {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false),
+            notificationPermissionState = NotificationPermissionState(),
             records = emptyList(),
-            onScreenAction = {}
+            onScreenAction = {},
         )
     }
 }
@@ -182,8 +226,9 @@ fun RecordsScreenLoadingRecordsPreview() {
     SafeBoxTheme {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = true),
+            notificationPermissionState = NotificationPermissionState(),
             records = emptyList(),
-            onScreenAction = {}
+            onScreenAction = {},
         )
     }
 }

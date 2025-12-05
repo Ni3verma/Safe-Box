@@ -2,7 +2,10 @@ package com.andryoga.composeapp.ui.home.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.composeapp.common.CommonConstants.IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION
+import com.andryoga.composeapp.common.CommonConstants.IS_NOTIFICATION_PERMISSION_ASKED_BEFORE
 import com.andryoga.composeapp.common.Utils.crashInDebugBuild
+import com.andryoga.composeapp.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
@@ -10,15 +13,19 @@ import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataReposito
 import com.andryoga.composeapp.domain.mappers.record.toRecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
+import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,15 +34,38 @@ class RecordsViewModel @Inject constructor(
     private val secureNoteDataRepository: SecureNoteDataRepository,
     private val loginDataRepository: LoginDataRepository,
     private val cardDataRepository: BankCardDataRepository,
+    private val backupMetadataRepository: BackupMetadataRepository,
+    private val preferenceProvider: PreferenceProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
 
     private val _records = MutableStateFlow(emptyList<RecordListItem>())
     val records = _records.asStateFlow()
+    private val _notificationPermissionState = MutableStateFlow<NotificationPermissionState>(
+        NotificationPermissionState()
+    )
+    val notificationPermissionState: StateFlow<NotificationPermissionState> =
+        _notificationPermissionState
+
 
     init {
         loadRecords()
+
+        viewModelScope.launch {
+            _notificationPermissionState.value = NotificationPermissionState(
+                isNotificationPermissionAskedBefore = preferenceProvider.getBooleanPref(
+                    IS_NOTIFICATION_PERMISSION_ASKED_BEFORE,
+                    false
+                ),
+                isNeverAskForNotificationPermission = preferenceProvider.getBooleanPref(
+                    IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION,
+                    false
+                ),
+                isBackupPathSet = backupMetadataRepository.isBackupPathSet()
+            )
+        }
+
     }
 
     private fun loadRecords() {
@@ -85,6 +115,7 @@ class RecordsViewModel @Inject constructor(
     }
 
     fun onScreenAction(action: RecordScreenAction) {
+        Timber.i("on screen action: ${action::class.simpleName}")
         when (action) {
             is RecordScreenAction.OnSearchTextUpdate -> {
                 onSearchTextUpdate(searchText = action.searchText)
@@ -101,6 +132,38 @@ class RecordsViewModel @Inject constructor(
             // these are handled in UI layer and flow should ideally never come here
             is RecordScreenAction.OnAddNewRecord, is RecordScreenAction.OnRecordClick -> {
                 crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
+            }
+
+            RecordScreenAction.OnNeverAskForNotificationPermission -> updateNotificationPermissionState(
+                isNotificationPermissionAskedBefore = notificationPermissionState.value.isNotificationPermissionAskedBefore,
+                isNeverAskForNotificationPermission = true
+            )
+
+            RecordScreenAction.OnNotificationPermissionAskedForFirstTime -> updateNotificationPermissionState(
+                isNotificationPermissionAskedBefore = true,
+                isNeverAskForNotificationPermission = notificationPermissionState.value.isNeverAskForNotificationPermission
+            )
+        }
+    }
+
+    private fun updateNotificationPermissionState(
+        isNotificationPermissionAskedBefore: Boolean,
+        isNeverAskForNotificationPermission: Boolean
+    ) {
+        _notificationPermissionState.update {
+            it.copy(
+                isNotificationPermissionAskedBefore = isNotificationPermissionAskedBefore,
+                isNeverAskForNotificationPermission = isNeverAskForNotificationPermission
+            )
+        }
+
+        viewModelScope.launch {
+            if (isNotificationPermissionAskedBefore) {
+                preferenceProvider.upsertBooleanPref(IS_NOTIFICATION_PERMISSION_ASKED_BEFORE, true)
+            }
+
+            if (isNeverAskForNotificationPermission) {
+                preferenceProvider.upsertBooleanPref(IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION, true)
             }
         }
     }

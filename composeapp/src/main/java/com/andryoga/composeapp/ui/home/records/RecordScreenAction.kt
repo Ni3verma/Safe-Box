@@ -10,4 +10,6 @@ sealed interface RecordScreenAction {
     data class OnAddNewRecord(val recordType: RecordType) : RecordScreenAction
     data class OnRecordClick(val id: Int, val recordType: RecordType) : RecordScreenAction
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
+    object OnNotificationPermissionAskedForFirstTime : RecordScreenAction
+    object OnNeverAskForNotificationPermission : RecordScreenAction
 }
