@@ -54,9 +54,8 @@ class NewBackupOrRestoreVM @Inject constructor(
             if (isPswrdCorrect.not()) {
                 updateWorkflowState(WorkflowState.WRONG_PASSWORD)
             } else {
-                Timber.i("pswrd is correct, preparing work req")
-                val requestId = createWorkRequest(password, operation)
-                Timber.i("enqueued backup work")
+                Timber.i("pswrd is correct, enqueuing work req")
+                val requestId = enqueueWorkRequest(password, operation)
                 workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
                     Timber.i("backup work state: ${workInfo?.state}")
                     when (workInfo?.state) {
@@ -78,17 +77,17 @@ class NewBackupOrRestoreVM @Inject constructor(
         }
     }
 
-    private fun createWorkRequest(password: String, operation: Operation): UUID {
+    private fun enqueueWorkRequest(password: String, operation: Operation): UUID {
         return when (operation) {
-            Operation.Backup -> createBackupWorkRequest(password)
-            is Operation.Restore -> createRestoreWorkRequest(
+            Operation.Backup -> enqueueBackupWork(password)
+            is Operation.Restore -> enqueueRestoreWork(
                 password,
                 operation.fileUri.toString().orEmpty()
             )
         }
     }
 
-    private fun createBackupWorkRequest(password: String): UUID {
+    private fun enqueueBackupWork(password: String): UUID {
         return BackupDataWorker.enqueueRequest(
             password = password,
             showBackupStartNotification = true,
@@ -97,7 +96,7 @@ class NewBackupOrRestoreVM @Inject constructor(
         )
     }
 
-    private fun createRestoreWorkRequest(password: String, fileUri: String): UUID {
+    private fun enqueueRestoreWork(password: String, fileUri: String): UUID {
         val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
             .setInputData(
                 Data.Builder()
