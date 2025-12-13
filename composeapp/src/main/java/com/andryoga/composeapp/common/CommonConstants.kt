@@ -3,7 +3,9 @@ package com.andryoga.composeapp.common
 object CommonConstants {
     //        SHOULD ONLY be user for simple shared preference
     const val TOTAL_LOGIN_COUNT = "total_login_count"
-    const val LOGIN_COUNT_WITH_BIOMETRIC = "login_count_with_biometric"
+
+    // user cannot login with biometric always, it has a limit
+    const val ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING = "allowed_biometric_login_count_remaining"
     const val IS_NOTIFICATION_PERMISSION_ASKED_BEFORE = "is_notification_permission_asked_before"
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
 

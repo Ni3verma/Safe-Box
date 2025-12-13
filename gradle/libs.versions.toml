@@ -28,6 +28,7 @@ timber = "5.0.1"
 room = "2.8.1"
 security = "1.1.0"
 kotlinxSerializationJson = "1.9.0"
+biometric = "1.1.0"
 
 [libraries]
 # AndroidX Core
@@ -79,6 +80,7 @@ room-testing = { group = "androidx.room", name = "room-testing", version.ref = "
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose"]

@@ -50,7 +50,8 @@
     <string name="close">Close</string>
     <string name="error">Error!</string>
     <string name="github">Github</string>
-    <string name="biometric_title_text">Biometric Authentication</string>
+    <string name="biometric_title_text">Login to SafeBox</string>
+    <string name="biometric_sub_title_text">Verify your identity</string>
     <string name="biometric_negative_button_text">Close</string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>

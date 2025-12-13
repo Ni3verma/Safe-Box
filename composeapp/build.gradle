@@ -117,6 +117,7 @@ dependencies {
     implementation libs.timber
     implementation libs.security.crypto
     implementation libs.kotlinx.serialization.json
+    implementation libs.biometric
 
     ksp(libs.room.compiler)
     implementation libs.bundles.room

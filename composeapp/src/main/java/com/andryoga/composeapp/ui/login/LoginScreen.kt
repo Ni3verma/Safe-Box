@@ -23,6 +23,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,6 +43,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
+import com.andryoga.composeapp.ui.core.BiometricAuthHandler
+import com.andryoga.composeapp.ui.core.canAuthenticateUsingBiometric
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 
@@ -50,7 +54,7 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.passwordValidatorState == PasswordValidatorState.VERIFIED) {
+    if (uiState.userAuthState == UserAuthState.VERIFIED) {
         onLoginSuccess()
     }
 
@@ -96,6 +100,19 @@ private fun LoginScreen(
             )
         }
     }
+
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        if (canAuthenticateUsingBiometric(context)) {
+            screenAction(LoginScreenAction.BiometricAvailable)
+        }
+    }
+
+    if (uiState.canUnlockWithBiometric) {
+        BiometricAuthHandler(
+            onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) }
+        )
+    }
 }
 
 @Composable
@@ -110,7 +127,7 @@ private fun LoginCardContent(
     }
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
-    val isPasswordFieldError = uiState.passwordValidatorState == PasswordValidatorState.INCORRECT
+    val isPasswordFieldError = uiState.userAuthState == UserAuthState.INCORRECT_PASSWORD_ENTERED
 
     Column(
         modifier = Modifier
@@ -205,7 +222,7 @@ private fun LoginPreviewWrongPassword() {
         LoginScreen(
             uiState = LoginUiState(
                 hint = "This is hint",
-                passwordValidatorState = PasswordValidatorState.INCORRECT
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED
             ),
             screenAction = {}
         )

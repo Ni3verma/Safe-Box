@@ -26,6 +26,8 @@ class LoginViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
+
+    // todo: total login count was used for in-app review, this should not increase forever
     private var totalLoginCount: Int = 1
 
     init {
@@ -38,6 +40,28 @@ class LoginViewModel @Inject constructor(
         when (action) {
             is LoginScreenAction.LoginClicked -> onLoginClicked(action.password)
             LoginScreenAction.ShowHintClicked -> getHintFromDb()
+            LoginScreenAction.BiometricSuccess -> onBiometricSuccess()
+            LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
+        }
+    }
+
+    private fun onBiometricAvailable() {
+        Timber.i("biometric capability is available")
+        viewModelScope.launch {
+            if (userDetailsRepository.shouldStartBiometricAuthFlow()) {
+                _uiState.update {
+                    it.copy(
+                        canUnlockWithBiometric = true
+                    )
+                }
+            }
+        }
+    }
+
+    private fun onBiometricSuccess() {
+        Timber.i("biometric success")
+        viewModelScope.launch {
+            onAuthSuccess(withBiometric = true)
         }
     }
 
@@ -47,17 +71,28 @@ class LoginViewModel @Inject constructor(
             val isPasswordCorrect = userDetailsRepository.checkPassword(password)
             Timber.i("is password correct: $isPasswordCorrect")
 
-            val passwordValidatorState = if (isPasswordCorrect) {
-                PasswordValidatorState.VERIFIED
+            if (isPasswordCorrect) {
+                onAuthSuccess(withBiometric = false)
             } else {
-                PasswordValidatorState.INCORRECT
+                onIncorrectPassword()
             }
+        }
+    }
 
-            _uiState.update {
-                it.copy(
-                    passwordValidatorState = passwordValidatorState
-                )
-            }
+    private suspend fun onAuthSuccess(withBiometric: Boolean) {
+        userDetailsRepository.onAuthSuccess(withBiometric = withBiometric)
+        _uiState.update {
+            it.copy(
+                userAuthState = UserAuthState.VERIFIED
+            )
+        }
+    }
+
+    private fun onIncorrectPassword() {
+        _uiState.update {
+            it.copy(
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED
+            )
         }
     }
 
@@ -73,7 +108,6 @@ class LoginViewModel @Inject constructor(
     }
 
     object Constants {
-        private const val MAX_CONT_BIOMETRIC_LOGINS = 5
         private const val ASK_FOR_REVIEW_AFTER_EVERY = 10
     }
 }

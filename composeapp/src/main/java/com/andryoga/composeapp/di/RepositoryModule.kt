@@ -19,6 +19,7 @@ import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,10 +34,12 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideUserDetailsRepo(
-        userDetailsDaoSecure: UserDetailsDaoSecure
+        userDetailsDaoSecure: UserDetailsDaoSecure,
+        preferenceProvider: PreferenceProvider
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
-            userDetailsDaoSecure
+            userDetailsDaoSecure,
+            preferenceProvider
         )
     }
 
