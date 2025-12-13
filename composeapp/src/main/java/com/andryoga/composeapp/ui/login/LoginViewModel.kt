@@ -8,6 +8,7 @@ import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.composeapp.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
+import com.andryoga.composeapp.worker.BackupDataWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,6 +73,12 @@ class LoginViewModel @Inject constructor(
             Timber.i("is password correct: $isPasswordCorrect")
 
             if (isPasswordCorrect) {
+                BackupDataWorker.enqueueRequest(
+                    password = password,
+                    showBackupStartNotification = false,
+                    workManager = workManager,
+                    symmetricKeyUtils
+                )
                 onAuthSuccess(withBiometric = false)
             } else {
                 onIncorrectPassword()

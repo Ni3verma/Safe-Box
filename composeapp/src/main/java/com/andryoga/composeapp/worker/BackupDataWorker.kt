@@ -6,10 +6,17 @@ import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.AnalyticsKeys.BACKUP_FAILED
 import com.andryoga.composeapp.common.CommonConstants
+import com.andryoga.composeapp.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
+import com.andryoga.composeapp.common.CommonConstants.BACKUP_PARAM_PASSWORD
+import com.andryoga.composeapp.common.CommonConstants.WORKER_NAME_BACKUP_DATA
 import com.andryoga.composeapp.common.CommonConstants.time1Sec
 import com.andryoga.composeapp.common.Utils
 import com.andryoga.composeapp.common.Utils.makeStatusNotification
@@ -38,6 +45,7 @@ import timber.log.Timber
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.util.Date
+import java.util.UUID
 
 class BackupDataWorker(
     context: Context,
@@ -322,5 +330,35 @@ class BackupDataWorker(
             notificationContent,
             NotificationCompat.PRIORITY_HIGH
         )
+    }
+
+    companion object {
+        fun enqueueRequest(
+            password: String,
+            showBackupStartNotification: Boolean,
+            workManager: WorkManager,
+            symmetricKeyUtils: SymmetricKeyUtils
+        ): UUID {
+            val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
+                .setInputData(
+                    Data.Builder()
+                        .putString(BACKUP_PARAM_PASSWORD, symmetricKeyUtils.encrypt(password))
+                        .putBoolean(
+                            BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                            showBackupStartNotification
+                        )
+                        .build()
+                )
+                .build()
+
+            workManager.enqueueUniqueWork(
+                WORKER_NAME_BACKUP_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                backupDataRequest
+            )
+
+            Timber.i("backup work req enqueued")
+            return backupDataRequest.id
+        }
     }
 }

@@ -7,11 +7,8 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.andryoga.composeapp.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
-import com.andryoga.composeapp.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.composeapp.common.CommonConstants.RESTORE_PARAM_FILE_URI
 import com.andryoga.composeapp.common.CommonConstants.RESTORE_PARAM_PASSWORD
-import com.andryoga.composeapp.common.CommonConstants.WORKER_NAME_BACKUP_DATA
 import com.andryoga.composeapp.common.CommonConstants.WORKER_NAME_RESTORE_DATA
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
@@ -92,22 +89,12 @@ class NewBackupOrRestoreVM @Inject constructor(
     }
 
     private fun createBackupWorkRequest(password: String): UUID {
-        val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
-            .setInputData(
-                Data.Builder()
-                    .putString(BACKUP_PARAM_PASSWORD, symmetricKeyUtils.encrypt(password))
-                    .putBoolean(BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, true)
-                    .build()
-            )
-            .build()
-
-        workManager.enqueueUniqueWork(
-            WORKER_NAME_BACKUP_DATA,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
-            backupDataRequest
+        return BackupDataWorker.enqueueRequest(
+            password = password,
+            showBackupStartNotification = true,
+            workManager = workManager,
+            symmetricKeyUtils = symmetricKeyUtils
         )
-
-        return backupDataRequest.id
     }
 
     private fun createRestoreWorkRequest(password: String, fileUri: String): UUID {
