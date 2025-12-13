@@ -3,10 +3,14 @@ package com.andryoga.composeapp.ui.home
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -16,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.LocalSnackbarHostState
 import com.andryoga.composeapp.ui.core.MyAppTopAppBar
 import com.andryoga.composeapp.ui.core.ScrollBehaviorType
 import com.andryoga.composeapp.ui.core.TopBarState
@@ -46,6 +51,8 @@ fun HomeScreen() {
 
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
 
+    val globalSnackbarHostState = remember { SnackbarHostState() }
+
     // Use a 'when' block to select the BEHAVIOR and its CONNECTION for the current screen.
     val (scrollBehavior, nestedScrollConnection) = when (currentConfig?.scrollBehaviorType) {
         ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
@@ -53,6 +60,7 @@ fun HomeScreen() {
         else -> null to object : NestedScrollConnection {} // For NONE or when hidden
     }
 
+    CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
     Scaffold(
         topBar = {
             if (currentConfig != null) {
@@ -67,6 +75,7 @@ fun HomeScreen() {
                 BottomNavBar(nestedNavController, isBackupPathSet)
             }
         },
+        snackbarHost = { SnackbarHost(globalSnackbarHostState) },
         modifier = Modifier.nestedScroll(nestedScrollConnection)
     ) { innerPadding ->
         NavHost(
@@ -108,6 +117,7 @@ fun HomeScreen() {
                 )
             }
         }
+    }
     }
 }
 

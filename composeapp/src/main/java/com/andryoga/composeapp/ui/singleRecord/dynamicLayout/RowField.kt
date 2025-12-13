@@ -1,5 +1,8 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout
 
+import android.content.ClipData
+import android.os.Build
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,13 +14,19 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -25,6 +34,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.LocalSnackbarHostState
 import com.andryoga.composeapp.ui.core.MandatoryLabelText
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenAction
@@ -32,6 +42,8 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @Composable
 fun RowField(
@@ -40,13 +52,18 @@ fun RowField(
     viewMode: ViewMode,
     screenAction: (SingleRecordScreenAction) -> Unit
 ) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
     var isPasswordVisible by remember { mutableStateOf(false) }
+    val snackbarHost = LocalSnackbarHostState.current
 
     if (viewMode == ViewMode.VIEW) {
         if (uiState.data.isNotBlank()) {
+            val label = stringResource(uiState.cell.label)
             Column {
                 Text(
-                    text = stringResource(uiState.cell.label),
+                    text = label,
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
@@ -57,6 +74,30 @@ fun RowField(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
                         .padding(bottom = 8.dp)
+                        .clickable {
+                            scope.launch {
+                                Timber.i("setting clip entry for $label")
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                clipboard.setClipEntry(
+                                    ClipEntry(
+                                        ClipData.newPlainText(
+                                            label,
+                                            uiState.data
+                                        )
+                                    )
+                                )
+
+                                // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
+                                // so need to show our own snackbar
+                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                                    snackbarHost.currentSnackbarData?.dismiss()
+                                    snackbarHost.showSnackbar(
+                                        message = "Copied $label to clipboard",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        }
                 )
             }
         }

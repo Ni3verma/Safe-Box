@@ -135,7 +135,7 @@ class SingleRecordViewModel @Inject constructor(
                 uiState.data.isEmpty().not() &&
                         uiState.cell.isCopyable &&
                         uiState.cell.isPasswordField.not()
-            }.forEach { _, uiState ->
+            }.forEach { (_, uiState) ->
                 val cellTitle = context.getString(uiState.cell.label)
                 dataStringBuffer.append("$cellTitle : ${uiState.data}\n")
             }
