@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId "com.andryoga.composeapp"
-        minSdk 23
+        minSdk 24
         targetSdk 36
         versionCode 10
         // majorVersion.minorVersion.dbVersion.fixVersion
@@ -118,6 +118,7 @@ dependencies {
     implementation libs.security.crypto
     implementation libs.kotlinx.serialization.json
     implementation libs.biometric
+    implementation libs.dot.lottie
 
     ksp(libs.room.compiler)
     implementation libs.bundles.room

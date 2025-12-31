@@ -1,13 +1,19 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore
 
+import android.net.Uri
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.common.Utils.launchRestorePicker
 import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.backupAndRestore.components.BackupView
@@ -23,6 +29,16 @@ import timber.log.Timber
 fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
     val viewModel = hiltViewModel<BackupAndRestoreVM>()
     val uiState by viewModel.uiState.collectAsState()
+    val startWithRestoreWorkflow by viewModel.startRestoreWorkflow.collectAsState()
+
+    val selectRestoreFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri: Uri? ->
+            Timber.i("uri selected for restore = $uri")
+            viewModel.onScreenAction(ScreenAction.RestoreFileSelected(uri))
+        }
+    )
+
     OnStart {
         val config = TopAppBarConfig(
             title = { Text(stringResource(R.string.bottom_nav_backup_and_restore)) },
@@ -30,8 +46,13 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
         mainViewModel.updateTopBar(config)
     }
 
+    LaunchedEffect(startWithRestoreWorkflow) {
+        launchRestorePicker(selectRestoreFileLauncher)
+    }
+
     BackupAndRestoreScreen(
         uiState = uiState,
+        selectRestoreFileLauncher = selectRestoreFileLauncher,
         onScreenAction = { action ->
             viewModel.onScreenAction(action)
         }
@@ -41,6 +62,7 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
 @Composable
 private fun BackupAndRestoreScreen(
     uiState: ScreenState,
+    selectRestoreFileLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
     Column {
@@ -49,9 +71,7 @@ private fun BackupAndRestoreScreen(
             onScreenAction = onScreenAction
         )
         RestoreView(
-            onRestoreFileSelected = { uri ->
-                onScreenAction(ScreenAction.RestoreFileSelected(uri))
-            }
+            selectRestoreFileLauncher = selectRestoreFileLauncher
         )
     }
 
@@ -76,7 +96,10 @@ private fun BackupAndRestorePathLoadingPreview() {
     SafeBoxTheme {
         BackupAndRestoreScreen(
             uiState = ScreenState(),
-            onScreenAction = {}
+            selectRestoreFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument(),
+                {}),
+            onScreenAction = {},
         )
     }
 }
@@ -87,7 +110,10 @@ private fun BackupAndRestorePathNotSetPreview() {
     SafeBoxTheme {
         BackupAndRestoreScreen(
             uiState = ScreenState(backupState = BackupPathNotSet()),
-            onScreenAction = {}
+            selectRestoreFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument(),
+                {}),
+            onScreenAction = {},
         )
     }
 }
@@ -103,7 +129,10 @@ private fun BackupAndRestorePathSetPreview() {
                     backupTime = "28 Sep 2025 05:04 PM"
                 )
             ),
-            onScreenAction = {}
+            selectRestoreFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument(),
+                {}),
+            onScreenAction = {},
         )
     }
 }

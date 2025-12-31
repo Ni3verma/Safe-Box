@@ -4,22 +4,30 @@ package com.andryoga.composeapp.ui.home.records
 
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.andryoga.composeapp.R
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.MainViewModel
@@ -38,12 +46,15 @@ import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordList
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import com.andryoga.composeapp.ui.utils.OnStart
+import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
+import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import timber.log.Timber
 
 @Composable
 fun RecordsScreenRoot(
     mainViewModel: MainViewModel,
     onAddNewRecord: (RecordType) -> Unit,
+    onRestoreFromBackup: () -> Unit,
     onRecordClick: (id: Int, recordType: RecordType) -> Unit,
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
@@ -65,6 +76,7 @@ fun RecordsScreenRoot(
         uiState = uiState,
         notificationPermissionState = notificationPermissionState,
         records = records,
+        onRestoreFromBackup = onRestoreFromBackup,
         onScreenAction = { action ->
             when (action) {
                 is RecordScreenAction.OnAddNewRecord -> onAddNewRecord(action.recordType)
@@ -80,13 +92,47 @@ private fun RecordsScreen(
     uiState: RecordsUiState,
     notificationPermissionState: NotificationPermissionState,
     records: List<RecordListItem>,
+    onRestoreFromBackup: () -> Unit,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
     if (uiState.isLoading) {
         // todo: show loading screen
     } else if (records.isEmpty()) {
-        // todo: show empty view
-        FilterRow(uiState, onScreenAction, Modifier.padding(horizontal = 16.dp))
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ) {
+            DotLottieAnimation(
+                source = DotLottieSource.Asset("no_record.lottie"),
+                autoplay = true,
+                loop = true,
+                useFrameInterpolation = false,
+            )
+            Text(
+                text = stringResource(R.string.no_record),
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Button(onClick = {
+                onScreenAction(
+                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = true
+                    )
+                )
+            }) {
+                Text(stringResource(R.string.new_record_button))
+            }
+            Button(onClick = {
+                onRestoreFromBackup()
+            }) {
+                Text(stringResource(R.string.restore_records_button))
+            }
+        }
+
     } else {
         val records = records
         LazyColumn(
@@ -186,6 +232,7 @@ private fun RecordsScreenPreview() {
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
             records = getRecordList(),
+            onRestoreFromBackup = {},
             onScreenAction = {},
         )
     }
@@ -202,6 +249,7 @@ private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
             ),
             notificationPermissionState = NotificationPermissionState(),
             records = getRecordList(),
+            onRestoreFromBackup = {},
             onScreenAction = {},
         )
     }
@@ -215,6 +263,7 @@ fun RecordsScreenNoRecordsPreview() {
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
             records = emptyList(),
+            onRestoreFromBackup = {},
             onScreenAction = {},
         )
     }
@@ -228,6 +277,7 @@ fun RecordsScreenLoadingRecordsPreview() {
             uiState = RecordsUiState(isLoading = true),
             notificationPermissionState = NotificationPermissionState(),
             records = emptyList(),
+            onRestoreFromBackup = {},
             onScreenAction = {},
         )
     }

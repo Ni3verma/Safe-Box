@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,7 +32,7 @@ private val items = listOf(
 fun BottomNavBar(nestedNavController: NavHostController, isBackupPathSet: Boolean) {
     NavigationBar {
         val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
-        val currentRoute = navBackStackEntry?.destination?.route
+        val currentDestination = navBackStackEntry?.destination
 
         items.forEach { item ->
             NavigationBarItem(
@@ -52,7 +53,7 @@ fun BottomNavBar(nestedNavController: NavHostController, isBackupPathSet: Boolea
                     }
                 },
                 label = { Text(stringResource(item.titleRes)) },
-                selected = currentRoute == item.route::class.qualifiedName,
+                selected = currentDestination?.hasRoute(item.route::class) ?: false,
                 onClick = {
                     nestedNavController.navigate(item.route) {
                         popUpTo(nestedNavController.graph.findStartDestination().id) {
@@ -81,7 +82,7 @@ sealed class BottomNavItem(
     data object BackupAndRestore : BottomNavItem(
         R.string.bottom_nav_backup_and_restore,
         Icons.Default.SettingsBackupRestore,
-        HomeRouteType.BackupAndRestoreRoute
+        HomeRouteType.BackupAndRestoreRoute()
     )
 
     data object Settings : BottomNavItem(

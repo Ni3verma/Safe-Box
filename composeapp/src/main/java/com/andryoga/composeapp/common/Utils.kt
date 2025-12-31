@@ -3,7 +3,9 @@ package com.andryoga.composeapp.common
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.net.Uri
 import android.os.Build
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.andryoga.composeapp.BuildConfig
@@ -110,5 +112,14 @@ object Utils {
         if (BuildConfig.DEBUG) {
             throw Exceptions.DebugFatalException(message)
         }
+    }
+
+    fun launchRestorePicker(selectRestoreFileLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>) {
+        val backupMimeTypes = arrayOf(
+            "application/octet-stream",
+            "application/x-trash",
+            "application/x-binary"
+        )
+        selectRestoreFileLauncher.launch(backupMimeTypes)
     }
 }

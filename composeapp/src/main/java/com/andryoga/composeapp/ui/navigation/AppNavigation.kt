@@ -23,8 +23,8 @@ fun AppNavigation(
     val navController = rememberNavController()
     val startDestination = when (startDestinationState) {
         StartDestination.Loading -> LoadingRoute
-        StartDestination.Login -> LoginRoute
-//        StartDestination.Login -> HomeRoute
+//        StartDestination.Login -> LoginRoute //todo
+        StartDestination.Login -> HomeRoute
         StartDestination.Signup -> SignupRoute
     }
 

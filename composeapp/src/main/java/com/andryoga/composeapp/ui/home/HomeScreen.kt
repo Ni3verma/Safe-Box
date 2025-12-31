@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -38,7 +40,7 @@ import kotlinx.serialization.Serializable
 fun HomeScreen() {
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination
+    val currentDestination = navBackStackEntry?.destination
     val mainViewModel = hiltViewModel<MainViewModel>()
 
     val enterAlwaysScrollBehavior =
@@ -61,69 +63,77 @@ fun HomeScreen() {
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
-    Scaffold(
-        topBar = {
-            if (currentConfig != null) {
-                MyAppTopAppBar(
-                    config = currentConfig,
-                    scrollBehavior = scrollBehavior
-                )
-            }
-        },
-        bottomBar = {
-            if (isUserOnHomeRouteScreen(currentRoute?.route)) {
-                BottomNavBar(nestedNavController, isBackupPathSet)
-            }
-        },
-        snackbarHost = { SnackbarHost(globalSnackbarHostState) },
-        modifier = Modifier.nestedScroll(nestedScrollConnection)
-    ) { innerPadding ->
-        NavHost(
-            navController = nestedNavController,
-            startDestination = HomeRouteType.RecordRoute,
-            modifier = Modifier.padding(innerPadding),
-        ) {
-            composable<HomeRouteType.RecordRoute> {
-                RecordsScreenRoot(
-                    mainViewModel = mainViewModel,
-                    onAddNewRecord = { recordType ->
-                        nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
-                    },
-                    onRecordClick = { id, recordType ->
-                        nestedNavController.navigate(
-                            route = SingleRecordScreenRoute(
-                                recordType,
-                                id
+        Scaffold(
+            topBar = {
+                if (currentConfig != null) {
+                    MyAppTopAppBar(
+                        config = currentConfig,
+                        scrollBehavior = scrollBehavior
+                    )
+                }
+            },
+            bottomBar = {
+                if (isUserOnHomeRouteScreen(currentDestination)) {
+                    BottomNavBar(nestedNavController, isBackupPathSet)
+                }
+            },
+            snackbarHost = { SnackbarHost(globalSnackbarHostState) },
+            modifier = Modifier.nestedScroll(nestedScrollConnection)
+        ) { innerPadding ->
+            NavHost(
+                navController = nestedNavController,
+                startDestination = HomeRouteType.RecordRoute,
+                modifier = Modifier.padding(innerPadding),
+            ) {
+                composable<HomeRouteType.RecordRoute> {
+                    RecordsScreenRoot(
+                        mainViewModel = mainViewModel,
+                        onAddNewRecord = { recordType ->
+                            nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
+                        },
+                        onRestoreFromBackup = {
+                            nestedNavController.navigate(
+                                route = HomeRouteType.BackupAndRestoreRoute(
+                                    startWithRestoreWorkflow = true
+                                )
                             )
-                        )
-                    },
-                )
-            }
-            composable<HomeRouteType.BackupAndRestoreRoute> {
-                BackupAndRestoreScreenRoot(
-                    mainViewModel = mainViewModel
-                )
-            }
-            composable<HomeRouteType.SettingsRoute> {
-                SettingsScreen()
-            }
-            composable<SingleRecordScreenRoute> {
-                SingleRecordScreenRoot(
-                    mainViewModel = mainViewModel,
-                    onScreenClose = {
-                        nestedNavController.popBackStack()
-                    }
-                )
+                        },
+                        onRecordClick = { id, recordType ->
+                            nestedNavController.navigate(
+                                route = SingleRecordScreenRoute(
+                                    recordType,
+                                    id
+                                )
+                            )
+                        },
+                    )
+                }
+                composable<HomeRouteType.BackupAndRestoreRoute> {
+                    BackupAndRestoreScreenRoot(
+                        mainViewModel = mainViewModel
+                    )
+                }
+                composable<HomeRouteType.SettingsRoute> {
+                    SettingsScreen()
+                }
+                composable<SingleRecordScreenRoute> {
+                    SingleRecordScreenRoot(
+                        mainViewModel = mainViewModel,
+                        onScreenClose = {
+                            nestedNavController.popBackStack()
+                        }
+                    )
+                }
             }
         }
     }
-    }
 }
 
-private fun isUserOnHomeRouteScreen(route: String?): Boolean {
-    return HomeRouteType.RecordRoute::class.qualifiedName == route ||
-            HomeRouteType.BackupAndRestoreRoute::class.qualifiedName == route ||
-            HomeRouteType.SettingsRoute::class.qualifiedName == route
+private fun isUserOnHomeRouteScreen(currentDestination: NavDestination?): Boolean {
+    return currentDestination?.run {
+        hasRoute<HomeRouteType.RecordRoute>() || hasRoute<HomeRouteType.BackupAndRestoreRoute>() ||
+                hasRoute<HomeRouteType.SettingsRoute>()
+    } ?: false
 }
 
 @Serializable

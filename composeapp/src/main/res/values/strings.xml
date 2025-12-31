@@ -119,6 +119,12 @@
     <string name="notification_permission_rationale_dialog_body">To ensure you\'re always aware of your automatic backups, please allow notifications.\nYou will be alerted when a backup is complete or if an issue occurs.</string>
     <string name="notification_permission_rationale_dialog_heading">Need Notification permission</string>
 
+    <!--    Record screen-->
+    <string name="no_record">Start fresh by adding a record or bring back your data from a backup.</string>
+    <string name="new_record_button">Add a new record</string>
+    <string name="restore_records_button">Restore data</string>
+
+
     <!--    Other-->
     <string name="app_name">composeapp</string>
     <!--    <string name="app_name">Safe Box</string>-->

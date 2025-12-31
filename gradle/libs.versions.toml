@@ -29,6 +29,7 @@ room = "2.8.1"
 security = "1.1.0"
 kotlinxSerializationJson = "1.9.0"
 biometric = "1.1.0"
+lottie = "0.12.5"
 
 [libraries]
 # AndroidX Core
@@ -81,6 +82,7 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
+dot-lottie = { group = "com.github.LottieFiles", name = "dotlottie-android", version.ref = "lottie" }
 
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose"]

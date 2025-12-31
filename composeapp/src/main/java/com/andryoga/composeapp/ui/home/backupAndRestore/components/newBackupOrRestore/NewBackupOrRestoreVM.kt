@@ -57,7 +57,7 @@ class NewBackupOrRestoreVM @Inject constructor(
                 Timber.i("pswrd is correct, enqueuing work req")
                 val requestId = enqueueWorkRequest(password, operation)
                 workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
-                    Timber.i("backup work state: ${workInfo?.state}")
+                    Timber.i("backup/restore work state: ${workInfo?.state}")
                     when (workInfo?.state) {
                         WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> updateWorkflowState(
                             WorkflowState.IN_PROGRESS
