@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,12 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.ScrollBehaviorType
@@ -42,8 +43,9 @@ import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarNavIco
 import com.andryoga.composeapp.ui.home.records.components.RecordsSearchBarTitle
 import com.andryoga.composeapp.ui.home.records.components.shouldShowNotificationPermissionRationaleDialog
 import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
+import com.andryoga.composeapp.ui.home.records.models.RecordsState
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
-import com.andryoga.composeapp.ui.previewHelper.getRecordList
+import com.andryoga.composeapp.ui.previewHelper.getRecordState
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import com.andryoga.composeapp.ui.utils.OnStart
 import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
@@ -59,7 +61,7 @@ fun RecordsScreenRoot(
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
-    val records by viewModel.records.collectAsState()
+    val recordState by viewModel.recordState.collectAsState()
     val notificationPermissionState by viewModel.notificationPermissionState.collectAsState()
 
     OnStart {
@@ -75,7 +77,7 @@ fun RecordsScreenRoot(
     RecordsScreen(
         uiState = uiState,
         notificationPermissionState = notificationPermissionState,
-        records = records,
+        recordState = recordState,
         onRestoreFromBackup = onRestoreFromBackup,
         onScreenAction = { action ->
             when (action) {
@@ -91,13 +93,26 @@ fun RecordsScreenRoot(
 private fun RecordsScreen(
     uiState: RecordsUiState,
     notificationPermissionState: NotificationPermissionState,
-    records: List<RecordListItem>,
+    recordState: RecordsState,
     onRestoreFromBackup: () -> Unit,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
     if (uiState.isLoading) {
-        // todo: show loading screen
-    } else if (records.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+            Text(
+                text = stringResource(R.string.loading_data),
+                fontSize = 24.sp,
+                modifier = Modifier
+                    .padding(top = 8.dp)
+            )
+        }
+    } else if (recordState.records.isEmpty() && recordState.totalDbRecords == 0) {
+        // user has added no record and probably this is the first time he has logged in
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -106,7 +121,7 @@ private fun RecordsScreen(
                 .padding(8.dp)
         ) {
             DotLottieAnimation(
-                source = DotLottieSource.Asset("no_record.lottie"),
+                source = DotLottieSource.Asset("ghost.lottie"),
                 autoplay = true,
                 loop = true,
                 useFrameInterpolation = false,
@@ -133,8 +148,44 @@ private fun RecordsScreen(
             }
         }
 
+    } else if (recordState.records.isEmpty() && recordState.totalDbRecords > 0) {
+        // user has some records in db but has also applied some filters because pf which nothing can be displayed
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterRow(uiState, onScreenAction)
+            DotLottieAnimation(
+                source = DotLottieSource.Asset("ghost.lottie"),
+                autoplay = true,
+                loop = true,
+                useFrameInterpolation = false,
+                modifier = Modifier
+                    .padding(top = 28.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Text(
+                text = stringResource(R.string.no_filtered_record_title),
+                textAlign = TextAlign.Center,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+            Text(
+                text = stringResource(R.string.no_filtered_record_body),
+                textAlign = TextAlign.Center,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
     } else {
-        val records = records
+        val records = recordState.records
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize(),
@@ -231,7 +282,7 @@ private fun RecordsScreenPreview() {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
-            records = getRecordList(),
+            recordState = getRecordState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -248,21 +299,7 @@ private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
                 isShowAddNewRecordsBottomSheet = true
             ),
             notificationPermissionState = NotificationPermissionState(),
-            records = getRecordList(),
-            onRestoreFromBackup = {},
-            onScreenAction = {},
-        )
-    }
-}
-
-@LightDarkModePreview
-@Composable
-fun RecordsScreenNoRecordsPreview() {
-    SafeBoxTheme {
-        RecordsScreen(
-            uiState = RecordsUiState(isLoading = false),
-            notificationPermissionState = NotificationPermissionState(),
-            records = emptyList(),
+            recordState = getRecordState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -276,7 +313,7 @@ fun RecordsScreenLoadingRecordsPreview() {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = true),
             notificationPermissionState = NotificationPermissionState(),
-            records = emptyList(),
+            recordState = RecordsState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )

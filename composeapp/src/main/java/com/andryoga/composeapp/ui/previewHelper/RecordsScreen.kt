@@ -2,11 +2,13 @@ package com.andryoga.composeapp.ui.previewHelper
 
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.ui.home.records.models.RecordsState
 import kotlin.random.Random
 
-fun getRecordList(): List<RecordListItem> {
+fun getRecordState(): RecordsState {
     val records = mutableListOf<RecordListItem>()
-    // i is chosen in this range so that id doesn't conflict with existing records if this is ever used for fake data while debugging issues
+    // i is chosen in this range so that id doesn't conflict with existing records
+    // if this is ever used for fake data while debugging issues
     for (i in 1000..1100) {
         val randomTypeIndex = Random.nextInt(0, 4)
         val isSubtitlePresent = Random.nextBoolean()
@@ -20,7 +22,10 @@ fun getRecordList(): List<RecordListItem> {
         )
     }
 
-    return records
+    return RecordsState(
+        records = records,
+        totalDbRecords = records.size
+    )
 }
 
 fun getLoginRecordItem() = RecordListItem(

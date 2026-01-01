@@ -15,6 +15,7 @@ import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
 import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
+import com.andryoga.composeapp.ui.home.records.models.RecordsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -40,9 +41,9 @@ class RecordsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _records = MutableStateFlow(emptyList<RecordListItem>())
-    val records = _records.asStateFlow()
-    private val _notificationPermissionState = MutableStateFlow<NotificationPermissionState>(
+    private val _recordState = MutableStateFlow(RecordsState())
+    val recordState = _recordState.asStateFlow()
+    private val _notificationPermissionState = MutableStateFlow(
         NotificationPermissionState()
     )
     val notificationPermissionState: StateFlow<NotificationPermissionState> =
@@ -83,10 +84,12 @@ class RecordsViewModel @Inject constructor(
                 combinedList.sortedBy { it.title.lowercase() }
             }.flowOn(Dispatchers.Default)
 
+            var totalRecordsInDb = 0
             val filteredListItemFlow: Flow<List<RecordListItem>> = combine(
                 combinedListItemFlow,
                 _uiState
             ) { combinedList, currUiState ->
+                totalRecordsInDb = combinedList.size
                 val textFilteredList = combinedList.filter {
                     it.title.contains(
                         currUiState.searchText,
@@ -109,7 +112,12 @@ class RecordsViewModel @Inject constructor(
                         isLoading = false,
                     )
                 }
-                _records.value = filteredList
+                _recordState.update {
+                    it.copy(
+                        records = filteredList,
+                        totalDbRecords = totalRecordsInDb
+                    )
+                }
             }
         }
     }

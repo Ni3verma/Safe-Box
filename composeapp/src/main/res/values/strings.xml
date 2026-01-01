@@ -120,9 +120,12 @@
     <string name="notification_permission_rationale_dialog_heading">Need Notification permission</string>
 
     <!--    Record screen-->
+    <string name="loading_data">Loading your data …</string>
     <string name="no_record">Start fresh by adding a record or bring back your data from a backup.</string>
     <string name="new_record_button">Add a new record</string>
     <string name="restore_records_button">Restore data</string>
+    <string name="no_filtered_record_title">Oops! No results here.</string>
+    <string name="no_filtered_record_body">We couldn\'t find anything matching your search. Try adjusting your filters or checking for typos.</string>
 
 
     <!--    Other-->
