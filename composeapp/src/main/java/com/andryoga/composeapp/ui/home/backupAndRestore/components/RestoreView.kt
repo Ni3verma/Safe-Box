@@ -1,7 +1,5 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore.components
 
-import android.net.Uri
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
@@ -16,12 +14,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.common.Utils.launchRestorePicker
 
 
 @Composable
 fun RestoreView(
-    selectRestoreFileLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
+    launchRestoreFilePicker: () -> Unit,
 ) {
     Column(
         modifier = Modifier.padding(8.dp)
@@ -45,10 +42,7 @@ fun RestoreView(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Button(
-                    onClick = {
-//                        setIsUserAwayTimeoutSuspended(true)
-                        launchRestorePicker(selectRestoreFileLauncher)
-                    },
+                    onClick = launchRestoreFilePicker,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                 ) {

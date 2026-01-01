@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.R
-import com.andryoga.composeapp.common.Utils.launchRestorePicker
 import com.andryoga.composeapp.ui.MainViewModel
 import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.backupAndRestore.components.BackupView
@@ -34,8 +33,18 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
     val selectRestoreFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri: Uri? ->
+            viewModel.resumeActiveSessionManager()
             Timber.i("uri selected for restore = $uri")
             viewModel.onScreenAction(ScreenAction.RestoreFileSelected(uri))
+        }
+    )
+
+    val selectBackupPathLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree(),
+        onResult = { uri: Uri? ->
+            viewModel.resumeActiveSessionManager()
+            Timber.i("uri selected for backup = $uri")
+            viewModel.onScreenAction(ScreenAction.BackupPathSelected(uri))
         }
     )
 
@@ -47,12 +56,15 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
     }
 
     LaunchedEffect(startWithRestoreWorkflow) {
-        launchRestorePicker(selectRestoreFileLauncher)
+        if (startWithRestoreWorkflow) {
+            launchRestorePicker(viewModel, selectRestoreFileLauncher)
+        }
     }
 
     BackupAndRestoreScreen(
         uiState = uiState,
-        selectRestoreFileLauncher = selectRestoreFileLauncher,
+        launchRestoreFilePicker = { launchRestorePicker(viewModel, selectRestoreFileLauncher) },
+        launchSelectBackupPath = { launchSelectBackupPath(viewModel, selectBackupPathLauncher) },
         onScreenAction = { action ->
             viewModel.onScreenAction(action)
         }
@@ -62,16 +74,18 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
 @Composable
 private fun BackupAndRestoreScreen(
     uiState: ScreenState,
-    selectRestoreFileLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>,
+    launchRestoreFilePicker: () -> Unit,
+    launchSelectBackupPath: () -> Unit,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
     Column {
         BackupView(
             backupState = uiState.backupState,
+            launchSelectBackupPath = launchSelectBackupPath,
             onScreenAction = onScreenAction
         )
         RestoreView(
-            selectRestoreFileLauncher = selectRestoreFileLauncher
+            launchRestoreFilePicker = launchRestoreFilePicker
         )
     }
 
@@ -96,11 +110,9 @@ private fun BackupAndRestorePathLoadingPreview() {
     SafeBoxTheme {
         BackupAndRestoreScreen(
             uiState = ScreenState(),
-            selectRestoreFileLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.OpenDocument(),
-                {}),
-            onScreenAction = {},
-        )
+            launchRestoreFilePicker = {},
+            launchSelectBackupPath = {},
+        ) {}
     }
 }
 
@@ -110,12 +122,31 @@ private fun BackupAndRestorePathNotSetPreview() {
     SafeBoxTheme {
         BackupAndRestoreScreen(
             uiState = ScreenState(backupState = BackupPathNotSet()),
-            selectRestoreFileLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.OpenDocument(),
-                {}),
-            onScreenAction = {},
-        )
+            launchRestoreFilePicker = {},
+            launchSelectBackupPath = {},
+        ) {}
     }
+}
+
+private fun launchSelectBackupPath(
+    viewModel: BackupAndRestoreVM,
+    selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>
+) {
+    viewModel.pauseActiveSessionManager()
+    selectBackupPathLauncher.launch(null)
+}
+
+fun launchRestorePicker(
+    viewModel: BackupAndRestoreVM,
+    selectRestoreFileLauncher: ManagedActivityResultLauncher<Array<String>, Uri?>
+) {
+    viewModel.pauseActiveSessionManager()
+    val backupMimeTypes = arrayOf(
+        "application/octet-stream",
+        "application/x-trash",
+        "application/x-binary"
+    )
+    selectRestoreFileLauncher.launch(backupMimeTypes)
 }
 
 @LightDarkModePreview
@@ -129,10 +160,8 @@ private fun BackupAndRestorePathSetPreview() {
                     backupTime = "28 Sep 2025 05:04 PM"
                 )
             ),
-            selectRestoreFileLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.OpenDocument(),
-                {}),
-            onScreenAction = {},
-        )
+            launchRestoreFilePicker = {},
+            launchSelectBackupPath = {},
+        ) {}
     }
 }

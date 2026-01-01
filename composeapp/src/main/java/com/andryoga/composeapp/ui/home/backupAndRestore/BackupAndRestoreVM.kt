@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.andryoga.composeapp.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class BackupAndRestoreVM @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val backupMetadataRepository: BackupMetadataRepository,
+    private val activeSessionManager: ActiveSessionManager
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScreenState())
     val uiState: StateFlow<ScreenState> = _uiState
@@ -36,7 +38,9 @@ class BackupAndRestoreVM @Inject constructor(
     init {
         val args: HomeRouteType.BackupAndRestoreRoute =
             savedStateHandle.toRoute<HomeRouteType.BackupAndRestoreRoute>()
-        _startRestoreWorkflow.value = args.startWithRestoreWorkflow
+        if (args.startWithRestoreWorkflow) {
+            _startRestoreWorkflow.value = true
+        }
 
         backupMetadataRepository.getBackupMetadata().onEach { backupMetadata ->
             _uiState.update { currentState ->
@@ -75,6 +79,14 @@ class BackupAndRestoreVM @Inject constructor(
                 }
             }
         }
+    }
+
+    fun pauseActiveSessionManager() {
+        activeSessionManager.setPaused(true)
+    }
+
+    fun resumeActiveSessionManager() {
+        activeSessionManager.setPaused(false)
     }
     private fun handleBackupPathSelected(uri: Uri?) {
         viewModelScope.launch {

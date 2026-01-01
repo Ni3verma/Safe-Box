@@ -1,9 +1,5 @@
 package com.andryoga.composeapp.ui.home.backupAndRestore.components
 
-import android.net.Uri
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,21 +36,13 @@ import com.andryoga.composeapp.ui.home.backupAndRestore.Loading
 import com.andryoga.composeapp.ui.home.backupAndRestore.ScreenAction
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
-import timber.log.Timber
 
 @Composable
 fun BackupView(
     backupState: BackupState,
+    launchSelectBackupPath: () -> Unit,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
-    val selectBackupPathLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocumentTree(),
-        onResult = { uri: Uri? ->
-            Timber.i("uri selected for backup = $uri")
-            onScreenAction(ScreenAction.BackupPathSelected(uri))
-        }
-    )
-
     Column(
         modifier = Modifier.padding(8.dp)
     ) {
@@ -69,12 +57,11 @@ fun BackupView(
         when (backupState) {
             is Loading -> BackupPathLoading()
             is BackupPathNotSet -> BackupPathNotSet(
-                onScreenAction = onScreenAction,
-                selectBackupPathLauncher = selectBackupPathLauncher
+                launchSelectBackupPath = launchSelectBackupPath
             )
 
             is BackupPathSet -> BackupPathSet(
-                selectBackupPathLauncher = selectBackupPathLauncher,
+                launchSelectBackupPath = launchSelectBackupPath,
                 backupState = backupState,
                 onScreenAction = onScreenAction
             )
@@ -99,8 +86,7 @@ private fun BackupPathLoading() {
 
 @Composable
 private fun BackupPathNotSet(
-    onScreenAction: (ScreenAction) -> Unit,
-    selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>
+    launchSelectBackupPath: () -> Unit,
 ) {
     Card(
         modifier = Modifier.padding(vertical = 8.dp),
@@ -127,7 +113,7 @@ private fun BackupPathNotSet(
                 style = MaterialTheme.typography.bodyLarge
             )
             Button(
-                onClick = { selectBackupPathLauncher.launch(null) },
+                onClick = launchSelectBackupPath,
             ) {
                 Text(text = stringResource(R.string.backup_set_location))
             }
@@ -137,7 +123,7 @@ private fun BackupPathNotSet(
 
 @Composable
 private fun BackupPathSet(
-    selectBackupPathLauncher: ManagedActivityResultLauncher<Uri?, Uri?>,
+    launchSelectBackupPath: () -> Unit,
     backupState: BackupPathSet,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
@@ -192,9 +178,7 @@ private fun BackupPathSet(
                     .fillMaxWidth()
             ) {
                 Button(
-                    onClick = {
-                        selectBackupPathLauncher.launch(null)
-                    }
+                    onClick = launchSelectBackupPath
                 ) {
                     Text(text = stringResource(R.string.backup_edit_path))
                 }
@@ -214,6 +198,7 @@ private fun BackupScreenLoadingPreview() {
     SafeBoxTheme {
         BackupView(
             backupState = Loading,
+            launchSelectBackupPath = {},
             onScreenAction = {}
         )
     }
@@ -228,6 +213,7 @@ private fun BackupScreenPathSetPreview() {
                 backupPath = "/tree/primary:Safebox debug",
                 backupTime = "28 Sep 2025 05:04 PM"
             ),
+            launchSelectBackupPath = {},
             onScreenAction = {}
         )
     }
@@ -239,6 +225,7 @@ private fun BackupScreenPathNotSetPreview() {
     SafeBoxTheme {
         BackupView(
             backupState = BackupPathNotSet(),
+            launchSelectBackupPath = {},
             onScreenAction = {}
         )
     }

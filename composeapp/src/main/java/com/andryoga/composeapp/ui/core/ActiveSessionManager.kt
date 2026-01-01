@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * This class manages the logout flow if user is away from the app for too long.
@@ -39,7 +40,7 @@ class ActiveSessionManager : DefaultLifecycleObserver {
         timerJob?.cancel()
         timerJob = scope.launch {
             // wait for 10seconds before logging out. This will be coming from user pref in future
-            delay(2000)
+            delay(10.seconds)
             _logoutEvent.send(Unit)
         }
     }
