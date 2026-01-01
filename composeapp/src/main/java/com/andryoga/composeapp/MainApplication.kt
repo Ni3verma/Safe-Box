@@ -2,7 +2,9 @@ package com.andryoga.composeapp
 
 import android.app.Application
 import android.util.Log
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import com.andryoga.composeapp.worker.SafeBoxWorkerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
@@ -16,6 +18,9 @@ class MainApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var safeBoxWorkerFactory: SafeBoxWorkerFactory
+
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -41,6 +46,7 @@ class MainApplication : Application(), Configuration.Provider {
         } else {
             Timber.plant(ReleaseTree())
         }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(activeSessionManager)
     }
 }
 

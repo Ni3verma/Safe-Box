@@ -2,6 +2,7 @@ package com.andryoga.composeapp.di
 
 import android.content.Context
 import androidx.work.WorkManager
+import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,5 +19,11 @@ object SingletonProvider {
         @ApplicationContext context: Context
     ): WorkManager {
         return WorkManager.getInstance(context)
+    }
+
+    @Singleton
+    @Provides
+    fun provideActiveSessionManager(): ActiveSessionManager {
+        return ActiveSessionManager()
     }
 }

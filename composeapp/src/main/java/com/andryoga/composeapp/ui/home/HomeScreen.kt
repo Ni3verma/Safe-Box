@@ -8,6 +8,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -28,6 +29,8 @@ import com.andryoga.composeapp.ui.core.ScrollBehaviorType
 import com.andryoga.composeapp.ui.core.TopBarState
 import com.andryoga.composeapp.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.composeapp.ui.home.components.BottomNavBar
+import com.andryoga.composeapp.ui.home.components.UserAwayDialog
+import com.andryoga.composeapp.ui.home.components.UserAwayDialogRoute
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
 import com.andryoga.composeapp.ui.home.records.RecordsScreenRoot
 import com.andryoga.composeapp.ui.home.settings.SettingsScreen
@@ -35,9 +38,16 @@ import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.composeapp.ui.singleRecord.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
 
+/**
+ * This is home Nav graph container with Records screen as the start destination.
+ * @param onExitHomeNavGraph: this lambda is called when home nav graph will be exited. Clients need
+ * to handle this callback and navigate to appropriate screen
+ * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onExitHomeNavGraph: () -> Unit,
+) {
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -60,6 +70,12 @@ fun HomeScreen() {
         ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
         ScrollBehaviorType.EXIT_UNTIL_COLLAPSED -> exitUntilCollapsedScrollBehavior to exitUntilCollapsedScrollBehavior.nestedScrollConnection
         else -> null to object : NestedScrollConnection {} // For NONE or when hidden
+    }
+
+    LaunchedEffect(Unit) {
+        mainViewModel.logoutEvent.collect {
+            nestedNavController.navigate(UserAwayDialogRoute)
+        }
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
@@ -123,6 +139,9 @@ fun HomeScreen() {
                             nestedNavController.popBackStack()
                         }
                     )
+                }
+                composable<UserAwayDialogRoute> {
+                    UserAwayDialog(onExitHomeNavGraph = onExitHomeNavGraph)
                 }
             }
         }
