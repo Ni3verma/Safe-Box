@@ -119,6 +119,7 @@ dependencies {
     implementation libs.kotlinx.serialization.json
     implementation libs.biometric
     implementation libs.dot.lottie
+    implementation libs.bundles.play.review
 
     ksp(libs.room.compiler)
     implementation libs.bundles.room

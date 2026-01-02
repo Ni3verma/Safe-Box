@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -36,12 +37,15 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.BuildConfig
 import com.andryoga.composeapp.R
+import com.andryoga.composeapp.ui.core.InAppReviewSource
+import com.andryoga.composeapp.ui.utils.findActivity
 
 @Composable
 fun NewBackupOrRestoreScreen(
     operation: Operation,
     onDismiss: () -> Unit,
 ) {
+    val context = LocalContext.current
     val viewModel = hiltViewModel<NewBackupOrRestoreVM>()
     LaunchedEffect(Unit) {
         viewModel.initVM(operation)
@@ -49,7 +53,7 @@ fun NewBackupOrRestoreScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    NewBackupDialog(
+    NewBackupOrRestoreDialog(
         operation = operation,
         workflowState = uiState.workflowState,
         onScreenAction = { action ->
@@ -57,10 +61,19 @@ fun NewBackupOrRestoreScreen(
         },
         onDismiss = onDismiss
     )
+
+    LaunchedEffect(Unit) {
+        viewModel.startReviewOnRestoreSuccess.collect {
+            viewModel.inAppReviewManager.get().requestAndLaunchReview(
+                activity = context.findActivity(),
+                inAppReviewSource = InAppReviewSource.SUCCESSFUL_RESTORE
+            )
+        }
+    }
 }
 
 @Composable
-private fun NewBackupDialog(
+private fun NewBackupOrRestoreDialog(
     operation: Operation,
     workflowState: WorkflowState,
     onScreenAction: (ScreenAction) -> Unit,

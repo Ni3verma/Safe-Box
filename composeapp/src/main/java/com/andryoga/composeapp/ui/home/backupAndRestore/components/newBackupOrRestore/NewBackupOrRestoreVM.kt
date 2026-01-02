@@ -12,13 +12,17 @@ import com.andryoga.composeapp.common.CommonConstants.RESTORE_PARAM_PASSWORD
 import com.andryoga.composeapp.common.CommonConstants.WORKER_NAME_RESTORE_DATA
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
+import com.andryoga.composeapp.ui.core.InAppReviewManager
 import com.andryoga.composeapp.worker.BackupDataWorker
 import com.andryoga.composeapp.worker.RestoreDataWorker
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -29,12 +33,20 @@ import javax.inject.Inject
 class NewBackupOrRestoreVM @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
-    private val symmetricKeyUtils: SymmetricKeyUtils
+    private val symmetricKeyUtils: SymmetricKeyUtils,
+    val inAppReviewManager: Lazy<InAppReviewManager>
 ) : ViewModel() {
     private lateinit var operation: Operation
     private val _uiState =
         MutableStateFlow(NewBackupOrRestoreScreenState())
     val uiState: StateFlow<NewBackupOrRestoreScreenState> = _uiState
+
+    private val _startReviewOnRestoreSuccess = Channel<Unit>(Channel.CONFLATED)
+
+    /**
+     * Start In-App review flow if restore was success.
+     * */
+    val startReviewOnRestoreSuccess = _startReviewOnRestoreSuccess.receiveAsFlow()
 
     fun initVM(operation: Operation) {
         this.operation = operation
@@ -63,9 +75,14 @@ class NewBackupOrRestoreVM @Inject constructor(
                             WorkflowState.IN_PROGRESS
                         )
 
-                        WorkInfo.State.SUCCEEDED -> updateWorkflowState(
-                            WorkflowState.SUCCESS
-                        )
+                        WorkInfo.State.SUCCEEDED -> {
+                            if (operation is Operation.Restore) {
+                                _startReviewOnRestoreSuccess.send(Unit)
+                            }
+                            updateWorkflowState(
+                                WorkflowState.SUCCESS
+                            )
+                        }
 
                         WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
                             WorkflowState.FAILED
@@ -82,7 +99,7 @@ class NewBackupOrRestoreVM @Inject constructor(
             Operation.Backup -> enqueueBackupWork(password)
             is Operation.Restore -> enqueueRestoreWork(
                 password,
-                operation.fileUri.toString().orEmpty()
+                operation.fileUri.toString()
             )
         }
     }
