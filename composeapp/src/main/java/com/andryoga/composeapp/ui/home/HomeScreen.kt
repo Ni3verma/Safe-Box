@@ -18,6 +18,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -112,7 +113,11 @@ fun HomeScreen(
                                 route = HomeRouteType.BackupAndRestoreRoute(
                                     startWithRestoreWorkflow = true
                                 )
-                            )
+                            ) {
+                                popUpTo(nestedNavController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                            }
                         },
                         onRecordClick = { id, recordType ->
                             nestedNavController.navigate(

@@ -9,11 +9,12 @@ import com.andryoga.composeapp.data.repository.interfaces.BackupMetadataReposito
 import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import com.andryoga.composeapp.ui.home.navigation.HomeRouteType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,19 +28,19 @@ class BackupAndRestoreVM @Inject constructor(
     private val _uiState = MutableStateFlow(ScreenState())
     val uiState: StateFlow<ScreenState> = _uiState
 
-    private val _startRestoreWorkflow = MutableStateFlow(false)
+    private val _startRestoreWorkflow = Channel<Unit>(Channel.CONFLATED)
 
     /**
-     * State is made true when the screen needs to started with start restore workflow.
+     * event is emitted when the screen needs to start with start restore workflow.
      * i.e. open file system screen where user chooses the backup file to restore.
      * This param come as part of navigation param*/
-    val startRestoreWorkflow = _startRestoreWorkflow.asStateFlow()
+    val startRestoreWorkflow = _startRestoreWorkflow.receiveAsFlow()
 
     init {
         val args: HomeRouteType.BackupAndRestoreRoute =
             savedStateHandle.toRoute<HomeRouteType.BackupAndRestoreRoute>()
         if (args.startWithRestoreWorkflow) {
-            _startRestoreWorkflow.value = true
+            _startRestoreWorkflow.trySend(Unit)
         }
 
         backupMetadataRepository.getBackupMetadata().onEach { backupMetadata ->

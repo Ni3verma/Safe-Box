@@ -28,7 +28,6 @@ import timber.log.Timber
 fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
     val viewModel = hiltViewModel<BackupAndRestoreVM>()
     val uiState by viewModel.uiState.collectAsState()
-    val startWithRestoreWorkflow by viewModel.startRestoreWorkflow.collectAsState()
 
     val selectRestoreFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
@@ -55,8 +54,8 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
         mainViewModel.updateTopBar(config)
     }
 
-    LaunchedEffect(startWithRestoreWorkflow) {
-        if (startWithRestoreWorkflow) {
+    LaunchedEffect(Unit) {
+        viewModel.startRestoreWorkflow.collect {
             launchRestorePicker(viewModel, selectRestoreFileLauncher)
         }
     }
