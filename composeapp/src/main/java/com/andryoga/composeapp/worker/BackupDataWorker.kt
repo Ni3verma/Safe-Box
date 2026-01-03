@@ -324,7 +324,7 @@ class BackupDataWorker(
             0,
             applicationContext.getString(R.string.notification_backup_channel_name),
             applicationContext.getString(R.string.notification_backup_channel_desc),
-            NotificationManager.IMPORTANCE_HIGH,
+            NotificationManager.IMPORTANCE_DEFAULT,
             R.drawable.ic_backup_restore,
             applicationContext.getString(R.string.notification_backup_title),
             notificationContent,

@@ -25,7 +25,7 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = LoginGraph //todo
+        startDestination = HomeGraph //todo
     ) {
         loginGraph(navController = navController)
         homeGraph(navController = navController)

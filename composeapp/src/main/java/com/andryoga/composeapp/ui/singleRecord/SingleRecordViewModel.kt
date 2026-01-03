@@ -137,7 +137,9 @@ class SingleRecordViewModel @Inject constructor(
                         uiState.cell.isPasswordField.not()
             }.forEach { (_, uiState) ->
                 val cellTitle = context.getString(uiState.cell.label)
-                dataStringBuffer.append("$cellTitle : ${uiState.data}\n")
+
+                // for the data, add formatted data because it is easier to read.
+                dataStringBuffer.append("$cellTitle : ${uiState.getFormattedData()}\n")
             }
 
             dataStringBuffer.append(

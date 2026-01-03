@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,6 +60,7 @@ fun RowField(
     if (viewMode == ViewMode.VIEW) {
         if (uiState.data.isNotBlank()) {
             val label = stringResource(uiState.cell.label)
+            val formattedData = uiState.getFormattedData()
             Column {
                 Text(
                     text = label,
@@ -69,7 +69,7 @@ fun RowField(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = uiState.data,
+                    text = formattedData, // show formatted data on the UI
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
@@ -82,6 +82,7 @@ fun RowField(
                                     ClipEntry(
                                         ClipData.newPlainText(
                                             label,
+                                            // while copying we copy the original data and not the formatted data
                                             uiState.data
                                         )
                                     )
@@ -105,12 +106,14 @@ fun RowField(
         OutlinedTextField(
             value = uiState.data,
             onValueChange = {
-                screenAction(
-                    SingleRecordScreenAction.OnCellValueUpdate(
-                        fieldId = fieldId,
-                        data = it,
+                if (it.length <= uiState.cell.maxLength) {
+                    screenAction(
+                        SingleRecordScreenAction.OnCellValueUpdate(
+                            fieldId = fieldId,
+                            data = it,
+                        )
                     )
-                )
+                }
             },
             label = {
                 if (uiState.cell.isMandatory) {
@@ -125,10 +128,14 @@ fun RowField(
             },
             singleLine = uiState.cell.singleLine,
             minLines = uiState.cell.minLines,
-            visualTransformation = if (uiState.cell.isPasswordField && !isPasswordVisible) {
-                PasswordVisualTransformation()
+            visualTransformation = if (uiState.cell.isPasswordField) {
+                if (!isPasswordVisible) {
+                    uiState.cell.visualTransformation
+                } else {
+                    VisualTransformation.None
+                }
             } else {
-                VisualTransformation.Companion.None
+                uiState.cell.visualTransformation
             },
             trailingIcon = {
                 if (uiState.cell.isPasswordField) {

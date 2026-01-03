@@ -9,6 +9,7 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation
 import java.util.Date
 
 class BankAccountLayoutImpl(
@@ -84,6 +85,7 @@ class BankAccountLayoutImpl(
                         label = R.string.account_number,
                         isMandatory = true,
                         keyboardType = KeyboardType.Number, isCopyable = true,
+                        visualTransformation = SpaceAfterEveryFourCharsTransformation(),
                     ),
                     data = recordData?.accountNo.orEmpty()
                 ),
@@ -92,8 +94,11 @@ class BankAccountLayoutImpl(
                     data = recordData?.customerName.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_CUSTOMER_ID to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.customer_id),
-                    data = recordData?.customerId.orEmpty()
+                    cell = FieldUiState.Cell(
+                        label = R.string.customer_id,
+                        visualTransformation = SpaceAfterEveryFourCharsTransformation(),
+                    ),
+                    data = recordData?.customerId.orEmpty(),
                 ),
                 FieldId.BANK_ACCOUNT_BRANCH_CODE to FieldUiState(
                     cell = FieldUiState.Cell(label = R.string.branch_code, isCopyable = true),
@@ -108,7 +113,10 @@ class BankAccountLayoutImpl(
                     data = recordData?.branchAddress.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_IFSC_CODE to FieldUiState(
-                    cell = FieldUiState.Cell(label = R.string.ifsc_code, isCopyable = true),
+                    cell = FieldUiState.Cell(
+                        label = R.string.ifsc_code, isCopyable = true,
+                        visualTransformation = SpaceAfterEveryFourCharsTransformation(),
+                    ),
                     data = recordData?.ifscCode.orEmpty()
                 ),
                 FieldId.BANK_ACCOUNT_MICR_CODE to FieldUiState(

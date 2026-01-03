@@ -1,6 +1,7 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.data.repository.interfaces.BankCardDataRepository
@@ -9,6 +10,8 @@ import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.visualTransformers.ExpiryDateTransformation
+import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation
 import java.util.Date
 
 class BankCardLayoutImpl(
@@ -80,6 +83,7 @@ class BankCardLayoutImpl(
                         label = R.string.number,
                         isMandatory = true,
                         keyboardType = KeyboardType.Number, isCopyable = true,
+                        visualTransformation = SpaceAfterEveryFourCharsTransformation(),
                     ),
                     data = recordData?.number.orEmpty()
                 ),
@@ -87,6 +91,8 @@ class BankCardLayoutImpl(
                     cell = FieldUiState.Cell(
                         label = R.string.pin,
                         keyboardType = KeyboardType.Number,
+                        isPasswordField = true,
+                        visualTransformation = PasswordVisualTransformation()
                     ),
                     data = recordData?.pin.orEmpty()
                 ),
@@ -94,6 +100,8 @@ class BankCardLayoutImpl(
                     cell = FieldUiState.Cell(
                         label = R.string.cvv,
                         keyboardType = KeyboardType.Number,
+                        isPasswordField = true,
+                        visualTransformation = PasswordVisualTransformation()
                     ),
                     data = recordData?.cvv.orEmpty()
                 ),
@@ -102,6 +110,8 @@ class BankCardLayoutImpl(
                         label = R.string.expiryDate,
                         keyboardType = KeyboardType.Number,
                         isCopyable = true,
+                        visualTransformation = ExpiryDateTransformation(),
+                        maxLength = 4,
                     ),
                     data = recordData?.expiryDate.orEmpty()
                 ),

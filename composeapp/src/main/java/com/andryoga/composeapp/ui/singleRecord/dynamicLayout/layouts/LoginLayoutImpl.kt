@@ -1,5 +1,6 @@
 package com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts
 
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.data.repository.interfaces.LoginDataRepository
@@ -76,7 +77,9 @@ class LoginLayoutImpl(
                 ),
                 FieldId.LOGIN_PASSWORD to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.password, isPasswordField = true
+                        label = R.string.password,
+                        isPasswordField = true,
+                        visualTransformation = PasswordVisualTransformation()
                     ),
                     data = recordData?.password.orEmpty()
                 ),
