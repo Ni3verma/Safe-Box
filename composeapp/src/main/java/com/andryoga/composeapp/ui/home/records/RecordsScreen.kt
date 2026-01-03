@@ -231,17 +231,23 @@ private fun RecordsScreen(
         ) {
             NotificationPermissionRationaleDialog(
                 isNotificationPermissionAskedBefore = notificationPermissionState.isNotificationPermissionAskedBefore,
-                onPermissionAskedFirstTime = {
+                onAllowClick = { isRedirectingToSettings ->
                     // update is notification asked before in pref
                     showNotificationPermissionRationaleDialog = false
-                    onScreenAction(RecordScreenAction.OnNotificationPermissionAskedForFirstTime)
+                    onScreenAction(
+                        RecordScreenAction.OnNotificationAllowedFromRationaleDialog(
+                            isRedirectingToSettingsPage = isRedirectingToSettings
+                        )
+                    )
                 },
                 onCancelClick = { neverAsk ->
                     showNotificationPermissionRationaleDialog = false
                     Timber.i("notification permission rationale dialog cancelled, never ask = $neverAsk")
-                    if (neverAsk) {
-                        onScreenAction(RecordScreenAction.OnNeverAskForNotificationPermission)
-                    }
+                    onScreenAction(
+                        RecordScreenAction.OnCancelClickFromRationaleDialog(
+                            neverAsk = neverAsk
+                        )
+                    )
                 },
                 dismissDialogAction = {
                     showNotificationPermissionRationaleDialog = false

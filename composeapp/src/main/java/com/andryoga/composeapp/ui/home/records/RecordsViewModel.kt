@@ -2,6 +2,11 @@ package com.andryoga.composeapp.ui.home.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.composeapp.common.AnalyticsKeys.DO_NOT_ASK_AGAIN
+import com.andryoga.composeapp.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK
+import com.andryoga.composeapp.common.AnalyticsKeys.NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK
+import com.andryoga.composeapp.common.AnalyticsKeys.PERMISSION_ASKED_BEFORE
+import com.andryoga.composeapp.common.AnalyticsKeys.REDIRECT_TO_SETTINGS
 import com.andryoga.composeapp.common.CommonConstants.IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION
 import com.andryoga.composeapp.common.CommonConstants.IS_NOTIFICATION_PERMISSION_ASKED_BEFORE
 import com.andryoga.composeapp.common.CommonConstants.TOTAL_LOGIN_COUNT
@@ -18,6 +23,9 @@ import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
 import com.andryoga.composeapp.ui.core.InAppReviewManager
 import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
 import com.andryoga.composeapp.ui.home.records.models.RecordsState
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.analytics.logEvent
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -159,15 +167,37 @@ class RecordsViewModel @Inject constructor(
                 crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
             }
 
-            RecordScreenAction.OnNeverAskForNotificationPermission -> updateNotificationPermissionState(
-                isNotificationPermissionAskedBefore = notificationPermissionState.value.isNotificationPermissionAskedBefore,
-                isNeverAskForNotificationPermission = true
-            )
+            is RecordScreenAction.OnCancelClickFromRationaleDialog -> {
+                Firebase.analytics.logEvent(
+                    NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK
+                ) {
+                    param(DO_NOT_ASK_AGAIN, action.neverAsk.toString())
+                }
 
-            RecordScreenAction.OnNotificationPermissionAskedForFirstTime -> updateNotificationPermissionState(
-                isNotificationPermissionAskedBefore = true,
-                isNeverAskForNotificationPermission = notificationPermissionState.value.isNeverAskForNotificationPermission
-            )
+                if (action.neverAsk) {
+                    updateNotificationPermissionState(
+                        isNotificationPermissionAskedBefore = notificationPermissionState.value.isNotificationPermissionAskedBefore,
+                        isNeverAskForNotificationPermission = true
+                    )
+                }
+            }
+
+            is RecordScreenAction.OnNotificationAllowedFromRationaleDialog -> {
+                val isNotificationPermissionAskedBefore =
+                    notificationPermissionState.value.isNotificationPermissionAskedBefore
+                Firebase.analytics.logEvent(NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK) {
+                    param(PERMISSION_ASKED_BEFORE, isNotificationPermissionAskedBefore.toString())
+                    param(REDIRECT_TO_SETTINGS, action.isRedirectingToSettingsPage.toString())
+                }
+
+                if (isNotificationPermissionAskedBefore.not()) {
+                    // allow clicked for first time
+                    updateNotificationPermissionState(
+                        isNotificationPermissionAskedBefore = true,
+                        isNeverAskForNotificationPermission = notificationPermissionState.value.isNeverAskForNotificationPermission
+                    )
+                }
+            }
         }
     }
 

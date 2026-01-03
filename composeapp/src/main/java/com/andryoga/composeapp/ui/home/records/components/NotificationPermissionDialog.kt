@@ -57,7 +57,7 @@ import timber.log.Timber
 @Composable
 fun NotificationPermissionRationaleDialog(
     isNotificationPermissionAskedBefore: Boolean,
-    onPermissionAskedFirstTime: () -> Unit,
+    onAllowClick: (isRedirectingToSettings: Boolean) -> Unit,
     onCancelClick: (Boolean) -> Unit,
     dismissDialogAction: () -> Unit,
 ) {
@@ -150,7 +150,7 @@ fun NotificationPermissionRationaleDialog(
                             if (isNotificationPermissionAskedBefore.not()) {
                                 Timber.i("asking notification permission for the first time")
                                 permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                onPermissionAskedFirstTime()
+                                onAllowClick(false)
                             } else {
                                 if (ActivityCompat.shouldShowRequestPermissionRationale(
                                         context.findActivity(),
@@ -159,9 +159,11 @@ fun NotificationPermissionRationaleDialog(
                                 ) {
                                     Timber.i("asking notification permission")
                                     permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    onAllowClick(false)
                                 } else {
                                     // user has permanently denied permission, need to give from settings page
                                     dismissDialogAction()
+                                    onAllowClick(true)
                                     Timber.i("opening settings page for notification permission")
                                     val intent =
                                         Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
@@ -209,7 +211,7 @@ private fun NotificationPermissionDialogPreview() {
     SafeBoxTheme {
         NotificationPermissionRationaleDialog(
             isNotificationPermissionAskedBefore = true,
-            onPermissionAskedFirstTime = {},
+            onAllowClick = {},
             onCancelClick = {},
             dismissDialogAction = {}
         )

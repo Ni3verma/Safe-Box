@@ -3,9 +3,12 @@ package com.andryoga.composeapp.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
+import com.andryoga.composeapp.common.AnalyticsKeys.LOGIN_FAILED
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.andryoga.composeapp.worker.BackupDataWorker
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,6 +85,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun onIncorrectPassword() {
+        Firebase.analytics.logEvent(LOGIN_FAILED, null)
         _uiState.update {
             it.copy(
                 userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED

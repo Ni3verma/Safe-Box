@@ -9,6 +9,4 @@ interface SecureNoteDataRepository {
     suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>>
     suspend fun getSecureNoteDataByKey(key: Int): NoteData
     suspend fun deleteSecureNoteDataByKey(key: Int)
-//    suspend fun getSecureNoteDataByKey(key: Int): SecureNoteScreenData
-//    suspend fun getViewSecureNoteDataByKey(key: Int): ViewSecureNoteData
 }

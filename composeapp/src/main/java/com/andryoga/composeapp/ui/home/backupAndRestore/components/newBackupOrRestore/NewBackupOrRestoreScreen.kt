@@ -180,7 +180,7 @@ private fun confirmButtonComposable(
             {
                 TextButton(
                     onClick = {
-                        onScreenAction(ScreenAction.ConfirmPasswordRequest(password))
+                        onScreenAction(ScreenAction.PasswordConfirmed(password))
                     }
                 ) {
                     Text(stringResource(R.string.confirm))

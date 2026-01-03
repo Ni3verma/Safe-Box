@@ -7,6 +7,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import com.andryoga.composeapp.common.AnalyticsKeys.RESTORE_STARTED
 import com.andryoga.composeapp.common.CommonConstants.RESTORE_PARAM_FILE_URI
 import com.andryoga.composeapp.common.CommonConstants.RESTORE_PARAM_PASSWORD
 import com.andryoga.composeapp.common.CommonConstants.WORKER_NAME_RESTORE_DATA
@@ -15,6 +16,8 @@ import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.andryoga.composeapp.ui.core.InAppReviewManager
 import com.andryoga.composeapp.worker.BackupDataWorker
 import com.andryoga.composeapp.worker.RestoreDataWorker
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -55,18 +58,28 @@ class NewBackupOrRestoreVM @Inject constructor(
 
     fun onScreenAction(action: ScreenAction) {
         when (action) {
-            is ScreenAction.ConfirmPasswordRequest -> handleConfirmPasswordRequest(action.password)
-            ScreenAction.Dismiss -> TODO()
+            is ScreenAction.PasswordConfirmed -> handlePasswordConfirmedAction(action.password)
         }
     }
 
-    private fun handleConfirmPasswordRequest(password: String) {
+    private fun handlePasswordConfirmedAction(password: String) {
         viewModelScope.launch {
-            val isPswrdCorrect = userDetailsRepository.checkPassword(password)
-            if (isPswrdCorrect.not()) {
-                updateWorkflowState(WorkflowState.WRONG_PASSWORD)
+            val isPasswordCheckRequired = operation == Operation.Backup
+
+            var isPswrdCorrect = false
+            if (isPasswordCheckRequired) {
+                isPswrdCorrect = userDetailsRepository.checkPassword(password)
+                if (isPswrdCorrect.not()) {
+                    updateWorkflowState(WorkflowState.WRONG_PASSWORD)
+                    return@launch
+                }
             } else {
-                Timber.i("pswrd is correct, enqueuing work req")
+                // password check is not required for restore
+                Firebase.analytics.logEvent(RESTORE_STARTED, null)
+            }
+
+            if (isPasswordCheckRequired.not() || isPswrdCorrect) {
+                Timber.i("enqueuing work req")
                 val requestId = enqueueWorkRequest(password, operation)
                 workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
                     Timber.i("backup/restore work state: ${workInfo?.state}")

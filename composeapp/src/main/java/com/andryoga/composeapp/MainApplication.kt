@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import com.andryoga.composeapp.common.CrashlyticsKeys
 import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import com.andryoga.composeapp.worker.SafeBoxWorkerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -47,6 +48,7 @@ class MainApplication : Application(), Configuration.Provider {
             Timber.plant(ReleaseTree())
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(activeSessionManager)
+        CrashlyticsKeys(this).setDefaultKeys()
     }
 }
 

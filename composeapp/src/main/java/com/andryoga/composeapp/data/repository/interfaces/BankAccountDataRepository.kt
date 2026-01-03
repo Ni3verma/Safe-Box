@@ -9,5 +9,4 @@ interface BankAccountDataRepository {
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
     suspend fun getBankAccountDataByKey(key: Int): BankAccountData
     suspend fun deleteBankAccountDataByKey(key: Int)
-//    suspend fun getViewBankAccountDataByKey(key: Int): ViewBankAccountData
 }
