@@ -7,6 +7,7 @@ detektGradlePlugin = "1.23.8"
 
 junit = "4.13.2"
 extJunit = "1.3.0"
+testRunner = "1.7.0"
 espressoCore = "3.7.0"
 
 composeBom = "2025.12.01"
@@ -57,6 +58,7 @@ kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", v
 # Testing
 androidx-test-junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "extJunit" }
+androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testRunner" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -93,7 +95,7 @@ play-review-ktx = { group = "com.google.android.play", name = "review-ktx", vers
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]
 compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
 compose-debug = ["androidx-compose-ui-tooling", "androidx-compose-ui-test-manifest"]
-androidx-test = ["androidx-test-ext-junit", "androidx-test-espresso-core"]
+test = ["androidx-test-ext-junit", "androidx-test-espresso-core", "androidx-test-junit", "androidx-compose-ui-test-junit4", "androidx-test-runner"]
 hilt = ["hilt-android", "hilt-nav-compose"]
 work = ["work-runtime-ktx", "work-testing"]
 firebase = ["firebase-crashlytics", "firebase-analytics"]

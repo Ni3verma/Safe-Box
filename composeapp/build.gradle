@@ -25,7 +25,7 @@ android {
         targetSdk 36
         versionCode 10
         // majorVersion.minorVersion.dbVersion.fixVersion
-        versionName "1.7.4.1"
+        versionName "2.0.5.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -100,14 +100,17 @@ android {
         compose true
         buildConfig true
     }
+    sourceSets {
+        named("androidTest") {
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
+    }
 }
 
 dependencies {
     // test deps
-    testImplementation libs.androidx.test.junit
     androidTestImplementation platform(libs.androidx.compose.bom)
-    androidTestImplementation libs.bundles.androidx.test
-    androidTestImplementation libs.androidx.compose.ui.test.junit4
+    androidTestImplementation libs.bundles.test
 
     // debug deps
     debugImplementation libs.bundles.compose.debug

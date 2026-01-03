@@ -25,7 +25,7 @@ import com.andryoga.composeapp.data.db.entity.UserDetailsEntity
         SecureNoteDataEntity::class,
         BackupMetadataEntity::class
     ],
-    version = 4
+    version = 5
 )
 @TypeConverters(Converters::class)
 abstract class SafeBoxDatabase : RoomDatabase() {

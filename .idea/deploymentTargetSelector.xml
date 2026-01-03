@@ -16,7 +16,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="AddNewRecordBottomSheetPreview">
+      <SelectionState runConfigName="migration_4_5()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

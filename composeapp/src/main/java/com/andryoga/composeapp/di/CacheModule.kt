@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.andryoga.composeapp.data.db.Migration.MIGRATION_1_2
 import com.andryoga.composeapp.data.db.Migration.MIGRATION_2_3
 import com.andryoga.composeapp.data.db.Migration.MIGRATION_3_4
+import com.andryoga.composeapp.data.db.Migration.MIGRATION_4_5
 import com.andryoga.composeapp.data.db.SafeBoxDatabase
 import com.andryoga.composeapp.data.db.dao.BackupMetadataDao
 import com.andryoga.composeapp.data.db.dao.BankAccountDataDao
@@ -32,7 +33,7 @@ object CacheModule {
             context,
             SafeBoxDatabase::class.java,
             SafeBoxDatabase.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build()
     }
 
     // DAO
