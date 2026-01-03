@@ -2,6 +2,7 @@ package com.andryoga.composeapp.data.repository
 
 import com.andryoga.composeapp.common.CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING
 import com.andryoga.composeapp.common.CommonConstants.CRASHLYTICS_KEY_UID
+import com.andryoga.composeapp.common.CommonConstants.TOTAL_LOGIN_COUNT
 import com.andryoga.composeapp.data.db.entity.UserDetailsEntity
 import com.andryoga.composeapp.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.composeapp.data.repository.UserDetailsRepositoryImpl.Constants.MAX_CONT_BIOMETRIC_LOGINS
@@ -52,10 +53,20 @@ class UserDetailsRepositoryImpl @Inject constructor(
             MAX_CONT_BIOMETRIC_LOGINS
         }
 
-        Timber.i("setting biometric login count remaining to: $newBiometricLoginCountRemaining")
         preferenceProvider.upsertIntPref(
             ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
             max(0, newBiometricLoginCountRemaining)
+        )
+
+        val currLoginCount = preferenceProvider.getIntPref(TOTAL_LOGIN_COUNT, 1)
+        preferenceProvider.upsertIntPref(
+            TOTAL_LOGIN_COUNT,
+            currLoginCount + 1
+        )
+
+        Timber.i(
+            "setting biometric login count remaining to: $newBiometricLoginCountRemaining" +
+                    " and total login count to: ${currLoginCount + 1}"
         )
     }
 

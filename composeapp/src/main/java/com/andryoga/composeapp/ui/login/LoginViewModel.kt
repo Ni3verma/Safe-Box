@@ -3,10 +3,7 @@ package com.andryoga.composeapp.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
-import com.andryoga.composeapp.common.CommonConstants.TOTAL_LOGIN_COUNT
 import com.andryoga.composeapp.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.composeapp.providers.interfaces.EncryptedPreferenceProvider
-import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
 import com.andryoga.composeapp.security.interfaces.SymmetricKeyUtils
 import com.andryoga.composeapp.worker.BackupDataWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,23 +16,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
-    private val preferenceProvider: PreferenceProvider,
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
-
-    // todo: total login count was used for in-app review, this should not increase forever
-    private var totalLoginCount: Int = 1
-
-    init {
-        viewModelScope.launch {
-            totalLoginCount = preferenceProvider.getIntPref(TOTAL_LOGIN_COUNT, 1)
-        }
-    }
 
     fun onAction(action: LoginScreenAction) {
         when (action) {
@@ -112,9 +98,5 @@ class LoginViewModel @Inject constructor(
                 )
             }
         }
-    }
-
-    object Constants {
-        private const val ASK_FOR_REVIEW_AFTER_EVERY = 10
     }
 }

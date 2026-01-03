@@ -15,6 +15,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +33,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.ui.MainViewModel
+import com.andryoga.composeapp.ui.core.InAppReviewSource
 import com.andryoga.composeapp.ui.core.ScrollBehaviorType
 import com.andryoga.composeapp.ui.core.TopAppBarConfig
 import com.andryoga.composeapp.ui.home.records.components.AddNewRecordBottomSheet
@@ -48,6 +50,7 @@ import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.previewHelper.getRecordState
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
 import com.andryoga.composeapp.ui.utils.OnStart
+import com.andryoga.composeapp.ui.utils.findActivity
 import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
 import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import timber.log.Timber
@@ -63,6 +66,7 @@ fun RecordsScreenRoot(
     val uiState by viewModel.uiState.collectAsState()
     val recordState by viewModel.recordState.collectAsState()
     val notificationPermissionState by viewModel.notificationPermissionState.collectAsState()
+    val context = LocalContext.current
 
     OnStart {
         val config = TopAppBarConfig(
@@ -72,6 +76,15 @@ fun RecordsScreenRoot(
             scrollBehaviorType = ScrollBehaviorType.ENTER_ALWAYS
         )
         mainViewModel.updateTopBar(config)
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.startInAppReview.collect {
+            viewModel.inAppReviewManager.get().requestAndLaunchReview(
+                activity = context.findActivity(),
+                inAppReviewSource = InAppReviewSource.AFTER_X_LOGINS
+            )
+        }
     }
 
     RecordsScreen(

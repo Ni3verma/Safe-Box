@@ -1,7 +1,7 @@
 package com.andryoga.composeapp.common
 
 object CommonConstants {
-    //        SHOULD ONLY be user for simple shared preference
+    //        SHOULD ONLY be used for simple shared preference
     const val TOTAL_LOGIN_COUNT = "total_login_count"
 
     // user cannot login with biometric always, it has a limit

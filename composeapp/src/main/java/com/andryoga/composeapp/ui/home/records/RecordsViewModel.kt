@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.composeapp.common.CommonConstants.IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION
 import com.andryoga.composeapp.common.CommonConstants.IS_NOTIFICATION_PERMISSION_ASKED_BEFORE
+import com.andryoga.composeapp.common.CommonConstants.TOTAL_LOGIN_COUNT
 import com.andryoga.composeapp.common.Utils.crashInDebugBuild
 import com.andryoga.composeapp.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.composeapp.data.repository.interfaces.BankAccountDataRepository
@@ -14,16 +15,20 @@ import com.andryoga.composeapp.domain.mappers.record.toRecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordListItem
 import com.andryoga.composeapp.domain.models.record.RecordType
 import com.andryoga.composeapp.providers.interfaces.PreferenceProvider
+import com.andryoga.composeapp.ui.core.InAppReviewManager
 import com.andryoga.composeapp.ui.home.records.models.NotificationPermissionState
 import com.andryoga.composeapp.ui.home.records.models.RecordsState
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -36,7 +41,8 @@ class RecordsViewModel @Inject constructor(
     private val loginDataRepository: LoginDataRepository,
     private val cardDataRepository: BankCardDataRepository,
     private val backupMetadataRepository: BackupMetadataRepository,
-    private val preferenceProvider: PreferenceProvider
+    private val preferenceProvider: PreferenceProvider,
+    val inAppReviewManager: Lazy<InAppReviewManager>,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(RecordsUiState())
     val uiState = _uiState.asStateFlow()
@@ -49,6 +55,12 @@ class RecordsViewModel @Inject constructor(
     val notificationPermissionState: StateFlow<NotificationPermissionState> =
         _notificationPermissionState
 
+    private val _startInAppReview = Channel<Unit>(Channel.CONFLATED)
+
+    /**
+     * Start In-App review flow if user logs in after x times again.
+     * */
+    val startInAppReview = _startInAppReview.receiveAsFlow()
 
     init {
         loadRecords()
@@ -65,6 +77,11 @@ class RecordsViewModel @Inject constructor(
                 ),
                 isBackupPathSet = backupMetadataRepository.isBackupPathSet()
             )
+
+            val totalLoginCount = preferenceProvider.getIntPref(TOTAL_LOGIN_COUNT, 1)
+            if (totalLoginCount % ASK_FOR_REVIEW_AFTER_EVERY_LOGIN == 0) {
+                _startInAppReview.send(Unit)
+            }
         }
 
     }
@@ -207,5 +224,10 @@ class RecordsViewModel @Inject constructor(
 
             it.copy(recordTypeFilters = newFilterState)
         }
+    }
+
+    companion object {
+        // ask for review after every 10th login
+        private const val ASK_FOR_REVIEW_AFTER_EVERY_LOGIN = 10
     }
 }

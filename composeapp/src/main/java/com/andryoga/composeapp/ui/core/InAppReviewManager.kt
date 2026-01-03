@@ -20,5 +20,6 @@ class InAppReviewManager @Inject constructor(
 }
 
 enum class InAppReviewSource {
-    SUCCESSFUL_RESTORE
+    SUCCESSFUL_RESTORE,
+    AFTER_X_LOGINS,
 }
