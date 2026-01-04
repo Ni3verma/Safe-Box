@@ -8,9 +8,11 @@ import androidx.navigation.toRoute
 import com.andryoga.composeapp.R
 import com.andryoga.composeapp.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.composeapp.domain.models.record.RecordType
+import com.andryoga.composeapp.ui.core.ActiveSessionManager
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.composeapp.ui.singleRecord.dynamicLayout.models.ViewMode
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +30,8 @@ import javax.inject.Inject
 class SingleRecordViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     @param:ApplicationContext private val context: Context,
-    layoutFactory: LayoutFactory
+    layoutFactory: LayoutFactory,
+    val activeSessionManager: Lazy<ActiveSessionManager>
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())

@@ -31,7 +31,7 @@ room = "2.8.4"
 security = "1.1.0"
 kotlinxSerializationJson = "1.9.0"
 biometric = "1.1.0"
-lottie = "0.12.5"
+lottie = "0.12.6"
 playReview = "2.0.2"
 
 [libraries]

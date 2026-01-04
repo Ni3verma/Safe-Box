@@ -13,6 +13,7 @@ import com.andryoga.composeapp.ui.MainActivityViewModel
 import com.andryoga.composeapp.ui.core.AnimatedCurveBackground
 import com.andryoga.composeapp.ui.previewHelper.LightDarkModePreview
 import com.andryoga.composeapp.ui.theme.SafeBoxTheme
+import timber.log.Timber
 
 @Composable
 fun LoadingScreenRoot(
@@ -22,6 +23,7 @@ fun LoadingScreenRoot(
     val viewModel = hiltViewModel<MainActivityViewModel>()
     val loadingState by viewModel.loadingState.collectAsState(LoadingState.Initial)
 
+    Timber.i("loading state: $loadingState")
     when (loadingState) {
         LoadingState.Initial -> LoadingScreen()
         LoadingState.ProceedToLogin -> navigateToLogin()

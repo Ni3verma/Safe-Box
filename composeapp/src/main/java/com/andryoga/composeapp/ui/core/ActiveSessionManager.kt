@@ -33,6 +33,7 @@ class ActiveSessionManager : DefaultLifecycleObserver {
 
     override fun onStart(owner: LifecycleOwner) {
         Timber.i("onStart")
+        isPaused = false
         stopLogoutTimer()
     }
 

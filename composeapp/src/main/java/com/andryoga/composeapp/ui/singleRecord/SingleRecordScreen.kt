@@ -70,6 +70,7 @@ fun SingleRecordScreenRoot(
     LaunchedEffect(Unit) {
         viewModel.shareContentEvent.collect { dataToShare ->
             Timber.i("starting intent to share data")
+            viewModel.activeSessionManager.get().setPaused(true)
             ShareCompat.IntentBuilder(context)
                 .setType("text/plain")
                 .setText(dataToShare)
