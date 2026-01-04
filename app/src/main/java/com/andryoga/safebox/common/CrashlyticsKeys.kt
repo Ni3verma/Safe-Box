@@ -31,16 +31,11 @@ class CrashlyticsKeys(
      */
     @Suppress("DEPRECATION")
     private val locale: String
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        get() =
             context
                 .resources
                 .configuration
                 .locales[0].toString()
-        } else {
-            context
-                .resources
-                .configuration.locale.toString()
-        }
 
     /**
      * Retrieve the screen density information for the app.

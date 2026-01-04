@@ -89,7 +89,7 @@
     <string name="backup_set_message">Backup location is set</string>
     <string name="backup_path">Backup path is %1$s</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
-    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken everytime you login with password</string>
+    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken every time you login with password</string>
     <string name="backup_edit_path">Edit Path</string>
     <string name="new_backup_dialog_body_text">Please enter your current master password to create a new backup file.</string>
     <string name="backup_in_progress_message">It may take a while to backup data. Sit back and relax !</string>

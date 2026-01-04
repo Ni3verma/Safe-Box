@@ -1,14 +1,14 @@
 package com.andryoga.safebox.security.interfaces
 
 interface HashingUtils {
-    /*
+    /**
      * @author Nitin
      * Computes hash of passed input
      * @param password : simple string that needs to be hashed
      * @return {base64 encoded hash(password+salt)}+someSeparator+{base64 encoded salt}*/
     fun hash(password: String): String
 
-    /*
+    /**
      * @author Nitin
      * compares if text matches with passed in hash or not
      * @param toCompareText : it is the string that needs to be compared

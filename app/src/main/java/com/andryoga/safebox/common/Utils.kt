@@ -1,22 +1,22 @@
 package com.andryoga.safebox.common
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.andryoga.safebox.BuildConfig
+import com.andryoga.safebox.domain.NotificationOptions
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.andryoga.safebox.ui.common.NotificationOptions
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 object Utils {
-    fun logResource(tag: String, resource: Resource<Any>) {
-        Timber.d("$tag --> status = ${resource.status}\ndata = ${resource.data}\nmessage = ${resource.message}\n")
-    }
 
     fun String?.encryptNullableString(symmetricKeyUtils: SymmetricKeyUtils): String? {
         return if (this.isNullOrBlank()) null else symmetricKeyUtils.encrypt(this)
@@ -27,19 +27,15 @@ object Utils {
     }
 
     /**
-     * returns true if integer is non null and greater than 0, false otherwise
-     */
-    fun Int?.isPositive(): Boolean = (this ?: 0) > 0
-
-    /**
      * returns true if integer is non null and equal to 0, false otherwise
      */
     fun Int?.isZero(): Boolean = (this ?: 0) == 0
 
     fun getFormattedDate(date: Date, pattern: String = "EEEE, dd MMM yyyy hh:mm a"): String {
-        return SimpleDateFormat(pattern).format(date)
+        return SimpleDateFormat(pattern, Locale.US).format(date)
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun makeStatusNotification(context: Context, notificationOptions: NotificationOptions) {
         // Make a channel if necessary
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

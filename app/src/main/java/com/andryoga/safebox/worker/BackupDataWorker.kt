@@ -1,7 +1,10 @@
 package com.andryoga.safebox.worker
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
@@ -26,9 +29,9 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.safebox.domain.NotificationOptions
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.andryoga.safebox.ui.common.NotificationOptions
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.analytics.analytics
@@ -74,8 +77,7 @@ class BackupDataWorker(
                         false
                     )
                 if (isShowStartNotification) {
-                    Utils.makeStatusNotification(
-                        applicationContext,
+                    sendNotification(
                         getNotificationOptions(
                             applicationContext.getString(R.string.notification_backup_in_progress)
                         )
@@ -142,6 +144,19 @@ class BackupDataWorker(
         return Result.success()
     }
 
+    private fun sendNotification(notificationOptions: NotificationOptions) {
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            Utils.makeStatusNotification(
+                applicationContext,
+                notificationOptions
+            )
+        }
+    }
+
     private suspend fun onBackupError(exception: Exception) {
         Timber.e(
             exception,
@@ -152,8 +167,7 @@ class BackupDataWorker(
         }
         Timber.i("removing backup metadata")
         backupMetadataRepository.deleteBackupMetadata()
-        Utils.makeStatusNotification(
-            applicationContext,
+        sendNotification(
             getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure))
         )
     }
@@ -225,8 +239,7 @@ class BackupDataWorker(
         }
         recordTime("exported to file, updating date in db")
         backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
-        Utils.makeStatusNotification(
-            applicationContext,
+        sendNotification(
             getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
         )
     }
@@ -340,11 +353,11 @@ class BackupDataWorker(
                 .setInputData(
                     Data.Builder()
                         .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
+                            BACKUP_PARAM_PASSWORD,
                             symmetricKeyUtils.encrypt(password)
                         )
                         .putBoolean(
-                            CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                            BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
                             showBackupStartNotification
                         )
                         .build()
