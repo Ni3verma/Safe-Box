@@ -29,7 +29,7 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
-import com.andryoga.safebox.domain.NotificationOptions
+import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.google.firebase.Firebase

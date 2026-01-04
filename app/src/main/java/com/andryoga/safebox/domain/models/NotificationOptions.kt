@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.common
+package com.andryoga.safebox.domain.models
 
 data class NotificationOptions(
     val channelId: String,
