@@ -11,3 +11,4 @@
 -dontwarn java.awt.GraphicsEnvironment
 -dontwarn java.awt.HeadlessException
 -dontwarn java.awt.Window
+-dontwarn com.google.android.gms.common.annotation.NoNullnessRewrite
