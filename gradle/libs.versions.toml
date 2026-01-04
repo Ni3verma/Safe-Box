@@ -15,7 +15,7 @@ firebaseBom = "34.7.0"
 
 kotlin = "2.3.0"
 kotlinComposeCompiler = "2.3.0"
-ksp = "2.2.10-2.0.2"
+ksp = "2.3.4"
 kotlinSerialization = "2.3.0"
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"

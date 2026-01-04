@@ -23,10 +23,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.andryoga.composeapp" />
-                  <option name="mobileSdkAppId" value="1:510120975864:android:3a4b1799d32270d5360a0d" />
+                  <option name="appId" value="com.andryoga.safebox.debug" />
+                  <option name="mobileSdkAppId" value="1:123456789456:android:abcdef" />
                   <option name="projectId" value="andryoga-safe-box" />
-                  <option name="projectNumber" value="510120975864" />
+                  <option name="projectNumber" value="123456789456_THIS_IS_DUMMY_" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
