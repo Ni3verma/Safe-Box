@@ -127,10 +127,33 @@
     <string name="no_filtered_record_title">Oops! No results here.</string>
     <string name="no_filtered_record_body">We couldn\'t find anything matching your search. Try adjusting your filters or checking for typos.</string>
 
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Security &amp; Privacy</string>
+    <string name="settings_section_support_and_community">Support &amp; Community</string>
+
+    <string name="settings_privacy_enabled_title">Hide screen in Recent Apps</string>
+    <string name="settings_privacy_enabled_body">Masks app content in the device overview screen to protect sensitive data. Recommended to keep it on.</string>
+
+    <string name="settings_auto_backup_title">Auto-backup on login</string>
+    <string name="settings_auto_backup_body">Automatically backs up your data when you sign in with your master password (not with biometric). Recommended to keep it on.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Ask for password after %d biometric logins.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">This is the limit for how many times is continuous biometric login allowed. Once this limit is reached, password will be required to login. This ensures you remember your master password.</string>
+
+    <string name="settings_away_timeout_title">Auto-lock after %d seconds.</string>
+    <string name="settings_away_timeout_body">App logs you out automatically if you are away from the app for too long. A shorter duration is safer.</string>
+
+    <string name="settings_feedback_title">Send feedback</string>
+    <string name="settings_feedback_body">Report a bug or suggest a new feature. We value your input to make Safe Box better.</string>
+
+    <string name="settings_review_title">Rate on Play Store</string>
+    <string name="settings_review_body">If you enjoy using the app, please take a moment to leave a review. It helps others find us!</string>
+
+    <string name="settings_github_title">Contribute on GitHub</string>
+    <string name="settings_github_body">SafeBox is open source. View the code, report issues, or contribute to the project on GitHub.</string>
 
     <!--    Other-->
-    <string name="app_name">safebox</string>
-    <!--    <string name="app_name">Safe Box</string>-->
+    <string name="app_name">Safe Box</string>
     <string name="app_subtitle">Safely store your private data</string>
     <string name="enter_password">Enter password </string>
     <string name="blank_validation_text">Enter something !</string>
@@ -175,4 +198,6 @@
     <string name="enter_password_manually">For security reason, Please manually enter password</string>
     <string name="add_a_new_record">Add a new record</string>
     <string name="search_bar_placeholder">Search …</string>
+    <string name="send_feedback_email">Send feedback Email</string>
+    <string name="safe_box_feedback">Safe Box Feedback</string>
 </resources>

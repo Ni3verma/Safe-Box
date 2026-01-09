@@ -123,6 +123,7 @@ dependencies {
     implementation libs.biometric
     implementation libs.dot.lottie
     implementation libs.bundles.play.review
+    implementation libs.data.store.pref
 
     ksp(libs.room.compiler)
     implementation libs.bundles.room

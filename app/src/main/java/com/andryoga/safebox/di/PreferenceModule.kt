@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.andryoga.safebox.di
 
 import com.andryoga.safebox.providers.EncryptedPreferenceProviderImpl

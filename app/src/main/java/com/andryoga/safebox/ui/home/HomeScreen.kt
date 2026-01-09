@@ -34,7 +34,7 @@ import com.andryoga.safebox.ui.home.components.UserAwayDialog
 import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.records.RecordsScreenRoot
-import com.andryoga.safebox.ui.home.settings.SettingsScreen
+import com.andryoga.safebox.ui.home.settings.SettingsScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
@@ -135,7 +135,9 @@ fun HomeScreen(
                     )
                 }
                 composable<HomeRouteType.SettingsRoute> {
-                    SettingsScreen()
+                    SettingsScreenRoot(
+                        mainViewModel = mainViewModel
+                    )
                 }
                 composable<SingleRecordScreenRoute> {
                     SingleRecordScreenRoot(

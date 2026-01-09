@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "8.12.3"
+androidGradlePlugin = "8.13.2"
 kotlinGradlePlugin = "1.9.24"
 googleServicesGradlePlugin = "4.4.4"
 crashlyticsGradlePlugin = "3.0.6"
@@ -33,6 +33,7 @@ kotlinxSerializationJson = "1.9.0"
 biometric = "1.1.0"
 lottie = "0.12.6"
 playReview = "2.0.2"
+dataStore = "1.2.0"
 
 [libraries]
 # AndroidX Core
@@ -90,6 +91,7 @@ biometric = { group = "androidx.biometric", name = "biometric", version.ref = "b
 dot-lottie = { group = "com.github.LottieFiles", name = "dotlottie-android", version.ref = "lottie" }
 play-review = { group = "com.google.android.play", name = "review", version.ref = "playReview" }
 play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "playReview" }
+data-store-pref = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
 
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]

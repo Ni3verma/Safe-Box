@@ -17,6 +17,7 @@ object AnalyticsKeys {
     const val NEW_BANK_CARD = "new_bank_card"
     const val NEW_LOGIN = "new_login"
 
+    const val EMAIL_FEEDBACK = "email_feedback"
     const val OPEN_GITHUB = "open_github"
     const val OPEN_PLAY_STORE = "open_play_store"
 

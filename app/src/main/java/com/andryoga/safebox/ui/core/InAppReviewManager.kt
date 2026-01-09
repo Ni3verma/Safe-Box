@@ -9,6 +9,10 @@ import javax.inject.Inject
 class InAppReviewManager @Inject constructor(
     private val manager: ReviewManager
 ) {
+    /**
+     * It tries to launch in app review. Google's review library may or may not open in-app review flow.
+     * This is a fire and forget API.
+     */
     suspend fun requestAndLaunchReview(activity: Activity, inAppReviewSource: InAppReviewSource) {
         try {
             val reviewInfo = manager.requestReview()
