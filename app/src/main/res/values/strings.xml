@@ -131,8 +131,8 @@
     <string name="settings_section_security_and_privacy">Security &amp; Privacy</string>
     <string name="settings_section_support_and_community">Support &amp; Community</string>
 
-    <string name="settings_privacy_enabled_title">Hide screen in Recent Apps</string>
-    <string name="settings_privacy_enabled_body">Masks app content in the device overview screen to protect sensitive data. Recommended to keep it on.</string>
+    <string name="settings_privacy_enabled_title">Privacy mode</string>
+    <string name="settings_privacy_enabled_body">Masks app content in the device overview screen to protect sensitive data and do not allow app screenshot. Recommended to keep it on.</string>
 
     <string name="settings_auto_backup_title">Auto-backup on login</string>
     <string name="settings_auto_backup_body">Automatically backs up your data when you sign in with your master password (not with biometric). Recommended to keep it on.</string>

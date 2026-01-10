@@ -1,11 +1,13 @@
 package com.andryoga.safebox.data.repository
 
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import java.util.Date
 import java.util.UUID
@@ -15,6 +17,7 @@ import kotlin.math.max
 class UserDetailsRepositoryImpl @Inject constructor(
     private val userDetailsDaoSecure: UserDetailsDaoSecure,
     private val preferenceProvider: PreferenceProvider,
+    private val settingsDataStore: SettingsDataStore,
 ) : UserDetailsRepository {
     override suspend fun insertUserDetailsData(password: String, hint: String?) {
         val uid = UUID.randomUUID().toString()
@@ -42,12 +45,13 @@ class UserDetailsRepositoryImpl @Inject constructor(
             val currentBiometricLoginCountRemaining: Int =
                 preferenceProvider.getIntPref(
                     CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                    Constants.MAX_CONT_BIOMETRIC_LOGINS
+                    SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
                 )
 
             max(0, currentBiometricLoginCountRemaining - 1)
         } else {
-            Constants.MAX_CONT_BIOMETRIC_LOGINS
+            // reset login count remaining after password login
+            settingsDataStore.passwordAfterXBiometricLogins.first()
         }
 
         preferenceProvider.upsertIntPref(
@@ -75,7 +79,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
         val biometricLoginCountRemaining: Int =
             preferenceProvider.getIntPref(
                 CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                Constants.MAX_CONT_BIOMETRIC_LOGINS
+                SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
             )
 
         val result = biometricLoginCountRemaining > 0
@@ -88,9 +92,5 @@ class UserDetailsRepositoryImpl @Inject constructor(
             setUserId(uid)
             setCustomKey(CommonConstants.CRASHLYTICS_KEY_UID, uid)
         }
-    }
-
-    object Constants {
-        const val MAX_CONT_BIOMETRIC_LOGINS = 5
     }
 }

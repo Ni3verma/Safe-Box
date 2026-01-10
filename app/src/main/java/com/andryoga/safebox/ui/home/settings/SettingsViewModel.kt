@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.common.AnalyticsKeys
 import com.andryoga.safebox.data.dataStore.Settings
-import com.andryoga.safebox.data.dataStore.SettingsManager
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,10 +16,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsManager: SettingsManager,
+    private val settingsDataStore: SettingsDataStore,
 ) : ViewModel() {
 
-    val uiState: StateFlow<Settings> = settingsManager.settingsFlow
+    val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -53,18 +53,18 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun updatePrivacy(enabled: Boolean) = viewModelScope.launch {
-        settingsManager.updatePrivacy(enabled)
+        settingsDataStore.updatePrivacy(enabled)
     }
 
     private fun updateAwayTimeout(value: Int) = viewModelScope.launch {
-        settingsManager.updateAwayTimeout(value)
+        settingsDataStore.updateAwayTimeout(value)
     }
 
     private fun updateAutoBackupAfterPasswordLogin(value: Boolean) = viewModelScope.launch {
-        settingsManager.updateAutoBackupAfterPasswordLogin(value)
+        settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
     }
 
     private fun updatePasswordAfterXBiometricLogin(value: Int) = viewModelScope.launch {
-        settingsManager.updatePasswordAfterXBiometricLogin(value)
+        settingsDataStore.updatePasswordAfterXBiometricLogin(value)
     }
 }

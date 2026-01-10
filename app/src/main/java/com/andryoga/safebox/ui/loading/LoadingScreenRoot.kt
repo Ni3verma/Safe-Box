@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.safebox.ui.MainActivityViewModel
+import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -20,7 +20,7 @@ fun LoadingScreenRoot(
     navigateToLogin: () -> Unit,
     navigateToSignup: () -> Unit
 ) {
-    val viewModel = hiltViewModel<MainActivityViewModel>()
+    val viewModel = hiltViewModel<MainViewModel>()
     val loadingState by viewModel.loadingState.collectAsState(LoadingState.Initial)
 
     Timber.i("loading state: $loadingState")

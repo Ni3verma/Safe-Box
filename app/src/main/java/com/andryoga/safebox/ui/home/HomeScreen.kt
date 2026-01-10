@@ -73,7 +73,7 @@ fun HomeScreen(
         else -> null to object : NestedScrollConnection {} // For NONE or when hidden
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(mainViewModel.logoutEvent) {
         mainViewModel.logoutEvent.collect {
             nestedNavController.navigate(UserAwayDialogRoute)
         }

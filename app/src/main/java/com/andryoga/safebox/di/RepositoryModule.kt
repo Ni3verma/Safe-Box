@@ -1,6 +1,7 @@
 package com.andryoga.safebox.di
 
 import android.content.Context
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
@@ -35,11 +36,13 @@ object RepositoryModule {
     @Provides
     fun provideUserDetailsRepo(
         userDetailsDaoSecure: UserDetailsDaoSecure,
-        preferenceProvider: PreferenceProvider
+        preferenceProvider: PreferenceProvider,
+        settingsDataStore: SettingsDataStore,
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
             userDetailsDaoSecure,
-            preferenceProvider
+            preferenceProvider,
+            settingsDataStore
         )
     }
 

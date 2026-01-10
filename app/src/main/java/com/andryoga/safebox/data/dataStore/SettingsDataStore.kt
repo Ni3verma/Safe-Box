@@ -1,18 +1,23 @@
 package com.andryoga.safebox.data.dataStore
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.andryoga.safebox.data.dataStore.SettingsManager.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT
-import com.andryoga.safebox.data.dataStore.SettingsManager.DefaultValues.AWAY_TIMEOUT_DEFAULT
-import com.andryoga.safebox.data.dataStore.SettingsManager.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
-import com.andryoga.safebox.data.dataStore.SettingsManager.DefaultValues.PRIVACY_ENABLED_DEFAULT
+import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.data.dataStore.SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT
+import com.andryoga.safebox.data.dataStore.SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT
+import com.andryoga.safebox.data.dataStore.SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
+import com.andryoga.safebox.data.dataStore.SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
@@ -28,7 +33,10 @@ data class Settings(
 )
 
 @Singleton
-class SettingsManager @Inject constructor(@param:ApplicationContext private val context: Context) {
+class SettingsDataStore @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val preferenceProvider: Lazy<PreferenceProvider>,
+) {
 
     private object Keys {
         val PRIVACY_ENABLED = booleanPreferencesKey("privacy_enabled")
@@ -60,6 +68,14 @@ class SettingsManager @Inject constructor(@param:ApplicationContext private val 
             )
         }
 
+    val isPrivacyEnabled = getSetting(Keys.PRIVACY_ENABLED, PRIVACY_ENABLED_DEFAULT)
+    val awayTimeoutSec = getSetting(Keys.AWAY_TIMEOUT, AWAY_TIMEOUT_DEFAULT)
+    val autoBackupAfterPasswordLogin =
+        getSetting(Keys.AUTO_BACKUP_AFTER_PASSWORD_LOGIN, AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+    val passwordAfterXBiometricLogins =
+        getSetting(Keys.PASSWORD_AFTER_X_BIOMETRIC_LOGIN, PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+
+
     suspend fun updatePrivacy(enabled: Boolean) {
         context.dataStore.edit { it[Keys.PRIVACY_ENABLED] = enabled }
     }
@@ -73,6 +89,14 @@ class SettingsManager @Inject constructor(@param:ApplicationContext private val 
     }
 
     suspend fun updatePasswordAfterXBiometricLogin(value: Int) {
+        preferenceProvider.get()
+            .upsertIntPref(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING, value)
         context.dataStore.edit { it[Keys.PASSWORD_AFTER_X_BIOMETRIC_LOGIN] = value }
+    }
+
+    private fun <T> getSetting(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
+        return context.dataStore.data
+            .map { prefs -> prefs[key] ?: defaultValue }
+            .distinctUntilChanged()
     }
 }
