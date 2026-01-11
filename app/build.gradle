@@ -23,19 +23,13 @@ android {
         applicationId "com.andryoga.safebox"
         minSdk 24
         targetSdk 36
-        versionCode 12
+        versionCode 15
         // majorVersion.minorVersion.dbVersion.fixVersion
         versionName "2.0.4.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
     signingConfigs {
         release {
             // Load releaseKeyStore.properties in an object
@@ -81,6 +75,9 @@ android {
             firebaseCrashlytics {
                 mappingFileUploadEnabled true
             }
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         qa {
             initWith(buildTypes["release"])
@@ -105,6 +102,7 @@ android {
             assets.srcDirs(files("$projectDir/schemas"))
         }
     }
+    ndkVersion '28.0.12916984 rc3'
 }
 
 dependencies {
@@ -121,7 +119,6 @@ dependencies {
     implementation libs.security.crypto
     implementation libs.kotlinx.serialization.json
     implementation libs.biometric
-    implementation libs.dot.lottie
     implementation libs.bundles.play.review
     implementation libs.data.store.pref
 

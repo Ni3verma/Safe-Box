@@ -31,7 +31,6 @@ room = "2.8.4"
 security = "1.1.0"
 kotlinxSerializationJson = "1.9.0"
 biometric = "1.1.0"
-lottie = "0.12.6"
 playReview = "2.0.2"
 dataStore = "1.2.0"
 
@@ -88,7 +87,6 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
-dot-lottie = { group = "com.github.LottieFiles", name = "dotlottie-android", version.ref = "lottie" }
 play-review = { group = "com.google.android.play", name = "review", version.ref = "playReview" }
 play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "playReview" }
 data-store-pref = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }

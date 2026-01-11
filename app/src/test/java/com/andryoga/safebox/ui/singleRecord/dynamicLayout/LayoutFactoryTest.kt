@@ -14,10 +14,10 @@ class LayoutFactoryTest {
 
     @Before
     fun setUp() {
-        loginLayoutPlan = LayoutFactory.getLoginRecordLayout()
-        cardLayoutPlan = LayoutFactory.getCardRecordLayout()
-        noteLayoutPlan = LayoutFactory.getNoteRecordLayout()
-        bankAccountLayoutPlan = LayoutFactory.getBankAccountRecordLayout()
+//        loginLayoutPlan = LayoutFactory.getLoginRecordLayout()
+//        cardLayoutPlan = LayoutFactory.getCardRecordLayout()
+//        noteLayoutPlan = LayoutFactory.getNoteRecordLayout()
+//        bankAccountLayoutPlan = LayoutFactory.getBankAccountRecordLayout()
 
     }
 

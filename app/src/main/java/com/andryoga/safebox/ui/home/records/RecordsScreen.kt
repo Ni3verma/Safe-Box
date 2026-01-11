@@ -8,11 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,8 +56,6 @@ import com.andryoga.safebox.ui.previewHelper.getRecordState
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnStart
 import com.andryoga.safebox.ui.utils.findActivity
-import com.lottiefiles.dotlottie.core.compose.ui.DotLottieAnimation
-import com.lottiefiles.dotlottie.core.util.DotLottieSource
 import timber.log.Timber
 
 @Composable
@@ -133,11 +136,11 @@ private fun RecordsScreen(
                 .fillMaxSize()
                 .padding(8.dp)
         ) {
-            DotLottieAnimation(
-                source = DotLottieSource.Asset("ghost.lottie"),
-                autoplay = true,
-                loop = true,
-                useFrameInterpolation = false,
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(72.dp),
             )
             Text(
                 text = stringResource(R.string.no_record),
@@ -170,13 +173,13 @@ private fun RecordsScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             FilterRow(uiState, onScreenAction)
-            DotLottieAnimation(
-                source = DotLottieSource.Asset("ghost.lottie"),
-                autoplay = true,
-                loop = true,
-                useFrameInterpolation = false,
+            Icon(
+                imageVector = Icons.Outlined.ErrorOutline,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
-                    .padding(top = 28.dp)
+                    .padding(top = 64.dp)
+                    .size(72.dp)
                     .align(Alignment.CenterHorizontally)
             )
             Text(
@@ -302,6 +305,34 @@ private fun RecordsScreenPreview() {
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
             recordState = getRecordState(),
+            onRestoreFromBackup = {},
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun RecordsScreenWithNoRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(isLoading = false),
+            notificationPermissionState = NotificationPermissionState(),
+            recordState = RecordsState(),
+            onRestoreFromBackup = {},
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun RecordsScreenWithNoFilteredRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(isLoading = false),
+            notificationPermissionState = NotificationPermissionState(),
+            recordState = RecordsState(totalDbRecords = 1),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
