@@ -33,16 +33,16 @@ fun TextPreference(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp),
+            .padding(bottom = 16.dp)
+            .clickable {
+                onTap()
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
-                .clickable {
-                    onTap()
-                }
                 .padding(end = 16.dp)
         ) {
             Text(

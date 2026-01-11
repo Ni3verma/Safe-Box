@@ -156,7 +156,8 @@ fun sendFeedback(context: Context) {
     """.trimIndent()
 
     val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("canvas.nv@gmail.com")
+        data = Uri.parse("mailto:")
+        putExtra(Intent.EXTRA_EMAIL, arrayOf("canvas.nv@gmail.com"))
         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.safe_box_feedback))
         putExtra(Intent.EXTRA_TEXT, body)
     }

@@ -26,7 +26,7 @@ class BankCardDataDaoSecure @Inject constructor(
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
         return bankCardDataDao
             .getAllBankCardData()
-            .map { SearchBankCardData.Companion.decrypt(it, symmetricKeyUtils) }
+            .map { SearchBankCardData.decrypt(it, symmetricKeyUtils) }
     }
 
     override suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity {
@@ -71,7 +71,11 @@ class BankCardDataDaoSecure @Inject constructor(
                 symmetricKeyUtils.decrypt(it.number),
                 it.pin.decryptNullableString(symmetricKeyUtils),
                 it.cvv.decryptNullableString(symmetricKeyUtils),
-                it.expiryDate.decryptNullableString(symmetricKeyUtils),
+
+                // v2.x onwards, app adds "/" on the UI using visual transformations
+                // and we also do not save "/" while saving. This is required for old records
+                it.expiryDate.decryptNullableString(symmetricKeyUtils)?.replace("/", ""),
+
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate

@@ -111,17 +111,4 @@ object Migration {
             Timber.i("$migrationMessage success")
         }
     }
-
-    // no schema change here, just sanitizing data for v2 (compose app)
-    val MIGRATION_4_5 = object : Migration(4, 5) {
-        override fun migrate(db: SupportSQLiteDatabase) {
-            db.execSQL(
-                """
-            UPDATE bank_card_data 
-            SET expiryDate = REPLACE(TRIM(expiryDate), '/', '') 
-            WHERE expiryDate LIKE '%/%'
-            """.trimIndent()
-            )
-        }
-    }
 }
