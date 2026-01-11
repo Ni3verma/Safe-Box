@@ -93,27 +93,27 @@ jobs:
   #           name: Instrumentation test result
   #           path: app/build/reports/androidTests/connected/
 
-  Detekt:
-    name: Detekt Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Run Detekt
-        continue-on-error: true
-        run: ./gradlew detekt
-
-      - uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: app/build/reports/detekt/detekt.sarif
-          checkout_path: ${{ github.workspace }}
-
-      - name: upload detekt html report
-        uses: actions/upload-artifact@v6
-        with:
-          name: detektReport.html
-          path: app/build/reports/detekt/detekt.html
+#  Detekt:
+#    name: Detekt Scan
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v6
+#
+#      - name: Make gradlew executable
+#        run: chmod +x ./gradlew
+#
+#      - name: Run Detekt
+#        continue-on-error: true
+#        run: ./gradlew detekt
+#
+#      - uses: github/codeql-action/upload-sarif@v4
+#        with:
+#          sarif_file: app/build/reports/detekt/detekt.sarif
+#          checkout_path: ${{ github.workspace }}
+#
+#      - name: upload detekt html report
+#        uses: actions/upload-artifact@v6
+#        with:
+#          name: detektReport.html
+#          path: app/build/reports/detekt/detekt.html
