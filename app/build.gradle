@@ -86,13 +86,6 @@ android {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
-
-            firebaseCrashlytics {
-                mappingFileUploadEnabled true
-            }
-            ndk {
-                debugSymbolLevel = "FULL"
-            }
         }
     }
 

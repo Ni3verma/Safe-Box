@@ -1,0 +1,61 @@
+name: Production & RC Release
+
+on:
+  push:
+    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set release key store Properties
+        env:
+          RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
+        run: echo "$RELEASE_KEYSTORE_PROPERTIES" > ./releaseKeyStore.properties
+
+      - name: Prepare keystore
+        run: |
+          echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
+          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
+
+      - name: Prepare google services json
+        run: |
+          echo "${{ secrets.BASE_64_GOOGLE_SERVICES_JSON }}" > ./app/google-services.json.asc
+          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./app/google-services.json.asc > ./app/google-services.json
+
+      - name: Build release bundle and QA apk
+        run: ./gradlew bundleRelease assembleQa
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          path: |
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/apk/qa/*.apk
+          retention-days: 1
+
+#      - name: Generate Checksum
+#        id: shasum
+#        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/app-qa.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+#
+#      - name: Create GitHub Release
+#        uses: softprops/action-gh-release@v2
+#        with:
+#          # This automatically flags as "Pre-release" if the tag has 'rc' or 'beta'
+#          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
+#          generate_release_notes: true
+#          body: |
+#            ### Security Checksum
+#            **QA Build SHA-256:** `${{ steps.shasum.outputs.hash }}`
+#
+#            ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
+#          files: app/build/outputs/apk/qa/app-qa.apk
