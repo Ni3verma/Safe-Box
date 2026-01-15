@@ -35,12 +35,18 @@ jobs:
       - name: Build release bundle and QA apk
         run: ./gradlew bundleRelease assembleQa
 
-      - name: upload artifacts
+      - name: upload QA apk
         uses: actions/upload-artifact@v6
         with:
-          path: |
-            app/build/outputs/bundle/release/*.aab
-            app/build/outputs/apk/qa/*.apk
+          name: QA APK
+          path: app/build/outputs/apk/qa/*.apk
+          retention-days: 7
+
+      - name: upload release bundle
+        uses: actions/upload-artifact@v6
+        with:
+          name: release aab
+          path: app/build/outputs/bundle/release/*.aab
           retention-days: 1
 
 #      - name: Generate Checksum
