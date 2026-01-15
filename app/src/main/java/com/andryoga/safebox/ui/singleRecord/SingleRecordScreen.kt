@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -31,6 +32,7 @@ import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarActions
 import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarNavIcon
 import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarTitle
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.RowField
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnStart
@@ -92,53 +94,77 @@ fun SingleRecordScreen(
     uiState: SingleRecordScreenUiState,
     screenAction: (SingleRecordScreenAction) -> Unit
 ) {
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 20.dp)
-                .fillMaxWidth()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-        ) {
-            if (uiState.viewMode == ViewMode.VIEW) {
-                ActionButtonRow(
-                    screenAction = screenAction
-                )
-            }
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .fillMaxWidth()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
+    ) {
+        if (uiState.viewMode == ViewMode.VIEW) {
+            ActionButtonRow(
+                screenAction = screenAction
+            )
+        }
 
-            uiState.layoutPlan.arrangement.forEachIndexed { rowIndex, fields ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    fields.forEachIndexed { columnIndex, field ->
-                        val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
-                        val isVisibleOnlyInViewMode = fieldUiState.cell.isVisibleOnlyInViewMode
+        uiState.layoutPlan.arrangement.forEachIndexed { rowIndex, fields ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                val weightOfEachField = remember {
+                    if (uiState.viewMode == ViewMode.VIEW) {
+                        val nonEmptyFields = fields.count {
+                            val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
+                            fieldUiState != null && fieldUiState.data.isNotBlank()
+                        }
+                        1F / nonEmptyFields
+                    } else {
+                        1F / fields.size
+                    }
+                }
 
-                        /**
-                         * two conditions to show the field:
-                         * 1. field is not visible "only" in view mode. e.g. title field.
-                         * i.e we can edit it and it was entered by user while saving
-                         *
-                         * 2. we have opened the screen in view mode. i.e. user clicked on a saved record.
-                         * in this case all of the fields should be visible including fields such as creation date
-                         * */
+                fields.forEachIndexed { columnIndex, field ->
+                    val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
+                    val isVisibleOnlyInViewMode = fieldUiState.cell.isVisibleOnlyInViewMode
 
-                        if (!isVisibleOnlyInViewMode || uiState.viewMode == ViewMode.VIEW) {
-                            Box(Modifier.weight(field.weight)) {
-                                RowField(
-                                    fieldId = field.fieldId,
-                                    uiState = fieldUiState,
-                                    viewMode = uiState.viewMode,
-                                    screenAction = screenAction
-                                )
-                            }
+                    /**
+                     * two conditions to show a field:
+                     * 1. we have opened the screen in view mode. i.e. user clicked on a saved record.
+                     * in this case all of the non-empty fields should be visible including fields such as creation date
+                     *
+                     * 2. field is "NOT" visible "only" in view mode. e.g. title field.
+                     * i.e we can edit it and it was entered by user while saving
+                     * some fields like creationDate are only visible in View mode.
+                     * */
+
+                    if (uiState.viewMode == ViewMode.VIEW && fieldUiState.data.isNotBlank()) {
+                        // we are in view mode and the data for the field is not blank, so we can show it
+                        Box(Modifier.weight(weightOfEachField)) {
+                            RowField(
+                                fieldId = field.fieldId,
+                                uiState = fieldUiState,
+                                viewMode = uiState.viewMode,
+                                screenAction = screenAction
+                            )
+                        }
+                    } else if (uiState.viewMode != ViewMode.VIEW && !isVisibleOnlyInViewMode) {
+                        // we are in edit mode/ or new record mode, so all the fields should be
+                        // shown except for the one that should be shown in only view mode
+                        Box(Modifier.weight(weightOfEachField)) {
+                            RowField(
+                                fieldId = field.fieldId,
+                                uiState = fieldUiState,
+                                viewMode = uiState.viewMode,
+                                screenAction = screenAction
+                            )
                         }
                     }
                 }
             }
         }
-
+    }
 }
 
 @LightDarkModePreview
@@ -255,4 +281,30 @@ private fun SingleRecordScreenCardReadOnlyPreview() {
             {}
         )
     }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenCardWithSomeFieldsReadOnlyPreview() {
+    SingleRecordScreen(
+        SingleRecordScreenUiState(
+            isLoading = false,
+            layoutPlan = getCardLayoutPlan(withData = true, emptyFields = listOf(FieldId.CARD_CVV)),
+            viewMode = ViewMode.VIEW
+        ),
+        {}
+    )
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenCardWithSomeFields2ReadOnlyPreview() {
+    SingleRecordScreen(
+        SingleRecordScreenUiState(
+            isLoading = false,
+            layoutPlan = getCardLayoutPlan(withData = true, emptyFields = listOf(FieldId.CARD_PIN)),
+            viewMode = ViewMode.VIEW
+        ),
+        {}
+    )
 }

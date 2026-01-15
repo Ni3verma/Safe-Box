@@ -37,22 +37,6 @@ class LayoutFactoryTest {
         validateTitleField(noteLayoutPlan.fieldUiState[FieldId.NOTE_TITLE]!!)
     }
 
-    @Test
-    fun rowFieldWeight_addsToOne() {
-        loginLayoutPlan.arrangement.forEach { row ->
-            assert(row.sumOf { it.weight.toDouble() } == 1.0)
-        }
-        bankAccountLayoutPlan.arrangement.forEach { row ->
-            assert(row.sumOf { it.weight.toDouble() } == 1.0)
-        }
-        cardLayoutPlan.arrangement.forEach { row ->
-            assert(row.sumOf { it.weight.toDouble() } == 1.0)
-        }
-        noteLayoutPlan.arrangement.forEach { row ->
-            assert(row.sumOf { it.weight.toDouble() } == 1.0)
-        }
-    }
-
     private fun validateTitleField(field: FieldUiState) {
         assert(field.cell.isMandatory)
         assert(!field.cell.isPasswordField)

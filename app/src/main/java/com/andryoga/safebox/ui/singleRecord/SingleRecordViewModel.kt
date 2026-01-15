@@ -47,6 +47,7 @@ class SingleRecordViewModel @Inject constructor(
     init {
         val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
         layout = layoutFactory.getLayout(args.id, args.recordType)
+        Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
         viewModelScope.launch {
             _uiState.update {
@@ -99,12 +100,14 @@ class SingleRecordViewModel @Inject constructor(
             }
 
             SingleRecordScreenAction.OnDeleteClicked -> {
+                Timber.i("delete clicked")
                 viewModelScope.launch {
                     layout.deleteLayout()
                     _screenCloseEvent.emit(Unit)
                 }
             }
             SingleRecordScreenAction.OnEditClicked -> {
+                Timber.i("edit clicked")
                 _uiState.update {
                     it.copy(
                         viewMode = ViewMode.EDIT,
@@ -130,6 +133,7 @@ class SingleRecordViewModel @Inject constructor(
     }
 
     private fun handleShareRecord() {
+        Timber.i("on share clicked")
         viewModelScope.launch(Dispatchers.IO) {
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()

@@ -64,49 +64,47 @@ fun RowField(
 
     Column {
         if (viewMode == ViewMode.VIEW) {
-            if (uiState.data.isNotBlank()) {
-                val label = stringResource(uiState.cell.label)
-                val formattedData = uiState.getFormattedData()
-                Column {
-                    Text(
-                        text = label,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = formattedData, // show formatted data on the UI
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .padding(bottom = 8.dp)
-                            .clickable {
-                                scope.launch {
-                                    Timber.i("setting clip entry for $label")
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    clipboard.setClipEntry(
-                                        ClipEntry(
-                                            ClipData.newPlainText(
-                                                label,
-                                                // while copying we copy the original data and not the formatted data
-                                                uiState.data
-                                            )
+            val label = stringResource(uiState.cell.label)
+            val formattedData = uiState.getFormattedData()
+            Column {
+                Text(
+                    text = label,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = formattedData, // show formatted data on the UI
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .clickable {
+                            scope.launch {
+                                Timber.i("setting clip entry for $label")
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                clipboard.setClipEntry(
+                                    ClipEntry(
+                                        ClipData.newPlainText(
+                                            label,
+                                            // while copying we copy the original data and not the formatted data
+                                            uiState.data
                                         )
                                     )
+                                )
 
-                                    // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
-                                    // so need to show our own snackbar
-                                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                        snackbarHost.currentSnackbarData?.dismiss()
-                                        snackbarHost.showSnackbar(
-                                            message = "Copied $label to clipboard",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
+                                // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
+                                // so need to show our own snackbar
+                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                                    snackbarHost.currentSnackbarData?.dismiss()
+                                    snackbarHost.showSnackbar(
+                                        message = "Copied $label to clipboard",
+                                        duration = SnackbarDuration.Short
+                                    )
                                 }
                             }
-                    )
-                }
+                        }
+                )
             }
         } else {
             OutlinedTextField(
@@ -132,7 +130,7 @@ fun RowField(
                         Text(
                             text = stringResource(uiState.cell.label),
                             maxLines = 1,
-                            overflow = TextOverflow.Companion.Ellipsis
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 },

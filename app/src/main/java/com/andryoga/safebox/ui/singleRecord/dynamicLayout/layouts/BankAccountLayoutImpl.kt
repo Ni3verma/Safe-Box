@@ -61,13 +61,13 @@ class BankAccountLayoutImpl(
                 listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_CUSTOMER_NAME)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_CUSTOMER_ID)),
                 listOf(
-                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_CODE, weight = 0.5f),
-                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_NAME, weight = 0.5f)
+                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_CODE),
+                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_NAME)
                 ),
                 listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_ADDRESS)),
                 listOf(
-                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_IFSC_CODE, weight = 0.5f),
-                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_MICR_CODE, weight = 0.5f)
+                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_IFSC_CODE),
+                    LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_MICR_CODE)
                 ),
                 listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_NOTES)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),

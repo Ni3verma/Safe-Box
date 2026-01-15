@@ -70,13 +70,13 @@ fun getBankAccountLayoutPlan(withData: Boolean = false): LayoutPlan {
             listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_CUSTOMER_NAME)),
             listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_CUSTOMER_ID)),
             listOf(
-                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_CODE, weight = 0.5f),
-                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_NAME, weight = 0.5f)
+                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_CODE),
+                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_NAME)
             ),
             listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_BRANCH_ADDRESS)),
             listOf(
-                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_IFSC_CODE, weight = 0.5f),
-                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_MICR_CODE, weight = 0.5f)
+                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_IFSC_CODE),
+                LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_MICR_CODE)
             ),
             listOf(LayoutPlan.Field(fieldId = FieldId.BANK_ACCOUNT_NOTES)),
             listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
@@ -145,7 +145,68 @@ fun getBankAccountLayoutPlan(withData: Boolean = false): LayoutPlan {
     )
 }
 
-fun getCardLayoutPlan(withData: Boolean = false): LayoutPlan {
+fun getCardLayoutPlan(
+    withData: Boolean = false,
+    emptyFields: List<FieldId> = emptyList()
+): LayoutPlan {
+    val fieldUiState = mutableMapOf(
+        FieldId.CARD_TITLE to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.title, isMandatory = true
+            ), data = if (withData) "HDFC regalia gold cc" else ""
+        ),
+        FieldId.CARD_NAME to FieldUiState(
+            cell = FieldUiState.Cell(label = R.string.name),
+            data = if (withData) "NITIN" else ""
+        ),
+        FieldId.CARD_NUMBER to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.number,
+                isMandatory = true,
+                keyboardType = KeyboardType.Number,
+            ), data = if (withData) "23470129841924" else ""
+        ),
+        FieldId.CARD_PIN to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.pin,
+                keyboardType = KeyboardType.Number,
+            ), data = if (withData) "23423" else ""
+        ),
+        FieldId.CARD_CVV to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.cvv,
+                keyboardType = KeyboardType.Number,
+            ), data = if (withData) "4234" else ""
+        ),
+        FieldId.CARD_EXPIRY_DATE to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.expiryDate, keyboardType = KeyboardType.Number
+            ), data = if (withData) "4343" else ""
+        ),
+        FieldId.CARD_NOTES to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.notes, singleLine = false, minLines = 5
+            ), data = if (withData) "dsfnkso sdfmnpsdmf" else ""
+        ),
+        FieldId.CREATION_DATE to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.created_on, isVisibleOnlyInViewMode = true
+            ),
+            data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
+        ),
+        FieldId.UPDATE_DATE to FieldUiState(
+            cell = FieldUiState.Cell(
+                label = R.string.updated_on, isVisibleOnlyInViewMode = true
+            ),
+            data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
+        )
+    )
+    emptyFields.forEach { emptyFieldId ->
+        if (fieldUiState.containsKey(emptyFieldId)) {
+            fieldUiState[emptyFieldId] = fieldUiState[emptyFieldId]?.copy(data = "")!!
+        }
+    }
+
     return LayoutPlan(
         id = LayoutId.CARD,
         arrangement = listOf(
@@ -153,66 +214,15 @@ fun getCardLayoutPlan(withData: Boolean = false): LayoutPlan {
             listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NAME)),
             listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NUMBER)),
             listOf(
-                LayoutPlan.Field(fieldId = FieldId.CARD_PIN, weight = 0.5f),
-                LayoutPlan.Field(fieldId = FieldId.CARD_CVV, weight = 0.5f)
+                LayoutPlan.Field(fieldId = FieldId.CARD_PIN),
+                LayoutPlan.Field(fieldId = FieldId.CARD_CVV)
             ),
             listOf(LayoutPlan.Field(fieldId = FieldId.CARD_EXPIRY_DATE)),
             listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NOTES)),
             listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
             listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE)),
         ),
-        fieldUiState = mapOf(
-            FieldId.CARD_TITLE to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.title, isMandatory = true
-                ), data = if (withData) "HDFC regalia gold cc" else ""
-            ),
-            FieldId.CARD_NAME to FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.name),
-                data = if (withData) "NITIN" else ""
-            ),
-            FieldId.CARD_NUMBER to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.number,
-                    isMandatory = true,
-                    keyboardType = KeyboardType.Number,
-                ), data = if (withData) "23470129841924" else ""
-            ),
-            FieldId.CARD_PIN to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.pin,
-                    keyboardType = KeyboardType.Number,
-                ), data = if (withData) "23423" else ""
-            ),
-            FieldId.CARD_CVV to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.cvv,
-                    keyboardType = KeyboardType.Number,
-                ), data = if (withData) "4234" else ""
-            ),
-            FieldId.CARD_EXPIRY_DATE to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.expiryDate, keyboardType = KeyboardType.Number
-                ), data = if (withData) "4343" else ""
-            ),
-            FieldId.CARD_NOTES to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.notes, singleLine = false, minLines = 5
-                ), data = if (withData) "dsfnkso sdfmnpsdmf" else ""
-            ),
-            FieldId.CREATION_DATE to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.created_on, isVisibleOnlyInViewMode = true
-                ),
-                data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
-            ),
-            FieldId.UPDATE_DATE to FieldUiState(
-                cell = FieldUiState.Cell(
-                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
-                ),
-                data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
-            )
-        )
+        fieldUiState = fieldUiState
     )
 }
 

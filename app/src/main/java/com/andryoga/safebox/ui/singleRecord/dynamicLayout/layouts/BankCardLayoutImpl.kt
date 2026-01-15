@@ -59,8 +59,8 @@ class BankCardLayoutImpl(
                 listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NAME)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NUMBER)),
                 listOf(
-                    LayoutPlan.Field(fieldId = FieldId.CARD_PIN, weight = 0.5f),
-                    LayoutPlan.Field(fieldId = FieldId.CARD_CVV, weight = 0.5f)
+                    LayoutPlan.Field(fieldId = FieldId.CARD_PIN),
+                    LayoutPlan.Field(fieldId = FieldId.CARD_CVV)
                 ),
                 listOf(LayoutPlan.Field(fieldId = FieldId.CARD_EXPIRY_DATE)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.CARD_NOTES)),

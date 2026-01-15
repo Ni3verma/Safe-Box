@@ -9,6 +9,5 @@ data class LayoutPlan(
 ) {
     data class Field(
         val fieldId: FieldId = FieldId.UNKNOWN,
-        val weight: Float = 1f
     )
 }
