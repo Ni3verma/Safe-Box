@@ -264,7 +264,7 @@ class RecordsViewModel @Inject constructor(
     }
 
     companion object {
-        // ask for review after every 10th login
-        private const val ASK_FOR_REVIEW_AFTER_EVERY_LOGIN = 10
+        // ask for review after every 5th login
+        private const val ASK_FOR_REVIEW_AFTER_EVERY_LOGIN = 5
     }
 }

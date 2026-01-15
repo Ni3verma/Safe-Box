@@ -116,7 +116,7 @@ class NewBackupOrRestoreVM @Inject constructor(
     }
 
     private fun enqueueBackupWork(password: String): UUID {
-        return BackupDataWorker.Companion.enqueueRequest(
+        return BackupDataWorker.enqueueRequest(
             password = password,
             showBackupStartNotification = true,
             workManager = workManager,
