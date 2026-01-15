@@ -36,7 +36,7 @@ android {
         if (githubRef != null && githubRef.startsWith("v")) {
             versionName githubRef.substring(1) // Strips 'v' from 'v2.0.4.0'
         } else if (githubRef != null) {
-            versionName "${githubRef}-build.${githubRunNumber}" // e.g., master-build.145
+            versionName "${githubRef}-build.${version_code}" // e.g., master-build.145
         } else {
             versionName "LOCAL-build"
         }
