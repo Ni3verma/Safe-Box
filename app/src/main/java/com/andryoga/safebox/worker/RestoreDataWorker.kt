@@ -1,7 +1,7 @@
 package com.andryoga.safebox.worker
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.common.AnalyticsKeys
@@ -64,7 +64,7 @@ class RestoreDataWorker(
         recordTime("got input pswrd and file uri")
 
         ObjectInputStream(
-            applicationContext.contentResolver.openInputStream(Uri.parse(fileUri))
+            applicationContext.contentResolver.openInputStream(fileUri.toUri())
         ).use {
             val fileObject = it.readObject()
             if (fileObject !is Map<*, *>) {

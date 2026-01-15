@@ -16,13 +16,13 @@ enum class PasswordValidatorState {
     @Composable
     fun getUiText(): String {
         return when (this) {
-            PasswordValidatorState.INITIAL_STATE -> ""
-            PasswordValidatorState.EMPTY_PASSWORD -> stringResource(R.string.blank_validation_text)
-            PasswordValidatorState.SHORT_PASSWORD_LENGTH -> stringResource(R.string.length_validation_text)
-            PasswordValidatorState.NO_SPECIAL_CHAR -> stringResource(R.string.special_char_validation_text)
-            PasswordValidatorState.NOT_MIX_CASE -> stringResource(R.string.case_validation_text)
-            PasswordValidatorState.LESS_NUMERIC_COUNT -> stringResource(R.string.numeric_validation_text)
-            PasswordValidatorState.PASSWORD_IS_OK -> ""
+            INITIAL_STATE -> ""
+            EMPTY_PASSWORD -> stringResource(R.string.blank_validation_text)
+            SHORT_PASSWORD_LENGTH -> stringResource(R.string.length_validation_text)
+            NO_SPECIAL_CHAR -> stringResource(R.string.special_char_validation_text)
+            NOT_MIX_CASE -> stringResource(R.string.case_validation_text)
+            LESS_NUMERIC_COUNT -> stringResource(R.string.numeric_validation_text)
+            PASSWORD_IS_OK -> ""
         }
     }
 }

@@ -73,13 +73,11 @@ class SignupViewModel @Inject constructor(
     }
 
     private fun onHintUpdate(hint: String) {
-        _uiState.value = _uiState.value.copy(
-            hint = hint, passwordValidatorState = runPasswordValidator(hint = hint)
-        )
+        _uiState.value = _uiState.value.copy(hint = hint)
     }
 
     private fun runPasswordValidator(
-        password: String = _uiState.value.password, hint: String = _uiState.value.hint
+        password: String = _uiState.value.password
     ): PasswordValidatorState {
         var hasLowerCase = false
         var hasUpperCase = false
@@ -154,7 +152,6 @@ class SignupViewModel @Inject constructor(
 
     object Constants {
         const val MIN_PASSWORD_LENGTH = 7
-        const val MAX_HINT_SUBSET_LENGTH = 5
         const val MIN_NUMERIC_COUNT = 2
     }
 

@@ -1,17 +1,5 @@
 <resources>
     <!--    Content descriptions-->
-    <string name="cd_open_options_to_add_new_personal_data">Open options to add new personal data</string>
-    <string name="cd_add_new_login_data">Add new login data</string>
-    <string name="cd_add_new_bank_account_data">Add new bank account data</string>
-    <string name="cd_add_new_bank_card_data">Add new bank card data</string>
-    <string name="cd_add_a_new_note">Add a new note</string>
-    <string name="cd_empty_list">Empty List</string>
-    <string name="cd_top_curve">screen top curve view</string>
-    <string name="cd_bottom_curve">screen bottom curve view</string>
-    <string name="cd_app_logo">App logo</string>
-    <string name="cd_open_github_repo">Open github repo of this app</string>
-    <string name="cd_background_image">background image</string>
-    <string name="cd_save_button">Press to save data</string>
     <string name="cd_action_delete">Delete record</string>
     <string name="cd_action_edit">Edit record</string>
     <string name="cd_action_share">Share record</string>
@@ -23,44 +11,24 @@
 
 
     <!--    Screen title-->
-    <string name="title_login_data">Login Data</string>
-    <string name="title_bank_account_data">Bank Account Data</string>
-    <string name="title_bank_card_data">Bank Card Data</string>
-    <string name="title_secure_note_data">Secure Note Data</string>
-    <string name="title_view_data">View Data</string>
     <string name="bottom_nav_records">Records</string>
     <string name="bottom_nav_backup_and_restore">Backup &amp; Restore</string>
     <string name="bottom_nav_settings">Settings</string>
 
     <!--    Snackbar -->
-    <string name="snackbar_common_data_saved">Data saved</string>
-    <string name="snackbar_common_error_saving_data">Error occurred while saving data</string>
-    <string name="snackbar_common_copied_to_clipboard">Copied %1$s to clipboard</string>
 
     <!--    Common-->
-    <string name="common_error_mandatory_field">Mandatory Field</string>
-    <string name="common_no_result">No Result!</string>
-    <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
     <string name="common_app_playstore_download">Data stored securely by Safe Box.\nDownload it from playstore : %1$s</string>
-    <string name="common_data">Data</string>
-    <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
     <string name="confirm">Confirm</string>
     <string name="common_ok">OK</string>
-    <string name="close">Close</string>
-    <string name="error">Error!</string>
-    <string name="github">Github</string>
     <string name="biometric_title_text">Login to SafeBox</string>
     <string name="biometric_sub_title_text">Verify your identity</string>
     <string name="biometric_negative_button_text">Close</string>
-    <string name="delete">Delete</string>
-    <string name="edit">Edit</string>
-    <string name="share">Share</string>
     <string name="do_not_ask_again">Don\'t ask again</string>
     <string name="allow">Allow</string>
     <string name="login">Login</string>
     <string name="signup">Sign Up</string>
-    <string name="retry">Retry</string>
 
 
     <!--    User data type text-->
@@ -75,7 +43,6 @@
     <string name="name">Name</string>
     <string name="pin">PIN</string>
     <string name="cvv">CVV</string>
-    <string name="linkedAccount">Linked Account</string>
 
     <!--    delete record dialog-->
     <string name="delete_this_record">Delete this record?</string>
@@ -94,13 +61,11 @@
     <string name="new_backup_dialog_body_text">Please enter your current master password to create a new backup file.</string>
     <string name="backup_in_progress_message">It may take a while to backup data. Sit back and relax !</string>
     <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
-    <string name="backup_not_set_banner_message">Click here to set backup path</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
     <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
     <string name="new_restore_dialog_body_text">Please enter the password that was used to make the backup file.</string>
-    <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
     <string name="restore_complete_message">Data has been successfully restored.</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
 
@@ -154,8 +119,6 @@
 
     <!--    Other-->
     <string name="app_name">Safe Box</string>
-    <string name="app_subtitle">Safely store your private data</string>
-    <string name="enter_password">Enter password </string>
     <string name="blank_validation_text">Enter something !</string>
     <string name="length_validation_text">Too short !</string>
     <string name="special_char_validation_text">Enter a special character (e.g. @, *, $)</string>
@@ -163,12 +126,6 @@
     <string name="numeric_validation_text">Enter at least two numbers (e.g. 1, 2, 3)</string>
     <string name="save">Save</string>
     <string name="password">Password</string>
-    <string name="unlock">unlock</string>
-    <string name="collapse">Collapse</string>
-    <string name="login_data">Login Data</string>
-    <string name="bank_account">Bank Account</string>
-    <string name="bank_card">Bank Card</string>
-    <string name="secure_note">Secure Note</string>
     <string name="enter_hint">Enter a hint</string>
     <string name="show_hint">Show Hint</string>
     <string name="hide_hint">Hide Hint</string>
@@ -177,7 +134,6 @@
     <string name="url">URL</string>
     <string name="user_id">User Id </string>
     <string name="notes">Notes</string>
-    <string name="bank_account_data">Bank Account Data</string>
     <string name="account_number">Account Number </string>
     <string name="customer_name">Customer Name</string>
     <string name="customer_id">Customer Id</string>
@@ -187,15 +143,11 @@
     <string name="ifsc_code">IFSC Code</string>
     <string name="micr_code">MICR Code</string>
     <string name="welcome_back">Welcome Back !</string>
-    <string name="password_is_ok">Password is OK</string>
     <string name="welcome">Welcome !</string>
-    <string name="set_password_help_text">Set a strong master password</string>
-    <string name="timeout_dialog_title">Timeout</string>
     <string name="timeout_dialog_message">You were away for too long. Please click OK to login to app again</string>
     <string name="timeout_dialog_positive_button_text">OK</string>
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
-    <string name="enter_password_manually">For security reason, Please manually enter password</string>
     <string name="add_a_new_record">Add a new record</string>
     <string name="search_bar_placeholder">Search …</string>
     <string name="send_feedback_email">Send feedback Email</string>

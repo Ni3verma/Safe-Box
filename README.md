@@ -8,8 +8,6 @@ Safe Box is an easy to use, secure app which will store all your data in a super
     <img src="./screenshots/get it on google play store.jpg" width="40%">
 </a>
 
-</br>
-
 ## Features
 * Login with master password or biometric (fingerprint/IRIS/Face)
 * Add different kind of personal data and Easy navigation

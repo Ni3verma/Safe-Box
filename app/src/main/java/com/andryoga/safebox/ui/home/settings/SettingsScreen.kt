@@ -2,7 +2,6 @@ package com.andryoga.safebox.ui.home.settings
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
@@ -159,7 +159,7 @@ fun sendFeedback(context: Context) {
     """.trimIndent()
 
     val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:")
+        data = "mailto:".toUri()
         putExtra(Intent.EXTRA_EMAIL, arrayOf("canvas.nv@gmail.com"))
         putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.safe_box_feedback))
         putExtra(Intent.EXTRA_TEXT, body)
@@ -178,14 +178,14 @@ fun sendFeedback(context: Context) {
 }
 
 fun launchReview(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_PLAYSTORE_LINK))
+    val intent = Intent(Intent.ACTION_VIEW, APP_PLAYSTORE_LINK.toUri())
     if (intent.resolveActivity(context.packageManager) != null) {
         context.startActivity(intent)
     }
 }
 
 fun openGitHub(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_GITHUB_URL))
+    val intent = Intent(Intent.ACTION_VIEW, APP_GITHUB_URL.toUri())
     if (intent.resolveActivity(context.packageManager) != null) {
         context.startActivity(intent)
     }
