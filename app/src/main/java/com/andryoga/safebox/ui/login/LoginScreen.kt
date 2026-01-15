@@ -199,7 +199,8 @@ private fun LoginCardContent(
         Button(
             onClick = { screenAction(LoginScreenAction.LoginClicked(password = password)) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            shape = RoundedCornerShape(10.dp),
+            enabled = password.isBlank().not()
         ) {
             Text(stringResource(R.string.login))
         }

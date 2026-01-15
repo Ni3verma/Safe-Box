@@ -153,7 +153,7 @@ class SingleRecordViewModel @Inject constructor(
                 "---------------\n${
                     context.getString(
                         R.string.common_app_playstore_download,
-                        CommonConstants.APP_PLAYSTORE_LINK
+                        CommonConstants.APP_PLAYSTORE_LINK_SHARE
                     )
                 }"
             )

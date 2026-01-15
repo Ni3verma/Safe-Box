@@ -44,6 +44,14 @@ object CommonConstants {
     //        Other
     const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
+
+    // use below link to directly open playstore from the app. This should not be shared with
+    // anyone as it doesn't come as hyperlink on text message. Use APP_PLAYSTORE_LINK_SHARE instead
     const val APP_PLAYSTORE_LINK =
         "market://details?id=com.andryoga.safebox"
+
+    // use below link when sharing the app link over text message.
+    // It is rendered as a hyperlink in famous apps like Whatsapp.
+    const val APP_PLAYSTORE_LINK_SHARE =
+        "https://play.google.com/store/apps/details?id=com.andryoga.safebox"
 }
