@@ -16,7 +16,7 @@ ksp {
 }
 
 // version code will be incremental unique github run runner and default to a high value for local builds
-int version_code = System.getenv("GITHUB_RUN_NUMBER")?.toInt() ?: 9999999
+def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999999").toInteger()
 
 android {
     namespace 'com.andryoga.safebox'
