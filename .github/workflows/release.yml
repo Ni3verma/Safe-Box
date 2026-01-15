@@ -49,19 +49,18 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           retention-days: 1
 
-#      - name: Generate Checksum
-#        id: shasum
-#        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/app-qa.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
-#
-#      - name: Create GitHub Release
-#        uses: softprops/action-gh-release@v2
-#        with:
-#          # This automatically flags as "Pre-release" if the tag has 'rc' or 'beta'
-#          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
-#          generate_release_notes: true
-#          body: |
-#            ### Security Checksum
-#            **QA Build SHA-256:** `${{ steps.shasum.outputs.hash }}`
-#
-#            ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
-#          files: app/build/outputs/apk/qa/app-qa.apk
+      - name: Generate Checksum
+        id: shasum
+        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/app-qa.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
+          generate_release_notes: true # This pulls logic from .github/release.yml
+          body: |
+            ### Security Checksum
+            **QA Build SHA-256:** `${{ steps.shasum.outputs.hash }}`
+
+            ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
+          files: app/build/outputs/apk/qa/*.apk

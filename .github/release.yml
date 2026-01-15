@@ -1,0 +1,24 @@
+changelog:
+  categories:
+    - title: 🏕 New Feature
+      labels:
+        - Feature
+    - title: 📺 Minor UI changes
+      labels:
+        - UI
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug fix
+    - title: 📃 Documentation improvement
+      labels:
+        - documentation
+    - title: 🔨 Enhancements
+      labels:
+        - enhancement
+    - title: 👤 User Feedback implementation
+      labels:
+        - Feedback
+    - title: 👒 Dependencies
+      labels:
+        - dependencies
+        - github_actions

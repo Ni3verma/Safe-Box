@@ -18,6 +18,10 @@ ksp {
 // version code will be incremental unique github run runner and default to a high value for local builds
 def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999999").toInteger()
 
+// actual version_name(from CI) follows the pattern :majorVersion.minorVersion.dbVersion.fixVersion
+// so our tag is like v2.0.4.0
+def githubRef = System.getenv("GITHUB_REF_NAME") // e.g., 'v2.0.4.0' or 'master'
+
 android {
     namespace 'com.andryoga.safebox'
     compileSdk = 36
@@ -27,8 +31,16 @@ android {
         minSdk 24
         targetSdk 36
         versionCode version_code
-        // majorVersion.minorVersion.dbVersion.fixVersion-versionCode
-        versionName "2.0.4.0-$version_code"
+
+        // versionName logic
+        if (githubRef != null && githubRef.startsWith("v")) {
+            versionName githubRef.substring(1) // Strips 'v' from 'v2.0.4.0'
+        } else if (githubRef != null) {
+            versionName "${githubRef}-build.${githubRunNumber}" // e.g., master-build.145
+        } else {
+            versionName "LOCAL-build"
+        }
+        println "Building SafeBox: ${versionName} (${versionCode})"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
