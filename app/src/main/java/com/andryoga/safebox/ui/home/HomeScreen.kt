@@ -38,6 +38,7 @@ import com.andryoga.safebox.ui.home.settings.SettingsScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
+import timber.log.Timber
 
 /**
  * This is home Nav graph container with Records screen as the start destination.
@@ -71,6 +72,19 @@ fun HomeScreen(
         ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
         ScrollBehaviorType.EXIT_UNTIL_COLLAPSED -> exitUntilCollapsedScrollBehavior to exitUntilCollapsedScrollBehavior.nestedScrollConnection
         else -> null to object : NestedScrollConnection {} // For NONE or when hidden
+    }
+
+    LaunchedEffect(nestedNavController) {
+        nestedNavController.currentBackStackEntryFlow.collect { backStackEntry ->
+            val screenName = backStackEntry.destination.route
+                ?.substringAfterLast('.')
+                ?.substringBefore("?")
+                ?.substringBefore("/")
+
+            if (screenName != null) {
+                Timber.i("Navigated to: $screenName")
+            }
+        }
     }
 
     LaunchedEffect(mainViewModel.logoutEvent) {
@@ -143,6 +157,7 @@ fun HomeScreen(
                     SingleRecordScreenRoot(
                         mainViewModel = mainViewModel,
                         onScreenClose = {
+                            Timber.i("single record screen closure callback")
                             nestedNavController.popBackStack()
                         }
                     )

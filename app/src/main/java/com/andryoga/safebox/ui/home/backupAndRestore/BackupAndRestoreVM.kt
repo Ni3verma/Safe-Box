@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,6 +41,7 @@ class BackupAndRestoreVM @Inject constructor(
         val args: HomeRouteType.BackupAndRestoreRoute =
             savedStateHandle.toRoute<HomeRouteType.BackupAndRestoreRoute>()
         if (args.startWithRestoreWorkflow) {
+            Timber.i("starting restore workflow directly")
             _startRestoreWorkflow.trySend(Unit)
         }
 
@@ -57,9 +59,14 @@ class BackupAndRestoreVM @Inject constructor(
                 )
             }
         }.launchIn(viewModelScope)
+
+        uiState.onEach { uiState ->
+            Timber.i("ui state updated, backup state = ${uiState.backupState::class.simpleName}, newBackupOrRestoreScreenState = ${uiState.newBackupOrRestoreScreenState::class.simpleName}")
+        }.launchIn(viewModelScope)
     }
 
     fun onScreenAction(action: ScreenAction) {
+        Timber.i("screen action = ${action::class.simpleName}")
         when (action) {
             is ScreenAction.BackupPathSelected -> handleBackupPathSelected(action.uri)
             ScreenAction.NewBackupClick -> updateNewBackupOrRestoreScreenState(

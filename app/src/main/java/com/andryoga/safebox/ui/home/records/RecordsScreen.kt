@@ -97,8 +97,15 @@ fun RecordsScreenRoot(
         onRestoreFromBackup = onRestoreFromBackup,
         onScreenAction = { action ->
             when (action) {
-                is RecordScreenAction.OnAddNewRecord -> onAddNewRecord(action.recordType)
-                is RecordScreenAction.OnRecordClick -> onRecordClick(action.id, action.recordType)
+                is RecordScreenAction.OnAddNewRecord -> {
+                    Timber.i("add new record action")
+                    onAddNewRecord(action.recordType)
+                }
+
+                is RecordScreenAction.OnRecordClick -> {
+                    Timber.i("record click action")
+                    onRecordClick(action.id, action.recordType)
+                }
                 else -> viewModel.onScreenAction(action)
             }
         },

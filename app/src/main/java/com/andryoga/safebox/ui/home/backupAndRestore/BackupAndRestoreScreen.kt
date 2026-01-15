@@ -65,8 +65,14 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
 
     BackupAndRestoreScreen(
         uiState = uiState,
-        launchRestoreFilePicker = { launchRestorePicker(viewModel, selectRestoreFileLauncher) },
-        launchSelectBackupPath = { launchSelectBackupPath(viewModel, selectBackupPathLauncher) },
+        launchRestoreFilePicker = {
+            Timber.i("launching restore file picker")
+            launchRestorePicker(viewModel, selectRestoreFileLauncher)
+        },
+        launchSelectBackupPath = {
+            Timber.i("launching select backup path")
+            launchSelectBackupPath(viewModel, selectBackupPathLauncher)
+        },
         onScreenAction = { action ->
             viewModel.onScreenAction(action)
         }

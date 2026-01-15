@@ -23,7 +23,7 @@ fun LoadingScreenRoot(
     val viewModel = hiltViewModel<MainViewModel>()
     val loadingState by viewModel.loadingState.collectAsState(LoadingState.Initial)
 
-    Timber.i("loading state: $loadingState")
+    Timber.i("loading state: ${loadingState::class.simpleName}")
     when (loadingState) {
         LoadingState.Initial -> LoadingScreen()
         LoadingState.ProceedToLogin -> navigateToLogin()

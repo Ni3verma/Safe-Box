@@ -23,7 +23,7 @@ android {
         applicationId "com.andryoga.safebox"
         minSdk 24
         targetSdk 36
-        versionCode 15
+        versionCode 16
         // majorVersion.minorVersion.dbVersion.fixVersion
         versionName "2.0.4.0"
 

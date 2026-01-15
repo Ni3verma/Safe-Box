@@ -42,9 +42,8 @@ object CommonConstants {
     const val WORKER_NAME_RESTORE_DATA = "RESTORE_SAFE_BOX_DATA_WORK"
 
     //        Other
-    const val time1Sec = 1000L
-    const val time5Sec = 5000L
+    const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
     const val APP_PLAYSTORE_LINK =
-        "https://play.google.com/store/apps/details?id=com.andryoga.safebox"
+        "market://details?id=com.andryoga.safebox"
 }

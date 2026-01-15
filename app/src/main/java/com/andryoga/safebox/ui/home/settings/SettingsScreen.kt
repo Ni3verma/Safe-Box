@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
+import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.TopAppBarConfig
@@ -34,6 +35,7 @@ import com.andryoga.safebox.ui.home.settings.components.TextPreference
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnStart
+import timber.log.Timber
 
 @Composable
 fun SettingsScreenRoot(mainViewModel: MainViewModel) {
@@ -50,6 +52,7 @@ fun SettingsScreenRoot(mainViewModel: MainViewModel) {
 
     SettingsScreen(uiState = uiState, onScreenAction = {
         // intercept some of the events in UI
+        Timber.i("on screen action: ${it::class.simpleName}")
         when (it) {
             SettingsScreenAction.OpenGithubProject -> openGitHub(context)
             SettingsScreenAction.ReviewApp -> launchReview(context)
@@ -175,7 +178,7 @@ fun sendFeedback(context: Context) {
 }
 
 fun launchReview(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=${context.packageName}"))
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(APP_PLAYSTORE_LINK))
     if (intent.resolveActivity(context.packageManager) != null) {
         context.startActivity(intent)
     }
