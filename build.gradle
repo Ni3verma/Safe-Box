@@ -1,48 +1,26 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.8.22'
-    ext.navigationVersion = '2.5.3'
-    ext.hilt_version = '2.43.2'
-    ext.detekt_version = '1.23.0'
-
-    repositories {
-        google()
-        mavenCentral()
-    }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.3'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-        classpath "androidx.navigation:navigation-safe-args-gradle-plugin:$navigationVersion"
-        classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"
-        classpath 'com.google.gms:google-services:4.4.2'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
-        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
+        classpath libs.gradle
+        classpath libs.kotlin.gradle.plugin
     }
 }
 
 plugins {
-    id "io.gitlab.arturbosch.detekt" version "$detekt_version"
-}
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.crashlytics) apply false
+    alias(libs.plugins.google.services) apply false
 
-ext{
-    lifecycle_extension_version = '2.2.0'
-    lifecycle_livedata_extension_version = '2.3.1'
-    timber_version = '5.0.1'
-    biometric_version='1.1.0'
-    room_version='2.6.1'
-    compose_version = '1.6.0'
-    work_version = '2.7.0'
-}
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization) apply false
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+
+    alias(libs.plugins.hilt) apply false
 }
 
 tasks.register('clean', Delete) {

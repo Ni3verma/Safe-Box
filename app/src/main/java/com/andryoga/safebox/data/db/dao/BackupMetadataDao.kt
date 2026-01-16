@@ -18,6 +18,13 @@ interface BackupMetadataDao {
     @Query("update backup_metadata set lastBackupDate=:date")
     suspend fun updateLastBackupDate(date: Long)
 
+    /**
+     * Use this to check if backup path is set or not
+     * @return 0 only if backup path is not set
+     */
+    @Query("select COUNT(`key`) from backup_metadata where `key` = 1")
+    suspend fun isBackupPathSet(): Int
+
     @Query("select * from backup_metadata where `key` = 1")
     fun getBackupMetadata(): Flow<BackupMetadataEntity?>
 }

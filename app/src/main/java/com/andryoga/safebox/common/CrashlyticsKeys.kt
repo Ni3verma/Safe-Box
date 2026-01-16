@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.google.android.gms.common.GoogleApiAvailabilityLight
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.firebase.crashlytics.ktx.setCustomKeys
+import com.google.firebase.crashlytics.setCustomKeys
 import timber.log.Timber
 
 class CrashlyticsKeys(
@@ -31,16 +31,11 @@ class CrashlyticsKeys(
      */
     @Suppress("DEPRECATION")
     private val locale: String
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        get() =
             context
                 .resources
                 .configuration
                 .locales[0].toString()
-        } else {
-            context
-                .resources
-                .configuration.locale.toString()
-        }
 
     /**
      * Retrieve the screen density information for the app.
@@ -93,8 +88,8 @@ class CrashlyticsKeys(
                 // This returns all three of the install source, originating source, and initiating
                 // source.
                 "Originating: ${info.originatingPackageName ?: "None"}, " +
-                    "Installing: ${info.installingPackageName ?: "None"}, " +
-                    "Initiating: ${info.initiatingPackageName ?: "None"}"
+                        "Installing: ${info.installingPackageName ?: "None"}, " +
+                        "Initiating: ${info.initiatingPackageName ?: "None"}"
             } catch (e: PackageManager.NameNotFoundException) {
                 Timber.e(e)
                 "Unknown"

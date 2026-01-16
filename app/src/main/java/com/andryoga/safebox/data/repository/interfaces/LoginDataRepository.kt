@@ -1,15 +1,13 @@
 package com.andryoga.safebox.data.repository.interfaces
 
 import com.andryoga.safebox.data.db.docs.SearchLoginData
-import com.andryoga.safebox.data.db.docs.ViewLoginData
-import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
+import com.andryoga.safebox.domain.models.record.LoginData
 import kotlinx.coroutines.flow.Flow
 
+
 interface LoginDataRepository {
-    suspend fun insertLoginData(loginScreenData: LoginScreenData)
-    suspend fun updateLoginData(loginScreenData: LoginScreenData)
+    suspend fun upsertLoginData(loginData: LoginData)
     suspend fun getAllLoginData(): Flow<List<SearchLoginData>>
-    suspend fun getLoginDataByKey(key: Int): LoginScreenData
+    suspend fun getLoginDataByKey(key: Int): LoginData
     suspend fun deleteLoginDataByKey(key: Int)
-    suspend fun getViewLoginDataByKey(key: Int): ViewLoginData
 }

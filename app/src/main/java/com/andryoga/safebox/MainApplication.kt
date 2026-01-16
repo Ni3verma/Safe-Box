@@ -2,25 +2,33 @@ package com.andryoga.safebox
 
 import android.app.Application
 import android.util.Log
-import androidx.hilt.work.HiltWorkerFactory
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
+import com.andryoga.safebox.common.CrashlyticsKeys
+import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.worker.SafeBoxWorkerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
 import timber.log.Timber
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltAndroidApp
 class MainApplication : Application(), Configuration.Provider {
 
     @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+    lateinit var safeBoxWorkerFactory: SafeBoxWorkerFactory
 
-    override fun getWorkManagerConfiguration() =
-        Configuration.Builder()
-            .setWorkerFactory(workerFactory)
-            .build()
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
+
+    override val workManagerConfiguration: Configuration
+        get() =
+            Configuration.Builder()
+                .setWorkerFactory(safeBoxWorkerFactory)
+                .setMinimumLoggingLevel(Log.INFO)
+                .build()
 
     override fun onCreate() {
         super.onCreate()
@@ -39,6 +47,8 @@ class MainApplication : Application(), Configuration.Provider {
         } else {
             Timber.plant(ReleaseTree())
         }
+        ProcessLifecycleOwner.get().lifecycle.addObserver(activeSessionManager)
+        CrashlyticsKeys(this).setDefaultKeys()
     }
 }
 

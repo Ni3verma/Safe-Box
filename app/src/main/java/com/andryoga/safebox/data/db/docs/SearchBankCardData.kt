@@ -1,7 +1,7 @@
 package com.andryoga.safebox.data.db.docs
 
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import java.util.*
+import java.util.Date
 
 data class SearchBankCardData(
     val key: Int,

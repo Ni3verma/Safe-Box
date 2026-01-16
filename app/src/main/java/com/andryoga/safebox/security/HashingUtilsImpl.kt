@@ -41,8 +41,8 @@ class HashingUtilsImpl : HashingUtils {
         if (hashInfo.size != 2) {
             throw SecurityException(
                 "proper hash info not passed. " +
-                    "It must be of this format : " +
-                    "{base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}"
+                        "It must be of this format : " +
+                        "{base64 encoded hash(password+salt)}+$separator+{base64 encoded salt}"
             )
         }
         val salt = SecurityUtils.decodeBase64(hashInfo[1])

@@ -1,9 +1,11 @@
 package com.andryoga.safebox.common
 
 object CommonConstants {
-    //        SHOULD ONLY be user for simple shared preference
+    //        SHOULD ONLY be used for simple shared preference
     const val TOTAL_LOGIN_COUNT = "total_login_count"
-    const val LOGIN_COUNT_WITH_BIOMETRIC = "login_count_with_biometric"
+
+    // user cannot login with biometric always, it has a limit
+    const val ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING = "allowed_biometric_login_count_remaining"
     const val IS_NOTIFICATION_PERMISSION_ASKED_BEFORE = "is_notification_permission_asked_before"
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
 
@@ -22,7 +24,7 @@ object CommonConstants {
     const val BANK_ACCOUNT_DATA_KEY = "5"
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
-    const val BACKUP_VERSION = 1
+    const val BACKUP_VERSION = 2
 
     // Backup params
     const val BACKUP_PARAM_PASSWORD = "0"
@@ -40,9 +42,16 @@ object CommonConstants {
     const val WORKER_NAME_RESTORE_DATA = "RESTORE_SAFE_BOX_DATA_WORK"
 
     //        Other
-    const val time1Sec = 1000L
-    const val time5Sec = 5000L
+    const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
+
+    // use below link to directly open playstore from the app. This should not be shared with
+    // anyone as it doesn't come as hyperlink on text message. Use APP_PLAYSTORE_LINK_SHARE instead
     const val APP_PLAYSTORE_LINK =
+        "market://details?id=com.andryoga.safebox"
+
+    // use below link when sharing the app link over text message.
+    // It is rendered as a hyperlink in famous apps like Whatsapp.
+    const val APP_PLAYSTORE_LINK_SHARE =
         "https://play.google.com/store/apps/details?id=com.andryoga.safebox"
 }

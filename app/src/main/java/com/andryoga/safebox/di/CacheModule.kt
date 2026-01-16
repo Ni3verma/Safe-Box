@@ -2,11 +2,14 @@ package com.andryoga.safebox.di
 
 import android.content.Context
 import androidx.room.Room
-import com.andryoga.safebox.data.db.Migration.MIGRATION_1_2
-import com.andryoga.safebox.data.db.Migration.MIGRATION_2_3
-import com.andryoga.safebox.data.db.Migration.MIGRATION_3_4
+import com.andryoga.safebox.data.db.Migration
 import com.andryoga.safebox.data.db.SafeBoxDatabase
-import com.andryoga.safebox.data.db.dao.*
+import com.andryoga.safebox.data.db.dao.BackupMetadataDao
+import com.andryoga.safebox.data.db.dao.BankAccountDataDao
+import com.andryoga.safebox.data.db.dao.BankCardDataDao
+import com.andryoga.safebox.data.db.dao.LoginDataDao
+import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
+import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +30,11 @@ object CacheModule {
             context,
             SafeBoxDatabase::class.java,
             SafeBoxDatabase.DATABASE_NAME
-        ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build()
+        ).addMigrations(
+            Migration.MIGRATION_1_2,
+            Migration.MIGRATION_2_3,
+            Migration.MIGRATION_3_4,
+        ).build()
     }
 
     // DAO

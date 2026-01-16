@@ -1,6 +1,6 @@
 package com.andryoga.safebox.data.db.docs
 
-import java.util.*
+import java.util.Date
 
 data class SearchSecureNoteData(
     val key: Int,

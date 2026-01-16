@@ -15,16 +15,12 @@ class BankCardDataDaoSecure @Inject constructor(
     private val bankCardDataDao: BankCardDataDao,
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : BankCardDataDao {
-    override suspend fun insertBankCardData(bankCardDataEntity: BankCardDataEntity) {
-        bankCardDataDao.insertBankCardData(encrypt(bankCardDataEntity))
+    override suspend fun upsertBankCardData(bankCardDataEntity: BankCardDataEntity) {
+        bankCardDataDao.upsertBankCardData(encrypt(bankCardDataEntity))
     }
 
     override fun insertMultipleBankCardData(bankCardDataEntity: List<BankCardDataEntity>) {
         bankCardDataDao.insertMultipleBankCardData(bankCardDataEntity.map { encrypt(it) })
-    }
-
-    override suspend fun updateBankCardData(bankCardDataEntity: BankCardDataEntity) {
-        bankCardDataDao.updateBankCardData(encrypt(bankCardDataEntity))
     }
 
     override fun getAllBankCardData(): Flow<List<SearchBankCardData>> {
@@ -75,7 +71,11 @@ class BankCardDataDaoSecure @Inject constructor(
                 symmetricKeyUtils.decrypt(it.number),
                 it.pin.decryptNullableString(symmetricKeyUtils),
                 it.cvv.decryptNullableString(symmetricKeyUtils),
-                it.expiryDate.decryptNullableString(symmetricKeyUtils),
+
+                // v2.x onwards, app adds "/" on the UI using visual transformations
+                // and we also do not save "/" while saving. This is required for old records
+                it.expiryDate.decryptNullableString(symmetricKeyUtils)?.replace("/", ""),
+
                 it.notes.decryptNullableString(symmetricKeyUtils),
                 it.creationDate,
                 it.updateDate

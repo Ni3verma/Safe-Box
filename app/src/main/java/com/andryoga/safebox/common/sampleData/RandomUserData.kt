@@ -4,11 +4,13 @@ import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
-import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData
-import com.andryoga.safebox.ui.view.home.dataDetails.bankCard.BankCardScreenData
-import com.andryoga.safebox.ui.view.home.dataDetails.login.LoginScreenData
-import com.andryoga.safebox.ui.view.home.dataDetails.secureNote.SecureNoteScreenData
+import com.andryoga.safebox.domain.models.record.BankAccountData
+import com.andryoga.safebox.domain.models.record.CardData
+import com.andryoga.safebox.domain.models.record.LoginData
+import com.andryoga.safebox.domain.models.record.NoteData
 import timber.log.Timber
+import java.util.Date
+
 
 object RandomUserData {
 
@@ -20,14 +22,16 @@ object RandomUserData {
     private const val number3 = 3
 
     private suspend fun insertFakeLoginData(loginDataRepository: LoginDataRepository) {
-        loginDataRepository.insertLoginData(
-            LoginScreenData(
+        loginDataRepository.upsertLoginData(
+            LoginData(
                 0,
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
-                RandomTestData.getRandomTestString(2, number200)
+                RandomTestData.getRandomTestString(2, number200),
+                Date(),
+                Date(),
             )
         )
     }
@@ -35,8 +39,8 @@ object RandomUserData {
     private suspend fun insertFakeBankAccountData(
         bankAccountDataRepository: BankAccountDataRepository
     ) {
-        bankAccountDataRepository.insertBankAccountData(
-            BankAccountScreenData(
+        bankAccountDataRepository.upsertBankAccountData(
+            BankAccountData(
                 0,
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestInt(2, number20),
@@ -47,14 +51,16 @@ object RandomUserData {
                 RandomTestData.getRandomTestString(2, number30),
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestInt(2, number5),
-                RandomTestData.getRandomTestString(2, number200)
+                RandomTestData.getRandomTestString(2, number200),
+                Date(),
+                Date(),
             )
         )
     }
 
     private suspend fun insertFakeBankCardData(bankCardDataRepository: BankCardDataRepository) {
-        bankCardDataRepository.insertBankCardData(
-            BankCardScreenData(
+        bankCardDataRepository.upsertBankCardData(
+            CardData(
                 0,
                 RandomTestData.getRandomTestString(2, number20),
                 RandomTestData.getRandomTestString(2, number20),
@@ -62,17 +68,21 @@ object RandomUserData {
                 "02/22",
                 RandomTestData.getRandomTestInt(2, number5),
                 RandomTestData.getRandomTestInt(2, number3),
-                RandomTestData.getRandomTestString(2, number200)
+                RandomTestData.getRandomTestString(2, number200),
+                Date(),
+                Date(),
             )
         )
     }
 
     private suspend fun insertFakeSecureNoteData(secureNoteDataRepository: SecureNoteDataRepository) {
-        secureNoteDataRepository.insertSecureNoteData(
-            SecureNoteScreenData(
+        secureNoteDataRepository.upsertSecureNoteData(
+            NoteData(
                 0,
                 RandomTestData.getRandomTestString(2, number20),
-                RandomTestData.getRandomTestString(2, number200)
+                RandomTestData.getRandomTestString(2, number200),
+                Date(),
+                Date(),
             )
         )
     }

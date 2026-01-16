@@ -1,15 +1,12 @@
 package com.andryoga.safebox.worker
 
 import android.content.Context
-import android.net.Uri
-import androidx.hilt.work.HiltWorker
+import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.andryoga.safebox.common.AnalyticsKeys.RESTORE_FAILED
-import com.andryoga.safebox.common.AnalyticsKeys.RESTORE_SUCCESS
-import com.andryoga.safebox.common.AnalyticsKeys.VERSION
+import com.andryoga.safebox.common.AnalyticsKeys
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.Utils.getFormattedDate
+import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
@@ -25,12 +22,9 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.ktx.logEvent
-import com.google.firebase.ktx.Firebase
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.analytics
+import com.google.firebase.analytics.logEvent
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -39,11 +33,9 @@ import java.io.ObjectInputStream
 import java.util.Date
 import javax.crypto.BadPaddingException
 
-@HiltWorker
-@ExperimentalCoroutinesApi
-class RestoreDataWorker @AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
+class RestoreDataWorker(
+    context: Context,
+    params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val safeBoxDatabase: SafeBoxDatabase,
@@ -72,7 +64,7 @@ class RestoreDataWorker @AssistedInject constructor(
         recordTime("got input pswrd and file uri")
 
         ObjectInputStream(
-            applicationContext.contentResolver.openInputStream(Uri.parse(fileUri))
+            applicationContext.contentResolver.openInputStream(fileUri.toUri())
         ).use {
             val fileObject = it.readObject()
             if (fileObject !is Map<*, *>) {
@@ -84,15 +76,15 @@ class RestoreDataWorker @AssistedInject constructor(
             val creationDate = importMap[CommonConstants.CREATION_DATE_KEY]!![0].toLong()
             Timber.i(
                 "$localTag version = $version, " +
-                    "created on : ${getFormattedDate(Date(creationDate))}"
+                        "created on : ${Utils.getFormattedDate(Date(creationDate))}"
             )
             recordTime("file read to map object")
             try {
                 startRestore()
             } catch (badPaddingException: BadPaddingException) {
-                Timber.w("wrong password entered for restore", badPaddingException)
-                Firebase.analytics.logEvent(RESTORE_FAILED) {
-                    param(VERSION, version.toDouble())
+                Timber.e(badPaddingException, "wrong password entered for restore")
+                Firebase.analytics.logEvent(AnalyticsKeys.RESTORE_FAILED) {
+                    param(AnalyticsKeys.VERSION, version.toDouble())
                 }
                 return Result.failure()
             }
@@ -106,13 +98,14 @@ class RestoreDataWorker @AssistedInject constructor(
         iv = importMap[CommonConstants.IV_KEY]!!
         recordTime("read salt and iv")
         val loginData = decryptLoginData(importMap[CommonConstants.LOGIN_DATA_KEY])
-        val bankAccountData = decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
+        val bankAccountData =
+            decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
         recordTime("all data decrypted")
 
         restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
-        Firebase.analytics.logEvent(RESTORE_SUCCESS, null)
+        Firebase.analytics.logEvent(AnalyticsKeys.RESTORE_SUCCESS, null)
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {
@@ -258,7 +251,7 @@ class RestoreDataWorker @AssistedInject constructor(
 
     private fun recordTime(message: String) {
         val timeTook = System.currentTimeMillis() - startTime
-        val sec = CommonConstants.time1Sec
+        val sec = CommonConstants.TIME_1_SECOND
         Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
     }

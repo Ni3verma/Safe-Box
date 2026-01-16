@@ -3,8 +3,18 @@ package com.andryoga.safebox.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.andryoga.safebox.data.db.dao.*
-import com.andryoga.safebox.data.db.entity.*
+import com.andryoga.safebox.data.db.dao.BackupMetadataDao
+import com.andryoga.safebox.data.db.dao.BankAccountDataDao
+import com.andryoga.safebox.data.db.dao.BankCardDataDao
+import com.andryoga.safebox.data.db.dao.LoginDataDao
+import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
+import com.andryoga.safebox.data.db.dao.UserDetailsDao
+import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
+import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
+import com.andryoga.safebox.data.db.entity.BankCardDataEntity
+import com.andryoga.safebox.data.db.entity.LoginDataEntity
+import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 
 @Database(
     entities = [

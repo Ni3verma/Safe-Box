@@ -1,17 +1,24 @@
 package com.andryoga.safebox.worker
 
+import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
-import android.net.Uri
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.AnalyticsKeys.BACKUP_FAILED
+import com.andryoga.safebox.common.AnalyticsKeys
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.CommonConstants.time1Sec
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
@@ -22,18 +29,14 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.andryoga.safebox.ui.common.NotificationOptions
-import com.andryoga.safebox.ui.common.Utils.makeStatusNotification
+import com.google.firebase.Firebase
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.ktx.analytics
-import com.google.firebase.analytics.ktx.logEvent
-import com.google.firebase.ktx.Firebase
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import com.google.firebase.analytics.analytics
+import com.google.firebase.analytics.logEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -42,20 +45,18 @@ import timber.log.Timber
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.util.Date
+import java.util.UUID
 
-@HiltWorker
-@ExperimentalCoroutinesApi
-class BackupDataWorker
-@AssistedInject constructor(
-    @Assisted context: Context,
-    @Assisted params: WorkerParameters,
+class BackupDataWorker(
+    context: Context,
+    params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -67,14 +68,16 @@ class BackupDataWorker
     private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
-        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadataEntity ->
-            if (backupMetadataEntity != null) {
+        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadata ->
+            if (backupMetadata != null) {
                 Timber.i("backup metadata found")
                 val isShowStartNotification =
-                    inputData.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+                    inputData.getBoolean(
+                        BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                        false
+                    )
                 if (isShowStartNotification) {
-                    makeStatusNotification(
-                        applicationContext,
+                    sendNotification(
                         getNotificationOptions(
                             applicationContext.getString(R.string.notification_backup_in_progress)
                         )
@@ -83,7 +86,7 @@ class BackupDataWorker
 
                 startTime = System.currentTimeMillis()
 
-                val inputPassword = inputData.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
+                val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
                     ?: throw IllegalArgumentException("expected password input was not received")
 
                 val loginData = loginDataDaoSecure.exportAllData()
@@ -122,7 +125,7 @@ class BackupDataWorker
                     try {
                         val pickedDir = DocumentFile.fromTreeUri(
                             applicationContext,
-                            Uri.parse(backupMetadataEntity.uriString)
+                            backupMetadata.uriString.toUri()
                         )!!
 
                         deleteExtraBackupFiles(pickedDir)
@@ -138,7 +141,20 @@ class BackupDataWorker
             }
         }
 
-        return Result.Success()
+        return Result.success()
+    }
+
+    private fun sendNotification(notificationOptions: NotificationOptions) {
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            Utils.makeStatusNotification(
+                applicationContext,
+                notificationOptions
+            )
+        }
     }
 
     private suspend fun onBackupError(exception: Exception) {
@@ -146,13 +162,12 @@ class BackupDataWorker
             exception,
             "$localTag exception occurred : ${exception.localizedMessage}"
         )
-        Firebase.analytics.logEvent(BACKUP_FAILED) {
+        Firebase.analytics.logEvent(AnalyticsKeys.BACKUP_FAILED) {
             param(FirebaseAnalytics.Param.SOURCE, exception.message.orEmpty())
         }
         Timber.i("removing backup metadata")
         backupMetadataRepository.deleteBackupMetadata()
-        makeStatusNotification(
-            applicationContext,
+        sendNotification(
             getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure))
         )
     }
@@ -188,8 +203,8 @@ class BackupDataWorker
         withContext(Dispatchers.IO) {
             val files = pickedDir.listFiles().filter {
                 it.isFile && it.name != null &&
-                    it.name!!.endsWith(".bak") &&
-                    it.name!!.startsWith("SafeBoxBackup")
+                        it.name!!.endsWith(".bak") &&
+                        it.name!!.startsWith("SafeBoxBackup")
             }
             if (files.size >= CommonConstants.MAX_BACKUP_FILES) {
                 Timber.i("max backup files threshold reached")
@@ -224,8 +239,7 @@ class BackupDataWorker
         }
         recordTime("exported to file, updating date in db")
         backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
-        makeStatusNotification(
-            applicationContext,
+        sendNotification(
             getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
         )
     }
@@ -300,7 +314,7 @@ class BackupDataWorker
 
     private fun recordTime(message: String) {
         val timeTook = System.currentTimeMillis() - startTime
-        val sec = time1Sec
+        val sec = CommonConstants.TIME_1_SECOND
         Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
     }
@@ -320,11 +334,44 @@ class BackupDataWorker
             0,
             applicationContext.getString(R.string.notification_backup_channel_name),
             applicationContext.getString(R.string.notification_backup_channel_desc),
-            NotificationManager.IMPORTANCE_HIGH,
+            NotificationManager.IMPORTANCE_DEFAULT,
             R.drawable.ic_backup_restore,
             applicationContext.getString(R.string.notification_backup_title),
             notificationContent,
             NotificationCompat.PRIORITY_HIGH
         )
+    }
+
+    companion object {
+        fun enqueueRequest(
+            password: String,
+            showBackupStartNotification: Boolean,
+            workManager: WorkManager,
+            symmetricKeyUtils: SymmetricKeyUtils
+        ): UUID {
+            val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
+                .setInputData(
+                    Data.Builder()
+                        .putString(
+                            BACKUP_PARAM_PASSWORD,
+                            symmetricKeyUtils.encrypt(password)
+                        )
+                        .putBoolean(
+                            BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                            showBackupStartNotification
+                        )
+                        .build()
+                )
+                .build()
+
+            workManager.enqueueUniqueWork(
+                CommonConstants.WORKER_NAME_BACKUP_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                backupDataRequest
+            )
+
+            Timber.i("backup work req enqueued")
+            return backupDataRequest.id
+        }
     }
 }

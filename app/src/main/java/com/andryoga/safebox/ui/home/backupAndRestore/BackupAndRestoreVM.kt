@@ -1,0 +1,112 @@
+package com.andryoga.safebox.ui.home.backupAndRestore
+
+import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.home.navigation.HomeRouteType
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import javax.inject.Inject
+
+@HiltViewModel
+class BackupAndRestoreVM @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val backupMetadataRepository: BackupMetadataRepository,
+    private val activeSessionManager: ActiveSessionManager
+) : ViewModel() {
+    private val _uiState = MutableStateFlow(ScreenState())
+    val uiState: StateFlow<ScreenState> = _uiState
+
+    private val _startRestoreWorkflow = Channel<Unit>(Channel.CONFLATED)
+
+    /**
+     * event is emitted when the screen needs to start with start restore workflow.
+     * i.e. open file system screen where user chooses the backup file to restore.
+     * This param come as part of navigation param*/
+    val startRestoreWorkflow = _startRestoreWorkflow.receiveAsFlow()
+
+    init {
+        val args: HomeRouteType.BackupAndRestoreRoute =
+            savedStateHandle.toRoute<HomeRouteType.BackupAndRestoreRoute>()
+        if (args.startWithRestoreWorkflow) {
+            Timber.i("starting restore workflow directly")
+            _startRestoreWorkflow.trySend(Unit)
+        }
+
+        backupMetadataRepository.getBackupMetadata().onEach { backupMetadata ->
+            _uiState.update { currentState ->
+                currentState.copy(
+                    backupState = if (backupMetadata == null) {
+                        BackupPathNotSet()
+                    } else {
+                        BackupPathSet(
+                            backupPath = backupMetadata.path,
+                            backupTime = backupMetadata.lastBackupTime
+                        )
+                    }
+                )
+            }
+        }.launchIn(viewModelScope)
+
+        uiState.onEach { uiState ->
+            Timber.i("ui state updated, backup state = ${uiState.backupState::class.simpleName}, newBackupOrRestoreScreenState = ${uiState.newBackupOrRestoreScreenState::class.simpleName}")
+        }.launchIn(viewModelScope)
+    }
+
+    fun onScreenAction(action: ScreenAction) {
+        Timber.i("screen action = ${action::class.simpleName}")
+        when (action) {
+            is ScreenAction.BackupPathSelected -> handleBackupPathSelected(action.uri)
+            ScreenAction.NewBackupClick -> updateNewBackupOrRestoreScreenState(
+                newState = NewBackupOrRestoreScreenState.StartedForBackup
+            )
+
+            ScreenAction.NewBackupOrRestoreDismiss -> updateNewBackupOrRestoreScreenState(
+                newState = NewBackupOrRestoreScreenState.NotStarted
+            )
+
+            is ScreenAction.RestoreFileSelected -> {
+                if (action.uri != null) {
+                    updateNewBackupOrRestoreScreenState(
+                        newState = NewBackupOrRestoreScreenState.StartedForRestore(
+                            fileUri = action.uri
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun pauseActiveSessionManager() {
+        activeSessionManager.setPaused(true)
+    }
+
+    fun resumeActiveSessionManager() {
+        activeSessionManager.setPaused(false)
+    }
+    private fun handleBackupPathSelected(uri: Uri?) {
+        viewModelScope.launch {
+            backupMetadataRepository.insertBackupMetadata(uriPath = uri)
+        }
+    }
+
+    private fun updateNewBackupOrRestoreScreenState(newState: NewBackupOrRestoreScreenState) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                newBackupOrRestoreScreenState = newState
+            )
+        }
+    }
+}

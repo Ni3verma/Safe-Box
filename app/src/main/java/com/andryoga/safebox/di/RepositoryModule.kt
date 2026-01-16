@@ -1,12 +1,30 @@
 package com.andryoga.safebox.di
 
+import android.content.Context
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
-import com.andryoga.safebox.data.db.secureDao.*
-import com.andryoga.safebox.data.repository.*
-import com.andryoga.safebox.data.repository.interfaces.*
+import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
+import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
+import com.andryoga.safebox.data.repository.BackupMetadataRepositoryImpl
+import com.andryoga.safebox.data.repository.BankAccountDataRepositoryImpl
+import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
+import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
+import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
+import com.andryoga.safebox.data.repository.UserDetailsRepositoryImpl
+import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
+import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Singleton
@@ -17,10 +35,14 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideUserDetailsRepo(
-        userDetailsDaoSecure: UserDetailsDaoSecure
+        userDetailsDaoSecure: UserDetailsDaoSecure,
+        preferenceProvider: PreferenceProvider,
+        settingsDataStore: SettingsDataStore,
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
-            userDetailsDaoSecure
+            userDetailsDaoSecure,
+            preferenceProvider,
+            settingsDataStore
         )
     }
 
@@ -60,8 +82,9 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideBackupMetadataRepo(
+        @ApplicationContext context: Context,
         backupMetadataDao: BackupMetadataDao
     ): BackupMetadataRepository {
-        return BackupMetadataRepositoryImpl(backupMetadataDao)
+        return BackupMetadataRepositoryImpl(context, backupMetadataDao)
     }
 }

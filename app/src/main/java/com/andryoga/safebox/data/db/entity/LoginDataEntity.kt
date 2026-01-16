@@ -2,7 +2,7 @@ package com.andryoga.safebox.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.*
+import java.util.Date
 
 @Entity(tableName = "login_data")
 data class LoginDataEntity(

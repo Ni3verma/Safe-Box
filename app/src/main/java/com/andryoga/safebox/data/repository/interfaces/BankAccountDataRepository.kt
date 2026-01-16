@@ -1,15 +1,12 @@
 package com.andryoga.safebox.data.repository.interfaces
 
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
-import com.andryoga.safebox.data.db.docs.ViewBankAccountData
-import com.andryoga.safebox.ui.view.home.dataDetails.bankAccount.BankAccountScreenData
+import com.andryoga.safebox.domain.models.record.BankAccountData
 import kotlinx.coroutines.flow.Flow
 
 interface BankAccountDataRepository {
-    suspend fun insertBankAccountData(bankAccountScreenData: BankAccountScreenData)
-    suspend fun updateBankAccountData(bankAccountScreenData: BankAccountScreenData)
+    suspend fun upsertBankAccountData(accountData: BankAccountData)
     fun getAllBankAccountData(): Flow<List<SearchBankAccountData>>
-    suspend fun getBankAccountDataByKey(key: Int): BankAccountScreenData
+    suspend fun getBankAccountDataByKey(key: Int): BankAccountData
     suspend fun deleteBankAccountDataByKey(key: Int)
-    suspend fun getViewBankAccountDataByKey(key: Int): ViewBankAccountData
 }

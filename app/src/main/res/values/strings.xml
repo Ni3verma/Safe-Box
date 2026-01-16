@@ -1,77 +1,48 @@
 <resources>
     <!--    Content descriptions-->
-    <string name="cd_open_options_to_add_new_personal_data">Open options to add new personal data</string>
-    <string name="cd_add_new_login_data">Add new login data</string>
-    <string name="cd_add_new_bank_account_data">Add new bank account data</string>
-    <string name="cd_add_new_bank_card_data">Add new bank card data</string>
-    <string name="cd_add_a_new_note">Add a new note</string>
-    <string name="cd_empty_list">Empty List</string>
-    <string name="cd_top_curve">screen top curve view</string>
-    <string name="cd_bottom_curve">screen bottom curve view</string>
-    <string name="cd_app_logo">App logo</string>
-    <string name="cd_open_github_repo">Open github repo of this app</string>
-    <string name="cd_background_image">background image</string>
-    <string name="cd_save_button">Press to save data</string>
-    <string name="cd_action_delete">Delete data</string>
-    <string name="cd_action_edit">Edit data</string>
-    <string name="cd_action_share">Share data</string>
+    <string name="cd_action_delete">Delete record</string>
+    <string name="cd_action_edit">Edit record</string>
+    <string name="cd_action_share">Share record</string>
+    <string name="cd_toggle_sensitive_data_visibility">Toggle sensitive data visibility</string>
+    <string name="cd_add_new_record_button">Add new record button</string>
+    <string name="cd_search_bar">Search records by title</string>
+    <string name="cd_clear_search_bar">Clear search bar</string>"
+    <string name="cd_back_button">Back button</string>
+
 
     <!--    Screen title-->
-    <string name="drawer_group_my_data">My Data</string>
-    <string name="drawer_group_contact_us">Contact Us</string>
-    <string name="drawer_title_all_items">All Items</string>
-    <string name="drawer_title_login">Login</string>
-    <string name="drawer_title_bank_account">Bank Account</string>
-    <string name="drawer_title_bank_card">Bank Card</string>
-    <string name="drawer_title_secure_note">Secure Note</string>
-    <string name="drawer_title_backup_and_restore">Backup and Restore</string>
-    <string name="drawer_title_playstore">Play Store</string>
-    <string name="title_login_data">Login Data</string>
-    <string name="title_bank_account_data">Bank Account Data</string>
-    <string name="title_bank_card_data">Bank Card Data</string>
-    <string name="title_secure_note_data">Secure Note Data</string>
-    <string name="title_view_data">View Data</string>
+    <string name="bottom_nav_records">Records</string>
+    <string name="bottom_nav_backup_and_restore">Backup &amp; Restore</string>
+    <string name="bottom_nav_settings">Settings</string>
 
     <!--    Snackbar -->
-    <string name="snackbar_common_data_saved">Data saved</string>
-    <string name="snackbar_common_error_saving_data">Error occurred while saving data</string>
-    <string name="snackbar_common_copied_to_clipboard">Copied %1$s to clipboard</string>
 
     <!--    Common-->
-    <string name="common_error_mandatory_field">Mandatory Field</string>
-    <string name="common_no_result">No Result!</string>
-    <string name="common_click_on_plus_to_add_data">Click on <b>+</b> button to add new data</string>
     <string name="common_app_playstore_download">Data stored securely by Safe Box.\nDownload it from playstore : %1$s</string>
-    <string name="common_data">Data</string>
-    <string name="common_delete">Delete</string>
     <string name="common_cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
     <string name="common_ok">OK</string>
-    <string name="common_search">Search</string>
-    <string name="close">Close</string>
-    <string name="error">Error!</string>
-    <string name="github">Github</string>
-    <string name="biometric_title_text">Biometric Authentication</string>
+    <string name="biometric_title_text">Login to SafeBox</string>
+    <string name="biometric_sub_title_text">Verify your identity</string>
     <string name="biometric_negative_button_text">Close</string>
-    <string name="delete">Delete</string>
-    <string name="edit">Edit</string>
-    <string name="share">Share</string>
     <string name="do_not_ask_again">Don\'t ask again</string>
     <string name="allow">Allow</string>
+    <string name="login">Login</string>
+    <string name="signup">Sign Up</string>
 
 
     <!--    User data type text-->
-    <string name="login">Login</string>
-    <string name="bank">Bank</string>
-    <string name="card">Card</string>
-    <string name="note">Note</string>
+    <string name="type_display_account">Bank Account</string>
+    <string name="type_display_card">Card</string>
+    <string name="type_display_note">Note</string>
+    <string name="type_display_login">Login</string>
 
     <!--    Bank card dialog-->
-    <string name="number">Number <font color='#FF0000'>̽</font></string>
+    <string name="number">Number </string>
     <string name="expiryDate">Expiry Date</string>
     <string name="name">Name</string>
     <string name="pin">PIN</string>
     <string name="cvv">CVV</string>
-    <string name="linkedAccount">Linked Account</string>
 
     <!--    delete record dialog-->
     <string name="delete_this_record">Delete this record?</string>
@@ -80,26 +51,27 @@
 
     <!--     backup-->
     <string name="backup">Backup</string>
-    <string name="backup_path_not_set_message">"Backup location is not set. Click below button to set. It is recommended that while selecting location, add a new folder (e.g. Safe Box backup) in local Storage and then select same."</string>
+    <string name="backup_path_not_set_message">"Your backup location isn't set!! Use the button below to choose one.\nTip: It's a good idea to create a new folder for your backups (e.g., 'Safe Box Backup')."</string>
     <string name="backup_set_location">Set Location</string>
     <string name="backup_set_message">Backup location is set</string>
     <string name="backup_path">Backup path is %1$s</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
-    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken everytime you login with password</string>
+    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken every time you login with password</string>
     <string name="backup_edit_path">Edit Path</string>
-    <string name="backup_in_progress_message">Backup is in-progress</string>
-    <string name="backup_not_set_banner_message">Click here to set backup path</string>
+    <string name="new_backup_dialog_body_text">Please enter your current master password to create a new backup file.</string>
+    <string name="backup_in_progress_message">It may take a while to backup data. Sit back and relax !</string>
+    <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
-    <string name="restore_info">"Click below button to select a valid backup file. Please note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
-    <string name="restore_error_message">Error while importing data. Please re-verify file and password.</string>
-    <string name="restore_success_message">Successfully restored data</string>
+    <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
+    <string name="new_restore_dialog_body_text">Please enter the password that was used to make the backup file.</string>
+    <string name="restore_complete_message">Data has been successfully restored.</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
 
     <!--     master password dialog-->
-    <string name="master_password">Master Password</string>
-    <string name="incorrect_pswrd_message">Password is incorrect</string>
+    <string name="incorrect_pswrd_message">Password is incorrect !</string>
+    <string name="failed_message">Something went wrong! Please try again later.</string>
 
     <!--    Notification-->
     <string name="notification_backup_channel_id">backup data safebox</string>
@@ -112,33 +84,57 @@
     <string name="notification_permission_rationale_dialog_body">To ensure you\'re always aware of your automatic backups, please allow notifications.\nYou will be alerted when a backup is complete or if an issue occurs.</string>
     <string name="notification_permission_rationale_dialog_heading">Need Notification permission</string>
 
+    <!--    Record screen-->
+    <string name="loading_data">Loading your data …</string>
+    <string name="no_record">Start fresh by adding a record or bring back your data from a backup.</string>
+    <string name="new_record_button">Add a new record</string>
+    <string name="restore_records_button">Restore data</string>
+    <string name="no_filtered_record_title">Oops! No results here.</string>
+    <string name="no_filtered_record_body">We couldn\'t find anything matching your search. Try adjusting your filters or checking for typos.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Security &amp; Privacy</string>
+    <string name="settings_section_support_and_community">Support &amp; Community</string>
+
+    <string name="settings_privacy_enabled_title">Privacy mode</string>
+    <string name="settings_privacy_enabled_body">Masks app content in the device overview screen to protect sensitive data and do not allow app screenshot. Recommended to keep it on.</string>
+
+    <string name="settings_auto_backup_title">Auto-backup on login</string>
+    <string name="settings_auto_backup_body">Automatically backs up your data when you sign in with your master password (not with biometric). Recommended to keep it on.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Ask for password after %d biometric logins.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">This is the limit for how many times is continuous biometric login allowed. Once this limit is reached, password will be required to login. This ensures you remember your master password.</string>
+
+    <string name="settings_away_timeout_title">Auto-lock after %d seconds.</string>
+    <string name="settings_away_timeout_body">App logs you out automatically if you are away from the app for too long. A shorter duration is safer.</string>
+
+    <string name="settings_feedback_title">Send feedback</string>
+    <string name="settings_feedback_body">Report a bug or suggest a new feature. We value your input to make Safe Box better.</string>
+
+    <string name="settings_review_title">Rate on Play Store</string>
+    <string name="settings_review_body">If you enjoy using the app, please take a moment to leave a review. It helps others find us!</string>
+
+    <string name="settings_github_title">Contribute on GitHub</string>
+    <string name="settings_github_body">SafeBox is open source. View the code, report issues, or contribute to the project on GitHub.</string>
+
     <!--    Other-->
     <string name="app_name">Safe Box</string>
-    <string name="app_subtitle">Safely store your private data</string>
-    <string name="enter_password">Enter password <font color='#FF0000'>̽</font></string>
-    <string name="length_validation_text">Must be more than 8 characters</string>
-    <string name="special_char_validation_text">Must contain more than 1 special char</string>
-    <string name="case_validation_text">Must be a mix of upper and lower case letters</string>
-    <string name="numeric_validation_text">Must contain more than 2 numeric char</string>
-    <string name="hint_subset_validation_text">User Password subset not allowed</string>
+    <string name="blank_validation_text">Enter something !</string>
+    <string name="length_validation_text">Too short !</string>
+    <string name="special_char_validation_text">Enter a special character (e.g. @, *, $)</string>
+    <string name="case_validation_text">Must include at least one uppercase(A) and one lowercase letter(a).</string>
+    <string name="numeric_validation_text">Enter at least two numbers (e.g. 1, 2, 3)</string>
     <string name="save">Save</string>
     <string name="password">Password</string>
-    <string name="unlock">unlock</string>
-    <string name="collapse">Collapse</string>
-    <string name="login_data">Login Data</string>
-    <string name="bank_account">Bank Account</string>
-    <string name="bank_card">Bank Card</string>
-    <string name="secure_note">Secure Note</string>
-    <string name="add_hint">Add hint</string>
+    <string name="enter_hint">Enter a hint</string>
     <string name="show_hint">Show Hint</string>
-    <string name="hint">Hint: </string>
-    <string name="title">Title <font color='#FF0000'>̽</font></string>
+    <string name="hide_hint">Hide Hint</string>
+    <string name="hint">Hint</string>
+    <string name="title">Title </string>
     <string name="url">URL</string>
-    <string name="user_id">User Id <font color='#FF0000'>̽</font></string>
+    <string name="user_id">User Id </string>
     <string name="notes">Notes</string>
-    <string name="notes_mandatory">Notes <font color='#FF0000'>̽</font></string>
-    <string name="bank_account_data">Bank Account Data</string>
-    <string name="account_number">Account Number <font color='#FF0000'>̽</font></string>
+    <string name="account_number">Account Number </string>
     <string name="customer_name">Customer Name</string>
     <string name="customer_id">Customer Id</string>
     <string name="branch_code">Branch Code</string>
@@ -147,14 +143,13 @@
     <string name="ifsc_code">IFSC Code</string>
     <string name="micr_code">MICR Code</string>
     <string name="welcome_back">Welcome Back !</string>
-    <string name="password_is_ok">Password is OK</string>
-    <string name="hint_is_ok">Hint is OK</string>
     <string name="welcome">Welcome !</string>
-    <string name="set_password_help_text">Set a strong master password</string>
-    <string name="timeout_dialog_title">Timeout</string>
     <string name="timeout_dialog_message">You were away for too long. Please click OK to login to app again</string>
     <string name="timeout_dialog_positive_button_text">OK</string>
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
-    <string name="enter_password_manually">For security reason, Please manually enter password</string>
+    <string name="add_a_new_record">Add a new record</string>
+    <string name="search_bar_placeholder">Search …</string>
+    <string name="send_feedback_email">Send feedback Email</string>
+    <string name="safe_box_feedback">Safe Box Feedback</string>
 </resources>

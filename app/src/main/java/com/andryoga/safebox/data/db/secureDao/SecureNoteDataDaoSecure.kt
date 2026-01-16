@@ -12,16 +12,12 @@ class SecureNoteDataDaoSecure @Inject constructor(
     private val secureNoteDataDao: SecureNoteDataDao,
     private val symmetricKeyUtils: SymmetricKeyUtils
 ) : SecureNoteDataDao {
-    override suspend fun insertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
-        secureNoteDataDao.insertSecretNoteData(encrypt(secureNoteDataEntity))
+    override suspend fun upsertSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
+        secureNoteDataDao.upsertSecretNoteData(encrypt(secureNoteDataEntity))
     }
 
     override fun insertMultipleSecureNoteData(secureNoteDataEntity: List<SecureNoteDataEntity>) {
         secureNoteDataDao.insertMultipleSecureNoteData(secureNoteDataEntity.map { encrypt(it) })
-    }
-
-    override suspend fun updateSecretNoteData(secureNoteDataEntity: SecureNoteDataEntity) {
-        secureNoteDataDao.updateSecretNoteData(encrypt(secureNoteDataEntity))
     }
 
     override fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>> {

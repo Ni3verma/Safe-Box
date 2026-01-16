@@ -1,7 +1,7 @@
 package com.andryoga.safebox.data.db
 
 import androidx.room.TypeConverter
-import java.util.*
+import java.util.Date
 
 class Converters {
     @TypeConverter

@@ -1,41 +1,46 @@
-import io.gitlab.arturbosch.detekt.Detekt
-
 plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-    id 'androidx.navigation.safeargs.kotlin'
-    id 'dagger.hilt.android.plugin'
-    id "io.gitlab.arturbosch.detekt"
-    id "com.google.gms.google-services"
-    id "com.google.firebase.crashlytics"
-    id "kotlinx-serialization"
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.crashlytics)
 }
 
-apply from: '../CICD/cicd.gradle'
+ksp {
+    arg "room.schemaLocation", "${projectDir}/schemas"
+    arg "room.incremental", "true"
+    arg "room.expandProjection", "true"
+}
+
+// version code will be incremental unique github run runner and default to a high value for local builds
+def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999999").toInteger()
+
+// actual version_name(from CI) follows the pattern :majorVersion.minorVersion.dbVersion.fixVersion
+// so our tag is like v2.0.4.0
+def githubRef = System.getenv("GITHUB_REF_NAME") // e.g., 'v2.0.4.0' or 'master'
 
 android {
-    compileSdk 35
+    namespace 'com.andryoga.safebox'
+    compileSdk = 36
 
     defaultConfig {
         applicationId "com.andryoga.safebox"
-        minSdkVersion 23
-        targetSdkVersion 35
-        versionCode 11
-        // majorVersion.minorVersion.dbVersion.fixVersion
-        versionName "1.7.4.2"
+        minSdk 24
+        targetSdk 36
+        versionCode version_code
 
-        //room.incremental: Enables Gradle incremental annotation processor
-        //room.expandProjection: Configures Room to rewrite queries such that their top star projection is expanded to only contain the columns defined in the DAO method return type.
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += [
-                        "room.incremental"     : "true",
-                        "room.expandProjection": "true",
-                        "room.schemaLocation"  : "$projectDir/schemas".toString()
-                ]
-            }
+        // versionName logic
+        if (githubRef != null && githubRef.startsWith("v")) {
+            versionName githubRef.substring(1) // Strips 'v' from 'v2.0.4.0'
+        } else if (githubRef != null) {
+            versionName "${githubRef}-build.${version_code}" // e.g., master-build.145
+        } else {
+            versionName "LOCAL-build"
         }
+        println "Building SafeBox: ${versionName} (${versionCode})"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -85,6 +90,9 @@ android {
             firebaseCrashlytics {
                 mappingFileUploadEnabled true
             }
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         qa {
             initWith(buildTypes["release"])
@@ -97,111 +105,47 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-
     kotlinOptions {
         jvmTarget = '17'
     }
-
     buildFeatures {
-        viewBinding true
-        dataBinding true
         compose true
+        buildConfig true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion '1.4.8'
-    }
-    packagingOptions {
-        resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+    sourceSets {
+        named("androidTest") {
+            assets.srcDirs(files("$projectDir/schemas"))
         }
     }
-    namespace 'com.andryoga.safebox'
-    lint {
-        disable 'UnusedResources', 'FragmentTagUsage', 'Correctness', 'Messages'
-    }
+    ndkVersion '28.0.12916984 rc3'
 }
 
 dependencies {
+    // test deps
+    androidTestImplementation platform(libs.androidx.compose.bom)
+    androidTestImplementation libs.bundles.test
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    // debug deps
+    debugImplementation libs.bundles.compose.debug
 
-    // test dep
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation libs.bundles.androidx
+    implementation libs.bundles.work
+    implementation libs.timber
+    implementation libs.security.crypto
+    implementation libs.kotlinx.serialization.json
+    implementation libs.biometric
+    implementation libs.bundles.play.review
+    implementation libs.data.store.pref
 
-    // common
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation "androidx.fragment:fragment-ktx:1.3.4"
-    implementation "androidx.security:security-crypto:1.1.0-alpha03"
+    ksp(libs.room.compiler)
+    implementation libs.bundles.room
 
-    // coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1'
+    ksp(libs.hilt.compiler)
+    implementation libs.bundles.hilt
 
-    //lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_extension_version"
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_extension_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_extension_version"
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_livedata_extension_version"
-    implementation "androidx.lifecycle:lifecycle-common:$lifecycle_extension_version"
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.bundles.compose.ui
 
-    //navigation
-    implementation "androidx.navigation:navigation-fragment-ktx:$navigationVersion"
-    implementation "androidx.navigation:navigation-ui-ktx:$navigationVersion"
-
-    //timber
-    implementation "com.jakewharton.timber:timber:$timber_version"
-
-    //hilt
-    implementation "com.google.dagger:hilt-android:$hilt_version"
-    kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
-
-    //room
-    implementation "androidx.room:room-runtime:$room_version"
-    implementation "androidx.room:room-ktx:$room_version"
-    kapt "androidx.room:room-compiler:$room_version"
-
-    //compose
-    implementation "androidx.compose.ui:ui:$compose_version"
-    implementation "androidx.compose.material:material:$compose_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
-    implementation 'androidx.activity:activity-compose:1.3.0'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-
-    // only enable next dependency to copy icon to MaterialIconsCopy file at
-    // src/main/java/com/andryoga/safebox/ui/common/icons/MaterialIconsCopy.kt
-    // don't enable this as app size increases drastically for debug builds
-//    implementation "androidx.compose.material:material-icons-extended:$compose_version"
-
-    //crashlytics and analytics
-    implementation platform('com.google.firebase:firebase-bom:28.4.1')
-    implementation 'com.google.firebase:firebase-crashlytics-ktx'
-    implementation 'com.google.firebase:firebase-analytics-ktx'
-
-    //biometric
-    implementation "androidx.biometric:biometric:$biometric_version"
-
-    // in app review
-    implementation("com.google.android.play:review:2.0.2")
-
-    // serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
-
-    // work manager
-    implementation "androidx.work:work-runtime-ktx:$work_version"
-    implementation "androidx.hilt:hilt-work:1.0.0"
-    kapt("androidx.hilt:hilt-compiler:1.0.0")
-
-    // detekt plugins
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detekt_version")
-}
-
-tasks.withType(Detekt).configureEach {
-    jvmTarget = "17"
+    implementation platform(libs.firebase.bom)
+    implementation libs.bundles.firebase
 }

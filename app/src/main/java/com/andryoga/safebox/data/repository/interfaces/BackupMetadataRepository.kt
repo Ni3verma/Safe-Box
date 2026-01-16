@@ -1,11 +1,13 @@
 package com.andryoga.safebox.data.repository.interfaces
 
-import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
+import android.net.Uri
+import com.andryoga.safebox.domain.models.backup.BackupPathData
 import kotlinx.coroutines.flow.Flow
 
 interface BackupMetadataRepository {
-    suspend fun insertBackupMetadata(backupMetadataEntity: BackupMetadataEntity)
+    suspend fun insertBackupMetadata(uriPath: Uri?)
     suspend fun deleteBackupMetadata()
     suspend fun updateLastBackupDate(date: Long)
-    fun getBackupMetadata(): Flow<BackupMetadataEntity?>
+    suspend fun isBackupPathSet(): Boolean
+    fun getBackupMetadata(): Flow<BackupPathData?>
 }
