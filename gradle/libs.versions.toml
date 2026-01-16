@@ -1,6 +1,6 @@
 [versions]
 androidGradlePlugin = "8.13.2"
-kotlinGradlePlugin = "1.9.24"
+kotlinGradlePlugin = "2.3.0"
 googleServicesGradlePlugin = "4.4.4"
 crashlyticsGradlePlugin = "3.0.6"
 detektGradlePlugin = "1.23.8"
