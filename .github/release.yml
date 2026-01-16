@@ -18,11 +18,10 @@ changelog:
     - title: 👤 User Feedback implementation
       labels:
         - Feedback
-    - title: 👒 Dependencies
-      labels:
-        - dependencies
 
+  # If these labels are present on a PR, it will not be included in the automated release notes
   exclude:
     labels:
       - ignore_for_release_notes
       - github_actions
+      - dependencies
