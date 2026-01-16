@@ -51,7 +51,7 @@ jobs:
 
       - name: Generate Checksum
         id: shasum
-        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/app-qa.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/*.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

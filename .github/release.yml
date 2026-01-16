@@ -21,4 +21,8 @@ changelog:
     - title: 👒 Dependencies
       labels:
         - dependencies
-        - github_actions
+
+  exclude:
+    labels:
+      - ignore_for_release_notes
+      - github_actions
