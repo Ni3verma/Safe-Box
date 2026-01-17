@@ -9,4 +9,4 @@
 /releaseKeyStore.properties
 app/releaseKeyStore.jks
 *.apk
-.idea/
+/.idea/
