@@ -21,39 +21,45 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Run lint
-        run: ./gradlew lint
+      - name: Set release key store Properties
+        env:
+          RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
+        run: echo "$RELEASE_KEYSTORE_PROPERTIES" > ./releaseKeyStore.properties
 
-      - name: upload html lint report
+      - name: Prepare keystore
+        run: |
+          echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
+          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
+
+      - name: Prepare google services json
+        run: |
+          echo "${{ secrets.BASE_64_GOOGLE_SERVICES_JSON }}" > ./app/google-services.json.asc
+          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./app/google-services.json.asc > ./app/google-services.json
+
+      - name: Build release bundle and QA apk
+        run: ./gradlew bundleRelease assembleQa
+
+      - name: upload QA apk
         uses: actions/upload-artifact@v6
         with:
-          name: lint result
-          path: app/build/reports/lint-results-debug.html
-
-      - name: Run Unit Tests
-        run: ./gradlew test
-
-      - name: upload test result
-        uses: actions/upload-artifact@v6
-        with:
-          name: Unit test result
-          path: app/build/reports/tests/testDebugUnitTest/
-
-      - name: Build debug app
-        run: ./gradlew assembleDebug
-
-      - name: upload debug apk
-        uses: actions/upload-artifact@v6
-        with:
-          name: debug app
-          path: app/build/outputs/apk/debug/SafeBox-debug.apk
-
-      - name: Build QA apk
-        run: ./gradlew assembleQa
-
-      - name: Upload QA APK
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
+          name: QA APK
           path: app/build/outputs/apk/qa/*.apk
           retention-days: 7
+
+      - name: upload release bundle
+        uses: actions/upload-artifact@v6
+        with:
+          name: release aab
+          path: app/build/outputs/bundle/release/*.aab
+          retention-days: 1
+
+      - name: inspect AAB for symbols
+        run: unzip -l app/build/outputs/bundle/qa/*.aab | grep "BUNDLE-METADATA"
+
+      - name: Debug NDK and SDK Paths
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
+          echo "Checking NDK folder structure:"
+          ls -d $ANDROID_HOME/ndk/* || echo "No NDK versions found in default path"
