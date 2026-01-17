@@ -39,17 +39,17 @@ jobs:
           name: Unit test result
           path: app/build/reports/tests/testDebugUnitTest/
 
-      - name: Build debug app
-        run: ./gradlew assembleDebug
+      - name: Build apks
+        run: ./gradlew assembleDebug assembleQa
+
+      - name: upload symbols file
+        run: ./gradlew uploadCrashlyticsSymbolFileQa
 
       - name: upload debug apk
         uses: actions/upload-artifact@v6
         with:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
-
-      - name: Build QA apk
-        run: ./gradlew assembleQa
 
       - name: Upload QA APK
         uses: actions/upload-artifact@v6

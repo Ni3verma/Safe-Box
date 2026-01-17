@@ -89,6 +89,7 @@ android {
             signingConfig signingConfigs.release
             firebaseCrashlytics {
                 mappingFileUploadEnabled true
+                nativeSymbolUploadEnabled true
             }
             ndk {
                 debugSymbolLevel = "FULL"
@@ -98,6 +99,10 @@ android {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
+            firebaseCrashlytics {
+                mappingFileUploadEnabled true
+                nativeSymbolUploadEnabled true
+            }
         }
     }
 
@@ -117,7 +122,7 @@ android {
             assets.srcDirs(files("$projectDir/schemas"))
         }
     }
-    ndkVersion '28.0.12916984 rc3'
+    ndkVersion '29.0.14206865'
 }
 
 dependencies {
