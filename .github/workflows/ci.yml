@@ -21,6 +21,14 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Debug NDK and SDK Paths
+        run: |
+          echo "ANDROID_HOME: $ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
+          echo "Checking NDK folder structure:"
+          ls -d $ANDROID_HOME/ndk/* || echo "No NDK versions found in default path"
+
       - name: Set release key store Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
@@ -54,12 +62,4 @@ jobs:
           retention-days: 1
 
       - name: inspect AAB for symbols
-        run: unzip -l app/build/outputs/bundle/qa/*.aab | grep "BUNDLE-METADATA"
-
-      - name: Debug NDK and SDK Paths
-        run: |
-          echo "ANDROID_HOME: $ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
-          echo "Checking NDK folder structure:"
-          ls -d $ANDROID_HOME/ndk/* || echo "No NDK versions found in default path"
+        run: unzip -l app/build/outputs/bundle/release/*.aab | grep "BUNDLE-METADATA"
