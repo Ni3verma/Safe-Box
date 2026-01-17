@@ -99,6 +99,10 @@ android {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
+            firebaseCrashlytics {
+                mappingFileUploadEnabled true
+                nativeSymbolUploadEnabled true
+            }
         }
     }
 
