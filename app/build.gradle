@@ -118,6 +118,7 @@ android {
             assets.srcDirs(files("$projectDir/schemas"))
         }
     }
+    ndkVersion '29.0.14206865'
 }
 
 dependencies {
