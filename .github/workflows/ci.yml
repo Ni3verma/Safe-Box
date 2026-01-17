@@ -21,53 +21,39 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Verify NDK Gatekeeper
-        run: |
-          # 1. Extract the ndk version from app/build.gradle
-          REQUIRED_NDK=$(grep "ndkVersion" app/build.gradle | sed "s/.*ndkVersion//" | tr -d "[:space:]'\"")
-          
-          echo "Checking for NDK Version: [$REQUIRED_NDK]"
-          
-          NDK_PATH="$ANDROID_HOME/ndk/$REQUIRED_NDK"
-          
-          # 2. Check if that specific directory exists
-          if [ ! -d "$NDK_PATH" ]; then
-            echo "::error::NDK Version $REQUIRED_NDK not found on CI runner!"
-            echo "Expected path: $NDK_PATH"
-            echo "Actually available in $ANDROID_HOME/ndk/:"
-            ls "$ANDROID_HOME/ndk/"
-            exit 1
-          else
-            echo "✅ NDK $REQUIRED_NDK found and verified."
-          fi
+      - name: Run lint
+        run: ./gradlew lint
 
-      - name: Set release key store Properties
-        env:
-          RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
-        run: echo "$RELEASE_KEYSTORE_PROPERTIES" > ./releaseKeyStore.properties
-
-      - name: Prepare keystore
-        run: |
-          echo "${{ secrets.BASE_64_RELEASE_KEYSTORE }}" > ./releaseKeyStore.jks.asc
-          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./releaseKeyStore.jks.asc > ./app/releaseKeyStore.jks
-
-      - name: Prepare google services json
-        run: |
-          echo "${{ secrets.BASE_64_GOOGLE_SERVICES_JSON }}" > ./app/google-services.json.asc
-          gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./app/google-services.json.asc > ./app/google-services.json
-
-      - name: Build release bundle
-        run: ./gradlew bundleRelease
-
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileRelease
-
-      - name: upload release bundle
+      - name: upload html lint report
         uses: actions/upload-artifact@v6
         with:
-          name: release aab
-          path: app/build/outputs/bundle/release/*.aab
-          retention-days: 1
+          name: lint result
+          path: app/build/reports/lint-results-debug.html
 
-      - name: inspect AAB for symbols
-        run: unzip -l app/build/outputs/bundle/release/*.aab | grep "BUNDLE-METADATA"
+      - name: Run Unit Tests
+        run: ./gradlew test
+
+      - name: upload test result
+        uses: actions/upload-artifact@v6
+        with:
+          name: Unit test result
+          path: app/build/reports/tests/testDebugUnitTest/
+
+      - name: Build apks
+        run: ./gradlew assembleDebug assembleQa
+
+      - name: upload symbols file
+        run: ./gradlew uploadCrashlyticsSymbolFileQa
+
+      - name: upload debug apk
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug app
+          path: app/build/outputs/apk/debug/SafeBox-debug.apk
+
+      - name: Upload QA APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
+          path: app/build/outputs/apk/qa/*.apk
+          retention-days: 7

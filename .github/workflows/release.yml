@@ -17,6 +17,26 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Verify NDK Gatekeeper
+        run: |
+          # 1. Extract the ndk version from app/build.gradle
+          REQUIRED_NDK=$(grep "ndkVersion" app/build.gradle | sed "s/.*ndkVersion//" | tr -d "[:space:]'\"")
+          
+          echo "Checking for NDK Version: [$REQUIRED_NDK]"
+          
+          NDK_PATH="$ANDROID_HOME/ndk/$REQUIRED_NDK"
+          
+          # 2. Check if that specific directory exists
+          if [ ! -d "$NDK_PATH" ]; then
+            echo "::error::NDK Version $REQUIRED_NDK not found on CI runner!"
+            echo "Expected path: $NDK_PATH"
+            echo "Actually available in $ANDROID_HOME/ndk/:"
+            ls "$ANDROID_HOME/ndk/"
+            exit 1
+          else
+            echo "✅ NDK $REQUIRED_NDK found and verified."
+          fi
+
       - name: Set release key store Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
@@ -34,6 +54,9 @@ jobs:
 
       - name: Build release bundle and QA apk
         run: ./gradlew bundleRelease assembleQa
+
+      - name: upload symbols file
+        run: ./gradlew uploadCrashlyticsSymbolFileRelease uploadCrashlyticsSymbolFileQa
 
       - name: upload QA apk
         uses: actions/upload-artifact@v6

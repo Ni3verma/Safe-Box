@@ -16,7 +16,7 @@ ksp {
 }
 
 // version code will be incremental unique github run runner and default to a high value for local builds
-def version_code = 1
+def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger() + 15
 
 // actual version_name(from CI) follows the pattern :majorVersion.minorVersion.dbVersion.fixVersion
 // so our tag is like v2.0.4.0
