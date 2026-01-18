@@ -1,4 +1,4 @@
-# Safe Box   [![CICD](https://github.com/Ni3verma/Safe-Box/actions/workflows/main.yml/badge.svg)](https://github.com/Ni3verma/Safe-Box/actions/workflows/main.yml)
+# Safe Box   [![CICD](https://github.com/Ni3verma/Safe-Box/actions/workflows/release.yml/badge.svg)](https://github.com/Ni3verma/Safe-Box/actions/workflows/release.yml)
 
 >Need a secure app to store all your passwords, private data?
 
@@ -24,7 +24,7 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 </br></br>
 
 <img src="./screenshots/readme/onePlace.png" height="400px" width = "200px"/>&emsp;
-<img src="./screenshots/readme/swipeToDelete.png" height="400px" width = "200px"/>&emsp;
+<img src="./screenshots/readme/settings.png" height="400px" width = "200px"/>&emsp;
 <img src="./screenshots/readme/editCopyShareDelete.png" height="400px" width = "200px"/>
 </br></br>
 

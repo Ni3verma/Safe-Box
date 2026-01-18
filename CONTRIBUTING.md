@@ -4,7 +4,7 @@ When contributing to this repository, please first raise a new issue or discuss 
 
 ## Overview Of Process (For experienced developers)
 1. Find/Create a Issue > Fork the repo > work on your branch (name = `feature/nameOfFeature`).
-2. Verify lint report. Detekt and ktlint check will automatically happen in pre-commit hook.
+2. Verify lint report.
 ```
 gradlew lint
 ```
@@ -50,27 +50,13 @@ git merge master
 ```
 
 ### 7. Commit your changes
-* (Not Recommended) You can commit from command line.
-```
-git add .
-git commit -m'a descriptive message here'
-```
-* (Recommended way) In case you are committing from Android studio (`ctrl+K`) then make sure to select these below options and in the Author box enter in this format only : `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
+
+Use (`Cmnd/ctrl+K`) to open commit window in Android Studio. In the Author box, use this format :
+`name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
 
 <img src="./screenshots/contributing/commit_from_android_studio.png">
-On commit detekt will run automatically to verify code quality.
 
-### 8. Solve detekt errors
-In case your commit failed, errors can be found in the below file.
-```
-app/build/reports/detekt/detekt.html
-```
-INFO : Incase Detekt fails, then report will automatically open in browser
-NOTE : until detekt issues are fixed, you will not be able to commit your changes.
-
-Once commit is done, push your changes.
-
-### 9. Create Pull Request
+### 8. Create Pull Request
 Open the forked repo in browser. You should see an option to create pull request.
 
 <img src="./screenshots/contributing/pull_request_button.png">
@@ -83,12 +69,6 @@ Then in this dialog verify that:
 
 <img src="./screenshots/contributing/create_pull_request.png">
 
-After create pull request, wait for all the checks to pass
+Create the pull request and verify that all the checks are green before sening it for review.
 
-<img src="./screenshots/contributing/pull_req_checks.png">
-
-You can also track progress in actions tab. Click on the workflow to see which steps have executed or have error. If you scroll to the bottom of a workflow then you can also see the reports. Download and verify the reports.
-
-<img src="./screenshots/contributing/workflow.png">
-
-### 10. Wait for someone to review your code and merge changes.
+### 9. Wait for someone to review your code and merge changes.
