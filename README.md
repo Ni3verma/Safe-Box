@@ -9,12 +9,13 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 </a>
 
 ## Features
-* Login with master password or biometric (fingerprint/IRIS/Face)
-* Add different kind of personal data and Easy navigation
-* Store data locally and encrypted
-* Supports dark theme
-* Share non-confidential data from a record with a single click
-* Backup and Restore data locally
+
+* Login with master password or biometric (fingerprint/IRIS/Face).
+* Add different kind of personal data and Easy navigation.
+* Store everything locally on the device.
+* Supports dynamic theme(based on device wallpaper) on eligible devices and Day/Night theme as well.
+* Share non-confidential data from a record with a single click.
+* Backup and Restore data locally.
 
 <hr>
 
