@@ -51,7 +51,7 @@ git merge master
 
 ### 7. Commit your changes
 
-Use (`Cmnd/ctrl+K`) to open commit window in Android Studio. In the Author box, use this format :
+Use (`Cmd/Ctrl+K`) to open commit window in Android Studio. In the Author box, use this format :
 `name <email>`. eg: `Nitin Verma <canvas.nv@gmail.com>`
 
 <img src="./screenshots/contributing/commit_from_android_studio.png">
