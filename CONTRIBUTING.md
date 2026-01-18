@@ -69,6 +69,6 @@ Then in this dialog verify that:
 
 <img src="./screenshots/contributing/create_pull_request.png">
 
-Create the pull request and verify that all the checks are green before sening it for review.
+Create the pull request and verify that all the checks are green before sending it for review.
 
 ### 9. Wait for someone to review your code and merge changes.
