@@ -2,16 +2,15 @@ package com.andryoga.safebox.ui.signup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andryoga.safebox.BuildConfig
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.analytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -25,13 +24,19 @@ import javax.inject.Inject
 @HiltViewModel
 class SignupViewModel @Inject constructor(
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
-    private val userDetailsRepository: UserDetailsRepository
+    private val userDetailsRepository: UserDetailsRepository,
+    private val analyticsHelper: AnalyticsHelper,
+    @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupUiState())
     val uiState = _uiState.asStateFlow()
 
+    private val _navigateToHome = MutableStateFlow<Boolean>(false)
+    val navigateToHome: StateFlow<Boolean> = _navigateToHome
+
+
     init {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             _uiState.value = _uiState.value.copy(
                 password = "Qwerty@@135",
                 hint = "This is a hint",
@@ -45,9 +50,9 @@ class SignupViewModel @Inject constructor(
                 passwordValidatorState = it.passwordValidatorState, hint = it.hint
             )
         }.distinctUntilChanged().onEach { enableParams ->
-            _uiState.value = _uiState.value.copy(
-                isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotEmpty()
-            )
+            _uiState.update {
+                it.copy(isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotBlank())
+            }
         }.launchIn(viewModelScope)
 
         uiState.map { it.passwordValidatorState }.distinctUntilChanged()
@@ -106,7 +111,7 @@ class SignupViewModel @Inject constructor(
                 PasswordValidatorState.NO_SPECIAL_CHAR
             }
 
-            password.length <= Constants.MIN_PASSWORD_LENGTH -> {
+            password.length < Constants.MIN_PASSWORD_LENGTH -> {
                 PasswordValidatorState.SHORT_PASSWORD_LENGTH
             }
 
@@ -122,16 +127,15 @@ class SignupViewModel @Inject constructor(
 
         Timber.i("save password clicked")
         val passwordValidatorState = runPasswordValidator()
-        if (passwordValidatorState != PasswordValidatorState.PASSWORD_IS_OK) {
+        if (passwordValidatorState != PasswordValidatorState.PASSWORD_IS_OK || hint.isBlank()) {
+            // ideally flow should NEVER come here bcz we don't allow signup click
             Timber.w("password not ok but user was able to tap on signup button !!")
-            Firebase.analytics.logEvent(AnalyticsKeys.SIGNUP_BLOCKED, null)
-            _uiState.value = _uiState.value.copy(
-                passwordValidatorState = passwordValidatorState
-            )
+            analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED)
+            _uiState.update { it.copy(passwordValidatorState = passwordValidatorState) }
             return
         }
 
-        Firebase.analytics.logEvent(FirebaseAnalytics.Event.SIGN_UP, null)
+        analyticsHelper.logEvent(AnalyticsKey.SIGN_UP)
 
         viewModelScope.launch {
             userDetailsRepository.insertUserDetailsData(password, hint)
@@ -142,11 +146,7 @@ class SignupViewModel @Inject constructor(
             )
             Timber.i("Added pswrd in db")
 
-            _uiState.update {
-                it.copy(
-                    navigateToHome = true
-                )
-            }
+            _navigateToHome.emit(true)
         }
     }
 
