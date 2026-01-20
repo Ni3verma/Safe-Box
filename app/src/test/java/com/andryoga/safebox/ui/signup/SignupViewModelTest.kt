@@ -55,12 +55,12 @@ class SignupViewModelTest {
     fun initialState() {
         val uiState = viewModel.uiState.value
 
-        assert(uiState.password.isBlank())
-        assertFalse(uiState.isPasswordFieldError)
+        assertThat(uiState.password).isEmpty()
+        assertThat(uiState.isPasswordFieldError).isFalse()
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-        assert(uiState.hint.isBlank())
-        assertFalse(uiState.isSignupButtonEnabled)
-        assertFalse(viewModel.navigateToHome.value)
+        assertThat(uiState.hint).isEmpty()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
+        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
