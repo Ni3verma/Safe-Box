@@ -74,11 +74,11 @@ class SignupViewModelTest {
         val uiState = viewModel.uiState.value
 
         assertThat(uiState.password).isEqualTo("Qwerty@@135")
-        assertFalse(uiState.isPasswordFieldError)
+        assertThat(uiState.isPasswordFieldError).isFalse()
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
         assertThat(uiState.hint).isEqualTo("This is a hint")
-        assertTrue(uiState.isSignupButtonEnabled)
-        assertFalse(viewModel.navigateToHome.value)
+        assertThat(uiState.isSignupButtonEnabled).isTrue()
+        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
