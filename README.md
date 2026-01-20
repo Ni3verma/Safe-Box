@@ -1,4 +1,4 @@
-# Safe Box   [![CICD](https://github.com/Ni3verma/Safe-Box/actions/workflows/main.yml/badge.svg)](https://github.com/Ni3verma/Safe-Box/actions/workflows/main.yml)
+# Safe Box   [![CICD](https://github.com/Ni3verma/Safe-Box/actions/workflows/release.yml/badge.svg)](https://github.com/Ni3verma/Safe-Box/actions/workflows/release.yml)
 
 >Need a secure app to store all your passwords, private data?
 
@@ -9,12 +9,13 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 </a>
 
 ## Features
-* Login with master password or biometric (fingerprint/IRIS/Face)
-* Add different kind of personal data and Easy navigation
-* Store data locally and encrypted
-* Supports dark theme
-* Share non-confidential data from a record with a single click
-* Backup and Restore data locally
+
+* Login with master password or biometric (fingerprint/IRIS/Face).
+* Add different kind of personal data and Easy navigation.
+* Store everything locally on the device.
+* Supports dynamic theme(based on device wallpaper) on eligible devices and Day/Night theme as well.
+* Share non-confidential data from a record with a single click.
+* Backup and Restore data locally.
 
 <hr>
 
@@ -24,7 +25,7 @@ Safe Box is an easy to use, secure app which will store all your data in a super
 </br></br>
 
 <img src="./screenshots/readme/onePlace.png" height="400px" width = "200px"/>&emsp;
-<img src="./screenshots/readme/swipeToDelete.png" height="400px" width = "200px"/>&emsp;
+<img src="./screenshots/readme/settings.png" height="400px" width = "200px"/>&emsp;
 <img src="./screenshots/readme/editCopyShareDelete.png" height="400px" width = "200px"/>
 </br></br>
 
