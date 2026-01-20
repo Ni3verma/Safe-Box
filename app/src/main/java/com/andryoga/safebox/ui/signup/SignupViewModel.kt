@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -49,9 +50,9 @@ class SignupViewModel @Inject constructor(
                 passwordValidatorState = it.passwordValidatorState, hint = it.hint
             )
         }.distinctUntilChanged().onEach { enableParams ->
-            _uiState.value = _uiState.value.copy(
-                isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotBlank()
-            )
+            _uiState.update {
+                it.copy(isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotBlank())
+            }
         }.launchIn(viewModelScope)
 
         uiState.map { it.passwordValidatorState }.distinctUntilChanged()
@@ -130,9 +131,7 @@ class SignupViewModel @Inject constructor(
             // ideally flow should NEVER come here bcz we don't allow signup click
             Timber.w("password not ok but user was able to tap on signup button !!")
             analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED)
-            _uiState.value = _uiState.value.copy(
-                passwordValidatorState = passwordValidatorState
-            )
+            _uiState.update { it.copy(passwordValidatorState = passwordValidatorState) }
             return
         }
 
