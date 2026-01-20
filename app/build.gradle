@@ -128,7 +128,8 @@ android {
 dependencies {
     // test deps
     androidTestImplementation platform(libs.androidx.compose.bom)
-    androidTestImplementation libs.bundles.test
+
+    testImplementation libs.bundles.unit.test
 
     // debug deps
     debugImplementation libs.bundles.compose.debug
