@@ -18,8 +18,6 @@ import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -98,8 +96,8 @@ class SignupViewModelTest {
 
         val uiState = viewModel.uiState.value
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.EMPTY_PASSWORD)
-        assertTrue(uiState.isPasswordFieldError)
-        assertFalse(uiState.isSignupButtonEnabled)
+        assertThat(uiState.isPasswordFieldError).isTrue()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
     }
 
     @Test
@@ -109,8 +107,8 @@ class SignupViewModelTest {
 
         val uiState = viewModel.uiState.value
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
-        assertTrue(uiState.isPasswordFieldError)
-        assertFalse(uiState.isSignupButtonEnabled)
+        assertThat(uiState.isPasswordFieldError).isTrue()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
     }
 
     @Test
@@ -120,8 +118,8 @@ class SignupViewModelTest {
 
         val uiState = viewModel.uiState.value
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
-        assertTrue(uiState.isPasswordFieldError)
-        assertFalse(uiState.isSignupButtonEnabled)
+        assertThat(uiState.isPasswordFieldError).isTrue()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
     }
 
     @Test
@@ -134,8 +132,8 @@ class SignupViewModelTest {
             advanceUntilIdle()
             val uiState = viewModel.uiState.value
             assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.LESS_NUMERIC_COUNT)
-            assertTrue(uiState.isPasswordFieldError)
-            assertFalse(uiState.isSignupButtonEnabled)
+            assertThat(uiState.isPasswordFieldError).isTrue()
+            assertThat(uiState.isSignupButtonEnabled).isFalse()
         }
     }
 
@@ -151,8 +149,8 @@ class SignupViewModelTest {
             advanceUntilIdle()
             val uiState = viewModel.uiState.value
             assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NO_SPECIAL_CHAR)
-            assertTrue(uiState.isPasswordFieldError)
-            assertFalse(uiState.isSignupButtonEnabled)
+            assertThat(uiState.isPasswordFieldError).isTrue()
+            assertThat(uiState.isSignupButtonEnabled).isFalse()
             password += "1" // add a number to the password
         }
     }
@@ -170,8 +168,8 @@ class SignupViewModelTest {
             advanceUntilIdle()
             val uiState = viewModel.uiState.value
             assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.SHORT_PASSWORD_LENGTH)
-            assertTrue(uiState.isPasswordFieldError)
-            assertFalse(uiState.isSignupButtonEnabled)
+            assertThat(uiState.isPasswordFieldError).isTrue()
+            assertThat(uiState.isSignupButtonEnabled).isFalse()
             password += charPool.random()
         }
     }
@@ -189,8 +187,8 @@ class SignupViewModelTest {
             advanceUntilIdle()
             val uiState = viewModel.uiState.value
             assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-            assertFalse(uiState.isPasswordFieldError)
-            assertFalse(uiState.isSignupButtonEnabled)
+            assertThat(uiState.isPasswordFieldError).isFalse()
+            assertThat(uiState.isSignupButtonEnabled).isFalse()
             password += charPool.random()
         }
     }
@@ -204,8 +202,8 @@ class SignupViewModelTest {
 
         val uiState = viewModel.uiState.value
         assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-        assertFalse(uiState.isPasswordFieldError)
-        assertFalse(uiState.isSignupButtonEnabled)
+        assertThat(uiState.isPasswordFieldError).isFalse()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
     }
 
     @Test
@@ -217,8 +215,8 @@ class SignupViewModelTest {
 
         val uiState = viewModel.uiState.value
         assertThat(uiState.passwordValidatorState).isNotEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-        assertTrue(uiState.isPasswordFieldError)
-        assertFalse(uiState.isSignupButtonEnabled)
+        assertThat(uiState.isPasswordFieldError).isTrue()
+        assertThat(uiState.isSignupButtonEnabled).isFalse()
     }
 
     @Test
