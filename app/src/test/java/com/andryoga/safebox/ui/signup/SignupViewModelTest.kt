@@ -405,7 +405,7 @@ class SignupViewModelTest {
                 CommonConstants.IS_SIGN_UP_REQUIRED,
                 false
             )
-            assertThat(viewModel.navigateToHome.value).isTrue()
         }
+        assertThat(viewModel.navigateToHome.value).isTrue()
     }
 }
