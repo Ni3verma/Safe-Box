@@ -33,6 +33,7 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@v6
       - uses: ./.github/workflows/quality
 
   debug_apk:
