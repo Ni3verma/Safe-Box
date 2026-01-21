@@ -17,10 +17,7 @@ develocity {
         termsOfUseAgree = 'yes'
 
         publishing {
-            // Only publish if it's CI AND the build failed
-            onlyIf {
-                false
-            }
+            onlyIf { false }
         }
     }
 }
