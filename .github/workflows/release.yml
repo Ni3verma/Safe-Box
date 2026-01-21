@@ -15,7 +15,28 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Run lint
+        run: ./gradlew lintDebug --build-cache
+
+      - name: upload html lint report
+        uses: actions/upload-artifact@v6
+        with:
+          name: lint result
+          path: app/build/reports/lint-results-debug.html
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --info
+
+      - name: upload test result
+        if: always() # Upload even if tests fail
+        uses: actions/upload-artifact@v6
+        with:
+          name: Unit test result
+          path: app/build/reports/tests/testDebugUnitTest/
 
       - name: Verify NDK Gatekeeper
         run: |
@@ -52,8 +73,8 @@ jobs:
           echo "${{ secrets.BASE_64_GOOGLE_SERVICES_JSON }}" > ./app/google-services.json.asc
           gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./app/google-services.json.asc > ./app/google-services.json
 
-      - name: Build release bundle and QA apk
-        run: ./gradlew bundleRelease assembleQa
+      - name: Build QA apk
+        run: ./gradlew assembleQa
 
       - name: upload symbols file
         run: ./gradlew uploadCrashlyticsSymbolFileRelease uploadCrashlyticsSymbolFileQa
@@ -65,6 +86,9 @@ jobs:
           path: app/build/outputs/apk/qa/*.apk
           retention-days: 7
 
+      - name: Build release bundle
+        run: ./gradlew bundleRelease
+
       - name: upload release bundle
         uses: actions/upload-artifact@v6
         with:
@@ -72,18 +96,11 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           retention-days: 1
 
-      - name: Generate Checksum
-        id: shasum
-        run: echo "hash=$(sha256sum app/build/outputs/apk/qa/*.apk | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
           generate_release_notes: true # This pulls logic from .github/release.yml
           body: |
-            ### Security Checksum
-            **QA Build SHA-256:** `${{ steps.shasum.outputs.hash }}`
-
             ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
           files: app/build/outputs/apk/qa/*.apk

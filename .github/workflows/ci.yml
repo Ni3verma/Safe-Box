@@ -5,55 +5,64 @@ on:
     branches: [ "master" ]
   push:
     branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      build_qa:
+        description: 'Check to build QA APK as well'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: ./.github/workflows/setup/action.yml
 
-      - name: set up JDK 17
-        uses: actions/setup-java@v5
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
+  quality:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: ./.github/workflows/setup/quality.yml
 
-      - name: Run lint
-        run: ./gradlew lint
-
-      - name: upload html lint report
-        uses: actions/upload-artifact@v6
-        with:
-          name: lint result
-          path: app/build/reports/lint-results-debug.html
-
-      - name: Run Unit Tests
-        run: ./gradlew test
-
-      - name: upload test result
-        uses: actions/upload-artifact@v6
-        with:
-          name: Unit test result
-          path: app/build/reports/tests/testDebugUnitTest/
-
-      - name: Build apks
-        run: ./gradlew assembleDebug assembleQa
-
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileQa
+  debug_apk:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Build debug apk
+        run: ./gradlew assembleDebug --scan
 
       - name: upload debug apk
         uses: actions/upload-artifact@v6
         with:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
+
+  qa_apk:
+    if: ${{ github.event.inputs.build_qa == 'true' }}
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Build QA apk
+        run: ./gradlew assembleQa --scan
+
+      - name: upload symbols file
+        run: ./gradlew uploadCrashlyticsSymbolFileQa
 
       - name: Upload QA APK
         uses: actions/upload-artifact@v6

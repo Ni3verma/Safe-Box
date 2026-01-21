@@ -1,0 +1,25 @@
+name: 'Run Quality checks'
+description: 'Common Quality checks'
+runs:
+  using: "composite"
+  steps:
+    - uses: ./.github/workflows/setup/action.yml
+      
+    - name: Run lint
+      run: ./gradlew lintDebug --build-cache
+
+    - name: upload html lint report
+      uses: actions/upload-artifact@v6
+      with:
+        name: lint result
+        path: app/build/reports/lint-results-debug.html
+
+    - name: Run Unit Tests
+      run: ./gradlew testDebugUnitTest --info
+
+    - name: upload test result
+      if: always() # Upload even if tests fail
+      uses: actions/upload-artifact@v6
+      with:
+        name: Unit test result
+        path: app/build/reports/tests/testDebugUnitTest/
