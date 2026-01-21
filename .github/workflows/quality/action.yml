@@ -2,6 +2,7 @@ name: 'Run Quality checks'
 description: 'Common Quality checks'
 runs:
   using: "composite"
+  runs-on: ubuntu-latest
   steps:
     - uses: ./.github/workflows/setup/action.yml
 
