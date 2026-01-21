@@ -42,6 +42,7 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@v6
       - name: Build debug apk
         run: ./gradlew assembleDebug --scan
 
@@ -59,6 +60,7 @@ jobs:
     permissions:
       contents: read
     steps:
+      - uses: actions/checkout@v6
       - name: Build QA apk
         run: ./gradlew assembleQa --scan
 
