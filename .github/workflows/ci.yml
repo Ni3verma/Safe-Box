@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-      - uses: /.github/workflows/setup/setup.yml
+      - uses: ./.github/workflows/setup/setup
 
   quality:
     needs:
@@ -33,7 +33,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: ./.github/workflows/setup/quality.yml
+      - uses: ./.github/workflows/setup/quality
 
   debug_apk:
     needs:
