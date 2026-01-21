@@ -18,13 +18,8 @@ develocity {
 
         publishing {
             // Only publish if it's CI AND the build failed
-            onlyIf { result ->
-                boolean isCi = System.getenv("CI") == "true"
-                boolean hasFailed = !result.buildResult.failures.isEmpty()
-
-                print("develocity publishing condition check: isCi: $isCi, hasFailed: $hasFailed")
-
-                return isCi && hasFailed
+            onlyIf {
+                false
             }
         }
     }
