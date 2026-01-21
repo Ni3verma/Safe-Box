@@ -2,11 +2,11 @@ name: 'Run Quality checks'
 description: 'Common Quality checks'
 runs:
   using: "composite"
-  runs-on: ubuntu-latest
   steps:
     - uses: ./.github/workflows/setup/action.yml
 
     - name: Run lint
+      shell: bash
       run: ./gradlew lintDebug --build-cache
 
     - name: upload html lint report
@@ -16,6 +16,7 @@ runs:
         path: app/build/reports/lint-results-debug.html
 
     - name: Run Unit Tests
+      shell: bash
       run: ./gradlew testDebugUnitTest --info
 
     - name: upload test result
