@@ -22,6 +22,8 @@ develocity {
                 boolean isCi = System.getenv("CI") == "true"
                 boolean hasFailed = !result.buildResult.failures.isEmpty()
 
+                print("develocity publishing condition check: isCi: $isCi, hasFailed: $hasFailed")
+
                 return isCi && hasFailed
             }
         }
