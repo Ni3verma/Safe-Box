@@ -5,13 +5,6 @@ on:
     branches: [ "master" ]
   push:
     branches: [ "master" ]
-  workflow_dispatch:
-    inputs:
-      build_qa:
-        description: 'Check to build QA APK as well'
-        required: false
-        type: boolean
-        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,7 +47,6 @@ jobs:
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
   qa_apk:
-    if: ${{ github.event.inputs.build_qa == 'true' }}
     needs:
       - setup
     runs-on: ubuntu-latest
