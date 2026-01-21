@@ -3,8 +3,8 @@ description: 'Common Quality checks'
 runs:
   using: "composite"
   steps:
-    - uses: ./.github/workflows/setup/action.yml
-      
+    - uses: ./.github/workflows/setup/setup.yml
+
     - name: Run lint
       run: ./gradlew lintDebug --build-cache
 
