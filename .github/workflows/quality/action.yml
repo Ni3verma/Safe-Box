@@ -3,8 +3,8 @@ description: 'Common Quality checks'
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v6
-    - uses: ./.github/workflows/setup/action.yml
+    #    - uses: actions/checkout@v6
+    #    - uses: ./.github/workflows/setup/action
 
     - name: Run lint
       shell: bash
