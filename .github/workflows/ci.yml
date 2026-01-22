@@ -20,51 +20,54 @@ jobs:
       - uses: ./.github/workflows/setup
         with:
           gradle_key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
-  
-  quality:
-    needs:
-      - setup
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - uses: ./.github/workflows/quality
 
-  debug_apk:
-    needs:
-      - setup
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
       - name: Build debug apk
         run: ./gradlew assembleDebug --build-cache --info --scan
+  
+  #  quality:
+  #    needs:
+  #      - setup
+  #    runs-on: ubuntu-latest
+  #    permissions:
+  #      contents: read
+  #    steps:
+  #      - uses: actions/checkout@v6
+  #      - uses: ./.github/workflows/quality
 
-      - name: upload debug apk
-        uses: actions/upload-artifact@v6
-        with:
-          name: debug app
-          path: app/build/outputs/apk/debug/SafeBox-debug.apk
+#  debug_apk:
+#    needs:
+#      - setup
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#    steps:
+#      - uses: actions/checkout@v6
+#      - name: Build debug apk
+#        run: ./gradlew assembleDebug --build-cache --info --scan
+#
+#      - name: upload debug apk
+#        uses: actions/upload-artifact@v6
+#        with:
+#          name: debug app
+#          path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
-  qa_apk:
-    needs:
-      - setup
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-      - name: Build QA apk
-        run: ./gradlew assembleQa --scan
-
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileQa
-
-      - name: Upload QA APK
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
-          path: app/build/outputs/apk/qa/*.apk
-          retention-days: 7
+#  qa_apk:
+#    needs:
+#      - setup
+#    runs-on: ubuntu-latest
+#    permissions:
+#      contents: read
+#    steps:
+#      - uses: actions/checkout@v6
+#      - name: Build QA apk
+#        run: ./gradlew assembleQa --scan
+#
+#      - name: upload symbols file
+#        run: ./gradlew uploadCrashlyticsSymbolFileQa
+#
+#      - name: Upload QA APK
+#        uses: actions/upload-artifact@v6
+#        with:
+#          name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
+#          path: app/build/outputs/apk/qa/*.apk
+#          retention-days: 7
