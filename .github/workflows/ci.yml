@@ -22,7 +22,7 @@ jobs:
           gradle_key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
 
       - name: Build debug apk
-        run: ./gradlew assembleDebug --build-cache --info --scan
+        run: ./gradlew assembleDebug --info --scan
   
   #  quality:
   #    needs:
@@ -39,7 +39,7 @@ jobs:
 #      - setup
 #    runs-on: ubuntu-latest
 #    permissions:
-#      contents: read
+#      contents: write
 #    steps:
 #      - uses: actions/checkout@v6
 #      - name: Build debug apk
