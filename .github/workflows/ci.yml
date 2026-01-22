@@ -21,8 +21,8 @@ jobs:
         with:
           gradle_key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - name: Build debug apk
-        run: ./gradlew assembleDebug --info --scan
+  #      - name: Build debug apk
+  #        run: ./gradlew assembleDebug --info --scan
   
   #  quality:
   #    needs:
@@ -34,16 +34,16 @@ jobs:
   #      - uses: actions/checkout@v6
   #      - uses: ./.github/workflows/quality
 
-#  debug_apk:
-#    needs:
-#      - setup
-#    runs-on: ubuntu-latest
-#    permissions:
-#      contents: write
-#    steps:
-#      - uses: actions/checkout@v6
-#      - name: Build debug apk
-#        run: ./gradlew assembleDebug --build-cache --info --scan
+  debug_apk:
+    needs:
+      - setup
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build debug apk
+        run: ./gradlew assembleDebug --info --scan
 #
 #      - name: upload debug apk
 #        uses: actions/upload-artifact@v6
