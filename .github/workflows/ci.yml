@@ -18,6 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/workflows/setup
+        with:
+          gradle_key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
   
   quality:
     needs:

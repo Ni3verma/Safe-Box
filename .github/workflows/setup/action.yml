@@ -1,5 +1,9 @@
 name: 'Setup Project'
 description: 'Common setup steps for all CI jobs'
+inputs:
+  gradle_key:
+    description: 'Encryption key for Gradle'
+    required: true
 runs:
   using: "composite"
   steps:
@@ -9,9 +13,19 @@ runs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Validate Gradle Cache Key
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.gradle_cache_key }}" ]; then
+          echo "::error::gradle_cache_key is empty! Check if the secret is passed in the main workflow."
+          exit 1
+        else
+          echo "✅ gradle_cache_key found."
+        fi
+        
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
-        cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+        cache-encryption-key: ${{ inputs.gradle_key }}
         cache-read-only: false
         dependency-graph: generate-and-submit
