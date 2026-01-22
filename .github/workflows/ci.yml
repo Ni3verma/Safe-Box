@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build debug apk
-        run: ./gradlew assembleDebug --scan
+        run: ./gradlew assembleDebug --build-cache --info --scan
 
       - name: upload debug apk
         uses: actions/upload-artifact@v6
