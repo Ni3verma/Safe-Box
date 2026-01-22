@@ -51,6 +51,9 @@ jobs:
 
       - name: Build debug apk
         run: ./gradlew assembleDebug --info --scan
+
+      - name: Build QA apk
+        run: ./gradlew assembleQa --info --scan
 #
 #      - name: upload debug apk
 #        uses: actions/upload-artifact@v6
