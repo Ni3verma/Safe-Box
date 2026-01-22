@@ -16,13 +16,13 @@ runs:
     - name: Validate Gradle Cache Key
       shell: bash
       run: |
-        if [ -z "${{ inputs.gradle_cache_key }}" ]; then
-          echo "::error::gradle_cache_key is empty! Check if the secret is passed in the main workflow."
+        if [ -z "${{ inputs.gradle_key }}" ]; then
+          echo "::error::gradle_key is empty! Check if the secret is passed in the main workflow."
           exit 1
         else
-          echo "✅ gradle_cache_key found."
+          echo "✅ gradle_key found."
         fi
-        
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
       with:
