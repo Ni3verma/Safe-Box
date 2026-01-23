@@ -3,13 +3,12 @@ package com.andryoga.safebox.ui.login
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.worker.BackupDataWorker
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +25,7 @@ class LoginViewModel @Inject constructor(
     private val workManager: Lazy<WorkManager>,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val settingsDataStore: SettingsDataStore,
+    private val analyticsHelper: AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
@@ -102,7 +102,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun onIncorrectPassword() {
-        Firebase.analytics.logEvent(AnalyticsKeys.LOGIN_FAILED, null)
+        analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED)
         _uiState.update {
             it.copy(
                 userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED

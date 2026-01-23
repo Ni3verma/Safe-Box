@@ -3,13 +3,12 @@ package com.andryoga.safebox.common
 enum class AnalyticsKey(val eventName: String) {
     SIGNUP_BLOCKED("signup_blocked"),
     SIGN_UP("sign_up"),
+    LOGIN_FAILED("login_failed"),
 }
 
 @Deprecated("Use AnalyticsKey (enum) instead")
 object AnalyticsKeys {
     // event names
-    const val LOGIN_FAILED = "login_failed"
-
     const val BACKUP_SELECT_DIR_RESULT = "backup_select_dir_result"
     const val BACKUP_FAILED = "backup_failed"
 
