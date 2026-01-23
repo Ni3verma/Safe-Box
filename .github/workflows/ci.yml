@@ -2,9 +2,9 @@ name: CI & Internal Distribution
 
 on:
   pull_request:
-    branches: [ "master1" ]
+    branches: [ "master" ]
   push:
-    branches: [ "master1" ]
+    branches: [ "master" ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
