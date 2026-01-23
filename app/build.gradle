@@ -100,7 +100,16 @@ android {
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
             firebaseCrashlytics {
-                mappingFileUploadEnabled true
+                /**
+                 * this is disabled intentionally. Keeping it true results in input diff for minify task which makes
+                 * the incremental build slow. incremental build is not that slow on local machine but it takes ~2min
+                 * on CI and few secs on local machine.
+                 * If this upload is disabled, then it takes few ms on local machine and few sec on CI.
+                 *
+                 * If a crash stack needs to be deobfuscated in future, then either upload the mapping file manually or make below true temporarily
+                 * and rebuild the project.
+                 * */
+                mappingFileUploadEnabled false
                 nativeSymbolUploadEnabled true
             }
         }
