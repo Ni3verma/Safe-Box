@@ -100,7 +100,15 @@ android {
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
             firebaseCrashlytics {
-                mappingFileUploadEnabled true
+                /**
+                 * I don't want this to be enabled on local machine or CI because it is an indirect
+                 * input to minify task. So if this is enabled, minify task always runs in
+                 * incremental build.
+                 *
+                 * If a crash stack needs to be deobfuscated in future, then either upload the
+                 * mapping file manually or make below true temporarily and rebuild the project.
+                 * */
+                mappingFileUploadEnabled false
                 nativeSymbolUploadEnabled true
             }
         }

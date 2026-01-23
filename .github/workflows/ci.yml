@@ -11,10 +11,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  quality:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v6
 
@@ -23,10 +23,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
 
       - name: Run lint
-        run: ./gradlew lint
+        run: ./gradlew lintDebug
 
       - name: upload html lint report
         uses: actions/upload-artifact@v6
@@ -35,19 +40,32 @@ jobs:
           path: app/build/reports/lint-results-debug.html
 
       - name: Run Unit Tests
-        run: ./gradlew test
+        run: ./gradlew testDebugUnitTest
 
       - name: upload test result
+        if: always() # Upload even if tests fail
         uses: actions/upload-artifact@v6
         with:
           name: Unit test result
           path: app/build/reports/tests/testDebugUnitTest/
 
-      - name: Build apks
-        run: ./gradlew assembleDebug assembleQa
+  debug_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
 
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileQa
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Build debug apk
+        run: ./gradlew assembleDebug --scan
 
       - name: upload debug apk
         uses: actions/upload-artifact@v6
@@ -55,9 +73,36 @@ jobs:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
 
+  qa_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Build QA apk
+        run: ./gradlew assembleQa --scan
+
       - name: Upload QA APK
         uses: actions/upload-artifact@v6
         with:
           name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
           path: app/build/outputs/apk/qa/*.apk
           retention-days: 7
+
+      - name: upload QA mapping file
+        uses: actions/upload-artifact@v6
+        with:
+          name: qaMapping
+          path: app/build/outputs/mapping/qa/mapping.txt
+
+      - name: upload QA symbols file to crashlytics
+        run: ./gradlew uploadCrashlyticsSymbolFileQa
