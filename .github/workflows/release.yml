@@ -1,8 +1,13 @@
 name: Production & RC Release
 
+#on:
+#  push:
+#    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc. tag push
 on:
+  pull_request:
+    branches: [ "master" ]
   push:
-    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc. tag push
+    branches: [ "master" ]
 
 jobs:
   quality:
@@ -127,8 +132,8 @@ jobs:
           path: app/build/outputs/bundle/release/*.aab
           retention-days: 7
 
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileRelease
+  #      - name: upload symbols file
+  #        run: ./gradlew uploadCrashlyticsSymbolFileRelease
 
   qa_pipeline:
     needs:
@@ -179,7 +184,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
+          #          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
+          prerelease: true
           generate_release_notes: true # This pulls logic from .github/release.yml
           body: |
             ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
