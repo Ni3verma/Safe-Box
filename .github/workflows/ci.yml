@@ -31,8 +31,7 @@ jobs:
           cache-read-only: false
 
       - name: Run lint
-        shell: bash
-        run: ./gradlew lintDebug --build-cache
+        run: ./gradlew lintDebug
 
       - name: upload html lint report
         uses: actions/upload-artifact@v6
@@ -41,7 +40,6 @@ jobs:
           path: app/build/reports/lint-results-debug.html
 
       - name: Run Unit Tests
-        shell: bash
         run: ./gradlew testDebugUnitTest
 
       - name: upload test result

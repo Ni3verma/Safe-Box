@@ -2,11 +2,13 @@ name: Production & RC Release
 
 on:
   push:
-    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc.
+    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc. tag push
 
 jobs:
-  release:
+  quality:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v6
 
@@ -18,25 +20,28 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
 
       - name: Run lint
-        run: ./gradlew lintDebug --build-cache
+        run: ./gradlew lintRelease
 
       - name: upload html lint report
         uses: actions/upload-artifact@v6
         with:
           name: lint result
-          path: app/build/reports/lint-results-debug.html
+          path: app/build/reports/lint-results-release.html
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --info
+        run: ./gradlew testReleaseUnitTest
 
       - name: upload test result
         if: always() # Upload even if tests fail
         uses: actions/upload-artifact@v6
         with:
           name: Unit test result
-          path: app/build/reports/tests/testDebugUnitTest/
+          path: app/build/reports/tests/testReleaseUnitTest/
 
       - name: Verify NDK Gatekeeper
         run: |
@@ -58,6 +63,45 @@ jobs:
             echo "✅ NDK $REQUIRED_NDK found and verified."
           fi
 
+  debug_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Build debug apk
+        run: ./gradlew assembleDebug --scan
+
+      - name: upload debug apk
+        uses: actions/upload-artifact@v6
+        with:
+          name: debug app
+          path: app/build/outputs/apk/debug/SafeBox-debug.apk
+
+  release_pipeline:
+    needs:
+      - debug_pipeline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
       - name: Set release key store Properties
         env:
           RELEASE_KEYSTORE_PROPERTIES: ${{ secrets.RELEASE_KEYSTORE_PROPERTIES }}
@@ -73,19 +117,6 @@ jobs:
           echo "${{ secrets.BASE_64_GOOGLE_SERVICES_JSON }}" > ./app/google-services.json.asc
           gpg -d --passphrase "${{ secrets.GPG_PASSPHRASE }}" --batch ./app/google-services.json.asc > ./app/google-services.json
 
-      - name: Build QA apk
-        run: ./gradlew assembleQa
-
-      - name: upload symbols file
-        run: ./gradlew uploadCrashlyticsSymbolFileRelease uploadCrashlyticsSymbolFileQa
-
-      - name: upload QA apk
-        uses: actions/upload-artifact@v6
-        with:
-          name: QA APK
-          path: app/build/outputs/apk/qa/*.apk
-          retention-days: 7
-
       - name: Build release bundle
         run: ./gradlew bundleRelease
 
@@ -94,7 +125,56 @@ jobs:
         with:
           name: release aab
           path: app/build/outputs/bundle/release/*.aab
-          retention-days: 1
+          retention-days: 7
+
+      - name: upload symbols file
+        run: ./gradlew uploadCrashlyticsSymbolFileRelease
+
+  qa_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Build QA apk
+        run: ./gradlew assembleQa --scan
+
+      - name: upload QA apk
+        uses: actions/upload-artifact@v6
+        with:
+          name: QA APK
+          path: app/build/outputs/apk/qa/*.apk
+          retention-days: 7
+
+      - name: upload QA mapping file
+        uses: actions/upload-artifact@v6
+        with:
+          name: qaMapping
+          path: app/build/outputs/mapping/qa/mapping.txt
+
+      - name: upload QA symbols file to crashlytics
+        run: ./gradlew uploadCrashlyticsSymbolFileQa
+
+  release_on_github:
+    needs: qa_pipeline
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Retrieve QA apk
+        uses: actions/download-artifact@v7
+        with:
+          name: QA APK
+          path: downloaded-artifacts/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -103,4 +183,4 @@ jobs:
           generate_release_notes: true # This pulls logic from .github/release.yml
           body: |
             ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
-          files: app/build/outputs/apk/qa/*.apk
+          files: downloaded-artifacts/*
