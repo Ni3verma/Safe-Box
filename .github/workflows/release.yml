@@ -170,7 +170,9 @@ jobs:
         run: ./gradlew uploadCrashlyticsSymbolFileQa
 
   release_on_github:
-    needs: qa_pipeline
+    needs:
+      - qa_pipeline
+      - release_pipeline
     runs-on: ubuntu-latest
     permissions:
       contents: read
