@@ -30,6 +30,42 @@ jobs:
           cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
 
+      - name: Run lint
+        shell: bash
+        run: ./gradlew lintDebug --build-cache
+
+      - name: upload html lint report
+        uses: actions/upload-artifact@v6
+        with:
+          name: lint result
+          path: app/build/reports/lint-results-debug.html
+
+      - name: Run Unit Tests
+        shell: bash
+        run: ./gradlew testDebugUnitTest
+
+      - name: upload test result
+        if: always() # Upload even if tests fail
+        uses: actions/upload-artifact@v6
+        with:
+          name: Unit test result
+          path: app/build/reports/tests/testDebugUnitTest/
+
+  debug_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
       - name: Build debug apk
         run: ./gradlew assembleDebug --scan
 
@@ -38,6 +74,21 @@ jobs:
         with:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
+
+  qa_pipeline:
+    needs:
+      - quality
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
 
       - name: Build QA apk
         run: ./gradlew assembleQa --scan
@@ -60,24 +111,3 @@ jobs:
 
       - name: upload QA mapping file to crashlytics
         run: ./gradlew uploadCrashlyticsMappingFileQa
-
-      - name: Run lint
-        shell: bash
-        run: ./gradlew lintDebug --build-cache
-
-      - name: upload html lint report
-        uses: actions/upload-artifact@v6
-        with:
-          name: lint result
-          path: app/build/reports/lint-results-debug.html
-
-      - name: Run Unit Tests
-        shell: bash
-        run: ./gradlew testDebugUnitTest
-
-      - name: upload test result
-        if: always() # Upload even if tests fail
-        uses: actions/upload-artifact@v6
-        with:
-          name: Unit test result
-          path: app/build/reports/tests/testDebugUnitTest/
