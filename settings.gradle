@@ -6,6 +6,22 @@ pluginManagement {
     }
 }
 
+plugins {
+    id "com.gradle.develocity" version "4.3.1"
+}
+
+develocity {
+    projectId = "safeBox"
+    buildScan {
+        termsOfUseUrl = 'https://gradle.com/help/legal-terms-of-use'
+        termsOfUseAgree = 'yes'
+
+        publishing {
+            onlyIf { false }
+        }
+    }
+}
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
