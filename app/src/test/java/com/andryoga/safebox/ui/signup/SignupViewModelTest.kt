@@ -403,7 +403,7 @@ class SignupViewModelTest {
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { analyticsHelper.logEvent(key = AnalyticsKey.SIGN_UP) }
+        verify(exactly = 1) { analyticsHelper.logEvent(key = AnalyticsKey.SIGN_UP) }
         coVerify(exactly = 1) { userDetailsRepository.insertUserDetailsData(password, hint) }
         coVerify(exactly = 1) {
             encryptedPreferenceProvider.upsertBooleanPref(

@@ -12,31 +12,33 @@ import com.andryoga.safebox.worker.BackupDataWorker
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import timber.log.Timber
 import javax.inject.Inject
+
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: Lazy<WorkManager>,
     private val symmetricKeyUtils: SymmetricKeyUtils,
-    private val settingsDataStore: SettingsDataStore,
+    settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var autoBackupAfterPasswordLogin = true
-
-    init {
-        viewModelScope.launch {
-            autoBackupAfterPasswordLogin = settingsDataStore.autoBackupAfterPasswordLogin.first()
-        }
-    }
+    private val autoBackupAfterPasswordLogin =
+        settingsDataStore.autoBackupAfterPasswordLogin.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            false
+        )
 
     fun onAction(action: LoginScreenAction) {
         when (action) {
@@ -74,7 +76,7 @@ class LoginViewModel @Inject constructor(
             Timber.i("is password correct: $isPasswordCorrect")
 
             if (isPasswordCorrect) {
-                if (autoBackupAfterPasswordLogin) {
+                if (autoBackupAfterPasswordLogin.value) {
                     Timber.i("enqueuing auto backup request after login with pswrd")
                     BackupDataWorker.enqueueRequest(
                         password = password,
@@ -118,6 +120,13 @@ class LoginViewModel @Inject constructor(
                     hint = userDetailsRepository.getHint() ?: ""
                 )
             }
+        }
+    }
+
+    @TestOnly
+    internal fun startObservingForTests() {
+        viewModelScope.launch {
+            autoBackupAfterPasswordLogin.collect { /* no-op */ }
         }
     }
 }

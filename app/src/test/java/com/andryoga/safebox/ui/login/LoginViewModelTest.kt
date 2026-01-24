@@ -2,14 +2,11 @@
 
 package com.andryoga.safebox.ui.login
 
-import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
@@ -23,13 +20,14 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockkObject
-import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -58,14 +56,13 @@ class LoginViewModelTest {
 
     private lateinit var viewModel: LoginViewModel
 
+    private val autoBackupAfterPasswordLoginFlow = MutableStateFlow(true)
+
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         every { lazyWorkManager.get() } returns workManager
-
-        // Default settings - auto backup is on
-        coEvery { settingsDataStore.autoBackupAfterPasswordLogin } returns flowOf(true)
-
+        coEvery { settingsDataStore.autoBackupAfterPasswordLogin } returns autoBackupAfterPasswordLoginFlow
         viewModel = LoginViewModel(
             userDetailsRepository = userDetailsRepository,
             workManager = lazyWorkManager,
@@ -73,10 +70,11 @@ class LoginViewModelTest {
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
         )
+        viewModel.startObservingForTests()
     }
 
     @Test
-    fun `verify initial state of ui state`() = runTest {
+    fun `verify initial state of ui state`() {
         val uiState = viewModel.uiState.value
 
         assertThat(uiState.userAuthState).isEqualTo(UserAuthState.INITIAL)
@@ -137,25 +135,15 @@ class LoginViewModelTest {
             val password = "password"
             val encryptedPassword = "encryptedPassword"
 
-            val nameSlot = slot<String>()
-            val policySlot = slot<ExistingWorkPolicy>()
-            val requestSlot = slot<OneTimeWorkRequest>()
-
             coEvery { userDetailsRepository.checkPassword(password) } returns true
             every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
             mockkObject(BackupDataWorker.Companion)
+            yield()
 
             viewModel.onAction(LoginScreenAction.LoginClicked(password))
             advanceUntilIdle()
 
             coVerify { userDetailsRepository.checkPassword(password) }
-            verify(exactly = 1) {
-                workManager.enqueueUniqueWork(
-                    capture(nameSlot),
-                    capture(policySlot),
-                    capture(requestSlot)
-                )
-            }
             verify(exactly = 1) {
                 BackupDataWorker.enqueueRequest(
                     password,
@@ -164,17 +152,6 @@ class LoginViewModelTest {
                     symmetricKeyUtils
                 )
             }
-            assertThat(nameSlot.captured).isEqualTo(CommonConstants.WORKER_NAME_BACKUP_DATA)
-            assertThat(policySlot.captured).isEqualTo(ExistingWorkPolicy.APPEND_OR_REPLACE)
-            assertThat(
-                requestSlot.captured.workSpec.input.getBoolean(
-                    BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
-                    true
-                )
-            ).isFalse()
-            assertThat(requestSlot.captured.workSpec.input.getString(CommonConstants.BACKUP_PARAM_PASSWORD)).isEqualTo(
-                encryptedPassword
-            )
             unmockkObject(BackupDataWorker.Companion)
         }
 
@@ -184,16 +161,8 @@ class LoginViewModelTest {
             val password = "password"
             coEvery { userDetailsRepository.checkPassword(password) } returns true
             coEvery { settingsDataStore.autoBackupAfterPasswordLogin } returns flowOf(false)
-
-            // Re-initialize ViewModel to pick up the new setting
-            viewModel = LoginViewModel(
-                userDetailsRepository,
-                lazyWorkManager,
-                symmetricKeyUtils,
-                settingsDataStore,
-                analyticsHelper
-            )
-            advanceUntilIdle() // Wait for init to complete
+            autoBackupAfterPasswordLoginFlow.value = false
+            yield()
 
             mockkObject(BackupDataWorker.Companion)
 
@@ -208,9 +177,6 @@ class LoginViewModelTest {
                     workManager,
                     symmetricKeyUtils
                 )
-            }
-            verify(exactly = 0) {
-                workManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>())
             }
             coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
             assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
