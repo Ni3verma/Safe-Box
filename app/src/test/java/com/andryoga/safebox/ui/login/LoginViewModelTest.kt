@@ -24,7 +24,6 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -160,7 +159,6 @@ class LoginViewModelTest {
         runTest {
             val password = "password"
             coEvery { userDetailsRepository.checkPassword(password) } returns true
-            coEvery { settingsDataStore.autoBackupAfterPasswordLogin } returns flowOf(false)
             autoBackupAfterPasswordLoginFlow.value = false
             yield()
 
