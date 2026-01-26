@@ -38,6 +38,17 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnStart
 import timber.log.Timber
 
+/**
+ * This is a common screen for different use cases.
+ * 1. View a single record - VIEW MODE
+ * 2. Edit a single record - EDIT (update) a record (user can edit a record only after
+ * clicking edit button on view mode screen)
+ * 3. Create a new record - Add a new record.
+ *
+ * Use remember {} carefully in this screen as something that you cached in view mode might create
+ * a problem in edit mode. Most of the times uiState.viewMode will be a good candidate for the
+ * key of remember(uiState.viewMode){}
+ * */
 @Composable
 fun SingleRecordScreenRoot(
     mainViewModel: MainViewModel,
@@ -113,13 +124,19 @@ fun SingleRecordScreen(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                val weightOfEachField = remember {
+                val weightOfEachField = remember(uiState.viewMode) {
                     if (uiState.viewMode == ViewMode.VIEW) {
                         val nonEmptyFields = fields.count {
                             val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
                             fieldUiState != null && fieldUiState.data.isNotBlank()
                         }
-                        1F / nonEmptyFields
+                        if (nonEmptyFields == 0) {
+                            // all the fields of row are empty in view mode, so we will not show
+                            // anything on the screen. so we can return 1F here.
+                            1F
+                        } else {
+                            1F / nonEmptyFields
+                        }
                     } else {
                         1F / fields.size
                     }
