@@ -74,7 +74,7 @@ class MainViewModel @Inject constructor(
         initialValue = LoadingState.Initial
     )
 
-    val isPrivacyEnabled = settingsDataStore.isPrivacyEnabled.distinctUntilChanged()
+    val isPrivacyEnabled = settingsDataStore.isPrivacyEnabled
 
     /**
      * A screen calls this to configure and show the top bar.
