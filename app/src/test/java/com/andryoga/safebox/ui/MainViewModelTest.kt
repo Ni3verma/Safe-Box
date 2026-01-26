@@ -77,7 +77,6 @@ class MainViewModelTest {
 
     @Test
     fun `isBackupPathSet state is false when backup metadata is null`() = runTest {
-        backupMetadataFlow.emit(null)
         val items = mutableListOf<Boolean>()
         job = backgroundScope.launch {
             viewModel.isBackupPathSet.collect { items.add(it) }
@@ -168,7 +167,6 @@ class MainViewModelTest {
             viewModel.isPrivacyEnabled.collect { items.add(it) }
         }
 
-        isPrivacyEnabledFlow.emit(true)
         runCurrent()
 
         assertThat(items.size).isEqualTo(1)
