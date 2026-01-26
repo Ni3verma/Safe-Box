@@ -29,9 +29,9 @@ jobs:
             });
             
             if (pr.labels.length === 0) {
-              core.setFailed("❌ Please add atleast one label.");
+              core.setFailed("❌ Please add at least one label.");
             } else {
-              console.log(`✅ Labels found`);
+              console.log(`✅ Labels found.`);
             }      
 
       - name: Setup Gradle
