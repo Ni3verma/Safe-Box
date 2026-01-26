@@ -50,7 +50,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun initialState() {
+    fun `verify initial state of ui state`() {
         val uiState = viewModel.uiState.value
 
         assertThat(uiState.password).isEmpty()
@@ -62,7 +62,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun debugApp_initialState() {
+    fun `verify initial state of ui state for debug app`() {
         viewModel = SignupViewModel(
             encryptedPreferenceProvider = encryptedPreferenceProvider,
             userDetailsRepository = userDetailsRepository,
@@ -80,7 +80,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updatePassword_updatesUiState() = runTest {
+    fun `password is updated in ui state when password update screen action comes to vm`() =
+        runTest {
         val password = "safasf"
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
         advanceUntilIdle()
@@ -90,7 +91,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_emptyPassword() = runTest {
+    fun `on password update with empty password fails validation`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = ""))
         advanceUntilIdle()
 
@@ -101,7 +102,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_onlyLowerCaseLetters() = runTest {
+    fun `on password update with only lowercase letters fails validation`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "jsanfjakf"))
         advanceUntilIdle()
 
@@ -112,7 +113,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_onlyUpperCaseLetters() = runTest {
+    fun `on password update with only uppercase letters fails validation`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "FMNJKFBNJ"))
         advanceUntilIdle()
 
@@ -123,7 +124,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_withLessThanMinNumericCount() = runTest {
+    fun `on password update with less than minimum numeric count fails validation`() = runTest {
         var password = "jaLO" // no numeric and mix and upper, lower case
 
         repeat(MIN_NUMERIC_COUNT - 1) {
@@ -138,7 +139,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_withEqOrGtMinNumericCount() = runTest {
+    fun `on password update with minimum numeric count but no special char fails validation`() =
+        runTest {
         var password = "jaLO" // no numeric and mix and upper, lower case
         repeat(MIN_NUMERIC_COUNT) {
             password += "1" // add a number to the password
@@ -156,7 +158,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_fails_withLengthLessThanMinLength() = runTest {
+    fun `on password update with password shorter than min length fails validation`() = runTest {
         var password = "jJ@"
         val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         repeat(MIN_NUMERIC_COUNT) {
@@ -175,7 +177,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onPasswordUpdate_passes_withLengthEqOrGtThanMinLength() = runTest {
+    fun `on password update with valid password passes validation`() = runTest {
         var password = "jJ12@"
         val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
         while (password.length != MIN_PASSWORD_LENGTH) {
@@ -194,7 +196,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun validPasswordUpdate_afterInvalidPassword_updatesStateCorrectly() = runTest {
+    fun `on password update with valid password after invalid password updates state correctly`() =
+        runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJJ"))
         advanceUntilIdle()
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJ@43jsnfjka"))
@@ -207,7 +210,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun invalidPasswordUpdate_afterValidPassword_updatesStateCorrectly() = runTest {
+    fun `on password update with invalid password after valid password updates state correctly`() =
+        runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJ@43jsnfjka"))
         advanceUntilIdle()
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJJ"))
@@ -220,7 +224,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_updatesUiState() = runTest {
+    fun `on hint update updates ui state`() = runTest {
         val hint = "this is hint"
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = hint))
         advanceUntilIdle()
@@ -230,7 +234,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_emptyHint_doesNotEnabledSignupButtonState() = runTest {
+    fun `on hint update with empty hint does not enable signup button`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "  "))
         advanceUntilIdle()
 
@@ -239,7 +243,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_withoutPassword_doesNotEnabledSignupButtonState() = runTest {
+    fun `on hint update without password does not enable signup button`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
         advanceUntilIdle()
 
@@ -248,7 +252,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_shouldNotUpdatePasswordState() = runTest {
+    fun `on hint update does not update password state`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
         advanceUntilIdle()
 
@@ -258,7 +262,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHintMultipleTimes_shouldNotUpdatePasswordState() = runTest {
+    fun `on multiple hint updates do not update password state`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
         advanceUntilIdle()
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint 2"))
@@ -270,7 +274,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_withInvalidPassword_updatesStateCorrectly() = runTest {
+    fun `on hint update with invalid password updates state correctly`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "djD7b"))
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
         advanceUntilIdle()
@@ -287,7 +291,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun updateHint_withValidPassword_updatesStateCorrectly() = runTest {
+    fun `on hint update with valid password updates state correctly and enables signup`() =
+        runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // valid password
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
         advanceUntilIdle()
@@ -299,7 +304,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun validPassword_afterHint_updatesStateCorrectly() = runTest {
+    fun `on valid password update after hint updates state correctly`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "da")) // invalid password
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint")) // hint is entered
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // now valid password
@@ -312,7 +317,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun invalidPassword_afterHintAndValidPassword_updatesStateCorrectly() = runTest {
+    fun `on invalid password update after hint and valid password updates state correctly`() =
+        runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // valid password
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint")) // hint is entered
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "da")) // invalid password
@@ -325,7 +331,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun signup_invalidPassword_sendAnalyticsEventAndDoesNotMakeDbCall() = runTest {
+    fun `on signup with invalid password logs analytics and does not call db`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj"))
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
         advanceUntilIdle()
@@ -342,7 +348,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun signup_emptyHint_sendAnalyticsEventAndDoesNotMakeDbCall() = runTest {
+    fun `on signup with empty hint logs analytics and does not call db`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = ""))
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
         advanceUntilIdle()
@@ -357,7 +363,8 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun signup_validPasswordButEmptyHint_sendAnalyticsEventAndDoesNotMakeDbCall() = runTest {
+    fun `on signup with valid password but empty hint logs analytics and does not call db`() =
+        runTest {
         viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd"))
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = ""))
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
@@ -373,7 +380,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun signup_BlankHint_sendAnalyticsEventAndDoesNotMakeDbCall() = runTest {
+    fun `on signup with blank hint logs analytics and does not call db`() = runTest {
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "  "))
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
         advanceUntilIdle()
@@ -388,7 +395,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun signup_validPasswordAndHint() = runTest {
+    fun `on signup with valid password and hint saves data and navigates`() = runTest {
         val hint = "a"
         val password = "aP@33dsdasP"
         viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = hint))
@@ -396,9 +403,9 @@ class SignupViewModelTest {
         viewModel.onAction(action = SignupScreenAction.OnSignupClick)
         advanceUntilIdle()
 
+        verify(exactly = 1) { analyticsHelper.logEvent(key = AnalyticsKey.SIGN_UP) }
+        coVerify(exactly = 1) { userDetailsRepository.insertUserDetailsData(password, hint) }
         coVerify(exactly = 1) {
-            analyticsHelper.logEvent(key = AnalyticsKey.SIGN_UP)
-            userDetailsRepository.insertUserDetailsData(password, hint)
             encryptedPreferenceProvider.upsertBooleanPref(
                 CommonConstants.IS_SIGN_UP_REQUIRED,
                 false
