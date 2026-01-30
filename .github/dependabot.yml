@@ -14,3 +14,15 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 20
     rebase-strategy: disabled
+    groups:
+      patch-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+
+      minor-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
