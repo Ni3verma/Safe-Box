@@ -70,6 +70,7 @@ android {
     androidComponents {
         onVariants(selector().all()) { variant ->
             variant.outputs.each { output ->
+                // if you are changing apk name then also change name in git workflow file.
                 output.outputFileName.set("SafeBox-${variant.name}.apk")
             }
         }
