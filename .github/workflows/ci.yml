@@ -24,8 +24,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: verify label
+      - name: verify label of PR
         uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
