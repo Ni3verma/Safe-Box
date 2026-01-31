@@ -18,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
@@ -68,14 +69,22 @@ class SettingsDataStore @Inject constructor(
             )
         }
 
-    val isPrivacyEnabled = getSetting(Keys.PRIVACY_ENABLED, PRIVACY_ENABLED_DEFAULT)
-    val awayTimeoutSec = getSetting(Keys.AWAY_TIMEOUT, AWAY_TIMEOUT_DEFAULT)
-    val autoBackupAfterPasswordLogin =
-        getSetting(Keys.AUTO_BACKUP_AFTER_PASSWORD_LOGIN, AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
-    val passwordAfterXBiometricLogins =
-        getSetting(Keys.PASSWORD_AFTER_X_BIOMETRIC_LOGIN, PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+    val isPrivacyEnabledFlow = getSetting(Keys.PRIVACY_ENABLED, PRIVACY_ENABLED_DEFAULT)
+    val awayTimeoutSecFlow = getSetting(Keys.AWAY_TIMEOUT, AWAY_TIMEOUT_DEFAULT)
 
+    suspend fun getPasswordAfterXBiometricLogins(): Int {
+        return getSetting(
+            Keys.PASSWORD_AFTER_X_BIOMETRIC_LOGIN,
+            PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
+        ).first()
+    }
 
+    suspend fun getAutoBackupAfterPasswordLogin(): Boolean {
+        return getSetting(
+            Keys.AUTO_BACKUP_AFTER_PASSWORD_LOGIN,
+            AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT
+        ).first()
+    }
     suspend fun updatePrivacy(enabled: Boolean) {
         context.dataStore.edit { it[Keys.PRIVACY_ENABLED] = enabled }
     }

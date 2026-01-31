@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -74,7 +73,15 @@ class MainViewModel @Inject constructor(
         initialValue = LoadingState.Initial
     )
 
-    val isPrivacyEnabled = settingsDataStore.isPrivacyEnabled
+    /**
+     * emits value only when user changes the setting from settings screen.
+     * It does not replay the last value.
+     * */
+    val isPrivacyEnabled = settingsDataStore.isPrivacyEnabledFlow.shareIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        replay = 0
+    )
 
     /**
      * A screen calls this to configure and show the top bar.
