@@ -7,7 +7,6 @@ import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import java.util.Date
 import java.util.UUID
@@ -51,7 +50,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
             max(0, currentBiometricLoginCountRemaining - 1)
         } else {
             // reset login count remaining after password login
-            settingsDataStore.passwordAfterXBiometricLogins.first()
+            settingsDataStore.getPasswordAfterXBiometricLogins()
         }
 
         preferenceProvider.upsertIntPref(

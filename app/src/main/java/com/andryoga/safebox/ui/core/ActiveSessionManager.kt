@@ -34,7 +34,7 @@ class ActiveSessionManager @Inject constructor(
 
     init {
         applicationScope.launch {
-            settingsDataStore.awayTimeoutSec.collect {
+            settingsDataStore.awayTimeoutSecFlow.collect {
                 Timber.i("timeout updated in active session manager to $it seconds")
                 timeout = it.seconds
             }

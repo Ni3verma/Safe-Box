@@ -23,7 +23,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -55,13 +54,12 @@ class LoginViewModelTest {
 
     private lateinit var viewModel: LoginViewModel
 
-    private val autoBackupAfterPasswordLoginFlow = MutableStateFlow(true)
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         every { lazyWorkManager.get() } returns workManager
-        coEvery { settingsDataStore.autoBackupAfterPasswordLogin } returns autoBackupAfterPasswordLoginFlow
+        coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns false
         viewModel = LoginViewModel(
             userDetailsRepository = userDetailsRepository,
             workManager = lazyWorkManager,
@@ -69,7 +67,6 @@ class LoginViewModelTest {
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
         )
-        viewModel.startObservingForTests()
     }
 
     @Test
@@ -135,6 +132,7 @@ class LoginViewModelTest {
             val encryptedPassword = "encryptedPassword"
 
             coEvery { userDetailsRepository.checkPassword(password) } returns true
+            coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
             every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
             mockkObject(BackupDataWorker.Companion)
             yield()
@@ -155,11 +153,10 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun `onLoginClicked with correct password and auto-backup disabled does not trigger backup`() =
+    fun `onLoginClicked with correct password and auto backup disabled does not trigger backup`() =
         runTest {
             val password = "password"
             coEvery { userDetailsRepository.checkPassword(password) } returns true
-            autoBackupAfterPasswordLoginFlow.value = false
             yield()
 
             mockkObject(BackupDataWorker.Companion)

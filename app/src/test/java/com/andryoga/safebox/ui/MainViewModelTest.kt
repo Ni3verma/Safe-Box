@@ -58,7 +58,7 @@ class MainViewModelTest {
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        every { settingsDataStore.isPrivacyEnabled } returns isPrivacyEnabledFlow
+        every { settingsDataStore.isPrivacyEnabledFlow } returns isPrivacyEnabledFlow
         every { backupMetadataRepository.getBackupMetadata() } returns backupMetadataFlow
         every { activeSessionManager.logoutEvent } returns logoutEventFlow
 
