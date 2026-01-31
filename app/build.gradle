@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
@@ -68,10 +67,11 @@ android {
         }
     }
 
-    android.applicationVariants.configureEach { variant ->
-        variant.outputs.configureEach {
-            // if you are changing apk name then also change name in git workflow file
-            outputFileName = "SafeBox-${variant.name}.apk"
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            variant.outputs.each { output ->
+                output.outputFileName.set("SafeBox-${variant.name}.apk")
+            }
         }
     }
 
@@ -118,8 +118,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
+    kotlin {
+        jvmToolchain(17)
     }
     buildFeatures {
         compose true
