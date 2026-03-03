@@ -51,7 +51,7 @@ jobs:
         run: ./gradlew lintDebug
 
       - name: upload html lint report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lint result
           path: app/build/reports/lint-results-debug.html
@@ -61,7 +61,7 @@ jobs:
 
       - name: upload test result
         if: always() # Upload even if tests fail
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Unit test result
           path: app/build/reports/tests/testDebugUnitTest/
@@ -85,7 +85,7 @@ jobs:
         run: ./gradlew assembleDebug --scan
 
       - name: upload debug apk
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
@@ -109,14 +109,14 @@ jobs:
         run: ./gradlew assembleQa --scan
 
       - name: Upload QA APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ github.event_name == 'pull_request' && format('SafeBox-QA-PR-{0}', github.event.pull_request.number) || 'SafeBox-QA-Master' }}
           path: app/build/outputs/apk/qa/*.apk
           retention-days: 7
 
       - name: upload QA mapping file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: qaMapping
           path: app/build/outputs/mapping/qa/mapping.txt

@@ -44,7 +44,7 @@ jobs:
         run: ./gradlew lintRelease
 
       - name: upload html lint report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: lint result
           path: app/build/reports/lint-results-release.html
@@ -54,7 +54,7 @@ jobs:
 
       - name: upload test result
         if: always() # Upload even if tests fail
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: Unit test result
           path: app/build/reports/tests/testReleaseUnitTest/
@@ -98,7 +98,7 @@ jobs:
         run: ./gradlew assembleDebug --scan
 
       - name: upload debug apk
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: debug app
           path: app/build/outputs/apk/debug/SafeBox-debug.apk
@@ -137,7 +137,7 @@ jobs:
         run: ./gradlew bundleRelease
 
       - name: upload release bundle
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: release aab
           path: app/build/outputs/bundle/release/*.aab
@@ -165,14 +165,14 @@ jobs:
         run: ./gradlew assembleQa --scan
 
       - name: upload QA apk
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: QA APK
           path: app/build/outputs/apk/qa/*.apk
           retention-days: 7
 
       - name: upload QA mapping file
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: qaMapping
           path: app/build/outputs/mapping/qa/mapping.txt
