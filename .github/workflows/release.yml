@@ -189,7 +189,7 @@ jobs:
       contents: read
     steps:
       - name: Retrieve QA apk
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: QA APK
           path: downloaded-artifacts/
