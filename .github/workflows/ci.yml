@@ -42,7 +42,7 @@ jobs:
             }      
       
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
@@ -76,7 +76,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-encryption-key: ${{secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
