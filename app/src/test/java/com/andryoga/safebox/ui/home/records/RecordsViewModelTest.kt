@@ -8,6 +8,7 @@ import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -38,11 +39,13 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -85,10 +88,20 @@ class RecordsViewModelTest {
     private val secureNoteDataFlow = MutableSharedFlow<List<SearchSecureNoteData>>(replay = 1)
     private val loginDataFlow = MutableSharedFlow<List<SearchLoginData>>(replay = 1)
     private val cardDataFlow = MutableSharedFlow<List<SearchBankCardData>>(replay = 1)
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
+
+        val dispatchersProvider = object : DispatchersProvider {
+            override val main: CoroutineDispatcher
+                get() = testDispatcher
+            override val default: CoroutineDispatcher
+                get() = testDispatcher
+            override val io: CoroutineDispatcher
+                get() = testDispatcher
+        }
 
         every { bankAccountDataRepository.getAllBankAccountData() } returns bankAccountDataFlow
         every { secureNoteDataRepository.getAllSecureNoteData() } returns secureNoteDataFlow
@@ -100,10 +113,11 @@ class RecordsViewModelTest {
             secureNoteDataRepository,
             loginDataRepository,
             cardDataRepository,
+            dispatchersProvider,
             backupMetadataRepository,
             preferenceProvider,
+            analyticsHelper,
             inAppReviewManager,
-            analyticsHelper
         )
     }
 
@@ -175,7 +189,7 @@ class RecordsViewModelTest {
 
         coVerify(exactly = 1) { backupMetadataRepository.isBackupPathSet() }
         assertThat(items.size).isEqualTo(2) // an initial state and one after runCurrent
-        assertThat(items[0]).isEqualTo(NotificationPermissionState()) //initial state
+        assertThat(items[0]).isEqualTo(NotificationPermissionState()) // initial state
         assertThat(items[1]).isEqualTo(
             NotificationPermissionState(
                 isNotificationPermissionAskedBefore = isNotificationPermissionAskedBefore,
@@ -194,7 +208,7 @@ class RecordsViewModelTest {
             )
         } returns 1
 
-        val items = mutableListOf<Unit?>()
+        val items = mutableListOf<Unit>()
         job = backgroundScope.launch {
             viewModel.startInAppReview.collect { items.add(it) }
         }
@@ -207,8 +221,7 @@ class RecordsViewModelTest {
                 any()
             )
         }
-        assertThat(items.size).isEqualTo(1)
-        assertThat(items[0]).isNull()
+        assertThat(items).isEmpty()
     }
 
     @Test
@@ -220,34 +233,7 @@ class RecordsViewModelTest {
             )
         } returns ASK_FOR_REVIEW_AFTER_EVERY_LOGIN
 
-        val items = mutableListOf<Unit?>()
-        job = backgroundScope.launch {
-            viewModel.startInAppReview.collect { items.add(it) }
-        }
-
-        runCurrent()
-
-        coVerify(exactly = 1) {
-            preferenceProvider.getIntPref(
-                CommonConstants.TOTAL_LOGIN_COUNT,
-                any()
-            )
-        }
-        assertThat(items.size).isEqualTo(2)
-        assertThat(items[0]).isEqualTo(null)
-        assertThat(items[1]).isEqualTo(Unit)
-    }
-
-    @Test
-    fun `inAppReview does not emit data when login count just exceeds threshold`() = runTest {
-        coEvery {
-            preferenceProvider.getIntPref(
-                CommonConstants.TOTAL_LOGIN_COUNT,
-                any()
-            )
-        } returns ASK_FOR_REVIEW_AFTER_EVERY_LOGIN + 1
-
-        val items = mutableListOf<Unit?>()
+        val items = mutableListOf<Unit>()
         job = backgroundScope.launch {
             viewModel.startInAppReview.collect { items.add(it) }
         }
@@ -261,7 +247,32 @@ class RecordsViewModelTest {
             )
         }
         assertThat(items.size).isEqualTo(1)
-        assertThat(items[0]).isNull()
+        assertThat(items[0]).isEqualTo(Unit)
+    }
+
+    @Test
+    fun `inAppReview does not emit data when login count just exceeds threshold`() = runTest {
+        coEvery {
+            preferenceProvider.getIntPref(
+                CommonConstants.TOTAL_LOGIN_COUNT,
+                any()
+            )
+        } returns ASK_FOR_REVIEW_AFTER_EVERY_LOGIN + 1
+
+        val items = mutableListOf<Unit>()
+        job = backgroundScope.launch {
+            viewModel.startInAppReview.collect { items.add(it) }
+        }
+
+        runCurrent()
+
+        coVerify(exactly = 1) {
+            preferenceProvider.getIntPref(
+                CommonConstants.TOTAL_LOGIN_COUNT,
+                any()
+            )
+        }
+        assertThat(items).isEmpty()
     }
 
     @Test
@@ -426,20 +437,21 @@ class RecordsViewModelTest {
     }
 
     @Test
-    fun `uiState returns empty list when there are 0 db records and some search text`() = runTest {
-        val items = mutableListOf<RecordsUiState>()
-        job = backgroundScope.launch { viewModel.uiState.collect { items.add(it) } }
+    fun `uiState returns empty list when there are 0 db records and some search text`() =
+        runTest {
+            val items = mutableListOf<RecordsUiState>()
+            job = backgroundScope.launch { viewModel.uiState.collect { items.add(it) } }
 
-        setupAndEmitEmptyRecords()
+            setupAndEmitEmptyRecords()
 
-        viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("search text"))
-        runCurrent()
+            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("search text"))
+            runCurrent()
 
-        val lastState = items.last()
-        assertThat(lastState.totalDbRecords).isEqualTo(0)
-        assertThat(lastState.searchText).isEqualTo("search text")
-        assertThat(lastState.records).isEmpty()
-    }
+            val lastState = items.last()
+            assertThat(lastState.totalDbRecords).isEqualTo(0)
+            assertThat(lastState.searchText).isEqualTo("search text")
+            assertThat(lastState.records).isEmpty()
+        }
 
     @Test
     fun `uiState returns empty list when filters match no existing items`() = runTest {
@@ -485,7 +497,8 @@ class RecordsViewModelTest {
         assertThat(lastState.searchText).isEqualTo("Account 2")
 
         val expected = getExpectedDefaultRecords().filter {
-            it.recordType == RecordType.BANK_ACCOUNT && it.title.lowercase().contains("account 2")
+            it.recordType == RecordType.BANK_ACCOUNT && it.title.lowercase()
+                .contains("account 2")
         }
         assertThat(lastState.records).hasSize(1)
         assertThat(lastState.records).containsExactlyElementsIn(expected).inOrder()
@@ -575,7 +588,9 @@ class RecordsViewModelTest {
         runCurrent()
         lastState = items.last()
         assertThat(lastState.records).hasSize(4)
-        assertThat(lastState.records.all { it.recordType == RecordType.NOTE || it.recordType == RecordType.CARD }).isTrue()
+        assertThat(
+            lastState.records.all { it.recordType == RecordType.NOTE || it.recordType == RecordType.CARD }
+        ).isTrue()
 
         // 3. User taps NOTE again -> Unselects NOTE, Only Card records remain shown
         viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.NOTE))
@@ -676,7 +691,11 @@ class RecordsViewModelTest {
             }
             runCurrent()
 
-            viewModel.onScreenAction(RecordScreenAction.OnCancelClickFromRationaleDialog(neverAsk = true))
+            viewModel.onScreenAction(
+                RecordScreenAction.OnCancelClickFromRationaleDialog(
+                    neverAsk = true
+                )
+            )
             runCurrent()
 
             val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
@@ -689,7 +708,6 @@ class RecordsViewModelTest {
             val builder = AnalyticsParamsBuilder()
             slot.captured.invoke(builder)
             assertThat(builder.params[AnalyticsParam.DO_NOT_ASK_AGAIN.paramName]).isEqualTo(true)
-
 
             assertThat(viewModel.notificationPermissionState.value.isNeverAskForNotificationPermission).isTrue()
             coVerify(exactly = 1) {
@@ -719,7 +737,11 @@ class RecordsViewModelTest {
 
             val initialNeverAsk =
                 viewModel.notificationPermissionState.value.isNeverAskForNotificationPermission
-            viewModel.onScreenAction(RecordScreenAction.OnCancelClickFromRationaleDialog(neverAsk = false))
+            viewModel.onScreenAction(
+                RecordScreenAction.OnCancelClickFromRationaleDialog(
+                    neverAsk = false
+                )
+            )
             runCurrent()
 
             val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
@@ -853,7 +875,6 @@ class RecordsViewModelTest {
                 false
             )
 
-
             coVerify(exactly = 0) { preferenceProvider.upsertBooleanPref(any(), any()) }
         }
 
@@ -920,5 +941,5 @@ class RecordsViewModelTest {
         RecordListItem(2, "Login 2", "userId 2", RecordType.LOGIN, "LOGIN_2"),
         RecordListItem(1, "Secure Note 1", null, RecordType.NOTE, "NOTE_1"),
         RecordListItem(2, "Secure Note 2", null, RecordType.NOTE, "NOTE_2")
-    )
+    ).sortedBy { it.title.lowercase() }
 }

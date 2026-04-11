@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.MainViewModel
@@ -84,9 +83,8 @@ fun RecordsScreenRoot(
         mainViewModel.updateTopBar(config)
     }
 
-    val startInAppReview by viewModel.startInAppReview.collectAsStateWithLifecycle()
-    LaunchedEffect(startInAppReview) {
-        if (startInAppReview != null) {
+    LaunchedEffect(Unit) {
+        viewModel.startInAppReview.collect {
             viewModel.inAppReviewManager.get().requestAndLaunchReview(
                 activity = context.findActivity(),
                 inAppReviewSource = InAppReviewSource.AFTER_X_LOGINS

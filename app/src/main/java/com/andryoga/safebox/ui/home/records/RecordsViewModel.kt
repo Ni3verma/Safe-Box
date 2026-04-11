@@ -6,6 +6,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -21,11 +22,14 @@ import com.andryoga.safebox.ui.home.records.models.UserInputs
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -38,10 +42,11 @@ class RecordsViewModel @Inject constructor(
     secureNoteDataRepository: SecureNoteDataRepository,
     loginDataRepository: LoginDataRepository,
     cardDataRepository: BankCardDataRepository,
+    dispatchersProvider: DispatchersProvider,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val preferenceProvider: PreferenceProvider,
-    val inAppReviewManager: Lazy<InAppReviewManager>,
     private val analyticsHelper: AnalyticsHelper,
+    val inAppReviewManager: Lazy<InAppReviewManager>,
 ) : ViewModel() {
     private val _notificationPermissionState = MutableStateFlow(
         NotificationPermissionState()
@@ -56,17 +61,16 @@ class RecordsViewModel @Inject constructor(
 
     /**
      * Start In-App review flow if user logs in after x times again.
-     * */
-    val startInAppReview = flow {
+     */
+    val startInAppReview: SharedFlow<Unit> = flow {
         val totalLoginCount =
             preferenceProvider.getIntPref(CommonConstants.TOTAL_LOGIN_COUNT, 1)
         if (totalLoginCount % ASK_FOR_REVIEW_AFTER_EVERY_LOGIN == 0) {
             emit(Unit)
         }
-    }.stateIn(
+    }.shareIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
+        started = SharingStarted.WhileSubscribed(5000)
     )
 
     private val dbRecords = combine(
@@ -80,7 +84,9 @@ class RecordsViewModel @Inject constructor(
                 loginData.map { it.toRecordListItem() } +
                 cardData.map { it.toRecordListItem() }
         combinedList.sortedBy { it.title.lowercase() }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    }
+        .flowOn(dispatchersProvider.default)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val userInputs = MutableStateFlow(UserInputs())
 
@@ -112,7 +118,7 @@ class RecordsViewModel @Inject constructor(
                 totalDbRecords = totalRecordsInDb,
             )
         }
-    }.stateIn(
+    }.flowOn(dispatchersProvider.default).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = RecordsUiState()
