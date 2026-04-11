@@ -22,7 +22,7 @@ class SecureNoteDataRepositoryImpl @Inject constructor(
         secureNoteDataDaoSecure.upsertSecretNoteData(noteData.toDbEntity())
     }
 
-    override suspend fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>> {
+    override fun getAllSecureNoteData(): Flow<List<SearchSecureNoteData>> {
         return secureNoteDataDaoSecure.getAllSecretNoteData()
     }
 

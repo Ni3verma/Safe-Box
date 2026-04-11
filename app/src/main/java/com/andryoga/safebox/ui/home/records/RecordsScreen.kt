@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.MainViewModel
@@ -50,9 +51,12 @@ import com.andryoga.safebox.ui.home.records.components.RecordsSearchBarNavIcon
 import com.andryoga.safebox.ui.home.records.components.RecordsSearchBarTitle
 import com.andryoga.safebox.ui.home.records.components.shouldShowNotificationPermissionRationaleDialog
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
-import com.andryoga.safebox.ui.home.records.models.RecordsState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
-import com.andryoga.safebox.ui.previewHelper.getRecordState
+import com.andryoga.safebox.ui.previewHelper.getAppliedRecordTypeFilters
+import com.andryoga.safebox.ui.previewHelper.getBankAccountRecordItem
+import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
+import com.andryoga.safebox.ui.previewHelper.getLoginRecordItem
+import com.andryoga.safebox.ui.previewHelper.getNoteRecordItem
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnStart
 import com.andryoga.safebox.ui.utils.findActivity
@@ -67,7 +71,6 @@ fun RecordsScreenRoot(
 ) {
     val viewModel = hiltViewModel<RecordsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
-    val recordState by viewModel.recordState.collectAsState()
     val notificationPermissionState by viewModel.notificationPermissionState.collectAsState()
     val context = LocalContext.current
 
@@ -81,8 +84,9 @@ fun RecordsScreenRoot(
         mainViewModel.updateTopBar(config)
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.startInAppReview.collect {
+    val startInAppReview by viewModel.startInAppReview.collectAsStateWithLifecycle()
+    LaunchedEffect(startInAppReview) {
+        if (startInAppReview != null) {
             viewModel.inAppReviewManager.get().requestAndLaunchReview(
                 activity = context.findActivity(),
                 inAppReviewSource = InAppReviewSource.AFTER_X_LOGINS
@@ -93,7 +97,6 @@ fun RecordsScreenRoot(
     RecordsScreen(
         uiState = uiState,
         notificationPermissionState = notificationPermissionState,
-        recordState = recordState,
         onRestoreFromBackup = onRestoreFromBackup,
         onScreenAction = { action ->
             when (action) {
@@ -116,7 +119,6 @@ fun RecordsScreenRoot(
 private fun RecordsScreen(
     uiState: RecordsUiState,
     notificationPermissionState: NotificationPermissionState,
-    recordState: RecordsState,
     onRestoreFromBackup: () -> Unit,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
@@ -134,7 +136,7 @@ private fun RecordsScreen(
                     .padding(top = 8.dp)
             )
         }
-    } else if (recordState.records.isEmpty() && recordState.totalDbRecords == 0) {
+    } else if (uiState.records.isEmpty() && uiState.totalDbRecords == 0) {
         // user has added no record and probably this is the first time he has logged in
         Column(
             verticalArrangement = Arrangement.Center,
@@ -171,7 +173,7 @@ private fun RecordsScreen(
             }
         }
 
-    } else if (recordState.records.isEmpty() && recordState.totalDbRecords > 0) {
+    } else if (uiState.records.isEmpty() && uiState.totalDbRecords > 0) {
         // user has some records in db but has also applied some filters because pf which nothing can be displayed
         Column(
             modifier = Modifier
@@ -208,7 +210,7 @@ private fun RecordsScreen(
             )
         }
     } else {
-        val records = recordState.records
+        val records = uiState.records
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize(),
@@ -311,7 +313,6 @@ private fun RecordsScreenPreview() {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
-            recordState = getRecordState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -325,7 +326,6 @@ private fun RecordsScreenWithNoRecordsPreview() {
         RecordsScreen(
             uiState = RecordsUiState(isLoading = false),
             notificationPermissionState = NotificationPermissionState(),
-            recordState = RecordsState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -337,9 +337,8 @@ private fun RecordsScreenWithNoRecordsPreview() {
 private fun RecordsScreenWithNoFilteredRecordsPreview() {
     SafeBoxTheme {
         RecordsScreen(
-            uiState = RecordsUiState(isLoading = false),
+            uiState = RecordsUiState(isLoading = false, totalDbRecords = 2),
             notificationPermissionState = NotificationPermissionState(),
-            recordState = RecordsState(totalDbRecords = 1),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -356,7 +355,6 @@ private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
                 isShowAddNewRecordsBottomSheet = true
             ),
             notificationPermissionState = NotificationPermissionState(),
-            recordState = getRecordState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
@@ -368,9 +366,50 @@ private fun RecordsScreenWithAddNewRecordBottomSheetPreview() {
 fun RecordsScreenLoadingRecordsPreview() {
     SafeBoxTheme {
         RecordsScreen(
-            uiState = RecordsUiState(isLoading = true),
+            uiState = RecordsUiState(),
             notificationPermissionState = NotificationPermissionState(),
-            recordState = RecordsState(),
+            onRestoreFromBackup = {},
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+fun RecordsScreenWithRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(
+                isLoading = false,
+                records = listOf(
+                    getLoginRecordItem(),
+                    getCardRecordItem(),
+                    getNoteRecordItem(),
+                    getBankAccountRecordItem(),
+                ),
+                totalDbRecords = 4
+            ),
+            notificationPermissionState = NotificationPermissionState(),
+            onRestoreFromBackup = {},
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+fun RecordsScreenWithFilteredRecordsPreview() {
+    SafeBoxTheme {
+        RecordsScreen(
+            uiState = RecordsUiState(
+                isLoading = false,
+                records = listOf(
+                    getLoginRecordItem()
+                ),
+                totalDbRecords = 4,
+                recordTypeFilters = getAppliedRecordTypeFilters(),
+            ),
+            notificationPermissionState = NotificationPermissionState(),
             onRestoreFromBackup = {},
             onScreenAction = {},
         )
