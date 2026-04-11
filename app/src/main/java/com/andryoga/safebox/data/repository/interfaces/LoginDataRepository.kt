@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface LoginDataRepository {
     suspend fun upsertLoginData(loginData: LoginData)
-    suspend fun getAllLoginData(): Flow<List<SearchLoginData>>
+    fun getAllLoginData(): Flow<List<SearchLoginData>>
     suspend fun getLoginDataByKey(key: Int): LoginData
     suspend fun deleteLoginDataByKey(key: Int)
 }

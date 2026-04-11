@@ -2,31 +2,7 @@ package com.andryoga.safebox.ui.previewHelper
 
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
-import com.andryoga.safebox.ui.home.records.models.RecordsState
-import kotlin.random.Random
-
-fun getRecordState(): RecordsState {
-    val records = mutableListOf<RecordListItem>()
-    // i is chosen in this range so that id doesn't conflict with existing records
-    // if this is ever used for fake data while debugging issues
-    for (i in 1000..1100) {
-        val randomTypeIndex = Random.nextInt(0, 4)
-        val isSubtitlePresent = Random.nextBoolean()
-        records.add(
-            RecordListItem(
-                id = i,
-                title = "$i - title",
-                subTitle = if (isSubtitlePresent) "$i - subtitle" else null,
-                recordType = RecordType.entries[randomTypeIndex]
-            )
-        )
-    }
-
-    return RecordsState(
-        records = records,
-        totalDbRecords = records.size
-    )
-}
+import com.andryoga.safebox.ui.home.records.models.UserInputs
 
 fun getLoginRecordItem() = RecordListItem(
     id = 1,
@@ -55,3 +31,12 @@ fun getNoteRecordItem() = RecordListItem(
     subTitle = null,
     recordType = RecordType.NOTE
 )
+
+fun getAppliedRecordTypeFilters(): List<UserInputs.RecordTypeFilter> {
+    return listOf(
+        UserInputs.RecordTypeFilter(RecordType.LOGIN, true),
+        UserInputs.RecordTypeFilter(RecordType.CARD, false),
+        UserInputs.RecordTypeFilter(RecordType.BANK_ACCOUNT, false),
+        UserInputs.RecordTypeFilter(RecordType.NOTE, false)
+    )
+}

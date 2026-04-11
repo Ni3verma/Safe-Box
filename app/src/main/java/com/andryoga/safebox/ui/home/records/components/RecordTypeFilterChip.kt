@@ -15,15 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.domain.models.record.RecordType
-import com.andryoga.safebox.ui.home.records.RecordsUiState
-import com.andryoga.safebox.ui.home.records.RecordsUiState.RecordTypeFilter
+import com.andryoga.safebox.ui.home.records.models.UserInputs.RecordTypeFilter
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.getTitle
 
 @Composable
 fun RecordTypeFilterRow(
-    filters: List<RecordsUiState.RecordTypeFilter>,
+    filters: List<RecordTypeFilter>,
     onFilterToggle: (RecordType) -> Unit,
     modifier: Modifier = Modifier
 ) {

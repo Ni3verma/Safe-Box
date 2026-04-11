@@ -22,7 +22,7 @@ class LoginDataRepositoryImpl @Inject constructor(
         loginDataDaoSecure.upsertLoginData(loginData.toDbEntity())
     }
 
-    override suspend fun getAllLoginData(): Flow<List<SearchLoginData>> {
+    override fun getAllLoginData(): Flow<List<SearchLoginData>> {
         return loginDataDaoSecure.getAllLoginData()
     }
 

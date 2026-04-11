@@ -1,6 +1,6 @@
 package com.andryoga.safebox.analytics
 
-import android.os.Bundle
+import androidx.core.os.bundleOf
 import com.andryoga.safebox.common.AnalyticsKey
 import com.google.firebase.Firebase
 import com.google.firebase.analytics.analytics
@@ -8,14 +8,21 @@ import timber.log.Timber
 
 class FirebaseAnalytics : AnalyticsHelper {
     override fun logEvent(key: AnalyticsKey) {
-        logEvent(key = key, params = null)
+        Timber.i("logEvent: $key")
+        Firebase.analytics.logEvent(key.eventName, null)
     }
 
     override fun logEvent(
         key: AnalyticsKey,
-        params: Bundle?
+        paramBlock: AnalyticsParamsBuilder.() -> Unit
+
     ) {
-        Timber.i("logEvent: $key, $params")
-        Firebase.analytics.logEvent(key.eventName, params)
+        val builder = AnalyticsParamsBuilder()
+        paramBlock(builder)
+        Timber.i("logEvent: $key, param keys: ${builder.params.keys}")
+        Firebase.analytics.logEvent(
+            key.eventName,
+            bundleOf(*builder.params.toList().toTypedArray())
+        )
     }
 }

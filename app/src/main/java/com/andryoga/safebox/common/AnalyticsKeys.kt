@@ -4,6 +4,16 @@ enum class AnalyticsKey(val eventName: String) {
     SIGNUP_BLOCKED("signup_blocked"),
     SIGN_UP("sign_up"),
     LOGIN_FAILED("login_failed"),
+    NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK("notification_permission_rationale_dialog_allow_click"),
+    NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK("notification_permission_rationale_dialog_cancel_click")
+}
+
+enum class AnalyticsParam(val paramName: String) {
+    VERSION("version"),
+    RESULT("result"),
+    DO_NOT_ASK_AGAIN("do_not_ask_again"),
+    PERMISSION_ASKED_BEFORE("permission_asked_before"),
+    REDIRECT_TO_SETTINGS("redirect_to_settings"),
 }
 
 @Deprecated("Use AnalyticsKey (enum) instead")
@@ -25,15 +35,7 @@ object AnalyticsKeys {
     const val OPEN_GITHUB = "open_github"
     const val OPEN_PLAY_STORE = "open_play_store"
 
-    const val NOTIFICATION_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK =
-        "notification_permission_rationale_dialog_allow_click"
-    const val NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK =
-        "notification_permission_rationale_dialog_cancel_click"
-
     // param names
     const val VERSION = "version"
     const val RESULT = "result"
-    const val DO_NOT_ASK_AGAIN = "do_not_ask_again"
-    const val PERMISSION_ASKED_BEFORE = "permission_asked_before"
-    const val REDIRECT_TO_SETTINGS = "redirect_to_settings"
 }
