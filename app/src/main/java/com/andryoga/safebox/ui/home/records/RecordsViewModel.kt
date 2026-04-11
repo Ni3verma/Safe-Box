@@ -71,7 +71,8 @@ class RecordsViewModel @Inject constructor(
         }
     }.shareIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000)
+        started = SharingStarted.Lazily,
+        replay = 0
     )
 
     private val dbRecords = combine(
