@@ -15,6 +15,7 @@ class InAppReviewManager @Inject constructor(
      */
     suspend fun requestAndLaunchReview(activity: Activity, inAppReviewSource: InAppReviewSource) {
         try {
+            Timber.i("requesting in app review, source: %s", inAppReviewSource)
             val reviewInfo = manager.requestReview()
             manager.launchReviewFlow(activity, reviewInfo)
         } catch (e: Exception) {

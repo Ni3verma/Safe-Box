@@ -66,6 +66,7 @@ class RecordsViewModel @Inject constructor(
         val totalLoginCount =
             preferenceProvider.getIntPref(CommonConstants.TOTAL_LOGIN_COUNT, 1)
         if (totalLoginCount % ASK_FOR_REVIEW_AFTER_EVERY_LOGIN == 0) {
+            Timber.i("eligible for in app review")
             emit(Unit)
         }
     }.shareIn(
