@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.SafeBoxDatabase
@@ -22,9 +24,6 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
-import com.google.firebase.analytics.logEvent
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -42,7 +41,8 @@ class RestoreDataWorker(
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
-    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+    private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+    private val analyticsHelper: AnalyticsHelper
 ) : CoroutineWorker(context, params) {
 
     private val localTag = "restore data worker -> "
@@ -83,8 +83,8 @@ class RestoreDataWorker(
                 startRestore()
             } catch (badPaddingException: BadPaddingException) {
                 Timber.e(badPaddingException, "wrong password entered for restore")
-                Firebase.analytics.logEvent(AnalyticsKeys.RESTORE_FAILED) {
-                    param(AnalyticsKeys.VERSION, version.toDouble())
+                analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
+                    param(AnalyticsParam.VERSION, version.toDouble())
                 }
                 return Result.failure()
             }
@@ -105,7 +105,7 @@ class RestoreDataWorker(
         recordTime("all data decrypted")
 
         restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
-        Firebase.analytics.logEvent(AnalyticsKeys.RESTORE_SUCCESS, null)
+        analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {

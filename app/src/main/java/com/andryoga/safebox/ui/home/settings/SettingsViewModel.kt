@@ -2,11 +2,10 @@ package com.andryoga.safebox.ui.home.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow
@@ -39,15 +39,15 @@ class SettingsViewModel @Inject constructor(
             )
 
             SettingsScreenAction.OpenGithubProject -> {
-                Firebase.analytics.logEvent(AnalyticsKeys.OPEN_GITHUB, null)
+                analyticsHelper.logEvent(AnalyticsKey.OPEN_GITHUB)
             }
 
             SettingsScreenAction.ReviewApp -> {
-                Firebase.analytics.logEvent(AnalyticsKeys.OPEN_PLAY_STORE, null)
+                analyticsHelper.logEvent(AnalyticsKey.OPEN_PLAY_STORE)
             }
 
             SettingsScreenAction.SendFeedback -> {
-                Firebase.analytics.logEvent(AnalyticsKeys.EMAIL_FEEDBACK, null)
+                analyticsHelper.logEvent(AnalyticsKey.EMAIL_FEEDBACK)
             }
         }
     }

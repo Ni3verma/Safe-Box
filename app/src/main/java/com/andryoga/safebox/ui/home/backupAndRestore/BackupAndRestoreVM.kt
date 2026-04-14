@@ -1,13 +1,10 @@
 package com.andryoga.safebox.ui.home.backupAndRestore
 
 import android.net.Uri
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,9 +19,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BackupAndRestoreVM @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val backupMetadataRepository: BackupMetadataRepository,
-    private val activeSessionManager: ActiveSessionManager
+    private val activeSessionManager: ActiveSessionManager,
+    backupAndRestoreRouteProvider: BackupAndRestoreRouteProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScreenState())
     val uiState: StateFlow<ScreenState> = _uiState
@@ -38,8 +35,7 @@ class BackupAndRestoreVM @Inject constructor(
     val startRestoreWorkflow = _startRestoreWorkflow.receiveAsFlow()
 
     init {
-        val args: HomeRouteType.BackupAndRestoreRoute =
-            savedStateHandle.toRoute<HomeRouteType.BackupAndRestoreRoute>()
+        val args = backupAndRestoreRouteProvider.getRoute()
         if (args.startWithRestoreWorkflow) {
             Timber.i("starting restore workflow directly")
             _startRestoreWorkflow.trySend(Unit)

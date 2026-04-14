@@ -1,6 +1,7 @@
 package com.andryoga.safebox.di
 
 import android.content.Context
+import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
@@ -50,41 +51,46 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideLoginDataRepo(
-        loginDataDaoSecure: LoginDataDaoSecure
+        loginDataDaoSecure: LoginDataDaoSecure,
+        analyticsHelper: AnalyticsHelper
     ): LoginDataRepository {
-        return LoginDataRepositoryImpl(loginDataDaoSecure)
+        return LoginDataRepositoryImpl(loginDataDaoSecure, analyticsHelper)
     }
 
     @Singleton
     @Provides
     fun provideBankAccountDataRepo(
-        bankAccountDataDaoSecure: BankAccountDataDaoSecure
+        bankAccountDataDaoSecure: BankAccountDataDaoSecure,
+        analyticsHelper: AnalyticsHelper
     ): BankAccountDataRepository {
-        return BankAccountDataRepositoryImpl(bankAccountDataDaoSecure)
+        return BankAccountDataRepositoryImpl(bankAccountDataDaoSecure, analyticsHelper)
     }
 
     @Singleton
     @Provides
     fun provideBankCardDataRepo(
-        bankCardDataDaoSecure: BankCardDataDaoSecure
+        bankCardDataDaoSecure: BankCardDataDaoSecure,
+        analyticsHelper: AnalyticsHelper
     ): BankCardDataRepository {
-        return BankCardDataRepositoryImpl(bankCardDataDaoSecure)
+        return BankCardDataRepositoryImpl(bankCardDataDaoSecure, analyticsHelper)
     }
 
     @Singleton
     @Provides
     fun provideSecureNoteDataRepo(
-        secureNoteDataDaoSecure: SecureNoteDataDaoSecure
+        secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+        analyticsHelper: AnalyticsHelper
     ): SecureNoteDataRepository {
-        return SecureNoteDataRepositoryImpl(secureNoteDataDaoSecure)
+        return SecureNoteDataRepositoryImpl(secureNoteDataDaoSecure, analyticsHelper)
     }
 
     @Singleton
     @Provides
     fun provideBackupMetadataRepo(
         @ApplicationContext context: Context,
-        backupMetadataDao: BackupMetadataDao
+        backupMetadataDao: BackupMetadataDao,
+        analyticsHelper: AnalyticsHelper
     ): BackupMetadataRepository {
-        return BackupMetadataRepositoryImpl(context, backupMetadataDao)
+        return BackupMetadataRepositoryImpl(context, backupMetadataDao, analyticsHelper)
     }
 }

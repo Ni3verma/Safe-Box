@@ -7,15 +7,14 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -35,6 +34,7 @@ class NewBackupOrRestoreVM @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
     private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val analyticsHelper: AnalyticsHelper,
     val inAppReviewManager: Lazy<InAppReviewManager>
 ) : ViewModel() {
     private lateinit var operation: Operation
@@ -73,7 +73,7 @@ class NewBackupOrRestoreVM @Inject constructor(
                 }
             } else {
                 // password check is not required for restore
-                Firebase.analytics.logEvent(AnalyticsKeys.RESTORE_STARTED, null)
+                analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED)
             }
 
             if (isPasswordCheckRequired.not() || isPswrdCorrect) {
