@@ -1,12 +1,11 @@
 package com.andryoga.safebox.ui.singleRecord
 
 import android.content.Context
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.toRoute
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
@@ -15,7 +14,6 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,10 +26,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SingleRecordViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    @param:ApplicationContext private val context: Context,
+    val activeSessionManager: Lazy<ActiveSessionManager>,
+    singleRecordRouteProvider: SingleRecordRouteProvider,
     layoutFactory: LayoutFactory,
-    val activeSessionManager: Lazy<ActiveSessionManager>
+    @param:ApplicationContext private val context: Context,
+    private val dispatchersProvider: DispatchersProvider
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
@@ -45,7 +44,7 @@ class SingleRecordViewModel @Inject constructor(
     private val layout: Layout
 
     init {
-        val args = savedStateHandle.toRoute<SingleRecordScreenRoute>()
+        val args = singleRecordRouteProvider.getRoute()
         layout = layoutFactory.getLayout(args.id, args.recordType)
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
@@ -134,7 +133,7 @@ class SingleRecordViewModel @Inject constructor(
 
     private fun handleShareRecord() {
         Timber.i("on share clicked")
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(dispatchersProvider.io) {
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()
 
