@@ -3,15 +3,14 @@ package com.andryoga.safebox.data.repository
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.Utils.getFormattedDate
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
-import com.google.firebase.analytics.logEvent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,13 +19,14 @@ import javax.inject.Inject
 
 class BackupMetadataRepositoryImpl @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val backupMetadataDao: BackupMetadataDao
+    private val backupMetadataDao: BackupMetadataDao,
+    private val analyticsHelper: AnalyticsHelper
 ) : BackupMetadataRepository {
     private val contentResolver = context.contentResolver
 
     override suspend fun insertBackupMetadata(uriPath: Uri?) {
-        Firebase.analytics.logEvent(AnalyticsKeys.BACKUP_SELECT_DIR_RESULT) {
-            param(AnalyticsKeys.RESULT, (uriPath != null && uriPath.path != null).toString())
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
+            param(AnalyticsParam.RESULT, (uriPath != null && uriPath.path != null))
         }
 
         if (uriPath != null) {

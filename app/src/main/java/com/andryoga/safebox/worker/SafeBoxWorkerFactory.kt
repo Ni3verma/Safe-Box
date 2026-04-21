@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
@@ -26,6 +27,7 @@ class SafeBoxWorkerFactory @Inject constructor(
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
     private val safeBoxDatabase: SafeBoxDatabase,
+    private val analyticsHelper: AnalyticsHelper
 ) : WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -43,7 +45,8 @@ class SafeBoxWorkerFactory @Inject constructor(
                     loginDataDaoSecure,
                     bankAccountDataDaoSecure,
                     bankCardDataDaoSecure,
-                    secureNoteDataDaoSecure
+                    secureNoteDataDaoSecure,
+                    analyticsHelper
                 )
             }
 
@@ -57,7 +60,8 @@ class SafeBoxWorkerFactory @Inject constructor(
                     loginDataDaoSecure,
                     bankAccountDataDaoSecure,
                     bankCardDataDaoSecure,
-                    secureNoteDataDaoSecure
+                    secureNoteDataDaoSecure,
+                    analyticsHelper
                 )
             }
 

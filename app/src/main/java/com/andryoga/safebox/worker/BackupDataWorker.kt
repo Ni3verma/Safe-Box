@@ -15,7 +15,9 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.AnalyticsKeys
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
@@ -32,10 +34,6 @@ import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.analytics.analytics
-import com.google.firebase.analytics.logEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
@@ -57,6 +55,7 @@ class BackupDataWorker(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+    private val analyticsHelper: AnalyticsHelper
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -162,8 +161,8 @@ class BackupDataWorker(
             exception,
             "$localTag exception occurred : ${exception.localizedMessage}"
         )
-        Firebase.analytics.logEvent(AnalyticsKeys.BACKUP_FAILED) {
-            param(FirebaseAnalytics.Param.SOURCE, exception.message.orEmpty())
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_FAILURE) {
+            param(AnalyticsParam.MESSAGE, exception.message.orEmpty())
         }
         Timber.i("removing backup metadata")
         backupMetadataRepository.deleteBackupMetadata()
