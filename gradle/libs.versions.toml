@@ -12,6 +12,7 @@ espressoCore = "3.7.0"
 mockk = "1.14.9"
 kotlinxCoroutineTest = "1.10.2"
 truth = "1.4.5"
+turbine = "1.1.0"
 
 composeBom = "2026.03.01"
 firebaseBom = "34.12.0"
@@ -66,11 +67,11 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutineTest" }
 truth = { group = "com.google.truth", name = "truth", version.ref = "truth" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
 
 # Mockito
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
-mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 
 # hilt
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHilt" }
@@ -104,7 +105,7 @@ data-store-pref = { group = "androidx.datastore", name = "datastore-preferences"
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]
 compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
 compose-debug = ["androidx-compose-ui-tooling", "androidx-compose-ui-test-manifest"]
-unit-test = ["androidx-test-ext-junit", "androidx-test-junit", "mockk", "mockk-agent", "kotlinx-coroutines-test", "truth"]
+unit-test = ["androidx-test-ext-junit", "androidx-test-junit", "mockk", "mockk-agent", "kotlinx-coroutines-test", "truth", "turbine"]
 hilt = ["hilt-android", "hilt-nav-compose"]
 work = ["work-runtime-ktx", "work-testing"]
 firebase = ["firebase-crashlytics", "firebase-analytics"]
