@@ -19,7 +19,7 @@ jobs:
           distribution: 'temurin'
 
       - name: verify label
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: pr } = await github.rest.pulls.get({
@@ -195,7 +195,7 @@ jobs:
           path: downloaded-artifacts/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') }}
           generate_release_notes: true # This pulls logic from .github/release.yml
