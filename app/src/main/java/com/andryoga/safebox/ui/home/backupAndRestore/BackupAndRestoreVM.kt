@@ -3,6 +3,7 @@ package com.andryoga.safebox.ui.home.backupAndRestore
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +22,7 @@ import javax.inject.Inject
 class BackupAndRestoreVM @Inject constructor(
     private val backupMetadataRepository: BackupMetadataRepository,
     private val activeSessionManager: ActiveSessionManager,
+    private val dispatchers: DispatchersProvider,
     backupAndRestoreRouteProvider: BackupAndRestoreRouteProvider
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ScreenState())
@@ -93,7 +95,7 @@ class BackupAndRestoreVM @Inject constructor(
         activeSessionManager.setPaused(false)
     }
     private fun handleBackupPathSelected(uri: Uri?) {
-        viewModelScope.launch {
+        viewModelScope.launch(dispatchers.io) {
             backupMetadataRepository.insertBackupMetadata(uriPath = uri)
         }
     }

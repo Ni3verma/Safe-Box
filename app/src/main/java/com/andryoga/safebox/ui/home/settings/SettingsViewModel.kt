@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
-    private val analyticsHelper: AnalyticsHelper
+    private val analyticsHelper: AnalyticsHelper,
+    private val dispatchers: DispatchersProvider
 ) : ViewModel() {
 
     val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow
@@ -30,7 +32,7 @@ class SettingsViewModel @Inject constructor(
         when (action) {
             is SettingsScreenAction.UpdatePrivacy -> updatePrivacy(action.enabled)
             is SettingsScreenAction.UpdateAutoBackupAfterLogin -> updateAutoBackupAfterPasswordLogin(
-                action.count
+                action.enabled
             )
 
             is SettingsScreenAction.UpdateAwayTimeout -> updateAwayTimeout(action.timeout)
@@ -52,19 +54,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updatePrivacy(enabled: Boolean) = viewModelScope.launch {
+    private fun updatePrivacy(enabled: Boolean) = viewModelScope.launch(dispatchers.io) {
         settingsDataStore.updatePrivacy(enabled)
     }
 
-    private fun updateAwayTimeout(value: Int) = viewModelScope.launch {
+    private fun updateAwayTimeout(value: Int) = viewModelScope.launch(dispatchers.io) {
         settingsDataStore.updateAwayTimeout(value)
     }
 
-    private fun updateAutoBackupAfterPasswordLogin(value: Boolean) = viewModelScope.launch {
+    private fun updateAutoBackupAfterPasswordLogin(value: Boolean) =
+        viewModelScope.launch(dispatchers.io) {
         settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
     }
 
-    private fun updatePasswordAfterXBiometricLogin(value: Int) = viewModelScope.launch {
+    private fun updatePasswordAfterXBiometricLogin(value: Int) =
+        viewModelScope.launch(dispatchers.io) {
         settingsDataStore.updatePasswordAfterXBiometricLogin(value)
     }
 }
