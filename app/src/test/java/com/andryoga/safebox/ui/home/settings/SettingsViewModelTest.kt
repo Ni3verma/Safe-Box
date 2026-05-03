@@ -18,7 +18,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -42,7 +42,7 @@ class SettingsViewModelTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        val testDispatcher = UnconfinedTestDispatcher()
+        val testDispatcher = mainDispatcherRule.testDispatcher
         val dispatchersProvider = object : DispatchersProvider {
             override val main: CoroutineDispatcher
                 get() = testDispatcher
@@ -71,6 +71,7 @@ class SettingsViewModelTest {
         val action = SettingsScreenAction.UpdatePrivacy(enabled)
 
         viewModel.onScreenAction(action)
+        advanceUntilIdle()
 
         coVerify { settingsDataStore.updatePrivacy(enabled) }
     }
@@ -81,6 +82,7 @@ class SettingsViewModelTest {
         val action = SettingsScreenAction.UpdateAutoBackupAfterLogin(enabled)
 
         viewModel.onScreenAction(action)
+        advanceUntilIdle()
 
         coVerify { settingsDataStore.updateAutoBackupAfterPasswordLogin(enabled) }
     }
@@ -91,6 +93,7 @@ class SettingsViewModelTest {
         val action = SettingsScreenAction.UpdateAwayTimeout(timeout)
 
         viewModel.onScreenAction(action)
+        advanceUntilIdle()
 
         coVerify { settingsDataStore.updateAwayTimeout(timeout) }
     }
@@ -101,6 +104,7 @@ class SettingsViewModelTest {
         val action = SettingsScreenAction.UpdatePasswordAfterXBiometric(limit)
 
         viewModel.onScreenAction(action)
+        advanceUntilIdle()
 
         coVerify { settingsDataStore.updatePasswordAfterXBiometricLogin(limit) }
     }
