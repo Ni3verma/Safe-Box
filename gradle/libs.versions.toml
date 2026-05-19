@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "9.1.1"
+androidGradlePlugin = "9.2.1"
 kotlinGradlePlugin = "2.3.21"
 googleServicesGradlePlugin = "4.4.4"
 crashlyticsGradlePlugin = "3.0.7"
@@ -10,11 +10,11 @@ extJunit = "1.3.0"
 testRunner = "1.7.0"
 espressoCore = "3.7.0"
 mockk = "1.14.9"
-kotlinxCoroutineTest = "1.10.2"
+kotlinxCoroutineTest = "1.11.0"
 truth = "1.4.5"
 
-composeBom = "2026.04.01"
-firebaseBom = "34.12.0"
+composeBom = "2026.05.01"
+firebaseBom = "34.13.0"
 
 kotlinComposeCompiler = "2.3.21"
 ksp = "2.3.7"
