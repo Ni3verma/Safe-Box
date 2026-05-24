@@ -5,7 +5,6 @@ package com.andryoga.safebox.ui.home.backupAndRestore
 import android.net.Uri
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
-import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -17,10 +16,9 @@ import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -51,21 +49,12 @@ class BackupAndRestoreVMTest {
     }
 
     private fun initViewModel(startWithRestore: Boolean = false) {
-        val testDispatcher = UnconfinedTestDispatcher()
-        val dispatchersProvider = object : DispatchersProvider {
-            override val main: CoroutineDispatcher
-                get() = testDispatcher
-            override val default: CoroutineDispatcher
-                get() = testDispatcher
-            override val io: CoroutineDispatcher
-                get() = testDispatcher
-        }
         val route = BackupAndRestoreRoute(startWithRestore)
         every { backupAndRestoreRouteProvider.getRoute() } returns route
         viewModel = BackupAndRestoreVM(
             backupMetadataRepository,
             activeSessionManager,
-            dispatchersProvider,
+            mainDispatcherRule.testDispatcherProvider,
             backupAndRestoreRouteProvider
         )
     }
@@ -123,6 +112,7 @@ class BackupAndRestoreVMTest {
         val action = ScreenAction.BackupPathSelected(uri)
 
         viewModel.onScreenAction(action)
+        advanceUntilIdle()
 
         coVerify { backupMetadataRepository.insertBackupMetadata(uri) }
     }

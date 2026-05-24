@@ -4,7 +4,6 @@ package com.andryoga.safebox.ui.singleRecord
 
 import android.content.Context
 import com.andryoga.safebox.MainDispatcherRule
-import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
@@ -24,12 +23,10 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.spyk
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -56,24 +53,13 @@ class SingleRecordViewModelTest {
     @MockK
     lateinit var singleRecordRouteProvider: SingleRecordRouteProvider
 
-    private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var viewModel: SingleRecordViewModel
-    private lateinit var dispatchersProvider: DispatchersProvider
     private var job: Job? = null
 
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-
-        dispatchersProvider = object : DispatchersProvider {
-            override val main: CoroutineDispatcher
-                get() = testDispatcher
-            override val default: CoroutineDispatcher
-                get() = testDispatcher
-            override val io: CoroutineDispatcher
-                get() = testDispatcher
-        }
 
         every { layoutFactory.getLayout(any(), any()) } returns layout
         coEvery { layout.getLayoutPlan() } returns LayoutPlan(fieldUiState = emptyMap())
@@ -91,7 +77,7 @@ class SingleRecordViewModelTest {
             singleRecordRouteProvider,
             layoutFactory,
             context,
-            dispatchersProvider
+            mainDispatcherRule.testDispatcherProvider
         )
     }
 

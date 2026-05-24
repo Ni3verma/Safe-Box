@@ -54,21 +54,21 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private fun updatePrivacy(enabled: Boolean) = viewModelScope.launch(dispatchers.io) {
+    private fun updatePrivacy(enabled: Boolean) = viewModelScope.launch {
         settingsDataStore.updatePrivacy(enabled)
     }
 
-    private fun updateAwayTimeout(value: Int) = viewModelScope.launch(dispatchers.io) {
+    private fun updateAwayTimeout(value: Int) = viewModelScope.launch {
         settingsDataStore.updateAwayTimeout(value)
     }
 
     private fun updateAutoBackupAfterPasswordLogin(value: Boolean) =
-        viewModelScope.launch(dispatchers.io) {
+        viewModelScope.launch {
         settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
     }
 
     private fun updatePasswordAfterXBiometricLogin(value: Int) =
-        viewModelScope.launch(dispatchers.io) {
+        viewModelScope.launch {
         settingsDataStore.updatePasswordAfterXBiometricLogin(value)
     }
 }
