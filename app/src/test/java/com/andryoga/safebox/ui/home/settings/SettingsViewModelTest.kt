@@ -45,7 +45,6 @@ class SettingsViewModelTest {
         viewModel = SettingsViewModel(
             settingsDataStore,
             analyticsHelper,
-            mainDispatcherRule.testDispatcherProvider
         )
     }
 

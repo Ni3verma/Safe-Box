@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,8 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
-    private val analyticsHelper: AnalyticsHelper,
-    private val dispatchers: DispatchersProvider
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
 
     val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow

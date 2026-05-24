@@ -95,7 +95,7 @@ class BackupAndRestoreVM @Inject constructor(
         activeSessionManager.setPaused(false)
     }
     private fun handleBackupPathSelected(uri: Uri?) {
-        viewModelScope.launch(dispatchers.io) {
+        viewModelScope.launch {
             backupMetadataRepository.insertBackupMetadata(uriPath = uri)
         }
     }
