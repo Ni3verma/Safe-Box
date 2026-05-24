@@ -54,7 +54,6 @@ class BackupAndRestoreVMTest {
         viewModel = BackupAndRestoreVM(
             backupMetadataRepository,
             activeSessionManager,
-            mainDispatcherRule.testDispatcherProvider,
             backupAndRestoreRouteProvider
         )
     }
