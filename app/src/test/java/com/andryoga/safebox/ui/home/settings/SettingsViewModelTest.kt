@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -49,31 +50,22 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `uiState reflects settings from data store`() = runTest(mainDispatcherRule.testDispatcher) {
-        // Best practice: Launch an empty collector in the background unconfined dispatcher
-        // This ensures the StateFlow's WhileSubscribed starts eagerly
+    fun `uiState reflects settings from data store`() = runTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiState.collect {}
         }
 
-        // Assert initial state
-        val initialSettings = Settings()
-        assertThat(viewModel.uiState.value).isEqualTo(initialSettings)
+        assertThat(viewModel.uiState.value).isEqualTo(Settings())
 
-        // Trigger an update
         val updatedSettings = Settings(isPrivacyEnabled = true, awayTimeoutSec = 10)
         settingsFlow.value = updatedSettings
+        runCurrent()
 
-        // Yield to allow the main dispatcher to process the downstream update
-        advanceUntilIdle()
-
-        // Assert the new state
         assertThat(viewModel.uiState.value).isEqualTo(updatedSettings)
     }
 
     @Test
-    fun `onScreenAction UpdatePrivacy calls data store`() =
-        runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction UpdatePrivacy calls data store`() = runTest {
         val enabled = true
         val action = SettingsScreenAction.UpdatePrivacy(enabled)
 
@@ -84,8 +76,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction UpdateAutoBackupAfterLogin calls data store`() =
-        runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction UpdateAutoBackupAfterLogin calls data store`() = runTest {
         val enabled = true
         val action = SettingsScreenAction.UpdateAutoBackupAfterLogin(enabled)
 
@@ -96,8 +87,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction UpdateAwayTimeout calls data store`() =
-        runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction UpdateAwayTimeout calls data store`() = runTest {
         val timeout = 15
         val action = SettingsScreenAction.UpdateAwayTimeout(timeout)
 
@@ -108,8 +98,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction UpdatePasswordAfterXBiometric calls data store`() =
-        runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction UpdatePasswordAfterXBiometric calls data store`() = runTest {
         val limit = 5
         val action = SettingsScreenAction.UpdatePasswordAfterXBiometric(limit)
 
@@ -120,8 +109,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction OpenGithubProject logs event`() =
-        runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction OpenGithubProject logs event`() = runTest {
         val action = SettingsScreenAction.OpenGithubProject
 
         viewModel.onScreenAction(action)
@@ -130,7 +118,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction ReviewApp logs event`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction ReviewApp logs event`() = runTest {
         val action = SettingsScreenAction.ReviewApp
 
         viewModel.onScreenAction(action)
@@ -139,7 +127,7 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction SendFeedback logs event`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `onScreenAction SendFeedback logs event`() = runTest {
         val action = SettingsScreenAction.SendFeedback
 
         viewModel.onScreenAction(action)

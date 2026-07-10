@@ -23,7 +23,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import kotlin.time.Duration.Companion.seconds
 
 class BackupAndRestoreVMTest {
     @get:Rule
@@ -45,6 +44,7 @@ class BackupAndRestoreVMTest {
     @Before
     fun setup() {
         MockKAnnotations.init(this)
+        backupMetadataFlow.value = null
         every { backupMetadataRepository.getBackupMetadata() } returns backupMetadataFlow
     }
 
@@ -70,35 +70,38 @@ class BackupAndRestoreVMTest {
     @Test
     fun `init does not start restore workflow when startWithRestoreWorkflow is false`() = runTest {
         initViewModel(startWithRestore = false)
-        viewModel.startRestoreWorkflow.test(timeout = 2.seconds) {
+        viewModel.startRestoreWorkflow.test {
             expectNoEvents()
         }
     }
 
     @Test
     fun `init sets BackupPathNotSet state when backup metadata is null`() = runTest {
-        initViewModel()
         backupMetadataFlow.value = null
+        initViewModel()
+
         viewModel.uiState.test {
-            // Skip initial Loading state
-            skipItems(1)
-            val item = awaitItem()
-            assertThat(item.backupState).isInstanceOf(BackupPathNotSet::class.java)
+            val initialState = awaitItem()
+            assertThat(initialState.backupState).isInstanceOf(Loading::class.java)
+
+            val updatedState = awaitItem()
+            assertThat(updatedState.backupState).isInstanceOf(BackupPathNotSet::class.java)
         }
     }
 
     @Test
     fun `init sets BackupPathSet state when backup metadata is available`() = runTest {
-        initViewModel()
         val metadata = BackupPathData("uri", "test_path", "time")
         backupMetadataFlow.value = metadata
+        initViewModel()
 
         viewModel.uiState.test {
-            // Skip initial state
-            skipItems(1)
-            val uiState = awaitItem()
-            assertThat(uiState.backupState).isInstanceOf(BackupPathSet::class.java)
-            val backupState = uiState.backupState as BackupPathSet
+            val initialState = awaitItem()
+            assertThat(initialState.backupState).isInstanceOf(Loading::class.java)
+
+            val updatedState = awaitItem()
+            assertThat(updatedState.backupState).isInstanceOf(BackupPathSet::class.java)
+            val backupState = updatedState.backupState as BackupPathSet
             assertThat(backupState.backupPath).isEqualTo(metadata.path)
             assertThat(backupState.backupTime).isEqualTo(metadata.lastBackupTime)
         }
@@ -191,3 +194,4 @@ class BackupAndRestoreVMTest {
         verify { activeSessionManager.setPaused(false) }
     }
 }
+
