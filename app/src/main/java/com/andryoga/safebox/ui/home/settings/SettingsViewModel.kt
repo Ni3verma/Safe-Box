@@ -30,7 +30,7 @@ class SettingsViewModel @Inject constructor(
         when (action) {
             is SettingsScreenAction.UpdatePrivacy -> updatePrivacy(action.enabled)
             is SettingsScreenAction.UpdateAutoBackupAfterLogin -> updateAutoBackupAfterPasswordLogin(
-                action.count
+                action.enabled
             )
 
             is SettingsScreenAction.UpdateAwayTimeout -> updateAwayTimeout(action.timeout)
@@ -60,11 +60,13 @@ class SettingsViewModel @Inject constructor(
         settingsDataStore.updateAwayTimeout(value)
     }
 
-    private fun updateAutoBackupAfterPasswordLogin(value: Boolean) = viewModelScope.launch {
+    private fun updateAutoBackupAfterPasswordLogin(value: Boolean) =
+        viewModelScope.launch {
         settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
     }
 
-    private fun updatePasswordAfterXBiometricLogin(value: Int) = viewModelScope.launch {
+    private fun updatePasswordAfterXBiometricLogin(value: Int) =
+        viewModelScope.launch {
         settingsDataStore.updatePasswordAfterXBiometricLogin(value)
     }
 }

@@ -8,7 +8,6 @@ import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -39,7 +38,6 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -94,15 +92,6 @@ class RecordsViewModelTest {
     fun setUp() {
         MockKAnnotations.init(this)
 
-        val dispatchersProvider = object : DispatchersProvider {
-            override val main: CoroutineDispatcher
-                get() = testDispatcher
-            override val default: CoroutineDispatcher
-                get() = testDispatcher
-            override val io: CoroutineDispatcher
-                get() = testDispatcher
-        }
-
         every { bankAccountDataRepository.getAllBankAccountData() } returns bankAccountDataFlow
         every { secureNoteDataRepository.getAllSecureNoteData() } returns secureNoteDataFlow
         every { loginDataRepository.getAllLoginData() } returns loginDataFlow
@@ -113,7 +102,7 @@ class RecordsViewModelTest {
             secureNoteDataRepository,
             loginDataRepository,
             cardDataRepository,
-            dispatchersProvider,
+            mainDispatcherRule.testDispatcherProvider,
             backupMetadataRepository,
             preferenceProvider,
             analyticsHelper,
