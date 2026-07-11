@@ -23,7 +23,7 @@ data class FieldUiState(
         val minLines: Int = 1,
         val keyboardType: KeyboardType = KeyboardType.Unspecified,
 
-        // If set to true, this cell will be visible only in view mode. e.g creation date
+        // If set to true, this cell will be visible only in view mode. e.g. creation date
         val isVisibleOnlyInViewMode: Boolean = false,
         val isCopyable: Boolean = false,
         val visualTransformation: VisualTransformation = VisualTransformation.None,

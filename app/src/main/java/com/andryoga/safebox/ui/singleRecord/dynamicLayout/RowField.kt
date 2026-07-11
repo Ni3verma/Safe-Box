@@ -5,14 +5,12 @@ import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -59,8 +56,7 @@ fun RowField(
     val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     var isPasswordVisible by remember { mutableStateOf(false) }
-    val snackbarHost = LocalSnackbarHostState.current
-    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val snackBarHost = LocalSnackbarHostState.current
 
     Column {
         if (viewMode == ViewMode.VIEW) {
@@ -96,8 +92,8 @@ fun RowField(
                                 // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
                                 // so need to show our own snackbar
                                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                    snackbarHost.currentSnackbarData?.dismiss()
-                                    snackbarHost.showSnackbar(
+                                    snackBarHost.currentSnackbarData?.dismiss()
+                                    snackBarHost.showSnackbar(
                                         message = "Copied $label to clipboard",
                                         duration = SnackbarDuration.Short
                                     )
@@ -117,10 +113,6 @@ fun RowField(
                                 data = it,
                             )
                         )
-                    }
-
-                    scope.launch {
-                        bringIntoViewRequester.bringIntoView()
                     }
                 },
                 label = {
@@ -160,23 +152,18 @@ fun RowField(
                 keyboardOptions = KeyboardOptions(
                     keyboardType = uiState.cell.keyboardType
                 ),
-
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .fillMaxWidth()
+                    .then(
+                        if (!uiState.cell.singleLine) {
+                            Modifier.heightIn(min = 120.dp, max = 320.dp)
+                        } else {
+                            Modifier
+                        }
+                    )
             )
         }
-
-        /**
-         * This is a hacky way so that the above field(OutlineTextField) always remains into view
-         * even if user enters a long text.
-         * */
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = Color.Transparent,
-            modifier = Modifier
-                .bringIntoViewRequester(bringIntoViewRequester)
-        )
     }
 }
 
