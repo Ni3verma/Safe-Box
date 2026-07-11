@@ -1,14 +1,10 @@
 package com.andryoga.safebox.ui
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -21,7 +17,6 @@ import kotlinx.serialization.Serializable
 import timber.log.Timber
 
 @AndroidEntryPoint
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 class MainActivity : FragmentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
@@ -43,9 +38,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             SafeBoxTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { paddingValues ->
-                    AppNavigation()
-                }
+                AppNavigation()
             }
         }
     }

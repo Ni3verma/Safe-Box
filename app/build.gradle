@@ -23,12 +23,12 @@ def githubRef = System.getenv("GITHUB_REF_NAME") // e.g., 'v2.0.4.0' or 'master'
 
 android {
     namespace 'com.andryoga.safebox'
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId "com.andryoga.safebox"
         minSdk 24
-        targetSdk 36
+        targetSdk 37
         versionCode version_code
 
         // versionName logic
