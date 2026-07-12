@@ -64,6 +64,7 @@ class NoteLayoutImpl(
                         isMandatory = true,
                         singleLine = false,
                         minLines = 5,
+                        maxLines = 15,
                         isCopyable = true,
                     ),
                     data = recordData?.notes.orEmpty()

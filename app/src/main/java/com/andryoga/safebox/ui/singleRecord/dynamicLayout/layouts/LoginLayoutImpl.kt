@@ -85,7 +85,7 @@ class LoginLayoutImpl(
                 ),
                 FieldId.LOGIN_NOTES to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.notes, singleLine = false, minLines = 5
+                        label = R.string.notes, singleLine = false, minLines = 5, maxLines = 6
                     ),
                     data = recordData?.notes.orEmpty()
                 ),
