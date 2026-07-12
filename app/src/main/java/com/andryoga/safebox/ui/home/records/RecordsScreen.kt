@@ -3,6 +3,7 @@
 package com.andryoga.safebox.ui.home.records
 
 import android.os.Build
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -113,8 +114,9 @@ fun RecordsScreenRoot(
     )
 }
 
+@VisibleForTesting
 @Composable
-private fun RecordsScreen(
+internal fun RecordsScreen(
     uiState: RecordsUiState,
     notificationPermissionState: NotificationPermissionState,
     onRestoreFromBackup: () -> Unit,

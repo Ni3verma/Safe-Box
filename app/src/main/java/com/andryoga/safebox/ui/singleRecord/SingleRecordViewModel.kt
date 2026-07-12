@@ -121,16 +121,6 @@ class SingleRecordViewModel @Inject constructor(
         }
     }
 
-    fun onBackClick() {
-        if (uiState.value.viewMode == ViewMode.EDIT) {
-            goBackToViewMode()
-        } else {
-            viewModelScope.launch {
-                _screenCloseEvent.emit(Unit)
-            }
-        }
-    }
-
     private fun handleShareRecord() {
         Timber.i("on share clicked")
         viewModelScope.launch(dispatchersProvider.io) {

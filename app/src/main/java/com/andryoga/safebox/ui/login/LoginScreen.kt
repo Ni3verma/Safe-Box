@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,8 +65,10 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
         screenAction = viewModel::onAction
     )
 }
+
+@VisibleForTesting
 @Composable
-private fun LoginScreen(
+internal fun LoginScreen(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit
 ) {

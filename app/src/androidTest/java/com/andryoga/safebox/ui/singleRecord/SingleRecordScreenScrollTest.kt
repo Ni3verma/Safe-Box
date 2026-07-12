@@ -11,9 +11,11 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
@@ -62,13 +64,8 @@ class SingleRecordScreenScrollTest {
         }
     }
 
-    /**
-     * TC-1: Verifies that inserting text in the middle of an existing multiline note
-     * correctly updates the field value and keeps the content visible on screen.
-     */
     @Test
-    fun enterTextInMiddleOfNote_shouldUpdateTextAndRemainVisible_TC1() {
-        // Given: SingleRecordScreen loaded in EDIT mode with an existing Login note
+    fun enterTextInMiddleOfNote_shouldUpdateTextAndRemainVisible() {
         val initialNoteText = "this is my primary google account"
         val updatedNoteText = "this is my primary [EDITED MIDDLE] google account"
 
@@ -78,23 +75,16 @@ class SingleRecordScreenScrollTest {
             )
         }
 
-        // When: Replacing text in the middle of the existing note
         composeTestRule.onNodeWithText(initialNoteText)
             .assertIsDisplayed()
             .performTextReplacement(updatedNoteText)
 
-        // Then: Updated note text remains visible above keyboard/padding bounds
         composeTestRule.onNodeWithText(updatedNoteText)
             .assertIsDisplayed()
     }
 
-    /**
-     * TC-2: Verifies that appending new text to the very end of an existing note
-     * updates correctly and keeps the bottom line visible.
-     */
     @Test
-    fun enterTextAtVeryEndOfNote_shouldAppendTextAndRemainVisible_TC2() {
-        // Given: SingleRecordScreen loaded in EDIT mode with pre-existing note content
+    fun enterTextAtVeryEndOfNote_shouldAppendTextAndRemainVisible() {
         val initialNoteText = "this is my primary google account"
         val appendedBottomLineText = "\nNEW BOTTOM LINE TEXT"
         val expectedFullText = "$initialNoteText$appendedBottomLineText"
@@ -105,22 +95,15 @@ class SingleRecordScreenScrollTest {
             )
         }
 
-        // When: Entering new text at the bottom line
         composeTestRule.onNodeWithText(initialNoteText)
             .performTextReplacement(expectedFullText)
 
-        // Then: Full multiline content including the appended bottom line remains displayed
         composeTestRule.onNodeWithText(expectedFullText)
             .assertIsDisplayed()
     }
 
-    /**
-     * TC-3: Verifies entering 8 consecutive newlines followed by text inside an empty Notes field.
-     * Ensures that multiline text input handles block spacing without clipping or layout shifts.
-     */
     @Test
-    fun enterEightContinuousNewlinesFollowedByText_shouldNotClipContent_TC3() {
-        // Given: SingleRecordScreen loaded in EDIT mode with an empty Notes field
+    fun enterEightContinuousNewlinesFollowedByText_shouldNotClipContent() {
         val eightNewlinesAndText = "\n\n\n\n\n\n\n\nTC3_8_LINES_VERIFIED"
 
         composeTestRule.setContent {
@@ -129,23 +112,15 @@ class SingleRecordScreenScrollTest {
             )
         }
 
-        // When: Entering 8 newlines and trailing text into Notes
         composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(eightNewlinesAndText)
 
-        // Then: Entered text after 8 blank lines remains cleanly displayed
         composeTestRule.onNodeWithText(eightNewlinesAndText)
             .assertIsDisplayed()
     }
 
-    /**
-     * TC-4: Verifies entering 16 consecutive newlines inside Notes.
-     * Confirms multiline field expansion respects bounded height restrictions (max 320.dp)
-     * and keeps typed content accessible.
-     */
     @Test
-    fun enterSixteenContinuousNewlines_shouldHonorMaxHeightAndScrollInternally_TC4() {
-        // Given: SingleRecordScreen loaded in EDIT mode with an empty Notes field
+    fun enterSixteenContinuousNewlines_shouldHonorMaxHeightAndScrollInternally() {
         val sixteenNewlinesAndText = "\n".repeat(16) + "TC4_16_LINES_VERIFIED"
 
         composeTestRule.setContent {
@@ -154,43 +129,30 @@ class SingleRecordScreenScrollTest {
             )
         }
 
-        // When: Typing 16 consecutive newlines and verification text
         composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(sixteenNewlinesAndText)
 
-        // Then: The input node correctly holds and displays the multiline text
         composeTestRule.onNodeWithText(sixteenNewlinesAndText)
             .assertIsDisplayed()
     }
 
-    /**
-     * TC-5: Verifies automatic focus bring-into-view behavior when clicking directly on a bottom field (Notes)
-     * on an initially un-scrolled form.
-     */
     @Test
-    fun clickBottomNotesFieldOnUnscrolledForm_shouldAutoBringFieldIntoView_TC5() {
-        // Given: Bank account record loaded in EDIT mode (Notes field sits at bottom of un-scrolled form)
+    fun clickBottomNotesFieldOnUnscrolledForm_shouldAutoBringFieldIntoView() {
         composeTestRule.setContent {
             StatefulSingleRecordScreenTestHost(
                 initialPlan = getBankAccountLayoutPlan(withData = true)
             )
         }
 
-        // When: Directly clicking the Notes label/field at the bottom
         composeTestRule.onNodeWithText("Notes")
             .performClick()
 
-        // Then: The Notes field brings itself into view and remains displayed
         composeTestRule.onNodeWithText("Notes")
             .assertIsDisplayed()
     }
 
-    /**
-     * TC-6: Verifies standard focus and typing on a single-line field (Customer Name).
-     */
     @Test
-    fun clickAndTypeInSingleLineField_shouldUpdateAndRemainVisible_TC6() {
-        // Given: Bank account record loaded in EDIT mode without initial data
+    fun clickAndTypeInSingleLineField_shouldUpdateAndRemainVisible() {
         val targetFieldName = "Customer Name"
         val inputCustomerName = "NITIN VERMA"
 
@@ -200,13 +162,66 @@ class SingleRecordScreenScrollTest {
             )
         }
 
-        // When: Clicking on single-line field and typing text
         composeTestRule.onNode(hasSetTextAction() and hasText(targetFieldName))
             .performClick()
             .performTextInput(inputCustomerName)
 
-        // Then: Entered text is displayed in the field
         composeTestRule.onNodeWithText(inputCustomerName)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun viewMode_longNotes_shouldBeScrollableAndDisplayBottomText() {
+        val longNotesBody =
+            "Start of long notes\n" + "Line content inside notes\n".repeat(40) + "END_OF_LONG_NOTES_VIEW_MODE"
+        val longNotesPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
+            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+            arrangement = listOf(
+                listOf(
+                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
+                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE
+                    )
+                ),
+                listOf(
+                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
+                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES
+                    )
+                )
+            ),
+            fieldUiState = mapOf(
+                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
+                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                        label = R.string.title,
+                        isMandatory = true
+                    ),
+                    data = "Long Notes Title"
+                ),
+                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
+                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                        label = R.string.notes,
+                        minLines = 4,
+                        maxLines = 10
+                    ),
+                    data = longNotesBody
+                )
+            )
+        )
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SingleRecordScreen(
+                    uiState = SingleRecordScreenUiState(
+                        isLoading = false,
+                        viewMode = ViewMode.VIEW,
+                        layoutPlan = longNotesPlan
+                    ),
+                    screenAction = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("END_OF_LONG_NOTES_VIEW_MODE", substring = true)
+            .performScrollTo()
             .assertIsDisplayed()
     }
 }

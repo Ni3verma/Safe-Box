@@ -52,6 +52,9 @@ class SignupAndLoginE2ETest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
+    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+
+    @Inject
     lateinit var userDetailsRepository: UserDetailsRepository
 
     @Inject
@@ -109,12 +112,12 @@ class SignupAndLoginE2ETest {
     @Test
     fun subsequentLaunch_loginFlow_shouldRejectWrongPasswordAndNavigateToHomeOnCorrectPassword() =
         runTest {
-            // Given: Pre-seeded credentials from a previous signup and IS_SIGN_UP_REQUIRED = false
-            safeBoxDatabase.clearAllTables()
-            userDetailsRepository.insertUserDetailsData("Qwerty@@123", "E2E hint")
-            encryptedPreferenceProvider.upsertBooleanPref(
-                CommonConstants.IS_SIGN_UP_REQUIRED,
-                false
+            // Given: Pre-seeded credentials using E2ETestUtils (IS_SIGN_UP_REQUIRED = false, biometric count = 0)
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
             )
 
             ActivityScenario.launch(MainActivity::class.java).use { _ ->
@@ -134,15 +137,8 @@ class SignupAndLoginE2ETest {
                 composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
                     .assertIsDisplayed()
 
-                // 3. Enter correct master password and submit
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.password),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement("Qwerty@@123")
-                composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+                // 3. Enter correct master password and submit via E2ETestUtils.unlockApp
+                E2ETestUtils.unlockApp(composeTestRule, context)
 
                 // 4. Verify successful authentication unlocks and opens Home screen showing 0 records
                 composeTestRule.onNodeWithText(context.getString(R.string.no_record))
