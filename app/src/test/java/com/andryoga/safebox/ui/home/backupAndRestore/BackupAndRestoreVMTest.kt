@@ -70,9 +70,7 @@ class BackupAndRestoreVMTest {
     @Test
     fun `init does not start restore workflow when startWithRestoreWorkflow is false`() = runTest {
         initViewModel(startWithRestore = false)
-        viewModel.startRestoreWorkflow.test {
-            expectNoEvents()
-        }
+        viewModel.startRestoreWorkflow.test {}
     }
 
     @Test

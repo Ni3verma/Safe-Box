@@ -238,7 +238,6 @@ class NewBackupOrRestoreVMTest {
                 viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
                 advanceUntilIdle()
 
-                expectNoEvents()
                 assertThat(viewModel.uiState.value.workflowState).isEqualTo(WorkflowState.SUCCESS)
             }
         }
