@@ -41,7 +41,7 @@ android {
         }
         println "Building SafeBox: ${versionName} (${versionCode})"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.andryoga.safebox.CustomHiltTestRunner"
     }
 
     signingConfigs {
@@ -168,6 +168,7 @@ dependencies {
     implementation libs.bundles.room
 
     ksp(libs.hilt.compiler)
+    kspAndroidTest(libs.hilt.compiler)
     implementation libs.bundles.hilt
 
     implementation platform(libs.androidx.compose.bom)

@@ -43,3 +43,11 @@
 * **Dispatcher Abstraction:** Never hardcode `Dispatchers.IO` or `Dispatchers.Default` inside
   ViewModels or Repositories. Inject a `DispatchersProvider` interface to guarantee predictable,
   synchronized virtual-time execution during unit testing via a `TestDispatcher`.
+
+## Test Naming & Conventions
+
+* **No Test Case Numbers in Method Names:** NEVER add test case numbers or arbitrary numerical
+  prefixes/suffixes (e.g., `_TC1`, `_TC3`, `test01_`) in unit or UI test method names.
+* **Clean & Descriptive:** Test names must be clean, readable, concise, and self-descriptive (e.g.,
+  `emptyPasswordError_shouldShowBlankValidationText` or
+  `clickTogglePasswordIcon_shouldToggleVisualTransformation`).

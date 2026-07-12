@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.signup
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -58,8 +59,9 @@ fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
     )
 }
 
+@VisibleForTesting
 @Composable
-private fun SignupScreen(
+internal fun SignupScreen(
     uiState: SignupUiState,
     screenAction: (SignupScreenAction) -> Unit,
 ) {
