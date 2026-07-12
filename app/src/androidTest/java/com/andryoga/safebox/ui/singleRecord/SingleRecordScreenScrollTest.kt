@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -128,7 +130,7 @@ class SingleRecordScreenScrollTest {
         }
 
         // When: Entering 8 newlines and trailing text into Notes
-        composeTestRule.onNodeWithText("Notes")
+        composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(eightNewlinesAndText)
 
         // Then: Entered text after 8 blank lines remains cleanly displayed
@@ -153,7 +155,7 @@ class SingleRecordScreenScrollTest {
         }
 
         // When: Typing 16 consecutive newlines and verification text
-        composeTestRule.onNodeWithText("Notes")
+        composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(sixteenNewlinesAndText)
 
         // Then: The input node correctly holds and displays the multiline text
@@ -199,7 +201,7 @@ class SingleRecordScreenScrollTest {
         }
 
         // When: Clicking on single-line field and typing text
-        composeTestRule.onNodeWithText(targetFieldName)
+        composeTestRule.onNode(hasSetTextAction() and hasText(targetFieldName))
             .performClick()
             .performTextInput(inputCustomerName)
 
