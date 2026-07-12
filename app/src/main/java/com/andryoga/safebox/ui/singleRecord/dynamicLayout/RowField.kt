@@ -5,7 +5,6 @@ import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -128,6 +127,7 @@ fun RowField(
                 },
                 singleLine = uiState.cell.singleLine,
                 minLines = uiState.cell.minLines,
+                maxLines = uiState.cell.maxLines,
                 visualTransformation = if (uiState.cell.isPasswordField) {
                     if (!isPasswordVisible) {
                         uiState.cell.visualTransformation
@@ -155,13 +155,6 @@ fun RowField(
                 modifier = Modifier
                     .padding(top = 8.dp)
                     .fillMaxWidth()
-                    .then(
-                        if (!uiState.cell.singleLine) {
-                            Modifier.heightIn(min = 120.dp, max = 320.dp)
-                        } else {
-                            Modifier
-                        }
-                    )
             )
         }
     }
