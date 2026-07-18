@@ -13,6 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.sampleData.RandomUserData
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -22,10 +23,12 @@ import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.domain.mappers.record.toRecordListItem
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -69,6 +72,12 @@ class RecordsScreenScrollAndAppBarTest {
     @Inject
     lateinit var secureNoteDataRepository: SecureNoteDataRepository
 
+    @Inject
+    lateinit var settingsDataStore: SettingsDataStore
+
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
@@ -76,14 +85,27 @@ class RecordsScreenScrollAndAppBarTest {
         hiltRule.inject()
     }
 
+    @After
+    fun tearDown() {
+        runBlocking {
+            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+            activeSessionManager.setPaused(true)
+        }
+    }
+
     @Test
-    fun emptyRecordsState_topAppBarShouldBeVisibleAndShowAddNewButton() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun emptyRecordsState_topAppBarShouldBeVisibleAndShowAddNewButton() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -101,21 +123,23 @@ class RecordsScreenScrollAndAppBarTest {
     }
 
     @Test
-    fun scrollLongPopulatedList_shouldKeepListAccessibleAndCheckTopBar() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun scrollLongPopulatedList_shouldKeepListAccessibleAndCheckTopBar() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
 
-        // Seed 200 records using RandomUserData
-        RandomUserData.insertRandomData(
-            loginDataRepository,
-            bankAccountDataRepository,
-            bankCardDataRepository,
-            secureNoteDataRepository
-        )
+            // Seed 200 records using RandomUserData
+            RandomUserData.insertRandomData(
+                loginDataRepository,
+                bankAccountDataRepository,
+                bankCardDataRepository,
+                secureNoteDataRepository
+            )
+        }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -125,13 +149,16 @@ class RecordsScreenScrollAndAppBarTest {
             composeTestRule.onNodeWithContentDescription(addNewButtonDesc).assertIsDisplayed()
 
             // Scroll down the LazyColumn to index 40 and verify items remain accessible
-            composeTestRule.onNode(hasScrollToIndexAction()).performScrollToIndex(40)
+            composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
+                .performScrollToIndex(40)
         }
     }
 
     @Test
-    fun scrollLongPopulatedListToEnd_lastRecordShouldBeCompletelyVisibleAndUnobstructed() =
-        runTest {
+    fun scrollLongPopulatedListToEnd_lastRecordShouldBeCompletelyVisibleAndUnobstructed() {
+        lateinit var lastRecordTitle: String
+        var combinedSortedSize = 0
+        runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
@@ -156,15 +183,17 @@ class RecordsScreenScrollAndAppBarTest {
                 .map { it.toRecordListItem() }
             val combinedSorted =
                 (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
-            val lastRecord = combinedSorted.last()
-
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                E2ETestUtils.unlockApp(composeTestRule, context)
-
-                composeTestRule.onNode(hasScrollToIndexAction())
-                    .performScrollToIndex(combinedSorted.size)
-                composeTestRule.onNodeWithText(lastRecord.title, substring = true)
-                    .assertIsDisplayed()
-            }
+            lastRecordTitle = combinedSorted.last().title
+            combinedSortedSize = combinedSorted.size
         }
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
+                .performScrollToIndex(combinedSortedSize)
+            composeTestRule.onNodeWithText(lastRecordTitle, substring = true)
+                .assertIsDisplayed()
+        }
+    }
 }

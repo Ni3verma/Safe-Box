@@ -14,6 +14,7 @@ import com.andryoga.safebox.domain.models.backup.BackupPathData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
@@ -30,14 +31,20 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         }
 
         if (uriPath != null) {
-            val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            contentResolver.takePersistableUriPermission(uriPath, flags)
+            if (uriPath.scheme == "content" || uriPath.toString().startsWith("content://")) {
+                runCatching {
+                    val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    contentResolver.takePersistableUriPermission(uriPath, flags)
+                }.onFailure {
+                    Timber.w(it, "Failed to take persistable URI permission for $uriPath")
+                }
+            }
             backupMetadataDao.insertBackupMetadata(
                 BackupMetadataEntity(
                     key = 1,
                     uriString = uriPath.toString(),
-                    displayPath = uriPath.path!!,
+                    displayPath = uriPath.path ?: uriPath.toString(),
                     lastBackupDate = null,
                     createdOn = Date()
                 )

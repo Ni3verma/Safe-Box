@@ -73,14 +73,10 @@ class MainViewModel @Inject constructor(
         initialValue = LoadingState.Initial
     )
 
-    /**
-     * emits value only when user changes the setting from settings screen.
-     * It does not replay the last value.
-     * */
-    val isPrivacyEnabled = settingsDataStore.isPrivacyEnabledFlow.shareIn(
+    val isPrivacyEnabled: StateFlow<Boolean> = settingsDataStore.isPrivacyEnabledFlow.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
-        replay = 0
+        initialValue = true
     )
 
     /**

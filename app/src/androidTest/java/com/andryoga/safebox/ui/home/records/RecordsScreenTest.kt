@@ -220,7 +220,8 @@ class RecordsScreenTest {
             }
         }
 
-        composeTestRule.onNode(hasScrollToIndexAction()).performScrollToIndex(50)
+        composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
+            .performScrollToIndex(50)
         composeTestRule.onNodeWithText("LAST_RECORD_INDEX_50").assertIsDisplayed()
     }
 }

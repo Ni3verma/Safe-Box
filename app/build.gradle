@@ -168,7 +168,9 @@ dependencies {
     implementation libs.bundles.room
 
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
     kspAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.androidx.hilt.compiler)
     implementation libs.bundles.hilt
 
     implementation platform(libs.androidx.compose.bom)

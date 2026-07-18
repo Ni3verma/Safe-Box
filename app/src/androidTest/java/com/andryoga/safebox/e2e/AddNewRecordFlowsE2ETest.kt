@@ -13,13 +13,16 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,6 +54,12 @@ class AddNewRecordFlowsE2ETest {
     @Inject
     lateinit var safeBoxDatabase: SafeBoxDatabase
 
+    @Inject
+    lateinit var settingsDataStore: SettingsDataStore
+
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
@@ -58,14 +67,27 @@ class AddNewRecordFlowsE2ETest {
         hiltRule.inject()
     }
 
+    @After
+    fun tearDown() {
+        runBlocking {
+            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+            activeSessionManager.setPaused(true)
+        }
+    }
+
     @Test
-    fun addNewLoginRecord_shouldSaveAndAppearInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun addNewLoginRecord_shouldSaveAndAppearInRecordsList() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
         val targetTitle = "E2E Login Title"
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -106,13 +128,15 @@ class AddNewRecordFlowsE2ETest {
     }
 
     @Test
-    fun addNewNoteRecord_shouldSaveAndAppearInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun addNewNoteRecord_shouldSaveAndAppearInRecordsList() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
         val targetTitle = "E2E Note Title"
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -144,13 +168,15 @@ class AddNewRecordFlowsE2ETest {
     }
 
     @Test
-    fun addNewBankCardRecord_shouldSaveAndAppearInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun addNewBankCardRecord_shouldSaveAndAppearInRecordsList() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
         val targetTitle = "E2E Card Title"
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -174,7 +200,7 @@ class AddNewRecordFlowsE2ETest {
                     substring = true
                 )
             )
-                .performTextInput("4111222233334444")
+                .performTextInput("1122334455667788")
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
@@ -182,13 +208,15 @@ class AddNewRecordFlowsE2ETest {
     }
 
     @Test
-    fun addNewBankAccountRecord_shouldSaveAndAppearInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun addNewBankAccountRecord_shouldSaveAndAppearInRecordsList() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
         val targetTitle = "E2E Bank Account Title"
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->

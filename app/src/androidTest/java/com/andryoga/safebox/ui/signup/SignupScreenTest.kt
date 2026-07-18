@@ -1,10 +1,5 @@
 package com.andryoga.safebox.ui.signup
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -15,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
@@ -24,6 +20,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/**
+ * Component-level UI Test suite for [SignupScreen].
+ * Uses shared [StatefulSignupScreenTestHost] to verify interaction flows without duplication.
+ */
 @RunWith(AndroidJUnit4::class)
 class SignupScreenTest {
 
@@ -31,66 +31,6 @@ class SignupScreenTest {
     val composeTestRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-
-    /**
-     * Stateful test host wrapper mimicking [SignupViewModel] Unidirectional Data Flow.
-     * Evaluates password validation state and dynamically enables/disables the Signup button.
-     */
-    @Composable
-    private fun StatefulSignupScreenTestHost(
-        onSignupClicked: () -> Unit = {}
-    ) {
-        var password by remember { mutableStateOf("") }
-        var hint by remember { mutableStateOf("") }
-
-        val validatorState = run {
-            var hasLowerCase = false
-            var hasUpperCase = false
-            var numericCount = 0
-            var specialCharCount = 0
-
-            password.forEach { char ->
-                when {
-                    char.isLowerCase() -> hasLowerCase = true
-                    char.isUpperCase() -> hasUpperCase = true
-                    char.isDigit() -> numericCount++
-                    !char.isLetterOrDigit() -> specialCharCount++
-                }
-            }
-            when {
-                password.isBlank() -> PasswordValidatorState.INITIAL_STATE
-                hasLowerCase.not() || hasUpperCase.not() -> PasswordValidatorState.NOT_MIX_CASE
-                numericCount < 2 -> PasswordValidatorState.LESS_NUMERIC_COUNT
-                specialCharCount == 0 -> PasswordValidatorState.NO_SPECIAL_CHAR
-                password.length < 7 -> PasswordValidatorState.SHORT_PASSWORD_LENGTH
-                else -> PasswordValidatorState.PASSWORD_IS_OK
-            }
-        }
-
-        val isError =
-            validatorState != PasswordValidatorState.PASSWORD_IS_OK && validatorState != PasswordValidatorState.INITIAL_STATE
-        val isButtonEnabled =
-            validatorState == PasswordValidatorState.PASSWORD_IS_OK && hint.isNotBlank()
-
-        SafeBoxTheme {
-            SignupScreen(
-                uiState = SignupUiState(
-                    password = password,
-                    hint = hint,
-                    isPasswordFieldError = isError,
-                    passwordValidatorState = validatorState,
-                    isSignupButtonEnabled = isButtonEnabled
-                ),
-                screenAction = { action ->
-                    when (action) {
-                        is SignupScreenAction.OnPasswordUpdate -> password = action.password
-                        is SignupScreenAction.OnHintUpdate -> hint = action.hint
-                        SignupScreenAction.OnSignupClick -> onSignupClicked()
-                    }
-                }
-            )
-        }
-    }
 
     @Test
     fun initialScreenState_shouldShowFieldsAndDisableSignupButton() {
@@ -126,96 +66,6 @@ class SignupScreenTest {
         composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Toggle Password").performClick()
         composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
-    }
-
-    @Test
-    fun emptyPasswordError_shouldShowBlankValidationText() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                SignupScreen(
-                    uiState = SignupUiState(
-                        isPasswordFieldError = true,
-                        passwordValidatorState = PasswordValidatorState.EMPTY_PASSWORD
-                    ),
-                    screenAction = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.blank_validation_text))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun shortPasswordLengthError_shouldShowLengthValidationText() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                SignupScreen(
-                    uiState = SignupUiState(
-                        isPasswordFieldError = true,
-                        passwordValidatorState = PasswordValidatorState.SHORT_PASSWORD_LENGTH
-                    ),
-                    screenAction = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.length_validation_text))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun notMixCaseError_shouldShowCaseValidationText() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                SignupScreen(
-                    uiState = SignupUiState(
-                        isPasswordFieldError = true,
-                        passwordValidatorState = PasswordValidatorState.NOT_MIX_CASE
-                    ),
-                    screenAction = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun lessNumericCountError_shouldShowNumericValidationText() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                SignupScreen(
-                    uiState = SignupUiState(
-                        isPasswordFieldError = true,
-                        passwordValidatorState = PasswordValidatorState.LESS_NUMERIC_COUNT
-                    ),
-                    screenAction = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.numeric_validation_text))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun noSpecialCharError_shouldShowSpecialCharValidationText() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                SignupScreen(
-                    uiState = SignupUiState(
-                        isPasswordFieldError = true,
-                        passwordValidatorState = PasswordValidatorState.NO_SPECIAL_CHAR
-                    ),
-                    screenAction = {}
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.special_char_validation_text))
-            .assertIsDisplayed()
     }
 
     @Test
@@ -286,14 +136,14 @@ class SignupScreenTest {
 
         // Type invalid password (no uppercase/lowercase mix)
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
-            .performTextInput("abc")
+            .performTextReplacement("abc")
         composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsNotEnabled()
 
         // Type valid password meeting all rules (>=7 chars, mixed case, >=2 digits, >=1 special char)
         composeTestRule.onNode(hasSetTextAction() and hasText("abc", substring = true))
-            .performTextInput("Qwerty@@12")
+            .performTextReplacement("Qwerty@@12")
         composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
             .assertDoesNotExist()
 

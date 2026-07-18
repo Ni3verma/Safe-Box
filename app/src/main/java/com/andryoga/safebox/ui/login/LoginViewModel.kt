@@ -36,6 +36,7 @@ class LoginViewModel @Inject constructor(
             LoginScreenAction.ShowHintClicked -> getHintFromDb()
             LoginScreenAction.BiometricSuccess -> onBiometricSuccess()
             LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
+            LoginScreenAction.BiometricError -> onBiometricError()
         }
     }
 
@@ -56,6 +57,15 @@ class LoginViewModel @Inject constructor(
         Timber.i("biometric success")
         viewModelScope.launch {
             onAuthSuccess(withBiometric = true)
+        }
+    }
+
+    private fun onBiometricError() {
+        Timber.i("biometric error or cancelled")
+        _uiState.update {
+            it.copy(
+                canUnlockWithBiometric = false
+            )
         }
     }
 
@@ -88,7 +98,8 @@ class LoginViewModel @Inject constructor(
         userDetailsRepository.onAuthSuccess(withBiometric = withBiometric)
         _uiState.update {
             it.copy(
-                userAuthState = UserAuthState.VERIFIED
+                userAuthState = UserAuthState.VERIFIED,
+                canUnlockWithBiometric = false
             )
         }
     }

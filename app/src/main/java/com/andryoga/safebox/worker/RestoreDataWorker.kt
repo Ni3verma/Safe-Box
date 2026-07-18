@@ -2,6 +2,7 @@ package com.andryoga.safebox.worker
 
 import android.content.Context
 import androidx.core.net.toUri
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.analytics.AnalyticsHelper
@@ -24,6 +25,8 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -32,9 +35,11 @@ import java.io.ObjectInputStream
 import java.util.Date
 import javax.crypto.BadPaddingException
 
-class RestoreDataWorker(
-    context: Context,
-    params: WorkerParameters,
+@HiltWorker
+class RestoreDataWorker
+@AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val safeBoxDatabase: SafeBoxDatabase,
@@ -56,41 +61,71 @@ class RestoreDataWorker(
 
     override suspend fun doWork(): Result {
         startTime = System.currentTimeMillis()
-        inputPassword = inputData.getString(CommonConstants.RESTORE_PARAM_PASSWORD)
-            ?: throw IllegalArgumentException("expected password input was not received")
-        val fileUri = inputData.getString(CommonConstants.RESTORE_PARAM_FILE_URI)
-            ?: throw IllegalArgumentException("expected file uri input was not received")
+        return try {
+            inputPassword = inputData.getString(CommonConstants.RESTORE_PARAM_PASSWORD)
+                ?: throw IllegalArgumentException("expected password input was not received")
+            val fileUri = inputData.getString(CommonConstants.RESTORE_PARAM_FILE_URI)
+                ?: throw IllegalArgumentException("expected file uri input was not received")
 
-        recordTime("got input pswrd and file uri")
+            recordTime("got input pswrd and file uri")
 
-        ObjectInputStream(
-            applicationContext.contentResolver.openInputStream(fileUri.toUri())
-        ).use {
-            val fileObject = it.readObject()
-            if (fileObject !is Map<*, *>) {
-                throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
-            }
-
-            importMap = fileObject as Map<String, ByteArray?>
-            val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
-            val creationDate = importMap[CommonConstants.CREATION_DATE_KEY]!![0].toLong()
-            Timber.i(
-                "$localTag version = $version, " +
-                        "created on : ${Utils.getFormattedDate(Date(creationDate))}"
-            )
-            recordTime("file read to map object")
-            try {
-                startRestore()
-            } catch (badPaddingException: BadPaddingException) {
-                Timber.e(badPaddingException, "wrong password entered for restore")
-                analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
-                    param(AnalyticsParam.VERSION, version.toDouble())
+            val uri = fileUri.toUri()
+            val inputStream =
+                if (uri.scheme == "file" || uri.scheme == null || (uri.scheme != "content" && uri.path != null)) {
+                    val path =
+                        uri.path ?: throw IllegalArgumentException("Restore file path is null")
+                    java.io.FileInputStream(java.io.File(path))
+                } else {
+                    applicationContext.contentResolver.openInputStream(uri)
+                        ?: throw IllegalArgumentException("Could not open input stream for $uri")
                 }
-                return Result.failure()
-            }
-        }
 
-        return Result.success()
+            ObjectInputStream(inputStream).use {
+                val fileObject = it.readObject()
+                if (fileObject !is Map<*, *>) {
+                    throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
+                }
+
+                importMap = fileObject as Map<String, ByteArray?>
+                val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+                val creationDate = importMap[CommonConstants.CREATION_DATE_KEY]!![0].toLong()
+                Timber.i(
+                    "$localTag version = $version, " +
+                            "created on : ${Utils.getFormattedDate(Date(creationDate))}"
+                )
+                recordTime("file read to map object")
+                startRestore()
+            }
+
+            Result.success()
+        } catch (badPaddingException: BadPaddingException) {
+            Timber.e(badPaddingException, "wrong password entered for restore")
+            val version = runCatching {
+                if (::importMap.isInitialized) importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+                    .toDouble() else 0.0
+            }.getOrNull() ?: 0.0
+            analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
+                param(AnalyticsParam.VERSION, version)
+            }
+            Result.failure()
+        } catch (exception: Exception) {
+            onRestoreError(exception)
+            Result.failure()
+        }
+    }
+
+    private fun onRestoreError(exception: Exception) {
+        Timber.e(
+            exception,
+            "$localTag exception occurred : ${exception.localizedMessage}"
+        )
+        val version = runCatching {
+            if (::importMap.isInitialized) importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+                .toDouble() else 0.0
+        }.getOrNull() ?: 0.0
+        analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
+            param(AnalyticsParam.VERSION, version)
+        }
     }
 
     private fun startRestore() {

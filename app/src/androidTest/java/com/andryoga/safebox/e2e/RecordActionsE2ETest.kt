@@ -14,6 +14,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -26,9 +27,11 @@ import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -37,7 +40,7 @@ import java.util.Date
 import javax.inject.Inject
 
 /**
- * End-to-End (E2E) Hilt UI Test suite verifying editing, deleting, sharing, and back-navigation workflows for existing records.
+ * End-to-End (E2E) Hilt UI Test suite verifying editing, deleting, and back-navigation workflows for existing records.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -73,6 +76,12 @@ class RecordActionsE2ETest {
     @Inject
     lateinit var bankAccountDataRepository: BankAccountDataRepository
 
+    @Inject
+    lateinit var settingsDataStore: SettingsDataStore
+
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
@@ -80,31 +89,45 @@ class RecordActionsE2ETest {
         hiltRule.inject()
     }
 
+    @After
+    fun tearDown() {
+        runBlocking {
+            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+            activeSessionManager.setPaused(true)
+        }
+    }
+
     @Test
-    fun editExistingLoginRecord_shouldSaveUpdatedTitleAndReflectInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+    fun editExistingLoginRecord_shouldSaveUpdatedTitleAndReflectInRecordsList() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+
+            val initialTitle = "Original Login Record"
+            loginDataRepository.upsertLoginData(
+                LoginData(
+                    id = 701,
+                    title = initialTitle,
+                    url = null,
+                    userId = "user@test.com",
+                    password = "secret",
+                    notes = null,
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
 
         val initialTitle = "Original Login Record"
         val updatedTitle = "Updated Login Record"
         val updatedUserId = "updated@user.com"
-        loginDataRepository.upsertLoginData(
-            LoginData(
-                id = 701,
-                title = initialTitle,
-                url = null,
-                userId = "user@test.com",
-                password = "secret",
-                notes = null,
-                creationDate = Date(),
-                updateDate = Date()
-            )
-        )
-        kotlinx.coroutines.yield()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -140,27 +163,29 @@ class RecordActionsE2ETest {
     }
 
     @Test
-    fun editExistingNoteRecord_shouldSaveUpdatedTitleAndNotesAndReflectInRecordsList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
-
+    fun editExistingNoteRecord_shouldSaveUpdatedTitleAndNotesAndReflectInRecordsList() {
         val initialTitle = "Original Note Record"
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+
+            secureNoteDataRepository.upsertSecureNoteData(
+                NoteData(
+                    id = 711,
+                    title = initialTitle,
+                    notes = "old notes",
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
+
         val updatedTitle = "Updated Note Record"
         val updatedNotes = "Updated confidential notes body"
-        secureNoteDataRepository.upsertSecureNoteData(
-            NoteData(
-                id = 711,
-                title = initialTitle,
-                notes = "old notes",
-                creationDate = Date(),
-                updateDate = Date()
-            )
-        )
-        kotlinx.coroutines.yield()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -195,8 +220,9 @@ class RecordActionsE2ETest {
     }
 
     @Test
-    fun editExistingBankCardRecord_shouldSaveUpdatedTitleAndNumberAndReflectInRecordsList() =
-        runTest {
+    fun editExistingBankCardRecord_shouldSaveUpdatedTitleAndNumberAndReflectInRecordsList() {
+        val initialTitle = "Original Card Record"
+        runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
@@ -204,14 +230,11 @@ class RecordActionsE2ETest {
                 preferenceProvider
             )
 
-            val initialTitle = "Original Card Record"
-            val updatedTitle = "Updated Card Record"
-            val updatedNumber = "5555666677778888"
             bankCardDataRepository.upsertBankCardData(
                 CardData(
                     id = 712,
                     title = initialTitle,
-                    number = "4111222233334444",
+                    number = "1122334455667788",
                     name = null,
                     expiryDate = null,
                     cvv = null,
@@ -221,43 +244,47 @@ class RecordActionsE2ETest {
                     updateDate = Date()
                 )
             )
-            kotlinx.coroutines.yield()
-
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                E2ETestUtils.unlockApp(composeTestRule, context)
-
-                composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
-                composeTestRule.onNodeWithText(initialTitle).performClick()
-
-                val editDesc = context.getString(R.string.cd_action_edit)
-                composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
-                composeTestRule.onNodeWithContentDescription(editDesc).performClick()
-
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.title),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement(updatedTitle)
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.number),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement(updatedNumber)
-
-                composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-
-                composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
-                composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
-            }
         }
 
+        val updatedTitle = "Updated Card Record"
+        val updatedNumber = "9988776655443322"
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(initialTitle).performClick()
+
+            val editDesc = context.getString(R.string.cd_action_edit)
+            composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
+            composeTestRule.onNodeWithContentDescription(editDesc).performClick()
+
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.title),
+                    substring = true
+                )
+            )
+                .performTextReplacement(updatedTitle)
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.number),
+                    substring = true
+                )
+            )
+                .performTextReplacement(updatedNumber)
+
+            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+
+            composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
+        }
+    }
+
     @Test
-    fun editExistingBankAccountRecord_shouldSaveUpdatedTitleAndAccountNumberAndReflectInRecordsList() =
-        runTest {
+    fun editExistingBankAccountRecord_shouldSaveUpdatedTitleAndAccountNumberAndReflectInRecordsList() {
+        val initialTitle = "Original Account Record"
+        runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
@@ -265,9 +292,6 @@ class RecordActionsE2ETest {
                 preferenceProvider
             )
 
-            val initialTitle = "Original Account Record"
-            val updatedTitle = "Updated Account Record"
-            val updatedAccountNumber = "9988776655"
             bankAccountDataRepository.upsertBankAccountData(
                 BankAccountData(
                     id = 713,
@@ -285,63 +309,67 @@ class RecordActionsE2ETest {
                     updateDate = Date()
                 )
             )
-            kotlinx.coroutines.yield()
-
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                E2ETestUtils.unlockApp(composeTestRule, context)
-
-                composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
-                composeTestRule.onNodeWithText(initialTitle).performClick()
-
-                val editDesc = context.getString(R.string.cd_action_edit)
-                composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
-                composeTestRule.onNodeWithContentDescription(editDesc).performClick()
-
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.title),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement(updatedTitle)
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.account_number),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement(updatedAccountNumber)
-
-                composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-
-                composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
-                composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
-            }
         }
 
-    @Test
-    fun deleteExistingLoginRecord_shouldRemoveRecordFromList() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
+        val updatedTitle = "Updated Account Record"
+        val updatedAccountNumber = "9988776655"
 
-        val targetTitle = "Login Record To Delete"
-        loginDataRepository.upsertLoginData(
-            LoginData(
-                id = 702,
-                title = targetTitle,
-                url = null,
-                userId = "delete@test.com",
-                password = "secret",
-                notes = null,
-                creationDate = Date(),
-                updateDate = Date()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(initialTitle).performClick()
+
+            val editDesc = context.getString(R.string.cd_action_edit)
+            composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
+            composeTestRule.onNodeWithContentDescription(editDesc).performClick()
+
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.title),
+                    substring = true
+                )
             )
-        )
-        kotlinx.coroutines.yield()
+                .performTextReplacement(updatedTitle)
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.account_number),
+                    substring = true
+                )
+            )
+                .performTextReplacement(updatedAccountNumber)
+
+            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+
+            composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun deleteExistingLoginRecord_shouldRemoveRecordFromList() {
+        val targetTitle = "Login Record To Delete"
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+
+            loginDataRepository.upsertLoginData(
+                LoginData(
+                    id = 702,
+                    title = targetTitle,
+                    url = null,
+                    userId = "delete@test.com",
+                    password = "secret",
+                    notes = null,
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -364,29 +392,30 @@ class RecordActionsE2ETest {
     }
 
     @Test
-    fun backButtonClickInEditMode_shouldPopBackToRecordsScreenWithoutSaving() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
-
+    fun backButtonClickInEditMode_shouldPopBackToRecordsScreenWithoutSaving() {
         val targetTitle = "Record For Back Test"
         val uncommittedTitle = "Uncommitted Edit Title"
-        loginDataRepository.upsertLoginData(
-            LoginData(
-                id = 703,
-                title = targetTitle,
-                url = null,
-                userId = "back@test.com",
-                password = "secret",
-                notes = null,
-                creationDate = Date(),
-                updateDate = Date()
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
             )
-        )
-        kotlinx.coroutines.yield()
+
+            loginDataRepository.upsertLoginData(
+                LoginData(
+                    id = 703,
+                    title = targetTitle,
+                    url = null,
+                    userId = "back@test.com",
+                    password = "secret",
+                    notes = null,
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
@@ -418,28 +447,29 @@ class RecordActionsE2ETest {
     }
 
     @Test
-    fun backButtonClickInViewMode_shouldPopBackToRecordsScreen() = runTest {
-        E2ETestUtils.setupUnlockedHomeState(
-            safeBoxDatabase,
-            userDetailsRepository,
-            encryptedPreferenceProvider,
-            preferenceProvider
-        )
-
+    fun backButtonClickInViewMode_shouldPopBackToRecordsScreen() {
         val targetTitle = "Record For View Back Test"
-        loginDataRepository.upsertLoginData(
-            LoginData(
-                id = 704,
-                title = targetTitle,
-                url = null,
-                userId = "viewback@test.com",
-                password = "secret",
-                notes = null,
-                creationDate = Date(),
-                updateDate = Date()
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
             )
-        )
-        kotlinx.coroutines.yield()
+
+            loginDataRepository.upsertLoginData(
+                LoginData(
+                    id = 704,
+                    title = targetTitle,
+                    url = null,
+                    userId = "viewback@test.com",
+                    password = "secret",
+                    notes = null,
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)

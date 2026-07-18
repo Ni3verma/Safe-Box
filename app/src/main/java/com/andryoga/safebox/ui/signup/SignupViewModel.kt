@@ -36,14 +36,6 @@ class SignupViewModel @Inject constructor(
 
 
     init {
-        if (isDebug) {
-            _uiState.value = _uiState.value.copy(
-                password = "Qwerty@@135",
-                hint = "This is a hint",
-                passwordValidatorState = PasswordValidatorState.PASSWORD_IS_OK,
-                isSignupButtonEnabled = true
-            )
-        }
 
         uiState.map {
             SignupButtonEnableParams(

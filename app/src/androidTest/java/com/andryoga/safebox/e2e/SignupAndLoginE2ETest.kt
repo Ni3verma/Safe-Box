@@ -14,14 +14,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -60,6 +63,12 @@ class SignupAndLoginE2ETest {
     @Inject
     lateinit var safeBoxDatabase: SafeBoxDatabase
 
+    @Inject
+    lateinit var settingsDataStore: SettingsDataStore
+
+    @Inject
+    lateinit var activeSessionManager: ActiveSessionManager
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
@@ -67,37 +76,50 @@ class SignupAndLoginE2ETest {
         hiltRule.inject()
     }
 
+    @After
+    fun tearDown() {
+        runBlocking {
+            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+            activeSessionManager.setPaused(true)
+        }
+    }
+
     @Test
-    fun firstLaunch_signupFlow_shouldPersistCredentialsAndNavigateToHomeWithZeroRecords() =
-        runTest {
-            // Given: Fresh app state with zero records and signup required
+    fun firstLaunch_signupFlow_shouldPersistCredentialsAndNavigateToHomeWithZeroRecords() {
+        // Given: Fresh app state with zero records and signup required
+        runBlocking {
             encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
             safeBoxDatabase.clearAllTables()
+        }
 
-            ActivityScenario.launch(MainActivity::class.java).use { _ ->
-                // 1. Verify Signup Screen is displayed on first boot
-                composeTestRule.onNodeWithText(context.getString(R.string.welcome))
-                    .assertIsDisplayed()
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            // 1. Verify Signup Screen is displayed on first boot
+            composeTestRule.onNodeWithText(context.getString(R.string.welcome))
+                .assertIsDisplayed()
 
-                // 2. Enter valid master password and hint (using performTextReplacement to override any debug pre-fills)
-                composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
-                    .performTextReplacement("Qwerty@@123")
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.hint),
-                        substring = true
-                    )
+            // 2. Enter valid master password and hint (using performTextReplacement to override any debug pre-fills)
+            composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+                .performTextReplacement("Qwerty@@123")
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.hint),
+                    substring = true
                 )
-                    .performTextReplacement("E2E hint")
+            )
+                .performTextReplacement("E2E hint")
 
-                // 3. Click Sign Up
-                composeTestRule.onNodeWithText(context.getString(R.string.signup)).performClick()
+            // 3. Click Sign Up
+            composeTestRule.onNodeWithText(context.getString(R.string.signup)).performClick()
 
-                // 4. Verify clean transition to Home screen showing 0 records state
-                composeTestRule.onNodeWithText(context.getString(R.string.no_record))
-                    .assertIsDisplayed()
+            // 4. Verify clean transition to Home screen showing 0 records state
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record))
+                .assertIsDisplayed()
 
-                // 5. Verify database and preference persistence directly from injected singletons
+            // 5. Verify database and preference persistence directly from injected singletons
+            runBlocking {
                 val isSignupStillRequired = encryptedPreferenceProvider.getBooleanPref(
                     CommonConstants.IS_SIGN_UP_REQUIRED,
                     true
@@ -108,41 +130,43 @@ class SignupAndLoginE2ETest {
                 assertThat(isPasswordCorrect).isTrue()
             }
         }
+    }
 
     @Test
-    fun subsequentLaunch_loginFlow_shouldRejectWrongPasswordAndNavigateToHomeOnCorrectPassword() =
-        runTest {
-            // Given: Pre-seeded credentials using E2ETestUtils (IS_SIGN_UP_REQUIRED = false, biometric count = 0)
+    fun subsequentLaunch_loginFlow_shouldRejectWrongPasswordAndNavigateToHomeOnCorrectPassword() {
+        // Given: Pre-seeded credentials using E2ETestUtils (IS_SIGN_UP_REQUIRED = false, biometric count = 0)
+        runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
                 encryptedPreferenceProvider,
                 preferenceProvider
             )
-
-            ActivityScenario.launch(MainActivity::class.java).use { _ ->
-                // 1. Verify Login Screen is displayed on subsequent launch
-                composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
-                    .assertIsDisplayed()
-
-                // 2. Attempt login with wrong password and verify rejection
-                composeTestRule.onNode(
-                    hasSetTextAction() and hasText(
-                        context.getString(R.string.password),
-                        substring = true
-                    )
-                )
-                    .performTextReplacement("WrongPass123")
-                composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
-                composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
-                    .assertIsDisplayed()
-
-                // 3. Enter correct master password and submit via E2ETestUtils.unlockApp
-                E2ETestUtils.unlockApp(composeTestRule, context)
-
-                // 4. Verify successful authentication unlocks and opens Home screen showing 0 records
-                composeTestRule.onNodeWithText(context.getString(R.string.no_record))
-                    .assertIsDisplayed()
-            }
         }
+
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            // 1. Verify Login Screen is displayed on subsequent launch
+            composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
+                .assertIsDisplayed()
+
+            // 2. Attempt login with wrong password and verify rejection
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.password),
+                    substring = true
+                )
+            )
+                .performTextReplacement("WrongPass123")
+            composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+            composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
+                .assertIsDisplayed()
+
+            // 3. Enter correct master password and submit via E2ETestUtils.unlockApp
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            // 4. Verify successful authentication unlocks and opens Home screen showing 0 records
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record))
+                .assertIsDisplayed()
+        }
+    }
 }

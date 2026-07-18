@@ -18,35 +18,111 @@ class MigrationTest {
         FrameworkSQLiteOpenHelperFactory()
     )
 
-    // example test for future ref
     @Test
-    fun migration_4_5() {
-//        var db = helper.createDatabase(TEST_DB, 4)
-//        db.execSQL(
-//            """
-//        INSERT INTO bank_card_data (title, number, expiryDate, creationDate, updateDate)
-//        VALUES ('Test Card', '12345678', '11/28', 1704312000, 1704312000)
-//        """.trimIndent()
-//        )
-//
-//        db.execSQL(
-//            """
-//        INSERT INTO bank_card_data (title, number, expiryDate, creationDate, updateDate)
-//        VALUES ('Space Card', '87654321', ' 05/25 ', 1704312000, 1704312000)
-//        """.trimIndent()
-//        )
-//        db.close()
-//
-//        db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
-//
-//        val cursor = db.query("SELECT title, expiryDate FROM bank_card_data ORDER BY title ASC")
-//
-//        cursor.moveToFirst()
-//        assertEquals("0525", cursor.getString(cursor.getColumnIndex("expiryDate")))
-//
-//        cursor.moveToNext()
-//        assertEquals("1128", cursor.getString(cursor.getColumnIndex("expiryDate")))
-//
-//        cursor.close()
+    fun migration_1_2_shouldMigrateLoginCardAndBankAccountTablesWithoutDataLoss() {
+        var db = helper.createDatabase(TEST_DB, 1)
+        db.execSQL(
+            "INSERT INTO login_data (`title`, `url`, `password`, `notes`, `userId`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Apple ID', 'apple.com', 'secret', 'my note', 'user@apple.com', 1000, 2000)"
+        )
+        db.execSQL(
+            "INSERT INTO bank_card_data (`title`, `name`, `number`, `pin`, `cvv`, `expiryDate`, `notes`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Visa Card', 'John Doe', '12345678', '1234', '999', '12/28', 'Card notes', 1000, 2000)"
+        )
+        db.execSQL(
+            "INSERT INTO bank_account_data (`title`, `accountNumber`, `customerName`, `customerId`, `branchCode`, `branchName`, `branchAddress`, `ifscCode`, `micrCode`, `notes`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Checking Account', '9876543210', 'John Doe', 'C-1', 'B-1', 'Main', 'Address', 'IFSC001', 'MICR001', 'Account notes', 1000, 2000)"
+        )
+        db.close()
+
+        db = helper.runMigrationsAndValidate(TEST_DB, 2, true, Migration.MIGRATION_1_2)
+
+        val loginCursor = db.query("SELECT * FROM login_data WHERE title = 'Apple ID'")
+        loginCursor.moveToFirst()
+        assert(loginCursor.getString(loginCursor.getColumnIndexOrThrow("userId")) == "user@apple.com")
+        assert(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate")) == 1000L)
+        loginCursor.close()
+
+        val cardCursor = db.query("SELECT * FROM bank_card_data WHERE title = 'Visa Card'")
+        cardCursor.moveToFirst()
+        assert(cardCursor.getString(cardCursor.getColumnIndexOrThrow("number")) == "12345678")
+        cardCursor.close()
+
+        val accountCursor =
+            db.query("SELECT * FROM bank_account_data WHERE title = 'Checking Account'")
+        accountCursor.moveToFirst()
+        assert(accountCursor.getString(accountCursor.getColumnIndexOrThrow("accountNumber")) == "9876543210")
+        accountCursor.close()
+
+        db.close()
+    }
+
+    @Test
+    fun migration_2_3_shouldSetCreationDateEqualToUpdateDateAcrossTables() {
+        var db = helper.createDatabase(TEST_DB, 2)
+        db.execSQL(
+            "INSERT INTO login_data (`title`, `url`, `password`, `notes`, `userId`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Google ID', 'google.com', 'pass', 'notes', 'user@google.com', 1000, 5000)"
+        )
+        db.execSQL(
+            "INSERT INTO bank_card_data (`title`, `name`, `number`, `pin`, `cvv`, `expiryDate`, `notes`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Mastercard', 'Jane Doe', '87654321', '4321', '888', '11/27', 'notes', 2000, 6000)"
+        )
+        db.execSQL(
+            "INSERT INTO bank_account_data (`title`, `accountNumber`, `customerName`, `customerId`, `branchCode`, `branchName`, `branchAddress`, `ifscCode`, `micrCode`, `notes`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Savings Account', '1122334455', 'Jane Doe', 'C-2', 'B-2', 'East', 'Addr', 'IFSC002', 'MICR002', 'notes', 3000, 7000)"
+        )
+        db.execSQL(
+            "INSERT INTO secure_note_data (`title`, `notes`, `creationDate`, `updateDate`) " +
+                    "VALUES ('Secret Note', 'My confidential note', 4000, 8000)"
+        )
+        db.close()
+
+        db = helper.runMigrationsAndValidate(TEST_DB, 3, true, Migration.MIGRATION_2_3)
+
+        val loginCursor =
+            db.query("SELECT creationDate, updateDate FROM login_data WHERE title = 'Google ID'")
+        loginCursor.moveToFirst()
+        assert(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate")) == 5000L)
+        loginCursor.close()
+
+        val cardCursor =
+            db.query("SELECT creationDate, updateDate FROM bank_card_data WHERE title = 'Mastercard'")
+        cardCursor.moveToFirst()
+        assert(cardCursor.getLong(cardCursor.getColumnIndexOrThrow("creationDate")) == 6000L)
+        cardCursor.close()
+
+        val accountCursor =
+            db.query("SELECT creationDate, updateDate FROM bank_account_data WHERE title = 'Savings Account'")
+        accountCursor.moveToFirst()
+        assert(accountCursor.getLong(accountCursor.getColumnIndexOrThrow("creationDate")) == 7000L)
+        accountCursor.close()
+
+        val noteCursor =
+            db.query("SELECT creationDate, updateDate FROM secure_note_data WHERE title = 'Secret Note'")
+        noteCursor.moveToFirst()
+        assert(noteCursor.getLong(noteCursor.getColumnIndexOrThrow("creationDate")) == 8000L)
+        noteCursor.close()
+
+        db.close()
+    }
+
+    @Test
+    fun migration_3_4_shouldCreateBackupMetadataTable() {
+        var db = helper.createDatabase(TEST_DB, 3)
+        db.close()
+
+        db = helper.runMigrationsAndValidate(TEST_DB, 4, true, Migration.MIGRATION_3_4)
+
+        db.execSQL(
+            "INSERT INTO backup_metadata (`uriString`, `displayPath`, `lastBackupDate`, `createdOn`) " +
+                    "VALUES ('content://backups', '/sdcard/backups', 123456789, 123456789)"
+        )
+        val cursor = db.query("SELECT * FROM backup_metadata WHERE uriString = 'content://backups'")
+        cursor.moveToFirst()
+        assert(cursor.getString(cursor.getColumnIndexOrThrow("displayPath")) == "/sdcard/backups")
+        cursor.close()
+
+        db.close()
     }
 }

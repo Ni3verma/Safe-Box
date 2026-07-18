@@ -23,12 +23,13 @@ fun canAuthenticateUsingBiometric(context: Context): Boolean {
 @Composable
 fun BiometricAuthHandler(
     onSuccess: () -> Unit,
+    onErrorOrCancel: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
 
-    val biometricPrompt: BiometricPrompt = remember(activity) {
+    val biometricPrompt: BiometricPrompt = remember(activity, onSuccess, onErrorOrCancel) {
         BiometricPrompt(
             activity,
             executor,
@@ -38,7 +39,7 @@ fun BiometricAuthHandler(
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    // not handling this for now
+                    onErrorOrCancel()
                 }
             }
         )

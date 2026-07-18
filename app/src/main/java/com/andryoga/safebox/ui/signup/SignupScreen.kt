@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -49,8 +50,10 @@ fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val navigateToHome by viewModel.navigateToHome.collectAsState()
 
-    if (navigateToHome) {
-        onSignupSuccess()
+    LaunchedEffect(navigateToHome) {
+        if (navigateToHome) {
+            onSignupSuccess()
+        }
     }
 
     SignupScreen(

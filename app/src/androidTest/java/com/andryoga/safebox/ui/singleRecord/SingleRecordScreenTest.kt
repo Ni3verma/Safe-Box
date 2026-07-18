@@ -418,7 +418,8 @@ class SingleRecordScreenTest {
                     com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_PASSWORD to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
                         cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
                             label = R.string.password,
-                            isPasswordField = true
+                            isPasswordField = true,
+                            visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
                         ),
                         data = "SecretPass123"
                     )
@@ -439,9 +440,14 @@ class SingleRecordScreenTest {
         }
 
         val toggleDesc = context.getString(R.string.cd_toggle_sensitive_data_visibility)
+        val maskedText = "\u2022".repeat("SecretPass123".length)
         composeTestRule.onNodeWithContentDescription(toggleDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedText) and hasSetTextAction())
+            .assertIsDisplayed() // masked by default
         composeTestRule.onNodeWithContentDescription(toggleDesc).performClick()
         composeTestRule.onNodeWithContentDescription(toggleDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedText) and hasSetTextAction())
+            .assertDoesNotExist() // unmasked after toggle
 
         viewModeState = ViewMode.VIEW
         composeTestRule.waitForIdle()
