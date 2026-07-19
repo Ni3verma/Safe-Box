@@ -70,6 +70,9 @@ class LoginScreenTest {
 
     @Test
     fun clickTogglePasswordIcon_shouldToggleVisualTransformation() {
+        val testPassword = "SecretPass123"
+        val maskedBullet = "\u2022".repeat(testPassword.length)
+
         composeTestRule.setContent {
             SafeBoxTheme {
                 LoginScreen(
@@ -79,11 +82,24 @@ class LoginScreenTest {
             }
         }
 
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
+            .performTextInput(testPassword)
+        composeTestRule.waitForIdle()
+
         val toggleIconDescription = context.getString(R.string.cd_toggle_sensitive_data_visibility)
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedBullet) and hasSetTextAction()).assertIsDisplayed()
+
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).performClick()
         composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
+        composeTestRule.onNode(hasText(testPassword) and hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test

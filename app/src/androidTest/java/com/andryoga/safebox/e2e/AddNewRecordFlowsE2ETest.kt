@@ -214,7 +214,7 @@ class AddNewRecordFlowsE2ETest {
                     substring = true
                 )
             )
-                .performTextInput("1122334455667788")
+                .performTextInput("4111111111111111")
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {

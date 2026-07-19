@@ -57,19 +57,27 @@ class SignupScreenTest {
 
     @Test
     fun clickTogglePasswordIcon_shouldToggleVisualTransformation() {
+        val testPassword = "Secret@123"
+        val maskedBullet = "\u2022".repeat(testPassword.length)
+
         composeTestRule.setContent {
             SafeBoxTheme {
                 SignupScreen(
-                    uiState = SignupUiState(password = "Secret@123"),
+                    uiState = SignupUiState(password = testPassword),
                     screenAction = {}
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Toggle Password").performClick()
+        val toggleIconDesc = context.getString(R.string.cd_toggle_sensitive_data_visibility)
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedBullet) and hasSetTextAction()).assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(testPassword) and hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test

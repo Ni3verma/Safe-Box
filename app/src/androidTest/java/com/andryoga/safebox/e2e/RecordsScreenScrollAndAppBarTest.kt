@@ -169,9 +169,11 @@ class RecordsScreenScrollAndAppBarTest {
                             .fetchSemanticsNodes().isNotEmpty()
             }
 
-            // Scroll down the LazyColumn to index 40 and verify items remain accessible
+            // Scroll down the LazyColumn to index 40 and verify items and Top App Bar remain accessible
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
                 .performScrollToIndex(40)
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithContentDescription(addNewButtonDesc).assertIsDisplayed()
         }
     }
 
@@ -220,14 +222,25 @@ class RecordsScreenScrollAndAppBarTest {
                             .fetchSemanticsNodes().isNotEmpty()
             }
 
+            val headerItemCount = 1
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
-                .performScrollToIndex(combinedSortedSize)
+                .performScrollToIndex(combinedSortedSize + headerItemCount)
             composeTestRule.waitUntil(timeoutMillis = 20000L) {
-                composeTestRule.onAllNodes(hasText(lastRecordTitle, substring = true))
-                    .fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(
+                    hasText(
+                        lastRecordTitle,
+                        substring = true
+                    ) and androidx.compose.ui.test.hasClickAction(),
+                    useUnmergedTree = true
+                ).fetchSemanticsNodes().isNotEmpty()
             }
-            composeTestRule.onNodeWithText(lastRecordTitle, substring = true)
-                .assertIsDisplayed()
+            composeTestRule.onNode(
+                hasText(
+                    lastRecordTitle,
+                    substring = true
+                ) and androidx.compose.ui.test.hasClickAction(),
+                useUnmergedTree = true
+            ).assertIsDisplayed()
         }
     }
 }

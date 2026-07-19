@@ -15,6 +15,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
@@ -34,7 +38,7 @@ class SingleRecordScreenTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
-    fun viewMode_shouldShowActionButtonsAndRenderReadOnlyFields() {
+    fun viewMode_shouldShowActionButtons() {
         composeTestRule.setContent {
             SafeBoxTheme {
                 SingleRecordScreen(
@@ -412,18 +416,14 @@ class SingleRecordScreenTest {
     fun passwordField_inEditModeShouldShowToggleIconAndMaskUnmaskText_andInvisibleInViewMode() {
         var viewModeState by mutableStateOf(ViewMode.EDIT)
         val passwordLayoutPlan =
-            com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-                id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+            LayoutPlan(
+                id = LayoutId.LOGIN,
                 arrangement = listOf(
-                    listOf(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                            com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_PASSWORD
-                        )
-                    )
+                    listOf(LayoutPlan.Field(FieldId.LOGIN_PASSWORD))
                 ),
                 fieldUiState = mapOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_PASSWORD to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                        cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                    FieldId.LOGIN_PASSWORD to FieldUiState(
+                        cell = FieldUiState.Cell(
                             label = R.string.password,
                             isPasswordField = true,
                             visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
@@ -456,6 +456,8 @@ class SingleRecordScreenTest {
         composeTestRule.onNodeWithContentDescription(toggleDesc).assertIsDisplayed()
         composeTestRule.onNode(hasText(maskedText) and hasSetTextAction())
             .assertDoesNotExist() // unmasked after toggle
+        composeTestRule.onNode(hasText("SecretPass123") and hasSetTextAction())
+            .assertIsDisplayed()
 
         viewModeState = ViewMode.VIEW
         composeTestRule.waitForIdle()
@@ -466,18 +468,14 @@ class SingleRecordScreenTest {
     fun copyableField_clickingInViewModeShouldCopyToClipboard() {
         var clipboardEntry: androidx.compose.ui.platform.ClipEntry? = null
 
-        val copyLayoutPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+        val copyLayoutPlan = LayoutPlan(
+            id = LayoutId.LOGIN,
             arrangement = listOf(
-                listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_USER_ID
-                    )
-                )
+                listOf(LayoutPlan.Field(FieldId.LOGIN_USER_ID))
             ),
             fieldUiState = mapOf(
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_USER_ID to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_USER_ID to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.user_id,
                         isCopyable = true
                     ),

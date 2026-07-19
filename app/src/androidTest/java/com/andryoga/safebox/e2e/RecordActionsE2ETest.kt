@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
-import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
@@ -26,7 +25,6 @@ import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
-import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -129,8 +127,7 @@ class RecordActionsE2ETest {
         val updatedTitle = "Updated Login Record"
         val updatedUserId = "updated@user.com"
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -193,8 +190,7 @@ class RecordActionsE2ETest {
         val updatedTitle = "Updated Note Record"
         val updatedNotes = "Updated confidential notes body"
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -246,7 +242,7 @@ class RecordActionsE2ETest {
                 CardData(
                     id = 712,
                     title = initialTitle,
-                    number = "1122334455667788",
+                    number = "CARD-ORIGINAL-1234",
                     name = null,
                     expiryDate = null,
                     cvv = null,
@@ -259,10 +255,9 @@ class RecordActionsE2ETest {
         }
 
         val updatedTitle = "Updated Card Record"
-        val updatedNumber = "9988776655443322"
+        val updatedNumber = "CARD-UPDATED-5678"
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -332,8 +327,7 @@ class RecordActionsE2ETest {
         val updatedTitle = "Updated Account Record"
         val updatedAccountNumber = "9988776655"
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -395,8 +389,7 @@ class RecordActionsE2ETest {
             )
         }
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -447,8 +440,7 @@ class RecordActionsE2ETest {
             )
         }
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
             }
@@ -507,8 +499,7 @@ class RecordActionsE2ETest {
             )
         }
 
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
             }

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.core.app.ActivityScenario
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
@@ -27,9 +28,11 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.e2e.E2ETestUtils.TEST_MASTER_PASSWORD
 import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.ui.MainActivity
 import java.util.Date
 
 /**
@@ -233,34 +236,43 @@ object E2ETestUtils {
     }
 
     /**
-     * Unlocks the app from [LoginScreen] and confirms transition to the Home [RecordsScreen].
+     * Waits until at least one node matching [matcher] exists in the Compose unmerged semantics tree.
+     */
+    private fun waitForNode(
+        composeTestRule: ComposeTestRule,
+        matcher: androidx.compose.ui.test.SemanticsMatcher,
+        timeoutMillis: Long = 5000L
+    ) {
+        composeTestRule.waitUntil(timeoutMillis = timeoutMillis) {
+            runCatching {
+                composeTestRule.onAllNodes(matcher, useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty()
+            }.getOrDefault(false)
+        }
+    }
+
+    /**
+     * Launches [MainActivity], executes [unlockApp] if needed, and scopes the [ActivityScenario] lifecycle.
+     */
+    inline fun launchUnlockedScenario(
+        composeTestRule: ComposeTestRule,
+        context: Context,
+        crossinline block: (ActivityScenario<MainActivity>) -> Unit
+    ) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            unlockApp(composeTestRule, context)
+            block(scenario)
+        }
+    }
+
+    /**
+     * Dismisses any active timeout dialog, verifies the [LoginScreen] or unlocked [RecordsScreen],
+     * inputs the [TEST_MASTER_PASSWORD], and waits for the Home screen to render.
      */
     fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
-        composeTestRule.waitForIdle()
-        runCatching {
-            val timeoutText = context.getString(R.string.timeout_dialog_message)
-            val positiveBtnText = context.getString(R.string.timeout_dialog_positive_button_text)
-            val timeoutNodes = composeTestRule.onAllNodes(
-                androidx.compose.ui.test.hasText(timeoutText),
-                useUnmergedTree = true
-            ).fetchSemanticsNodes()
-            if (timeoutNodes.isNotEmpty()) {
-                val btnNodes = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(positiveBtnText),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes()
-                if (btnNodes.isNotEmpty()) {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(positiveBtnText),
-                        useUnmergedTree = true
-                    ).onFirst().performClick()
-                    composeTestRule.waitForIdle()
-                }
-            }
-        }
         val welcomeBackText = context.getString(R.string.welcome_back)
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
+        composeTestRule.waitUntil(timeoutMillis = 15000L) {
             runCatching {
                 val timeoutNodes = composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_message)),
@@ -302,6 +314,7 @@ object E2ETestUtils {
             return
         }
 
+        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(welcomeBackText), 15000L)
         composeTestRule.onAllNodes(
             androidx.compose.ui.test.hasText(welcomeBackText),
             useUnmergedTree = true
@@ -321,14 +334,11 @@ object E2ETestUtils {
             useUnmergedTree = true
         ).onFirst().performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        waitForNode(
+            composeTestRule,
+            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            25000L
+        )
         composeTestRule.waitForIdle()
     }
 
@@ -341,17 +351,11 @@ object E2ETestUtils {
         optionResId: Int
     ) {
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(
-                        addNewButtonDesc
-                    ),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        waitForNode(
+            composeTestRule,
+            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            25000L
+        )
         composeTestRule.onAllNodes(
             androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
             useUnmergedTree = true
@@ -363,14 +367,7 @@ object E2ETestUtils {
 
         val optionText = context.getString(optionResId)
         val bottomSheetTitle = context.getString(R.string.add_a_new_record)
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(bottomSheetTitle),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(bottomSheetTitle), 25000L)
         composeTestRule.onAllNodes(
             androidx.compose.ui.test.hasText(optionText),
             useUnmergedTree = true

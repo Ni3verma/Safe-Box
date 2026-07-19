@@ -110,15 +110,20 @@ class SignupAndLoginE2ETest {
                 .assertIsDisplayed()
 
             // 2. Enter valid master password and hint (using performTextReplacement to override any debug pre-fills)
-            composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
-                .performTextReplacement("Qwerty@@123")
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.password),
+                    substring = true
+                )
+            )
+                .performTextReplacement(E2ETestUtils.TEST_MASTER_PASSWORD)
             composeTestRule.onNode(
                 hasSetTextAction() and hasText(
                     context.getString(R.string.hint),
                     substring = true
                 )
             )
-                .performTextReplacement("E2E hint")
+                .performTextReplacement(E2ETestUtils.TEST_MASTER_HINT)
             composeTestRule.waitForIdle()
             E2ETestUtils.closeSoftKeyboard(composeTestRule, context)
             composeTestRule.waitForIdle()
@@ -150,7 +155,8 @@ class SignupAndLoginE2ETest {
                 )
                 assertThat(isSignupStillRequired).isFalse()
 
-                val isPasswordCorrect = userDetailsRepository.checkPassword("Qwerty@@123")
+                val isPasswordCorrect =
+                    userDetailsRepository.checkPassword(E2ETestUtils.TEST_MASTER_PASSWORD)
                 assertThat(isPasswordCorrect).isTrue()
             }
         }

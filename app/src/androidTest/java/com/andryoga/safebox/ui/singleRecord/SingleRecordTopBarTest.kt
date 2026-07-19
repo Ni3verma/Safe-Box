@@ -104,7 +104,7 @@ class SingleRecordTopBarTest {
     }
 
     @Test
-    fun editModeWithValidFields_saveButtonShouldBeVisibleAndEnabled_andInvisibleWhenInvalid() {
+    fun topBarActions_shouldToggleSaveButtonVisibilityWithState() {
         var isSaveVisible by androidx.compose.runtime.mutableStateOf(true)
 
         composeTestRule.setContent {

@@ -18,6 +18,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -149,6 +152,7 @@ class SingleRecordScreenScrollTest {
         }
 
         composeTestRule.onNodeWithText("Notes")
+            .performScrollTo()
             .performClick()
         composeTestRule.waitForIdle()
 
@@ -180,30 +184,22 @@ class SingleRecordScreenScrollTest {
     fun viewMode_longNotes_shouldBeScrollableAndDisplayBottomText() {
         val longNotesBody =
             "Start of long notes\n" + "Line content inside notes\n".repeat(40) + "END_OF_LONG_NOTES_VIEW_MODE"
-        val longNotesPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+        val longNotesPlan = LayoutPlan(
+            id = LayoutId.LOGIN,
             arrangement = listOf(
-                listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE
-                    )
-                ),
-                listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES
-                    )
-                )
+                listOf(LayoutPlan.Field(FieldId.LOGIN_TITLE)),
+                listOf(LayoutPlan.Field(FieldId.LOGIN_NOTES))
             ),
             fieldUiState = mapOf(
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_TITLE to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.title,
                         isMandatory = true
                     ),
                     data = "Long Notes Title"
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_NOTES to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.notes,
                         minLines = 4,
                         maxLines = 10
