@@ -93,6 +93,14 @@ class LoginBiometricAndHintE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -100,6 +108,14 @@ class LoginBiometricAndHintE2ETest {
                 .assertIsDisplayed()
                 .performClick()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(E2ETestUtils.TEST_MASTER_HINT),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(E2ETestUtils.TEST_MASTER_HINT)
                 .assertIsDisplayed()
 
@@ -107,6 +123,14 @@ class LoginBiometricAndHintE2ETest {
                 .assertIsDisplayed()
                 .performClick()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(E2ETestUtils.TEST_MASTER_HINT),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(E2ETestUtils.TEST_MASTER_HINT)
                 .assertDoesNotExist()
             composeTestRule.onNodeWithText(context.getString(R.string.show_hint))
@@ -161,6 +185,14 @@ class LoginBiometricAndHintE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -177,6 +209,14 @@ class LoginBiometricAndHintE2ETest {
 
             composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.incorrect_pswrd_message)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
                 .assertIsDisplayed()
         }
@@ -198,6 +238,14 @@ class LoginBiometricAndHintE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -209,6 +257,7 @@ class LoginBiometricAndHintE2ETest {
             ).performTextReplacement(E2ETestUtils.TEST_MASTER_PASSWORD)
 
             composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+            composeTestRule.waitForIdle()
 
             val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
@@ -250,6 +299,14 @@ class LoginBiometricAndHintE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -265,6 +322,7 @@ class LoginBiometricAndHintE2ETest {
                 )
             ).performTextReplacement(E2ETestUtils.TEST_MASTER_PASSWORD)
             composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+            composeTestRule.waitForIdle()
 
             val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
             composeTestRule.waitUntil(timeoutMillis = 15000L) {

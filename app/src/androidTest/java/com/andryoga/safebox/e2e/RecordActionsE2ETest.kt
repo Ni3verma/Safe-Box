@@ -131,6 +131,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).performClick()
@@ -155,6 +158,9 @@ class RecordActionsE2ETest {
                 .performTextReplacement(updatedUserId)
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(updatedUserId).assertIsDisplayed()
@@ -189,6 +195,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).performClick()
@@ -213,6 +222,9 @@ class RecordActionsE2ETest {
                 .performTextReplacement(updatedNotes)
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
@@ -251,6 +263,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).performClick()
@@ -275,6 +290,9 @@ class RecordActionsE2ETest {
                 .performTextReplacement(updatedNumber)
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
@@ -316,6 +334,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(initialTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(initialTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).performClick()
@@ -340,6 +361,9 @@ class RecordActionsE2ETest {
                 .performTextReplacement(updatedAccountNumber)
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
@@ -373,6 +397,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -384,6 +411,9 @@ class RecordActionsE2ETest {
             composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
@@ -419,6 +449,9 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -438,6 +471,9 @@ class RecordActionsE2ETest {
             val backDesc = context.getString(R.string.cd_back_button)
             composeTestRule.onNodeWithContentDescription(backDesc).assertIsDisplayed()
             composeTestRule.onNodeWithContentDescription(backDesc).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(uncommittedTitle).assertDoesNotExist()
@@ -473,12 +509,18 @@ class RecordActionsE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
 
             val backDesc = context.getString(R.string.cd_back_button)
             composeTestRule.onNodeWithContentDescription(backDesc).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))

@@ -91,10 +91,12 @@ class SingleRecordActionsComprehensiveTest {
 
         // Click toggle eye icon to unmask
         composeTestRule.onNodeWithContentDescription(toggleDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(hasText(rawPassword) and hasSetTextAction()).assertIsDisplayed()
 
         // Click toggle eye icon to mask again
         composeTestRule.onNodeWithContentDescription(toggleDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(hasText(maskedPassword) and hasSetTextAction()).assertIsDisplayed()
     }
 
@@ -364,9 +366,11 @@ class SingleRecordActionsComprehensiveTest {
 
         val deleteDesc = context.getString(R.string.cd_action_delete)
         composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(deleteEmitCount).isEqualTo(1)
     }
@@ -395,6 +399,7 @@ class SingleRecordActionsComprehensiveTest {
 
         val shareDesc = context.getString(R.string.cd_action_share)
         composeTestRule.onNodeWithContentDescription(shareDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(shareEmitCount).isEqualTo(1)
     }
 
@@ -420,6 +425,7 @@ class SingleRecordActionsComprehensiveTest {
 
         val shareDesc = context.getString(R.string.cd_action_share)
         composeTestRule.onNodeWithContentDescription(shareDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(shareEmitCount).isEqualTo(1)
     }
 
@@ -445,6 +451,7 @@ class SingleRecordActionsComprehensiveTest {
 
         val shareDesc = context.getString(R.string.cd_action_share)
         composeTestRule.onNodeWithContentDescription(shareDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(shareEmitCount).isEqualTo(1)
     }
 
@@ -470,6 +477,7 @@ class SingleRecordActionsComprehensiveTest {
 
         val shareDesc = context.getString(R.string.cd_action_share)
         composeTestRule.onNodeWithContentDescription(shareDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(shareEmitCount).isEqualTo(1)
     }
 }

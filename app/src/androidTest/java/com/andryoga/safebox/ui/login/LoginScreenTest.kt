@@ -82,6 +82,7 @@ class LoginScreenTest {
         val toggleIconDescription = context.getString(R.string.cd_toggle_sensitive_data_visibility)
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
     }
 
@@ -104,6 +105,7 @@ class LoginScreenTest {
         }
 
         composeTestRule.onNodeWithText(context.getString(R.string.show_hint)).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(testHint).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.hide_hint)).assertIsDisplayed()
         assertThat(showHintClicked).isTrue()
@@ -142,6 +144,7 @@ class LoginScreenTest {
             )
         )
             .performTextInput("Secret@123")
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsEnabled()
 
         composeTestRule.onNode(
@@ -151,6 +154,7 @@ class LoginScreenTest {
             )
         )
             .performTextReplacement("")
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsNotEnabled()
     }
 
@@ -179,8 +183,10 @@ class LoginScreenTest {
             )
         )
             .performTextInput(targetPassword)
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsEnabled()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(emittedPassword).isEqualTo(targetPassword)
     }
@@ -210,12 +216,14 @@ class LoginScreenTest {
             )
         )
             .performTextInput(targetPassword)
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsEnabled()
 
         // Perform rapid multi-clicks
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+        composeTestRule.waitForIdle()
 
         // Verify that multiple click actions are emitted cleanly (or handled by state/ViewModel) without race condition crash
         assertThat(loginClickCount).isGreaterThan(0)

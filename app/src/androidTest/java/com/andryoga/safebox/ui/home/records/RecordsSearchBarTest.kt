@@ -1,5 +1,8 @@
 package com.andryoga.safebox.ui.home.records
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -8,7 +11,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
@@ -34,14 +37,16 @@ class RecordsSearchBarTest {
     @Test
     fun searchBarTitle_typingTextShouldEmitOnSearchTextUpdate() {
         var emittedQuery: String? = null
+        var currentQuery by mutableStateOf("")
 
         composeTestRule.setContent {
             SafeBoxTheme {
                 RecordsSearchBarTitle(
-                    query = "",
+                    query = currentQuery,
                     onScreenAction = { action ->
                         if (action is RecordScreenAction.OnSearchTextUpdate) {
                             emittedQuery = action.searchText
+                            currentQuery = action.searchText
                         }
                     }
                 )
@@ -51,7 +56,8 @@ class RecordsSearchBarTest {
         composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
             .assertIsDisplayed()
         composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
-            .performTextInput("abc")
+            .performTextReplacement("abc")
+        composeTestRule.waitForIdle()
 
         assertThat(emittedQuery).isEqualTo("abc")
     }
@@ -105,6 +111,7 @@ class RecordsSearchBarTest {
         val addNewDesc = context.getString(R.string.cd_add_new_record_button)
         composeTestRule.onNodeWithContentDescription(addNewDesc).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(addNewDesc).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(showBottomSheetEmitted).isTrue()
     }

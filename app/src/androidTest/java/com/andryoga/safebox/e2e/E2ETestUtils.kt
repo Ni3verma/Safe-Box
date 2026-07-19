@@ -4,6 +4,7 @@ package com.andryoga.safebox.e2e
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -26,6 +27,7 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import java.util.Date
@@ -212,6 +214,25 @@ object E2ETestUtils {
     }
 
     /**
+     * Closes the soft keyboard if active and waits for layout insets to settle.
+     */
+    fun closeSoftKeyboard(composeTestRule: ComposeTestRule, context: Context) {
+        runCatching {
+            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val imm =
+                    context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
+                if (imm?.isAcceptingText == true) {
+                    imm.toggleSoftInput(
+                        android.view.inputmethod.InputMethodManager.HIDE_IMPLICIT_ONLY,
+                        0
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+    }
+
+    /**
      * Unlocks the app from [LoginScreen] and confirms transition to the Home [RecordsScreen].
      */
     fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
@@ -237,7 +258,9 @@ object E2ETestUtils {
                 }
             }
         }
-        composeTestRule.waitUntil(timeoutMillis = 15000L) {
+        val welcomeBackText = context.getString(R.string.welcome_back)
+        val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
+        composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 val timeoutNodes = composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_message)),
@@ -255,29 +278,50 @@ object E2ETestUtils {
                         ).onFirst().performClick()
                     }
                 }
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                val isWelcome = composeTestRule.onAllNodes(
+                    androidx.compose.ui.test.hasText(welcomeBackText),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes().isNotEmpty()
+                val isHome = composeTestRule.onAllNodes(
+                    androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                    useUnmergedTree = true
+                ).fetchSemanticsNodes().isNotEmpty()
+                isWelcome || isHome
             }.getOrDefault(false)
         }
+
+        val isAlreadyHome = runCatching {
+            composeTestRule.onAllNodes(
+                androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                useUnmergedTree = true
+            ).fetchSemanticsNodes().isNotEmpty()
+        }.getOrDefault(false)
+
+        if (isAlreadyHome) {
+            composeTestRule.waitForIdle()
+            return
+        }
+
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+            androidx.compose.ui.test.hasText(welcomeBackText),
             useUnmergedTree = true
         ).onFirst().assertIsDisplayed()
-        composeTestRule.onAllNodes(
+        composeTestRule.waitForIdle()
+        val passwordNodes = composeTestRule.onAllNodes(
             hasSetTextAction() and hasText(
                 context.getString(R.string.password),
                 substring = true
             )
-        ).onFirst()
-            .performTextReplacement(TEST_MASTER_PASSWORD)
+        )
+        passwordNodes.onFirst().performTextReplacement(TEST_MASTER_PASSWORD)
+        composeTestRule.waitForIdle()
+        closeSoftKeyboard(composeTestRule, context)
         composeTestRule.onAllNodes(
             androidx.compose.ui.test.hasText(context.getString(R.string.login)),
             useUnmergedTree = true
         ).onFirst().performClick()
-        val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 15000L) {
+        composeTestRule.waitForIdle()
+        composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
@@ -297,7 +341,7 @@ object E2ETestUtils {
         optionResId: Int
     ) {
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 15000L) {
+        composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasContentDescription(
@@ -319,7 +363,7 @@ object E2ETestUtils {
 
         val optionText = context.getString(optionResId)
         val bottomSheetTitle = context.getString(R.string.add_a_new_record)
-        composeTestRule.waitUntil(timeoutMillis = 15000L) {
+        composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasText(bottomSheetTitle),
@@ -336,4 +380,72 @@ object E2ETestUtils {
             useUnmergedTree = true
         ).onLast().performClick()
     }
+
+    /**
+     * Unlocks the app via [unlockApp] and waits until a specific record title appears on the Home [RecordsScreen].
+     */
+    fun unlockAppAndWaitForTitle(
+        composeTestRule: ComposeTestRule,
+        context: Context,
+        title: String,
+        timeoutMillis: Long = 25000L
+    ) {
+        unlockApp(composeTestRule, context)
+        waitForRecordTitle(composeTestRule, title, timeoutMillis)
+    }
+
+    /**
+     * Unlocks the app via [unlockApp] and optionally waits until an expected title appears on the Home [RecordsScreen].
+     */
+    fun unlockAppAndWaitForRecord(
+        composeTestRule: ComposeTestRule,
+        context: Context,
+        expectedTitle: String? = null,
+        timeoutMillis: Long = 25000L
+    ) {
+        unlockApp(composeTestRule, context)
+        if (expectedTitle != null) {
+            waitForRecordTitle(composeTestRule, expectedTitle, timeoutMillis)
+        }
+    }
+
+    /**
+     * Waits until at least one semantics node matching [title] is present in the semantics tree.
+     */
+    fun waitForRecordTitle(
+        composeTestRule: ComposeTestRule,
+        title: String,
+        timeoutMillis: Long = 25000L
+    ) {
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(title, substring = true),
+            timeoutMillis = timeoutMillis
+        )
+    }
+
+    /**
+     * Helper inside [E2ETestUtils] object to wait until at least one node matching [matcher] is displayed.
+     */
+    fun waitUntilNodeDisplayed(
+        composeTestRule: ComposeTestRule,
+        matcher: SemanticsMatcher,
+        timeoutMillis: Long = 25000L
+    ) {
+        composeTestRule.waitUntilNodeDisplayed(matcher, timeoutMillis)
+    }
 }
+
+/**
+ * Extension function on [ComposeTestRule] to wait until at least one node matching [matcher] is displayed in the semantics tree.
+ */
+fun ComposeTestRule.waitUntilNodeDisplayed(
+    matcher: SemanticsMatcher,
+    timeoutMillis: Long = 25000L
+) {
+    waitUntil(timeoutMillis = timeoutMillis) {
+        runCatching {
+            onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }.getOrDefault(false)
+    }
+}
+

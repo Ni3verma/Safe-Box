@@ -5,7 +5,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.isToggleable
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -77,6 +77,7 @@ class SettingsScreenComprehensiveTest {
         }
 
         composeTestRule.onAllNodes(isToggleable())[0].performClick()
+        composeTestRule.waitForIdle()
         assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdatePrivacy::class.java)
         assertThat((emittedAction as SettingsScreenAction.UpdatePrivacy).enabled).isFalse()
     }
@@ -94,6 +95,7 @@ class SettingsScreenComprehensiveTest {
         }
 
         composeTestRule.onAllNodes(isToggleable())[1].performClick()
+        composeTestRule.waitForIdle()
         assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdateAutoBackupAfterLogin::class.java)
         assertThat((emittedAction as SettingsScreenAction.UpdateAutoBackupAfterLogin).enabled).isFalse()
     }
@@ -167,6 +169,7 @@ class SettingsScreenComprehensiveTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.settings_feedback_title))
             .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
         assertThat(emittedAction).isEqualTo(SettingsScreenAction.SendFeedback)
     }
 
@@ -184,6 +187,7 @@ class SettingsScreenComprehensiveTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.settings_review_title))
             .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
         assertThat(emittedAction).isEqualTo(SettingsScreenAction.ReviewApp)
     }
 
@@ -201,6 +205,7 @@ class SettingsScreenComprehensiveTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.settings_github_title))
             .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
         assertThat(emittedAction).isEqualTo(SettingsScreenAction.OpenGithubProject)
     }
 }

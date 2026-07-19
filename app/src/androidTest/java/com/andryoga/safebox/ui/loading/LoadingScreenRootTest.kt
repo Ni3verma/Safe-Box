@@ -50,6 +50,14 @@ class LoadingScreenRootTest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 10000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome))
                 .assertIsDisplayed()
         }
@@ -65,6 +73,14 @@ class LoadingScreenRootTest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            composeTestRule.waitUntil(timeoutMillis = 10000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
         }

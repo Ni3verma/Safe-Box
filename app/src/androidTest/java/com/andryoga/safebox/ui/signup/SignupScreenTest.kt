@@ -1,5 +1,8 @@
 package com.andryoga.safebox.ui.signup
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -65,6 +68,7 @@ class SignupScreenTest {
 
         composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Toggle Password").performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
     }
 
@@ -72,15 +76,23 @@ class SignupScreenTest {
     fun typingInPasswordAndHintFields_shouldEmitCorrespondingActions() {
         var lastPasswordAction: SignupScreenAction? = null
         var lastHintAction: SignupScreenAction? = null
+        var uiState by mutableStateOf(SignupUiState())
 
         composeTestRule.setContent {
             SafeBoxTheme {
                 SignupScreen(
-                    uiState = SignupUiState(),
+                    uiState = uiState,
                     screenAction = { action ->
                         when (action) {
-                            is SignupScreenAction.OnPasswordUpdate -> lastPasswordAction = action
-                            is SignupScreenAction.OnHintUpdate -> lastHintAction = action
+                            is SignupScreenAction.OnPasswordUpdate -> {
+                                lastPasswordAction = action
+                                uiState = uiState.copy(password = action.password)
+                            }
+
+                            is SignupScreenAction.OnHintUpdate -> {
+                                lastHintAction = action
+                                uiState = uiState.copy(hint = action.hint)
+                            }
                             else -> {}
                         }
                     }
@@ -89,7 +101,8 @@ class SignupScreenTest {
         }
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
-            .performTextInput("Secret@123")
+            .performTextReplacement("Secret@123")
+        composeTestRule.waitForIdle()
         assertThat((lastPasswordAction as? SignupScreenAction.OnPasswordUpdate)?.password).isEqualTo(
             "Secret@123"
         )
@@ -100,7 +113,8 @@ class SignupScreenTest {
                 substring = true
             )
         )
-            .performTextInput("My pet")
+            .performTextReplacement("My pet")
+        composeTestRule.waitForIdle()
         assertThat((lastHintAction as? SignupScreenAction.OnHintUpdate)?.hint).isEqualTo("My pet")
     }
 
@@ -123,6 +137,7 @@ class SignupScreenTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsEnabled()
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).performClick()
+        composeTestRule.waitForIdle()
         assertThat(signupClicked).isTrue()
     }
 
@@ -137,6 +152,7 @@ class SignupScreenTest {
         // Type invalid password (no uppercase/lowercase mix)
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextReplacement("abc")
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsNotEnabled()
@@ -144,6 +160,7 @@ class SignupScreenTest {
         // Type valid password meeting all rules (>=7 chars, mixed case, >=2 digits, >=1 special char)
         composeTestRule.onNode(hasSetTextAction() and hasText("abc", substring = true))
             .performTextReplacement("Qwerty@@12")
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
             .assertDoesNotExist()
 
@@ -158,6 +175,7 @@ class SignupScreenTest {
             )
         )
             .performTextInput("First car")
+        composeTestRule.waitForIdle()
 
         // Now button must dynamically enable itself
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsEnabled()
@@ -178,6 +196,7 @@ class SignupScreenTest {
         // Type valid credentials
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextInput("Qwerty@@12")
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
                 context.getString(R.string.hint),
@@ -185,10 +204,12 @@ class SignupScreenTest {
             )
         )
             .performTextInput("My hint")
+        composeTestRule.waitForIdle()
 
         // Trigger signup
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsEnabled()
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(navigatedToNextScreen).isTrue()
     }

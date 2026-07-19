@@ -144,6 +144,12 @@ class CrossFeatureUserJourneysE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             // Step 1: Unlock App (Login -> Home)
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(hasText("Apple ID Login"), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
 
             // Step 2: Add New Record (Add Item)
@@ -169,6 +175,15 @@ class CrossFeatureUserJourneysE2ETest {
             composeTestRule.waitForIdle()
 
             // Confirm new note appears on Records screen
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText("E2E Test Secret Note"),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText("E2E Test Secret Note").assertIsDisplayed()
 
             // Step 3: Search & Filter (Search/Filter)
@@ -176,14 +191,45 @@ class CrossFeatureUserJourneysE2ETest {
                 .performTextInput("E2E Test")
             composeTestRule.waitForIdle()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText("E2E Test Secret Note"),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText("E2E Test Secret Note").assertIsDisplayed()
             composeTestRule.onNodeWithText("Apple ID Login").assertDoesNotExist()
 
+            composeTestRule.waitForIdle()
             val clearDesc = context.getString(R.string.cd_clear_search_bar)
             composeTestRule.onNodeWithContentDescription(clearDesc, useUnmergedTree = true)
                 .onParent()
                 .performClick()
             composeTestRule.waitForIdle()
+
+            runCatching {
+                val searchInputNodes = composeTestRule.onAllNodes(
+                    hasSetTextAction() and hasText("E2E Test"),
+                    useUnmergedTree = true
+                ).fetchSemanticsNodes()
+                if (searchInputNodes.isNotEmpty()) {
+                    composeTestRule.onNode(
+                        hasSetTextAction() and hasText("E2E Test"),
+                        useUnmergedTree = true
+                    ).performTextReplacement("")
+                }
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.waitUntil(timeoutMillis = 25000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(hasText("Apple ID Login"), useUnmergedTree = true)
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
 
             // Step 4: Backup (Navigate and trigger backup creation)

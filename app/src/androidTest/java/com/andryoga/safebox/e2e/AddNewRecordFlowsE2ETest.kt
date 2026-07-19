@@ -123,6 +123,13 @@ class AddNewRecordFlowsE2ETest {
 
             // Click Save and verify item appears on RecordsScreen
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(
+                    hasText(targetTitle, substring = true),
+                    useUnmergedTree = true
+                )
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
         }
     }
@@ -163,6 +170,13 @@ class AddNewRecordFlowsE2ETest {
                 .performTextInput("Very secret notes content for testing")
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(
+                    hasText(targetTitle, substring = true),
+                    useUnmergedTree = true
+                )
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
         }
     }
@@ -203,6 +217,13 @@ class AddNewRecordFlowsE2ETest {
                 .performTextInput("1122334455667788")
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(
+                    hasText(targetTitle, substring = true),
+                    useUnmergedTree = true
+                )
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
         }
     }
@@ -243,6 +264,13 @@ class AddNewRecordFlowsE2ETest {
                 .performTextInput("0987654321")
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(
+                    hasText(targetTitle, substring = true),
+                    useUnmergedTree = true
+                )
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
         }
     }

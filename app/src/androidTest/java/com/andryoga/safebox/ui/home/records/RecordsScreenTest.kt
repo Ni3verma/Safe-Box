@@ -124,6 +124,7 @@ class RecordsScreenTest {
 
         // Perform click and verify action
         composeTestRule.onNodeWithText("Personal Gmail").performClick()
+        composeTestRule.waitForIdle()
         assertThat(clickedId).isEqualTo(101)
         assertThat(clickedType).isEqualTo(RecordType.LOGIN)
     }
@@ -157,6 +158,7 @@ class RecordsScreenTest {
 
         val loginFilterLabel = context.getString(R.string.type_display_login)
         composeTestRule.onNode(hasText(loginFilterLabel)).performClick()
+        composeTestRule.waitForIdle()
         assertThat(toggledRecordType).isEqualTo(RecordType.LOGIN)
     }
 
@@ -191,6 +193,7 @@ class RecordsScreenTest {
         composeTestRule.onNodeWithText(loginTypeTitle).assertIsDisplayed()
 
         composeTestRule.onNodeWithText(loginTypeTitle).performClick()
+        composeTestRule.waitForIdle()
         assertThat(selectedRecordType).isEqualTo(RecordType.LOGIN)
     }
 
@@ -222,6 +225,7 @@ class RecordsScreenTest {
 
         composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
             .performScrollToIndex(50)
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("LAST_RECORD_INDEX_50").assertIsDisplayed()
     }
 }

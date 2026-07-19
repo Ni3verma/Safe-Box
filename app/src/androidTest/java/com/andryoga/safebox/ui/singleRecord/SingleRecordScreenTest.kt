@@ -80,6 +80,7 @@ class SingleRecordScreenTest {
 
         val editDesc = context.getString(R.string.cd_action_edit)
         composeTestRule.onNodeWithContentDescription(editDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(editClicked).isTrue()
     }
 
@@ -106,6 +107,7 @@ class SingleRecordScreenTest {
 
         val shareDesc = context.getString(R.string.cd_action_share)
         composeTestRule.onNodeWithContentDescription(shareDesc).performClick()
+        composeTestRule.waitForIdle()
         assertThat(shareClicked).isTrue()
     }
 
@@ -132,6 +134,7 @@ class SingleRecordScreenTest {
 
         val deleteDesc = context.getString(R.string.cd_action_delete)
         composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
+        composeTestRule.waitForIdle()
 
         // Verify alert dialog appears
         composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
@@ -141,6 +144,7 @@ class SingleRecordScreenTest {
 
         // Click Confirm
         composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
+        composeTestRule.waitForIdle()
         assertThat(deleteClicked).isTrue()
     }
 
@@ -167,11 +171,13 @@ class SingleRecordScreenTest {
 
         val deleteDesc = context.getString(R.string.cd_action_delete)
         composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
             .assertIsDisplayed()
 
         // Click Cancel
         composeTestRule.onNodeWithText(context.getString(R.string.common_cancel)).performClick()
+        composeTestRule.waitForIdle()
         assertThat(deleteClicked).isFalse()
         composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
             .assertDoesNotExist()
@@ -210,6 +216,7 @@ class SingleRecordScreenTest {
             )
         )
             .performTextInput(" Edited")
+        composeTestRule.waitForIdle()
 
         assertThat(updatedData).isNotNull()
     }
@@ -445,6 +452,7 @@ class SingleRecordScreenTest {
         composeTestRule.onNode(hasText(maskedText) and hasSetTextAction())
             .assertIsDisplayed() // masked by default
         composeTestRule.onNodeWithContentDescription(toggleDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription(toggleDesc).assertIsDisplayed()
         composeTestRule.onNode(hasText(maskedText) and hasSetTextAction())
             .assertDoesNotExist() // unmasked after toggle

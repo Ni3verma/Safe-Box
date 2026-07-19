@@ -4,6 +4,7 @@ package com.andryoga.safebox.e2e
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -124,6 +125,7 @@ class RecordsScreenScrollAndAppBarTest {
 
     @Test
     fun scrollLongPopulatedList_shouldKeepListAccessibleAndCheckTopBar() {
+        lateinit var firstRecordTitle: String
         runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
@@ -139,6 +141,18 @@ class RecordsScreenScrollAndAppBarTest {
                 bankCardDataRepository,
                 secureNoteDataRepository
             )
+
+            val loginData =
+                loginDataRepository.getAllLoginData().first().map { it.toRecordListItem() }
+            val bankAccountData = bankAccountDataRepository.getAllBankAccountData().first()
+                .map { it.toRecordListItem() }
+            val cardData =
+                bankCardDataRepository.getAllBankCardData().first().map { it.toRecordListItem() }
+            val noteData = secureNoteDataRepository.getAllSecureNoteData().first()
+                .map { it.toRecordListItem() }
+            val combinedSorted =
+                (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
+            firstRecordTitle = combinedSorted.first().title
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -148,6 +162,13 @@ class RecordsScreenScrollAndAppBarTest {
             val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
             composeTestRule.onNodeWithContentDescription(addNewButtonDesc).assertIsDisplayed()
 
+            composeTestRule.waitUntil(timeoutMillis = 20000L) {
+                composeTestRule.onAllNodes(hasScrollToIndexAction(), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty() &&
+                        composeTestRule.onAllNodes(hasText(firstRecordTitle, substring = true))
+                            .fetchSemanticsNodes().isNotEmpty()
+            }
+
             // Scroll down the LazyColumn to index 40 and verify items remain accessible
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
                 .performScrollToIndex(40)
@@ -156,6 +177,7 @@ class RecordsScreenScrollAndAppBarTest {
 
     @Test
     fun scrollLongPopulatedListToEnd_lastRecordShouldBeCompletelyVisibleAndUnobstructed() {
+        lateinit var firstRecordTitle: String
         lateinit var lastRecordTitle: String
         var combinedSortedSize = 0
         runBlocking {
@@ -183,6 +205,7 @@ class RecordsScreenScrollAndAppBarTest {
                 .map { it.toRecordListItem() }
             val combinedSorted =
                 (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
+            firstRecordTitle = combinedSorted.first().title
             lastRecordTitle = combinedSorted.last().title
             combinedSortedSize = combinedSorted.size
         }
@@ -190,8 +213,19 @@ class RecordsScreenScrollAndAppBarTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
 
+            composeTestRule.waitUntil(timeoutMillis = 20000L) {
+                composeTestRule.onAllNodes(hasScrollToIndexAction(), useUnmergedTree = true)
+                    .fetchSemanticsNodes().isNotEmpty() &&
+                        composeTestRule.onAllNodes(hasText(firstRecordTitle, substring = true))
+                            .fetchSemanticsNodes().isNotEmpty()
+            }
+
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
                 .performScrollToIndex(combinedSortedSize)
+            composeTestRule.waitUntil(timeoutMillis = 20000L) {
+                composeTestRule.onAllNodes(hasText(lastRecordTitle, substring = true))
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
             composeTestRule.onNodeWithText(lastRecordTitle, substring = true)
                 .assertIsDisplayed()
         }

@@ -207,6 +207,7 @@ class SignupPasswordValidationRulesTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextInput("Secret@@123")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
@@ -214,6 +215,7 @@ class SignupPasswordValidationRulesTest {
                 substring = true
             )
         ).performTextInput("   ")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup))
             .assertIsNotEnabled()
@@ -224,6 +226,7 @@ class SignupPasswordValidationRulesTest {
                 substring = true
             )
         ).performTextReplacement("Valid Hint")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup))
             .assertIsEnabled()
@@ -240,16 +243,19 @@ class SignupPasswordValidationRulesTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextInput("P@sswrd🚀#123")
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
                 context.getString(R.string.hint),
                 substring = true
             )
         ).performTextInput("Emoji hint")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup))
             .assertIsEnabled()
             .performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(signupTriggered).isTrue()
     }
@@ -271,6 +277,7 @@ class SignupPasswordValidationRulesTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextInput(veryLongPassword)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
@@ -278,6 +285,7 @@ class SignupPasswordValidationRulesTest {
                 substring = true
             )
         ).performTextInput("Long password hint")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup))
             .assertIsEnabled()
@@ -292,12 +300,14 @@ class SignupPasswordValidationRulesTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
             .performTextInput("Qwerty@@123")
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
                 context.getString(R.string.hint),
                 substring = true
             )
         ).performTextInput("Preserved hint")
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(context.getString(R.string.signup))
             .assertIsEnabled()

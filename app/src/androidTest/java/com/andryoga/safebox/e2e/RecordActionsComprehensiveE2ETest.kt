@@ -1,6 +1,7 @@
 package com.andryoga.safebox.e2e
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -119,7 +120,9 @@ class RecordActionsComprehensiveE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             E2ETestUtils.unlockApp(composeTestRule, context)
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -134,7 +137,9 @@ class RecordActionsComprehensiveE2ETest {
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.confirm)).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
@@ -170,7 +175,9 @@ class RecordActionsComprehensiveE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             E2ETestUtils.unlockApp(composeTestRule, context)
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -221,7 +228,9 @@ class RecordActionsComprehensiveE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             E2ETestUtils.unlockApp(composeTestRule, context)
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -236,7 +245,9 @@ class RecordActionsComprehensiveE2ETest {
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.confirm)).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
@@ -271,7 +282,9 @@ class RecordActionsComprehensiveE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             E2ETestUtils.unlockApp(composeTestRule, context)
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -292,7 +305,9 @@ class RecordActionsComprehensiveE2ETest {
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             // Re-open saved record in view mode from RecordsScreen
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
@@ -335,7 +350,9 @@ class RecordActionsComprehensiveE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use {
             E2ETestUtils.unlockApp(composeTestRule, context)
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
@@ -357,12 +374,17 @@ class RecordActionsComprehensiveE2ETest {
 
             composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+            }
 
             // Re-open saved card in view mode from RecordsScreen
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(targetTitle).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("5555 6666 7777 8888")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("5555 6666 7777 8888").assertIsDisplayed()
             composeTestRule.onNodeWithText("12/28").assertIsDisplayed()

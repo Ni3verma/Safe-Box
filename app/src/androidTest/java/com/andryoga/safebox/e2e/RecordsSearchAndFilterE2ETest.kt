@@ -153,6 +153,10 @@ class RecordsSearchAndFilterE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Amazon Shopping")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
             composeTestRule.onNodeWithText("American Express Card").assertIsDisplayed()
@@ -160,6 +164,10 @@ class RecordsSearchAndFilterE2ETest {
 
             composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
                 .performTextInput("amazon")
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("American Express Card")).fetchSemanticsNodes()
+                    .isEmpty()
+            }
 
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
             composeTestRule.onNodeWithText("American Express Card").assertDoesNotExist()
@@ -218,9 +226,17 @@ class RecordsSearchAndFilterE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Amazon Shopping")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
                 .performTextInput("amazon")
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("American Express Card")).fetchSemanticsNodes()
+                    .isEmpty()
+            }
 
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
             composeTestRule.onNodeWithText("American Express Card").assertDoesNotExist()
@@ -230,7 +246,10 @@ class RecordsSearchAndFilterE2ETest {
             composeTestRule.onNodeWithContentDescription(clearDesc, useUnmergedTree = true)
                 .onParent()
                 .performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("American Express Card")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
                 .assertIsDisplayed()
@@ -291,6 +310,9 @@ class RecordsSearchAndFilterE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Login Item")).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Login Item").assertIsDisplayed()
             composeTestRule.onNodeWithText("Card Item").assertIsDisplayed()
@@ -298,14 +320,18 @@ class RecordsSearchAndFilterE2ETest {
 
             val cardChipLabel = context.getString(R.string.type_display_card)
             composeTestRule.onNode(hasText(cardChipLabel) and hasRole(Role.Checkbox)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Login Item")).fetchSemanticsNodes().isEmpty()
+            }
 
             composeTestRule.onNodeWithText("Card Item").assertIsDisplayed()
             composeTestRule.onNodeWithText("Login Item").assertDoesNotExist()
             composeTestRule.onNodeWithText("Note Item").assertDoesNotExist()
 
             composeTestRule.onNode(hasText(cardChipLabel) and hasRole(Role.Checkbox)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Login Item")).fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Login Item").assertIsDisplayed()
             composeTestRule.onNodeWithText("Card Item").assertIsDisplayed()
@@ -339,12 +365,19 @@ class RecordsSearchAndFilterE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Amazon Shopping")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
 
             composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
                 .performTextInput("ZebraX")
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(context.getString(R.string.no_filtered_record_title)))
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(context.getString(R.string.no_filtered_record_title))
                 .assertIsDisplayed()
@@ -409,6 +442,10 @@ class RecordsSearchAndFilterE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Apple ID Login")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
@@ -417,7 +454,10 @@ class RecordsSearchAndFilterE2ETest {
             // 1. Enter search text matching one login item
             composeTestRule.onNode(hasSetTextAction() and hasText(context.getString(R.string.search_bar_placeholder)))
                 .performTextInput("apple")
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Amazon Shopping")).fetchSemanticsNodes()
+                    .isEmpty()
+            }
 
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
             composeTestRule.onNodeWithText("Amazon Shopping").assertDoesNotExist()
@@ -426,7 +466,10 @@ class RecordsSearchAndFilterE2ETest {
             // 2. Select Card category chip: zero items match both "apple" AND Card
             val cardChipLabel = context.getString(R.string.type_display_card)
             composeTestRule.onNode(hasText(cardChipLabel) and hasRole(Role.Checkbox)).performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(context.getString(R.string.no_filtered_record_title)))
+                    .fetchSemanticsNodes().isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText(context.getString(R.string.no_filtered_record_title))
                 .assertIsDisplayed()
@@ -437,7 +480,10 @@ class RecordsSearchAndFilterE2ETest {
             val loginChipLabel = context.getString(R.string.type_display_login)
             composeTestRule.onNode(hasText(loginChipLabel) and hasRole(Role.Checkbox))
                 .performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Apple ID Login")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
             composeTestRule.onNodeWithText("Amazon Shopping").assertDoesNotExist()
@@ -446,7 +492,10 @@ class RecordsSearchAndFilterE2ETest {
             val clearDesc = context.getString(R.string.cd_clear_search_bar)
             composeTestRule.onNodeWithContentDescription(clearDesc, useUnmergedTree = true)
                 .onParent().performClick()
-            composeTestRule.waitForIdle()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Amazon Shopping")).fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
 
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()

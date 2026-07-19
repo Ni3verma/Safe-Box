@@ -78,6 +78,7 @@ class SingleRecordScreenScrollTest {
         composeTestRule.onNodeWithText(initialNoteText)
             .assertIsDisplayed()
             .performTextReplacement(updatedNoteText)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(updatedNoteText)
             .assertIsDisplayed()
@@ -97,6 +98,7 @@ class SingleRecordScreenScrollTest {
 
         composeTestRule.onNodeWithText(initialNoteText)
             .performTextReplacement(expectedFullText)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(expectedFullText)
             .assertIsDisplayed()
@@ -114,6 +116,7 @@ class SingleRecordScreenScrollTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(eightNewlinesAndText)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(eightNewlinesAndText)
             .assertIsDisplayed()
@@ -131,6 +134,7 @@ class SingleRecordScreenScrollTest {
 
         composeTestRule.onNode(hasSetTextAction() and hasText("Notes"))
             .performTextInput(sixteenNewlinesAndText)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(sixteenNewlinesAndText)
             .assertIsDisplayed()
@@ -146,6 +150,7 @@ class SingleRecordScreenScrollTest {
 
         composeTestRule.onNodeWithText("Notes")
             .performClick()
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Notes")
             .assertIsDisplayed()
@@ -165,6 +170,7 @@ class SingleRecordScreenScrollTest {
         composeTestRule.onNode(hasSetTextAction() and hasText(targetFieldName))
             .performClick()
             .performTextInput(inputCustomerName)
+        composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(inputCustomerName)
             .assertIsDisplayed()
@@ -222,6 +228,8 @@ class SingleRecordScreenScrollTest {
 
         composeTestRule.onNodeWithText("END_OF_LONG_NOTES_VIEW_MODE", substring = true)
             .performScrollTo()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("END_OF_LONG_NOTES_VIEW_MODE", substring = true)
             .assertIsDisplayed()
     }
 }

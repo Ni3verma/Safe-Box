@@ -69,6 +69,7 @@ class BackupAndRestoreScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.backup_set_location))
             .performClick()
+        composeTestRule.waitForIdle()
         assertThat(setLocationClicked).isTrue()
     }
 
@@ -101,10 +102,12 @@ class BackupAndRestoreScreenTest {
             .assertIsDisplayed()
 
         composeTestRule.onNodeWithText(context.getString(R.string.backup_edit_path)).performClick()
+        composeTestRule.waitForIdle()
         assertThat(editPathClicked).isTrue()
 
         composeTestRule.onNode(hasText(context.getString(R.string.backup)) and hasClickAction())
             .performClick()
+        composeTestRule.waitForIdle()
         assertThat(newBackupClicked).isTrue()
     }
 
@@ -122,6 +125,7 @@ class BackupAndRestoreScreenTest {
         composeTestRule.onNodeWithText(context.getString(R.string.restore_info)).assertIsDisplayed()
         composeTestRule.onNode(hasText(context.getString(R.string.restore)) and hasClickAction())
             .performClick()
+        composeTestRule.waitForIdle()
         assertThat(restorePickerLaunched).isTrue()
     }
 
@@ -147,6 +151,7 @@ class BackupAndRestoreScreenTest {
 
         composeTestRule.onNode(hasText(maskedText) and hasSetTextAction()).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(toggleDesc).performClick()
+        composeTestRule.waitForIdle()
         composeTestRule.onNode(hasText(passwordInput) and hasSetTextAction()).assertIsDisplayed()
     }
 

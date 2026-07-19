@@ -57,6 +57,7 @@ class SingleRecordTopBarTest {
         val backDesc = context.getString(R.string.cd_back_button)
         composeTestRule.onNodeWithContentDescription(backDesc).assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(backDesc).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(backClicked).isTrue()
     }
@@ -80,6 +81,7 @@ class SingleRecordTopBarTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+        composeTestRule.waitForIdle()
 
         assertThat(saveClicked).isTrue()
     }

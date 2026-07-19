@@ -105,6 +105,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 .performClick()
             composeTestRule.waitForIdle()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText(context.getString(R.string.settings_section_security_and_privacy)),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.settings_section_security_and_privacy))
                 .assertIsDisplayed()
 
@@ -113,6 +122,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 .performClick()
             composeTestRule.waitForIdle()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText(context.getString(R.string.backup_path_not_set_message)),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.backup_path_not_set_message))
                 .assertIsDisplayed()
 
@@ -121,6 +139,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 .performClick()
             composeTestRule.waitForIdle()
 
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText(context.getString(R.string.no_record)),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()
         }
@@ -227,6 +254,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -250,6 +286,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasText(context.getString(R.string.welcome_back)),
+                        useUnmergedTree = true
+                    )
+                        .fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
