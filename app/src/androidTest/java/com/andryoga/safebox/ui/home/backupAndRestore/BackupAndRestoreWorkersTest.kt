@@ -282,8 +282,8 @@ class BackupAndRestoreWorkersTest {
                 .setWorkerFactory(workerFactory)
                 .build()
 
-            val runResult = runCatching { restoreWorker.doWork() }
-            assertThat(runResult.isFailure || runResult.getOrNull() == Result.failure()).isTrue()
+            val result = restoreWorker.doWork()
+            assertThat(result).isEqualTo(Result.failure())
         }
 
     @Test
@@ -303,7 +303,7 @@ class BackupAndRestoreWorkersTest {
 
             // Pre-create 10 backup files (the maximum allowed threshold)
             for (i in 1..CommonConstants.MAX_BACKUP_FILES) {
-                val formattedIndex = String.format("%02d", i)
+                val formattedIndex = String.format(java.util.Locale.ROOT, "%02d", i)
                 val dummyFile = File(backupDir, "SafeBoxBackup202601010000000$formattedIndex.bak")
                 dummyFile.writeText("dummy content $i")
             }

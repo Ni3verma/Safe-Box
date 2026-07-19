@@ -31,24 +31,28 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         }
 
         if (uriPath != null) {
+            var permissionGranted = true
             if (uriPath.scheme == "content" || uriPath.toString().startsWith("content://")) {
                 runCatching {
                     val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                     contentResolver.takePersistableUriPermission(uriPath, flags)
                 }.onFailure {
+                    permissionGranted = false
                     Timber.w(it, "Failed to take persistable URI permission for $uriPath")
                 }
             }
-            backupMetadataDao.insertBackupMetadata(
-                BackupMetadataEntity(
-                    key = 1,
-                    uriString = uriPath.toString(),
-                    displayPath = uriPath.path ?: uriPath.toString(),
-                    lastBackupDate = null,
-                    createdOn = Date()
+            if (permissionGranted) {
+                backupMetadataDao.insertBackupMetadata(
+                    BackupMetadataEntity(
+                        key = 1,
+                        uriString = uriPath.toString(),
+                        displayPath = uriPath.path ?: uriPath.toString(),
+                        lastBackupDate = null,
+                        createdOn = Date()
+                    )
                 )
-            )
+            }
         }
     }
 

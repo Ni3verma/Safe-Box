@@ -20,28 +20,10 @@ fun StatefulSignupScreenTestHost(
     var password by remember { mutableStateOf("") }
     var hint by remember { mutableStateOf("") }
 
-    val validatorState = run {
-        var hasLowerCase = false
-        var hasUpperCase = false
-        var numericCount = 0
-        var specialCharCount = 0
-
-        password.forEach { char ->
-            when {
-                char.isLowerCase() -> hasLowerCase = true
-                char.isUpperCase() -> hasUpperCase = true
-                char.isDigit() -> numericCount++
-                !char.isLetterOrDigit() -> specialCharCount++
-            }
-        }
-        when {
-            password.isBlank() -> PasswordValidatorState.INITIAL_STATE
-            hasLowerCase.not() || hasUpperCase.not() -> PasswordValidatorState.NOT_MIX_CASE
-            numericCount < 2 -> PasswordValidatorState.LESS_NUMERIC_COUNT
-            specialCharCount == 0 -> PasswordValidatorState.NO_SPECIAL_CHAR
-            password.length < 7 -> PasswordValidatorState.SHORT_PASSWORD_LENGTH
-            else -> PasswordValidatorState.PASSWORD_IS_OK
-        }
+    val validatorState = if (password.isEmpty()) {
+        PasswordValidatorState.INITIAL_STATE
+    } else {
+        SignupViewModel.runPasswordValidator(password)
     }
 
     val isError =

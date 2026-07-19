@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.core
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
@@ -15,6 +16,10 @@ import com.andryoga.safebox.ui.utils.findActivity
 
 private const val AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_STRONG
 
+@VisibleForTesting
+var biometricAuthHandlerOverride: (@Composable (onSuccess: () -> Unit, onErrorOrCancel: () -> Unit) -> Unit)? =
+    null
+
 fun canAuthenticateUsingBiometric(context: Context): Boolean {
     return BiometricManager.from(context)
         .canAuthenticate(AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
@@ -25,6 +30,11 @@ fun BiometricAuthHandler(
     onSuccess: () -> Unit,
     onErrorOrCancel: () -> Unit = {},
 ) {
+    val override = biometricAuthHandlerOverride
+    if (override != null) {
+        override(onSuccess, onErrorOrCancel)
+        return
+    }
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }

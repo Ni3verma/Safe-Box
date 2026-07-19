@@ -43,6 +43,7 @@ object E2ETestUtils {
 
     const val TEST_MASTER_PASSWORD = "Qwerty@@123"
     const val TEST_MASTER_HINT = "E2E Master Hint"
+    val TEST_DATE: Date = Date(1700000000000L)
 
     /**
      * Pre-seeds the database and encrypted preferences so the app boots directly onto the LoginScreen.
@@ -142,8 +143,8 @@ object E2ETestUtils {
                 userId = "user@apple.com",
                 password = "ApplePassword123!",
                 notes = "2FA enabled",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         bankCardDataRepository.upsertBankCardData(
@@ -156,8 +157,8 @@ object E2ETestUtils {
                 cvv = "999",
                 pin = "1234",
                 notes = "Travel points card",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         bankAccountDataRepository.upsertBankAccountData(
@@ -173,8 +174,8 @@ object E2ETestUtils {
                 ifscCode = "SVFB0001234",
                 micrCode = "123456789",
                 notes = "Primary checking",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         secureNoteDataRepository.upsertSecureNoteData(
@@ -182,8 +183,8 @@ object E2ETestUtils {
                 id = 904,
                 title = "Wifi Router Secrets",
                 notes = "SSID: SafeBox_5G\nPassword: SecureWifiPassword#2026\nAdmin IP: 192.168.1.1",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
     }
@@ -193,7 +194,7 @@ object E2ETestUtils {
      */
     suspend fun setupBackupMetadataState(
         backupMetadataRepository: BackupMetadataRepository,
-        mockUriString: String = "content://com.android.externalstorage.documents/tree/primary%3ASafeboxBackups",
+        mockUriString: String = "file:///sdcard/SafeboxBackups",
         mockTimestamp: Long = System.currentTimeMillis()
     ) {
         backupMetadataRepository.insertBackupMetadata(Uri.parse(mockUriString))

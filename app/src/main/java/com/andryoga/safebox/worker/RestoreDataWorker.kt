@@ -80,7 +80,27 @@ class RestoreDataWorker
                         ?: throw IllegalArgumentException("Could not open input stream for $uri")
                 }
 
-            ObjectInputStream(inputStream).use {
+            val secureObjectInputStream = object : ObjectInputStream(inputStream) {
+                override fun resolveClass(desc: java.io.ObjectStreamClass): Class<*> {
+                    val allowedClasses = setOf(
+                        "java.util.HashMap",
+                        "java.util.Map",
+                        "java.lang.String",
+                        "[B",
+                        "java.lang.Number",
+                        "java.lang.Integer",
+                        "java.lang.Long"
+                    )
+                    if (desc.name !in allowedClasses) {
+                        throw java.io.InvalidClassException(
+                            "Unauthorized deserialization attempt",
+                            desc.name
+                        )
+                    }
+                    return super.resolveClass(desc)
+                }
+            }
+            secureObjectInputStream.use {
                 val fileObject = it.readObject()
                 if (fileObject !is Map<*, *>) {
                     throw InvalidObjectException("input file is not correct, was not able to read it is as Map")

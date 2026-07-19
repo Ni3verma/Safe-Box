@@ -156,7 +156,7 @@ class BackupAndRestoreScreenTest {
     }
 
     @Test
-    fun enterPasswordView_inWrongPasswordState_shouldShowSupportingErrorTextAndRedOutline() {
+    fun enterPasswordView_inWrongPasswordState_shouldShowSupportingErrorText() {
         composeTestRule.setContent {
             SafeBoxTheme {
                 EnterPasswordView(

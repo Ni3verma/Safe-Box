@@ -208,7 +208,7 @@ class LoginScreenTest {
     }
 
     @Test
-    fun rapidMultiClickOnLoginButton_shouldPreventDuplicateSubmission() {
+    fun rapidMultiClickOnLoginButton_shouldEmitClickAction() {
         var loginClickCount = 0
         val targetPassword = "MySecretPassword123"
 

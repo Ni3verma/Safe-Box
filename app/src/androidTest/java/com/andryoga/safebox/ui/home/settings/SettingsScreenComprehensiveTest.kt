@@ -120,12 +120,10 @@ class SettingsScreenComprehensiveTest {
             .performSemanticsAction(SemanticsActions.SetProgress) { it(10f) }
 
         composeTestRule.waitForIdle()
-        if (emittedAction != null) {
-            assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdatePasswordAfterXBiometric::class.java)
-            assertThat((emittedAction as SettingsScreenAction.UpdatePasswordAfterXBiometric).limit).isEqualTo(
-                10
-            )
-        }
+        assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdatePasswordAfterXBiometric::class.java)
+        assertThat((emittedAction as SettingsScreenAction.UpdatePasswordAfterXBiometric).limit).isEqualTo(
+            10
+        )
     }
 
     @Test
@@ -147,12 +145,8 @@ class SettingsScreenComprehensiveTest {
             .performSemanticsAction(SemanticsActions.SetProgress) { it(15f) }
 
         composeTestRule.waitForIdle()
-        if (emittedAction != null) {
-            assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdateAwayTimeout::class.java)
-            assertThat((emittedAction as SettingsScreenAction.UpdateAwayTimeout).timeout).isEqualTo(
-                15
-            )
-        }
+        assertThat(emittedAction).isInstanceOf(SettingsScreenAction.UpdateAwayTimeout::class.java)
+        assertThat((emittedAction as SettingsScreenAction.UpdateAwayTimeout).timeout).isEqualTo(15)
     }
 
     @Test
