@@ -2,6 +2,7 @@
 
 package com.andryoga.safebox.ui.home.settings
 
+import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
@@ -15,10 +16,7 @@ import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
@@ -51,17 +49,14 @@ class SettingsViewModelTest {
 
     @Test
     fun `uiState reflects settings from data store`() = runTest {
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect {}
+        viewModel.uiState.test {
+            assertThat(awaitItem()).isEqualTo(Settings())
+
+            val updatedSettings = Settings(isPrivacyEnabled = false, awayTimeoutSec = 30)
+            settingsFlow.value = updatedSettings
+
+            assertThat(awaitItem()).isEqualTo(updatedSettings)
         }
-
-        assertThat(viewModel.uiState.value).isEqualTo(Settings())
-
-        val updatedSettings = Settings(isPrivacyEnabled = true, awayTimeoutSec = 10)
-        settingsFlow.value = updatedSettings
-        runCurrent()
-
-        assertThat(viewModel.uiState.value).isEqualTo(updatedSettings)
     }
 
     @Test

@@ -168,14 +168,17 @@ class BackupAndRestoreVMTest {
     @Test
     fun `onScreenAction RestoreFileSelected does not update state with null URI`() = runTest {
         initViewModel()
-        val initialState = viewModel.uiState.value
+        viewModel.uiState.test {
+            val initialState = awaitItem()
 
-        val action = ScreenAction.RestoreFileSelected(null)
-        viewModel.onScreenAction(action)
+            val action = ScreenAction.RestoreFileSelected(null)
+            viewModel.onScreenAction(action)
+            advanceUntilIdle()
 
-        val finalState = viewModel.uiState.value
-        assertThat(finalState.newBackupOrRestoreScreenState)
-            .isEqualTo(initialState.newBackupOrRestoreScreenState)
+            val finalState = expectMostRecentItem()
+            assertThat(finalState.newBackupOrRestoreScreenState)
+                .isEqualTo(initialState.newBackupOrRestoreScreenState)
+        }
     }
 
     @Test
@@ -192,4 +195,3 @@ class BackupAndRestoreVMTest {
         verify { activeSessionManager.setPaused(false) }
     }
 }
-

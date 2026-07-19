@@ -2,6 +2,7 @@
 
 package com.andryoga.safebox.ui
 
+import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.CommonConstants.IS_SIGN_UP_REQUIRED
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
@@ -19,13 +20,10 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,8 +50,6 @@ class MainViewModelTest {
     private val backupMetadataFlow = MutableStateFlow<BackupPathData?>(null)
     private val logoutEventFlow = MutableSharedFlow<Unit>(replay = 1)
 
-    private var job: Job? = null
-
 
     @Before
     fun setUp() {
@@ -70,50 +66,28 @@ class MainViewModelTest {
         )
     }
 
-    @After
-    fun tearDown() {
-        job?.cancel()
-    }
-
     @Test
     fun `isBackupPathSet state is false when backup metadata is null`() = runTest {
-        val items = mutableListOf<Boolean>()
-        job = backgroundScope.launch {
-            viewModel.isBackupPathSet.collect { items.add(it) }
+        viewModel.isBackupPathSet.test {
+            assertThat(awaitItem()).isTrue()
+            assertThat(awaitItem()).isFalse()
         }
-
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(2)
-        assertThat(items[0]).isTrue()
-        assertThat(items[1]).isFalse()
     }
 
     @Test
     fun `isBackupPathSet state is true when backup metadata is not null`() = runTest {
         backupMetadataFlow.emit(BackupPathData("uri_path", "file_name", ""))
-        val items = mutableListOf<Boolean>()
-        job = backgroundScope.launch {
-            viewModel.isBackupPathSet.collect { items.add(it) }
+        viewModel.isBackupPathSet.test {
+            assertThat(awaitItem()).isTrue() // stateflow do not re-emit same value
         }
-
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(1)
-        assertThat(items[0]).isTrue() // stateflow do not re-emit same value
     }
 
     @Test
     fun `logout event is emitted from viewmodel`() = runTest {
-        val items = mutableListOf<Unit>()
-        job = backgroundScope.launch {
-            viewModel.logoutEvent.collect { items.add(it) }
+        viewModel.logoutEvent.test {
+            logoutEventFlow.emit(Unit)
+            assertThat(awaitItem()).isEqualTo(Unit)
         }
-
-        logoutEventFlow.emit(Unit)
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(1)
     }
 
     @Test
@@ -124,18 +98,11 @@ class MainViewModelTest {
                 true
             )
         } returns false
-        val items = mutableListOf<LoadingState>()
-        job = backgroundScope.launch {
-            viewModel.loadingState.collect { items.add(it) }
+
+        viewModel.loadingState.test {
+            assertThat(awaitItem()).isEqualTo(LoadingState.Initial)
+            assertThat(awaitItem()).isEqualTo(LoadingState.ProceedToLogin)
         }
-
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(2)
-        assertThat(items[0])
-            .isEqualTo(LoadingState.Initial)
-        assertThat(items[1])
-            .isEqualTo(LoadingState.ProceedToLogin)
     }
 
     @Test
@@ -146,85 +113,62 @@ class MainViewModelTest {
                 true
             )
         } returns true
-        val items = mutableListOf<LoadingState>()
-        job = backgroundScope.launch {
-            viewModel.loadingState.collect { items.add(it) }
+
+        viewModel.loadingState.test {
+            assertThat(awaitItem()).isEqualTo(LoadingState.Initial)
+            assertThat(awaitItem()).isEqualTo(LoadingState.ProceedToSignup)
         }
-
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(2)
-        assertThat(items[0])
-            .isEqualTo(LoadingState.Initial)
-        assertThat(items[1])
-            .isEqualTo(LoadingState.ProceedToSignup)
     }
 
     @Test
     fun `isPrivacyEnabled emits true when settings emits true`() = runTest {
-        val items = mutableListOf<Boolean>()
-        job = backgroundScope.launch {
-            viewModel.isPrivacyEnabled.collect { items.add(it) }
+        viewModel.isPrivacyEnabled.test {
+            assertThat(awaitItem()).isTrue()
         }
-
-        runCurrent()
-
-        assertThat(items.size).isEqualTo(1)
-        assertThat(items[0]).isTrue()
     }
 
     @Test
     fun `isPrivacyEnabled emits false when settings emits false`() = runTest {
-        val items = mutableListOf<Boolean>()
-        job = backgroundScope.launch {
-            viewModel.isPrivacyEnabled.collect { items.add(it) }
+        viewModel.isPrivacyEnabled.test {
+            assertThat(awaitItem()).isTrue()
+            isPrivacyEnabledFlow.emit(false)
+            assertThat(awaitItem()).isFalse()
         }
-
-        isPrivacyEnabledFlow.emit(false)
-        runCurrent()
-
-        assertThat(items.last()).isFalse()
     }
 
     @Test
     fun `isPrivacyEnabled does not emit duplicate value when settings emits prev value`() =
         runTest {
-            val items = mutableListOf<Boolean>()
-            job = backgroundScope.launch {
-                viewModel.isPrivacyEnabled.collect { items.add(it) }
+            viewModel.isPrivacyEnabled.test {
+                assertThat(awaitItem()).isTrue()
+                isPrivacyEnabledFlow.emit(false)
+                assertThat(awaitItem()).isFalse()
+
+                isPrivacyEnabledFlow.emit(false) // false again
+                advanceUntilIdle()
+                expectNoEvents() // no duplicate emission
             }
-
-            isPrivacyEnabledFlow.emit(false)
-            runCurrent()
-            val sizeAfterFirstFalse = items.size
-            isPrivacyEnabledFlow.emit(false) // false again
-            runCurrent()
-
-            assertThat(items.size).isEqualTo(sizeAfterFirstFalse) // no duplicate emission
-            assertThat(items.last()).isFalse()
         }
 
     @Test
     fun `isPrivacyEnabled emit updated value when settings emits new value`() = runTest {
-        val items = mutableListOf<Boolean>()
-        job = backgroundScope.launch {
-            viewModel.isPrivacyEnabled.collect { items.add(it) }
+        viewModel.isPrivacyEnabled.test {
+            assertThat(awaitItem()).isTrue()
+            isPrivacyEnabledFlow.emit(false)
+            assertThat(awaitItem()).isFalse()
+            isPrivacyEnabledFlow.emit(true) // changed
+            assertThat(awaitItem()).isTrue()
         }
-
-        isPrivacyEnabledFlow.emit(false)
-        runCurrent()
-        isPrivacyEnabledFlow.emit(true) // changed
-        runCurrent()
-
-        assertThat(items).isEqualTo(listOf(true, false, true))
     }
 
     @Test
     fun `updateTopBar updates the state to visible`() = runTest {
         val topAppBarConfig = TopAppBarConfig({}, {}, {})
-        viewModel.updateTopBar(topAppBarConfig)
-
-        assertThat(viewModel.topBarState.value).isEqualTo(TopBarState.Visible(topAppBarConfig))
+        viewModel.topBarState.test {
+            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
+            viewModel.updateTopBar(topAppBarConfig)
+            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
+        }
     }
 
     @Test
@@ -232,19 +176,25 @@ class MainViewModelTest {
         val topAppBarConfig = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.NONE)
         val topAppBarConfigNew = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.ENTER_ALWAYS)
 
-        viewModel.updateTopBar(topAppBarConfig)
-        viewModel.updateTopBar(topAppBarConfigNew)
-
-        assertThat(viewModel.topBarState.value).isEqualTo(TopBarState.Visible(topAppBarConfigNew))
+        viewModel.topBarState.test {
+            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
+            viewModel.updateTopBar(topAppBarConfig)
+            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
+            viewModel.updateTopBar(topAppBarConfigNew)
+            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfigNew))
+        }
     }
 
     @Test
     fun `hideTopBar updates the state to hidden`() = runTest {
         val topAppBarConfig = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.NONE)
 
-        viewModel.updateTopBar(topAppBarConfig)
-        viewModel.hideTopBar()
-
-        assertThat(viewModel.topBarState.value).isEqualTo(TopBarState.Hidden)
+        viewModel.topBarState.test {
+            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
+            viewModel.updateTopBar(topAppBarConfig)
+            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
+            viewModel.hideTopBar()
+            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
+        }
     }
 }

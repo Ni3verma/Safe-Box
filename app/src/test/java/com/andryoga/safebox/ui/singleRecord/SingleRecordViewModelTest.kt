@@ -3,6 +3,7 @@
 package com.andryoga.safebox.ui.singleRecord
 
 import android.content.Context
+import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -24,12 +25,8 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -54,7 +51,6 @@ class SingleRecordViewModelTest {
     lateinit var singleRecordRouteProvider: SingleRecordRouteProvider
 
     private lateinit var viewModel: SingleRecordViewModel
-    private var job: Job? = null
 
 
     @Before
@@ -64,11 +60,6 @@ class SingleRecordViewModelTest {
         every { layoutFactory.getLayout(any(), any()) } returns layout
         coEvery { layout.getLayoutPlan() } returns LayoutPlan(fieldUiState = emptyMap())
         every { context.getString(any()) } returns "some string"
-    }
-
-    @After
-    fun tearDown() {
-        job?.cancel()
     }
 
     private fun initViewModel() {
@@ -88,22 +79,28 @@ class SingleRecordViewModelTest {
             1
         )
         initViewModel()
-        runCurrent()
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isLoading).isFalse()
-        assertThat(uiState.viewMode).isEqualTo(ViewMode.VIEW)
-        assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isFalse()
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.isLoading).isFalse()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.VIEW)
+            assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isFalse()
+        }
     }
 
     @Test
     fun `initial state is correct for new record`() = runTest {
         every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
         initViewModel()
-        runCurrent()
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isLoading).isFalse()
-        assertThat(uiState.viewMode).isEqualTo(ViewMode.NEW)
-        assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isTrue()
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.isLoading).isFalse()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.NEW)
+            assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isTrue()
+        }
     }
 
     @Test
@@ -121,24 +118,27 @@ class SingleRecordViewModelTest {
         every { layout.checkMandatoryFields(any()) } returns true
         every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
 
-
         // 2. Arrange: Initialize the ViewModel AFTER mocks are set
         initViewModel()
 
-        // 3. Act: Run coroutines and perform action
-        runCurrent() // for init
-        viewModel.onAction(
-            SingleRecordScreenAction.OnCellValueUpdate(
-                FieldId.LOGIN_TITLE,
-                "new data"
-            )
-        )
-        runCurrent()
+        // 3. Act & Assert with Turbine
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            awaitItem() // post-init state
 
-        // 4. Assert: Check the results
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.layoutPlan.fieldUiState[FieldId.LOGIN_TITLE]?.data).isEqualTo("new data")
-        assertThat(uiState.topAppBarUiState.isSaveButtonEnabled).isTrue()
+            viewModel.onAction(
+                SingleRecordScreenAction.OnCellValueUpdate(
+                    FieldId.LOGIN_TITLE,
+                    "new data"
+                )
+            )
+            advanceUntilIdle()
+
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.layoutPlan.fieldUiState[FieldId.LOGIN_TITLE]?.data).isEqualTo("new data")
+            assertThat(uiState.topAppBarUiState.isSaveButtonEnabled).isTrue()
+        }
     }
 
     @Test
@@ -146,16 +146,14 @@ class SingleRecordViewModelTest {
         every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
         initViewModel()
         coEvery { layout.saveLayout(any()) } just runs
-        job = launch {
-            val event = viewModel.screenCloseEvent.first()
-            assertThat(event).isEqualTo(Unit)
+
+        viewModel.screenCloseEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+            advanceUntilIdle()
+
+            assertThat(awaitItem()).isEqualTo(Unit)
+            coVerify { layout.saveLayout(any()) }
         }
-        runCurrent()
-
-        viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
-        runCurrent()
-
-        coVerify { layout.saveLayout(any()) }
     }
 
     @Test
@@ -166,16 +164,14 @@ class SingleRecordViewModelTest {
         )
         initViewModel()
         coEvery { layout.deleteLayout() } just runs
-        job = launch {
-            val event = viewModel.screenCloseEvent.first()
-            assertThat(event).isEqualTo(Unit)
+
+        viewModel.screenCloseEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+            advanceUntilIdle()
+
+            assertThat(awaitItem()).isEqualTo(Unit)
+            coVerify { layout.deleteLayout() }
         }
-        runCurrent()
-
-        viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
-        runCurrent()
-
-        coVerify { layout.deleteLayout() }
     }
 
     @Test
@@ -185,14 +181,19 @@ class SingleRecordViewModelTest {
             1
         )
         initViewModel()
-        runCurrent()
 
-        viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
-        runCurrent()
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            awaitItem() // post-init state
 
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.viewMode).isEqualTo(ViewMode.EDIT)
-        assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isTrue()
+            viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
+            advanceUntilIdle()
+
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.EDIT)
+            assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isTrue()
+        }
     }
 
     @Test
@@ -267,21 +268,18 @@ class SingleRecordViewModelTest {
 
             // 2. Arrange: Initialize the ViewModel AFTER mocks are set
             initViewModel()
-            var emittedEvent: String? = null
-            job = launch {
-                emittedEvent = viewModel.shareContentEvent.first()
+
+            // 3. Act & Assert with Turbine
+            viewModel.shareContentEvent.test {
+                viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+                advanceUntilIdle()
+
+                val emittedEvent = awaitItem()
+                assertThat(emittedEvent).isNotNull()
+                assertThat(emittedEvent).contains("Copyable : copy me")
+                assertThat(emittedEvent).doesNotContain("secret")
+                assertThat(emittedEvent).doesNotContain("don't copy me")
+                assertThat(emittedEvent).contains("some app link")
             }
-
-            // 3. Act: Run coroutines and perform action
-            runCurrent()
-            viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
-            runCurrent()
-
-            // 4. Assert: Check that only the correct field was included
-            assertThat(emittedEvent).isNotNull()
-            assertThat(emittedEvent).contains("Copyable : copy me")
-            assertThat(emittedEvent).doesNotContain("secret")
-            assertThat(emittedEvent).doesNotContain("don't copy me")
-            assertThat(emittedEvent).contains("some app link")
         }
 }
