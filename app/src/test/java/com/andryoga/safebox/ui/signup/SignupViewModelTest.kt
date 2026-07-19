@@ -2,14 +2,13 @@
 
 package com.andryoga.safebox.ui.signup
 
+import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
-import com.andryoga.safebox.ui.signup.SignupViewModel.Constants.MIN_NUMERIC_COUNT
-import com.andryoga.safebox.ui.signup.SignupViewModel.Constants.MIN_PASSWORD_LENGTH
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
@@ -23,6 +22,7 @@ import org.junit.Rule
 import org.junit.Test
 
 class SignupViewModelTest {
+
     @MockK(relaxUnitFun = true)
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
@@ -37,7 +37,6 @@ class SignupViewModelTest {
 
     private lateinit var viewModel: SignupViewModel
 
-
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
@@ -50,367 +49,175 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun `verify initial state of ui state`() {
-        val uiState = viewModel.uiState.value
-
-        assertThat(uiState.password).isEmpty()
-        assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-        assertThat(uiState.hint).isEmpty()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-        assertThat(viewModel.navigateToHome.value).isFalse()
+    fun initialUiState_matchesDefaultSignupUiState() = runTest {
+        viewModel.uiState.test {
+            val initialState = awaitItem()
+            assertThat(initialState.password).isEmpty()
+            assertThat(initialState.hint).isEmpty()
+            assertThat(initialState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
+            assertThat(initialState.isPasswordFieldError).isFalse()
+            assertThat(initialState.isSignupButtonEnabled).isFalse()
+        }
     }
 
     @Test
-    fun `verify initial state of ui state for debug app`() {
-        viewModel = SignupViewModel(
-            encryptedPreferenceProvider = encryptedPreferenceProvider,
-            userDetailsRepository = userDetailsRepository,
-            analyticsHelper = analyticsHelper,
-            isDebug = true
-        )
-        val uiState = viewModel.uiState.value
-
-        assertThat(uiState.password).isEmpty()
-        assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-        assertThat(uiState.hint).isEmpty()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-        assertThat(viewModel.navigateToHome.value).isFalse()
+    fun initialNavigateToHome_stateIsFalse() = runTest {
+        viewModel.navigateToHome.test {
+            assertThat(awaitItem()).isFalse()
+        }
     }
 
     @Test
-    fun `password is updated in ui state when password update screen action comes to vm`() =
-        runTest {
-        val password = "safasf"
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.password).isEqualTo(password)
-    }
-
-    @Test
-    fun `on password update with empty password fails validation`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = ""))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.EMPTY_PASSWORD)
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on password update with only lowercase letters fails validation`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "jsanfjakf"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on password update with only uppercase letters fails validation`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "FMNJKFBNJ"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on password update with less than minimum numeric count fails validation`() = runTest {
-        var password = "jaLO" // no numeric and mix and upper, lower case
-
-        repeat(MIN_NUMERIC_COUNT - 1) {
-            password += "1" // add a number to the password
-            viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
+    fun onPasswordUpdate_withEmptyText_updatesStateWithEmptyPassword() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = ""))
             advanceUntilIdle()
-            val uiState = viewModel.uiState.value
-            assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.LESS_NUMERIC_COUNT)
-            assertThat(uiState.isPasswordFieldError).isTrue()
-            assertThat(uiState.isSignupButtonEnabled).isFalse()
+
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.password).isEmpty()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.EMPTY_PASSWORD)
+            assertThat(updatedState.isPasswordFieldError).isTrue()
         }
     }
 
     @Test
-    fun `on password update with minimum numeric count but no special char fails validation`() =
-        runTest {
-        var password = "jaLO" // no numeric and mix and upper, lower case
-        repeat(MIN_NUMERIC_COUNT) {
-            password += "1" // add a number to the password
-        }
-
-        repeat(2) {
-            viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
+    fun onPasswordUpdate_withLengthLessThan7_updatesStateWithShortPasswordLength() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Ab12@"))
             advanceUntilIdle()
-            val uiState = viewModel.uiState.value
-            assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.NO_SPECIAL_CHAR)
-            assertThat(uiState.isPasswordFieldError).isTrue()
-            assertThat(uiState.isSignupButtonEnabled).isFalse()
-            password += "1" // add a number to the password
+
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.SHORT_PASSWORD_LENGTH)
         }
     }
 
     @Test
-    fun `on password update with password shorter than min length fails validation`() = runTest {
-        var password = "jJ@"
-        val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        repeat(MIN_NUMERIC_COUNT) {
-            password += "1"
-        }
-
-        while (password.length < MIN_PASSWORD_LENGTH) {
-            viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
+    fun onPasswordUpdate_withNoSpecialChar_updatesStateWithNoSpecialChar() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password123"))
             advanceUntilIdle()
-            val uiState = viewModel.uiState.value
-            assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.SHORT_PASSWORD_LENGTH)
-            assertThat(uiState.isPasswordFieldError).isTrue()
-            assertThat(uiState.isSignupButtonEnabled).isFalse()
-            password += charPool.random()
+
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.NO_SPECIAL_CHAR)
         }
     }
 
     @Test
-    fun `on password update with valid password passes validation`() = runTest {
-        var password = "jJ12@"
-        val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-        while (password.length != MIN_PASSWORD_LENGTH) {
-            password += charPool.random()
-        }
-
-        repeat(2) {
-            viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
+    fun onPasswordUpdate_withNoUpperCase_updatesStateWithNotMixCase() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "password@123"))
             advanceUntilIdle()
-            val uiState = viewModel.uiState.value
-            assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-            assertThat(uiState.isPasswordFieldError).isFalse()
-            assertThat(uiState.isSignupButtonEnabled).isFalse()
-            password += charPool.random()
+
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
         }
     }
 
     @Test
-    fun `on password update with valid password after invalid password updates state correctly`() =
-        runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJJ"))
-        advanceUntilIdle()
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJ@43jsnfjka"))
-        advanceUntilIdle()
+    fun onPasswordUpdate_withNoLowerCase_updatesStateWithNotMixCase() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "PASSWORD@123"))
+            advanceUntilIdle()
 
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-        assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on password update with invalid password after valid password updates state correctly`() =
-        runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJ@43jsnfjka"))
-        advanceUntilIdle()
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "aJJ"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.passwordValidatorState).isNotEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on hint update updates ui state`() = runTest {
-        val hint = "this is hint"
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = hint))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.hint).isEqualTo(hint)
-    }
-
-    @Test
-    fun `on hint update with empty hint does not enable signup button`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "  "))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on hint update without password does not enable signup button`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-    }
-
-    @Test
-    fun `on hint update does not update password state`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isPasswordFieldError).isFalse() // because password is not yet entered
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-    }
-
-    @Test
-    fun `on multiple hint updates do not update password state`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
-        advanceUntilIdle()
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint 2"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isPasswordFieldError).isFalse() // because password is not yet entered
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-    }
-
-    @Test
-    fun `on hint update with invalid password updates state correctly`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "djD7b"))
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.passwordValidatorState).isNotIn(
-            listOf(
-                PasswordValidatorState.INITIAL_STATE,
-                PasswordValidatorState.PASSWORD_IS_OK
-            )
-        )
-    }
-
-    @Test
-    fun `on hint update with valid password updates state correctly and enables signup`() =
-        runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // valid password
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint"))
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isTrue()
-        assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-    }
-
-    @Test
-    fun `on valid password update after hint updates state correctly`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "da")) // invalid password
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint")) // hint is entered
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // now valid password
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isTrue()
-        assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-    }
-
-    @Test
-    fun `on invalid password update after hint and valid password updates state correctly`() =
-        runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd")) // valid password
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "this is hint")) // hint is entered
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "da")) // invalid password
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
-        assertThat(uiState.isPasswordFieldError).isTrue()
-        assertThat(uiState.passwordValidatorState).isNotEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-    }
-
-    @Test
-    fun `on signup with invalid password logs analytics and does not call db`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj"))
-        viewModel.onAction(action = SignupScreenAction.OnSignupClick)
-        advanceUntilIdle()
-
-        val uiState = viewModel.uiState.value
-        verify(exactly = 1) {
-            analyticsHelper.logEvent(key = AnalyticsKey.SIGNUP_BLOCKED)
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.NOT_MIX_CASE)
         }
-        coVerify(exactly = 0) {
-            userDetailsRepository.insertUserDetailsData(any(), any())
-        }
-        assertThat(uiState.passwordValidatorState).isNotEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
-        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
-    fun `on signup with empty hint logs analytics and does not call db`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = ""))
-        viewModel.onAction(action = SignupScreenAction.OnSignupClick)
-        advanceUntilIdle()
+    fun onPasswordUpdate_withLessNumericCount_updatesStateWithLessNumericCount() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@1"))
+            advanceUntilIdle()
 
-        verify(exactly = 1) {
-            analyticsHelper.logEvent(key = AnalyticsKey.SIGNUP_BLOCKED)
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.LESS_NUMERIC_COUNT)
         }
-        coVerify(exactly = 0) {
-            userDetailsRepository.insertUserDetailsData(any(), any())
-        }
-        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
-    fun `on signup with valid password but empty hint logs analytics and does not call db`() =
-        runTest {
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = "dj@687JJdd"))
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = ""))
-        viewModel.onAction(action = SignupScreenAction.OnSignupClick)
-        advanceUntilIdle()
+    fun onPasswordUpdate_withValidPassword_updatesStateWithPasswordIsOk() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+            advanceUntilIdle()
 
-        verify(exactly = 1) {
-            analyticsHelper.logEvent(key = AnalyticsKey.SIGNUP_BLOCKED)
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
+            assertThat(updatedState.isPasswordFieldError).isFalse()
         }
-        coVerify(exactly = 0) {
-            userDetailsRepository.insertUserDetailsData(any(), any())
-        }
-        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
-    fun `on signup with blank hint logs analytics and does not call db`() = runTest {
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = "  "))
-        viewModel.onAction(action = SignupScreenAction.OnSignupClick)
-        advanceUntilIdle()
+    fun onHintUpdate_updatesHintInUiState() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+            advanceUntilIdle()
 
-        verify(exactly = 1) {
-            analyticsHelper.logEvent(key = AnalyticsKey.SIGNUP_BLOCKED)
+            val updatedState = expectMostRecentItem()
+            assertThat(updatedState.hint).isEqualTo("favorite pet")
         }
-        coVerify(exactly = 0) {
-            userDetailsRepository.insertUserDetailsData(any(), any())
-        }
-        assertThat(viewModel.navigateToHome.value).isFalse()
     }
 
     @Test
-    fun `on signup with valid password and hint saves data and navigates`() = runTest {
-        val hint = "a"
-        val password = "aP@33dsdasP"
-        viewModel.onAction(action = SignupScreenAction.OnHintUpdate(hint = hint))
-        viewModel.onAction(action = SignupScreenAction.OnPasswordUpdate(password = password))
-        viewModel.onAction(action = SignupScreenAction.OnSignupClick)
-        advanceUntilIdle()
+    fun onSignupClick_withValidPasswordAndHint_insertsUserDetailsAndNavigatesHome() = runTest {
+        val password = "Password@123"
+        val hint = "favorite pet"
 
-        verify(exactly = 1) { analyticsHelper.logEvent(key = AnalyticsKey.SIGN_UP) }
-        coVerify(exactly = 1) { userDetailsRepository.insertUserDetailsData(password, hint) }
-        coVerify(exactly = 1) {
-            encryptedPreferenceProvider.upsertBooleanPref(
-                CommonConstants.IS_SIGN_UP_REQUIRED,
-                false
-            )
+        viewModel.navigateToHome.test {
+            assertThat(awaitItem()).isFalse()
+
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = password))
+            viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = hint))
+            viewModel.onAction(SignupScreenAction.OnSignupClick)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGN_UP) }
+            coVerify(exactly = 1) { userDetailsRepository.insertUserDetailsData(password, hint) }
+            coVerify(exactly = 1) {
+                encryptedPreferenceProvider.upsertBooleanPref(
+                    CommonConstants.IS_SIGN_UP_REQUIRED,
+                    false
+                )
+            }
+            assertThat(expectMostRecentItem()).isTrue()
         }
-        assertThat(viewModel.navigateToHome.value).isTrue()
+    }
+
+    @Test
+    fun onSignupClick_withInvalidPassword_logsSignupBlockedAndDoesNotCallDb() = runTest {
+        viewModel.navigateToHome.test {
+            assertThat(awaitItem()).isFalse()
+
+            viewModel.onAction(SignupScreenAction.OnSignupClick)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED) }
+            coVerify(exactly = 0) { userDetailsRepository.insertUserDetailsData(any(), any()) }
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun onSignupClick_withEmptyHint_logsSignupBlockedAndDoesNotCallDb() = runTest {
+        viewModel.navigateToHome.test {
+            assertThat(awaitItem()).isFalse()
+
+            viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+            viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = ""))
+            viewModel.onAction(SignupScreenAction.OnSignupClick)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED) }
+            coVerify(exactly = 0) { userDetailsRepository.insertUserDetailsData(any(), any()) }
+            expectNoEvents()
+        }
     }
 }

@@ -22,6 +22,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
@@ -37,7 +38,6 @@ import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
@@ -60,7 +60,8 @@ class BackupDataWorker
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
-    private val analyticsHelper: AnalyticsHelper
+    private val analyticsHelper: AnalyticsHelper,
+    private val dispatchersProvider: DispatchersProvider
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -213,7 +214,7 @@ class BackupDataWorker
     }
 
     private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
-        withContext(Dispatchers.IO) {
+        withContext(dispatchersProvider.io) {
             val files = pickedDir.listFiles().filter {
                 it.isFile && it.name != null &&
                         it.name!!.startsWith("SafeBoxBackup") &&
@@ -235,7 +236,7 @@ class BackupDataWorker
 
     private suspend fun exportToFile(
         pickedDir: DocumentFile
-    ) = withContext(Dispatchers.IO) {
+    ) = withContext(dispatchersProvider.io) {
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
         val fileName = "SafeBoxBackup$nameSuffix"
