@@ -22,7 +22,11 @@ private const val AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_STR
 var biometricAuthHandlerOverride: (@Composable (onSuccess: () -> Unit, onErrorOrCancel: () -> Unit) -> Unit)? =
     null
 
+@VisibleForTesting
+var canAuthenticateUsingBiometricOverride: Boolean? = null
+
 fun canAuthenticateUsingBiometric(context: Context): Boolean {
+    canAuthenticateUsingBiometricOverride?.let { return it }
     return BiometricManager.from(context)
         .canAuthenticate(AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
 }

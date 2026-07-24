@@ -73,6 +73,7 @@ class LoginBiometricAndHintE2ETest {
     @After
     fun tearDown() {
         com.andryoga.safebox.ui.core.biometricAuthHandlerOverride = null
+        com.andryoga.safebox.ui.core.canAuthenticateUsingBiometricOverride = null
         runBlocking {
             settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
             settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
@@ -287,6 +288,7 @@ class LoginBiometricAndHintE2ETest {
     @Test
     fun biometricErrorOrCancellation_shouldResetUiStateAndPreventInfinitePromptLoop() {
         var biometricErrorTriggered = false
+        com.andryoga.safebox.ui.core.canAuthenticateUsingBiometricOverride = true
         com.andryoga.safebox.ui.core.biometricAuthHandlerOverride = { _, onErrorOrCancel ->
             biometricErrorTriggered = true
             androidx.compose.runtime.LaunchedEffect(Unit) {
