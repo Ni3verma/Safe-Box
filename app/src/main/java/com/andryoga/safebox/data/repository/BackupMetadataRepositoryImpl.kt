@@ -14,6 +14,7 @@ import com.andryoga.safebox.domain.models.backup.BackupPathData
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.util.Date
 import javax.inject.Inject
 
@@ -25,23 +26,37 @@ class BackupMetadataRepositoryImpl @Inject constructor(
     private val contentResolver = context.contentResolver
 
     override suspend fun insertBackupMetadata(uriPath: Uri?) {
-        analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
-            param(AnalyticsParam.RESULT, (uriPath != null && uriPath.path != null))
+        var permissionGranted = uriPath != null
+        if (uriPath != null) {
+            if (uriPath.scheme == "content" || uriPath.toString().startsWith("content://")) {
+                runCatching {
+                    val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    contentResolver.takePersistableUriPermission(uriPath, flags)
+                }.onFailure {
+                    permissionGranted = false
+                    Timber.w(
+                        it,
+                        "Failed to take persistable URI permission for authority=%s",
+                        uriPath.authority ?: "unknown"
+                    )
+                }
+            }
+            if (permissionGranted) {
+                backupMetadataDao.insertBackupMetadata(
+                    BackupMetadataEntity(
+                        key = 1,
+                        uriString = uriPath.toString(),
+                        displayPath = uriPath.path ?: uriPath.toString(),
+                        lastBackupDate = null,
+                        createdOn = Date()
+                    )
+                )
+            }
         }
 
-        if (uriPath != null) {
-            val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            contentResolver.takePersistableUriPermission(uriPath, flags)
-            backupMetadataDao.insertBackupMetadata(
-                BackupMetadataEntity(
-                    key = 1,
-                    uriString = uriPath.toString(),
-                    displayPath = uriPath.path!!,
-                    lastBackupDate = null,
-                    createdOn = Date()
-                )
-            )
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
+            param(AnalyticsParam.RESULT, permissionGranted)
         }
     }
 

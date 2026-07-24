@@ -36,14 +36,6 @@ class SignupViewModel @Inject constructor(
 
 
     init {
-        if (isDebug) {
-            _uiState.value = _uiState.value.copy(
-                password = "Qwerty@@135",
-                hint = "This is a hint",
-                passwordValidatorState = PasswordValidatorState.PASSWORD_IS_OK,
-                isSignupButtonEnabled = true
-            )
-        }
 
         uiState.map {
             SignupButtonEnableParams(
@@ -81,42 +73,44 @@ class SignupViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(hint = hint)
     }
 
-    private fun runPasswordValidator(
-        password: String = _uiState.value.password
-    ): PasswordValidatorState {
-        var hasLowerCase = false
-        var hasUpperCase = false
-        var numericCount = 0
-        var specialCharCount = 0
+    companion object {
+        fun runPasswordValidator(
+            password: String
+        ): PasswordValidatorState {
+            var hasLowerCase = false
+            var hasUpperCase = false
+            var numericCount = 0
+            var specialCharCount = 0
 
-        password.forEach { char ->
-            when {
-                char.isLowerCase() -> hasLowerCase = true
-                char.isUpperCase() -> hasUpperCase = true
-                char.isDigit() -> numericCount++
-                !char.isLetterOrDigit() -> specialCharCount++
+            password.forEach { char ->
+                when {
+                    char.isLowerCase() -> hasLowerCase = true
+                    char.isUpperCase() -> hasUpperCase = true
+                    char.isDigit() -> numericCount++
+                    !char.isLetterOrDigit() -> specialCharCount++
+                }
             }
-        }
-        return when {
-            password.isBlank() -> PasswordValidatorState.EMPTY_PASSWORD
-            hasLowerCase.not() || hasUpperCase.not() -> {
-                PasswordValidatorState.NOT_MIX_CASE
-            }
+            return when {
+                password.isBlank() -> PasswordValidatorState.EMPTY_PASSWORD
+                hasLowerCase.not() || hasUpperCase.not() -> {
+                    PasswordValidatorState.NOT_MIX_CASE
+                }
 
-            numericCount < Constants.MIN_NUMERIC_COUNT -> {
-                PasswordValidatorState.LESS_NUMERIC_COUNT
-            }
+                numericCount < Constants.MIN_NUMERIC_COUNT -> {
+                    PasswordValidatorState.LESS_NUMERIC_COUNT
+                }
 
-            specialCharCount == 0 -> {
-                PasswordValidatorState.NO_SPECIAL_CHAR
-            }
+                specialCharCount == 0 -> {
+                    PasswordValidatorState.NO_SPECIAL_CHAR
+                }
 
-            password.length < Constants.MIN_PASSWORD_LENGTH -> {
-                PasswordValidatorState.SHORT_PASSWORD_LENGTH
-            }
+                password.length < Constants.MIN_PASSWORD_LENGTH -> {
+                    PasswordValidatorState.SHORT_PASSWORD_LENGTH
+                }
 
-            else -> {
-                PasswordValidatorState.PASSWORD_IS_OK
+                else -> {
+                    PasswordValidatorState.PASSWORD_IS_OK
+                }
             }
         }
     }
@@ -126,7 +120,7 @@ class SignupViewModel @Inject constructor(
         val hint = _uiState.value.hint
 
         Timber.i("save password clicked")
-        val passwordValidatorState = runPasswordValidator()
+        val passwordValidatorState = runPasswordValidator(password)
         if (passwordValidatorState != PasswordValidatorState.PASSWORD_IS_OK || hint.isBlank()) {
             // ideally flow should NEVER come here bcz we don't allow signup click
             Timber.w("password not ok but user was able to tap on signup button !!")

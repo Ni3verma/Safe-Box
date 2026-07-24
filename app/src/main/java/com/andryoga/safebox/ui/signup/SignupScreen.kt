@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.signup
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -48,8 +50,10 @@ fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val navigateToHome by viewModel.navigateToHome.collectAsState()
 
-    if (navigateToHome) {
-        onSignupSuccess()
+    LaunchedEffect(navigateToHome) {
+        if (navigateToHome) {
+            onSignupSuccess()
+        }
     }
 
     SignupScreen(
@@ -58,8 +62,9 @@ fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
     )
 }
 
+@VisibleForTesting
 @Composable
-private fun SignupScreen(
+internal fun SignupScreen(
     uiState: SignupUiState,
     screenAction: (SignupScreenAction) -> Unit,
 ) {

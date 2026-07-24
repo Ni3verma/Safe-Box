@@ -28,6 +28,7 @@ navigationCompose = "2.9.8"
 material3 = "1.4.0"
 daggerHilt = "2.60.1"
 androidxHilt = "1.4.0"
+androidxHiltWork = "1.2.0"
 work = "2.11.2"
 timber = "5.0.1"
 room = "2.8.4"
@@ -77,6 +78,9 @@ mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" 
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "daggerHilt" }
 hilt-nav-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidxHilt" }
+hilt-android-testing = { module = "com.google.dagger:hilt-android-testing", version.ref = "daggerHilt" }
+hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "androidxHiltWork" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "androidxHiltWork" }
 
 #work
 work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
@@ -106,8 +110,8 @@ androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-act
 compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
 compose-debug = ["androidx-compose-ui-tooling", "androidx-compose-ui-test-manifest"]
 unit-test = ["androidx-test-ext-junit", "androidx-test-junit", "mockk", "mockk-agent", "kotlinx-coroutines-test", "truth", "turbine"]
-compose-test = ["androidx-compose-ui-test-junit4", "androidx-test-ext-junit", "androidx-test-runner", "truth"]
-hilt = ["hilt-android", "hilt-nav-compose"]
+compose-test = ["androidx-compose-ui-test-junit4", "androidx-test-ext-junit", "androidx-test-runner", "truth", "hilt-android-testing"]
+hilt = ["hilt-android", "hilt-nav-compose", "hilt-work"]
 work = ["work-runtime-ktx", "work-testing"]
 firebase = ["firebase-crashlytics", "firebase-analytics"]
 room = ["room-runtime", "room-testing"]

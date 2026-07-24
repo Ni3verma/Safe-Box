@@ -41,7 +41,7 @@ android {
         }
         println "Building SafeBox: ${versionName} (${versionCode})"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.andryoga.safebox.CustomHiltTestRunner"
     }
 
     signingConfigs {
@@ -131,13 +131,19 @@ android {
             assets.srcDirs(files("$projectDir/schemas"))
         }
     }
+
     testOptions {
         managedDevices {
             localDevices {
-                create("pixel8Api34") {
+                register("pixel8Api34") {
                     device = "Pixel 8"
                     apiLevel = 34
                     systemImageSource = "aosp-atd"
+                }
+                register("pixel2Api24") {
+                    device = "Pixel 2"
+                    apiLevel = 24
+                    systemImageSource = "aosp"
                 }
             }
         }
@@ -168,6 +174,9 @@ dependencies {
     implementation libs.bundles.room
 
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
+    kspAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.androidx.hilt.compiler)
     implementation libs.bundles.hilt
 
     implementation platform(libs.androidx.compose.bom)

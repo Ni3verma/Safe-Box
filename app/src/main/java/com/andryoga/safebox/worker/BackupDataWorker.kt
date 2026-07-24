@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
@@ -34,6 +35,8 @@ import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withContext
@@ -45,9 +48,11 @@ import java.io.ObjectOutputStream
 import java.util.Date
 import java.util.UUID
 
-class BackupDataWorker(
-    context: Context,
-    params: WorkerParameters,
+@HiltWorker
+class BackupDataWorker
+@AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
@@ -67,80 +72,89 @@ class BackupDataWorker(
     private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
-        backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadata ->
-            if (backupMetadata != null) {
-                Timber.i("backup metadata found")
-                val isShowStartNotification =
-                    inputData.getBoolean(
-                        BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
-                        false
-                    )
-                if (isShowStartNotification) {
-                    sendNotification(
-                        getNotificationOptions(
-                            applicationContext.getString(R.string.notification_backup_in_progress)
+        var isSuccess = true
+        try {
+            backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadata ->
+                if (backupMetadata != null) {
+                    Timber.i("backup metadata found")
+                    val isShowStartNotification =
+                        inputData.getBoolean(
+                            BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                            false
                         )
-                    )
-                }
+                    if (isShowStartNotification) {
+                        sendNotification(
+                            getNotificationOptions(
+                                applicationContext.getString(R.string.notification_backup_in_progress)
+                            )
+                        )
+                    }
 
-                startTime = System.currentTimeMillis()
+                    startTime = System.currentTimeMillis()
 
-                val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
-                    ?: throw IllegalArgumentException("expected password input was not received")
+                    val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
+                        ?: throw IllegalArgumentException("expected password input was not received")
 
-                val loginData = loginDataDaoSecure.exportAllData()
-                val bankAccountData = bankAccountDataDaoSecure.exportAllData()
-                val bankCardData = bankCardDataDaoSecure.exportAllData()
-                val secureNoteData = secureNoteDataDaoSecure.exportAllData()
+                    val loginData = loginDataDaoSecure.exportAllData()
+                    val bankAccountData = bankAccountDataDaoSecure.exportAllData()
+                    val bankCardData = bankCardDataDaoSecure.exportAllData()
+                    val secureNoteData = secureNoteDataDaoSecure.exportAllData()
 
-                recordTime("got all data")
+                    recordTime("got all data")
 
-                if (
-                    shouldExport(loginData, bankAccountData, bankCardData, secureNoteData)
-                ) {
-                    Timber.i("$localTag data is present for export")
-                    salt = passwordBasedEncryption.getRandomSalt()
-                    iv = passwordBasedEncryption.getRandomIV()
-                    exportMap.putAll(
-                        mapOf(
-                            CommonConstants.SALT_KEY to salt,
-                            CommonConstants.IV_KEY to iv,
-                            CommonConstants.VERSION_KEY to ByteArray(1) {
-                                CommonConstants.BACKUP_VERSION.toByte()
+                    if (
+                        shouldExport(loginData, bankAccountData, bankCardData, secureNoteData)
+                    ) {
+                        Timber.i("$localTag data is present for export")
+                        salt = passwordBasedEncryption.getRandomSalt()
+                        iv = passwordBasedEncryption.getRandomIV()
+                        exportMap.putAll(
+                            mapOf(
+                                CommonConstants.SALT_KEY to salt,
+                                CommonConstants.IV_KEY to iv,
+                                CommonConstants.VERSION_KEY to ByteArray(1) {
+                                    CommonConstants.BACKUP_VERSION.toByte()
+                                }
+                            )
+                        )
+                        recordTime("got salt and iv")
+
+                        populateExportMapWithData(
+                            loginData,
+                            inputPassword,
+                            bankAccountData,
+                            bankCardData,
+                            secureNoteData
+                        )
+
+                        Timber.i("getting picked dir")
+                        try {
+                            val uri = backupMetadata.uriString.toUri()
+                            val pickedDir = if (uri.scheme == "file" && uri.path != null) {
+                                DocumentFile.fromFile(java.io.File(uri.path!!))
+                            } else {
+                                DocumentFile.fromTreeUri(applicationContext, uri)!!
                             }
-                        )
-                    )
-                    recordTime("got salt and iv")
 
-                    populateExportMapWithData(
-                        loginData,
-                        inputPassword,
-                        bankAccountData,
-                        bankCardData,
-                        secureNoteData
-                    )
-
-                    Timber.i("getting picked dir")
-                    try {
-                        val pickedDir = DocumentFile.fromTreeUri(
-                            applicationContext,
-                            backupMetadata.uriString.toUri()
-                        )!!
-
-                        deleteExtraBackupFiles(pickedDir)
-                        exportToFile(pickedDir)
-                    } catch (exception: Exception) {
-                        onBackupError(exception)
+                            deleteExtraBackupFiles(pickedDir)
+                            exportToFile(pickedDir)
+                        } catch (exception: Exception) {
+                            onBackupError(exception)
+                            isSuccess = false
+                        }
+                    } else {
+                        Timber.i("$localTag  nothing to export")
                     }
                 } else {
-                    Timber.i("$localTag  nothing to export")
+                    Timber.i("backup metadata not found")
                 }
-            } else {
-                Timber.i("backup metadata not found")
             }
+        } catch (exception: Exception) {
+            onBackupError(exception)
+            isSuccess = false
         }
 
-        return Result.success()
+        return if (isSuccess) Result.success() else Result.failure()
     }
 
     private fun sendNotification(notificationOptions: NotificationOptions) {
@@ -202,8 +216,10 @@ class BackupDataWorker(
         withContext(Dispatchers.IO) {
             val files = pickedDir.listFiles().filter {
                 it.isFile && it.name != null &&
-                        it.name!!.endsWith(".bak") &&
-                        it.name!!.startsWith("SafeBoxBackup")
+                        it.name!!.startsWith("SafeBoxBackup") &&
+                        (it.name!!.endsWith(".bak") || it.name!!.endsWith(".bak.bin") || it.name!!.contains(
+                            ".bak"
+                        ))
             }
             if (files.size >= CommonConstants.MAX_BACKUP_FILES) {
                 Timber.i("max backup files threshold reached")
@@ -222,19 +238,31 @@ class BackupDataWorker(
     ) = withContext(Dispatchers.IO) {
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
-        Timber.i("$localTag  creating file")
-        val file = pickedDir.createFile("application/octet-stream", "SafeBoxBackup$nameSuffix")
-
-        Timber.i("$localTag opening file descriptor")
-        applicationContext.contentResolver.openFileDescriptor(
-            file!!.uri,
-            "w"
-        )?.use { parcelFileDescriptor ->
-            Timber.i("$localTag making output stream")
-            ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
+        val fileName = "SafeBoxBackup$nameSuffix"
+        val uri = pickedDir.uri
+        if (uri.scheme == "file" || uri.scheme == null || (uri.scheme != "content" && uri.path != null)) {
+            val path = uri.path ?: throw IllegalArgumentException("Backup directory path is null")
+            val targetFile = java.io.File(path, fileName)
+            Timber.i("$localTag making output stream for file path: ${targetFile.absolutePath}")
+            ObjectOutputStream(FileOutputStream(targetFile)).use {
                 Timber.i("$localTag writing to backup file")
                 it.writeObject(exportMap)
             }
+        } else {
+            Timber.i("$localTag  creating file")
+            val file = pickedDir.createFile("application/octet-stream", fileName)
+            Timber.i("$localTag opening file descriptor / output stream")
+            val fileUri = file!!.uri
+            applicationContext.contentResolver.openFileDescriptor(
+                fileUri,
+                "w"
+            )?.use { parcelFileDescriptor ->
+                Timber.i("$localTag making output stream")
+                ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
+                    Timber.i("$localTag writing to backup file")
+                    it.writeObject(exportMap)
+                }
+            } ?: throw IllegalStateException("Failed to open file descriptor for URI: $fileUri")
         }
         recordTime("exported to file, updating date in db")
         backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())

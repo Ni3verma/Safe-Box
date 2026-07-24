@@ -35,7 +35,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.InAppReviewSource
 import com.andryoga.safebox.ui.utils.findActivity
@@ -80,9 +79,7 @@ private fun NewBackupOrRestoreDialog(
     onDismiss: () -> Unit,
 ) {
     var password by remember {
-        mutableStateOf(
-            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
-        )
+        mutableStateOf("")
     }
 
     AlertDialog(

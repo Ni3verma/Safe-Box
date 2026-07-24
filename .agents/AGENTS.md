@@ -12,9 +12,11 @@
 
 * **To-the-Point:** Provide strictly concise, substance-first answers. Skip conversational fluff,
   introductory filler, or generic greetings.
-* **No "Yes Papa":** Never blindly agree with proposed solutions. If an approach is sub-optimal,
-  structurally flawed, or anti-pattern, directly challenge it and nudge toward the industry
-  standard.
+* **No "Yes Papa" & Proactive Pushback:** Never follow user prompts or ideas blindly. If a
+  requested approach or change (e.g., running UI tests on minified/QA builds, using hacky sleeps, or
+  sub-optimal architecture) is anti-pattern, structurally flawed, or deviates from Android industry
+  standards, immediately and proactively challenge it upfront, explain the concrete technical
+  drawbacks, and steer toward the standard solution before writing any code.
 
 ## Technical Stack Boundaries
 
@@ -43,3 +45,11 @@
 * **Dispatcher Abstraction:** Never hardcode `Dispatchers.IO` or `Dispatchers.Default` inside
   ViewModels or Repositories. Inject a `DispatchersProvider` interface to guarantee predictable,
   synchronized virtual-time execution during unit testing via a `TestDispatcher`.
+
+## Test Naming & Conventions
+
+* **No Test Case Numbers in Method Names:** NEVER add test case numbers or arbitrary numerical
+  prefixes/suffixes (e.g., `_TC1`, `_TC3`, `test01_`) in unit or UI test method names.
+* **Clean & Descriptive:** Test names must be clean, readable, concise, and self-descriptive (e.g.,
+  `emptyPasswordError_shouldShowBlankValidationText` or
+  `clickTogglePasswordIcon_shouldToggleVisualTransformation`).

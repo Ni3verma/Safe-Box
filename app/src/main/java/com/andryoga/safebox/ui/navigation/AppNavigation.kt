@@ -77,7 +77,9 @@ private fun NavGraphBuilder.homeGraph(
         composable<HomeRoute> {
             HomeScreen(
                 onExitHomeNavGraph = {
-                    navController.navigate(LoginGraph)
+                    navController.navigate(LoginGraph) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

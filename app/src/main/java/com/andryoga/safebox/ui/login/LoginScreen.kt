@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.BiometricAuthHandler
@@ -55,8 +55,10 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
-    if (uiState.userAuthState == UserAuthState.VERIFIED) {
-        onLoginSuccess()
+    LaunchedEffect(uiState.userAuthState) {
+        if (uiState.userAuthState == UserAuthState.VERIFIED) {
+            onLoginSuccess()
+        }
     }
 
     LoginScreen(
@@ -64,8 +66,10 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
         screenAction = viewModel::onAction
     )
 }
+
+@VisibleForTesting
 @Composable
-private fun LoginScreen(
+internal fun LoginScreen(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit
 ) {
@@ -111,7 +115,8 @@ private fun LoginScreen(
 
     if (uiState.canUnlockWithBiometric) {
         BiometricAuthHandler(
-            onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) }
+            onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) },
+            onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) }
         )
     }
 }
@@ -122,9 +127,7 @@ private fun LoginCardContent(
     screenAction: (LoginScreenAction) -> Unit
 ) {
     var password by remember {
-        mutableStateOf(
-            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
-        )
+        mutableStateOf("")
     }
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
