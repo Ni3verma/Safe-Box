@@ -84,6 +84,7 @@ class RestoreDataWorker
                 override fun resolveClass(desc: java.io.ObjectStreamClass): Class<*> {
                     val allowedClasses = setOf(
                         "java.util.HashMap",
+                        "java.util.LinkedHashMap",
                         "java.util.Map",
                         "java.lang.String",
                         "[B",

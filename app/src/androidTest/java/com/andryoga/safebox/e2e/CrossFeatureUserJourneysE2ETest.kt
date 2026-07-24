@@ -5,7 +5,6 @@ package com.andryoga.safebox.e2e
 import android.net.Uri
 import android.view.WindowManager
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -292,9 +291,7 @@ class CrossFeatureUserJourneysE2ETest {
             }
 
             // Toggle privacy off and verify FLAG_SECURE is cleared immediately via StateFlow
-            composeTestRule.onNode(
-                hasAnySibling(hasText(context.getString(R.string.settings_privacy_enabled_title))) and isToggleable()
-            ).performClick()
+            composeTestRule.onAllNodes(isToggleable())[0].performClick()
             composeTestRule.waitForIdle()
             scenario.onActivity { activity ->
                 assertThat((activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) == 0).isTrue()

@@ -154,9 +154,10 @@ class RecordActionsE2ETest {
             )
                 .performTextReplacement(updatedUserId)
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
@@ -217,9 +218,10 @@ class RecordActionsE2ETest {
             )
                 .performTextReplacement(updatedNotes)
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
@@ -284,9 +286,10 @@ class RecordActionsE2ETest {
             )
                 .performTextReplacement(updatedNumber)
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
@@ -354,9 +357,10 @@ class RecordActionsE2ETest {
             )
                 .performTextReplacement(updatedAccountNumber)
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(updatedTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()

@@ -19,10 +19,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.MandatoryLabelText
 import com.andryoga.safebox.ui.signup.SignupScreenAction
 import com.andryoga.safebox.ui.signup.SignupUiState
@@ -38,8 +40,8 @@ fun PasswordTextField(
     OutlinedTextField(
         value = uiState.password,
         onValueChange = { screenAction(SignupScreenAction.OnPasswordUpdate(it)) },
-        label = { MandatoryLabelText("Password") },
-        placeholder = { Text("Enter a strong password") },
+        label = { MandatoryLabelText(stringResource(R.string.password)) },
+        placeholder = { Text(stringResource(R.string.password)) },
         singleLine = true,
         isError = uiState.isPasswordFieldError,
         supportingText = {
@@ -52,7 +54,10 @@ fun PasswordTextField(
             val image =
                 if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(image, contentDescription = "Toggle Password")
+                Icon(
+                    image,
+                    contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility)
+                )
             }
         },
         modifier = Modifier

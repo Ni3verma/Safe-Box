@@ -222,24 +222,20 @@ class RecordsScreenScrollAndAppBarTest {
                             .fetchSemanticsNodes().isNotEmpty()
             }
 
-            val headerItemCount = 1
+            // LazyColumn index 0 is the search bar header; index combinedSortedSize is the last record item
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
-                .performScrollToIndex(combinedSortedSize + headerItemCount)
+                .performScrollToIndex(combinedSortedSize)
             composeTestRule.waitUntil(timeoutMillis = 20000L) {
                 composeTestRule.onAllNodes(
                     hasText(
                         lastRecordTitle,
                         substring = true
-                    ) and androidx.compose.ui.test.hasClickAction(),
-                    useUnmergedTree = true
+                    )
                 ).fetchSemanticsNodes().isNotEmpty()
             }
-            composeTestRule.onNode(
-                hasText(
-                    lastRecordTitle,
-                    substring = true
-                ) and androidx.compose.ui.test.hasClickAction(),
-                useUnmergedTree = true
+            composeTestRule.onNodeWithText(
+                lastRecordTitle,
+                substring = true
             ).assertIsDisplayed()
         }
     }
