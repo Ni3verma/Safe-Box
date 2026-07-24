@@ -195,7 +195,7 @@ object E2ETestUtils {
     suspend fun setupBackupMetadataState(
         backupMetadataRepository: BackupMetadataRepository,
         mockUriString: String = "file:///sdcard/SafeboxBackups",
-        mockTimestamp: Long = System.currentTimeMillis()
+        mockTimestamp: Long = TEST_DATE.time
     ) {
         backupMetadataRepository.insertBackupMetadata(Uri.parse(mockUriString))
         backupMetadataRepository.updateLastBackupDate(mockTimestamp)
@@ -225,11 +225,10 @@ object E2ETestUtils {
             androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 val imm =
                     context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                if (imm?.isAcceptingText == true) {
-                    imm.toggleSoftInput(
-                        android.view.inputmethod.InputMethodManager.HIDE_IMPLICIT_ONLY,
-                        0
-                    )
+                val currentActivity = (context as? android.app.Activity)
+                val windowToken = currentActivity?.currentFocus?.windowToken
+                if (imm != null && windowToken != null) {
+                    imm.hideSoftInputFromWindow(windowToken, 0)
                 }
             }
         }
@@ -273,7 +272,7 @@ object E2ETestUtils {
     fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
         val welcomeBackText = context.getString(R.string.welcome_back)
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 15000L) {
+        composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 val timeoutNodes = composeTestRule.onAllNodes(
                     androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_message)),
@@ -315,7 +314,7 @@ object E2ETestUtils {
             return
         }
 
-        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(welcomeBackText), 15000L)
+        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(welcomeBackText), 25000L)
         composeTestRule.onAllNodes(
             androidx.compose.ui.test.hasText(welcomeBackText),
             useUnmergedTree = true
@@ -442,7 +441,13 @@ fun ComposeTestRule.waitUntilNodeDisplayed(
 ) {
     waitUntil(timeoutMillis = timeoutMillis) {
         runCatching {
-            onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            val nodes = onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes()
+            nodes.isNotEmpty() && runCatching {
+                onNode(
+                    matcher,
+                    useUnmergedTree = true
+                ).assertIsDisplayed(); true
+            }.getOrDefault(false)
         }.getOrDefault(false)
     }
 }

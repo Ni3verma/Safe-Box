@@ -26,12 +26,8 @@ class BackupMetadataRepositoryImpl @Inject constructor(
     private val contentResolver = context.contentResolver
 
     override suspend fun insertBackupMetadata(uriPath: Uri?) {
-        analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
-            param(AnalyticsParam.RESULT, (uriPath != null && uriPath.path != null))
-        }
-
+        var permissionGranted = uriPath != null
         if (uriPath != null) {
-            var permissionGranted = true
             if (uriPath.scheme == "content" || uriPath.toString().startsWith("content://")) {
                 runCatching {
                     val flags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or
@@ -39,7 +35,11 @@ class BackupMetadataRepositoryImpl @Inject constructor(
                     contentResolver.takePersistableUriPermission(uriPath, flags)
                 }.onFailure {
                     permissionGranted = false
-                    Timber.w(it, "Failed to take persistable URI permission for $uriPath")
+                    Timber.w(
+                        it,
+                        "Failed to take persistable URI permission for authority=%s",
+                        uriPath.authority ?: "unknown"
+                    )
                 }
             }
             if (permissionGranted) {
@@ -53,6 +53,10 @@ class BackupMetadataRepositoryImpl @Inject constructor(
                     )
                 )
             }
+        }
+
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
+            param(AnalyticsParam.RESULT, permissionGranted)
         }
     }
 

@@ -6,7 +6,9 @@ import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
@@ -39,17 +41,20 @@ fun BiometricAuthHandler(
     val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
     val executor = remember(context) { ContextCompat.getMainExecutor(context) }
 
-    val biometricPrompt: BiometricPrompt = remember(activity, onSuccess, onErrorOrCancel) {
+    val currentOnSuccess by rememberUpdatedState(onSuccess)
+    val currentOnErrorOrCancel by rememberUpdatedState(onErrorOrCancel)
+
+    val biometricPrompt: BiometricPrompt = remember(activity) {
         BiometricPrompt(
             activity,
             executor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    onSuccess()
+                    currentOnSuccess()
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    onErrorOrCancel()
+                    currentOnErrorOrCancel()
                 }
             }
         )
