@@ -298,10 +298,7 @@ class CrossFeatureUserJourneysE2ETest {
             }
 
             // Step 6: Session Timeout (Trigger UserAwayDialog & verify backstack pop)
-            activeSessionManager.onStop(object : androidx.lifecycle.LifecycleOwner {
-                override val lifecycle: androidx.lifecycle.Lifecycle
-                    get() = androidx.lifecycle.LifecycleRegistry(this)
-            })
+            activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 runCatching {
@@ -327,7 +324,7 @@ class CrossFeatureUserJourneysE2ETest {
             // Verify Backstack Security: HomeGraph is popped completely upon logout/timeout transition
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText(context.getString(R.string.no_record))
+            composeTestRule.onNode(hasText("Amazon Shopping", substring = true))
                 .assertDoesNotExist()
         }
     }

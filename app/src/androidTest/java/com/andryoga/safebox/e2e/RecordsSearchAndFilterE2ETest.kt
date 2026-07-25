@@ -102,53 +102,57 @@ class RecordsSearchAndFilterE2ETest {
         }
     }
 
+    private suspend fun seedStandardSearchRecords() {
+        E2ETestUtils.setupUnlockedHomeState(
+            safeBoxDatabase,
+            userDetailsRepository,
+            encryptedPreferenceProvider,
+            preferenceProvider
+        )
+
+        loginDataRepository.upsertLoginData(
+            LoginData(
+                id = 801,
+                title = "Amazon Shopping",
+                url = null,
+                userId = "user@amazon.com",
+                password = "secret",
+                notes = null,
+                creationDate = Date(),
+                updateDate = Date()
+            )
+        )
+
+        bankCardDataRepository.upsertBankCardData(
+            CardData(
+                id = 802,
+                title = "American Express Card",
+                name = null,
+                number = "CARD-AMEX-1234",
+                expiryDate = null,
+                cvv = null,
+                pin = null,
+                notes = null,
+                creationDate = Date(),
+                updateDate = Date()
+            )
+        )
+
+        secureNoteDataRepository.upsertSecureNoteData(
+            NoteData(
+                id = 803,
+                title = "Personal Diary Note",
+                notes = "secret notes",
+                creationDate = Date(),
+                updateDate = Date()
+            )
+        )
+    }
+
     @Test
     fun typeSearchTextInTopBar_whenPopulatedListDisplayed_shouldFilterLazyColumnByTitleIgnoreCase() {
         runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
-            )
-
-            loginDataRepository.upsertLoginData(
-                LoginData(
-                    id = 801,
-                    title = "Amazon Shopping",
-                    url = null,
-                    userId = "user@amazon.com",
-                    password = "secret",
-                    notes = null,
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
-
-            bankCardDataRepository.upsertBankCardData(
-                CardData(
-                    id = 802,
-                    title = "American Express Card",
-                    name = null,
-                    number = "378282246310005",
-                    expiryDate = null,
-                    cvv = null,
-                    pin = null,
-                    notes = null,
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
-
-            secureNoteDataRepository.upsertSecureNoteData(
-                NoteData(
-                    id = 803,
-                    title = "Personal Diary Note",
-                    notes = "secret notes",
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
+            seedStandardSearchRecords()
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -178,50 +182,7 @@ class RecordsSearchAndFilterE2ETest {
     @Test
     fun clickClearIconInSearchBar_whenFilterIsActive_shouldResetSearchQueryAndRestoreFullRecordList() {
         runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
-            )
-
-            loginDataRepository.upsertLoginData(
-                LoginData(
-                    id = 801,
-                    title = "Amazon Shopping",
-                    url = null,
-                    userId = "user@amazon.com",
-                    password = "secret",
-                    notes = null,
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
-
-            bankCardDataRepository.upsertBankCardData(
-                CardData(
-                    id = 802,
-                    title = "American Express Card",
-                    name = null,
-                    number = "378282246310005",
-                    expiryDate = null,
-                    cvv = null,
-                    pin = null,
-                    notes = null,
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
-
-            secureNoteDataRepository.upsertSecureNoteData(
-                NoteData(
-                    id = 803,
-                    title = "Personal Diary Note",
-                    notes = "secret notes",
-                    creationDate = Date(),
-                    updateDate = Date()
-                )
-            )
+            seedStandardSearchRecords()
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -287,7 +248,7 @@ class RecordsSearchAndFilterE2ETest {
                     id = 812,
                     title = "Card Item",
                     name = null,
-                    number = "1122334455667788",
+                    number = "CARD-ORIGINAL-1234",
                     expiryDate = null,
                     cvv = null,
                     pin = null,
@@ -429,7 +390,7 @@ class RecordsSearchAndFilterE2ETest {
                     id = 833,
                     title = "Chase Sapphire Card",
                     name = null,
-                    number = "4111222233334444",
+                    number = "CARD-CHASE-1234",
                     expiryDate = null,
                     cvv = null,
                     pin = null,

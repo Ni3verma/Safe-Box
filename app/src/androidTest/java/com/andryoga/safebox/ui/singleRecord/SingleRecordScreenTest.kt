@@ -20,6 +20,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -227,44 +228,44 @@ class SingleRecordScreenTest {
 
     @Test
     fun viewMode_allPopulatedFields_shouldRenderLabelsAndFormattedData() {
-        val customLayoutPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+        val customLayoutPlan = LayoutPlan(
+            id = LayoutId.LOGIN,
             arrangement = listOf(
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_TITLE
                     )
                 ),
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_USER_ID
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_USER_ID
                     )
                 ),
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.CARD_NUMBER
+                    LayoutPlan.Field(
+                        FieldId.CARD_NUMBER
                     )
                 )
             ),
             fieldUiState = mapOf(
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_TITLE to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.title,
                         isMandatory = true
                     ),
                     data = "Test Title"
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_USER_ID to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_USER_ID to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.user_id,
                         isCopyable = true
                     ),
                     data = "test@user.com"
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.CARD_NUMBER to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.CARD_NUMBER to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.number,
-                        visualTransformation = com.andryoga.safebox.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation()
+                        visualTransformation = SpaceAfterEveryFourCharsTransformation()
                     ),
                     data = "4111222233334444"
                 )
@@ -296,41 +297,41 @@ class SingleRecordScreenTest {
 
     @Test
     fun viewMode_unpopulatedFields_shouldNotRenderEmptyLabelsOrPlaceholders() {
-        val customLayoutPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+        val customLayoutPlan = LayoutPlan(
+            id = LayoutId.LOGIN,
             arrangement = listOf(
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_TITLE
                     )
                 ),
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_URL
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_URL
                     )
                 ),
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_NOTES
                     )
                 )
             ),
             fieldUiState = mapOf(
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_TITLE to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.title,
                         isMandatory = true
                     ),
                     data = "Only Title Entered"
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_URL to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_URL to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.url
                     ),
                     data = ""
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_NOTES to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_NOTES to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.notes
                     ),
                     data = ""
@@ -359,30 +360,30 @@ class SingleRecordScreenTest {
     @Test
     fun creationAndUpdatedDates_shouldBeVisibleOnlyInViewModeAndHiddenInEditMode() {
         var viewModeState by mutableStateOf(ViewMode.VIEW)
-        val dateLayoutPlan = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan(
-            id = com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId.LOGIN,
+        val dateLayoutPlan = LayoutPlan(
+            id = LayoutId.LOGIN,
             arrangement = listOf(
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE
+                    LayoutPlan.Field(
+                        FieldId.LOGIN_TITLE
                     )
                 ),
                 listOf(
-                    com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan.Field(
-                        com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.CREATION_DATE
+                    LayoutPlan.Field(
+                        FieldId.CREATION_DATE
                     )
                 )
             ),
             fieldUiState = mapOf(
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.LOGIN_TITLE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.LOGIN_TITLE to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.title,
                         isMandatory = true
                     ),
                     data = "Sample Title"
                 ),
-                com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId.CREATION_DATE to com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState(
-                    cell = com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState.Cell(
+                FieldId.CREATION_DATE to FieldUiState(
+                    cell = FieldUiState.Cell(
                         label = R.string.created_on,
                         isVisibleOnlyInViewMode = true
                     ),

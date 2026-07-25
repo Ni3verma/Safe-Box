@@ -205,7 +205,12 @@ class SignupPasswordValidationRulesTest {
             StatefulSignupScreenTestHost()
         }
 
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextInput("Secret@@123")
         composeTestRule.waitForIdle()
 
@@ -241,7 +246,12 @@ class SignupPasswordValidationRulesTest {
             )
         }
 
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextInput("P@sswrd🚀#123")
         composeTestRule.waitForIdle()
         composeTestRule.onNode(
@@ -275,7 +285,12 @@ class SignupPasswordValidationRulesTest {
             )
         }
 
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextInput(veryLongPassword)
         composeTestRule.waitForIdle()
 
@@ -298,7 +313,12 @@ class SignupPasswordValidationRulesTest {
             StatefulSignupScreenTestHost()
         }
 
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextInput("Qwerty@@123")
         composeTestRule.waitForIdle()
         composeTestRule.onNode(

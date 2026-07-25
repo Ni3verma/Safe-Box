@@ -472,6 +472,8 @@ class RecordActionsE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
+                .assertIsDisplayed()
             composeTestRule.onNodeWithText(uncommittedTitle).assertDoesNotExist()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
                 .assertDoesNotExist()
@@ -518,6 +520,8 @@ class RecordActionsE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
+                .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
                 .assertDoesNotExist()
         }

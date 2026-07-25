@@ -45,6 +45,9 @@
 * **Dispatcher Abstraction:** Never hardcode `Dispatchers.IO` or `Dispatchers.Default` inside
   ViewModels or Repositories. Inject a `DispatchersProvider` interface to guarantee predictable,
   synchronized virtual-time execution during unit testing via a `TestDispatcher`.
+* **No Fully Qualified Names in Code:** Never inline fully qualified package names in code (e.g.,
+  `java.nio.ByteBuffer.allocate` or `com.andryoga.safebox...`). Always add an `import` statement at
+  the top of the file and use clean, short type names.
 
 ## Test Naming & Conventions
 

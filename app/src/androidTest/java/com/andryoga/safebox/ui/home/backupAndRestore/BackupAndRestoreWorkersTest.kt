@@ -81,6 +81,41 @@ class BackupAndRestoreWorkersTest {
         hiltRule.inject()
     }
 
+    private suspend fun runBackupWorker(password: String = testPassword): Result {
+        val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
+            .setInputData(
+                Data.Builder()
+                    .putString(
+                        CommonConstants.BACKUP_PARAM_PASSWORD,
+                        symmetricKeyUtils.encrypt(password)
+                    )
+                    .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+                    .build()
+            )
+            .setWorkerFactory(workerFactory)
+            .build()
+        return worker.doWork()
+    }
+
+    private suspend fun runRestoreWorker(password: String = testPassword, fileUri: String): Result {
+        val worker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
+            .setInputData(
+                Data.Builder()
+                    .putString(
+                        CommonConstants.RESTORE_PARAM_PASSWORD,
+                        symmetricKeyUtils.encrypt(password)
+                    )
+                    .putString(
+                        CommonConstants.RESTORE_PARAM_FILE_URI,
+                        fileUri
+                    )
+                    .build()
+            )
+            .setWorkerFactory(workerFactory)
+            .build()
+        return worker.doWork()
+    }
+
     @Test
     fun exportToBackupFile_withValidPasswordAndSeededRecords_shouldCreateEncryptedBakFileAndReturnSuccess() =
         runBlocking {
@@ -98,20 +133,7 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = worker.doWork()
+            val result = runBackupWorker()
             assertThat(result).isEqualTo(Result.success())
 
             val bakFiles = backupDir.listFiles { file ->
@@ -140,19 +162,7 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val backupWorker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-            assertThat(backupWorker.doWork()).isEqualTo(Result.success())
+            assertThat(runBackupWorker()).isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
                 f.name.startsWith("SafeBoxBackup") && (f.name.endsWith(".bak") || f.name.endsWith(".bak.bin") || f.name.contains(
@@ -165,23 +175,8 @@ class BackupAndRestoreWorkersTest {
             safeBoxDatabase.clearAllTables()
             assertThat(loginDataRepository.getAllLoginData().first().isEmpty()).isTrue()
 
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(generatedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker(testPassword, Uri.fromFile(generatedFile).toString())
+            assertThat(result).isEqualTo(Result.success())
             assertThat(result).isEqualTo(Result.success())
 
             val restoredLogins = loginDataRepository.getAllLoginData().first()

@@ -5,18 +5,25 @@ import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
+import com.andryoga.safebox.ui.core.BiometricAuthProvider
+import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
 import com.andryoga.safebox.ui.navigation.AppNavigation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
     private val viewModel: MainViewModel by viewModels()
+
+    @Inject
+    lateinit var biometricAuthProvider: BiometricAuthProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,8 +40,10 @@ class MainActivity : FragmentActivity() {
         }
         enableEdgeToEdge()
         setContent {
-            SafeBoxTheme {
-                AppNavigation()
+            CompositionLocalProvider(LocalBiometricAuthProvider provides biometricAuthProvider) {
+                SafeBoxTheme {
+                    AppNavigation()
+                }
             }
         }
     }

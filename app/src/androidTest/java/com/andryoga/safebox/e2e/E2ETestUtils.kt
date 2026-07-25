@@ -2,18 +2,28 @@
 
 package com.andryoga.safebox.e2e
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import androidx.test.core.app.ActivityScenario
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
@@ -33,6 +43,7 @@ import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import java.util.Date
 
 /**
@@ -218,37 +229,54 @@ object E2ETestUtils {
     }
 
     /**
-     * Closes the soft keyboard if active and waits for layout insets to settle.
+     * Resets settings, active session manager state, and database tables for test teardowns.
      */
-    fun closeSoftKeyboard(composeTestRule: ComposeTestRule, context: Context) {
-        runCatching {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                val imm =
-                    context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                val currentActivity = (context as? android.app.Activity)
-                val windowToken = currentActivity?.currentFocus?.windowToken
-                if (imm != null && windowToken != null) {
-                    imm.hideSoftInputFromWindow(windowToken, 0)
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
+    suspend fun resetAppState(
+        safeBoxDatabase: SafeBoxDatabase,
+        settingsDataStore: SettingsDataStore,
+        activeSessionManager: ActiveSessionManager,
+        encryptedPreferenceProvider: EncryptedPreferenceProvider? = null,
+        isSignUpRequired: Boolean = false
+    ) {
+        settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+        settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+        settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+        settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+        activeSessionManager.setPaused(true)
+        safeBoxDatabase.clearAllTables()
+        encryptedPreferenceProvider?.upsertBooleanPref(
+            CommonConstants.IS_SIGN_UP_REQUIRED,
+            isSignUpRequired
+        )
     }
 
     /**
-     * Waits until at least one node matching [matcher] exists in the Compose unmerged semantics tree.
+     * Creates a stable [LifecycleOwner] for testing session timeout triggers.
      */
-    private fun waitForNode(
-        composeTestRule: ComposeTestRule,
-        matcher: androidx.compose.ui.test.SemanticsMatcher,
-        timeoutMillis: Long = 5000L
-    ) {
-        composeTestRule.waitUntil(timeoutMillis = timeoutMillis) {
-            runCatching {
-                composeTestRule.onAllNodes(matcher, useUnmergedTree = true)
-                    .fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
+    fun createTestLifecycleOwner(): LifecycleOwner {
+        return object : LifecycleOwner {
+            private val registry = LifecycleRegistry(this)
+            override val lifecycle: Lifecycle
+                get() = registry
         }
+    }
+
+    /**
+     * Closes the soft keyboard if active and waits for layout insets to settle.
+     */
+    fun closeSoftKeyboard(composeTestRule: ComposeTestRule, context: Context) {
+        var activity: Activity?
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            activity = ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(Stage.RESUMED)
+                .firstOrNull()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            val token = activity?.currentFocus?.windowToken
+            if (imm != null && token != null) {
+                imm.hideSoftInputFromWindow(token, 0)
+            }
+        }
+        composeTestRule.waitForIdle()
     }
 
     /**
@@ -275,27 +303,27 @@ object E2ETestUtils {
         composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 val timeoutNodes = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_message)),
+                    hasText(context.getString(R.string.timeout_dialog_message)),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes()
                 if (timeoutNodes.isNotEmpty()) {
                     val btnNodes = composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
+                        hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
                         useUnmergedTree = true
                     ).fetchSemanticsNodes()
                     if (btnNodes.isNotEmpty()) {
                         composeTestRule.onAllNodes(
-                            androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
+                            hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
                             useUnmergedTree = true
                         ).onFirst().performClick()
                     }
                 }
                 val isWelcome = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(welcomeBackText),
+                    hasText(welcomeBackText),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes().isNotEmpty()
                 val isHome = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                    hasContentDescription(addNewButtonDesc),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes().isNotEmpty()
                 isWelcome || isHome
@@ -304,7 +332,7 @@ object E2ETestUtils {
 
         val isAlreadyHome = runCatching {
             composeTestRule.onAllNodes(
-                androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                hasContentDescription(addNewButtonDesc),
                 useUnmergedTree = true
             ).fetchSemanticsNodes().isNotEmpty()
         }.getOrDefault(false)
@@ -314,9 +342,12 @@ object E2ETestUtils {
             return
         }
 
-        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(welcomeBackText), 25000L)
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(welcomeBackText),
+            timeoutMillis = 25000L
+        )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(welcomeBackText),
+            hasText(welcomeBackText),
             useUnmergedTree = true
         ).onFirst().assertIsDisplayed()
         composeTestRule.waitForIdle()
@@ -329,15 +360,11 @@ object E2ETestUtils {
         passwordNodes.onFirst().performTextReplacement(TEST_MASTER_PASSWORD)
         composeTestRule.waitForIdle()
         closeSoftKeyboard(composeTestRule, context)
-        composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(context.getString(R.string.login)),
-            useUnmergedTree = true
-        ).onFirst().performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
         composeTestRule.waitForIdle()
-        waitForNode(
-            composeTestRule,
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
-            25000L
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasContentDescription(addNewButtonDesc),
+            timeoutMillis = 25000L
         )
         composeTestRule.waitForIdle()
     }
@@ -351,29 +378,31 @@ object E2ETestUtils {
         optionResId: Int
     ) {
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        waitForNode(
-            composeTestRule,
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
-            25000L
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasContentDescription(addNewButtonDesc),
+            timeoutMillis = 25000L
         )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            hasContentDescription(addNewButtonDesc),
             useUnmergedTree = true
         ).onFirst().assertIsDisplayed()
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            hasContentDescription(addNewButtonDesc),
             useUnmergedTree = true
         ).onFirst().performClick()
 
         val optionText = context.getString(optionResId)
         val bottomSheetTitle = context.getString(R.string.add_a_new_record)
-        waitForNode(composeTestRule, androidx.compose.ui.test.hasText(bottomSheetTitle), 25000L)
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(bottomSheetTitle),
+            timeoutMillis = 25000L
+        )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(optionText),
+            hasText(optionText),
             useUnmergedTree = true
         ).onLast().assertIsDisplayed()
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(optionText),
+            hasText(optionText),
             useUnmergedTree = true
         ).onLast().performClick()
     }
@@ -421,14 +450,17 @@ object E2ETestUtils {
     }
 
     /**
-     * Helper inside [E2ETestUtils] object to wait until at least one node matching [matcher] is displayed.
+     * Waits until at least one semantics node matching [text] is displayed in the semantics tree.
      */
-    fun waitUntilNodeDisplayed(
+    fun waitForText(
         composeTestRule: ComposeTestRule,
-        matcher: SemanticsMatcher,
+        text: String,
         timeoutMillis: Long = 25000L
     ) {
-        composeTestRule.waitUntilNodeDisplayed(matcher, timeoutMillis)
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(text),
+            timeoutMillis = timeoutMillis
+        )
     }
 }
 
@@ -437,17 +469,18 @@ object E2ETestUtils {
  */
 fun ComposeTestRule.waitUntilNodeDisplayed(
     matcher: SemanticsMatcher,
-    timeoutMillis: Long = 25000L
+    timeoutMillis: Long = 25000L,
+    assertDisplayed: Boolean = false
 ) {
     waitUntil(timeoutMillis = timeoutMillis) {
         runCatching {
             val nodes = onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes()
-            nodes.isNotEmpty() && runCatching {
-                onNode(
+            nodes.isNotEmpty() && (!assertDisplayed || runCatching {
+                onAllNodes(
                     matcher,
                     useUnmergedTree = true
-                ).assertIsDisplayed(); true
-            }.getOrDefault(false)
+                ).onFirst().assertIsDisplayed(); true
+            }.getOrDefault(false))
         }.getOrDefault(false)
     }
 }
