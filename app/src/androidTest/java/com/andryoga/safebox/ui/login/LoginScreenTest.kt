@@ -64,7 +64,14 @@ class LoginScreenTest {
             }
         }
 
-        // With clean production initialization (password = ""), login button is disabled by default
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        ).performTextReplacement("")
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsNotEnabled()
     }
 

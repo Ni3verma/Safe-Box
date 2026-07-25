@@ -36,11 +36,15 @@ fun LoadingScreenRoot(
                 navigateToSignup()
             }
 
-            else -> Unit
+            LoadingState.Initial -> Unit
         }
     }
 
-    LoadingScreen()
+    when (loadingState) {
+        LoadingState.Initial -> LoadingScreen()
+        LoadingState.ProceedToLogin,
+        LoadingState.ProceedToSignup -> Unit
+    }
 }
 
 @Composable

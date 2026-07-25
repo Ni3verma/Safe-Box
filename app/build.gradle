@@ -119,6 +119,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    sourceSets {
+        named("androidTest") {
+            java.srcDirs += ["$buildDir/generated/ksp/debugAndroidTest/kotlin", "$buildDir/generated/ksp/debugAndroidTest/java"]
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
+    }
+
     kotlin {
         jvmToolchain(17)
     }
@@ -126,10 +134,9 @@ android {
         compose true
         buildConfig true
     }
-    sourceSets {
-        named("androidTest") {
-            assets.srcDirs(files("$projectDir/schemas"))
-        }
+
+    tasks.matching { (it.name.startsWith("compileDebugAndroidTest") || it.name.startsWith("dexBuilderDebugAndroidTest")) && it.name != "kspDebugAndroidTestKotlin" }.configureEach {
+        dependsOn("kspDebugAndroidTestKotlin")
     }
 
     testOptions {

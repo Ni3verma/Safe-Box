@@ -6,9 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.andryoga.safebox.ui.navigation.AppNavigation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,14 +22,12 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.isPrivacyEnabled.collect { isEnabled ->
-                    Timber.i("setting flag secure to $isEnabled")
-                    if (isEnabled) {
-                        window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    } else {
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    }
+            viewModel.isPrivacyEnabled.collect { isEnabled ->
+                Timber.i("setting flag secure to $isEnabled")
+                if (isEnabled) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
             }
         }

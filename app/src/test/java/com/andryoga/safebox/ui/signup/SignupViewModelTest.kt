@@ -62,20 +62,21 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun `verify initial state of ui state for debug app`() {
+    fun `verify initial state of ui state for debug app`() = runTest {
         viewModel = SignupViewModel(
             encryptedPreferenceProvider = encryptedPreferenceProvider,
             userDetailsRepository = userDetailsRepository,
             analyticsHelper = analyticsHelper,
             isDebug = true
         )
+        advanceUntilIdle()
         val uiState = viewModel.uiState.value
 
-        assertThat(uiState.password).isEmpty()
+        assertThat(uiState.password).isEqualTo("Qwerty@@135")
         assertThat(uiState.isPasswordFieldError).isFalse()
-        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.INITIAL_STATE)
-        assertThat(uiState.hint).isEmpty()
-        assertThat(uiState.isSignupButtonEnabled).isFalse()
+        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
+        assertThat(uiState.hint).isEqualTo("first 5 @@ first 3")
+        assertThat(uiState.isSignupButtonEnabled).isTrue()
         assertThat(viewModel.navigateToHome.value).isFalse()
     }
 

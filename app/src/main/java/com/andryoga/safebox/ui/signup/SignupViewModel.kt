@@ -36,6 +36,15 @@ class SignupViewModel @Inject constructor(
 
 
     init {
+        if (isDebug) {
+            _uiState.update {
+                it.copy(
+                    password = "Qwerty@@135",
+                    hint = "first 5 @@ first 3",
+                    passwordValidatorState = runPasswordValidator("Qwerty@@135")
+                )
+            }
+        }
 
         uiState.map {
             SignupButtonEnableParams(
@@ -73,7 +82,8 @@ class SignupViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(hint = hint)
     }
 
-    companion object {
+    @androidx.annotation.VisibleForTesting
+    internal companion object {
         fun runPasswordValidator(
             password: String
         ): PasswordValidatorState {

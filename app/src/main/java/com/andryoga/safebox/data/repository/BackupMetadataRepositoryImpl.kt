@@ -25,7 +25,7 @@ class BackupMetadataRepositoryImpl @Inject constructor(
 ) : BackupMetadataRepository {
     private val contentResolver = context.contentResolver
 
-    override suspend fun insertBackupMetadata(uriPath: Uri?) {
+    override suspend fun insertBackupMetadata(uriPath: Uri?): Boolean {
         var permissionGranted = uriPath != null
         if (uriPath != null) {
             if (uriPath.scheme == "content" || uriPath.toString().startsWith("content://")) {
@@ -58,6 +58,7 @@ class BackupMetadataRepositoryImpl @Inject constructor(
         analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
             param(AnalyticsParam.RESULT, permissionGranted)
         }
+        return permissionGranted
     }
 
     override suspend fun deleteBackupMetadata() {

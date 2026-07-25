@@ -10,6 +10,6 @@ class CustomHiltTestRunner : AndroidJUnitRunner() {
         className: String?,
         context: Context?
     ): Application {
-        return super.newApplication(cl, HiltTestApp_Application::class.java.name, context)
+        return super.newApplication(cl, "com.andryoga.safebox.HiltTestApp_Application", context)
     }
 }

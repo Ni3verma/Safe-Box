@@ -68,6 +68,8 @@ class LoginBiometricAndHintE2ETest {
     @Before
     fun setup() {
         hiltRule.inject()
+        com.andryoga.safebox.ui.core.biometricAuthHandlerOverride = null
+        com.andryoga.safebox.ui.core.canAuthenticateUsingBiometricOverride = null
     }
 
     @After

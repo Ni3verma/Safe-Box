@@ -126,8 +126,8 @@ private fun LoginCardContent(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit
 ) {
-    var password by remember {
-        mutableStateOf("")
+    var password by remember(uiState.defaultPassword) {
+        mutableStateOf(uiState.defaultPassword)
     }
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }

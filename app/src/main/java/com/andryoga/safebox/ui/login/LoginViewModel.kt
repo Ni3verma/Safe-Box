@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -7,6 +8,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.worker.BackupDataWorker
 import dagger.Lazy
@@ -18,7 +20,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
@@ -26,9 +27,16 @@ class LoginViewModel @Inject constructor(
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
+    @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
+
+    init {
+        if (isDebug) {
+            _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
+        }
+    }
 
     fun onAction(action: LoginScreenAction) {
         when (action) {
@@ -98,8 +106,7 @@ class LoginViewModel @Inject constructor(
         userDetailsRepository.onAuthSuccess(withBiometric = withBiometric)
         _uiState.update {
             it.copy(
-                userAuthState = UserAuthState.VERIFIED,
-                canUnlockWithBiometric = false
+                userAuthState = UserAuthState.VERIFIED
             )
         }
     }

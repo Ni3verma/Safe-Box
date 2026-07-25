@@ -91,13 +91,39 @@ class NewBackupOrRestoreVMTest {
             workManager,
             symmetricKeyUtils,
             analyticsHelper,
-            lazyInAppReviewManager
+            lazyInAppReviewManager,
+            isDebug = true
         )
     }
 
     @After
     fun tearDown() {
         unmockkObject(BackupDataWorker)
+    }
+
+    @Test
+    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() = runTest {
+        viewModel.uiState.test {
+            val state = awaitItem()
+            assertThat(state.defaultPassword).isEqualTo("Qwerty@@135")
+        }
+    }
+
+    @Test
+    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() = runTest {
+        val prodViewModel = NewBackupOrRestoreVM(
+            userDetailsRepository,
+            workManager,
+            symmetricKeyUtils,
+            analyticsHelper,
+            lazyInAppReviewManager,
+            isDebug = false
+        )
+
+        prodViewModel.uiState.test {
+            val state = awaitItem()
+            assertThat(state.defaultPassword).isEmpty()
+        }
     }
 
     @Test
