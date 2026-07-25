@@ -120,11 +120,7 @@ class RestoreDataWorker
                 importMap = fileObject as Map<String, ByteArray?>
                 val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
                 val creationDateBytes = importMap[CommonConstants.CREATION_DATE_KEY]!!
-                val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
-                    ByteBuffer.wrap(creationDateBytes).long
-                } else {
-                    creationDateBytes[0].toLong()
-                }
+                val creationDate = ByteBuffer.wrap(creationDateBytes).long
                 Timber.i(
                     "$localTag version = $version, " +
                             "created on : ${Utils.getFormattedDate(Date(creationDate))}"
