@@ -65,17 +65,33 @@ class LoginViewModelTest {
             symmetricKeyUtils = symmetricKeyUtils,
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
+            isDebug = true
         )
     }
 
     @Test
-    fun `verify initial state of ui state`() = runTest {
-        viewModel.uiState.test {
-            val uiState = awaitItem()
-            assertThat(uiState.userAuthState).isEqualTo(UserAuthState.INITIAL)
-            assertThat(uiState.hint).isEmpty()
-            assertThat(uiState.canUnlockWithBiometric).isFalse()
-        }
+    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() {
+        val uiState = viewModel.uiState.value
+
+        assertThat(uiState.userAuthState).isEqualTo(UserAuthState.INITIAL)
+        assertThat(uiState.hint).isEmpty()
+        assertThat(uiState.canUnlockWithBiometric).isFalse()
+        assertThat(uiState.defaultPassword).isEqualTo("Qwerty@@135")
+    }
+
+    @Test
+    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() {
+        val prodViewModel = LoginViewModel(
+            userDetailsRepository = userDetailsRepository,
+            workManager = lazyWorkManager,
+            symmetricKeyUtils = symmetricKeyUtils,
+            settingsDataStore = settingsDataStore,
+            analyticsHelper = analyticsHelper,
+            isDebug = false
+        )
+
+        val uiState = prodViewModel.uiState.value
+        assertThat(uiState.defaultPassword).isEmpty()
     }
 
     @Test

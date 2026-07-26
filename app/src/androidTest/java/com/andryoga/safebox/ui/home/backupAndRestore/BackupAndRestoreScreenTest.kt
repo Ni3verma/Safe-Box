@@ -156,7 +156,7 @@ class BackupAndRestoreScreenTest {
     }
 
     @Test
-    fun enterPasswordView_inWrongPasswordState_shouldShowSupportingErrorTextAndRedOutline() {
+    fun enterPasswordView_inWrongPasswordState_shouldShowSupportingErrorText() {
         composeTestRule.setContent {
             SafeBoxTheme {
                 EnterPasswordView(
@@ -221,5 +221,41 @@ class BackupAndRestoreScreenTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.restore_complete_message))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun backupPathPermissionError_shouldDisplaySnackbarWithMessageAndRetryButton() {
+        var retryClicked = false
+        val snackbarHostState = androidx.compose.material3.SnackbarHostState()
+        val errorMessage = context.getString(R.string.backup_path_select_failed_message)
+        val retryText = context.getString(R.string.retry)
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    val result = snackbarHostState.showSnackbar(
+                        message = errorMessage,
+                        actionLabel = retryText,
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                    if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+                        retryClicked = true
+                    }
+                }
+                BackupAndRestoreScreen(
+                    uiState = ScreenState(backupState = BackupPathNotSet()),
+                    snackBarHostState = snackbarHostState,
+                    launchRestoreFilePicker = {},
+                    launchSelectBackupPath = { retryClicked = true },
+                    onScreenAction = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(errorMessage).assertIsDisplayed()
+        composeTestRule.onNodeWithText(retryText, ignoreCase = true).assertIsDisplayed()
+        composeTestRule.onNodeWithText(retryText, ignoreCase = true).performClick()
+        composeTestRule.waitForIdle()
+        assertThat(retryClicked).isTrue()
     }
 }

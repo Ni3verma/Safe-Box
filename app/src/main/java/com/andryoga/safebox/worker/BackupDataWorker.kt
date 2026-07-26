@@ -43,8 +43,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
+import java.io.File
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
+import java.nio.ByteBuffer
 import java.util.Date
 import java.util.UUID
 
@@ -208,9 +210,10 @@ class BackupDataWorker
             encryptSecureNoteData(secureNoteData, inputPassword)
         recordTime("got secure note data byte array")
 
-        exportMap[CommonConstants.CREATION_DATE_KEY] = ByteArray(1) {
-            System.currentTimeMillis().toByte()
-        }
+        exportMap[CommonConstants.CREATION_DATE_KEY] =
+            ByteBuffer.allocate(Long.SIZE_BYTES)
+                .putLong(System.currentTimeMillis())
+                .array()
     }
 
     private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
@@ -218,9 +221,7 @@ class BackupDataWorker
             val files = pickedDir.listFiles().filter {
                 it.isFile && it.name != null &&
                         it.name!!.startsWith("SafeBoxBackup") &&
-                        (it.name!!.endsWith(".bak") || it.name!!.endsWith(".bak.bin") || it.name!!.contains(
-                            ".bak"
-                        ))
+                        it.name!!.contains(".bak")
             }
             if (files.size >= CommonConstants.MAX_BACKUP_FILES) {
                 Timber.i("max backup files threshold reached")
@@ -241,9 +242,9 @@ class BackupDataWorker
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
         val fileName = "SafeBoxBackup$nameSuffix"
         val uri = pickedDir.uri
-        if (uri.scheme == "file" || uri.scheme == null || (uri.scheme != "content" && uri.path != null)) {
+        if (BackupStorageUtils.isRawFileScheme(uri)) {
             val path = uri.path ?: throw IllegalArgumentException("Backup directory path is null")
-            val targetFile = java.io.File(path, fileName)
+            val targetFile = File(path, fileName)
             Timber.i("$localTag making output stream for file path: ${targetFile.absolutePath}")
             ObjectOutputStream(FileOutputStream(targetFile)).use {
                 Timber.i("$localTag writing to backup file")

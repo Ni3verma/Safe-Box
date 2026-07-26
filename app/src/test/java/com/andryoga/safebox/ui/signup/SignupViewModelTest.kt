@@ -68,6 +68,25 @@ class SignupViewModelTest {
     }
 
     @Test
+    fun initialUiState_whenIsDebugTrue_prefillsDebugPasswordAndHint() = runTest {
+        viewModel = SignupViewModel(
+            encryptedPreferenceProvider = encryptedPreferenceProvider,
+            userDetailsRepository = userDetailsRepository,
+            analyticsHelper = analyticsHelper,
+            isDebug = true
+        )
+        advanceUntilIdle()
+        val uiState = viewModel.uiState.value
+
+        assertThat(uiState.password).isEqualTo("Qwerty@@135")
+        assertThat(uiState.isPasswordFieldError).isFalse()
+        assertThat(uiState.passwordValidatorState).isEqualTo(PasswordValidatorState.PASSWORD_IS_OK)
+        assertThat(uiState.hint).isEqualTo("first 5 @@ first 3")
+        assertThat(uiState.isSignupButtonEnabled).isTrue()
+        assertThat(viewModel.navigateToHome.value).isFalse()
+    }
+
+    @Test
     fun onPasswordUpdate_withEmptyText_updatesStateWithEmptyPassword() = runTest {
         viewModel.uiState.test {
             awaitItem()

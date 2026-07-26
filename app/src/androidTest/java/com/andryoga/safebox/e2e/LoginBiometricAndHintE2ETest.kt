@@ -2,7 +2,9 @@
 
 package com.andryoga.safebox.e2e
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -63,15 +65,20 @@ class LoginBiometricAndHintE2ETest {
     @Inject
     lateinit var activeSessionManager: ActiveSessionManager
 
+    @Inject
+    lateinit var fakeBiometricAuthProvider: com.andryoga.safebox.di.FakeBiometricAuthProvider
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
     fun setup() {
         hiltRule.inject()
+        fakeBiometricAuthProvider.reset()
     }
 
     @After
     fun tearDown() {
+        fakeBiometricAuthProvider.reset()
         runBlocking {
             settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
             settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
@@ -96,7 +103,7 @@ class LoginBiometricAndHintE2ETest {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 runCatching {
                     composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        hasText(context.getString(R.string.welcome_back)),
                         useUnmergedTree = true
                     ).fetchSemanticsNodes().isNotEmpty()
                 }.getOrDefault(false)
@@ -285,6 +292,15 @@ class LoginBiometricAndHintE2ETest {
 
     @Test
     fun biometricErrorOrCancellation_shouldResetUiStateAndPreventInfinitePromptLoop() {
+        var biometricErrorTriggered = false
+        fakeBiometricAuthProvider.canAuthenticateOverride = true
+        fakeBiometricAuthProvider.authHandlerOverride = { _, onErrorOrCancel ->
+            biometricErrorTriggered = true
+            LaunchedEffect(Unit) {
+                onErrorOrCancel()
+            }
+        }
+
         runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
@@ -302,10 +318,10 @@ class LoginBiometricAndHintE2ETest {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 runCatching {
                     composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
+                        hasText(context.getString(R.string.welcome_back)),
                         useUnmergedTree = true
                     ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
+                }.getOrDefault(false) && biometricErrorTriggered
             }
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
@@ -314,7 +330,7 @@ class LoginBiometricAndHintE2ETest {
                 assertThat(userDetailsRepository.shouldStartBiometricAuthFlow()).isTrue()
             }
 
-            // Simulate biometric error/cancellation by triggering master password fallback input directly
+            // Enter master password fallback to complete login
             composeTestRule.onNode(
                 hasSetTextAction() and hasText(
                     context.getString(R.string.password),
@@ -328,7 +344,7 @@ class LoginBiometricAndHintE2ETest {
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 runCatching {
                     composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasContentDescription(
+                        hasContentDescription(
                             addNewButtonDesc
                         )
                     )
@@ -338,8 +354,11 @@ class LoginBiometricAndHintE2ETest {
             composeTestRule.waitForIdle()
 
             // Verify clean unlock via password fallback when biometric was initially active
-            composeTestRule.onNode(androidx.compose.ui.test.hasContentDescription(addNewButtonDesc))
+            composeTestRule.onNode(hasContentDescription(addNewButtonDesc))
                 .assertIsDisplayed()
+
+            // Assert that biometric prompt/handler was invoked only once, proving no prompt loop occurs
+            assertThat(fakeBiometricAuthProvider.invocationCount).isEqualTo(1)
         }
     }
 }

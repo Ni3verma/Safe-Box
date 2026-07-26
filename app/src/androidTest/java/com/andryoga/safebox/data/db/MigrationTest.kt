@@ -3,6 +3,7 @@ package com.andryoga.safebox.data.db
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 
@@ -38,20 +39,24 @@ class MigrationTest {
         db = helper.runMigrationsAndValidate(TEST_DB, 2, true, Migration.MIGRATION_1_2)
 
         val loginCursor = db.query("SELECT * FROM login_data WHERE title = 'Apple ID'")
-        loginCursor.moveToFirst()
-        assert(loginCursor.getString(loginCursor.getColumnIndexOrThrow("userId")) == "user@apple.com")
-        assert(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate")) == 1000L)
+        assertThat(loginCursor.moveToFirst()).isTrue()
+        assertThat(loginCursor.getString(loginCursor.getColumnIndexOrThrow("userId"))).isEqualTo("user@apple.com")
+        assertThat(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate"))).isEqualTo(
+            1000L
+        )
         loginCursor.close()
 
         val cardCursor = db.query("SELECT * FROM bank_card_data WHERE title = 'Visa Card'")
-        cardCursor.moveToFirst()
-        assert(cardCursor.getString(cardCursor.getColumnIndexOrThrow("number")) == "12345678")
+        assertThat(cardCursor.moveToFirst()).isTrue()
+        assertThat(cardCursor.getString(cardCursor.getColumnIndexOrThrow("number"))).isEqualTo("12345678")
         cardCursor.close()
 
         val accountCursor =
             db.query("SELECT * FROM bank_account_data WHERE title = 'Checking Account'")
-        accountCursor.moveToFirst()
-        assert(accountCursor.getString(accountCursor.getColumnIndexOrThrow("accountNumber")) == "9876543210")
+        assertThat(accountCursor.moveToFirst()).isTrue()
+        assertThat(accountCursor.getString(accountCursor.getColumnIndexOrThrow("accountNumber"))).isEqualTo(
+            "9876543210"
+        )
         accountCursor.close()
 
         db.close()
@@ -82,26 +87,34 @@ class MigrationTest {
 
         val loginCursor =
             db.query("SELECT creationDate, updateDate FROM login_data WHERE title = 'Google ID'")
-        loginCursor.moveToFirst()
-        assert(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate")) == 5000L)
+        assertThat(loginCursor.moveToFirst()).isTrue()
+        assertThat(loginCursor.getLong(loginCursor.getColumnIndexOrThrow("creationDate"))).isEqualTo(
+            5000L
+        )
         loginCursor.close()
 
         val cardCursor =
             db.query("SELECT creationDate, updateDate FROM bank_card_data WHERE title = 'Mastercard'")
-        cardCursor.moveToFirst()
-        assert(cardCursor.getLong(cardCursor.getColumnIndexOrThrow("creationDate")) == 6000L)
+        assertThat(cardCursor.moveToFirst()).isTrue()
+        assertThat(cardCursor.getLong(cardCursor.getColumnIndexOrThrow("creationDate"))).isEqualTo(
+            6000L
+        )
         cardCursor.close()
 
         val accountCursor =
             db.query("SELECT creationDate, updateDate FROM bank_account_data WHERE title = 'Savings Account'")
-        accountCursor.moveToFirst()
-        assert(accountCursor.getLong(accountCursor.getColumnIndexOrThrow("creationDate")) == 7000L)
+        assertThat(accountCursor.moveToFirst()).isTrue()
+        assertThat(accountCursor.getLong(accountCursor.getColumnIndexOrThrow("creationDate"))).isEqualTo(
+            7000L
+        )
         accountCursor.close()
 
         val noteCursor =
             db.query("SELECT creationDate, updateDate FROM secure_note_data WHERE title = 'Secret Note'")
-        noteCursor.moveToFirst()
-        assert(noteCursor.getLong(noteCursor.getColumnIndexOrThrow("creationDate")) == 8000L)
+        assertThat(noteCursor.moveToFirst()).isTrue()
+        assertThat(noteCursor.getLong(noteCursor.getColumnIndexOrThrow("creationDate"))).isEqualTo(
+            8000L
+        )
         noteCursor.close()
 
         db.close()
@@ -119,8 +132,8 @@ class MigrationTest {
                     "VALUES ('content://backups', '/sdcard/backups', 123456789, 123456789)"
         )
         val cursor = db.query("SELECT * FROM backup_metadata WHERE uriString = 'content://backups'")
-        cursor.moveToFirst()
-        assert(cursor.getString(cursor.getColumnIndexOrThrow("displayPath")) == "/sdcard/backups")
+        assertThat(cursor.moveToFirst()).isTrue()
+        assertThat(cursor.getString(cursor.getColumnIndexOrThrow("displayPath"))).isEqualTo("/sdcard/backups")
         cursor.close()
 
         db.close()

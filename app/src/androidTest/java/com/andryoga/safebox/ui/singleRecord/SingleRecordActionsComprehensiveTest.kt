@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.singleRecord
 
+import android.content.Context
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
@@ -177,6 +178,20 @@ class SingleRecordActionsComprehensiveTest {
 
     // --- CLIPBOARD COPYING IN VIEW MODE across all types ---
 
+    private fun recordingClipboard(onSet: (ClipEntry?) -> Unit): Clipboard {
+        return object : Clipboard {
+            private var currentEntry: ClipEntry? = null
+            override suspend fun getClipEntry(): ClipEntry? = currentEntry
+            override suspend fun setClipEntry(clipEntry: ClipEntry?) {
+                currentEntry = clipEntry
+                onSet(clipEntry)
+            }
+
+            override val nativeClipboard: android.content.ClipboardManager
+                get() = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        }
+    }
+
     @Test
     fun clickLoginUserIdFieldInViewMode_shouldWriteCorrectTextToClipboard() {
         var clipboardEntry: ClipEntry? = null
@@ -187,15 +202,7 @@ class SingleRecordActionsComprehensiveTest {
 
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalClipboard provides object : Clipboard {
-                    override suspend fun getClipEntry(): ClipEntry? = clipboardEntry
-                    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-                        clipboardEntry = clipEntry
-                    }
-
-                    override val nativeClipboard: android.content.ClipboardManager
-                        get() = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                }
+                LocalClipboard provides recordingClipboard { clipboardEntry = it }
             ) {
                 SafeBoxTheme {
                     SingleRecordScreen(
@@ -211,6 +218,7 @@ class SingleRecordActionsComprehensiveTest {
         }
 
         composeTestRule.onNodeWithText(formattedTextToClick, substring = true).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5000L) { clipboardEntry != null }
         composeTestRule.waitForIdle()
         assertThat(clipboardEntry?.clipData?.getItemAt(0)?.text?.toString()).isEqualTo(expectedData)
     }
@@ -232,15 +240,7 @@ class SingleRecordActionsComprehensiveTest {
 
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalClipboard provides object : Clipboard {
-                    override suspend fun getClipEntry(): ClipEntry? = clipboardEntry
-                    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-                        clipboardEntry = clipEntry
-                    }
-
-                    override val nativeClipboard: android.content.ClipboardManager
-                        get() = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                }
+                LocalClipboard provides recordingClipboard { clipboardEntry = it }
             ) {
                 SafeBoxTheme {
                     SingleRecordScreen(
@@ -256,6 +256,7 @@ class SingleRecordActionsComprehensiveTest {
         }
 
         composeTestRule.onNodeWithText(formattedTextToClick, substring = true).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5000L) { clipboardEntry != null }
         composeTestRule.waitForIdle()
         assertThat(clipboardEntry?.clipData?.getItemAt(0)?.text?.toString()).isEqualTo(expectedData)
     }
@@ -271,15 +272,7 @@ class SingleRecordActionsComprehensiveTest {
 
         composeTestRule.setContent {
             CompositionLocalProvider(
-                LocalClipboard provides object : Clipboard {
-                    override suspend fun getClipEntry(): ClipEntry? = clipboardEntry
-                    override suspend fun setClipEntry(clipEntry: ClipEntry?) {
-                        clipboardEntry = clipEntry
-                    }
-
-                    override val nativeClipboard: android.content.ClipboardManager
-                        get() = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                }
+                LocalClipboard provides recordingClipboard { clipboardEntry = it }
             ) {
                 SafeBoxTheme {
                     SingleRecordScreen(
@@ -295,6 +288,7 @@ class SingleRecordActionsComprehensiveTest {
         }
 
         composeTestRule.onNodeWithText(formattedTextToClick, substring = true).performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5000L) { clipboardEntry != null }
         composeTestRule.waitForIdle()
         assertThat(clipboardEntry?.clipData?.getItemAt(0)?.text?.toString()).isEqualTo(expectedData)
     }

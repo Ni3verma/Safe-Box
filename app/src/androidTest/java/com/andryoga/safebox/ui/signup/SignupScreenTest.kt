@@ -44,7 +44,12 @@ class SignupScreenTest {
         }
 
         composeTestRule.onNodeWithText(context.getString(R.string.welcome)).assertIsDisplayed()
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .assertIsDisplayed()
         composeTestRule.onNode(
             hasSetTextAction() and hasText(
@@ -57,19 +62,27 @@ class SignupScreenTest {
 
     @Test
     fun clickTogglePasswordIcon_shouldToggleVisualTransformation() {
+        val testPassword = "Secret@123"
+        val maskedBullet = "\u2022".repeat(testPassword.length)
+
         composeTestRule.setContent {
             SafeBoxTheme {
                 SignupScreen(
-                    uiState = SignupUiState(password = "Secret@123"),
+                    uiState = SignupUiState(password = testPassword),
                     screenAction = {}
                 )
             }
         }
 
-        composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Toggle Password").performClick()
+        val toggleIconDesc = context.getString(R.string.cd_toggle_sensitive_data_visibility)
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedBullet) and hasSetTextAction()).assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithContentDescription("Toggle Password").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription(toggleIconDesc).assertIsDisplayed()
+        composeTestRule.onNode(hasText(testPassword) and hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test
@@ -100,7 +113,12 @@ class SignupScreenTest {
             }
         }
 
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextReplacement("Secret@123")
         composeTestRule.waitForIdle()
         assertThat((lastPasswordAction as? SignupScreenAction.OnPasswordUpdate)?.password).isEqualTo(
@@ -150,7 +168,12 @@ class SignupScreenTest {
         composeTestRule.onNodeWithText(context.getString(R.string.signup)).assertIsNotEnabled()
 
         // Type invalid password (no uppercase/lowercase mix)
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextReplacement("abc")
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.case_validation_text))
@@ -194,7 +217,12 @@ class SignupScreenTest {
         }
 
         // Type valid credentials
-        composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
             .performTextInput("Qwerty@@12")
         composeTestRule.waitForIdle()
         composeTestRule.onNode(

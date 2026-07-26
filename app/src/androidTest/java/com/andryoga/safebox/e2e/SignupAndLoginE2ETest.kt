@@ -80,11 +80,13 @@ class SignupAndLoginE2ETest {
     @After
     fun tearDown() {
         runBlocking {
-            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
-            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
-            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
-            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
-            activeSessionManager.setPaused(true)
+            E2ETestUtils.resetAppState(
+                safeBoxDatabase = safeBoxDatabase,
+                settingsDataStore = settingsDataStore,
+                activeSessionManager = activeSessionManager,
+                encryptedPreferenceProvider = encryptedPreferenceProvider,
+                isSignUpRequired = true
+            )
         }
     }
 
@@ -98,27 +100,25 @@ class SignupAndLoginE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
             // 1. Verify Signup Screen is displayed on first boot
-            composeTestRule.waitUntil(timeoutMillis = 25000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.welcome))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome))
                 .assertIsDisplayed()
 
             // 2. Enter valid master password and hint (using performTextReplacement to override any debug pre-fills)
-            composeTestRule.onNode(hasSetTextAction() and hasText("Password", substring = true))
-                .performTextReplacement("Qwerty@@123")
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.password),
+                    substring = true
+                )
+            )
+                .performTextReplacement(E2ETestUtils.TEST_MASTER_PASSWORD)
             composeTestRule.onNode(
                 hasSetTextAction() and hasText(
                     context.getString(R.string.hint),
                     substring = true
                 )
             )
-                .performTextReplacement("E2E hint")
+                .performTextReplacement(E2ETestUtils.TEST_MASTER_HINT)
             composeTestRule.waitForIdle()
             E2ETestUtils.closeSoftKeyboard(composeTestRule, context)
             composeTestRule.waitForIdle()
@@ -130,14 +130,7 @@ class SignupAndLoginE2ETest {
             composeTestRule.waitForIdle()
 
             // 4. Verify clean transition to Home screen showing 0 records state
-            composeTestRule.waitUntil(timeoutMillis = 25000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.no_record)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.no_record))
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()
@@ -150,7 +143,8 @@ class SignupAndLoginE2ETest {
                 )
                 assertThat(isSignupStillRequired).isFalse()
 
-                val isPasswordCorrect = userDetailsRepository.checkPassword("Qwerty@@123")
+                val isPasswordCorrect =
+                    userDetailsRepository.checkPassword(E2ETestUtils.TEST_MASTER_PASSWORD)
                 assertThat(isPasswordCorrect).isTrue()
             }
         }
@@ -170,14 +164,7 @@ class SignupAndLoginE2ETest {
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
             // 1. Verify Login Screen is displayed on subsequent launch
-            composeTestRule.waitUntil(timeoutMillis = 25000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.welcome_back)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.welcome_back))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
 
@@ -195,14 +182,10 @@ class SignupAndLoginE2ETest {
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.waitUntil(timeoutMillis = 25000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.incorrect_pswrd_message)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            E2ETestUtils.waitForText(
+                composeTestRule,
+                context.getString(R.string.incorrect_pswrd_message)
+            )
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
                 .assertIsDisplayed()
@@ -211,14 +194,7 @@ class SignupAndLoginE2ETest {
             E2ETestUtils.unlockApp(composeTestRule, context)
 
             // 4. Verify successful authentication unlocks and opens Home screen showing 0 records
-            composeTestRule.waitUntil(timeoutMillis = 25000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.no_record)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.no_record))
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()

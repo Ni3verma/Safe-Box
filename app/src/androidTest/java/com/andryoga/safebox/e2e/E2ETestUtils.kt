@@ -2,17 +2,28 @@
 
 package com.andryoga.safebox.e2e
 
+import android.app.Activity
 import android.content.Context
 import android.net.Uri
+import android.view.inputmethod.InputMethodManager
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.test.core.app.ActivityScenario
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
@@ -27,9 +38,12 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.e2e.E2ETestUtils.TEST_MASTER_PASSWORD
 import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.ui.MainActivity
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import java.util.Date
 
 /**
@@ -40,6 +54,7 @@ object E2ETestUtils {
 
     const val TEST_MASTER_PASSWORD = "Qwerty@@123"
     const val TEST_MASTER_HINT = "E2E Master Hint"
+    val TEST_DATE: Date = Date(1700000000000L)
 
     /**
      * Pre-seeds the database and encrypted preferences so the app boots directly onto the LoginScreen.
@@ -139,8 +154,8 @@ object E2ETestUtils {
                 userId = "user@apple.com",
                 password = "ApplePassword123!",
                 notes = "2FA enabled",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         bankCardDataRepository.upsertBankCardData(
@@ -153,8 +168,8 @@ object E2ETestUtils {
                 cvv = "999",
                 pin = "1234",
                 notes = "Travel points card",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         bankAccountDataRepository.upsertBankAccountData(
@@ -170,8 +185,8 @@ object E2ETestUtils {
                 ifscCode = "SVFB0001234",
                 micrCode = "123456789",
                 notes = "Primary checking",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
         secureNoteDataRepository.upsertSecureNoteData(
@@ -179,8 +194,8 @@ object E2ETestUtils {
                 id = 904,
                 title = "Wifi Router Secrets",
                 notes = "SSID: SafeBox_5G\nPassword: SecureWifiPassword#2026\nAdmin IP: 192.168.1.1",
-                creationDate = Date(),
-                updateDate = Date()
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
             )
         )
     }
@@ -190,8 +205,8 @@ object E2ETestUtils {
      */
     suspend fun setupBackupMetadataState(
         backupMetadataRepository: BackupMetadataRepository,
-        mockUriString: String = "content://com.android.externalstorage.documents/tree/primary%3ASafeboxBackups",
-        mockTimestamp: Long = System.currentTimeMillis()
+        mockUriString: String = "file:///sdcard/SafeboxBackups",
+        mockTimestamp: Long = TEST_DATE.time
     ) {
         backupMetadataRepository.insertBackupMetadata(Uri.parse(mockUriString))
         backupMetadataRepository.updateLastBackupDate(mockTimestamp)
@@ -214,76 +229,101 @@ object E2ETestUtils {
     }
 
     /**
+     * Resets settings, active session manager state, and database tables for test teardowns.
+     */
+    suspend fun resetAppState(
+        safeBoxDatabase: SafeBoxDatabase,
+        settingsDataStore: SettingsDataStore,
+        activeSessionManager: ActiveSessionManager,
+        encryptedPreferenceProvider: EncryptedPreferenceProvider? = null,
+        isSignUpRequired: Boolean = false
+    ) {
+        settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
+        settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
+        settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
+        settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
+        activeSessionManager.setPaused(true)
+        safeBoxDatabase.clearAllTables()
+        encryptedPreferenceProvider?.upsertBooleanPref(
+            CommonConstants.IS_SIGN_UP_REQUIRED,
+            isSignUpRequired
+        )
+    }
+
+    /**
+     * Creates a stable [LifecycleOwner] for testing session timeout triggers.
+     */
+    fun createTestLifecycleOwner(): LifecycleOwner {
+        return object : LifecycleOwner {
+            private val registry = LifecycleRegistry(this)
+            override val lifecycle: Lifecycle
+                get() = registry
+        }
+    }
+
+    /**
      * Closes the soft keyboard if active and waits for layout insets to settle.
      */
     fun closeSoftKeyboard(composeTestRule: ComposeTestRule, context: Context) {
-        runCatching {
-            androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                val imm =
-                    context.getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager
-                if (imm?.isAcceptingText == true) {
-                    imm.toggleSoftInput(
-                        android.view.inputmethod.InputMethodManager.HIDE_IMPLICIT_ONLY,
-                        0
-                    )
-                }
+        var activity: Activity?
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            activity = ActivityLifecycleMonitorRegistry.getInstance()
+                .getActivitiesInStage(Stage.RESUMED)
+                .firstOrNull()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            val token = activity?.currentFocus?.windowToken
+            if (imm != null && token != null) {
+                imm.hideSoftInputFromWindow(token, 0)
             }
         }
         composeTestRule.waitForIdle()
     }
 
     /**
-     * Unlocks the app from [LoginScreen] and confirms transition to the Home [RecordsScreen].
+     * Launches [MainActivity], executes [unlockApp] if needed, and scopes the [ActivityScenario] lifecycle.
+     */
+    inline fun launchUnlockedScenario(
+        composeTestRule: ComposeTestRule,
+        context: Context,
+        crossinline block: (ActivityScenario<MainActivity>) -> Unit
+    ) {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            unlockApp(composeTestRule, context)
+            block(scenario)
+        }
+    }
+
+    /**
+     * Dismisses any active timeout dialog, verifies the [LoginScreen] or unlocked [RecordsScreen],
+     * inputs the [TEST_MASTER_PASSWORD], and waits for the Home screen to render.
      */
     fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
-        composeTestRule.waitForIdle()
-        runCatching {
-            val timeoutText = context.getString(R.string.timeout_dialog_message)
-            val positiveBtnText = context.getString(R.string.timeout_dialog_positive_button_text)
-            val timeoutNodes = composeTestRule.onAllNodes(
-                androidx.compose.ui.test.hasText(timeoutText),
-                useUnmergedTree = true
-            ).fetchSemanticsNodes()
-            if (timeoutNodes.isNotEmpty()) {
-                val btnNodes = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(positiveBtnText),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes()
-                if (btnNodes.isNotEmpty()) {
-                    composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(positiveBtnText),
-                        useUnmergedTree = true
-                    ).onFirst().performClick()
-                    composeTestRule.waitForIdle()
-                }
-            }
-        }
         val welcomeBackText = context.getString(R.string.welcome_back)
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
         composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
                 val timeoutNodes = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_message)),
+                    hasText(context.getString(R.string.timeout_dialog_message)),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes()
                 if (timeoutNodes.isNotEmpty()) {
                     val btnNodes = composeTestRule.onAllNodes(
-                        androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
+                        hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
                         useUnmergedTree = true
                     ).fetchSemanticsNodes()
                     if (btnNodes.isNotEmpty()) {
                         composeTestRule.onAllNodes(
-                            androidx.compose.ui.test.hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
+                            hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
                             useUnmergedTree = true
                         ).onFirst().performClick()
                     }
                 }
                 val isWelcome = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(welcomeBackText),
+                    hasText(welcomeBackText),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes().isNotEmpty()
                 val isHome = composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                    hasContentDescription(addNewButtonDesc),
                     useUnmergedTree = true
                 ).fetchSemanticsNodes().isNotEmpty()
                 isWelcome || isHome
@@ -292,7 +332,7 @@ object E2ETestUtils {
 
         val isAlreadyHome = runCatching {
             composeTestRule.onAllNodes(
-                androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+                hasContentDescription(addNewButtonDesc),
                 useUnmergedTree = true
             ).fetchSemanticsNodes().isNotEmpty()
         }.getOrDefault(false)
@@ -302,8 +342,12 @@ object E2ETestUtils {
             return
         }
 
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(welcomeBackText),
+            timeoutMillis = 25000L
+        )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(welcomeBackText),
+            hasText(welcomeBackText),
             useUnmergedTree = true
         ).onFirst().assertIsDisplayed()
         composeTestRule.waitForIdle()
@@ -316,19 +360,12 @@ object E2ETestUtils {
         passwordNodes.onFirst().performTextReplacement(TEST_MASTER_PASSWORD)
         composeTestRule.waitForIdle()
         closeSoftKeyboard(composeTestRule, context)
-        composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(context.getString(R.string.login)),
-            useUnmergedTree = true
-        ).onFirst().performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasContentDescription(addNewButtonDesc),
+            timeoutMillis = 25000L
+        )
         composeTestRule.waitForIdle()
     }
 
@@ -341,42 +378,31 @@ object E2ETestUtils {
         optionResId: Int
     ) {
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasContentDescription(
-                        addNewButtonDesc
-                    ),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasContentDescription(addNewButtonDesc),
+            timeoutMillis = 25000L
+        )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            hasContentDescription(addNewButtonDesc),
             useUnmergedTree = true
         ).onFirst().assertIsDisplayed()
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasContentDescription(addNewButtonDesc),
+            hasContentDescription(addNewButtonDesc),
             useUnmergedTree = true
         ).onFirst().performClick()
 
         val optionText = context.getString(optionResId)
         val bottomSheetTitle = context.getString(R.string.add_a_new_record)
-        composeTestRule.waitUntil(timeoutMillis = 25000L) {
-            runCatching {
-                composeTestRule.onAllNodes(
-                    androidx.compose.ui.test.hasText(bottomSheetTitle),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes().isNotEmpty()
-            }.getOrDefault(false)
-        }
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(bottomSheetTitle),
+            timeoutMillis = 25000L
+        )
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(optionText),
+            hasText(optionText),
             useUnmergedTree = true
         ).onLast().assertIsDisplayed()
         composeTestRule.onAllNodes(
-            androidx.compose.ui.test.hasText(optionText),
+            hasText(optionText),
             useUnmergedTree = true
         ).onLast().performClick()
     }
@@ -424,14 +450,17 @@ object E2ETestUtils {
     }
 
     /**
-     * Helper inside [E2ETestUtils] object to wait until at least one node matching [matcher] is displayed.
+     * Waits until at least one semantics node matching [text] is displayed in the semantics tree.
      */
-    fun waitUntilNodeDisplayed(
+    fun waitForText(
         composeTestRule: ComposeTestRule,
-        matcher: SemanticsMatcher,
+        text: String,
         timeoutMillis: Long = 25000L
     ) {
-        composeTestRule.waitUntilNodeDisplayed(matcher, timeoutMillis)
+        composeTestRule.waitUntilNodeDisplayed(
+            matcher = hasText(text),
+            timeoutMillis = timeoutMillis
+        )
     }
 }
 
@@ -440,11 +469,18 @@ object E2ETestUtils {
  */
 fun ComposeTestRule.waitUntilNodeDisplayed(
     matcher: SemanticsMatcher,
-    timeoutMillis: Long = 25000L
+    timeoutMillis: Long = 25000L,
+    assertDisplayed: Boolean = false
 ) {
     waitUntil(timeoutMillis = timeoutMillis) {
         runCatching {
-            onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+            val nodes = onAllNodes(matcher, useUnmergedTree = true).fetchSemanticsNodes()
+            nodes.isNotEmpty() && (!assertDisplayed || runCatching {
+                onAllNodes(
+                    matcher,
+                    useUnmergedTree = true
+                ).onFirst().assertIsDisplayed(); true
+            }.getOrDefault(false))
         }.getOrDefault(false)
     }
 }

@@ -30,8 +30,13 @@ import dagger.assisted.AssistedInject
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
+import java.io.File
+import java.io.FileInputStream
+import java.io.InvalidClassException
 import java.io.InvalidObjectException
 import java.io.ObjectInputStream
+import java.io.ObjectStreamClass
+import java.nio.ByteBuffer
 import java.util.Date
 import javax.crypto.BadPaddingException
 
@@ -71,16 +76,42 @@ class RestoreDataWorker
 
             val uri = fileUri.toUri()
             val inputStream =
-                if (uri.scheme == "file" || uri.scheme == null || (uri.scheme != "content" && uri.path != null)) {
+                if (BackupStorageUtils.isRawFileScheme(uri)) {
                     val path =
                         uri.path ?: throw IllegalArgumentException("Restore file path is null")
-                    java.io.FileInputStream(java.io.File(path))
+                    FileInputStream(File(path))
                 } else {
                     applicationContext.contentResolver.openInputStream(uri)
                         ?: throw IllegalArgumentException("Could not open input stream for $uri")
                 }
 
-            ObjectInputStream(inputStream).use {
+            val secureObjectInputStream = try {
+                object : ObjectInputStream(inputStream) {
+                    override fun resolveClass(desc: ObjectStreamClass): Class<*> {
+                        val allowedClasses = setOf(
+                            "java.util.HashMap",
+                            "java.util.LinkedHashMap",
+                            "java.util.Map",
+                            "java.lang.String",
+                            "[B",
+                            "java.lang.Number",
+                            "java.lang.Integer",
+                            "java.lang.Long"
+                        )
+                        if (desc.name !in allowedClasses) {
+                            throw InvalidClassException(
+                                "Unauthorized deserialization attempt",
+                                desc.name
+                            )
+                        }
+                        return super.resolveClass(desc)
+                    }
+                }
+            } catch (t: Throwable) {
+                inputStream.close()
+                throw t
+            }
+            secureObjectInputStream.use {
                 val fileObject = it.readObject()
                 if (fileObject !is Map<*, *>) {
                     throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
@@ -88,7 +119,15 @@ class RestoreDataWorker
 
                 importMap = fileObject as Map<String, ByteArray?>
                 val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
-                val creationDate = importMap[CommonConstants.CREATION_DATE_KEY]!![0].toLong()
+                val creationDateBytes = importMap[CommonConstants.CREATION_DATE_KEY]!!
+                // Check size for backward compatibility: new backups store an 8-byte Long timestamp,
+                // while legacy backups stored a 1-byte value. Calling ByteBuffer.wrap().long on <8 bytes
+                // throws BufferUnderflowException and fails the restore.
+                val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
+                    ByteBuffer.wrap(creationDateBytes).long
+                } else {
+                    creationDateBytes[0].toLong()
+                }
                 Timber.i(
                     "$localTag version = $version, " +
                             "created on : ${Utils.getFormattedDate(Date(creationDate))}"

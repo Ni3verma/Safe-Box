@@ -303,10 +303,11 @@ class RecordActionsComprehensiveE2ETest {
                 .performTextReplacement("")
             composeTestRule.waitForIdle()
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsDisplayed()
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).assertIsDisplayed()
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             // Re-open saved record in view mode from RecordsScreen
@@ -372,10 +373,11 @@ class RecordActionsComprehensiveE2ETest {
                 .performTextReplacement(updatedNumber)
             composeTestRule.waitForIdle()
 
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsDisplayed()
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).assertIsDisplayed()
+            composeTestRule.onNodeWithText(saveText).performClick()
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
             }
 
             // Re-open saved card in view mode from RecordsScreen

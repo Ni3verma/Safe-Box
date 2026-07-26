@@ -197,10 +197,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             E2ETestUtils.unlockApp(composeTestRule, context)
 
-            activeSessionManager.onStop(object : androidx.lifecycle.LifecycleOwner {
-                override val lifecycle: androidx.lifecycle.Lifecycle
-                    get() = androidx.lifecycle.LifecycleRegistry(this)
-            })
+            activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
             composeTestRule.waitUntil(timeoutMillis = 15000L) {
                 runCatching {
@@ -295,8 +292,14 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                         .fetchSemanticsNodes().isNotEmpty()
                 }.getOrDefault(false)
             }
-            composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
-                .assertIsDisplayed()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                var isFlagCleared = false
+                scenario.onActivity { activity ->
+                    val flags = activity.window.attributes.flags
+                    isFlagCleared = (flags and WindowManager.LayoutParams.FLAG_SECURE) == 0
+                }
+                isFlagCleared
+            }
 
             scenario.onActivity { activity ->
                 val flags = activity.window.attributes.flags

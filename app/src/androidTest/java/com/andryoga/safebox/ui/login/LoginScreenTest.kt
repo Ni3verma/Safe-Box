@@ -64,12 +64,22 @@ class LoginScreenTest {
             }
         }
 
-        // With clean production initialization (password = ""), login button is disabled by default
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        ).performTextReplacement("")
+        composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsNotEnabled()
     }
 
     @Test
     fun clickTogglePasswordIcon_shouldToggleVisualTransformation() {
+        val testPassword = "SecretPass123"
+        val maskedBullet = "\u2022".repeat(testPassword.length)
+
         composeTestRule.setContent {
             SafeBoxTheme {
                 LoginScreen(
@@ -79,11 +89,24 @@ class LoginScreenTest {
             }
         }
 
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.password),
+                substring = true
+            )
+        )
+            .performTextInput(testPassword)
+        composeTestRule.waitForIdle()
+
         val toggleIconDescription = context.getString(R.string.cd_toggle_sensitive_data_visibility)
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
+        composeTestRule.onNode(hasText(maskedBullet) and hasSetTextAction()).assertIsDisplayed()
+
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).performClick()
         composeTestRule.waitForIdle()
+
         composeTestRule.onNodeWithContentDescription(toggleIconDescription).assertIsDisplayed()
+        composeTestRule.onNode(hasText(testPassword) and hasSetTextAction()).assertIsDisplayed()
     }
 
     @Test
@@ -192,7 +215,7 @@ class LoginScreenTest {
     }
 
     @Test
-    fun rapidMultiClickOnLoginButton_shouldPreventDuplicateSubmission() {
+    fun rapidMultiClickOnLoginButton_shouldEmitClickAction() {
         var loginClickCount = 0
         val targetPassword = "MySecretPassword123"
 

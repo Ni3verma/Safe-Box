@@ -70,208 +70,105 @@ class AddNewRecordFlowsE2ETest {
     @After
     fun tearDown() {
         runBlocking {
-            settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
-            settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
-            settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
-            settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
-            activeSessionManager.setPaused(true)
+            E2ETestUtils.resetAppState(
+                safeBoxDatabase = safeBoxDatabase,
+                settingsDataStore = settingsDataStore,
+                activeSessionManager = activeSessionManager
+            )
+        }
+    }
+
+    private fun createRecordAndAssert(
+        typeResId: Int,
+        title: String,
+        extraFields: List<Pair<Int, String>> = emptyList()
+    ) {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+            E2ETestUtils.clickAddNewRecordOption(
+                composeTestRule,
+                context,
+                typeResId
+            )
+
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.title),
+                    substring = true
+                )
+            ).performTextInput(title)
+
+            extraFields.forEach { (labelResId, value) ->
+                composeTestRule.onNode(
+                    hasSetTextAction() and hasText(
+                        context.getString(labelResId),
+                        substring = true
+                    )
+                ).performTextInput(value)
+            }
+
+            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(
+                    hasText(title, substring = true),
+                    useUnmergedTree = true
+                ).fetchSemanticsNodes().isNotEmpty()
+            }
+            composeTestRule.onNodeWithText(title).assertIsDisplayed()
         }
     }
 
     @Test
     fun addNewLoginRecord_shouldSaveAndAppearInRecordsList() {
-        runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
+        createRecordAndAssert(
+            typeResId = R.string.type_display_login,
+            title = "E2E Login Title",
+            extraFields = listOf(
+                R.string.user_id to "user@test.com",
+                R.string.password to "SecretPass!123"
             )
-        }
-        val targetTitle = "E2E Login Title"
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
-            E2ETestUtils.clickAddNewRecordOption(
-                composeTestRule,
-                context,
-                R.string.type_display_login
-            )
-
-            // Fill in mandatory fields on SingleRecordScreen
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.title),
-                    substring = true
-                )
-            )
-                .performTextInput(targetTitle)
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.user_id),
-                    substring = true
-                )
-            )
-                .performTextInput("user@test.com")
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.password),
-                    substring = true
-                )
-            )
-                .performTextInput("SecretPass!123")
-
-            // Click Save and verify item appears on RecordsScreen
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(
-                    hasText(targetTitle, substring = true),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
-            composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
-        }
+        )
     }
 
     @Test
     fun addNewNoteRecord_shouldSaveAndAppearInRecordsList() {
-        runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
+        createRecordAndAssert(
+            typeResId = R.string.type_display_note,
+            title = "E2E Note Title",
+            extraFields = listOf(
+                R.string.notes to "Very secret notes content for testing"
             )
-        }
-        val targetTitle = "E2E Note Title"
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
-            E2ETestUtils.clickAddNewRecordOption(
-                composeTestRule,
-                context,
-                R.string.type_display_note
-            )
-
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.title),
-                    substring = true
-                )
-            )
-                .performTextInput(targetTitle)
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.notes),
-                    substring = true
-                )
-            )
-                .performTextInput("Very secret notes content for testing")
-
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(
-                    hasText(targetTitle, substring = true),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
-            composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
-        }
+        )
     }
 
     @Test
     fun addNewBankCardRecord_shouldSaveAndAppearInRecordsList() {
-        runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
+        createRecordAndAssert(
+            typeResId = R.string.type_display_card,
+            title = "E2E Card Title",
+            extraFields = listOf(
+                R.string.number to "4111111111111111"
             )
-        }
-        val targetTitle = "E2E Card Title"
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
-            E2ETestUtils.clickAddNewRecordOption(
-                composeTestRule,
-                context,
-                R.string.type_display_card
-            )
-
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.title),
-                    substring = true
-                )
-            )
-                .performTextInput(targetTitle)
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.number),
-                    substring = true
-                )
-            )
-                .performTextInput("1122334455667788")
-
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(
-                    hasText(targetTitle, substring = true),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
-            composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
-        }
+        )
     }
 
     @Test
     fun addNewBankAccountRecord_shouldSaveAndAppearInRecordsList() {
-        runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
+        createRecordAndAssert(
+            typeResId = R.string.type_display_account,
+            title = "E2E Bank Account Title",
+            extraFields = listOf(
+                R.string.account_number to "0987654321"
             )
-        }
-        val targetTitle = "E2E Bank Account Title"
-
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            E2ETestUtils.unlockApp(composeTestRule, context)
-            E2ETestUtils.clickAddNewRecordOption(
-                composeTestRule,
-                context,
-                R.string.type_display_account
-            )
-
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.title),
-                    substring = true
-                )
-            )
-                .performTextInput(targetTitle)
-            composeTestRule.onNode(
-                hasSetTextAction() and hasText(
-                    context.getString(R.string.account_number),
-                    substring = true
-                )
-            )
-                .performTextInput("0987654321")
-
-            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                composeTestRule.onAllNodes(
-                    hasText(targetTitle, substring = true),
-                    useUnmergedTree = true
-                )
-                    .fetchSemanticsNodes().isNotEmpty()
-            }
-            composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
-        }
+        )
     }
 }

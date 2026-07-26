@@ -22,6 +22,7 @@ import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.domain.mappers.record.toRecordListItem
+import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -123,35 +124,37 @@ class RecordsScreenScrollAndAppBarTest {
         }
     }
 
+    private suspend fun getSortedRecordList(): List<RecordListItem> {
+        E2ETestUtils.setupUnlockedHomeState(
+            safeBoxDatabase,
+            userDetailsRepository,
+            encryptedPreferenceProvider,
+            preferenceProvider
+        )
+
+        RandomUserData.insertRandomData(
+            loginDataRepository,
+            bankAccountDataRepository,
+            bankCardDataRepository,
+            secureNoteDataRepository
+        )
+
+        val loginData =
+            loginDataRepository.getAllLoginData().first().map { it.toRecordListItem() }
+        val bankAccountData = bankAccountDataRepository.getAllBankAccountData().first()
+            .map { it.toRecordListItem() }
+        val cardData =
+            bankCardDataRepository.getAllBankCardData().first().map { it.toRecordListItem() }
+        val noteData = secureNoteDataRepository.getAllSecureNoteData().first()
+            .map { it.toRecordListItem() }
+        return (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
+    }
+
     @Test
     fun scrollLongPopulatedList_shouldKeepListAccessibleAndCheckTopBar() {
         lateinit var firstRecordTitle: String
         runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
-            )
-
-            // Seed 200 records using RandomUserData
-            RandomUserData.insertRandomData(
-                loginDataRepository,
-                bankAccountDataRepository,
-                bankCardDataRepository,
-                secureNoteDataRepository
-            )
-
-            val loginData =
-                loginDataRepository.getAllLoginData().first().map { it.toRecordListItem() }
-            val bankAccountData = bankAccountDataRepository.getAllBankAccountData().first()
-                .map { it.toRecordListItem() }
-            val cardData =
-                bankCardDataRepository.getAllBankCardData().first().map { it.toRecordListItem() }
-            val noteData = secureNoteDataRepository.getAllSecureNoteData().first()
-                .map { it.toRecordListItem() }
-            val combinedSorted =
-                (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
+            val combinedSorted = getSortedRecordList()
             firstRecordTitle = combinedSorted.first().title
         }
 
@@ -169,9 +172,11 @@ class RecordsScreenScrollAndAppBarTest {
                             .fetchSemanticsNodes().isNotEmpty()
             }
 
-            // Scroll down the LazyColumn to index 40 and verify items remain accessible
+            // Scroll down the LazyColumn to index 40 and verify items and Top App Bar remain accessible
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
                 .performScrollToIndex(40)
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithContentDescription(addNewButtonDesc).assertIsDisplayed()
         }
     }
 
@@ -181,30 +186,7 @@ class RecordsScreenScrollAndAppBarTest {
         lateinit var lastRecordTitle: String
         var combinedSortedSize = 0
         runBlocking {
-            E2ETestUtils.setupUnlockedHomeState(
-                safeBoxDatabase,
-                userDetailsRepository,
-                encryptedPreferenceProvider,
-                preferenceProvider
-            )
-
-            RandomUserData.insertRandomData(
-                loginDataRepository,
-                bankAccountDataRepository,
-                bankCardDataRepository,
-                secureNoteDataRepository
-            )
-
-            val loginData =
-                loginDataRepository.getAllLoginData().first().map { it.toRecordListItem() }
-            val bankAccountData = bankAccountDataRepository.getAllBankAccountData().first()
-                .map { it.toRecordListItem() }
-            val cardData =
-                bankCardDataRepository.getAllBankCardData().first().map { it.toRecordListItem() }
-            val noteData = secureNoteDataRepository.getAllSecureNoteData().first()
-                .map { it.toRecordListItem() }
-            val combinedSorted =
-                (loginData + bankAccountData + cardData + noteData).sortedBy { it.title.lowercase() }
+            val combinedSorted = getSortedRecordList()
             firstRecordTitle = combinedSorted.first().title
             lastRecordTitle = combinedSorted.last().title
             combinedSortedSize = combinedSorted.size
@@ -220,14 +202,21 @@ class RecordsScreenScrollAndAppBarTest {
                             .fetchSemanticsNodes().isNotEmpty()
             }
 
+            // LazyColumn index 0 is the search bar header; index combinedSortedSize is the last record item
             composeTestRule.onNode(hasScrollToIndexAction(), useUnmergedTree = true)
                 .performScrollToIndex(combinedSortedSize)
             composeTestRule.waitUntil(timeoutMillis = 20000L) {
-                composeTestRule.onAllNodes(hasText(lastRecordTitle, substring = true))
-                    .fetchSemanticsNodes().isNotEmpty()
+                composeTestRule.onAllNodes(
+                    hasText(
+                        lastRecordTitle,
+                        substring = true
+                    )
+                ).fetchSemanticsNodes().isNotEmpty()
             }
-            composeTestRule.onNodeWithText(lastRecordTitle, substring = true)
-                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(
+                lastRecordTitle,
+                substring = true
+            ).assertIsDisplayed()
         }
     }
 }

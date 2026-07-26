@@ -13,6 +13,7 @@ import com.andryoga.safebox.ui.MainActivity
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -37,10 +38,28 @@ class LoadingScreenRootTest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private var originalSignupRequired: Boolean = false
 
     @Before
     fun setup() {
         hiltRule.inject()
+        runBlocking {
+            originalSignupRequired =
+                encryptedPreferenceProvider.getBooleanPref(
+                    CommonConstants.IS_SIGN_UP_REQUIRED,
+                    false
+                )
+        }
+    }
+
+    @After
+    fun tearDown() {
+        runBlocking {
+            encryptedPreferenceProvider.upsertBooleanPref(
+                CommonConstants.IS_SIGN_UP_REQUIRED,
+                originalSignupRequired
+            )
+        }
     }
 
     @Test

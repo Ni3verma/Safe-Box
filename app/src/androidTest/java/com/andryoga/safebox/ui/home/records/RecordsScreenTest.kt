@@ -76,6 +76,10 @@ class RecordsScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.no_filtered_record_body))
             .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.type_display_card))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.type_display_login))
+            .assertIsDisplayed()
     }
 
     @Test

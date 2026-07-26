@@ -105,6 +105,7 @@ class BackupMetadataRepositoryImplTest {
             val mockUri = mockk<Uri>()
             every { mockUri.scheme } returns "content"
             every { mockUri.path } returns "/tree/downloads"
+            every { mockUri.authority } returns "com.android.providers.downloads"
             every { mockUri.toString() } returns "content://com.android.providers.downloads/tree/downloads"
             every {
                 contentResolver.takePersistableUriPermission(

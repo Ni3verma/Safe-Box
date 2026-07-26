@@ -11,6 +11,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.worker.BackupDataWorker
@@ -35,12 +36,19 @@ class NewBackupOrRestoreVM @Inject constructor(
     private val workManager: WorkManager,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val analyticsHelper: AnalyticsHelper,
-    val inAppReviewManager: Lazy<InAppReviewManager>
+    val inAppReviewManager: Lazy<InAppReviewManager>,
+    @param:IsDebug private val isDebug: Boolean
 ) : ViewModel() {
     private lateinit var operation: Operation
     private val _uiState =
         MutableStateFlow(NewBackupOrRestoreScreenState())
     val uiState: StateFlow<NewBackupOrRestoreScreenState> = _uiState
+
+    init {
+        if (isDebug) {
+            _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
+        }
+    }
 
     private val _startReviewOnRestoreSuccess = Channel<Unit>(Channel.CONFLATED)
 

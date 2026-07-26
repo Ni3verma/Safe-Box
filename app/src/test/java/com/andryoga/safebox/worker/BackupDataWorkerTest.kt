@@ -72,8 +72,9 @@ class BackupDataWorkerTest {
         var updatedDate: Long? = null
         var deleted: Boolean = false
 
-        override suspend fun insertBackupMetadata(uriPath: Uri?) {
+        override suspend fun insertBackupMetadata(uriPath: Uri?): Boolean {
             metadata = uriPath?.let { BackupPathData(it.toString(), it.path ?: "", "Just now") }
+            return true
         }
 
         override suspend fun deleteBackupMetadata() {

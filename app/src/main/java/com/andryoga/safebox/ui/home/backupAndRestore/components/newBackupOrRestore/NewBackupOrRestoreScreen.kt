@@ -55,6 +55,7 @@ fun NewBackupOrRestoreScreen(
     NewBackupOrRestoreDialog(
         operation = operation,
         workflowState = uiState.workflowState,
+        defaultPassword = uiState.defaultPassword,
         onScreenAction = { action ->
             viewModel.onScreenAction(action)
         },
@@ -75,11 +76,12 @@ fun NewBackupOrRestoreScreen(
 private fun NewBackupOrRestoreDialog(
     operation: Operation,
     workflowState: WorkflowState,
+    defaultPassword: String = "",
     onScreenAction: (ScreenAction) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var password by remember {
-        mutableStateOf("")
+    var password by remember(defaultPassword) {
+        mutableStateOf(defaultPassword)
     }
 
     AlertDialog(
