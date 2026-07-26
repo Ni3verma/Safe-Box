@@ -3,7 +3,8 @@ package com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRest
 import android.net.Uri
 
 data class NewBackupOrRestoreScreenState(
-    val workflowState: WorkflowState = WorkflowState.ASK_FOR_PASSWORD
+    val workflowState: WorkflowState = WorkflowState.ASK_FOR_PASSWORD,
+    val defaultPassword: String = ""
 )
 
 enum class WorkflowState {

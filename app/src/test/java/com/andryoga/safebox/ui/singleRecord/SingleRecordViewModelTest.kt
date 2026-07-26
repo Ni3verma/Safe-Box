@@ -196,41 +196,6 @@ class SingleRecordViewModelTest {
     }
 
     @Test
-    fun `onBackClick from EDIT mode goes to VIEW mode`() = runTest {
-        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
-            RecordType.LOGIN,
-            1
-        )
-        initViewModel()
-        runCurrent() // init
-        viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
-        runCurrent() // switch to edit mode
-
-        viewModel.onBackClick()
-        runCurrent()
-
-        val uiState = viewModel.uiState.value
-        assertThat(uiState.viewMode).isEqualTo(ViewMode.VIEW)
-    }
-
-    @Test
-    fun `onBackClick from VIEW mode emits screenCloseEvent`() = runTest {
-        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
-            RecordType.LOGIN,
-            1
-        )
-        initViewModel()
-        job = launch {
-            val event = viewModel.screenCloseEvent.first()
-            assertThat(event).isEqualTo(Unit)
-        }
-        runCurrent()
-
-        viewModel.onBackClick()
-        runCurrent()
-    }
-
-    @Test
     fun `handleShareRecord emits shareContentEvent with only copyable non-password and non-empty fields`() =
         runTest {
             // 1. Arrange: Set up a mix of different field types

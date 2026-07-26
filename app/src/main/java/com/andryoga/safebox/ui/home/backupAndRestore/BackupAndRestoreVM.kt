@@ -34,6 +34,9 @@ class BackupAndRestoreVM @Inject constructor(
      * This param come as part of navigation param*/
     val startRestoreWorkflow = _startRestoreWorkflow.receiveAsFlow()
 
+    private val _showBackupPathPermissionError = Channel<Unit>(Channel.CONFLATED)
+    val showBackupPathPermissionError = _showBackupPathPermissionError.receiveAsFlow()
+
     init {
         val args = backupAndRestoreRouteProvider.getRoute()
         if (args.startWithRestoreWorkflow) {
@@ -93,8 +96,13 @@ class BackupAndRestoreVM @Inject constructor(
         activeSessionManager.setPaused(false)
     }
     private fun handleBackupPathSelected(uri: Uri?) {
+        if (uri == null) return
         viewModelScope.launch {
-            backupMetadataRepository.insertBackupMetadata(uriPath = uri)
+            val permissionGranted = backupMetadataRepository.insertBackupMetadata(uriPath = uri)
+            if (!permissionGranted) {
+                Timber.w("Failed to obtain permission for backup path")
+                _showBackupPathPermissionError.trySend(Unit)
+            }
         }
     }
 

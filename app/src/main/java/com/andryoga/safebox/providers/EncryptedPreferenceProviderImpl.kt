@@ -5,14 +5,15 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class EncryptedPreferenceProviderImpl @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val dispatchersProvider: DispatchersProvider
 ) :
     EncryptedPreferenceProvider {
     private val appContext = context.applicationContext
@@ -30,32 +31,31 @@ class EncryptedPreferenceProviderImpl @Inject constructor(
     }
 
     override suspend fun upsertBooleanPref(key: String, value: Boolean) {
-        withContext(Dispatchers.IO)
-        { sharedPref.edit { putBoolean(key, value) } }
+        withContext(dispatchersProvider.io) { sharedPref.edit { putBoolean(key, value) } }
     }
 
     override suspend fun getBooleanPref(key: String, defValue: Boolean): Boolean {
-        return withContext(Dispatchers.IO) { sharedPref.getBoolean(key, defValue) }
+        return withContext(dispatchersProvider.io) { sharedPref.getBoolean(key, defValue) }
     }
 
     override suspend fun upsertStringPref(key: String, value: String) {
-        withContext(Dispatchers.IO) { sharedPref.edit { putString(key, value) } }
+        withContext(dispatchersProvider.io) { sharedPref.edit { putString(key, value) } }
     }
 
     override suspend fun getStringPref(key: String, defValue: String?): String? {
-        return withContext(Dispatchers.IO) { sharedPref.getString(key, defValue) }
+        return withContext(dispatchersProvider.io) { sharedPref.getString(key, defValue) }
     }
 
     override suspend fun getIntPref(key: String, defValue: Int): Int {
-        return withContext(Dispatchers.IO) { sharedPref.getInt(key, defValue) }
+        return withContext(dispatchersProvider.io) { sharedPref.getInt(key, defValue) }
     }
 
     override suspend fun upsertIntPref(key: String, value: Int) {
-        withContext(Dispatchers.IO) { sharedPref.edit { putInt(key, value) } }
+        withContext(dispatchersProvider.io) { sharedPref.edit { putInt(key, value) } }
     }
 
     override suspend fun removePrefByKey(key: String) {
-        withContext(Dispatchers.IO) { sharedPref.edit { remove(key) } }
+        withContext(dispatchersProvider.io) { sharedPref.edit { remove(key) } }
     }
 
     private fun getMasterKey(): MasterKey {

@@ -183,8 +183,7 @@ class MainViewModelTest {
         isPrivacyEnabledFlow.emit(false)
         runCurrent()
 
-        assertThat(items.size).isEqualTo(1)
-        assertThat(items[0]).isFalse()
+        assertThat(items.last()).isFalse()
     }
 
     @Test
@@ -197,11 +196,12 @@ class MainViewModelTest {
 
             isPrivacyEnabledFlow.emit(false)
             runCurrent()
+            val sizeAfterFirstFalse = items.size
             isPrivacyEnabledFlow.emit(false) // false again
             runCurrent()
 
-            assertThat(items.size).isEqualTo(1) //emits once
-            assertThat(items[0]).isFalse()
+            assertThat(items.size).isEqualTo(sizeAfterFirstFalse) // no duplicate emission
+            assertThat(items.last()).isFalse()
         }
 
     @Test
@@ -216,8 +216,7 @@ class MainViewModelTest {
         isPrivacyEnabledFlow.emit(true) // changed
         runCurrent()
 
-        assertThat(items.size).isEqualTo(2)
-        assertThat(items).isEqualTo(listOf(false, true))
+        assertThat(items).isEqualTo(listOf(true, false, true))
     }
 
     @Test

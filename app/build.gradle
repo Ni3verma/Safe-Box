@@ -41,7 +41,7 @@ android {
         }
         println "Building SafeBox: ${versionName} (${versionCode})"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "com.andryoga.safebox.CustomHiltTestRunner"
     }
 
     signingConfigs {
@@ -119,6 +119,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    sourceSets {
+        named("androidTest") {
+            java.srcDirs += ["$buildDir/generated/ksp/debugAndroidTest/kotlin", "$buildDir/generated/ksp/debugAndroidTest/java"]
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
+    }
+
     kotlin {
         jvmToolchain(17)
     }
@@ -126,18 +134,23 @@ android {
         compose true
         buildConfig true
     }
-    sourceSets {
-        named("androidTest") {
-            assets.srcDirs(files("$projectDir/schemas"))
-        }
+
+    tasks.matching { (it.name.startsWith("compileDebugAndroidTest") || it.name.startsWith("dexBuilderDebugAndroidTest")) && it.name != "kspDebugAndroidTestKotlin" }.configureEach {
+        dependsOn("kspDebugAndroidTestKotlin")
     }
+
     testOptions {
         managedDevices {
             localDevices {
-                create("pixel8Api34") {
+                register("pixel8Api34") {
                     device = "Pixel 8"
                     apiLevel = 34
                     systemImageSource = "aosp-atd"
+                }
+                register("pixel2Api24") {
+                    device = "Pixel 2"
+                    apiLevel = 24
+                    systemImageSource = "aosp"
                 }
             }
         }
@@ -168,6 +181,9 @@ dependencies {
     implementation libs.bundles.room
 
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
+    kspAndroidTest(libs.hilt.compiler)
+    kspAndroidTest(libs.androidx.hilt.compiler)
     implementation libs.bundles.hilt
 
     implementation platform(libs.androidx.compose.bom)

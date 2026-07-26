@@ -6,7 +6,7 @@
     <string name="cd_toggle_sensitive_data_visibility">Toggle sensitive data visibility</string>
     <string name="cd_add_new_record_button">Add new record button</string>
     <string name="cd_search_bar">Search records by title</string>
-    <string name="cd_clear_search_bar">Clear search bar</string>"
+    <string name="cd_clear_search_bar">Clear search bar</string>
     <string name="cd_back_button">Back button</string>
 
 
@@ -55,6 +55,8 @@
     <string name="backup_set_location">Set Location</string>
     <string name="backup_set_message">Backup location is set</string>
     <string name="backup_path">Backup path is %1$s</string>
+    <string name="backup_path_select_failed_message">Could not access the selected folder. Try creating a new folder for your backups.</string>
+    <string name="retry">Retry</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
     <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken every time you login with password</string>
     <string name="backup_edit_path">Edit Path</string>

@@ -11,6 +11,7 @@ import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType.BackupAndRestoreRoute
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
@@ -106,7 +107,8 @@ class BackupAndRestoreVMTest {
     }
 
     @Test
-    fun `onScreenAction BackupPathSelected inserts metadata`() = runTest {
+    fun `onScreenAction BackupPathSelected inserts metadata when permission granted`() = runTest {
+        coEvery { backupMetadataRepository.insertBackupMetadata(any()) } returns true
         initViewModel()
         val uri: Uri = mockk()
         val action = ScreenAction.BackupPathSelected(uri)
@@ -115,6 +117,20 @@ class BackupAndRestoreVMTest {
         advanceUntilIdle()
 
         coVerify { backupMetadataRepository.insertBackupMetadata(uri) }
+    }
+
+    @Test
+    fun `onScreenAction BackupPathSelected when permission fails emits error event`() = runTest {
+        coEvery { backupMetadataRepository.insertBackupMetadata(any()) } returns false
+        initViewModel()
+        val uri: Uri = mockk()
+        val action = ScreenAction.BackupPathSelected(uri)
+
+        viewModel.showBackupPathPermissionError.test {
+            viewModel.onScreenAction(action)
+            advanceUntilIdle()
+            assertThat(awaitItem()).isEqualTo(Unit)
+        }
     }
 
     @Test

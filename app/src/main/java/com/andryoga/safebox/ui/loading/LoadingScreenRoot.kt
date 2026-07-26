@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -23,21 +24,26 @@ fun LoadingScreenRoot(
     val viewModel = hiltViewModel<MainViewModel>()
     val loadingState by viewModel.loadingState.collectAsState(LoadingState.Initial)
 
+    LaunchedEffect(loadingState) {
+        when (loadingState) {
+            LoadingState.ProceedToLogin -> {
+                Timber.i("proceed to login")
+                navigateToLogin()
+            }
+
+            LoadingState.ProceedToSignup -> {
+                Timber.i("proceed to signup")
+                navigateToSignup()
+            }
+
+            LoadingState.Initial -> Unit
+        }
+    }
+
     when (loadingState) {
-        LoadingState.Initial -> {
-            Timber.i("initial state, showing loading screen")
-            LoadingScreen()
-        }
-
-        LoadingState.ProceedToLogin -> {
-            Timber.i("proceed to login")
-            navigateToLogin()
-        }
-
-        LoadingState.ProceedToSignup -> {
-            Timber.i("proceed to signup")
-            navigateToSignup()
-        }
+        LoadingState.Initial -> LoadingScreen()
+        LoadingState.ProceedToLogin,
+        LoadingState.ProceedToSignup -> Unit
     }
 }
 

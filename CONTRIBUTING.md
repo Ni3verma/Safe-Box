@@ -4,11 +4,16 @@ When contributing to this repository, please first raise a new issue or discuss 
 
 ## Overview Of Process (For experienced developers)
 1. Find/Create a Issue > Fork the repo > work on your branch (name = `feature/nameOfFeature`).
-2. Verify lint report.
+2. Verify lint report and run tests.
+
+```bash
+./gradlew lintDebug
+./gradlew testDebugUnitTest
+./gradlew connectedDebugAndroidTest
 ```
-gradlew lint
-```
-3. push > wait for CI pipeline to complete > verify the reports in artifacts.
+
+3. push > wait for CI pipeline to complete > verify the reports in artifacts. (You can also run
+   instrumented UI tests manually via GitHub Actions -> **Manual UI Test Runner**).
 4. Wait for your changes to be merged.
 
 ## Pull Request Process (In-Detail)

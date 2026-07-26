@@ -32,9 +32,9 @@ fun AppNavigation(
     }
 }
 
-private fun navigateToHome(navController: NavHostController) {
-    navController.navigate(HomeGraph) {
-        popUpTo(0)
+private fun navigateRoot(navController: NavHostController, route: Any) {
+    navController.navigate(route) {
+        popUpTo(0) { inclusive = true }
     }
 }
 
@@ -47,23 +47,23 @@ private fun NavGraphBuilder.loginGraph(
             // get either go to login or signup screen. and on fast devices this is not even visible.
             LoadingScreenRoot(
                 navigateToLogin = {
-                    navController.navigate(LoginRoute) { popUpTo(0) }
+                    navigateRoot(navController, LoginRoute)
                 },
                 navigateToSignup = {
-                    navController.navigate(SignupRoute) { popUpTo(0) }
+                    navigateRoot(navController, SignupRoute)
                 }
             )
         }
         composable<LoginRoute> {
             LoginScreenRoot(onLoginSuccess = {
-                navigateToHome(navController)
+                navigateRoot(navController, HomeGraph)
             })
         }
 
         composable<SignupRoute> {
             SignupScreenRoot(
                 onSignupSuccess = {
-                    navigateToHome(navController)
+                    navigateRoot(navController, HomeGraph)
                 }
             )
         }
@@ -77,7 +77,7 @@ private fun NavGraphBuilder.homeGraph(
         composable<HomeRoute> {
             HomeScreen(
                 onExitHomeNavGraph = {
-                    navController.navigate(LoginGraph)
+                    navigateRoot(navController, LoginGraph)
                 }
             )
         }

@@ -35,7 +35,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.InAppReviewSource
 import com.andryoga.safebox.ui.utils.findActivity
@@ -56,6 +55,7 @@ fun NewBackupOrRestoreScreen(
     NewBackupOrRestoreDialog(
         operation = operation,
         workflowState = uiState.workflowState,
+        defaultPassword = uiState.defaultPassword,
         onScreenAction = { action ->
             viewModel.onScreenAction(action)
         },
@@ -76,13 +76,12 @@ fun NewBackupOrRestoreScreen(
 private fun NewBackupOrRestoreDialog(
     operation: Operation,
     workflowState: WorkflowState,
+    defaultPassword: String = "",
     onScreenAction: (ScreenAction) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var password by remember {
-        mutableStateOf(
-            if (BuildConfig.DEBUG) "Qwerty@@135" else ""
-        )
+    var password by remember(defaultPassword) {
+        mutableStateOf(defaultPassword)
     }
 
     AlertDialog(
