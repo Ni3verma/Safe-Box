@@ -45,6 +45,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.BiometricAuthHandler
+import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
 import com.andryoga.safebox.ui.core.canAuthenticateUsingBiometric
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -107,8 +108,9 @@ internal fun LoginScreen(
     }
 
     val context = LocalContext.current
+    val biometricAuthProvider = LocalBiometricAuthProvider.current
     LaunchedEffect(Unit) {
-        if (canAuthenticateUsingBiometric(context)) {
+        if (canAuthenticateUsingBiometric(context, biometricAuthProvider)) {
             screenAction(LoginScreenAction.BiometricAvailable)
         }
     }
