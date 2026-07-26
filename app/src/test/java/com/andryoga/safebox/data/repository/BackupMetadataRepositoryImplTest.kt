@@ -100,7 +100,7 @@ class BackupMetadataRepositoryImplTest {
         }
 
     @Test
-    fun insertBackupMetadata_whenTakePersistableUriPermissionThrowsSecurityException_shouldCatchAndStillInsertToDao() =
+    fun insertBackupMetadata_whenTakePersistableUriPermissionThrowsSecurityException_shouldCatchAndNotInsertToDao() =
         runTest {
             val mockUri = mockk<Uri>()
             every { mockUri.scheme } returns "content"
@@ -114,9 +114,10 @@ class BackupMetadataRepositoryImplTest {
                 )
             } throws SecurityException("Permission denied")
 
-            repository.insertBackupMetadata(mockUri)
+            val result = repository.insertBackupMetadata(mockUri)
 
-            coVerify(exactly = 1) { backupMetadataDao.insertBackupMetadata(any()) }
+            assertThat(result).isFalse()
+            coVerify(exactly = 0) { backupMetadataDao.insertBackupMetadata(any()) }
         }
 
     @Test

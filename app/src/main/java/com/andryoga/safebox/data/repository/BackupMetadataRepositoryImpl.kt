@@ -42,15 +42,17 @@ class BackupMetadataRepositoryImpl @Inject constructor(
                     )
                 }
             }
-            backupMetadataDao.insertBackupMetadata(
-                BackupMetadataEntity(
-                    key = 1,
-                    uriString = uriPath.toString(),
-                    displayPath = uriPath.path ?: uriPath.toString(),
-                    lastBackupDate = null,
-                    createdOn = Date()
+            if (permissionGranted) {
+                backupMetadataDao.insertBackupMetadata(
+                    BackupMetadataEntity(
+                        key = 1,
+                        uriString = uriPath.toString(),
+                        displayPath = uriPath.path ?: uriPath.toString(),
+                        lastBackupDate = null,
+                        createdOn = Date()
+                    )
                 )
-            )
+            }
         }
 
         analyticsHelper.logEvent(AnalyticsKey.BACKUP_SELECT_DIR_RESULT) {
