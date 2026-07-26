@@ -120,7 +120,14 @@ class RestoreDataWorker
                 importMap = fileObject as Map<String, ByteArray?>
                 val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
                 val creationDateBytes = importMap[CommonConstants.CREATION_DATE_KEY]!!
-                val creationDate = ByteBuffer.wrap(creationDateBytes).long
+                // Check size for backward compatibility: new backups store an 8-byte Long timestamp,
+                // while legacy backups stored a 1-byte value. Calling ByteBuffer.wrap().long on <8 bytes
+                // throws BufferUnderflowException and fails the restore.
+                val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
+                    ByteBuffer.wrap(creationDateBytes).long
+                } else {
+                    creationDateBytes[0].toLong()
+                }
                 Timber.i(
                     "$localTag version = $version, " +
                             "created on : ${Utils.getFormattedDate(Date(creationDate))}"

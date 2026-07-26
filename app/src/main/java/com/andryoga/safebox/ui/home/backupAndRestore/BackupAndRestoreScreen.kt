@@ -8,12 +8,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -59,7 +63,7 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
         mainViewModel.updateTopBar(config)
     }
 
-    val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+    val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = stringResource(R.string.backup_path_select_failed_message)
     val retryLabel = stringResource(R.string.retry)
 
@@ -74,9 +78,9 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
             val result = snackbarHostState.showSnackbar(
                 message = errorMessage,
                 actionLabel = retryLabel,
-                duration = androidx.compose.material3.SnackbarDuration.Long
+                duration = SnackbarDuration.Long
             )
-            if (result == androidx.compose.material3.SnackbarResult.ActionPerformed) {
+            if (result == SnackbarResult.ActionPerformed) {
                 launchSelectBackupPath(viewModel, selectBackupPathLauncher)
             }
         }
@@ -84,7 +88,7 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
 
     BackupAndRestoreScreen(
         uiState = uiState,
-        snackbarHostState = snackbarHostState,
+        snackBarHostState = snackbarHostState,
         launchRestoreFilePicker = {
             Timber.i("launching restore file picker")
             launchRestorePicker(viewModel, selectRestoreFileLauncher)
@@ -103,7 +107,7 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
 @Composable
 internal fun BackupAndRestoreScreen(
     uiState: ScreenState,
-    snackbarHostState: androidx.compose.material3.SnackbarHostState = remember { androidx.compose.material3.SnackbarHostState() },
+    snackBarHostState: SnackbarHostState = remember { SnackbarHostState() },
     launchRestoreFilePicker: () -> Unit,
     launchSelectBackupPath: () -> Unit,
     onScreenAction: (ScreenAction) -> Unit,
@@ -125,8 +129,8 @@ internal fun BackupAndRestoreScreen(
         }
 
         androidx.compose.material3.SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(androidx.compose.ui.Alignment.BottomCenter)
+            hostState = snackBarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 

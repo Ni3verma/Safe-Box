@@ -244,7 +244,7 @@ class BackupAndRestoreScreenTest {
                 }
                 BackupAndRestoreScreen(
                     uiState = ScreenState(backupState = BackupPathNotSet()),
-                    snackbarHostState = snackbarHostState,
+                    snackBarHostState = snackbarHostState,
                     launchRestoreFilePicker = {},
                     launchSelectBackupPath = { retryClicked = true },
                     onScreenAction = {}
