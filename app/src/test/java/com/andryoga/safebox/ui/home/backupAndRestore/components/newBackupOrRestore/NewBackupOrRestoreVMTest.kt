@@ -89,7 +89,7 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
-    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() = runTest {
+    fun initialUiState_whenIsDebugTrue_prefillsDebugPassword() = runTest {
         viewModel.uiState.test {
             val state = awaitItem()
             assertThat(state.defaultPassword).isEqualTo("Qwerty@@135")
@@ -97,32 +97,7 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
-    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() = runTest {
-        val prodViewModel = NewBackupOrRestoreVM(
-            userDetailsRepository,
-            workManager,
-            symmetricKeyUtils,
-            analyticsHelper,
-            lazyInAppReviewManager,
-            isDebug = false
-        )
-
-        prodViewModel.uiState.test {
-            val state = awaitItem()
-            assertThat(state.defaultPassword).isEmpty()
-        }
-    }
-
-    @Test
-    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() = runTest {
-        viewModel.uiState.test {
-            val state = awaitItem()
-            assertThat(state.defaultPassword).isEqualTo("Qwerty@@135")
-        }
-    }
-
-    @Test
-    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() = runTest {
+    fun initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty() = runTest {
         val prodViewModel = NewBackupOrRestoreVM(
             userDetailsRepository,
             workManager,
