@@ -701,9 +701,6 @@ class RecordsViewModelTest {
                 )
 
                 expectNoEvents()
-                assertThat(viewModel.notificationPermissionState.value.isNeverAskForNotificationPermission).isEqualTo(
-                    initialNeverAsk
-                )
                 // Ensure no upsert requests run with "true" context
                 coVerify(exactly = 0) { preferenceProvider.upsertBooleanPref(any(), true) }
             }

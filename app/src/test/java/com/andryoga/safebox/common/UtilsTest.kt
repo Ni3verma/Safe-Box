@@ -11,6 +11,7 @@ import io.mockk.verify
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.util.Date
+import java.util.TimeZone
 
 class UtilsTest {
 
@@ -86,13 +87,19 @@ class UtilsTest {
 
     @Test
     fun getFormattedDate_validDate_formatsAccordingToPattern() {
-        // Date corresponding to Nov 14, 2023 22:13:20 UTC (1700000000000L)
-        val fixedDate = Date(1700000000000L)
-        val customPattern = "yyyyMMddHHmmss"
+        val originalTimeZone = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            // Date corresponding to Nov 14, 2023 22:13:20 UTC (1700000000000L)
+            val fixedDate = Date(1700000000000L)
+            val customPattern = "yyyyMMddHHmmss"
 
-        val formattedDate = Utils.getFormattedDate(fixedDate, customPattern)
+            val formattedDate = Utils.getFormattedDate(fixedDate, customPattern)
 
-        assertThat(formattedDate).matches("^\\d{14}$")
+            assertThat(formattedDate).isEqualTo("20231114221320")
+        } finally {
+            TimeZone.setDefault(originalTimeZone)
+        }
     }
 
     @Test

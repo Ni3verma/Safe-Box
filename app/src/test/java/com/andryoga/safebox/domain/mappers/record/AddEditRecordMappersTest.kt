@@ -62,6 +62,7 @@ class AddEditRecordMappersTest {
         )
 
         val entity = loginData.toDbEntity()
+        val afterTime = System.currentTimeMillis()
 
         assertThat(entity.key).isEqualTo(5)
         assertThat(entity.title).isEqualTo("GitHub Account")
@@ -71,6 +72,7 @@ class AddEditRecordMappersTest {
         assertThat(entity.notes).isEqualTo("2FA enabled with YubiKey")
         assertThat(entity.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(entity.updateDate.time).isAtLeast(beforeTime)
+        assertThat(entity.updateDate.time).isAtMost(afterTime)
     }
 
     @Test
@@ -118,6 +120,7 @@ class AddEditRecordMappersTest {
         )
 
         val entity = accountData.toDbEntity()
+        val afterTime = System.currentTimeMillis()
 
         assertThat(entity.key).isEqualTo(10)
         assertThat(entity.title).isEqualTo("Savings Account")
@@ -132,6 +135,7 @@ class AddEditRecordMappersTest {
         assertThat(entity.notes).isEqualTo("High yield savings")
         assertThat(entity.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(entity.updateDate.time).isAtLeast(beforeTime)
+        assertThat(entity.updateDate.time).isAtMost(afterTime)
     }
 
     @Test
@@ -176,7 +180,7 @@ class AddEditRecordMappersTest {
             id = 7,
             title = "Corporate Visa",
             name = "Corporate User",
-            number = "4000123456789010",
+            number = "CARD-4000-1234-9010",
             pin = "9012",
             cvv = "321",
             expiryDate = "05/30",
@@ -186,17 +190,19 @@ class AddEditRecordMappersTest {
         )
 
         val entity = cardData.toDbEntity()
+        val afterTime = System.currentTimeMillis()
 
         assertThat(entity.key).isEqualTo(7)
         assertThat(entity.title).isEqualTo("Corporate Visa")
         assertThat(entity.name).isEqualTo("Corporate User")
-        assertThat(entity.number).isEqualTo("4000123456789010")
+        assertThat(entity.number).isEqualTo("CARD-4000-1234-9010")
         assertThat(entity.pin).isEqualTo("9012")
         assertThat(entity.cvv).isEqualTo("321")
         assertThat(entity.expiryDate).isEqualTo("05/30")
         assertThat(entity.notes).isEqualTo("Business expenses")
         assertThat(entity.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(entity.updateDate.time).isAtLeast(beforeTime)
+        assertThat(entity.updateDate.time).isAtMost(afterTime)
     }
 
     @Test
@@ -205,7 +211,7 @@ class AddEditRecordMappersTest {
             key = 88,
             title = "Mastercard Gold",
             name = "Bob Builder",
-            number = "5100112233445566",
+            number = "CARD-5100-1122-5566",
             pin = "1111",
             cvv = "555",
             expiryDate = "10/27",
@@ -219,7 +225,7 @@ class AddEditRecordMappersTest {
         assertThat(domain.id).isEqualTo(88)
         assertThat(domain.title).isEqualTo("Mastercard Gold")
         assertThat(domain.name).isEqualTo("Bob Builder")
-        assertThat(domain.number).isEqualTo("5100112233445566")
+        assertThat(domain.number).isEqualTo("CARD-5100-1122-5566")
         assertThat(domain.pin).isEqualTo("1111")
         assertThat(domain.cvv).isEqualTo("555")
         assertThat(domain.expiryDate).isEqualTo("10/27")

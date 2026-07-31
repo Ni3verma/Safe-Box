@@ -165,7 +165,18 @@ class RestoreDataWorkerTest {
 
         assertThat(result).isEqualTo(Result.success())
         verify(exactly = 1) { loginDataDaoSecure.deleteAllData() }
-        verify(exactly = 1) { loginDataDaoSecure.insertMultipleLoginData(any()) }
+        verify(exactly = 1) {
+            loginDataDaoSecure.insertMultipleLoginData(
+                match { list ->
+                    list.size == 1 &&
+                            list[0].title == "GitHub Account" &&
+                            list[0].url == "https://github.com" &&
+                            list[0].password == "secret" &&
+                            list[0].notes == "notes" &&
+                            list[0].userId == "octocat"
+                }
+            )
+        }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
     }
 

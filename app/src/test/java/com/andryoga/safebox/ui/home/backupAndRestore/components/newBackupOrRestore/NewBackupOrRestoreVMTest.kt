@@ -149,7 +149,7 @@ class NewBackupOrRestoreVMTest {
             }
             verify(exactly = 0) {
                 workManager.enqueueUniqueWork(
-                    eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
+                    any(),
                     any(),
                     any<OneTimeWorkRequest>()
                 )

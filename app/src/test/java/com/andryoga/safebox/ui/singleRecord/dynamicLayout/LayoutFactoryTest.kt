@@ -1,9 +1,9 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
-import com.andryoga.safebox.data.repository.BankAccountDataRepositoryImpl
-import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
-import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
-import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
+import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
+import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
@@ -19,15 +19,15 @@ import org.junit.Test
 
 class LayoutFactoryTest {
 
-    private val loginRepo: LoginDataRepositoryImpl = mockk(relaxed = true)
-    private val bankAccountRepo: BankAccountDataRepositoryImpl = mockk(relaxed = true)
-    private val bankCardRepo: BankCardDataRepositoryImpl = mockk(relaxed = true)
-    private val noteRepo: SecureNoteDataRepositoryImpl = mockk(relaxed = true)
+    private val loginRepo: LoginDataRepository = mockk(relaxed = true)
+    private val bankAccountRepo: BankAccountDataRepository = mockk(relaxed = true)
+    private val bankCardRepo: BankCardDataRepository = mockk(relaxed = true)
+    private val noteRepo: SecureNoteDataRepository = mockk(relaxed = true)
 
-    private val lazyLoginRepo: Lazy<LoginDataRepositoryImpl> = mockk()
-    private val lazyBankAccountRepo: Lazy<BankAccountDataRepositoryImpl> = mockk()
-    private val lazyBankCardRepo: Lazy<BankCardDataRepositoryImpl> = mockk()
-    private val lazyNoteRepo: Lazy<SecureNoteDataRepositoryImpl> = mockk()
+    private val lazyLoginRepo: Lazy<LoginDataRepository> = mockk()
+    private val lazyBankAccountRepo: Lazy<BankAccountDataRepository> = mockk()
+    private val lazyBankCardRepo: Lazy<BankCardDataRepository> = mockk()
+    private val lazyNoteRepo: Lazy<SecureNoteDataRepository> = mockk()
 
     private lateinit var layoutFactory: LayoutFactory
 

@@ -20,8 +20,8 @@ import java.util.Date
  */
 object DomainTestFixtures {
 
-    val FIXED_CREATION_DATE = Date(1700000000000L)
-    val FIXED_UPDATE_DATE = Date(1700050000000L)
+    val FIXED_CREATION_DATE: Date get() = Date(1700000000000L)
+    val FIXED_UPDATE_DATE: Date get() = Date(1700050000000L)
 
     fun createNoteData(
         id: Int? = 1,
@@ -155,7 +155,7 @@ object DomainTestFixtures {
         id: Int? = 4,
         title: String = "Travel Rewards Card",
         name: String = "John Doe",
-        number: String = "4111222233334444",
+        number: String = "CARD-1234-5678-9012",
         pin: String = "1234",
         cvv: String = "987",
         expiryDate: String = "12/28",
@@ -179,7 +179,7 @@ object DomainTestFixtures {
         key: Int = 4,
         title: String = "Travel Rewards Card",
         name: String = "John Doe",
-        number: String = "4111222233334444",
+        number: String = "CARD-1234-5678-9012",
         pin: String = "1234",
         cvv: String = "987",
         expiryDate: String = "12/28",

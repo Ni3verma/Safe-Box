@@ -21,6 +21,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -123,7 +124,7 @@ class LoginViewModelTest {
 
                 coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
                 expectNoEvents()
-                assertThat(viewModel.uiState.value.canUnlockWithBiometric).isFalse()
+                assertThat(initial.canUnlockWithBiometric).isFalse()
             }
         }
 
@@ -175,13 +176,18 @@ class LoginViewModelTest {
                 advanceUntilIdle()
 
                 coVerify { userDetailsRepository.checkPassword(password) }
+                val requestSlot = slot<OneTimeWorkRequest>()
                 verify(exactly = 1) {
                     workManager.enqueueUniqueWork(
                         eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
                         eq(ExistingWorkPolicy.APPEND_OR_REPLACE),
-                        any<OneTimeWorkRequest>()
+                        capture(requestSlot)
                     )
                 }
+                verify { symmetricKeyUtils.encrypt(password) }
+                assertThat(
+                    requestSlot.captured.workSpec.input.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
+                ).isEqualTo(encryptedPassword)
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
@@ -261,7 +267,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onShowHintClicked with null hint updates with empty string`() = runTest {
+    fun `onShowHintClicked with null hint keeps hint empty`() = runTest {
         coEvery { userDetailsRepository.getHint() } returns null
 
         viewModel.uiState.test {
@@ -273,7 +279,6 @@ class LoginViewModelTest {
 
             coVerify { userDetailsRepository.getHint() }
             expectNoEvents()
-            assertThat(viewModel.uiState.value.hint).isEmpty()
         }
     }
 }

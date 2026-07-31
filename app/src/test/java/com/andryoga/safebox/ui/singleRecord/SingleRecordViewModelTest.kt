@@ -125,7 +125,6 @@ class SingleRecordViewModelTest {
         viewModel.uiState.test {
             awaitItem() // initial state
             advanceUntilIdle()
-            awaitItem() // post-init state
 
             viewModel.onAction(
                 SingleRecordScreenAction.OnCellValueUpdate(
@@ -185,7 +184,6 @@ class SingleRecordViewModelTest {
         viewModel.uiState.test {
             awaitItem() // initial state
             advanceUntilIdle()
-            awaitItem() // post-init state
 
             viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
             advanceUntilIdle()

@@ -118,6 +118,10 @@ class BackupMetadataRepositoryImplTest {
 
             assertThat(result).isFalse()
             coVerify(exactly = 0) { backupMetadataDao.insertBackupMetadata(any()) }
+
+            val event =
+                analyticsHelper.loggedEvents.first { it.key == AnalyticsKey.BACKUP_SELECT_DIR_RESULT }
+            assertThat(event.params[AnalyticsParam.RESULT.paramName]).isEqualTo(false)
         }
 
     @Test

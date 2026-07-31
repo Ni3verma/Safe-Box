@@ -39,6 +39,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.Locale
 
 class BackupDataWorkerTest {
 
@@ -213,7 +214,7 @@ class BackupDataWorkerTest {
     @Test
     fun doWork_whenExtraBackupsExist_deletesOldestFilesExceedingLimit() = runTest {
         for (i in 1..(CommonConstants.MAX_BACKUP_FILES + 2)) {
-            val formatted = String.format("%02d", i)
+            val formatted = String.format(Locale.ROOT, "%02d", i)
             val dummyFile = File(tempDir, "SafeBoxBackup202601010000000$formatted.bak")
             dummyFile.writeText("dummy backup payload $i")
         }

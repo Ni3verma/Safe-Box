@@ -76,9 +76,12 @@ class MainViewModelTest {
 
     @Test
     fun `isBackupPathSet state is true when backup metadata is not null`() = runTest {
-        backupMetadataFlow.emit(BackupPathData("uri_path", "file_name", ""))
+        backupMetadataFlow.emit(null)
         viewModel.isBackupPathSet.test {
-            assertThat(awaitItem()).isTrue() // stateflow do not re-emit same value
+            assertThat(awaitItem()).isTrue() // initial seeded value
+            assertThat(awaitItem()).isFalse() // derived state from null metadata
+            backupMetadataFlow.emit(BackupPathData("uri_path", "file_name", ""))
+            assertThat(awaitItem()).isTrue() // derived state from BackupPathData
         }
     }
 
