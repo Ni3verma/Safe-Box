@@ -362,10 +362,22 @@ object E2ETestUtils {
         closeSoftKeyboard(composeTestRule, context)
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.waitUntilNodeDisplayed(
-            matcher = hasContentDescription(addNewButtonDesc),
-            timeoutMillis = 25000L
-        )
+        val unlocked = runCatching {
+            composeTestRule.waitUntilNodeDisplayed(
+                matcher = hasContentDescription(addNewButtonDesc),
+                timeoutMillis = 4000L
+            )
+            true
+        }.getOrDefault(false)
+        if (!unlocked) {
+            runCatching {
+                composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
+            }
+            composeTestRule.waitUntilNodeDisplayed(
+                matcher = hasContentDescription(addNewButtonDesc),
+                timeoutMillis = 20000L
+            )
+        }
         composeTestRule.waitForIdle()
     }
 

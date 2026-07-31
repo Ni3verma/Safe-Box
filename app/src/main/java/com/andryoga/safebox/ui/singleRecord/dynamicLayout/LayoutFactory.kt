@@ -1,9 +1,9 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
-import com.andryoga.safebox.data.repository.BankAccountDataRepositoryImpl
-import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
-import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
-import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
+import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
+import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
+import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
+import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
@@ -14,10 +14,10 @@ import dagger.Lazy
 import javax.inject.Inject
 
 class LayoutFactory @Inject constructor(
-    private val loginDataRepository: Lazy<LoginDataRepositoryImpl>,
-    private val bankAccountDataRepository: Lazy<BankAccountDataRepositoryImpl>,
-    private val bankCardDataRepository: Lazy<BankCardDataRepositoryImpl>,
-    private val noteDataRepository: Lazy<SecureNoteDataRepositoryImpl>
+    private val loginDataRepository: Lazy<LoginDataRepository>,
+    private val bankAccountDataRepository: Lazy<BankAccountDataRepository>,
+    private val bankCardDataRepository: Lazy<BankCardDataRepository>,
+    private val noteDataRepository: Lazy<SecureNoteDataRepository>
 ) {
     /**
      * Returns the layout for the given record type. Data is pre filled if recordId is passed as well

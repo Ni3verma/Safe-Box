@@ -140,6 +140,7 @@ android {
     }
 
     testOptions {
+        unitTests.returnDefaultValues = true
         managedDevices {
             localDevices {
                 register("pixel8Api34") {

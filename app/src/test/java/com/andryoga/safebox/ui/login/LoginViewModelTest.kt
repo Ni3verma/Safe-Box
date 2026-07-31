@@ -2,15 +2,17 @@
 
 package com.andryoga.safebox.ui.login
 
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import com.andryoga.safebox.worker.BackupDataWorker
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import io.mockk.MockKAnnotations
@@ -19,13 +21,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.yield
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -99,11 +99,15 @@ class LoginViewModelTest {
     fun `onBiometricAvailable updates state when biometric auth should start`() = runTest {
         coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
 
-        viewModel.onAction(LoginScreenAction.BiometricAvailable)
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.BiometricAvailable)
+            advanceUntilIdle()
 
-        coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
-        assertThat(viewModel.uiState.value.canUnlockWithBiometric).isTrue()
+            coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
+            val updated = expectMostRecentItem()
+            assertThat(updated.canUnlockWithBiometric).isTrue()
+        }
     }
 
     @Test
@@ -111,20 +115,30 @@ class LoginViewModelTest {
         runTest {
             coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns false
 
-            viewModel.onAction(LoginScreenAction.BiometricAvailable)
-            advanceUntilIdle()
+            viewModel.uiState.test {
+                val initial = awaitItem()
+                assertThat(initial.canUnlockWithBiometric).isFalse()
 
-            coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
-            assertThat(viewModel.uiState.value.canUnlockWithBiometric).isFalse()
+                viewModel.onAction(LoginScreenAction.BiometricAvailable)
+                advanceUntilIdle()
+
+                coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
+                expectNoEvents()
+                assertThat(initial.canUnlockWithBiometric).isFalse()
+            }
         }
 
     @Test
     fun `onBiometricSuccess updates auth state and calls repository`() = runTest {
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.BiometricSuccess)
+            advanceUntilIdle()
 
-        coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
+            val updated = expectMostRecentItem()
+            assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+        }
     }
 
     @Test
@@ -134,12 +148,16 @@ class LoginViewModelTest {
 
             coEvery { userDetailsRepository.checkPassword(password) } returns true
 
-            viewModel.onAction(LoginScreenAction.LoginClicked(password))
-            advanceUntilIdle()
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                advanceUntilIdle()
 
-            coVerify { userDetailsRepository.checkPassword(password) }
-            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-            assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+                coVerify { userDetailsRepository.checkPassword(password) }
+                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+                val updated = expectMostRecentItem()
+                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            }
         }
 
     @Test
@@ -151,22 +169,28 @@ class LoginViewModelTest {
             coEvery { userDetailsRepository.checkPassword(password) } returns true
             coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
             every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
-            mockkObject(BackupDataWorker.Companion)
-            yield()
 
-            viewModel.onAction(LoginScreenAction.LoginClicked(password))
-            advanceUntilIdle()
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                advanceUntilIdle()
 
-            coVerify { userDetailsRepository.checkPassword(password) }
-            verify(exactly = 1) {
-                BackupDataWorker.enqueueRequest(
-                    password,
-                    false,
-                    workManager,
-                    symmetricKeyUtils
-                )
+                coVerify { userDetailsRepository.checkPassword(password) }
+                val requestSlot = slot<OneTimeWorkRequest>()
+                verify(exactly = 1) {
+                    workManager.enqueueUniqueWork(
+                        eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
+                        eq(ExistingWorkPolicy.APPEND_OR_REPLACE),
+                        capture(requestSlot)
+                    )
+                }
+                verify { symmetricKeyUtils.encrypt(password) }
+                assertThat(
+                    requestSlot.captured.workSpec.input.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
+                ).isEqualTo(encryptedPassword)
+                val updated = expectMostRecentItem()
+                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
-            unmockkObject(BackupDataWorker.Companion)
         }
 
     @Test
@@ -174,26 +198,24 @@ class LoginViewModelTest {
         runTest {
             val password = "password"
             coEvery { userDetailsRepository.checkPassword(password) } returns true
-            yield()
 
-            mockkObject(BackupDataWorker.Companion)
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                advanceUntilIdle()
 
-            viewModel.onAction(LoginScreenAction.LoginClicked(password))
-            advanceUntilIdle()
-
-            coVerify(exactly = 1) { userDetailsRepository.checkPassword(password) }
-            verify(exactly = 0) {
-                BackupDataWorker.enqueueRequest(
-                    password,
-                    any(),
-                    workManager,
-                    symmetricKeyUtils
-                )
+                coVerify(exactly = 1) { userDetailsRepository.checkPassword(password) }
+                verify(exactly = 0) {
+                    workManager.enqueueUniqueWork(
+                        eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
+                        any(),
+                        any<OneTimeWorkRequest>()
+                    )
+                }
+                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+                val updated = expectMostRecentItem()
+                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
-            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-            assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-
-            unmockkObject(BackupDataWorker.Companion)
         }
 
     @Test
@@ -201,13 +223,17 @@ class LoginViewModelTest {
         val password = "wrong_password"
         coEvery { userDetailsRepository.checkPassword(password) } returns false
 
-        viewModel.onAction(LoginScreenAction.LoginClicked(password))
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.LoginClicked(password))
+            advanceUntilIdle()
 
-        coVerify { userDetailsRepository.checkPassword(password) }
-        verify { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
-        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
+            coVerify { userDetailsRepository.checkPassword(password) }
+            verify { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
+            val updated = expectMostRecentItem()
+            assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
+            coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
+        }
     }
 
     @Test
@@ -229,21 +255,30 @@ class LoginViewModelTest {
         val hint = "this is a hint"
         coEvery { userDetailsRepository.getHint() } returns hint
 
-        viewModel.onAction(LoginScreenAction.ShowHintClicked)
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.ShowHintClicked)
+            advanceUntilIdle()
 
-        coVerify { userDetailsRepository.getHint() }
-        assertThat(viewModel.uiState.value.hint).isEqualTo(hint)
+            coVerify { userDetailsRepository.getHint() }
+            val updated = expectMostRecentItem()
+            assertThat(updated.hint).isEqualTo(hint)
+        }
     }
 
     @Test
-    fun `onShowHintClicked with null hint updates with empty string`() = runTest {
+    fun `onShowHintClicked with null hint keeps hint empty`() = runTest {
         coEvery { userDetailsRepository.getHint() } returns null
 
-        viewModel.onAction(LoginScreenAction.ShowHintClicked)
-        advanceUntilIdle()
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertThat(initial.hint).isEmpty()
 
-        coVerify { userDetailsRepository.getHint() }
-        assertThat(viewModel.uiState.value.hint).isEmpty()
+            viewModel.onAction(LoginScreenAction.ShowHintClicked)
+            advanceUntilIdle()
+
+            coVerify { userDetailsRepository.getHint() }
+            expectNoEvents()
+        }
     }
 }

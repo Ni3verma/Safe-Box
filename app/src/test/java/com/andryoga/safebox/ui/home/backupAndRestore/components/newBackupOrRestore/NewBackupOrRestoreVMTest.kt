@@ -12,10 +12,11 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
+import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
-import com.andryoga.safebox.worker.BackupDataWorker
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import io.mockk.MockKAnnotations
@@ -24,19 +25,15 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.slot
-import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.util.UUID
 
 /**
  * Comprehensive Unit Test suite for [NewBackupOrRestoreVM].
@@ -72,19 +69,14 @@ class NewBackupOrRestoreVMTest {
     private lateinit var lazyInAppReviewManager: Lazy<InAppReviewManager>
     private lateinit var viewModel: NewBackupOrRestoreVM
 
-    private val testRequestId: UUID = UUID.randomUUID()
     private val workInfoFlow = MutableStateFlow<WorkInfo?>(null)
 
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        mockkObject(BackupDataWorker)
 
         lazyInAppReviewManager = Lazy { inAppReviewManager }
         every { workManager.getWorkInfoByIdFlow(any()) } returns workInfoFlow
-        every {
-            BackupDataWorker.enqueueRequest(any(), any(), any(), any())
-        } returns testRequestId
 
         viewModel = NewBackupOrRestoreVM(
             userDetailsRepository,
@@ -96,13 +88,8 @@ class NewBackupOrRestoreVMTest {
         )
     }
 
-    @After
-    fun tearDown() {
-        unmockkObject(BackupDataWorker)
-    }
-
     @Test
-    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() = runTest {
+    fun initialUiState_whenIsDebugTrue_prefillsDebugPassword() = runTest {
         viewModel.uiState.test {
             val state = awaitItem()
             assertThat(state.defaultPassword).isEqualTo("Qwerty@@135")
@@ -110,7 +97,7 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
-    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() = runTest {
+    fun initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty() = runTest {
         val prodViewModel = NewBackupOrRestoreVM(
             userDetailsRepository,
             workManager,
@@ -160,26 +147,45 @@ class NewBackupOrRestoreVMTest {
             viewModel.uiState.test {
                 assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.WRONG_PASSWORD)
             }
-            verify(exactly = 0) { BackupDataWorker.enqueueRequest(any(), any(), any(), any()) }
+            verify(exactly = 0) {
+                workManager.enqueueUniqueWork(
+                    any(),
+                    any(),
+                    any<OneTimeWorkRequest>()
+                )
+            }
         }
 
     @Test
     fun `PasswordConfirmed on Backup with correct password enqueues BackupDataWorker`() = runTest {
         viewModel.initVM(Operation.Backup)
         val password = "correct_password"
+        val encryptedPassword = "encrypted_correct_password"
         coEvery { userDetailsRepository.checkPassword(password) } returns true
+        every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
+
+        val workRequestSlot = slot<OneTimeWorkRequest>()
+        every {
+            workManager.enqueueUniqueWork(
+                CommonConstants.WORKER_NAME_BACKUP_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                capture(workRequestSlot)
+            )
+        } returns mockk()
 
         viewModel.onScreenAction(ScreenAction.PasswordConfirmed(password))
         advanceUntilIdle()
 
         verify {
-            BackupDataWorker.enqueueRequest(
-                password = password,
-                showBackupStartNotification = true,
-                workManager = workManager,
-                symmetricKeyUtils = symmetricKeyUtils
+            workManager.enqueueUniqueWork(
+                CommonConstants.WORKER_NAME_BACKUP_DATA,
+                ExistingWorkPolicy.APPEND_OR_REPLACE,
+                any<OneTimeWorkRequest>()
             )
         }
+        val inputData = workRequestSlot.captured.workSpec.input
+        assertThat(inputData.getString(BACKUP_PARAM_PASSWORD)).isEqualTo(encryptedPassword)
+        assertThat(inputData.getBoolean(BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)).isTrue()
     }
 
     @Test

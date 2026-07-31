@@ -44,6 +44,11 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Ensure Android Emulator is Installed
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "emulator"
+
       - name: Run Managed Device UI Tests (Debug Build)
         run: ./gradlew ${{ matrix.device }}DebugAndroidTest --stacktrace
 
