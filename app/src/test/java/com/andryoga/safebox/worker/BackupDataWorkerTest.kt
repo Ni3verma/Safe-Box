@@ -25,6 +25,7 @@ import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
@@ -33,11 +34,15 @@ import io.mockk.unmockkStatic
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.FileInputStream
+import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.util.Locale
 
@@ -118,7 +123,7 @@ class BackupDataWorkerTest {
                 salt: ByteArray,
                 iv: ByteArray,
                 encrypt: Boolean
-            ): ByteArray = ByteArray(10) { 5 }
+            ): ByteArray = data.copyOf()
 
             override fun getRandomSalt(): ByteArray = ByteArray(16) { 1 }
             override fun getRandomIV(): ByteArray = ByteArray(16) { 2 }
@@ -178,6 +183,17 @@ class BackupDataWorkerTest {
 
         assertThat(result).isEqualTo(Result.success())
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+
+        val createdFiles =
+            tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
+        assertThat(createdFiles).isEmpty()
+
+        coVerify(exactly = 0) {
+            loginDataDaoSecure.exportAllData()
+            bankAccountDataDaoSecure.exportAllData()
+            bankCardDataDaoSecure.exportAllData()
+            secureNoteDataDaoSecure.exportAllData()
+        }
     }
 
     @Test
@@ -209,6 +225,32 @@ class BackupDataWorkerTest {
         val createdFiles = tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") }
         assertThat(createdFiles).isNotNull()
         assertThat(createdFiles!!.isNotEmpty()).isTrue()
+
+        val backupFile = createdFiles.first()
+        val backupMap = ObjectInputStream(FileInputStream(backupFile)).use {
+            @Suppress("UNCHECKED_CAST")
+            it.readObject() as Map<String, ByteArray?>
+        }
+        val loginDataBytes = backupMap[CommonConstants.LOGIN_DATA_KEY]
+        assertThat(loginDataBytes).isNotNull()
+        val restoredJson = String(
+            fakePasswordBasedEncryption.encryptDecrypt(
+                "enc_password".toCharArray(),
+                loginDataBytes!!,
+                ByteArray(0),
+                ByteArray(0),
+                false
+            ),
+            Charsets.UTF_8
+        )
+        val restoredList = Json.decodeFromString(
+            ListSerializer(ExportLoginData.serializer()),
+            restoredJson
+        )
+        assertThat(restoredList).hasSize(1)
+        assertThat(restoredList[0].title).isEqualTo("GitHub")
+        assertThat(restoredList[0].url).isEqualTo("https://github.com")
+        assertThat(restoredList[0].password).isEqualTo("secret")
     }
 
     @Test
@@ -243,6 +285,22 @@ class BackupDataWorkerTest {
 
         val oldestFile = File(tempDir, "SafeBoxBackup20260101000000001.bak")
         assertThat(oldestFile.exists()).isFalse()
+
+        val remainingFiles =
+            tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
+        assertThat(remainingFiles.size).isEqualTo(CommonConstants.MAX_BACKUP_FILES)
+
+        val newerFile = File(
+            tempDir,
+            "SafeBoxBackup202601010000000${
+                String.format(
+                    Locale.ROOT,
+                    "%02d",
+                    CommonConstants.MAX_BACKUP_FILES + 2
+                )
+            }.bak"
+        )
+        assertThat(newerFile.exists()).isTrue()
     }
 
     @Test
