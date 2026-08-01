@@ -13,11 +13,11 @@ jobs:
       pull-requests: write
     steps:
       - name: PR Agent action step
-        uses: the-pr-agent/pr-agent@5a7b6a4a1b02b55f10bbcfb22b72ee025b34a621 # main
+        uses: the-pr-agent/pr-agent@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          config.model: "gemini/gemini-3.5-flash"
-          config.fallback_models: '["gemini/gemini-1.5-flash", "gemini/gemini-2.0-pro-exp"]'
+          config.model: "gemini/gemini-3.6-flash"
+          config.fallback_models: '["gemini/gemini-3.5-flash", "gemini/gemini-3.1-pro"]'
           config.restricted_mode: "true"
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           github_action_config.auto_review: "true"
