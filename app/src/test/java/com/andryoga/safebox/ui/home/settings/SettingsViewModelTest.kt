@@ -8,6 +8,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
@@ -33,6 +34,9 @@ class SettingsViewModelTest {
     @RelaxedMockK
     lateinit var analyticsHelper: AnalyticsHelper
 
+    @RelaxedMockK
+    lateinit var userDetailsRepository: UserDetailsRepository
+
     private lateinit var viewModel: SettingsViewModel
 
     private val settingsFlow = MutableStateFlow(Settings())
@@ -44,6 +48,7 @@ class SettingsViewModelTest {
         viewModel = SettingsViewModel(
             settingsDataStore,
             analyticsHelper,
+            userDetailsRepository,
         )
     }
 
@@ -129,4 +134,20 @@ class SettingsViewModelTest {
 
         verify { analyticsHelper.logEvent(AnalyticsKey.EMAIL_FEEDBACK) }
     }
+
+    @Test
+    fun `onScreenAction OnUpdateMasterPassword updates master password and hint via repository`() =
+        runTest {
+            viewModel.onScreenAction(
+                SettingsScreenAction.OnUpdateMasterPassword(
+                    newPassword = "UpdatedPass@@123",
+                    hint = "updated hint"
+                )
+            )
+            advanceUntilIdle()
+
+            coVerify {
+                userDetailsRepository.updatePasswordAndHint("UpdatedPass@@123", "updated hint")
+            }
+        }
 }

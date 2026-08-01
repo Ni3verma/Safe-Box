@@ -1,5 +1,7 @@
 package com.andryoga.safebox.data.repository
 
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
@@ -17,8 +19,9 @@ class UserDetailsRepositoryImpl @Inject constructor(
     private val userDetailsDaoSecure: UserDetailsDaoSecure,
     private val preferenceProvider: PreferenceProvider,
     private val settingsDataStore: SettingsDataStore,
+    private val analyticsHelper: AnalyticsHelper,
 ) : UserDetailsRepository {
-    override suspend fun insertUserDetailsData(password: String, hint: String?) {
+    override suspend fun insertUserDetailsData(password: String, hint: String) {
         val uid = UUID.randomUUID().toString()
         setCrashlyticsUid(uid)
 
@@ -84,6 +87,18 @@ class UserDetailsRepositoryImpl @Inject constructor(
         val result = biometricLoginCountRemaining > 0
         Timber.i("should start biometric auth flow: $result")
         return result
+    }
+
+    override suspend fun updatePasswordAndHint(newPassword: String, hint: String) {
+        Timber.i("updating master password and hint")
+        analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD)
+        userDetailsDaoSecure.updatePasswordAndHint(newPassword, hint, Date())
+
+        val newBiometricLoginCountRemaining = settingsDataStore.getPasswordAfterXBiometricLogins()
+        preferenceProvider.upsertIntPref(
+            CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+            newBiometricLoginCountRemaining
+        )
     }
 
     private fun setCrashlyticsUid(uid: String) {

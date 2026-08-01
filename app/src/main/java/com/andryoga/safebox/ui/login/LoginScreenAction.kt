@@ -10,4 +10,5 @@ sealed interface LoginScreenAction {
      * device supports Biometric auth, run business logic to determine if biometric auth should be triggered
      * */
     object BiometricAvailable : LoginScreenAction
+    class OnResetPassword(val newPassword: String, val hint: String) : LoginScreenAction
 }

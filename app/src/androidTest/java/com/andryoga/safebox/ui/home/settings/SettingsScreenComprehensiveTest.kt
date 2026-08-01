@@ -1,19 +1,26 @@
 package com.andryoga.safebox.ui.home.settings
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.Settings
+import com.andryoga.safebox.di.FakeBiometricAuthProvider
+import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -201,5 +208,62 @@ class SettingsScreenComprehensiveTest {
             .performScrollTo().performClick()
         composeTestRule.waitForIdle()
         assertThat(emittedAction).isEqualTo(SettingsScreenAction.OpenGithubProject)
+    }
+
+    @Test
+    fun changeMasterPasswordClick_shouldShowUpdatePasswordDialogAndEmitActionWhenAuthSucceeds() {
+        val fakeAuthProvider = FakeBiometricAuthProvider().apply {
+            authHandlerOverride = { onSuccess, _ ->
+                onSuccess()
+            }
+        }
+        var emittedAction: SettingsScreenAction? = null
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalBiometricAuthProvider provides fakeAuthProvider) {
+                SafeBoxTheme {
+                    SettingsScreen(
+                        uiState = Settings(),
+                        onScreenAction = { emittedAction = it }
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.change_master_password))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.update_password))
+            .assertIsDisplayed()
+
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.new_password) + "*"
+            )
+        ).performTextInput("NewPass@@123")
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.confirm_new_password) + "*"
+            )
+        ).performTextInput("NewPass@@123")
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.hint) + "*"
+            )
+        ).performTextInput("updated hint")
+        composeTestRule.waitForIdle()
+
+
+        composeTestRule.onNodeWithText(context.getString(R.string.confirm))
+            .assertIsEnabled()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(emittedAction).isInstanceOf(SettingsScreenAction.OnUpdateMasterPassword::class.java)
+        val updateAction = emittedAction as SettingsScreenAction.OnUpdateMasterPassword
+        assertThat(updateAction.newPassword).isEqualTo("NewPass@@123")
+        assertThat(updateAction.hint).isEqualTo("updated hint")
     }
 }

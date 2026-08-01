@@ -281,4 +281,28 @@ class LoginViewModelTest {
             expectNoEvents()
         }
     }
+
+    @Test
+    fun `onResetPassword updates repository and verifies user auth state`() =
+        runTest {
+            coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(
+                    LoginScreenAction.OnResetPassword(
+                        newPassword = "NewPassword@@123",
+                        hint = "new hint"
+                    )
+                )
+                advanceUntilIdle()
+
+                coVerify {
+                    userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
+                }
+                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+                val updated = expectMostRecentItem()
+                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            }
+        }
 }

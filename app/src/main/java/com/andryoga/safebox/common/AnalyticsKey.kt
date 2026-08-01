@@ -19,5 +19,6 @@ enum class AnalyticsKey(val eventName: String) {
     NEW_SECURE_NOTE("new_secure_note"),
     NEW_BANK_CARD("new_bank_card"),
     NEW_LOGIN("new_login"),
-    NEW_BANK_ACCOUNT("new_bank_account")
+    NEW_BANK_ACCOUNT("new_bank_account"),
+    UPDATE_PASSWORD("update_password"),
 }

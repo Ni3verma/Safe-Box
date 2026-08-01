@@ -26,6 +26,8 @@
 * **Navigation:** Latest Jetpack Navigation library.
 * **Build System:** Groovy-based `build.gradle` configuration files (**strictly NO Kotlin
   DSL / `build.gradle.kts`**).
+* **Best Practices Reference:** Consult and apply official Android guidance and patterns
+  from [android/skills](https://github.com/android/skills).
 
 ## Architecture & Code Quality Guidelines
 
@@ -48,6 +50,15 @@
 * **No Fully Qualified Names in Code:** Never inline fully qualified package names in code (e.g.,
   `java.nio.ByteBuffer.allocate` or `com.andryoga.safebox...`). Always add an `import` statement at
   the top of the file and use clean, short type names.
+* **Analytics & Tracking:** Always define and log appropriate new analytics events using
+  `AnalyticsHelper.kt` and `AnalyticsKey.kt` whenever implementing a new feature or user action.
+
+## Code Formatting & Style Rules
+
+* **No Extra Empty/Blank Lines:** Never introduce unnecessary empty or blank lines within import
+  blocks, in-between code blocks, or multiple trailing empty lines at the end of files.
+* **Trailing Commas:** Always include a trailing comma (`,`) for multi-line parameters, arguments,
+  enum entries, and collection literals as per modern Kotlin best practices.
 
 ## Test Naming & Conventions
 

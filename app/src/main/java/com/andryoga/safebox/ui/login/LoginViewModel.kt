@@ -45,10 +45,21 @@ class LoginViewModel @Inject constructor(
             LoginScreenAction.BiometricSuccess -> onBiometricSuccess()
             LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
             LoginScreenAction.BiometricError -> onBiometricError()
+            is LoginScreenAction.OnResetPassword -> onResetPassword(action.newPassword, action.hint)
+        }
+    }
+
+    private fun onResetPassword(newPassword: String, hint: String) {
+        Timber.i("resetting master password and hint from login screen")
+        viewModelScope.launch {
+            userDetailsRepository.updatePasswordAndHint(newPassword, hint)
+            Timber.i("master password and hint successfully updated from login screen")
+            onAuthSuccess(withBiometric = false)
         }
     }
 
     private fun onBiometricAvailable() {
+
         Timber.i("biometric capability is available")
         viewModelScope.launch {
             if (userDetailsRepository.shouldStartBiometricAuthFlow()) {

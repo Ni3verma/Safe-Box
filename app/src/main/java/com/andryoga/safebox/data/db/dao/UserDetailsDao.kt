@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
+import java.util.Date
 
 @Dao
 interface UserDetailsDao {
@@ -19,4 +20,7 @@ interface UserDetailsDao {
 
     @Query("select uid from user_details ")
     suspend fun getUid(): String
+
+    @Query("update user_details set password = :password, hint = :hint, updateDate = :updateDate")
+    suspend fun updatePasswordAndHint(password: String, hint: String, updateDate: Date)
 }
