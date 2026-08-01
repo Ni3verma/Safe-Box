@@ -11,6 +11,8 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
+      contents: write
+      checks: write
     steps:
       - name: PR Agent action step
         uses: the-pr-agent/pr-agent@main
