@@ -212,10 +212,10 @@ class UserDetailsRepositoryImplTest {
             }
             verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD) }
             val remaining = preferenceProvider.getIntPref(
-
                 CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
                 -1
             )
+
             assertThat(remaining).isEqualTo(10)
         }
 }

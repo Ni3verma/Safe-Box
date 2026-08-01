@@ -90,7 +90,6 @@ class SignupViewModel @Inject constructor(
         ): PasswordValidatorState = PasswordValidator.validate(password)
     }
 
-
     private fun signup() {
         val password = _uiState.value.password
         val hint = _uiState.value.hint

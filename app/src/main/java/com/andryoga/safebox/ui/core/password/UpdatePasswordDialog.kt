@@ -42,8 +42,8 @@ fun UpdatePasswordDialog(
     onSave: (newPassword: String, hint: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var newPassword by rememberSaveable { mutableStateOf("") }
-    var confirmPassword by rememberSaveable { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var hint by rememberSaveable { mutableStateOf("") }
     var newPasswordVisible by rememberSaveable { mutableStateOf(false) }
     var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
