@@ -177,6 +177,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
     }
 
     if (showUpdatePasswordDialog) {
+        val successMessage = stringResource(R.string.password_updated_success)
         UpdatePasswordDialog(
             onDismissRequest = {
                 Timber.i("update password dialog dismissed on settings screen")
@@ -188,7 +189,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
                 onScreenAction(SettingsScreenAction.OnUpdateMasterPassword(newPassword, hint))
                 Toast.makeText(
                     context,
-                    context.getString(R.string.password_updated_success),
+                    successMessage,
                     Toast.LENGTH_SHORT,
                 ).show()
             }
