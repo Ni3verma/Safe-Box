@@ -14,9 +14,12 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: set up JDK 17
         uses: actions/setup-java@v5
@@ -65,8 +68,62 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Detect Modified Files and Map UI Tests
+        id: test_mapping
+        run: |
+          git fetch origin master
+          MODIFIED_FILES=$(git diff --name-only origin/master...HEAD)
+          echo "Modified files:"
+          echo "$MODIFIED_FILES"
+
+          TESTS=()
+          FALLBACK="false"
+
+          while IFS= read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            if [[ "$file" == app/src/main/java/com/andryoga/safebox/ui/login/* ]]; then
+              TESTS+=("com.andryoga.safebox.e2e.LoginBiometricAndHintE2ETest")
+            elif [[ "$file" == app/src/main/java/com/andryoga/safebox/ui/home/records/* ]]; then
+              TESTS+=("com.andryoga.safebox.e2e.RecordsSearchAndFilterE2ETest")
+            elif [[ "$file" == app/src/main/java/com/andryoga/safebox/worker/* ]] || [[ "$file" == *backupAndRestore/* ]]; then
+              TESTS+=("com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreWorkersTest")
+            elif [[ "$file" == app/* ]] || [[ "$file" == gradle* ]] || [[ "$file" == *.gradle ]] || [[ "$file" == *.properties ]]; then
+              FALLBACK="true"
+            fi
+          done <<< "$MODIFIED_FILES"
+
+          UNIQUE_TESTS=()
+          if [ ${#TESTS[@]} -gt 0 ]; then
+            while IFS= read -r test_class; do
+              if [ -n "$test_class" ]; then
+                UNIQUE_TESTS+=("$test_class")
+              fi
+            done < <(printf "%s\n" "${TESTS[@]}" | sort -u)
+          fi
+
+          if [ "$FALLBACK" = "true" ]; then
+            echo "Core or build files modified. Running full test suite."
+            echo "AFFECTED_TESTS=" >> $GITHUB_ENV
+          elif [ ${#UNIQUE_TESTS[@]} -gt 0 ]; then
+            AFFECTED=$(IFS=,; echo "${UNIQUE_TESTS[*]}")
+            echo "Mapped affected tests: $AFFECTED"
+            echo "AFFECTED_TESTS=$AFFECTED" >> $GITHUB_ENV
+          else
+            echo "No application or build files modified. Skipping UI tests."
+            echo "AFFECTED_TESTS=SKIP" >> $GITHUB_ENV
+          fi
+
       - name: Run Instrumented UI Tests (Gradle Managed Device)
-        run: ./gradlew pixel8Api34DebugAndroidTest --stacktrace
+        run: |
+          if [ "$AFFECTED_TESTS" = "SKIP" ]; then
+            echo "Skipping UI tests as no application or build files were modified."
+          elif [ -n "$AFFECTED_TESTS" ]; then
+            ./gradlew pixel8Api34DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=$AFFECTED_TESTS --stacktrace
+          else
+            ./gradlew pixel8Api34DebugAndroidTest --stacktrace
+          fi
 
       - name: upload test result
         if: always() # Upload even if tests fail
