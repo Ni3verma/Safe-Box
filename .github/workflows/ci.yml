@@ -85,8 +85,8 @@ jobs:
             elif [[ "$file" == app/src/main/java/com/andryoga/safebox/ui/home/records/* ]]; then
               TESTS+=("com.andryoga.safebox.e2e.RecordsSearchAndFilterE2ETest")
             elif [[ "$file" == app/src/main/java/com/andryoga/safebox/worker/* ]] || [[ "$file" == *backupAndRestore/* ]]; then
-              TESTS+=("com.andryoga.safebox.e2e.BackupAndRestoreE2ETest")
-            elif [[ "$file" == app/src/main/java/* ]]; then
+              TESTS+=("com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreWorkersTest")
+            elif [[ "$file" == app/* ]] || [[ "$file" == gradle* ]] || [[ "$file" == *.gradle ]] || [[ "$file" == *.properties ]]; then
               FALLBACK="true"
             fi
           done <<< "$MODIFIED_FILES"
