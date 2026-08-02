@@ -47,8 +47,8 @@ jobs:
 
       - name: Ensure Android Emulator is Installed
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager --install "emulator"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "emulator"
 
       - name: Run Managed Device UI Tests (Debug Build)
         run: ./gradlew ${{ matrix.device }}DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }} --stacktrace
