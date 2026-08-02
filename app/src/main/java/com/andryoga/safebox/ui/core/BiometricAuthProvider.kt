@@ -17,6 +17,9 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.utils.findActivity
 import javax.inject.Inject
 
+private const val ALLOWED_AUTHENTICATORS =
+    BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
 val LocalBiometricAuthProvider = staticCompositionLocalOf<BiometricAuthProvider> {
     DefaultBiometricAuthProvider()
 }
@@ -26,6 +29,8 @@ interface BiometricAuthProvider {
 
     @Composable
     fun Authenticate(
+        title: String? = null,
+        subtitle: String? = null,
         onSuccess: () -> Unit,
         onErrorOrCancel: () -> Unit
     )
@@ -34,11 +39,13 @@ interface BiometricAuthProvider {
 class DefaultBiometricAuthProvider @Inject constructor() : BiometricAuthProvider {
     override fun canAuthenticate(context: Context): Boolean {
         return BiometricManager.from(context)
-            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+            .canAuthenticate(ALLOWED_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
     }
 
     @Composable
     override fun Authenticate(
+        title: String?,
+        subtitle: String?,
         onSuccess: () -> Unit,
         onErrorOrCancel: () -> Unit
     ) {
@@ -65,15 +72,15 @@ class DefaultBiometricAuthProvider @Inject constructor() : BiometricAuthProvider
             )
         }
 
-        val title = stringResource(R.string.biometric_title_text)
-        val subtitle = stringResource(R.string.biometric_sub_title_text)
-        val negativeButtonText = stringResource(R.string.biometric_negative_button_text)
-        LaunchedEffect(biometricPrompt) {
+        val defaultTitle = stringResource(R.string.biometric_title_text)
+        val defaultSubtitle = stringResource(R.string.biometric_sub_title_text)
+        val promptTitle = title ?: defaultTitle
+        val promptSubtitle = subtitle ?: defaultSubtitle
+        LaunchedEffect(biometricPrompt, promptTitle, promptSubtitle) {
             val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle(title)
-                .setSubtitle(subtitle)
-                .setNegativeButtonText(negativeButtonText)
-                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setTitle(promptTitle)
+                .setSubtitle(promptSubtitle)
+                .setAllowedAuthenticators(ALLOWED_AUTHENTICATORS)
                 .build()
 
             biometricPrompt.authenticate(promptInfo)

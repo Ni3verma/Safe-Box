@@ -12,12 +12,17 @@ fun canAuthenticateUsingBiometric(
 
 @Composable
 fun BiometricAuthHandler(
+    title: String? = null,
+    subtitle: String? = null,
     onSuccess: () -> Unit,
     onErrorOrCancel: () -> Unit = {},
     biometricAuthProvider: BiometricAuthProvider = LocalBiometricAuthProvider.current
 ) {
     biometricAuthProvider.Authenticate(
+        title = title,
+        subtitle = subtitle,
         onSuccess = onSuccess,
         onErrorOrCancel = onErrorOrCancel
     )
 }
+

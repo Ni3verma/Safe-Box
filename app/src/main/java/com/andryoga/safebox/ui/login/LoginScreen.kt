@@ -47,11 +47,13 @@ import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.BiometricAuthHandler
 import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
 import com.andryoga.safebox.ui.core.canAuthenticateUsingBiometric
+import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-
+import timber.log.Timber
 
 @Composable
+
 fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
@@ -74,6 +76,9 @@ internal fun LoginScreen(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit
 ) {
+    var showResetPasswordAuth by remember { mutableStateOf(false) }
+    var showUpdatePasswordDialog by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -102,8 +107,13 @@ internal fun LoginScreen(
         ) {
             LoginCardContent(
                 uiState = uiState,
-                screenAction = screenAction
+                screenAction = screenAction,
+                onForgotPasswordClick = {
+                    Timber.i("forgot password clicked on login screen, starting biometric auth")
+                    showResetPasswordAuth = true
+                }
             )
+
         }
     }
 
@@ -121,12 +131,44 @@ internal fun LoginScreen(
             onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) }
         )
     }
+
+    if (showResetPasswordAuth) {
+        BiometricAuthHandler(
+            title = stringResource(R.string.forgot_password),
+            subtitle = stringResource(R.string.forgot_password_biometric_subtitle),
+            onSuccess = {
+                Timber.i("biometric auth success for forgot password on login screen")
+                showResetPasswordAuth = false
+                showUpdatePasswordDialog = true
+            },
+            onErrorOrCancel = {
+                Timber.w("biometric auth error or cancel for forgot password on login screen")
+                showResetPasswordAuth = false
+            }
+        )
+    }
+
+    if (showUpdatePasswordDialog) {
+        UpdatePasswordDialog(
+            onDismissRequest = {
+                Timber.i("update password dialog dismissed on login screen")
+                showUpdatePasswordDialog = false
+            },
+            onSave = { newPassword, hint ->
+                Timber.i("submitting OnResetPassword action from login screen")
+                showUpdatePasswordDialog = false
+                screenAction(LoginScreenAction.OnResetPassword(newPassword, hint))
+            }
+        )
+    }
 }
 
 @Composable
+
 private fun LoginCardContent(
     uiState: LoginUiState,
-    screenAction: (LoginScreenAction) -> Unit
+    screenAction: (LoginScreenAction) -> Unit,
+    onForgotPasswordClick: () -> Unit = {}
 ) {
     var password by remember(uiState.defaultPassword) {
         mutableStateOf(uiState.defaultPassword)
@@ -208,6 +250,13 @@ private fun LoginCardContent(
             enabled = password.isBlank().not()
         ) {
             Text(stringResource(R.string.login))
+        }
+
+        TextButton(
+            onClick = onForgotPasswordClick,
+            modifier = Modifier.padding(top = 4.dp)
+        ) {
+            Text(stringResource(R.string.forgot_password))
         }
     }
 }

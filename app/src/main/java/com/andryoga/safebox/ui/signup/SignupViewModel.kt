@@ -8,6 +8,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.ui.core.password.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -86,43 +87,7 @@ class SignupViewModel @Inject constructor(
     internal companion object {
         fun runPasswordValidator(
             password: String
-        ): PasswordValidatorState {
-            var hasLowerCase = false
-            var hasUpperCase = false
-            var numericCount = 0
-            var specialCharCount = 0
-
-            password.forEach { char ->
-                when {
-                    char.isLowerCase() -> hasLowerCase = true
-                    char.isUpperCase() -> hasUpperCase = true
-                    char.isDigit() -> numericCount++
-                    !char.isLetterOrDigit() -> specialCharCount++
-                }
-            }
-            return when {
-                password.isBlank() -> PasswordValidatorState.EMPTY_PASSWORD
-                hasLowerCase.not() || hasUpperCase.not() -> {
-                    PasswordValidatorState.NOT_MIX_CASE
-                }
-
-                numericCount < Constants.MIN_NUMERIC_COUNT -> {
-                    PasswordValidatorState.LESS_NUMERIC_COUNT
-                }
-
-                specialCharCount == 0 -> {
-                    PasswordValidatorState.NO_SPECIAL_CHAR
-                }
-
-                password.length < Constants.MIN_PASSWORD_LENGTH -> {
-                    PasswordValidatorState.SHORT_PASSWORD_LENGTH
-                }
-
-                else -> {
-                    PasswordValidatorState.PASSWORD_IS_OK
-                }
-            }
-        }
+        ): PasswordValidatorState = PasswordValidator.validate(password)
     }
 
     private fun signup() {

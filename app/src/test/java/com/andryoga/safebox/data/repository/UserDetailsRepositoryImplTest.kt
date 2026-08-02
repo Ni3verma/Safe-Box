@@ -3,6 +3,8 @@
 package com.andryoga.safebox.data.repository
 
 import com.andryoga.safebox.MainDispatcherRule
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
@@ -13,7 +15,9 @@ import com.google.common.truth.Truth.assertThat
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
+import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,6 +38,9 @@ class UserDetailsRepositoryImplTest {
     @MockK
     lateinit var settingsDataStore: SettingsDataStore
 
+    @RelaxedMockK
+    lateinit var analyticsHelper: AnalyticsHelper
+
     private lateinit var preferenceProvider: FakePreferenceProvider
     private lateinit var mockCrashlytics: FirebaseCrashlytics
     private lateinit var repository: UserDetailsRepositoryImpl
@@ -46,7 +53,8 @@ class UserDetailsRepositoryImplTest {
         repository = UserDetailsRepositoryImpl(
             userDetailsDaoSecure = userDetailsDaoSecure,
             preferenceProvider = preferenceProvider,
-            settingsDataStore = settingsDataStore
+            settingsDataStore = settingsDataStore,
+            analyticsHelper = analyticsHelper
         )
     }
 
@@ -185,5 +193,29 @@ class UserDetailsRepositoryImplTest {
             val result = repository.shouldStartBiometricAuthFlow()
 
             assertThat(result).isFalse()
+        }
+
+    @Test
+    fun updatePasswordAndHint_shouldUpdateDaoSecureAndResetBiometricCount() =
+        runTest {
+            coEvery { userDetailsDaoSecure.updatePasswordAndHint(any(), any(), any()) } returns Unit
+            coEvery { settingsDataStore.getPasswordAfterXBiometricLogins() } returns 10
+            preferenceProvider.upsertIntPref(
+                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                1
+            )
+
+            repository.updatePasswordAndHint("NewPassword@@123", "new hint")
+
+            coVerify {
+                userDetailsDaoSecure.updatePasswordAndHint("NewPassword@@123", "new hint", any())
+            }
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD) }
+            val remaining = preferenceProvider.getIntPref(
+                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                -1
+            )
+
+            assertThat(remaining).isEqualTo(10)
         }
 }

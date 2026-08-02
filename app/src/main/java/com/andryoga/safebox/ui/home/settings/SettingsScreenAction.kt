@@ -8,5 +8,5 @@ sealed interface SettingsScreenAction {
     object SendFeedback : SettingsScreenAction
     object ReviewApp : SettingsScreenAction
     object OpenGithubProject : SettingsScreenAction
-
+    class OnUpdateMasterPassword(val newPassword: String, val hint: String) : SettingsScreenAction
 }

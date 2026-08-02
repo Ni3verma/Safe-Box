@@ -5,6 +5,7 @@ import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import java.util.Date
 import javax.inject.Inject
 
 class UserDetailsDaoSecure @Inject constructor(
@@ -28,6 +29,12 @@ class UserDetailsDaoSecure @Inject constructor(
 
     override suspend fun getUid(): String {
         return userDetailsDao.getUid()
+    }
+
+    override suspend fun updatePasswordAndHint(password: String, hint: String, updateDate: Date) {
+        val hashedPassword = hashingUtils.hash(password)
+        val encryptedHint = symmetricKeyUtils.encrypt(hint)
+        userDetailsDao.updatePasswordAndHint(hashedPassword, encryptedHint, updateDate)
     }
 
     suspend fun checkPassword(password: String): Boolean {

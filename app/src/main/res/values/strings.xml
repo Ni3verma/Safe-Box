@@ -154,4 +154,15 @@
     <string name="search_bar_placeholder">Search …</string>
     <string name="send_feedback_email">Send feedback Email</string>
     <string name="safe_box_feedback">Safe Box Feedback</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="forgot_password_biometric_subtitle">Authenticate to reset master password</string>
+    <string name="update_password">Update Master Password</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="change_master_password">Change Master Password</string>
+    <string name="change_master_password_body">Update your master password and hint</string>
+    <string name="password_updated_success">Master password updated successfully</string>
 </resources>

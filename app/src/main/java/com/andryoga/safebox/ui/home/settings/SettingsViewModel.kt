@@ -6,17 +6,21 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+
     private val settingsDataStore: SettingsDataStore,
-    private val analyticsHelper: AnalyticsHelper
+    private val analyticsHelper: AnalyticsHelper,
+    private val userDetailsRepository: UserDetailsRepository,
 ) : ViewModel() {
 
     val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow
@@ -36,6 +40,11 @@ class SettingsViewModel @Inject constructor(
             is SettingsScreenAction.UpdateAwayTimeout -> updateAwayTimeout(action.timeout)
             is SettingsScreenAction.UpdatePasswordAfterXBiometric -> updatePasswordAfterXBiometricLogin(
                 action.limit
+            )
+
+            is SettingsScreenAction.OnUpdateMasterPassword -> updateMasterPassword(
+                action.newPassword,
+                action.hint
             )
 
             SettingsScreenAction.OpenGithubProject -> {
@@ -67,6 +76,13 @@ class SettingsViewModel @Inject constructor(
 
     private fun updatePasswordAfterXBiometricLogin(value: Int) =
         viewModelScope.launch {
-        settingsDataStore.updatePasswordAfterXBiometricLogin(value)
-    }
+            settingsDataStore.updatePasswordAfterXBiometricLogin(value)
+        }
+
+    private fun updateMasterPassword(newPassword: String, hint: String) =
+        viewModelScope.launch {
+            Timber.i("updating master password and hint from settings screen")
+            userDetailsRepository.updatePasswordAndHint(newPassword, hint)
+            Timber.i("master password and hint successfully updated from settings screen")
+        }
 }

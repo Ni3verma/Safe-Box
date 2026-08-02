@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -14,6 +15,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
+import com.andryoga.safebox.di.FakeBiometricAuthProvider
+import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -266,5 +269,62 @@ class LoginScreenTest {
         // Verify that when canUnlockWithBiometric is true, the screen supports BiometricAuthHandler setup and renders properly.
         // Note: The Android BiometricPrompt is a platform-level window outside the Compose semantics tree, so we test its state configuration in component/unit tiers while suppressing it via ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING=0 in E2E journey tests to guarantee CI stability.
         composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
+    }
+
+    @Test
+    fun forgotPasswordClick_shouldShowUpdatePasswordDialogWhenAuthSucceeds() {
+        val fakeAuthProvider = FakeBiometricAuthProvider().apply {
+            authHandlerOverride = { onSuccess, _ ->
+                onSuccess()
+            }
+        }
+        var emittedAction: LoginScreenAction? = null
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalBiometricAuthProvider provides fakeAuthProvider) {
+                SafeBoxTheme {
+                    LoginScreen(
+                        uiState = LoginUiState(),
+                        screenAction = { emittedAction = it }
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.forgot_password))
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.update_password))
+            .assertIsDisplayed()
+
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.new_password) + "*"
+            )
+        ).performTextInput("NewPass@@123")
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.confirm_new_password) + "*"
+            )
+        ).performTextInput("NewPass@@123")
+        composeTestRule.onNode(
+            hasSetTextAction() and hasText(
+                context.getString(R.string.hint) + "*"
+            )
+        ).performTextInput("updated hint")
+        composeTestRule.waitForIdle()
+
+
+        composeTestRule.onNodeWithText(context.getString(R.string.confirm))
+            .assertIsEnabled()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(emittedAction).isInstanceOf(LoginScreenAction.OnResetPassword::class.java)
+        val resetAction = emittedAction as LoginScreenAction.OnResetPassword
+        assertThat(resetAction.newPassword).isEqualTo("NewPass@@123")
+        assertThat(resetAction.hint).isEqualTo("updated hint")
     }
 }

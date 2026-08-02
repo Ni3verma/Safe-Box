@@ -39,11 +39,13 @@ object RepositoryModule {
         userDetailsDaoSecure: UserDetailsDaoSecure,
         preferenceProvider: PreferenceProvider,
         settingsDataStore: SettingsDataStore,
+        analyticsHelper: AnalyticsHelper,
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
             userDetailsDaoSecure,
             preferenceProvider,
-            settingsDataStore
+            settingsDataStore,
+            analyticsHelper,
         )
     }
 

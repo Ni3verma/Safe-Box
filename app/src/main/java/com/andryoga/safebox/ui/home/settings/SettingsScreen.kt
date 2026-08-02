@@ -17,6 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +31,9 @@ import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.ui.MainViewModel
+import com.andryoga.safebox.ui.core.BiometricAuthHandler
 import com.andryoga.safebox.ui.core.TopAppBarConfig
+import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
 import com.andryoga.safebox.ui.home.settings.components.SliderPreference
 import com.andryoga.safebox.ui.home.settings.components.SwitchPreference
 import com.andryoga.safebox.ui.home.settings.components.TextPreference
@@ -68,6 +73,10 @@ fun SettingsScreenRoot(mainViewModel: MainViewModel) {
 @Composable
 fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> Unit) {
     val scrollState = rememberScrollState()
+    var showAuthForPasswordChange by remember { mutableStateOf(false) }
+    var showUpdatePasswordDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,9 +87,11 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             text = stringResource(R.string.settings_section_security_and_privacy),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier.padding(bottom = 16.dp),
         )
+
         SwitchPreference(
+
             title = stringResource(R.string.settings_privacy_enabled_title),
             checked = uiState.isPrivacyEnabled,
             onCheckedChange = { onScreenAction(SettingsScreenAction.UpdatePrivacy(it)) },
@@ -110,13 +121,22 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             body = stringResource(R.string.settings_away_timeout_body),
         )
 
+        TextPreference(
+            title = stringResource(R.string.change_master_password),
+            body = stringResource(R.string.change_master_password_body),
+            onTap = {
+                Timber.i("change master password clicked on settings screen, starting biometric auth")
+                showAuthForPasswordChange = true
+            },
+        )
+
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
         Text(
             text = stringResource(R.string.settings_section_support_and_community),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 8.dp),
+            modifier = Modifier.padding(bottom = 16.dp),
         )
 
         TextPreference(
@@ -139,7 +159,44 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             onTap = { onScreenAction(SettingsScreenAction.OpenGithubProject) },
         )
     }
+
+    if (showAuthForPasswordChange) {
+        BiometricAuthHandler(
+            title = stringResource(R.string.change_master_password),
+            subtitle = stringResource(R.string.change_master_password_body),
+            onSuccess = {
+                Timber.i("biometric auth success for change master password on settings screen")
+                showAuthForPasswordChange = false
+                showUpdatePasswordDialog = true
+            },
+            onErrorOrCancel = {
+                Timber.w("biometric auth error or cancel for change master password on settings screen")
+                showAuthForPasswordChange = false
+            }
+        )
+    }
+
+    if (showUpdatePasswordDialog) {
+        val successMessage = stringResource(R.string.password_updated_success)
+        UpdatePasswordDialog(
+            onDismissRequest = {
+                Timber.i("update password dialog dismissed on settings screen")
+                showUpdatePasswordDialog = false
+            },
+            onSave = { newPassword, hint ->
+                Timber.i("submitting OnUpdateMasterPassword action from settings screen")
+                showUpdatePasswordDialog = false
+                onScreenAction(SettingsScreenAction.OnUpdateMasterPassword(newPassword, hint))
+                Toast.makeText(
+                    context,
+                    successMessage,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
+        )
+    }
 }
+
 
 fun sendFeedback(context: Context) {
     val deviceModel = android.os.Build.MODEL

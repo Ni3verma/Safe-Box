@@ -26,7 +26,12 @@ class FakeBiometricAuthProvider @Inject constructor() : BiometricAuthProvider {
     override fun canAuthenticate(context: Context): Boolean = canAuthenticateOverride
 
     @Composable
-    override fun Authenticate(onSuccess: () -> Unit, onErrorOrCancel: () -> Unit) {
+    override fun Authenticate(
+        title: String?,
+        subtitle: String?,
+        onSuccess: () -> Unit,
+        onErrorOrCancel: () -> Unit
+    ) {
         invocationCount++
         authHandlerOverride?.invoke(onSuccess, onErrorOrCancel)
     }
