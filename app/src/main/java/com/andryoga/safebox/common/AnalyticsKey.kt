@@ -9,6 +9,7 @@ enum class AnalyticsKey(val eventName: String) {
     OPEN_GITHUB("open_github"),
     OPEN_PLAY_STORE("open_play_store"),
     EMAIL_FEEDBACK("email_feedback"),
+    BACKUP_STARTED("backup_started"),
     BACKUP_SELECT_DIR_RESULT("backup_select_dir_result"),
     BACKUP_DATA_SUCCESS("backup_data_success"),
     BACKUP_DATA_FAILURE("backup_data_failure"),

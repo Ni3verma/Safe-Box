@@ -201,7 +201,8 @@ class RestoreDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.failure())
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isTrue()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD)).isTrue()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
     }
 
     @Test

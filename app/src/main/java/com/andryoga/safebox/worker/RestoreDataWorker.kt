@@ -143,7 +143,7 @@ class RestoreDataWorker
                 if (::importMap.isInitialized) importMap[CommonConstants.VERSION_KEY]!![0].toInt()
                     .toDouble() else 0.0
             }.getOrNull() ?: 0.0
-            analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
+            analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD) {
                 param(AnalyticsParam.VERSION, version)
             }
             Result.failure()

@@ -10,7 +10,6 @@ import androidx.work.WorkManager
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
@@ -32,7 +31,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewBackupOrRestoreVM @Inject constructor(
-    private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val analyticsHelper: AnalyticsHelper,
@@ -70,46 +68,42 @@ class NewBackupOrRestoreVM @Inject constructor(
 
     private fun handlePasswordConfirmedAction(password: String) {
         viewModelScope.launch {
-            val isPasswordCheckRequired = operation == Operation.Backup
-
-            var isPswrdCorrect = false
-            if (isPasswordCheckRequired) {
-                isPswrdCorrect = userDetailsRepository.checkPassword(password)
-                if (isPswrdCorrect.not()) {
-                    updateWorkflowState(WorkflowState.WRONG_PASSWORD)
-                    return@launch
+            when (operation) {
+                Operation.Backup -> {
+                    Timber.i("password confirmed for new backup")
+                    analyticsHelper.logEvent(AnalyticsKey.BACKUP_STARTED)
                 }
-            } else {
-                // password check is not required for restore
-                analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED)
+
+                is Operation.Restore -> {
+                    Timber.i("password confirmed for new restore")
+                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED)
+                }
             }
 
-            if (isPasswordCheckRequired.not() || isPswrdCorrect) {
-                Timber.i("enqueuing work req")
-                val requestId = enqueueWorkRequest(password, operation)
-                workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
-                    Timber.i("backup/restore work state: ${workInfo?.state}")
-                    when (workInfo?.state) {
-                        WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> updateWorkflowState(
-                            WorkflowState.IN_PROGRESS
-                        )
+            Timber.i("enqueuing work req")
+            val requestId = enqueueWorkRequest(password, operation)
+            workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
+                Timber.i("backup/restore work state: ${workInfo?.state}")
+                when (workInfo?.state) {
+                    WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> updateWorkflowState(
+                        WorkflowState.IN_PROGRESS
+                    )
 
-                        WorkInfo.State.SUCCEEDED -> {
-                            if (operation is Operation.Restore) {
-                                _startReviewOnRestoreSuccess.send(Unit)
-                            }
-                            updateWorkflowState(
-                                WorkflowState.SUCCESS
-                            )
+                    WorkInfo.State.SUCCEEDED -> {
+                        if (operation is Operation.Restore) {
+                            _startReviewOnRestoreSuccess.send(Unit)
                         }
-
-                        WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
-                            WorkflowState.FAILED
+                        updateWorkflowState(
+                            WorkflowState.SUCCESS
                         )
-
                     }
-                }.launchIn(viewModelScope)
-            }
+
+                    WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
+                        WorkflowState.FAILED
+                    )
+
+                }
+            }.launchIn(viewModelScope)
         }
     }
 

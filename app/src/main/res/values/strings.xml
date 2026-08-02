@@ -58,10 +58,10 @@
     <string name="backup_path_select_failed_message">Could not access the selected folder. Try creating a new folder for your backups.</string>
     <string name="retry">Retry</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
-    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken every time you login with password</string>
+    <string name="backup_info_1">* Backup is taken every time you login with password and is encrypted by your current master password </string>
     <string name="backup_edit_path">Edit Path</string>
-    <string name="new_backup_dialog_body_text">Please enter your current master password to create a new backup file.</string>
-    <string name="backup_in_progress_message">It may take a while to backup data. Sit back and relax !</string>
+    <string name="new_backup_dialog_body_text">Please enter a password to create a new backup file.</string>
+    <string name="backup_in_progress_message">It may take a while to back up data. Sit back and relax !</string>
     <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
 
     <!--     restore-->
