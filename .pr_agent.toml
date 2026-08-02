@@ -1,12 +1,13 @@
 [config]
-model = "gemini/gemini-2.0-flash"
-fallback_models = ["gemini/gemini-3.5-flash", "gemini/gemini-3.1-pro"]
-restricted_mode = false
+model = "gemini/gemini-3.6-flash"
+fallback_models = ["gemini/gemini-3.5-flash", "gemini/gemini-2.5-flash", "gemini/gemini-2.0-flash", "gemini/gemini-3.1-pro"]
+restricted_mode = true
 
 [github_app]
 pr_commands = [
     "/describe",
-    "/improve"
+    "/improve",
+    "/review"
 ]
 
 [github_action_config]
@@ -20,9 +21,6 @@ push_commands = [
 
 [pr_description]
 generate_ai_title = true
-publish_description_as_comment = true
-publish_description_as_comment_persistent = false
-file_table_collapsible_open_by_default = true
 
 [pr_reviewer]
 num_max_findings = 20
