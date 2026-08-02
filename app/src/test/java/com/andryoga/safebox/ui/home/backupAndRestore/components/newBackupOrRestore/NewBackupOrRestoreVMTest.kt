@@ -14,11 +14,14 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockk
@@ -49,6 +52,9 @@ class NewBackupOrRestoreVMTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @RelaxedMockK
+    lateinit var userDetailsRepository: UserDetailsRepository
+
+    @RelaxedMockK
     lateinit var workManager: WorkManager
 
     @RelaxedMockK
@@ -73,6 +79,7 @@ class NewBackupOrRestoreVMTest {
         every { workManager.getWorkInfoByIdFlow(any()) } returns workInfoFlow
 
         viewModel = NewBackupOrRestoreVM(
+            userDetailsRepository,
             workManager,
             symmetricKeyUtils,
             analyticsHelper,
@@ -92,6 +99,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty() = runTest {
         val prodViewModel = NewBackupOrRestoreVM(
+            userDetailsRepository,
             workManager,
             symmetricKeyUtils,
             analyticsHelper,
@@ -127,11 +135,33 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
-    fun `PasswordConfirmed on Backup with any password logs BACKUP_STARTED and enqueues BackupDataWorker`() =
+    fun `PasswordConfirmed on Backup with incorrect password updates workflowState to WRONG_PASSWORD and does not enqueue work`() =
         runTest {
             viewModel.initVM(Operation.Backup)
-            val password = "any_password"
-            val encryptedPassword = "encrypted_any_password"
+            val password = "wrong_password"
+            coEvery { userDetailsRepository.checkPassword(password) } returns false
+
+            viewModel.onScreenAction(ScreenAction.PasswordConfirmed(password))
+            advanceUntilIdle()
+
+            viewModel.uiState.test {
+                assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.WRONG_PASSWORD)
+            }
+            verify(exactly = 0) {
+                workManager.enqueueUniqueWork(
+                    any(),
+                    any(),
+                    any<OneTimeWorkRequest>()
+                )
+            }
+        }
+
+    @Test
+    fun `PasswordConfirmed on Backup with correct password enqueues BackupDataWorker`() = runTest {
+        viewModel.initVM(Operation.Backup)
+        val password = "correct_password"
+        val encryptedPassword = "encrypted_correct_password"
+        coEvery { userDetailsRepository.checkPassword(password) } returns true
         every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
 
         val workRequestSlot = slot<OneTimeWorkRequest>()
@@ -146,7 +176,6 @@ class NewBackupOrRestoreVMTest {
         viewModel.onScreenAction(ScreenAction.PasswordConfirmed(password))
         advanceUntilIdle()
 
-            verify { analyticsHelper.logEvent(AnalyticsKey.BACKUP_STARTED) }
         verify {
             workManager.enqueueUniqueWork(
                 CommonConstants.WORKER_NAME_BACKUP_DATA,
@@ -160,7 +189,7 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
-    fun `PasswordConfirmed on Restore logs RESTORE_STARTED and enqueues RestoreDataWorker with encrypted password and fileUri`() =
+    fun `PasswordConfirmed on Restore skips checkPassword, logs RESTORE_STARTED, and enqueues RestoreDataWorker with encrypted password and fileUri`() =
         runTest {
             val fileUri: Uri = mockk(relaxed = true)
             viewModel.initVM(Operation.Restore(fileUri))
@@ -180,6 +209,7 @@ class NewBackupOrRestoreVMTest {
             viewModel.onScreenAction(ScreenAction.PasswordConfirmed(password))
             advanceUntilIdle()
 
+            coVerify(exactly = 0) { userDetailsRepository.checkPassword(any()) }
             verify { analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED) }
             verify {
                 workManager.enqueueUniqueWork(
@@ -201,6 +231,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo transitions to ENQUEUED, workflowState updates to IN_PROGRESS`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.ENQUEUED }
         workInfoFlow.value = mockWorkInfo
 
@@ -215,6 +246,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo transitions to RUNNING, workflowState updates to IN_PROGRESS`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.RUNNING }
         workInfoFlow.value = mockWorkInfo
 
@@ -230,6 +262,7 @@ class NewBackupOrRestoreVMTest {
     fun `when workInfo transitions to SUCCEEDED on Backup, workflowState updates to SUCCESS and no review event emitted`() =
         runTest {
             viewModel.initVM(Operation.Backup)
+            coEvery { userDetailsRepository.checkPassword(any()) } returns true
             val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.SUCCEEDED }
             workInfoFlow.value = mockWorkInfo
 
@@ -261,6 +294,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo transitions to FAILED, workflowState updates to FAILED`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.FAILED }
         workInfoFlow.value = mockWorkInfo
 
@@ -275,6 +309,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo transitions to BLOCKED, workflowState updates to FAILED`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.BLOCKED }
         workInfoFlow.value = mockWorkInfo
 
@@ -289,6 +324,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo transitions to CANCELLED, workflowState updates to FAILED`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.CANCELLED }
         workInfoFlow.value = mockWorkInfo
 
@@ -303,6 +339,7 @@ class NewBackupOrRestoreVMTest {
     @Test
     fun `when workInfo is null, workflowState updates to FAILED`() = runTest {
         viewModel.initVM(Operation.Backup)
+        coEvery { userDetailsRepository.checkPassword(any()) } returns true
         workInfoFlow.value = null
 
         viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))

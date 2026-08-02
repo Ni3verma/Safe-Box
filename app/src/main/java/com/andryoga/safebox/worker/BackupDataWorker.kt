@@ -157,12 +157,7 @@ class BackupDataWorker
             isSuccess = false
         }
 
-        if (isSuccess) {
-            analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_SUCCESS)
-            return Result.success()
-        } else {
-            return Result.failure()
-        }
+        return if (isSuccess) Result.success() else Result.failure()
     }
 
     private fun sendNotification(notificationOptions: NotificationOptions) {

@@ -10,6 +10,7 @@ import androidx.work.WorkManager
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
@@ -31,6 +32,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewBackupOrRestoreVM @Inject constructor(
+    private val userDetailsRepository: UserDetailsRepository,
     private val workManager: WorkManager,
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val analyticsHelper: AnalyticsHelper,
@@ -68,42 +70,46 @@ class NewBackupOrRestoreVM @Inject constructor(
 
     private fun handlePasswordConfirmedAction(password: String) {
         viewModelScope.launch {
-            when (operation) {
-                Operation.Backup -> {
-                    Timber.i("password confirmed for new backup")
-                    analyticsHelper.logEvent(AnalyticsKey.BACKUP_STARTED)
-                }
+            val isPasswordCheckRequired = operation == Operation.Backup
 
-                is Operation.Restore -> {
-                    Timber.i("password confirmed for new restore")
-                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED)
+            var isPswrdCorrect = false
+            if (isPasswordCheckRequired) {
+                isPswrdCorrect = userDetailsRepository.checkPassword(password)
+                if (isPswrdCorrect.not()) {
+                    updateWorkflowState(WorkflowState.WRONG_PASSWORD)
+                    return@launch
                 }
+            } else {
+                // password check is not required for restore
+                analyticsHelper.logEvent(AnalyticsKey.RESTORE_STARTED)
             }
 
-            Timber.i("enqueuing work req")
-            val requestId = enqueueWorkRequest(password, operation)
-            workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
-                Timber.i("backup/restore work state: ${workInfo?.state}")
-                when (workInfo?.state) {
-                    WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> updateWorkflowState(
-                        WorkflowState.IN_PROGRESS
-                    )
-
-                    WorkInfo.State.SUCCEEDED -> {
-                        if (operation is Operation.Restore) {
-                            _startReviewOnRestoreSuccess.send(Unit)
-                        }
-                        updateWorkflowState(
-                            WorkflowState.SUCCESS
+            if (isPasswordCheckRequired.not() || isPswrdCorrect) {
+                Timber.i("enqueuing work req")
+                val requestId = enqueueWorkRequest(password, operation)
+                workManager.getWorkInfoByIdFlow(requestId).onEach { workInfo ->
+                    Timber.i("backup/restore work state: ${workInfo?.state}")
+                    when (workInfo?.state) {
+                        WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING -> updateWorkflowState(
+                            WorkflowState.IN_PROGRESS
                         )
+
+                        WorkInfo.State.SUCCEEDED -> {
+                            if (operation is Operation.Restore) {
+                                _startReviewOnRestoreSuccess.send(Unit)
+                            }
+                            updateWorkflowState(
+                                WorkflowState.SUCCESS
+                            )
+                        }
+
+                        WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
+                            WorkflowState.FAILED
+                        )
+
                     }
-
-                    WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
-                        WorkflowState.FAILED
-                    )
-
-                }
-            }.launchIn(viewModelScope)
+                }.launchIn(viewModelScope)
+            }
         }
     }
 

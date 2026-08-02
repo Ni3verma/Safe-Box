@@ -182,7 +182,6 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
 
         val createdFiles =
@@ -221,7 +220,6 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
         val createdFiles = tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") }
@@ -284,7 +282,6 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
 
         val oldestFile = File(tempDir, "SafeBoxBackup20260101000000001.bak")
         assertThat(oldestFile.exists()).isFalse()
