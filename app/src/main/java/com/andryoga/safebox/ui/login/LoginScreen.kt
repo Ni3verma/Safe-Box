@@ -189,6 +189,9 @@ internal fun LoginScreen(
                 showDeviceSecurityRequiredDialog = false
                 screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             },
+            onOpenSettingsFailure = {
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+            },
         )
     }
 }

@@ -332,6 +332,15 @@ class LoginViewModelTest {
         }
 
     @Test
+    fun `OnDeviceSecurityRequiredOpenSettingsFailed logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+            }
+        }
+
+    @Test
     fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)

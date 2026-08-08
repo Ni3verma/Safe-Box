@@ -70,6 +70,10 @@ class SettingsViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
             }
 
+            SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+            }
+
             SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
                 analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
             }

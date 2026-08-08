@@ -27,6 +27,9 @@ sealed interface LoginScreenAction {
     // when user clicks open settings in device security required dialog
     object OnDeviceSecurityRequiredOpenSettingsClicked : LoginScreenAction
 
+    // when launching system security settings fails from device security required dialog
+    object OnDeviceSecurityRequiredOpenSettingsFailed : LoginScreenAction
+
     // when user dismisses/cancels device security required dialog
     object OnDeviceSecurityRequiredDismissClicked : LoginScreenAction
 

@@ -57,6 +57,10 @@ class LoginViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
             }
 
+            LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+            }
+
             LoginScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
                 analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
             }

@@ -226,6 +226,9 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
                 showDeviceSecurityRequiredDialog = false
                 onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             },
+            onOpenSettingsFailure = {
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+            },
         )
     }
 }
