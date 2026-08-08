@@ -148,11 +148,6 @@ android {
                     apiLevel = 34
                     systemImageSource = "aosp-atd"
                 }
-                register("pixel2Api24") {
-                    device = "Pixel 2"
-                    apiLevel = 24
-                    systemImageSource = "aosp"
-                }
             }
         }
     }
