@@ -37,6 +37,15 @@ import com.andryoga.safebox.ui.core.MandatoryLabelText
 import com.andryoga.safebox.ui.signup.PasswordValidatorState
 import timber.log.Timber
 
+/**
+ * Dialog enabling the user to set a new Master Password and password hint with validation.
+ *
+ * @param onDismissRequest Invoked when the dialog should be dismissed.
+ * @param onSave Invoked when the user submits valid new credentials (new password and hint).
+ * @param modifier Modifier to be applied to the alert dialog.
+ * @param onShow Invoked once when the dialog is displayed, typically for analytics logging.
+ * @param onCancelClick Invoked when the user explicitly cancels or dismisses the dialog via dismiss button or back-press.
+ */
 @Composable
 fun UpdatePasswordDialog(
     onDismissRequest: () -> Unit,

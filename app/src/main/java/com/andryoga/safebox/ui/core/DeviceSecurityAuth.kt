@@ -4,6 +4,13 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import timber.log.Timber
 
+/**
+ * Helper function to query device authentication capability using the provided [DeviceSecurityAuthProvider].
+ *
+ * @param context Application/Activity context.
+ * @param biometricAuthProvider Provider implementation to delegate capability check to.
+ * @param allowDeviceCredential Whether to include device credentials (PIN/Pattern/Password) in check.
+ */
 fun canAuthenticateUsingDeviceSecurity(
     context: Context,
     biometricAuthProvider: DeviceSecurityAuthProvider = DefaultDeviceSecurityAuthProvider(),
@@ -14,6 +21,9 @@ fun canAuthenticateUsingDeviceSecurity(
     return result
 }
 
+/**
+ * Composable wrapper triggering biometric or device credential authentication via [DeviceSecurityAuthProvider].
+ */
 @Composable
 fun DeviceSecurityAuthHandler(
     title: String? = null,

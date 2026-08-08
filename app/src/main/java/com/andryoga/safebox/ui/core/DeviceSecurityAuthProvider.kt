@@ -30,11 +30,29 @@ val LocalDeviceSecurityAuthProvider = staticCompositionLocalOf<DeviceSecurityAut
 }
 
 interface DeviceSecurityAuthProvider {
+    /**
+     * Checks whether the device supports and has enrolled authenticators.
+     *
+     * @param context Application/Activity context.
+     * @param allowDeviceCredential When true, checks for BIOMETRIC_STRONG or DEVICE_CREDENTIAL (PIN/Pattern/Password).
+     *                              When false, checks strictly for BIOMETRIC_STRONG.
+     * @return True if authentication capability is available, false otherwise.
+     */
     fun canAuthenticate(
         context: Context,
         allowDeviceCredential: Boolean = false,
     ): Boolean
 
+    /**
+     * Triggers the platform BiometricPrompt authentication flow.
+     *
+     * @param title Custom prompt title, or defaults to app login title.
+     * @param subtitle Custom prompt subtitle, or defaults to app verify identity subtitle.
+     * @param allowDeviceCredential When true, enables PIN/Pattern/Password device credential fallback.
+     *                              When false, restricts strictly to biometric and shows negative "Close" button.
+     * @param onSuccess Callback invoked upon successful authentication.
+     * @param onErrorOrCancel Callback invoked upon cancellation or authentication error.
+     */
     @Composable
     fun Authenticate(
         title: String? = null,

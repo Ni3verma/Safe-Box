@@ -7,6 +7,12 @@
 # Keep custom exceptions.
 -keep public class * extends java.lang.Exception
 
+# Preserve class names of UI screen actions for safe action logging via simpleName.
+-keepnames class com.andryoga.safebox.ui..*ScreenAction*
+-keepnames class com.andryoga.safebox.ui..*ScreenAction*$*
+-keepnames class com.andryoga.safebox.ui..*Action*
+-keepnames class com.andryoga.safebox.ui..*Action*$*
+
 -dontwarn java.awt.Component
 -dontwarn java.awt.GraphicsEnvironment
 -dontwarn java.awt.HeadlessException

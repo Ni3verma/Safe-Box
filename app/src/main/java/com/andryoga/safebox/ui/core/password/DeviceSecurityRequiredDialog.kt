@@ -14,6 +14,16 @@ import androidx.compose.ui.res.stringResource
 import com.andryoga.safebox.R
 import timber.log.Timber
 
+/**
+ * Dialog shown when the user attempts an action that requires device-level security (e.g. Master Password update/recovery)
+ * but no secure lock screen (biometric, PIN, pattern, or password) is enrolled on the device.
+ *
+ * @param onDismiss Invoked when the dialog is dismissed after a successful action (e.g., navigating to settings).
+ * @param modifier Modifier to be applied to the alert dialog.
+ * @param onShow Invoked once when the dialog is displayed, typically for analytics logging.
+ * @param onOpenSettingsClick Invoked when the user confirms navigating to Android security settings.
+ * @param onCancelClick Invoked when the user cancels or dismisses the dialog via dismiss button or back-press.
+ */
 @Composable
 fun DeviceSecurityRequiredDialog(
     onDismiss: () -> Unit,
