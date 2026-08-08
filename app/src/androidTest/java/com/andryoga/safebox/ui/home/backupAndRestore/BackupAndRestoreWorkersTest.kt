@@ -19,6 +19,7 @@ import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
@@ -254,7 +255,9 @@ class BackupAndRestoreWorkersTest {
                 .build()
 
             val result = restoreWorker.doWork()
-            assertThat(result).isEqualTo(Result.failure())
+            assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData()))
+            assertThat(RestoreFailureReason.fromWorkData(result.outputData))
+                .isEqualTo(RestoreFailureReason.INCORRECT_PASSWORD)
             assertThat(loginDataRepository.getAllLoginData().first().isEmpty()).isTrue()
         }
 
@@ -285,7 +288,9 @@ class BackupAndRestoreWorkersTest {
                 .build()
 
             val result = restoreWorker.doWork()
-            assertThat(result).isEqualTo(Result.failure())
+            assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
+            assertThat(RestoreFailureReason.fromWorkData(result.outputData))
+                .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE)
         }
 
     @Test

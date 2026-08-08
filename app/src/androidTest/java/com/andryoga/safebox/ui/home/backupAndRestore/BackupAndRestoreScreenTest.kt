@@ -224,6 +224,23 @@ class BackupAndRestoreScreenTest {
     }
 
     @Test
+    fun dialogBodyText_inCorruptFileState_shouldRenderCorruptFileMessage() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                dialogBodyText(
+                    operation = Operation.Restore(null),
+                    workflowState = WorkflowState.CORRUPT_FILE,
+                    password = "",
+                    onPasswordChange = {}
+                ).invoke()
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.restore_corrupt_file_message))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun backupPathPermissionError_shouldDisplaySnackbarWithMessageAndRetryButton() {
         var retryClicked = false
         val snackbarHostState = androidx.compose.material3.SnackbarHostState()

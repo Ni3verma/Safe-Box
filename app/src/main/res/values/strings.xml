@@ -58,22 +58,23 @@
     <string name="backup_path_select_failed_message">Could not access the selected folder. Try creating a new folder for your backups.</string>
     <string name="retry">Retry</string>
     <string name="backup_time">Backup was last taken on %1$s</string>
-    <string name="backup_info_1">* Backup file is encrypted by your current master password\n* Backup is taken every time you login with password</string>
+    <string name="backup_info_1">* Backup is taken every time you login with password and is encrypted by your current master password </string>
     <string name="backup_edit_path">Edit Path</string>
-    <string name="new_backup_dialog_body_text">Please enter your current master password to create a new backup file.</string>
-    <string name="backup_in_progress_message">It may take a while to backup data. Sit back and relax !</string>
-    <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
+    <string name="new_backup_dialog_body_text">Please enter a password to create a new backup file.</string>
+    <string name="backup_in_progress_message">It may take a while to back up data. Sit back and relax !</string>
+    <string name="backup_complete_message">Your backup is complete! Remember the password.</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
-    <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, you have to enter the same master password that was used to make the backup file."</string>
+    <string name="restore_info">"Click below button to select a backup file.\nPlease note that to restore data, enter the same password that was used to create the backup file."</string>
     <string name="new_restore_dialog_body_text">Please enter the password that was used to make the backup file.</string>
     <string name="restore_complete_message">Data has been successfully restored.</string>
     <string name="restore_in_progress_message">It may take a while to restore data. Sit back and relax !</string>
 
     <!--     master password dialog-->
     <string name="incorrect_pswrd_message">Password is incorrect !</string>
-    <string name="failed_message">Something went wrong! Please try again later.</string>
+    <string name="restore_corrupt_file_message">The selected backup file is corrupted or invalid. Please choose a valid backup file.</string>
+    <string name="failed_message">An unexpected error occurred while processing your data.</string>
 
     <!--    Notification-->
     <string name="notification_backup_channel_id">backup data safebox</string>
