@@ -28,7 +28,6 @@ import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
@@ -43,7 +42,6 @@ import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
 import java.security.GeneralSecurityException
 import java.util.Date
-import javax.crypto.AEADBadTagException
 import javax.crypto.BadPaddingException
 import javax.crypto.IllegalBlockSizeException
 
@@ -164,17 +162,13 @@ class RestoreDataWorker
     private fun mapExceptionToFailureReason(exception: Exception): RestoreFailureReason {
         return when (exception) {
             is IOException,
-            is InvalidClassException,
-            is InvalidObjectException,
             is IllegalArgumentException,
             is IllegalStateException,
             is NullPointerException,
             is ClassCastException,
             is BufferUnderflowException,
             is IllegalBlockSizeException,
-            is AEADBadTagException,
-            is GeneralSecurityException,
-            is SerializationException -> RestoreFailureReason.CORRUPT_OR_INVALID_FILE
+            is GeneralSecurityException -> RestoreFailureReason.CORRUPT_OR_INVALID_FILE
 
             else -> RestoreFailureReason.UNKNOWN_ERROR
         }
