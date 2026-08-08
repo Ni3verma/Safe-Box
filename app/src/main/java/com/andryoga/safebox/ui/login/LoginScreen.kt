@@ -162,15 +162,12 @@ internal fun LoginScreen(
 
     if (showUpdatePasswordDialog) {
         UpdatePasswordDialog(
-            onDismissRequest = {
+            onDismiss = {
                 showUpdatePasswordDialog = false
+                screenAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
             },
             onShow = {
                 screenAction(LoginScreenAction.OnUpdatePasswordDialogShown)
-            },
-            onCancelClick = {
-                showUpdatePasswordDialog = false
-                screenAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
             },
             onSave = { newPassword, hint ->
                 showUpdatePasswordDialog = false
@@ -183,16 +180,14 @@ internal fun LoginScreen(
         DeviceSecurityRequiredDialog(
             onDismiss = {
                 showDeviceSecurityRequiredDialog = false
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
             },
             onShow = {
                 screenAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
             },
             onOpenSettingsClick = {
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-            },
-            onCancelClick = {
                 showDeviceSecurityRequiredDialog = false
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             },
         )
     }

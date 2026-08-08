@@ -194,15 +194,12 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
     if (showUpdatePasswordDialog) {
         val successMessage = stringResource(R.string.password_updated_success)
         UpdatePasswordDialog(
-            onDismissRequest = {
+            onDismiss = {
                 showUpdatePasswordDialog = false
+                onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
             },
             onShow = {
                 onScreenAction(SettingsScreenAction.OnUpdatePasswordDialogShown)
-            },
-            onCancelClick = {
-                showUpdatePasswordDialog = false
-                onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
             },
             onSave = { newPassword, hint ->
                 showUpdatePasswordDialog = false
@@ -220,16 +217,14 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
         DeviceSecurityRequiredDialog(
             onDismiss = {
                 showDeviceSecurityRequiredDialog = false
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
             },
             onShow = {
                 onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDialogShown)
             },
             onOpenSettingsClick = {
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-            },
-            onCancelClick = {
                 showDeviceSecurityRequiredDialog = false
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             },
         )
     }

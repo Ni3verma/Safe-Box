@@ -40,19 +40,17 @@ import timber.log.Timber
 /**
  * Dialog enabling the user to set a new Master Password and password hint with validation.
  *
- * @param onDismissRequest Invoked when the dialog should be dismissed.
+ * @param onDismiss Invoked when the dialog should be dismissed or cancelled.
  * @param onSave Invoked when the user submits valid new credentials (new password and hint).
  * @param modifier Modifier to be applied to the alert dialog.
  * @param onShow Invoked once when the dialog is displayed, typically for analytics logging.
- * @param onCancelClick Invoked when the user explicitly cancels or dismisses the dialog via dismiss button or back-press.
  */
 @Composable
 fun UpdatePasswordDialog(
-    onDismissRequest: () -> Unit,
+    onDismiss: () -> Unit,
     onSave: (newPassword: String, hint: String) -> Unit,
     modifier: Modifier = Modifier,
     onShow: () -> Unit = {},
-    onCancelClick: () -> Unit = {},
 ) {
     LaunchedEffect(Unit) {
         onShow()
@@ -82,7 +80,7 @@ fun UpdatePasswordDialog(
     val focusManager = LocalFocusManager.current
 
     AlertDialog(
-        onDismissRequest = onCancelClick,
+        onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.update_password))
         },
@@ -183,7 +181,7 @@ fun UpdatePasswordDialog(
         },
 
         dismissButton = {
-            TextButton(onClick = onCancelClick) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.common_cancel))
             }
         },

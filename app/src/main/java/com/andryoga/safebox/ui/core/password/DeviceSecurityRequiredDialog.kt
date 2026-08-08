@@ -18,26 +18,24 @@ import timber.log.Timber
  * Dialog shown when the user attempts an action that requires device-level security (e.g. Master Password update/recovery)
  * but no secure lock screen (biometric, PIN, pattern, or password) is enrolled on the device.
  *
- * @param onDismiss Invoked when the dialog is dismissed after a successful action (e.g., navigating to settings).
+ * @param onDismiss Invoked when the user cancels or dismisses the dialog via dismiss button or back-press.
+ * @param onOpenSettingsClick Invoked when the user confirms navigating to Android security settings.
  * @param modifier Modifier to be applied to the alert dialog.
  * @param onShow Invoked once when the dialog is displayed, typically for analytics logging.
- * @param onOpenSettingsClick Invoked when the user confirms navigating to Android security settings.
- * @param onCancelClick Invoked when the user cancels or dismisses the dialog via dismiss button or back-press.
  */
 @Composable
 fun DeviceSecurityRequiredDialog(
     onDismiss: () -> Unit,
+    onOpenSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     onShow: () -> Unit = {},
-    onOpenSettingsClick: () -> Unit = {},
-    onCancelClick: () -> Unit = {},
 ) {
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         onShow()
     }
     AlertDialog(
-        onDismissRequest = onCancelClick,
+        onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.device_security_required_title))
         },
@@ -49,7 +47,6 @@ fun DeviceSecurityRequiredDialog(
                 onClick = {
                     Timber.i("opening security settings from DeviceSecurityRequiredDialog")
                     onOpenSettingsClick()
-                    onDismiss()
                     runCatching {
                         context.startActivity(
                             Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
@@ -71,7 +68,7 @@ fun DeviceSecurityRequiredDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onCancelClick) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.common_cancel))
             }
         },
