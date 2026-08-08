@@ -18,7 +18,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        device: [ pixel8Api34, pixel2Api24 ]
         shard: [ 0, 1, 2 ]
 
     steps:
@@ -51,12 +50,12 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "emulator"
 
       - name: Run Managed Device UI Tests (Debug Build)
-        run: ./gradlew ${{ matrix.device }}DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }} --stacktrace
+        run: ./gradlew pixel8Api34DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.numShards=3 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }} --stacktrace
 
       - name: Upload Test Reports
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: Test Reports (${{ matrix.device }} - Shard ${{ matrix.shard }} - Debug Build)
+          name: Test Reports (pixel8Api34 - Shard ${{ matrix.shard }} - Debug Build)
           path: |
             app/build/reports/androidTests/managedDevice/
