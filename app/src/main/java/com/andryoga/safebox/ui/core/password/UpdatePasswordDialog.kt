@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +41,13 @@ import timber.log.Timber
 fun UpdatePasswordDialog(
     onDismissRequest: () -> Unit,
     onSave: (newPassword: String, hint: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShow: () -> Unit = {},
+    onCancelClick: () -> Unit = {},
 ) {
+    LaunchedEffect(Unit) {
+        onShow()
+    }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var hint by rememberSaveable { mutableStateOf("") }
@@ -67,7 +73,7 @@ fun UpdatePasswordDialog(
     val focusManager = LocalFocusManager.current
 
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onCancelClick,
         title = {
             Text(stringResource(R.string.update_password))
         },
@@ -168,7 +174,7 @@ fun UpdatePasswordDialog(
         },
 
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = onCancelClick) {
                 Text(stringResource(R.string.common_cancel))
             }
         },

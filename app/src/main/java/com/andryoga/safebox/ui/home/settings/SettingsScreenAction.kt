@@ -9,4 +9,9 @@ sealed interface SettingsScreenAction {
     object ReviewApp : SettingsScreenAction
     object OpenGithubProject : SettingsScreenAction
     class OnUpdateMasterPassword(val newPassword: String, val hint: String) : SettingsScreenAction
+    object OnDeviceSecurityRequiredDialogShown : SettingsScreenAction
+    object OnDeviceSecurityRequiredOpenSettingsClicked : SettingsScreenAction
+    object OnDeviceSecurityRequiredDismissClicked : SettingsScreenAction
+    object OnUpdatePasswordDialogShown : SettingsScreenAction
+    object OnUpdatePasswordDismissClicked : SettingsScreenAction
 }

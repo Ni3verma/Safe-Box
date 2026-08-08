@@ -44,9 +44,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
-import com.andryoga.safebox.ui.core.BiometricAuthHandler
-import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
-import com.andryoga.safebox.ui.core.canAuthenticateUsingBiometric
+import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
+import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
+import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -76,8 +77,11 @@ internal fun LoginScreen(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit
 ) {
+    val context = LocalContext.current
+    val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
     var showResetPasswordAuth by remember { mutableStateOf(false) }
     var showUpdatePasswordDialog by remember { mutableStateOf(false) }
+    var showDeviceSecurityRequiredDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -109,40 +113,48 @@ internal fun LoginScreen(
                 uiState = uiState,
                 screenAction = screenAction,
                 onForgotPasswordClick = {
-                    Timber.i("forgot password clicked on login screen, starting biometric auth")
-                    showResetPasswordAuth = true
+                    Timber.i("forgot password clicked on login screen, checking device security auth availability")
+                    if (
+                        canAuthenticateUsingDeviceSecurity(
+                            context,
+                            biometricAuthProvider,
+                            allowDeviceCredential = true,
+                        )
+                    ) {
+                        showResetPasswordAuth = true
+                    } else {
+                        showDeviceSecurityRequiredDialog = true
+                    }
                 }
             )
 
         }
     }
 
-    val context = LocalContext.current
-    val biometricAuthProvider = LocalBiometricAuthProvider.current
     LaunchedEffect(Unit) {
-        if (canAuthenticateUsingBiometric(context, biometricAuthProvider)) {
+        if (canAuthenticateUsingDeviceSecurity(context, biometricAuthProvider)) {
             screenAction(LoginScreenAction.BiometricAvailable)
         }
     }
 
     if (uiState.canUnlockWithBiometric) {
-        BiometricAuthHandler(
+        DeviceSecurityAuthHandler(
             onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) },
             onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) }
         )
     }
 
     if (showResetPasswordAuth) {
-        BiometricAuthHandler(
+        DeviceSecurityAuthHandler(
             title = stringResource(R.string.forgot_password),
-            subtitle = stringResource(R.string.forgot_password_biometric_subtitle),
+            subtitle = stringResource(R.string.forgot_password_device_security_subtitle),
+            allowDeviceCredential = true,
             onSuccess = {
-                Timber.i("biometric auth success for forgot password on login screen")
                 showResetPasswordAuth = false
                 showUpdatePasswordDialog = true
             },
             onErrorOrCancel = {
-                Timber.w("biometric auth error or cancel for forgot password on login screen")
+                Timber.w("device security auth error or cancel for forgot password on login screen")
                 showResetPasswordAuth = false
             }
         )
@@ -151,14 +163,37 @@ internal fun LoginScreen(
     if (showUpdatePasswordDialog) {
         UpdatePasswordDialog(
             onDismissRequest = {
-                Timber.i("update password dialog dismissed on login screen")
                 showUpdatePasswordDialog = false
             },
+            onShow = {
+                screenAction(LoginScreenAction.OnUpdatePasswordDialogShown)
+            },
+            onCancelClick = {
+                showUpdatePasswordDialog = false
+                screenAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
+            },
             onSave = { newPassword, hint ->
-                Timber.i("submitting OnResetPassword action from login screen")
                 showUpdatePasswordDialog = false
                 screenAction(LoginScreenAction.OnResetPassword(newPassword, hint))
             }
+        )
+    }
+
+    if (showDeviceSecurityRequiredDialog) {
+        DeviceSecurityRequiredDialog(
+            onDismiss = {
+                showDeviceSecurityRequiredDialog = false
+            },
+            onShow = {
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
+            },
+            onOpenSettingsClick = {
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+            },
+            onCancelClick = {
+                showDeviceSecurityRequiredDialog = false
+                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
+            },
         )
     }
 }

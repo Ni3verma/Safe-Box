@@ -21,4 +21,10 @@ enum class AnalyticsKey(val eventName: String) {
     NEW_LOGIN("new_login"),
     NEW_BANK_ACCOUNT("new_bank_account"),
     UPDATE_PASSWORD("update_password"),
+    DEVICE_SECURITY_REQUIRED_DIALOG_SHOW("device_security_required_dialog_show"),
+    DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK("device_security_required_dialog_open_settings_click"),
+    DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK("device_security_required_dialog_cancel_click"),
+    UPDATE_PASSWORD_DIALOG_SHOW("update_password_dialog_show"),
+    UPDATE_PASSWORD_DIALOG_ALLOW_CLICK("update_password_dialog_allow_click"),
+    UPDATE_PASSWORD_DIALOG_CANCEL_CLICK("update_password_dialog_cancel_click"),
 }

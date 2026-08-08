@@ -10,6 +10,7 @@ import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.worker.BackupDataWorker
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +28,7 @@ class LoginViewModel @Inject constructor(
     private val symmetricKeyUtils: SymmetricKeyUtils,
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
+    private val activeSessionManager: ActiveSessionManager,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -46,11 +48,32 @@ class LoginViewModel @Inject constructor(
             LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
             LoginScreenAction.BiometricError -> onBiometricError()
             is LoginScreenAction.OnResetPassword -> onResetPassword(action.newPassword, action.hint)
+            LoginScreenAction.OnDeviceSecurityRequiredDialogShown -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
+            }
+
+            LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked -> {
+                activeSessionManager.setPaused(true)
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+            }
+
+            LoginScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+            }
+
+            LoginScreenAction.OnUpdatePasswordDialogShown -> {
+                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
+            }
+
+            LoginScreenAction.OnUpdatePasswordDismissClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
+            }
         }
     }
 
     private fun onResetPassword(newPassword: String, hint: String) {
         Timber.i("resetting master password and hint from login screen")
+        analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         viewModelScope.launch {
             userDetailsRepository.updatePasswordAndHint(newPassword, hint)
             Timber.i("master password and hint successfully updated from login screen")
@@ -73,7 +96,7 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun onBiometricSuccess() {
-        Timber.i("biometric success")
+        Timber.i("device security auth success")
         viewModelScope.launch {
             onAuthSuccess(withBiometric = true)
         }

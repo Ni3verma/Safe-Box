@@ -52,6 +52,14 @@
   the top of the file and use clean, short type names.
 * **Analytics & Tracking:** Always define and log appropriate new analytics events using
   `AnalyticsHelper.kt` and `AnalyticsKey.kt` whenever implementing a new feature or user action.
+    * **Dialog & UI Event Analytics Rule:** Whenever creating or displaying any user-facing dialog
+      (such as rationale, confirmation, or security alert dialogs), always define and log specific
+      analytics events in `AnalyticsKey.kt` and `AnalyticsHelper.kt` for dialog display (`*_SHOW`),
+      primary action clicks (`*_ALLOW_CLICK`, `*_OPEN_SETTINGS_CLICK`), and dismissal/cancellation
+      (`*_CANCEL_CLICK`).
+    * **Analytics Unit Verification Rule:** Always write unit tests in the corresponding ViewModel
+      test suites asserting that each UI event action correctly invokes
+      `analyticsHelper.logEvent(AnalyticsKey.X)`.
 
 ## Code Formatting & Style Rules
 

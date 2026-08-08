@@ -13,6 +13,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import io.mockk.MockKAnnotations
@@ -49,6 +50,9 @@ class LoginViewModelTest {
     @MockK(relaxUnitFun = true)
     lateinit var analyticsHelper: AnalyticsHelper
 
+    @MockK(relaxUnitFun = true)
+    lateinit var activeSessionManager: ActiveSessionManager
+
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -66,6 +70,7 @@ class LoginViewModelTest {
             symmetricKeyUtils = symmetricKeyUtils,
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
+            activeSessionManager = activeSessionManager,
             isDebug = true
         )
     }
@@ -88,10 +93,12 @@ class LoginViewModelTest {
             symmetricKeyUtils = symmetricKeyUtils,
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
+            activeSessionManager = activeSessionManager,
             isDebug = false
         )
 
         val uiState = prodViewModel.uiState.value
+
         assertThat(uiState.defaultPassword).isEmpty()
     }
 
@@ -301,8 +308,49 @@ class LoginViewModelTest {
                     userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
                 }
                 coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+                verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK) }
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredDialogShown logs DEVICE_SECURITY_REQUIRED_DIALOG_SHOW event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
+            verify { analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW) }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredOpenSettingsClicked pauses activeSessionManager and logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+            verify { activeSessionManager.setPaused(true) }
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+            }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+            }
+        }
+
+    @Test
+    fun `OnUpdatePasswordDialogShown logs UPDATE_PASSWORD_DIALOG_SHOW event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW) }
+        }
+
+    @Test
+    fun `OnUpdatePasswordDismissClicked logs UPDATE_PASSWORD_DIALOG_CANCEL_CLICK event`() =
+        runTest {
+            viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK) }
         }
 }

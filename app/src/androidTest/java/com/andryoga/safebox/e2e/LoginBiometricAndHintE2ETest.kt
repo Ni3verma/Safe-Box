@@ -66,19 +66,19 @@ class LoginBiometricAndHintE2ETest {
     lateinit var activeSessionManager: ActiveSessionManager
 
     @Inject
-    lateinit var fakeBiometricAuthProvider: com.andryoga.safebox.di.FakeBiometricAuthProvider
+    lateinit var fakeDeviceSecurityAuthProvider: com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Before
     fun setup() {
         hiltRule.inject()
-        fakeBiometricAuthProvider.reset()
+        fakeDeviceSecurityAuthProvider.reset()
     }
 
     @After
     fun tearDown() {
-        fakeBiometricAuthProvider.reset()
+        fakeDeviceSecurityAuthProvider.reset()
         runBlocking {
             settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
             settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
@@ -293,8 +293,8 @@ class LoginBiometricAndHintE2ETest {
     @Test
     fun biometricErrorOrCancellation_shouldResetUiStateAndPreventInfinitePromptLoop() {
         var biometricErrorTriggered = false
-        fakeBiometricAuthProvider.canAuthenticateOverride = true
-        fakeBiometricAuthProvider.authHandlerOverride = { _, onErrorOrCancel ->
+        fakeDeviceSecurityAuthProvider.canAuthenticateOverride = true
+        fakeDeviceSecurityAuthProvider.authHandlerOverride = { _, onErrorOrCancel ->
             biometricErrorTriggered = true
             LaunchedEffect(Unit) {
                 onErrorOrCancel()
@@ -358,7 +358,7 @@ class LoginBiometricAndHintE2ETest {
                 .assertIsDisplayed()
 
             // Assert that biometric prompt/handler was invoked only once, proving no prompt loop occurs
-            assertThat(fakeBiometricAuthProvider.invocationCount).isEqualTo(1)
+            assertThat(fakeDeviceSecurityAuthProvider.invocationCount).isEqualTo(1)
         }
     }
 }

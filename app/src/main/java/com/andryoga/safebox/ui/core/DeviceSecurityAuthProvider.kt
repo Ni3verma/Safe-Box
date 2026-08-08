@@ -17,37 +17,50 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.utils.findActivity
 import javax.inject.Inject
 
-private const val ALLOWED_AUTHENTICATORS =
-    BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
-
-val LocalBiometricAuthProvider = staticCompositionLocalOf<BiometricAuthProvider> {
-    DefaultBiometricAuthProvider()
+private fun getAllowedAuthenticators(allowDeviceCredential: Boolean): Int {
+    return if (allowDeviceCredential) {
+        BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+    } else {
+        BiometricManager.Authenticators.BIOMETRIC_STRONG
+    }
 }
 
-interface BiometricAuthProvider {
-    fun canAuthenticate(context: Context): Boolean
+val LocalDeviceSecurityAuthProvider = staticCompositionLocalOf<DeviceSecurityAuthProvider> {
+    DefaultDeviceSecurityAuthProvider()
+}
+
+interface DeviceSecurityAuthProvider {
+    fun canAuthenticate(
+        context: Context,
+        allowDeviceCredential: Boolean = false,
+    ): Boolean
 
     @Composable
     fun Authenticate(
         title: String? = null,
         subtitle: String? = null,
+        allowDeviceCredential: Boolean = false,
         onSuccess: () -> Unit,
-        onErrorOrCancel: () -> Unit
+        onErrorOrCancel: () -> Unit,
     )
 }
 
-class DefaultBiometricAuthProvider @Inject constructor() : BiometricAuthProvider {
-    override fun canAuthenticate(context: Context): Boolean {
+class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAuthProvider {
+    override fun canAuthenticate(
+        context: Context,
+        allowDeviceCredential: Boolean,
+    ): Boolean {
         return BiometricManager.from(context)
-            .canAuthenticate(ALLOWED_AUTHENTICATORS) == BiometricManager.BIOMETRIC_SUCCESS
+            .canAuthenticate(getAllowedAuthenticators(allowDeviceCredential)) == BiometricManager.BIOMETRIC_SUCCESS
     }
 
     @Composable
     override fun Authenticate(
         title: String?,
         subtitle: String?,
+        allowDeviceCredential: Boolean,
         onSuccess: () -> Unit,
-        onErrorOrCancel: () -> Unit
+        onErrorOrCancel: () -> Unit,
     ) {
         val context = LocalContext.current
         val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
@@ -76,14 +89,24 @@ class DefaultBiometricAuthProvider @Inject constructor() : BiometricAuthProvider
         val defaultSubtitle = stringResource(R.string.biometric_sub_title_text)
         val promptTitle = title ?: defaultTitle
         val promptSubtitle = subtitle ?: defaultSubtitle
-        LaunchedEffect(biometricPrompt, promptTitle, promptSubtitle) {
-            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        val negativeButtonText = stringResource(R.string.biometric_negative_button_text)
+        LaunchedEffect(
+            biometricPrompt,
+            promptTitle,
+            promptSubtitle,
+            allowDeviceCredential,
+            negativeButtonText,
+        ) {
+            val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
                 .setTitle(promptTitle)
                 .setSubtitle(promptSubtitle)
-                .setAllowedAuthenticators(ALLOWED_AUTHENTICATORS)
-                .build()
+                .setAllowedAuthenticators(getAllowedAuthenticators(allowDeviceCredential))
 
-            biometricPrompt.authenticate(promptInfo)
+            if (!allowDeviceCredential) {
+                promptInfoBuilder.setNegativeButtonText(negativeButtonText)
+            }
+
+            biometricPrompt.authenticate(promptInfoBuilder.build())
         }
     }
 }
