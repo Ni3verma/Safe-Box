@@ -9,6 +9,7 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coVerify
@@ -37,6 +38,9 @@ class SettingsViewModelTest {
     @RelaxedMockK
     lateinit var userDetailsRepository: UserDetailsRepository
 
+    @RelaxedMockK
+    lateinit var activeSessionManager: ActiveSessionManager
+
     private lateinit var viewModel: SettingsViewModel
 
     private val settingsFlow = MutableStateFlow(Settings())
@@ -49,6 +53,7 @@ class SettingsViewModelTest {
             settingsDataStore,
             analyticsHelper,
             userDetailsRepository,
+            activeSessionManager,
         )
     }
 
@@ -149,5 +154,55 @@ class SettingsViewModelTest {
             coVerify {
                 userDetailsRepository.updatePasswordAndHint("UpdatedPass@@123", "updated hint")
             }
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK) }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredDialogShown logs DEVICE_SECURITY_REQUIRED_DIALOG_SHOW event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDialogShown)
+            verify { analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW) }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredOpenSettingsClicked pauses activeSessionManager and logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+            verify { activeSessionManager.setPaused(true) }
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+            }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredOpenSettingsFailed logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+            }
+        }
+
+    @Test
+    fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
+            verify {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+            }
+        }
+
+    @Test
+    fun `OnUpdatePasswordDialogShown logs UPDATE_PASSWORD_DIALOG_SHOW event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnUpdatePasswordDialogShown)
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW) }
+        }
+
+    @Test
+    fun `OnUpdatePasswordDismissClicked logs UPDATE_PASSWORD_DIALOG_CANCEL_CLICK event`() =
+        runTest {
+            viewModel.onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
+            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK) }
         }
 }

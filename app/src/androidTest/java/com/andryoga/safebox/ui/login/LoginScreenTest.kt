@@ -15,8 +15,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
-import com.andryoga.safebox.di.FakeBiometricAuthProvider
-import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
+import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -266,14 +266,15 @@ class LoginScreenTest {
             }
         }
 
-        // Verify that when canUnlockWithBiometric is true, the screen supports BiometricAuthHandler setup and renders properly.
+        // Verify that when canUnlockWithBiometric is true, the screen supports DeviceSecurityAuthHandler setup and renders properly.
         // Note: The Android BiometricPrompt is a platform-level window outside the Compose semantics tree, so we test its state configuration in component/unit tiers while suppressing it via ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING=0 in E2E journey tests to guarantee CI stability.
         composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
     }
 
     @Test
     fun forgotPasswordClick_shouldShowUpdatePasswordDialogWhenAuthSucceeds() {
-        val fakeAuthProvider = FakeBiometricAuthProvider().apply {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
+            canAuthenticateOverride = true
             authHandlerOverride = { onSuccess, _ ->
                 onSuccess()
             }
@@ -281,7 +282,7 @@ class LoginScreenTest {
         var emittedAction: LoginScreenAction? = null
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalBiometricAuthProvider provides fakeAuthProvider) {
+            CompositionLocalProvider(LocalDeviceSecurityAuthProvider provides fakeAuthProvider) {
                 SafeBoxTheme {
                     LoginScreen(
                         uiState = LoginUiState(),
@@ -326,5 +327,33 @@ class LoginScreenTest {
         val resetAction = emittedAction as LoginScreenAction.OnResetPassword
         assertThat(resetAction.newPassword).isEqualTo("NewPass@@123")
         assertThat(resetAction.hint).isEqualTo("updated hint")
+    }
+
+    @Test
+    fun forgotPasswordClick_whenNoDeviceAuthEnrolled_shouldShowDeviceSecurityRequiredDialog() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
+            canAuthenticateOverride = false
+        }
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalDeviceSecurityAuthProvider provides fakeAuthProvider) {
+                SafeBoxTheme {
+                    LoginScreen(
+                        uiState = LoginUiState(),
+                        screenAction = {}
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.forgot_password))
+            .assertIsDisplayed()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.device_security_required_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.open_settings))
+            .assertIsDisplayed()
     }
 }

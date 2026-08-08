@@ -7,6 +7,7 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
     private val userDetailsRepository: UserDetailsRepository,
+    private val activeSessionManager: ActiveSessionManager,
 ) : ViewModel() {
 
     val uiState: StateFlow<Settings> = settingsDataStore.settingsFlow
@@ -58,6 +60,31 @@ class SettingsViewModel @Inject constructor(
             SettingsScreenAction.SendFeedback -> {
                 analyticsHelper.logEvent(AnalyticsKey.EMAIL_FEEDBACK)
             }
+
+            SettingsScreenAction.OnDeviceSecurityRequiredDialogShown -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
+            }
+
+            SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked -> {
+                activeSessionManager.setPaused(true)
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+            }
+
+            SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+            }
+
+            SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+            }
+
+            SettingsScreenAction.OnUpdatePasswordDialogShown -> {
+                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
+            }
+
+            SettingsScreenAction.OnUpdatePasswordDismissClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
+            }
         }
     }
 
@@ -71,8 +98,8 @@ class SettingsViewModel @Inject constructor(
 
     private fun updateAutoBackupAfterPasswordLogin(value: Boolean) =
         viewModelScope.launch {
-        settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
-    }
+            settingsDataStore.updateAutoBackupAfterPasswordLogin(value)
+        }
 
     private fun updatePasswordAfterXBiometricLogin(value: Int) =
         viewModelScope.launch {
@@ -82,6 +109,7 @@ class SettingsViewModel @Inject constructor(
     private fun updateMasterPassword(newPassword: String, hint: String) =
         viewModelScope.launch {
             Timber.i("updating master password and hint from settings screen")
+            analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
             userDetailsRepository.updatePasswordAndHint(newPassword, hint)
             Timber.i("master password and hint successfully updated from settings screen")
         }

@@ -16,7 +16,8 @@ auto_describe = true
 auto_improve = true
 handle_push_trigger = true
 push_commands = [
-    "/review"
+    "/review",
+    "/improve"
 ]
 
 [pr_description]
@@ -26,3 +27,7 @@ generate_ai_title = true
 num_max_findings = 20
 require_score_review = true
 require_tests_review = true
+
+[pr_code_suggestions]
+num_code_suggestions_per_chunk = 8
+commitable_code_suggestions = true

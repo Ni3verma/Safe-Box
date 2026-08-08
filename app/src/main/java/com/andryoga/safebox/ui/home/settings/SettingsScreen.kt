@@ -31,8 +31,11 @@ import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.ui.MainViewModel
-import com.andryoga.safebox.ui.core.BiometricAuthHandler
+import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
+import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.core.TopAppBarConfig
+import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
+import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
 import com.andryoga.safebox.ui.home.settings.components.SliderPreference
 import com.andryoga.safebox.ui.home.settings.components.SwitchPreference
@@ -73,8 +76,10 @@ fun SettingsScreenRoot(mainViewModel: MainViewModel) {
 @Composable
 fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> Unit) {
     val scrollState = rememberScrollState()
+    val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
     var showAuthForPasswordChange by remember { mutableStateOf(false) }
     var showUpdatePasswordDialog by remember { mutableStateOf(false) }
+    var showDeviceSecurityRequiredDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Column(
@@ -125,8 +130,18 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             title = stringResource(R.string.change_master_password),
             body = stringResource(R.string.change_master_password_body),
             onTap = {
-                Timber.i("change master password clicked on settings screen, starting biometric auth")
-                showAuthForPasswordChange = true
+                Timber.i("change master password clicked on settings screen, checking device security auth availability")
+                if (
+                    canAuthenticateUsingDeviceSecurity(
+                        context,
+                        biometricAuthProvider,
+                        allowDeviceCredential = true,
+                    )
+                ) {
+                    showAuthForPasswordChange = true
+                } else {
+                    showDeviceSecurityRequiredDialog = true
+                }
             },
         )
 
@@ -161,16 +176,16 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
     }
 
     if (showAuthForPasswordChange) {
-        BiometricAuthHandler(
+        DeviceSecurityAuthHandler(
             title = stringResource(R.string.change_master_password),
             subtitle = stringResource(R.string.change_master_password_body),
+            allowDeviceCredential = true,
             onSuccess = {
-                Timber.i("biometric auth success for change master password on settings screen")
                 showAuthForPasswordChange = false
                 showUpdatePasswordDialog = true
             },
             onErrorOrCancel = {
-                Timber.w("biometric auth error or cancel for change master password on settings screen")
+                Timber.w("device security auth error or cancel for change master password on settings screen")
                 showAuthForPasswordChange = false
             }
         )
@@ -179,12 +194,14 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
     if (showUpdatePasswordDialog) {
         val successMessage = stringResource(R.string.password_updated_success)
         UpdatePasswordDialog(
-            onDismissRequest = {
-                Timber.i("update password dialog dismissed on settings screen")
+            onDismiss = {
                 showUpdatePasswordDialog = false
+                onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
+            },
+            onShow = {
+                onScreenAction(SettingsScreenAction.OnUpdatePasswordDialogShown)
             },
             onSave = { newPassword, hint ->
-                Timber.i("submitting OnUpdateMasterPassword action from settings screen")
                 showUpdatePasswordDialog = false
                 onScreenAction(SettingsScreenAction.OnUpdateMasterPassword(newPassword, hint))
                 Toast.makeText(
@@ -193,6 +210,25 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
                     Toast.LENGTH_SHORT,
                 ).show()
             }
+        )
+    }
+
+    if (showDeviceSecurityRequiredDialog) {
+        DeviceSecurityRequiredDialog(
+            onDismiss = {
+                showDeviceSecurityRequiredDialog = false
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
+            },
+            onShow = {
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDialogShown)
+            },
+            onOpenSettingsClick = {
+                showDeviceSecurityRequiredDialog = false
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+            },
+            onOpenSettingsFailure = {
+                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+            },
         )
     }
 }

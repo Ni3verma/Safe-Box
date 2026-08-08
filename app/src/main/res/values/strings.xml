@@ -157,7 +157,7 @@
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Forgot Password?</string>
-    <string name="forgot_password_biometric_subtitle">Authenticate to reset master password</string>
+    <string name="forgot_password_device_security_subtitle">Authenticate to reset master password</string>
     <string name="update_password">Update Master Password</string>
     <string name="new_password">New Password</string>
     <string name="confirm_new_password">Confirm New Password</string>
@@ -165,4 +165,7 @@
     <string name="change_master_password">Change Master Password</string>
     <string name="change_master_password_body">Update your master password and hint</string>
     <string name="password_updated_success">Master password updated successfully</string>
+    <string name="device_security_required_title">Device Security Required</string>
+    <string name="device_security_required_body">Please enable device security (PIN, pattern, password, or biometrics) in your Android Settings to verify your identity before changing your master password.</string>
+    <string name="open_settings">Open Settings</string>
 </resources>

@@ -31,7 +31,7 @@ class UpdatePasswordDialogTest {
         composeTestRule.setContent {
             SafeBoxTheme {
                 UpdatePasswordDialog(
-                    onDismissRequest = {},
+                    onDismiss = {},
                     onSave = { _, _ -> }
                 )
             }
@@ -46,7 +46,7 @@ class UpdatePasswordDialogTest {
         composeTestRule.setContent {
             SafeBoxTheme {
                 UpdatePasswordDialog(
-                    onDismissRequest = {},
+                    onDismiss = {},
                     onSave = { _, _ -> }
                 )
             }
@@ -71,7 +71,7 @@ class UpdatePasswordDialogTest {
         composeTestRule.setContent {
             SafeBoxTheme {
                 UpdatePasswordDialog(
-                    onDismissRequest = {},
+                    onDismiss = {},
                     onSave = { _, _ -> }
                 )
             }
@@ -107,7 +107,7 @@ class UpdatePasswordDialogTest {
         composeTestRule.setContent {
             SafeBoxTheme {
                 UpdatePasswordDialog(
-                    onDismissRequest = {},
+                    onDismiss = {},
                     onSave = { pswrd, hnt ->
                         savedPassword = pswrd
                         savedHint = hnt
@@ -140,5 +140,25 @@ class UpdatePasswordDialogTest {
 
         assertThat(savedPassword).isEqualTo("ValidPass@@123")
         assertThat(savedHint).isEqualTo("my hint")
+    }
+
+    @Test
+    fun cancelButtonClick_shouldTriggerOnDismiss() {
+        var dismissCalled = false
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                UpdatePasswordDialog(
+                    onDismiss = { dismissCalled = true },
+                    onSave = { _, _ -> }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.common_cancel))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(dismissCalled).isTrue()
     }
 }

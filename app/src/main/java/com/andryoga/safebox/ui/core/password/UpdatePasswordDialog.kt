@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,12 +37,24 @@ import com.andryoga.safebox.ui.core.MandatoryLabelText
 import com.andryoga.safebox.ui.signup.PasswordValidatorState
 import timber.log.Timber
 
+/**
+ * Dialog enabling the user to set a new Master Password and password hint with validation.
+ *
+ * @param onDismiss Invoked when the dialog should be dismissed or cancelled.
+ * @param onSave Invoked when the user submits valid new credentials (new password and hint).
+ * @param modifier Modifier to be applied to the alert dialog.
+ * @param onShow Invoked once when the dialog is displayed, typically for analytics logging.
+ */
 @Composable
 fun UpdatePasswordDialog(
-    onDismissRequest: () -> Unit,
+    onDismiss: () -> Unit,
     onSave: (newPassword: String, hint: String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onShow: () -> Unit = {},
 ) {
+    LaunchedEffect(Unit) {
+        onShow()
+    }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var hint by rememberSaveable { mutableStateOf("") }
@@ -67,7 +80,7 @@ fun UpdatePasswordDialog(
     val focusManager = LocalFocusManager.current
 
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = onDismiss,
         title = {
             Text(stringResource(R.string.update_password))
         },
@@ -168,7 +181,7 @@ fun UpdatePasswordDialog(
         },
 
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.common_cancel))
             }
         },

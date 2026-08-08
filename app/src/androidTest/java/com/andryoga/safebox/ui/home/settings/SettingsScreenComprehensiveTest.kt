@@ -19,8 +19,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.Settings
-import com.andryoga.safebox.di.FakeBiometricAuthProvider
-import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
+import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -108,13 +108,13 @@ class SettingsScreenComprehensiveTest {
     }
 
     @Test
-    fun sliderPreference_forBiometricLogins_shouldRenderFormattedTitleAndEmitUpdateActionOnProgressChange() {
+    fun sliderPreference_forBiometricLimit_shouldRenderFormattedTitleAndEmitUpdateActionOnProgressChange() {
         var emittedAction: SettingsScreenAction? = null
         composeTestRule.setContent {
             SafeBoxTheme {
                 SettingsScreen(
                     uiState = Settings(passwordAfterXBiometricLogins = 5),
-                    onScreenAction = { emittedAction = it }
+                    onScreenAction = { emittedAction = it },
                 )
             }
         }
@@ -212,7 +212,8 @@ class SettingsScreenComprehensiveTest {
 
     @Test
     fun changeMasterPasswordClick_shouldShowUpdatePasswordDialogAndEmitActionWhenAuthSucceeds() {
-        val fakeAuthProvider = FakeBiometricAuthProvider().apply {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
+            canAuthenticateOverride = true
             authHandlerOverride = { onSuccess, _ ->
                 onSuccess()
             }
@@ -220,7 +221,7 @@ class SettingsScreenComprehensiveTest {
         var emittedAction: SettingsScreenAction? = null
 
         composeTestRule.setContent {
-            CompositionLocalProvider(LocalBiometricAuthProvider provides fakeAuthProvider) {
+            CompositionLocalProvider(LocalDeviceSecurityAuthProvider provides fakeAuthProvider) {
                 SafeBoxTheme {
                     SettingsScreen(
                         uiState = Settings(),
@@ -265,5 +266,33 @@ class SettingsScreenComprehensiveTest {
         val updateAction = emittedAction as SettingsScreenAction.OnUpdateMasterPassword
         assertThat(updateAction.newPassword).isEqualTo("NewPass@@123")
         assertThat(updateAction.hint).isEqualTo("updated hint")
+    }
+
+    @Test
+    fun changeMasterPasswordClick_whenNoDeviceAuthEnrolled_shouldShowDeviceSecurityRequiredDialog() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
+            canAuthenticateOverride = false
+        }
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalDeviceSecurityAuthProvider provides fakeAuthProvider) {
+                SafeBoxTheme {
+                    SettingsScreen(
+                        uiState = Settings(),
+                        onScreenAction = {}
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.change_master_password))
+            .performScrollTo()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.device_security_required_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.open_settings))
+            .assertIsDisplayed()
     }
 }

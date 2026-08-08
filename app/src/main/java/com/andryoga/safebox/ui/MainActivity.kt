@@ -8,8 +8,8 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import com.andryoga.safebox.ui.core.BiometricAuthProvider
-import com.andryoga.safebox.ui.core.LocalBiometricAuthProvider
+import com.andryoga.safebox.ui.core.DeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.navigation.AppNavigation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,7 +23,7 @@ class MainActivity : FragmentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     @Inject
-    lateinit var biometricAuthProvider: BiometricAuthProvider
+    lateinit var biometricAuthProvider: DeviceSecurityAuthProvider
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +40,7 @@ class MainActivity : FragmentActivity() {
         }
         enableEdgeToEdge()
         setContent {
-            CompositionLocalProvider(LocalBiometricAuthProvider provides biometricAuthProvider) {
+            CompositionLocalProvider(LocalDeviceSecurityAuthProvider provides biometricAuthProvider) {
                 SafeBoxTheme {
                     AppNavigation()
                 }
