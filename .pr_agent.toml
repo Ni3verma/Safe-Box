@@ -27,8 +27,7 @@ generate_ai_title = true
 num_max_findings = 20
 require_score_review = true
 require_tests_review = true
-inline_code_comments = true
 
 [pr_code_suggestions]
-num_code_suggestions = 8
+num_code_suggestions_per_chunk = 8
 commitable_code_suggestions = true
