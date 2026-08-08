@@ -98,9 +98,19 @@ class NewBackupOrRestoreVM @Inject constructor(
                         )
                     }
 
-                    WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> updateWorkflowState(
-                        WorkflowState.FAILED
-                    )
+                    WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> {
+                        val targetState =
+                            if (operation is Operation.Restore && workInfo?.state == WorkInfo.State.FAILED) {
+                                when (RestoreFailureReason.fromWorkData(workInfo.outputData)) {
+                                    RestoreFailureReason.INCORRECT_PASSWORD -> WorkflowState.WRONG_PASSWORD
+                                    RestoreFailureReason.CORRUPT_OR_INVALID_FILE -> WorkflowState.CORRUPT_FILE
+                                    RestoreFailureReason.UNKNOWN_ERROR -> WorkflowState.FAILED
+                                }
+                            } else {
+                                WorkflowState.FAILED
+                            }
+                        updateWorkflowState(targetState)
+                    }
 
                 }
             }.launchIn(viewModelScope)

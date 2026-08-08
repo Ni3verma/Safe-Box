@@ -20,6 +20,7 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -200,7 +201,9 @@ class RestoreDataWorkerTest {
         val worker = buildWorker(inputData)
         val result = worker.doWork()
 
-        assertThat(result).isEqualTo(Result.failure())
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData()))
+        assertThat(RestoreFailureReason.fromWorkData(result.outputData))
+            .isEqualTo(RestoreFailureReason.INCORRECT_PASSWORD)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD)).isTrue()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
     }
@@ -220,7 +223,9 @@ class RestoreDataWorkerTest {
         val worker = buildWorker(inputData)
         val result = worker.doWork()
 
-        assertThat(result).isEqualTo(Result.failure())
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
+        assertThat(RestoreFailureReason.fromWorkData(result.outputData))
+            .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isTrue()
     }
 
@@ -229,7 +234,9 @@ class RestoreDataWorkerTest {
         val worker = buildWorker(Data.EMPTY)
         val result = worker.doWork()
 
-        assertThat(result).isEqualTo(Result.failure())
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
+        assertThat(RestoreFailureReason.fromWorkData(result.outputData))
+            .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isTrue()
     }
 }

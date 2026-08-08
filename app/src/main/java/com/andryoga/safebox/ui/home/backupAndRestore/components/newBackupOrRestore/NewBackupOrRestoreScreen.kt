@@ -131,7 +131,8 @@ private fun dialogIconComposable(
                 tint = MaterialTheme.colorScheme.primary
             )
 
-            WorkflowState.FAILED -> Icon(
+            WorkflowState.FAILED,
+            WorkflowState.CORRUPT_FILE -> Icon(
                 Icons.Filled.ErrorOutline,
                 contentDescription = null,
                 modifier = modifier,
@@ -147,10 +148,14 @@ private fun cancelButtonComposable(
     onDismiss: () -> Unit
 ): @Composable (() -> Unit) {
     return when (workflowState) {
-        WorkflowState.WRONG_PASSWORD, WorkflowState.FAILED, WorkflowState.ASK_FOR_PASSWORD, WorkflowState.SUCCESS -> {
+        WorkflowState.WRONG_PASSWORD,
+        WorkflowState.FAILED,
+        WorkflowState.CORRUPT_FILE,
+        WorkflowState.ASK_FOR_PASSWORD,
+        WorkflowState.SUCCESS -> {
             {
                 val textResId = when (workflowState) {
-                    WorkflowState.SUCCESS, WorkflowState.FAILED -> R.string.common_ok
+                    WorkflowState.SUCCESS, WorkflowState.FAILED, WorkflowState.CORRUPT_FILE -> R.string.common_ok
                     else -> R.string.common_cancel
                 }
 
@@ -210,6 +215,15 @@ fun dialogBodyText(
                     workflowState = workflowState,
                     password = password,
                     onPasswordChange = onPasswordChange
+                )
+            }
+        }
+
+        WorkflowState.CORRUPT_FILE -> {
+            {
+                Text(
+                    text = stringResource(R.string.restore_corrupt_file_message),
+                    fontWeight = FontWeight.Medium
                 )
             }
         }

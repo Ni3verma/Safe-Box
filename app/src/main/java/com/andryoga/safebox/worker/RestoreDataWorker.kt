@@ -25,20 +25,27 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.io.InvalidClassException
 import java.io.InvalidObjectException
 import java.io.ObjectInputStream
 import java.io.ObjectStreamClass
+import java.nio.BufferUnderflowException
 import java.nio.ByteBuffer
+import java.security.GeneralSecurityException
 import java.util.Date
+import javax.crypto.AEADBadTagException
 import javax.crypto.BadPaddingException
+import javax.crypto.IllegalBlockSizeException
 
 @HiltWorker
 class RestoreDataWorker
@@ -146,10 +153,30 @@ class RestoreDataWorker
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD) {
                 param(AnalyticsParam.VERSION, version)
             }
-            Result.failure()
+            Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData())
         } catch (exception: Exception) {
             onRestoreError(exception)
-            Result.failure()
+            val failureReason = mapExceptionToFailureReason(exception)
+            Result.failure(failureReason.toWorkData())
+        }
+    }
+
+    private fun mapExceptionToFailureReason(exception: Exception): RestoreFailureReason {
+        return when (exception) {
+            is IOException,
+            is InvalidClassException,
+            is InvalidObjectException,
+            is IllegalArgumentException,
+            is IllegalStateException,
+            is NullPointerException,
+            is ClassCastException,
+            is BufferUnderflowException,
+            is IllegalBlockSizeException,
+            is AEADBadTagException,
+            is GeneralSecurityException,
+            is SerializationException -> RestoreFailureReason.CORRUPT_OR_INVALID_FILE
+
+            else -> RestoreFailureReason.UNKNOWN_ERROR
         }
     }
 

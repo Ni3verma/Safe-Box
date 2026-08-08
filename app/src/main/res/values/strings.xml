@@ -62,7 +62,7 @@
     <string name="backup_edit_path">Edit Path</string>
     <string name="new_backup_dialog_body_text">Please enter a password to create a new backup file.</string>
     <string name="backup_in_progress_message">It may take a while to back up data. Sit back and relax !</string>
-    <string name="backup_complete_message">Your backup is complete! It is protected by your current password.</string>
+    <string name="backup_complete_message">Your backup is complete! Remember the password.</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
@@ -73,7 +73,8 @@
 
     <!--     master password dialog-->
     <string name="incorrect_pswrd_message">Password is incorrect !</string>
-    <string name="failed_message">Something went wrong! Please try again later.</string>
+    <string name="restore_corrupt_file_message">The selected backup file is corrupted or invalid. Please choose a valid backup file.</string>
+    <string name="failed_message">An unexpected error occurred while processing your data.</string>
 
     <!--    Notification-->
     <string name="notification_backup_channel_id">backup data safebox</string>

@@ -14,6 +14,9 @@ enum class WorkflowState {
     // incorrect password entered by the user. show error.
     WRONG_PASSWORD,
 
+    // selected backup file is corrupted or has an invalid structure.
+    CORRUPT_FILE,
+
     // backup/restore job is in progress
     IN_PROGRESS,
 
