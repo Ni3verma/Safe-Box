@@ -1,7 +1,7 @@
 [config]
 model = "gemini/gemini-3.6-flash"
 fallback_models = ["gemini/gemini-3.5-flash", "gemini/gemini-2.5-flash", "gemini/gemini-2.0-flash", "gemini/gemini-3.1-pro"]
-restricted_mode = true
+restricted_mode = false
 
 [github_app]
 pr_commands = [
@@ -16,7 +16,8 @@ auto_describe = true
 auto_improve = true
 handle_push_trigger = true
 push_commands = [
-    "/review"
+    "/review",
+    "/improve"
 ]
 
 [pr_description]
@@ -26,3 +27,9 @@ generate_ai_title = true
 num_max_findings = 20
 require_score_review = true
 require_tests_review = true
+inline_code_comments = true
+
+[pr_code_suggestions]
+num_code_suggestions = 8
+commitable_code_suggestions = true
+demand_code_suggestions_per_file = true
