@@ -51,10 +51,18 @@ fun DeviceSecurityRequiredDialog(
                     onOpenSettingsClick()
                     onDismiss()
                     runCatching {
-                        context.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                        context.startActivity(
+                            Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                        )
                     }.onFailure {
                         runCatching {
-                            context.startActivity(Intent(Settings.ACTION_SETTINGS))
+                            context.startActivity(
+                                Intent(Settings.ACTION_SETTINGS).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            )
                         }
                     }
                 },
