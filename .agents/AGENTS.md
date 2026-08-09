@@ -5,6 +5,11 @@
 - **NEVER remove existing comments or docstrings** unless the user explicitly requests their
   removal.
 - Preserve all existing architectural context, explanatory comments, and KDoc blocks.
+- **KDoc & Documentation for New Files:** Always add clear, informative class-level KDoc comments to
+  all newly created classes, interfaces, objects, and enums explaining their architectural purpose.
+  Add method-level docstrings with `@param` / `@return` explanations for non-obvious methods,
+  cryptographic algorithms, parsing logic, or complex mathematical transformations (avoid redundant
+  comments on trivial getters/setters).
 - Feel free to modify, clarify, or add new well-structured comments to make the code more readable
   and self-documenting where required.
 
