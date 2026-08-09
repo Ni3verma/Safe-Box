@@ -34,7 +34,7 @@ jobs:
           path: app/build/reports/lint-results-release.html
 
       - name: Run Unit Tests
-        run: ./gradlew testReleaseUnitTest
+        run: ./gradlew testDebugUnitTest
 
       - name: Enable KVM hardware acceleration
         run: |
@@ -51,7 +51,7 @@ jobs:
         with:
           name: Test Reports (Unit & UI)
           path: |
-            app/build/reports/tests/testReleaseUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
             app/build/reports/androidTests/managedDevice/
 
       - name: Verify NDK Gatekeeper
