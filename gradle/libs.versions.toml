@@ -14,8 +14,8 @@ kotlinxCoroutineTest = "1.11.0"
 truth = "1.4.5"
 turbine = "1.2.1"
 
-composeBom = "2026.06.01"
-firebaseBom = "34.17.0"
+composeBom = "2026.08.00"
+firebaseBom = "34.18.0"
 
 kotlinComposeCompiler = "2.4.10"
 ksp = "2.3.10"
