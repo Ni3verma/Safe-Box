@@ -2,7 +2,7 @@
 androidGradlePlugin = "9.4.0"
 kotlinGradlePlugin = "2.4.10"
 googleServicesGradlePlugin = "4.5.0"
-crashlyticsGradlePlugin = "3.0.7"
+crashlyticsGradlePlugin = "3.0.8"
 detektGradlePlugin = "1.23.8"
 
 junit = "4.13.2"
@@ -18,7 +18,7 @@ composeBom = "2026.08.00"
 firebaseBom = "34.18.0"
 
 kotlinComposeCompiler = "2.4.10"
-ksp = "2.3.10"
+ksp = "2.3.11"
 kotlinSerialization = "2.4.10"
 coreKtx = "1.19.0"
 lifecycleRuntimeKtx = "2.11.0"
