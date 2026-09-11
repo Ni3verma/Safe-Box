@@ -18,6 +18,8 @@ interface AuthenticatorDataDao {
     @Upsert
     suspend fun upsertAuthenticatorData(authenticatorDataEntity: AuthenticatorDataEntity)
 
+    // https://github.com/Ni3verma/Safe-Box/issues/236
+    // TODO: Migrate bulk operations across all DAOs to suspend functions and switch RestoreDataWorker to RoomDatabase.withTransaction
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertMultipleAuthenticatorData(authenticatorDataEntity: List<AuthenticatorDataEntity>)
 
@@ -33,6 +35,8 @@ interface AuthenticatorDataDao {
     @Query("select * from authenticator_data")
     suspend fun exportAllData(): List<ExportAuthenticatorData>
 
+    // https://github.com/Ni3verma/Safe-Box/issues/236
+    // TODO: Migrate to suspend function alongside other DAOs
     @Query("delete from authenticator_data")
     fun deleteAllData()
 }
