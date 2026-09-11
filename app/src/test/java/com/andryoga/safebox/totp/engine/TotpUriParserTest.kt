@@ -87,12 +87,14 @@ class TotpUriParserTest {
     }
 
     @Test
-    fun parse_withInvalidBase32Secret_throwsIllegalArgumentException() {
-        val uri = "otpauth://totp/Google:alex@gmail.com?secret=InvalidSecret0189"
+    fun parse_withInvalidBase32Secret_throwsIllegalArgumentExceptionWithoutLeakingSecret() {
+        val secret = "InvalidSecret0189"
+        val uri = "otpauth://totp/Google:alex@gmail.com?secret=$secret"
 
-        assertThrows(IllegalArgumentException::class.java) {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
             TotpUriParser.parse(uri)
         }
+        assertThat(exception.message).doesNotContain(secret)
     }
 
     @Test

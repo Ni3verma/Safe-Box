@@ -27,7 +27,7 @@ object TotpUriParser {
         val uri = try {
             URI(sanitizedUriString)
         } catch (e: Exception) {
-            throw IllegalArgumentException("Malformed URI: $uriString", e)
+            throw IllegalArgumentException("Malformed OTP URI", e)
         }
 
         require(uri.scheme?.equals("otpauth", ignoreCase = true) == true) {
@@ -47,7 +47,7 @@ object TotpUriParser {
         }
         val cleanSecret = rawSecret.replace(" ", "").replace("-", "").uppercase()
         require(Base32Utils.isValidBase32(cleanSecret)) {
-            "Invalid Base32 secret key in OTP URI: $rawSecret"
+            "Invalid Base32 secret key in OTP URI"
         }
 
         val decodedLabel = uri.path?.trimStart('/') ?: ""

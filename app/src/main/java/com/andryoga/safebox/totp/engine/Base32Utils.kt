@@ -31,7 +31,7 @@ object Base32Utils {
         for (char in sanitized) {
             val charIndex = BASE32_CHARS.indexOf(char)
             if (charIndex == -1) {
-                throw IllegalArgumentException("Invalid Base32 character encountered: $char")
+                throw IllegalArgumentException("Invalid Base32 character encountered")
             }
 
             buffer = (buffer shl 5) or charIndex
