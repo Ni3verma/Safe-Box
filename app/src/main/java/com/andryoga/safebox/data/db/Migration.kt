@@ -111,4 +111,22 @@ object Migration {
             Timber.i("$migrationMessage success")
         }
     }
+
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            val migrationMessage = "migration from 4 to 5"
+            Timber.i(migrationMessage)
+
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `authenticator_data` (" +
+                        "`key` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`title` TEXT NOT NULL, " +
+                        "`secretKey` TEXT NOT NULL, " +
+                        "`creationDate` INTEGER NOT NULL, " +
+                        "`updateDate` INTEGER NOT NULL)"
+            )
+
+            Timber.i("$migrationMessage success")
+        }
+    }
 }

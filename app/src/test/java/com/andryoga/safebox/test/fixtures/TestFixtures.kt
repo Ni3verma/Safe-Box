@@ -1,13 +1,16 @@
 package com.andryoga.safebox.test.fixtures
 
+import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
@@ -15,6 +18,7 @@ import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.domain.models.backup.BackupPathData
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
@@ -366,5 +370,57 @@ object TestFixtures {
         notes = notes,
         creationDate = creationDate,
         updateDate = updateDate
+    )
+
+    fun createTestAuthenticatorData(
+        id: Int? = 1,
+        title: String = "GitHub 2FA",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = fixedDate,
+        updateDate: Date = fixedDate,
+    ) = AuthenticatorData(
+        id = id,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
+    )
+
+    fun createTestAuthenticatorDataEntity(
+        key: Int = 1,
+        title: String = "GitHub 2FA",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = fixedDate,
+        updateDate: Date = fixedDate,
+    ) = AuthenticatorDataEntity(
+        key = key,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
+    )
+
+    fun createTestSearchAuthenticatorData(
+        key: Int = 1,
+        title: String = "GitHub 2FA",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = fixedDate,
+    ) = SearchAuthenticatorData(
+        key = key,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+    )
+
+    fun createTestExportAuthenticatorData(
+        title: String = "GitHub 2FA",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Long = fixedDateLong,
+        updateDate: Long = fixedDateLong,
+    ) = ExportAuthenticatorData(
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
     )
 }
