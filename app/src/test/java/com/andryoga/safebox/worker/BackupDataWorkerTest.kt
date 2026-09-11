@@ -74,10 +74,29 @@ class BackupDataWorkerTest {
 
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var fakeSymmetricKeyUtils: FakeSymmetricKeyUtils
-    private lateinit var fakePasswordBasedEncryption: PasswordBasedEncryption
+    private lateinit var fakePasswordBasedEncryption: FakePasswordBasedEncryption
     private lateinit var fakeBackupMetadataRepo: FakeBackupMetadataRepository
     private lateinit var tempDir: File
     private lateinit var mockFileUri: Uri
+
+    private class FakePasswordBasedEncryption : PasswordBasedEncryption {
+        val encryptionCallModes = mutableListOf<Boolean>()
+
+        override fun encryptDecrypt(
+            password: CharArray,
+            data: ByteArray,
+            salt: ByteArray,
+            iv: ByteArray,
+            encrypt: Boolean,
+        ): ByteArray {
+            encryptionCallModes.add(encrypt)
+            val delta = if (encrypt) 1 else -1
+            return ByteArray(data.size) { i -> (data[i] + delta).toByte() }
+        }
+
+        override fun getRandomSalt(): ByteArray = ByteArray(16) { 1 }
+        override fun getRandomIV(): ByteArray = ByteArray(16) { 2 }
+    }
 
     private class FakeBackupMetadataRepository : BackupMetadataRepository {
         var metadata: BackupPathData? = null
@@ -108,6 +127,7 @@ class BackupDataWorkerTest {
         MockKAnnotations.init(this)
         analyticsHelper = FakeAnalyticsHelper()
         fakeSymmetricKeyUtils = FakeSymmetricKeyUtils()
+        fakePasswordBasedEncryption = FakePasswordBasedEncryption()
         fakeBackupMetadataRepo = FakeBackupMetadataRepository()
         tempDir = Files.createTempDirectory("backup_worker_unit_test").toFile()
 
@@ -117,23 +137,10 @@ class BackupDataWorkerTest {
             context.checkPermission(
                 any(),
                 any(),
-                any()
+                any(),
             )
         } returns PackageManager.PERMISSION_DENIED
         every { context.checkCallingOrSelfPermission(any()) } returns PackageManager.PERMISSION_DENIED
-
-        fakePasswordBasedEncryption = object : PasswordBasedEncryption {
-            override fun encryptDecrypt(
-                password: CharArray,
-                data: ByteArray,
-                salt: ByteArray,
-                iv: ByteArray,
-                encrypt: Boolean
-            ): ByteArray = data.copyOf()
-
-            override fun getRandomSalt(): ByteArray = ByteArray(16) { 1 }
-            override fun getRandomIV(): ByteArray = ByteArray(16) { 2 }
-        }
 
         mockFileUri = mockk(relaxed = true)
         every { mockFileUri.scheme } returns "file"
@@ -189,6 +196,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
+        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
 
@@ -230,6 +238,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
+        assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(true)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -342,6 +351,7 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
+            assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(true)
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -425,6 +435,11 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
+            assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(
+                true,
+                true,
+                true
+            )
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
