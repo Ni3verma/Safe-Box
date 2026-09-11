@@ -45,7 +45,10 @@ object TotpUriParser {
         require(!rawSecret.isNullOrBlank()) {
             "Missing 'secret' query parameter in OTP URI"
         }
-        val cleanSecret = rawSecret.replace(" ", "").replace("-", "").uppercase()
+        val cleanSecret = rawSecret
+            .filterNot { it.isWhitespace() || it == '-' }
+            .trimEnd('=')
+            .uppercase()
         require(Base32Utils.isValidBase32(cleanSecret)) {
             "Invalid Base32 secret key in OTP URI"
         }

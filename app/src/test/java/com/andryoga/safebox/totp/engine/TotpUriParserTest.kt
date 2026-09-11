@@ -60,6 +60,14 @@ class TotpUriParserTest {
     }
 
     @Test
+    fun parse_withPaddingAndWhitespaceInSecret_sanitizesPaddingAndWhitespaceInSecretKey() {
+        val uri = "otpauth://totp/Service?secret=jbsw-y3dp%09ehpk-3pxp=="
+        val parsed = TotpUriParser.parse(uri)
+
+        assertThat(parsed.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+    }
+
+    @Test
     fun parse_withInvalidScheme_throwsIllegalArgumentException() {
         val uri = "https://example.com/totp?secret=JBSWY3DPEHPK3PXP"
 

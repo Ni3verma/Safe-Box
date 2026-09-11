@@ -40,7 +40,7 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
         val keyBytes = Base32Utils.decode(secretBase32)
         require(keyBytes.isNotEmpty()) { "Secret key bytes cannot be empty" }
 
-        val timeCounter = timeSeconds / period
+        val timeCounter = Math.floorDiv(timeSeconds, period.toLong())
         val timeBytes = ByteBuffer.allocate(Long.SIZE_BYTES).putLong(timeCounter).array()
 
         val mac = Mac.getInstance(algorithm.hmacAlgorithm)
