@@ -138,4 +138,12 @@ class MigrationTest {
 
         db.close()
     }
+
+    @Test
+    fun migration_4_5_shouldCreateAuthenticatorDataTable() {
+        val db = helper.createDatabase(TEST_DB, 4)
+        db.close()
+
+        helper.runMigrationsAndValidate(TEST_DB, 5, true, Migration.MIGRATION_4_5)
+    }
 }
