@@ -9,9 +9,9 @@ Authenticator** feature in **Safe-Box**.
 
 1. **Full Architectural Uniformity:** Standardized with existing record types (`Login`,
    `Bank Account`, `Card`, `Note`). Uses the
-   unified [RecordsScreen](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsScreen.kt)
+   unified [RecordsScreen](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsScreen.kt)
    filter
-   and [SingleRecordScreen](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/SingleRecordScreen.kt)
+   and [SingleRecordScreen](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/SingleRecordScreen.kt)
    dynamic layout engine.
 2. **Simplified Data Model:** Streamlined to `Title` and `Secret Key` (no separate account name
    field).
@@ -81,9 +81,9 @@ sequenceDiagram
 ### 3.1 Step Details
 
 1. **Entry Point:** User taps `+`
-   on [RecordsScreen](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsScreen.kt) $\rightarrow$
+   on [RecordsScreen](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsScreen.kt) $\rightarrow$
    taps **"Authenticator"**
-   in [AddNewRecordBottomSheet](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt).
+   in [AddNewRecordBottomSheet](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt).
 2. **Direct Camera Launch:** Camera opens **immediately** with no intermediate dialogs.
 3. **Single-Device Mobile Fallback:**
     * If setting up 2FA directly on the same phone (e.g. mobile browser where camera cannot scan its
@@ -123,7 +123,7 @@ sequenceDiagram
 #### How the Timer Renders Dynamically:
 
 * **Database & ViewModel Layer:
-  ** [RecordsViewModel.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsViewModel.kt)
+  ** [RecordsViewModel.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsViewModel.kt)
   remains purely reactive and event-driven. It does **not** run an active 1-second coroutine timer,
   preventing unnecessary ViewModel allocations and full-list recompositions.
 * **Composable Level (`TotpBadge`):**
@@ -154,7 +154,7 @@ sequenceDiagram
 ### 4.2 Camera & QR Code Scanner Placement
 
 * **Immediate Launch on Record Creation:** Tapping `Authenticator`
-  in [AddNewRecordBottomSheet.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt)
+  in [AddNewRecordBottomSheet.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt)
   opens the Camera Viewfinder instantly.
 * **Manual Setup Fallback Button on Camera Screen:** A prominent `"Enter key manually"` text button
   at the bottom of the camera screen provides immediate fallback for single-device mobile browser
@@ -166,11 +166,11 @@ sequenceDiagram
 ### 4.3 `SingleRecordScreen` & `LayoutPlan` Extension Architecture
 
 Rather than creating an ad-hoc screen that breaks the generic pattern, we extend the
-existing [LayoutPlan](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/LayoutPlan.kt)
-and [FieldUiState](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldUiState.kt)
+existing [LayoutPlan](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/LayoutPlan.kt)
+and [FieldUiState](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldUiState.kt)
 system with a single clean, backward-compatible property:
 
-#### 1. Additions to [FieldUiState.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldUiState.kt)
+#### 1. Additions to [FieldUiState.kt](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldUiState.kt)
 
 ```kotlin
 @Immutable
@@ -192,7 +192,7 @@ data class Cell(
 )
 ```
 
-#### 2. Additions to [FieldId.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldId.kt)
+#### 2. Additions to [FieldId.kt](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/models/FieldId.kt)
 
 ```kotlin
 enum class FieldId {
@@ -209,7 +209,7 @@ enum class FieldId {
 
 #### 3. How `RowField.kt` Composes the New Field
 
-In [RowField.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/RowField.kt):
+In [RowField.kt](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/dynamicLayout/RowField.kt):
 
 * **In View Mode (`viewMode == ViewMode.VIEW`):**
     * If `uiState.cell.isTotpCodeField == true`: Renders
@@ -272,20 +272,20 @@ class AuthenticatorLayoutImpl(
 
 ## 5. Screen & Component Changes Summary
 
-| Screen / Component                                                                                                                                                                  | Change Type | Description                                                                            |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|----------------------------------------------------------------------------------------|
-| [RecordType.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt)                                 | Modified    | Added `AUTHENTICATOR` enum entry.                                                      |
-| [AddNewRecordBottomSheet.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt) | Modified    | Displays Authenticator option in the bottom sheet.                                     |
-| [RecordTypeFilterRow.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)         | Modified    | Adds filter chip for Authenticator records.                                            |
-| [RecordItem.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)                           | Modified    | Renders live TOTP code, timer, and clipboard copy button for Authenticator records.    |
-| `AuthenticatorLayoutImpl.kt`                                                                                                                                                        | **New**     | Implements `Layout` interface for `SingleRecordScreen` (View/Edit/Create layout plan). |
-| `QrScannerScreen.kt` / Dialog                                                                                                                                                       | **New**     | CameraX QR code scanner with ML Kit for instant `otpauth://` URI parsing.              |
+| Screen / Component                                                                                                            | Change Type | Description                                                                            |
+|-------------------------------------------------------------------------------------------------------------------------------|-------------|----------------------------------------------------------------------------------------|
+| [RecordType.kt](../app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt)                                 | Modified    | Added `AUTHENTICATOR` enum entry.                                                      |
+| [AddNewRecordBottomSheet.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt) | Modified    | Displays Authenticator option in the bottom sheet.                                     |
+| [RecordTypeFilterRow.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)         | Modified    | Adds filter chip for Authenticator records.                                            |
+| [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)                           | Modified    | Renders live TOTP code, timer, and clipboard copy button for Authenticator records.    |
+| `AuthenticatorLayoutImpl.kt`                                                                                                  | **New**     | Implements `Layout` interface for `SingleRecordScreen` (View/Edit/Create layout plan). |
+| `QrScannerScreen.kt` / Dialog                                                                                                 | **New**     | CameraX QR code scanner with ML Kit for instant `otpauth://` URI parsing.              |
 
 ---
 
 ## 6. Backup & Restore Architecture & Compatibility
 
-### 6.1 Backup Changes ([BackupDataWorker.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt))
+### 6.1 Backup Changes ([BackupDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt))
 
 * Introduce `ExportAuthenticatorData` model serialized via `kotlinx.serialization`.
 * `authenticatorDataDaoSecure.exportAllData()` is added to `shouldExport()` check.
@@ -295,7 +295,7 @@ class AuthenticatorLayoutImpl(
   CommonConstants.AUTHENTICATOR_DATA_KEY = "authenticator_data"
   ```
 
-### 6.2 Restore Changes ([RestoreDataWorker.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt))
+### 6.2 Restore Changes ([RestoreDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt))
 
 * Decrypts `importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]` into `List<ExportAuthenticatorData>`.
 * Inserts records via `authenticatorDataDaoSecure.insertMultipleAuthenticatorData()`.
@@ -364,7 +364,7 @@ partitioned into 6 modular Merge Requests (MRs):
 
 * **Scope:**
     * Room migration script adding `authenticator_data` table
-      to [SafeBoxDatabase.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/data/db/SafeBoxDatabase.kt).
+      to [SafeBoxDatabase.kt](../app/src/main/java/com/andryoga/safebox/data/db/SafeBoxDatabase.kt).
     * `AuthenticatorDataEntity`, `AuthenticatorDataDao`, and `AuthenticatorDataDaoSecure` (AES-GCM
       encryption).
     * `AuthenticatorDataRepository` & `AuthenticatorDataRepositoryImpl`.
@@ -375,10 +375,10 @@ partitioned into 6 modular Merge Requests (MRs):
 * **Scope:**
     * `ExportAuthenticatorData` model with `kotlinx.serialization`.
     *
-  Update [BackupDataWorker.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt)
+  Update [BackupDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt)
   with `CommonConstants.AUTHENTICATOR_DATA_KEY`.
     *
-  Update [RestoreDataWorker.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt)
+  Update [RestoreDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt)
   to handle backward-compatible restoration.
     * Unit tests validating backward compatibility when restoring backups with and without 2FA data.
 
@@ -393,9 +393,9 @@ partitioned into 6 modular Merge Requests (MRs):
 
 * **Scope:**
     * Add `RecordType.AUTHENTICATOR`
-      to [RecordType.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt).
+      to [RecordType.kt](../app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt).
     * Implement `AuthenticatorLayoutImpl`
-      for [SingleRecordScreen.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/singleRecord/SingleRecordScreen.kt).
+      for [SingleRecordScreen.kt](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/SingleRecordScreen.kt).
     * Live rolling OTP code component with circular timer and toggleable/masked Secret Key.
     * TopAppBar Share action formatting `"<Title>: <TOTP>"`.
     * Unit tests for layout plan generation and save/edit workflows.
@@ -404,18 +404,18 @@ partitioned into 6 modular Merge Requests (MRs):
 
 * **Scope:**
     *
-  Update [RecordItem.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)
+  Update [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)
   with live TOTP code, timer countdown, and dedicated clipboard copy icon button.
     * Add `Authenticator` chip
-      to [RecordTypeFilterRow.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)
+      to [RecordTypeFilterRow.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)
       and filter handling
-      in [RecordsViewModel.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsViewModel.kt).
+      in [RecordsViewModel.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsViewModel.kt).
     *
-  Update [AddNewRecordBottomSheet.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt)
+  Update [AddNewRecordBottomSheet.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt)
   with choice dialog ("Scan QR Code" vs "Enter Manually").
     * Clipboard auto-clear logic and Android 13 sensitive content mask.
     * Analytics events
-      in [AnalyticsKey.kt](file:///Users/nitinvermaa/AndroidStudioProjects/Safe-Box/app/src/main/java/com/andryoga/safebox/common/AnalyticsKey.kt)
+      in [AnalyticsKey.kt](../app/src/main/java/com/andryoga/safebox/common/AnalyticsKey.kt)
       and full E2E / ViewModel test coverage.
 
 

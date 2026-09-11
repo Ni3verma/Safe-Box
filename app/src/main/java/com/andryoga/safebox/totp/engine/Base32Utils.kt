@@ -41,6 +41,7 @@ object Base32Utils {
                 val byteValue = (buffer shr (bitsLeft - 8)) and 0xFF
                 outputStream.write(byteValue)
                 bitsLeft -= 8
+                buffer = buffer and ((1 shl bitsLeft) - 1)
             }
         }
 
@@ -59,6 +60,12 @@ object Base32Utils {
         return sanitized.all { BASE32_CHARS.indexOf(it) != -1 }
     }
 
+    /**
+     * Normalizes a Base32 string by stripping whitespace, hyphens, and padding, and converting to uppercase.
+     *
+     * @param encodedString Raw Base32 string.
+     * @return Normalized Base32 string.
+     */
     private fun sanitize(encodedString: String): String {
         return encodedString
             .replace(" ", "")

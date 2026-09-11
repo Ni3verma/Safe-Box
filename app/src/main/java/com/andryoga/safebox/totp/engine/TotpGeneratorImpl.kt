@@ -77,6 +77,12 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
         return if (elapsed == 0) period else period - elapsed
     }
 
+    /**
+     * Validates whether a given string is a syntactically valid Base32 secret key.
+     *
+     * @param secretBase32 Secret string to validate.
+     * @return True if valid RFC 4648 Base32, false otherwise.
+     */
     override fun isValidSecret(secretBase32: String): Boolean {
         return Base32Utils.isValidBase32(secretBase32)
     }

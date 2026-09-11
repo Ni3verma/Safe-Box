@@ -50,12 +50,7 @@ object TotpUriParser {
             "Invalid Base32 secret key in OTP URI: $rawSecret"
         }
 
-        val rawPath = uri.path?.trimStart('/') ?: ""
-        val decodedLabel = try {
-            URLDecoder.decode(rawPath, StandardCharsets.UTF_8.name())
-        } catch (e: Exception) {
-            rawPath
-        }
+        val decodedLabel = uri.path?.trimStart('/') ?: ""
 
         val issuerParam = queryParams["issuer"]
         val title = computeTitle(decodedLabel, issuerParam)
@@ -83,6 +78,12 @@ object TotpUriParser {
         )
     }
 
+    /**
+     * Parses the raw query string into a case-insensitive map of parameter key-value pairs.
+     *
+     * @param rawQuery The raw query string from the URI.
+     * @return Map of decoded query parameter names (in lowercase) to their values.
+     */
     private fun parseQueryParams(rawQuery: String?): Map<String, String> {
         if (rawQuery.isNullOrBlank()) return emptyMap()
 
@@ -108,9 +109,18 @@ object TotpUriParser {
             .toMap()
     }
 
+    /**
+     * Derives a clean, human-readable account title from the URI label and issuer parameter.
+     *
+     * @param decodedLabel Decoded label component from the URI path.
+     * @param issuerParam Optional issuer query parameter value.
+     * @return Formatted title (e.g. "Issuer - Account" or "Account").
+     */
     private fun computeTitle(decodedLabel: String, issuerParam: String?): String {
-        if (decodedLabel.isBlank() && !issuerParam.isNullOrBlank()) {
-            return issuerParam.trim()
+        val trimmedIssuer = issuerParam?.trim()?.takeIf { it.isNotBlank() }
+
+        if (decodedLabel.isBlank() && trimmedIssuer != null) {
+            return trimmedIssuer
         }
 
         if (decodedLabel.contains(":")) {
@@ -118,26 +128,36 @@ object TotpUriParser {
             val prefix = parts[0].trim()
             val account = parts[1].trim()
 
-            val issuer = issuerParam?.trim() ?: prefix
-            return if (account.isNotBlank()) {
-                if (issuer.equals(prefix, ignoreCase = true)) {
-                    "$issuer - $account"
-                } else {
-                    "$issuer ($prefix) - $account"
+            val issuer = trimmedIssuer ?: prefix.takeIf { it.isNotBlank() }
+
+            return when {
+                issuer != null && account.isNotBlank() -> {
+                    if (prefix.isNotBlank() && !issuer.equals(prefix, ignoreCase = true)) {
+                        "$issuer ($prefix) - $account"
+                    } else {
+                        "$issuer - $account"
+                    }
                 }
-            } else {
-                issuer
+
+                issuer != null -> issuer
+                account.isNotBlank() -> account
+                else -> "Authenticator Account"
             }
         }
 
         val label = decodedLabel.trim()
-        val issuer = issuerParam?.trim()
-        return if (!issuer.isNullOrBlank() && !label.contains(issuer, ignoreCase = true)) {
-            "$issuer - $label"
-        } else if (label.isNotBlank()) {
-            label
-        } else {
-            issuer ?: "Authenticator Account"
+        return when {
+            trimmedIssuer != null && label.isNotBlank() -> {
+                if (!label.contains(trimmedIssuer, ignoreCase = true)) {
+                    "$trimmedIssuer - $label"
+                } else {
+                    label
+                }
+            }
+
+            label.isNotBlank() -> label
+            trimmedIssuer != null -> trimmedIssuer
+            else -> "Authenticator Account"
         }
     }
 }

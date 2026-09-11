@@ -15,6 +15,11 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object TotpModule {
 
+    /**
+     * Provides the singleton instance of [TotpGenerator] implementation.
+     *
+     * @return [TotpGenerator] instance.
+     */
     @Singleton
     @Provides
     fun provideTotpGenerator(): TotpGenerator {

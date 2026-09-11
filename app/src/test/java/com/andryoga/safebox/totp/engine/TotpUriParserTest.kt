@@ -94,4 +94,28 @@ class TotpUriParserTest {
             TotpUriParser.parse(uri)
         }
     }
+
+    @Test
+    fun parse_withEmptyIssuerParam_fallsBackToPrefix() {
+        val uri = "otpauth://totp/Google:alex@gmail.com?secret=JBSWY3DPEHPK3PXP&issuer="
+        val parsed = TotpUriParser.parse(uri)
+
+        assertThat(parsed.title).isEqualTo("Google - alex@gmail.com")
+    }
+
+    @Test
+    fun parse_withPlusLogInEmailAndLabel_preservesPlusCharacters() {
+        val uri = "otpauth://totp/C%2B%2B:user%2Btag@gmail.com?secret=JBSWY3DPEHPK3PXP"
+        val parsed = TotpUriParser.parse(uri)
+
+        assertThat(parsed.title).isEqualTo("C++ - user+tag@gmail.com")
+    }
+
+    @Test
+    fun parse_withColonAndEmptyPrefixInLabel_fallsBackToAccount() {
+        val uri = "otpauth://totp/:user@gmail.com?secret=JBSWY3DPEHPK3PXP"
+        val parsed = TotpUriParser.parse(uri)
+
+        assertThat(parsed.title).isEqualTo("user@gmail.com")
+    }
 }
