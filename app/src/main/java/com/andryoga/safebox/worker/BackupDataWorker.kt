@@ -24,10 +24,12 @@ import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NO
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
+import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
@@ -62,8 +64,9 @@ class BackupDataWorker
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+    private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
     private val analyticsHelper: AnalyticsHelper,
-    private val dispatchersProvider: DispatchersProvider
+    private val dispatchersProvider: DispatchersProvider,
 ) : CoroutineWorker(context, params) {
     private val localTag = "backup data worker -> "
 
@@ -102,11 +105,18 @@ class BackupDataWorker
                     val bankAccountData = bankAccountDataDaoSecure.exportAllData()
                     val bankCardData = bankCardDataDaoSecure.exportAllData()
                     val secureNoteData = secureNoteDataDaoSecure.exportAllData()
+                    val authenticatorData = authenticatorDataDaoSecure.exportAllData()
 
                     recordTime("got all data")
 
                     if (
-                        shouldExport(loginData, bankAccountData, bankCardData, secureNoteData)
+                        shouldExport(
+                            loginData,
+                            bankAccountData,
+                            bankCardData,
+                            secureNoteData,
+                            authenticatorData,
+                        )
                     ) {
                         Timber.i("$localTag data is present for export")
                         salt = passwordBasedEncryption.getRandomSalt()
@@ -117,7 +127,7 @@ class BackupDataWorker
                                 CommonConstants.IV_KEY to iv,
                                 CommonConstants.VERSION_KEY to ByteArray(1) {
                                     CommonConstants.BACKUP_VERSION.toByte()
-                                }
+                                },
                             )
                         )
                         recordTime("got salt and iv")
@@ -127,7 +137,8 @@ class BackupDataWorker
                             inputPassword,
                             bankAccountData,
                             bankCardData,
-                            secureNoteData
+                            secureNoteData,
+                            authenticatorData,
                         )
 
                         Timber.i("getting picked dir")
@@ -198,7 +209,8 @@ class BackupDataWorker
         inputPassword: String,
         bankAccountData: List<ExportBankAccountData>,
         bankCardData: List<ExportBankCardData>,
-        secureNoteData: List<ExportSecureNoteData>
+        secureNoteData: List<ExportSecureNoteData>,
+        authenticatorData: List<ExportAuthenticatorData>,
     ) {
         exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
         recordTime("got login data byte array")
@@ -214,6 +226,10 @@ class BackupDataWorker
         exportMap[CommonConstants.SECURE_NOTE_DATA_KEY] =
             encryptSecureNoteData(secureNoteData, inputPassword)
         recordTime("got secure note data byte array")
+
+        exportMap[CommonConstants.AUTHENTICATOR_DATA_KEY] =
+            encryptAuthenticatorData(authenticatorData, inputPassword)
+        recordTime("got authenticator data byte array")
 
         exportMap[CommonConstants.CREATION_DATE_KEY] =
             ByteBuffer.allocate(Long.SIZE_BYTES)
@@ -341,6 +357,31 @@ class BackupDataWorker
                 salt,
                 iv,
                 true
+            )
+        }
+        return null
+    }
+
+    /**
+     * Serializes and encrypts the list of TOTP authenticators using password-based encryption.
+     *
+     * @param data The authenticator records to encrypt.
+     * @param inputPassword The user-supplied backup password (encrypted with symmetric key).
+     * @return Encrypted byte array payload, or null if the record list is empty.
+     */
+    private fun encryptAuthenticatorData(
+        data: List<ExportAuthenticatorData>,
+        inputPassword: String,
+    ): ByteArray? {
+        if (data.isNotEmpty()) {
+            val json =
+                Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), data)
+            return passwordBasedEncryption.encryptDecrypt(
+                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                json.toByteArray(),
+                salt,
+                iv,
+                true,
             )
         }
         return null

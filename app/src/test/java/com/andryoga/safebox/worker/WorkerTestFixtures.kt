@@ -44,7 +44,8 @@ object WorkerTestFixtures {
         loginData: ByteArray? = null,
         bankAccountData: ByteArray? = null,
         bankCardData: ByteArray? = null,
-        secureNoteData: ByteArray? = null
+        secureNoteData: ByteArray? = null,
+        authenticatorData: ByteArray? = null,
     ): Map<String, ByteArray?> {
         val map = mutableMapOf<String, ByteArray?>()
         map[CommonConstants.SALT_KEY] = salt
@@ -56,6 +57,7 @@ object WorkerTestFixtures {
         bankAccountData?.let { map[CommonConstants.BANK_ACCOUNT_DATA_KEY] = it }
         bankCardData?.let { map[CommonConstants.BANK_CARD_DATA_KEY] = it }
         secureNoteData?.let { map[CommonConstants.SECURE_NOTE_DATA_KEY] = it }
+        authenticatorData?.let { map[CommonConstants.AUTHENTICATOR_DATA_KEY] = it }
         return map
     }
 

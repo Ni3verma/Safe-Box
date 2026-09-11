@@ -11,14 +11,17 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
@@ -57,7 +60,8 @@ class RestoreDataWorker
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
-    private val analyticsHelper: AnalyticsHelper
+    private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
+    private val analyticsHelper: AnalyticsHelper,
 ) : CoroutineWorker(context, params) {
 
     private val localTag = "restore data worker -> "
@@ -197,9 +201,17 @@ class RestoreDataWorker
             decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
+        val authenticatorData =
+            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
         recordTime("all data decrypted")
 
-        restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
+        restoreDataToDb(
+            loginData,
+            bankAccountData,
+            bankCardData,
+            secureNoteData,
+            authenticatorData,
+        )
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
     }
 
@@ -271,11 +283,37 @@ class RestoreDataWorker
         }
     }
 
+    /**
+     * Decrypts and deserializes TOTP authenticator records from the encrypted backup byte array.
+     *
+     * @param authenticatorDataByteArray The encrypted payload from the backup archive, or null if absent.
+     * @return Decrypted list of [ExportAuthenticatorData], or null if the input payload is null.
+     */
+    private fun decryptAuthenticatorData(
+        authenticatorDataByteArray: ByteArray?,
+    ): List<ExportAuthenticatorData>? {
+        return if (authenticatorDataByteArray != null) {
+            val json = String(
+                passwordBasedEncryption.encryptDecrypt(
+                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    authenticatorDataByteArray,
+                    salt,
+                    iv,
+                    false,
+                ),
+            )
+            Json.decodeFromString(ListSerializer(ExportAuthenticatorData.serializer()), json)
+        } else {
+            null
+        }
+    }
+
     private fun restoreDataToDb(
         loginData: List<ExportLoginData>?,
         bankAccountData: List<ExportBankAccountData>?,
         bankCardData: List<ExportBankCardData>?,
-        secureNoteData: List<ExportSecureNoteData>?
+        secureNoteData: List<ExportSecureNoteData>?,
+        authenticatorData: List<ExportAuthenticatorData>?,
     ) {
         Timber.i("starting transaction")
         safeBoxDatabase.runInTransaction {
@@ -341,6 +379,22 @@ class RestoreDataWorker
                 )
             }
             recordTime("restored secure note data")
+
+            authenticatorDataDaoSecure.deleteAllData()
+            authenticatorData?.let {
+                authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                    authenticatorData.map {
+                        AuthenticatorDataEntity(
+                            0,
+                            it.title,
+                            it.secretKey,
+                            Date(it.creationDate),
+                            Date(it.updateDate),
+                        )
+                    },
+                )
+            }
+            recordTime("restored authenticator data")
         }
     }
 
