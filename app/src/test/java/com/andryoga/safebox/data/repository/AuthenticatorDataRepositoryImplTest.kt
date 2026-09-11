@@ -88,6 +88,23 @@ class AuthenticatorDataRepositoryImplTest {
         }
 
     @Test
+    fun upsertAuthenticatorData_whenDaoSecureThrows_shouldNotLogAnalytics() = runTest {
+        val authenticatorData = TestFixtures.createTestAuthenticatorData(
+            id = null,
+            title = "GitHub 2FA",
+        )
+        coEvery {
+            authenticatorDataDaoSecure.upsertAuthenticatorData(any())
+        } throws RuntimeException("Persistence failure")
+
+        val exception =
+            runCatching { repository.upsertAuthenticatorData(authenticatorData) }.exceptionOrNull()
+
+        assertThat(exception).isInstanceOf(RuntimeException::class.java)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.NEW_AUTHENTICATOR)).isFalse()
+    }
+
+    @Test
     fun getAllAuthenticatorData_shouldReturnFlowFromDaoSecure() = runTest {
         val searchList = listOf(
             TestFixtures.createTestSearchAuthenticatorData(key = 7, title = "Cloudflare 2FA"),

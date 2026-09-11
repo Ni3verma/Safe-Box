@@ -20,10 +20,11 @@ class AuthenticatorDataRepositoryImpl @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
 ) : AuthenticatorDataRepository {
     override suspend fun upsertAuthenticatorData(authenticatorData: AuthenticatorData) {
-        if (authenticatorData.id == null || authenticatorData.id == 0) {
+        val isNewRecord = authenticatorData.id == null || authenticatorData.id == 0
+        authenticatorDataDaoSecure.upsertAuthenticatorData(authenticatorData.toDbEntity())
+        if (isNewRecord) {
             analyticsHelper.logEvent(AnalyticsKey.NEW_AUTHENTICATOR)
         }
-        authenticatorDataDaoSecure.upsertAuthenticatorData(authenticatorData.toDbEntity())
     }
 
     override fun getAllAuthenticatorData(): Flow<List<SearchAuthenticatorData>> {
