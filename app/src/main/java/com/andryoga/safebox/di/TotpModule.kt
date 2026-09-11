@@ -2,8 +2,8 @@ package com.andryoga.safebox.di
 
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
@@ -13,16 +13,17 @@ import javax.inject.Singleton
  */
 @Module
 @InstallIn(SingletonComponent::class)
-object TotpModule {
+abstract class TotpModule {
 
     /**
-     * Provides the singleton instance of [TotpGenerator] implementation.
+     * Binds [TotpGeneratorImpl] to [TotpGenerator] interface.
      *
-     * @return [TotpGenerator] instance.
+     * @param totpGeneratorImpl Concrete TOTP generator implementation.
+     * @return [TotpGenerator] interface bound to the singleton component.
      */
     @Singleton
-    @Provides
-    fun provideTotpGenerator(): TotpGenerator {
-        return TotpGeneratorImpl()
-    }
+    @Binds
+    abstract fun bindTotpGenerator(
+        totpGeneratorImpl: TotpGeneratorImpl,
+    ): TotpGenerator
 }

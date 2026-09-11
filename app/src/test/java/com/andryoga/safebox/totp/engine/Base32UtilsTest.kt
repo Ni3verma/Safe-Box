@@ -71,4 +71,13 @@ class Base32UtilsTest {
         assertThat(Base32Utils.isValidBase32("1890Invalid!")).isFalse()
         assertThat(Base32Utils.isValidBase32("JBSWY3DP8")).isFalse()
     }
+
+    @Test
+    fun decode_withTabsAndNewlines_sanitizesAndDecodesSuccessfully() {
+        val input = "\tJBSWY3DPEHPK3PXP\n\r"
+        val decoded = Base32Utils.decode(input)
+
+        val expected = Base32Utils.decode("JBSWY3DPEHPK3PXP")
+        assertThat(decoded).isEqualTo(expected)
+    }
 }

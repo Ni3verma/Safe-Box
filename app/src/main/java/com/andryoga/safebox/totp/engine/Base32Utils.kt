@@ -68,8 +68,7 @@ object Base32Utils {
      */
     private fun sanitize(encodedString: String): String {
         return encodedString
-            .replace(" ", "")
-            .replace("-", "")
+            .filterNot { it.isWhitespace() || it == '-' }
             .trimEnd('=')
             .uppercase()
     }

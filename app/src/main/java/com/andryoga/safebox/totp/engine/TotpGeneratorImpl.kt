@@ -73,7 +73,7 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
         period: Int,
     ): Int {
         require(period > 0) { "Period must be greater than 0" }
-        val elapsed = (timeSeconds % period).toInt()
+        val elapsed = Math.floorMod(timeSeconds, period.toLong()).toInt()
         return if (elapsed == 0) period else period - elapsed
     }
 

@@ -187,6 +187,12 @@ class TotpGeneratorImplTest {
     }
 
     @Test
+    fun getRemainingSeconds_withNegativeTimestamp_returnsValidCountdown() {
+        assertThat(totpGenerator.getRemainingSeconds(timeSeconds = -1L, period = 30)).isEqualTo(1)
+        assertThat(totpGenerator.getRemainingSeconds(timeSeconds = -5L, period = 30)).isEqualTo(5)
+    }
+
+    @Test
     fun generateCode_withInvalidPeriodOrDigits_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException::class.java) {
             totpGenerator.generateCode(
