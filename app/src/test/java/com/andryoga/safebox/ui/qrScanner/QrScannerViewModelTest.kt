@@ -4,7 +4,9 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
+import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.google.common.truth.Truth.assertThat
 import com.google.mlkit.vision.barcode.BarcodeScanner
@@ -22,16 +24,19 @@ class QrScannerViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private lateinit var analyticsHelper: FakeAnalyticsHelper
+    private lateinit var fakePreferenceProvider: FakePreferenceProvider
     private lateinit var mockBarcodeScanner: BarcodeScanner
     private lateinit var viewModel: QrScannerViewModel
 
     @Before
     fun setUp() {
         analyticsHelper = FakeAnalyticsHelper()
+        fakePreferenceProvider = FakePreferenceProvider()
         mockBarcodeScanner = mockk(relaxed = true)
         viewModel = QrScannerViewModel(
             barcodeScanner = mockBarcodeScanner,
             analyticsHelper = analyticsHelper,
+            preferenceProvider = fakePreferenceProvider,
             dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
         )
     }
@@ -154,11 +159,71 @@ class QrScannerViewModelTest {
     }
 
     @Test
+    fun initialState_whenPermissionNeverAsked_shouldHaveAskedBeforeFalseInUiState() = runTest {
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertThat(initial.isCameraPermissionAskedBefore).isNull()
+
+            val loaded = awaitItem()
+            assertThat(loaded.isCameraPermissionAskedBefore).isFalse()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun initialState_whenPermissionAskedBefore_shouldHaveAskedBeforeTrueInUiState() = runTest {
+        val prefProvider = FakePreferenceProvider().apply {
+            upsertBooleanPref(CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE, true)
+        }
+        val vm = QrScannerViewModel(
+            barcodeScanner = mockBarcodeScanner,
+            analyticsHelper = analyticsHelper,
+            preferenceProvider = prefProvider,
+            dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
+        )
+        vm.uiState.test {
+            val initial = awaitItem()
+            assertThat(initial.isCameraPermissionAskedBefore).isNull()
+
+            val loaded = awaitItem()
+            assertThat(loaded.isCameraPermissionAskedBefore).isTrue()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun onInitialCameraPermissionRequested_shouldUpdateUiStateAndPersistPreference() = runTest {
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertThat(initial.isCameraPermissionAskedBefore).isNull()
+
+            val loaded = awaitItem()
+            assertThat(loaded.isCameraPermissionAskedBefore).isFalse()
+
+            viewModel.onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
+
+            val updated = awaitItem()
+            assertThat(updated.isCameraPermissionAskedBefore).isTrue()
+            assertThat(
+                fakePreferenceProvider.getBooleanPref(
+                    CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE,
+                    false,
+                ),
+            ).isTrue()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun uiState_shouldReflectCombinedDrivingState() = runTest {
         viewModel.uiState.test {
             val initial = awaitItem()
             assertThat(initial.isTorchEnabled).isFalse()
             assertThat(initial.showPermissionRationale).isFalse()
+            assertThat(initial.isCameraPermissionAskedBefore).isNull()
+
+            val loaded = awaitItem()
+            assertThat(loaded.isCameraPermissionAskedBefore).isFalse()
 
             viewModel.onAction(QrScannerScreenAction.OnToggleTorch)
             val withTorch = awaitItem()

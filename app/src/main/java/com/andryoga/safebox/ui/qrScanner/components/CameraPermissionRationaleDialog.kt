@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -57,13 +55,6 @@ fun CameraPermissionRationaleDialog(
     dismissDialogAction: () -> Unit,
 ) {
     val context = LocalContext.current
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            Timber.i("Camera permission launcher result: $isGranted")
-            dismissDialogAction()
-        },
-    )
 
     Dialog(
         onDismissRequest = { dismissDialogAction() },
@@ -135,12 +126,11 @@ fun CameraPermissionRationaleDialog(
                                 )
                             } ?: false
 
+                            dismissDialogAction()
                             if (shouldShowRationale) {
                                 Timber.i("Requesting camera permission via system dialog")
-                                permissionLauncher.launch(Manifest.permission.CAMERA)
                                 onAllowClick(false)
                             } else {
-                                dismissDialogAction()
                                 onAllowClick(true)
                                 Timber.i("Opening application details settings for camera permission")
                                 val intent =

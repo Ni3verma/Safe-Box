@@ -1,9 +1,11 @@
 package com.andryoga.safebox.ui.qrScanner
 
+import android.media.Image
 import androidx.camera.core.ImageProxy
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.google.common.truth.Truth.assertThat
 import com.google.mlkit.vision.barcode.BarcodeScanner
+import com.google.mlkit.vision.common.InputImage
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -50,6 +52,19 @@ class QrCodeAnalyzerTest {
         analyzer.analyze(secondImageProxy)
 
         verify(exactly = 1) { secondImageProxy.close() }
+        assertThat(scannedTotpData).isNull()
+    }
+
+    @Test
+    fun analyze_whenScannerProcessThrows_closesImageProxyAndDoesNotInvokeCallback() {
+        val imageProxy = mockk<ImageProxy>(relaxed = true)
+        val mockMediaImage = mockk<Image>(relaxed = true)
+        every { imageProxy.image } returns mockMediaImage
+        every { mockBarcodeScanner.process(any<InputImage>()) } throws RuntimeException("ML Kit internal error")
+
+        analyzer.analyze(imageProxy)
+
+        verify(exactly = 1) { imageProxy.close() }
         assertThat(scannedTotpData).isNull()
     }
 }

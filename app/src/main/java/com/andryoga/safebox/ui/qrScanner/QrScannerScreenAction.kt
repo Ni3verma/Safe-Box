@@ -17,4 +17,5 @@ sealed interface QrScannerScreenAction {
         QrScannerScreenAction
 
     object OnPermissionRationaleCancelClicked : QrScannerScreenAction
+    object OnInitialCameraPermissionRequested : QrScannerScreenAction
 }

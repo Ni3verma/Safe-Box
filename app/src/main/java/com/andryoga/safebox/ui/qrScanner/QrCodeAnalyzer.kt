@@ -42,31 +42,36 @@ class QrCodeAnalyzer(
             return
         }
 
-        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-        scanner.process(image)
-            .addOnSuccessListener { barcodes ->
-                if (isScanningActive) {
-                    for (barcode in barcodes) {
-                        val rawValue = barcode.rawValue
-                        if (!rawValue.isNullOrBlank()) {
-                            try {
-                                val parsedData = TotpUriParser.parse(rawValue)
-                                isScanningActive = false
-                                onQrCodeScanned(parsedData)
-                                break
-                            } catch (e: Exception) {
-                                Timber.d("Non-TOTP or malformed QR code scanned: %s", e.message)
+        try {
+            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+            scanner.process(image)
+                .addOnSuccessListener { barcodes ->
+                    if (isScanningActive) {
+                        for (barcode in barcodes) {
+                            val rawValue = barcode.rawValue
+                            if (!rawValue.isNullOrBlank()) {
+                                try {
+                                    val parsedData = TotpUriParser.parse(rawValue)
+                                    isScanningActive = false
+                                    onQrCodeScanned(parsedData)
+                                    break
+                                } catch (e: Exception) {
+                                    Timber.d("Non-TOTP or malformed QR code scanned: %s", e.message)
+                                }
                             }
                         }
                     }
                 }
-            }
-            .addOnFailureListener { error ->
-                Timber.e(error, "Barcode scanning failed")
-            }
-            .addOnCompleteListener {
-                imageProxy.close()
-            }
+                .addOnFailureListener { error ->
+                    Timber.e(error, "Barcode scanning failed")
+                }
+                .addOnCompleteListener {
+                    imageProxy.close()
+                }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to process image frame")
+            imageProxy.close()
+        }
     }
 
     /**

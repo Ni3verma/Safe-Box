@@ -62,7 +62,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -71,7 +70,7 @@ import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.qrScanner.components.CameraPermissionRationaleDialog
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.findActivity
+import com.andryoga.safebox.ui.utils.OnResume
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import timber.log.Timber
 import java.util.concurrent.Executors
@@ -148,31 +147,35 @@ fun QrScannerScreen(
 
     var camera by remember { mutableStateOf<Camera?>(null) }
 
+    OnResume {
+        val isGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA,
+        ) == PackageManager.PERMISSION_GRANTED
+        if (isGranted && !hasCameraPermission) {
+            hasCameraPermission = true
+        }
+    }
+
     LaunchedEffect(Unit) {
         onAction(QrScannerScreenAction.OnScannerVisible)
-        if (!hasCameraPermission) {
-            val activity = try {
-                context.findActivity()
-            } catch (_: Exception) {
-                null
-            }
-            // Check if user previously rejected permission without selecting "Don't ask again".
-            // If true, display educational rationale dialog before asking again per Android guidelines.
-            val shouldShowRationale = activity?.let {
-                ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.CAMERA)
-            } ?: false
+    }
 
-            if (shouldShowRationale) {
-                Timber.i("Camera permission previously denied; showing educational rationale dialog")
+    LaunchedEffect(hasCameraPermission, uiState.isCameraPermissionAskedBefore) {
+        if (!hasCameraPermission) {
+            val askedBefore = uiState.isCameraPermissionAskedBefore ?: return@LaunchedEffect
+            if (askedBefore) {
+                Timber.i("Camera permission previously asked; showing educational rationale dialog")
                 onAction(QrScannerScreenAction.OnShowPermissionRationale)
             } else {
-                Timber.i("Directly launching system camera permission prompt")
+                Timber.i("Directly launching system camera permission prompt for the first time")
+                onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
                 permissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
     }
 
-    LaunchedEffect(uiState.isTorchEnabled) {
+    LaunchedEffect(uiState.isTorchEnabled, camera) {
         camera?.let {
             if (it.cameraInfo.hasFlashUnit()) {
                 it.cameraControl.enableTorch(uiState.isTorchEnabled)
@@ -187,6 +190,9 @@ fun QrScannerScreen(
         onEnterKeyManually = onEnterKeyManually,
         onPermissionRationaleAllow = { isRedirectingToSettings ->
             onAction(QrScannerScreenAction.OnPermissionRationaleAllowClicked(isRedirectingToSettings))
+            if (!isRedirectingToSettings) {
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
         },
         onPermissionRationaleCancel = {
             onAction(QrScannerScreenAction.OnPermissionRationaleCancelClicked)
@@ -196,6 +202,8 @@ fun QrScannerScreen(
         },
         cameraPreview = {
             if (hasCameraPermission) {
+                val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+
                 AndroidView(
                     factory = { ctx ->
                         val previewView = PreviewView(ctx).apply {
@@ -204,7 +212,6 @@ fun QrScannerScreen(
                         }
 
                         val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                        val cameraExecutor = Executors.newSingleThreadExecutor()
 
                         cameraProviderFuture.addListener(
                             {
@@ -246,7 +253,7 @@ fun QrScannerScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                DisposableEffect(Unit) {
+                DisposableEffect(cameraExecutor) {
                     onDispose {
                         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
                         if (cameraProviderFuture.isDone) {
@@ -256,6 +263,7 @@ fun QrScannerScreen(
                                 Timber.w(e, "Error unbinding CameraX on dispose")
                             }
                         }
+                        cameraExecutor.shutdown()
                     }
                 }
             }
