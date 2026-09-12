@@ -263,6 +263,7 @@ fun QrScannerScreen(
                                 Timber.w(e, "Error unbinding CameraX on dispose")
                             }
                         }
+                        camera = null
                         cameraExecutor.shutdown()
                     }
                 }
