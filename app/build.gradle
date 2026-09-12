@@ -172,6 +172,7 @@ dependencies {
     implementation libs.biometric
     implementation libs.bundles.play.review
     implementation libs.data.store.pref
+    implementation libs.bundles.camera
 
     ksp(libs.room.compiler)
     implementation libs.bundles.room
