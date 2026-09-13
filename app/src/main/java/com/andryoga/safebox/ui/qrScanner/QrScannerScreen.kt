@@ -44,6 +44,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -126,6 +128,8 @@ fun QrScannerScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    val currentOnQrCodeScanned by rememberUpdatedState(onQrCodeScanned)
+
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(
@@ -135,12 +139,18 @@ fun QrScannerScreen(
         )
     }
 
+    var hasLaunchedInitialPrompt by rememberSaveable { mutableStateOf(false) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             hasCameraPermission = isGranted
+            onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
             if (!isGranted) {
                 Timber.w("Camera permission denied by user")
+                if (uiState.isCameraPermissionAskedBefore == true) {
+                    onAction(QrScannerScreenAction.OnShowPermissionRationale)
+                }
             }
         },
     )
@@ -167,9 +177,9 @@ fun QrScannerScreen(
             if (askedBefore) {
                 Timber.i("Camera permission previously asked; showing educational rationale dialog")
                 onAction(QrScannerScreenAction.OnShowPermissionRationale)
-            } else {
+            } else if (!hasLaunchedInitialPrompt) {
+                hasLaunchedInitialPrompt = true
                 Timber.i("Directly launching system camera permission prompt for the first time")
-                onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
                 permissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
@@ -228,7 +238,7 @@ fun QrScannerScreen(
                                             cameraExecutor,
                                             QrCodeAnalyzer(
                                                 scanner = barcodeScanner,
-                                                onQrCodeScanned = onQrCodeScanned,
+                                                onQrCodeScanned = { currentOnQrCodeScanned(it) },
                                             ),
                                         )
                                     }
