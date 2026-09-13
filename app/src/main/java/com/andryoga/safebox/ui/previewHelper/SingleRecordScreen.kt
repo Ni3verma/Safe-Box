@@ -5,6 +5,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 
@@ -286,7 +287,7 @@ fun getAuthenticatorLayoutPlan(withData: Boolean = false): LayoutPlan {
                 cell = FieldUiState.Cell(
                     label = R.string.totp_code,
                     isVisibleOnlyInViewMode = true,
-                    isTotpCodeField = true
+                    type = FieldType.TOTP
                 ),
                 // this field always holds the Base32 seed, the code is derived while rendering
                 data = if (withData) "JBSWY3DPEHPK3PXP" else ""

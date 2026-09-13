@@ -31,6 +31,7 @@ import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenAction
 import com.andryoga.safebox.ui.singleRecord.components.TotpCodeField
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -47,32 +48,36 @@ fun RowField(
 
     Column {
         if (viewMode == ViewMode.VIEW) {
-            if (uiState.cell.isTotpCodeField) {
-                // the stored value is the secret seed, so this field renders the derived
-                // rolling code instead of the raw data.
-                TotpCodeField(secretKey = uiState.data)
-            } else {
-                val label = stringResource(uiState.cell.label)
-                val formattedData = uiState.getFormattedData()
-                val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
-                Column {
-                    Text(
-                        text = label,
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = formattedData, // show formatted data on the UI
-                        color = MaterialTheme.colorScheme.onSurface,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier
-                            .padding(bottom = 8.dp)
-                            .clickable {
-                                // while copying we copy the original data and not the formatted data
-                                copyToClipboard(label, uiState.data, copiedMessage)
-                            }
-                    )
+            when (uiState.cell.type) {
+                FieldType.TOTP -> {
+                    // the stored value is the secret seed, so this field renders the derived
+                    // rolling code instead of the raw data.
+                    TotpCodeField(secretKey = uiState.data)
+                }
+
+                FieldType.DEFAULT_TEXT -> {
+                    val label = stringResource(uiState.cell.label)
+                    val formattedData = uiState.getFormattedData()
+                    val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
+                    Column {
+                        Text(
+                            text = label,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = formattedData, // show formatted data on the UI
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .clickable {
+                                    // while copying we copy the original data and not the formatted data
+                                    copyToClipboard(label, uiState.data, copiedMessage)
+                                }
+                        )
+                    }
                 }
             }
         } else {

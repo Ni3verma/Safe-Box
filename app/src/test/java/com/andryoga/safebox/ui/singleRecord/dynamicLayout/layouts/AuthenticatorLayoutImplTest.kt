@@ -6,6 +6,7 @@ import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
@@ -62,7 +63,8 @@ class AuthenticatorLayoutImplTest {
         assertThat(plan.id).isEqualTo(LayoutId.AUTHENTICATOR)
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data).isEqualTo("Google")
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.data).isEqualTo("JBSWY3DPEHPK3PXP")
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.isTotpCodeField).isTrue()
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.type)
+            .isEqualTo(FieldType.TOTP)
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.isVisibleOnlyInViewMode).isTrue()
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEqualTo("JBSWY3DPEHPK3PXP")
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.cell?.isPasswordField).isTrue()

@@ -8,6 +8,7 @@ import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ShareableField
@@ -119,7 +120,7 @@ class AuthenticatorLayoutImpl(
                     cell = FieldUiState.Cell(
                         label = R.string.totp_code,
                         isVisibleOnlyInViewMode = true,
-                        isTotpCodeField = true,
+                        type = FieldType.TOTP,
                         // holds the secret seed, never the code, so it must never be shared as is.
                         isCopyable = false,
                     ),
