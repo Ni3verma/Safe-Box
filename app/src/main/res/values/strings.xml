@@ -169,4 +169,13 @@
     <string name="device_security_required_title">Device Security Required</string>
     <string name="device_security_required_body">Please enable device security (PIN, pattern, password, or biometrics) in your Android Settings to verify your identity before changing your master password.</string>
     <string name="open_settings">Open Settings</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Camera Permission Required</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box requires camera access to scan QR codes for two-factor authentication setup.</string>
+    <string name="qr_scanner_title">Scan QR Code</string>
+    <string name="qr_scanner_instruction">Align QR code within the frame</string>
+    <string name="enter_key_manually">Enter Key Manually</string>
+    <string name="flash_toggle_description">Toggle flash</string>
+    <string name="close">Close</string>
 </resources>

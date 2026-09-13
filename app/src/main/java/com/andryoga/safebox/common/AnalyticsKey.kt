@@ -29,4 +29,13 @@ enum class AnalyticsKey(val eventName: String) {
     UPDATE_PASSWORD_DIALOG_SHOW("update_password_dialog_show"),
     UPDATE_PASSWORD_DIALOG_ALLOW_CLICK("update_password_dialog_allow_click"),
     UPDATE_PASSWORD_DIALOG_CANCEL_CLICK("update_password_dialog_cancel_click"),
+    CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW("camera_perm_dialog_show"),
+    CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK("camera_perm_dialog_allow_click"),
+    CAMERA_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK("camera_perm_dialog_cancel_click"),
+    CAMERA_PERMISSION_SETTINGS_OPEN_CLICK("camera_perm_settings_open_click"),
+    QR_SCANNER_SHOW("qr_scanner_show"),
+    QR_SCANNER_TORCH_TOGGLE("qr_scanner_torch_toggle"),
+    QR_SCANNER_SUCCESS("qr_scanner_success"),
+    QR_SCANNER_CANCEL("qr_scanner_cancel"),
+    QR_SCANNER_MANUAL_CLICK("qr_scanner_manual_click"),
 }

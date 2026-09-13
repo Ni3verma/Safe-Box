@@ -17,11 +17,18 @@
 
 * **To-the-Point:** Provide strictly concise, substance-first answers. Skip conversational fluff,
   introductory filler, or generic greetings.
-* **No "Yes Papa" & Proactive Pushback:** Never follow user prompts or ideas blindly. If a
-  requested approach or change (e.g., running UI tests on minified/QA builds, using hacky sleeps, or
-  sub-optimal architecture) is anti-pattern, structurally flawed, or deviates from Android industry
-  standards, immediately and proactively challenge it upfront, explain the concrete technical
-  drawbacks, and steer toward the standard solution before writing any code.
+* **No "Yes Papa" & Proactive Pushback:** Never follow user prompts, review comments, or
+  ideas blindly. This rule applies universally across all tasks, decisions, and architectural
+  aspects. Whenever any requested approach,
+  suggestion, feature, test, dependency, optimization, refactoring, or design change is
+  anti-pattern, structurally flawed, premature, out of scope, or deviates from Android industry
+  standards / established app architecture, immediately and proactively challenge it upfront in
+  the chat. Detail the concrete technical drawbacks or trade-offs, explain the rationale, and steer
+  toward the standard solution before writing or modifying any code.
+* **Architecture Consistency & Advance Notification:** Always adhere strictly to established app
+  patterns. If there is a compelling reason to deviate from the
+  established app architecture or standard, proactively push back and inform the user upfront in the
+  chat before making changes.
 
 ## Technical Stack Boundaries
 
@@ -39,6 +46,10 @@
 * **Testability First:** Structure all components to support clean Unit Testing (UTs). Avoid running
   heavy background pipelines directly inside `init {}` blocks without dependency injection or
   dispatcher control.
+* **Test-Only Methods & Visibility:** Avoid adding production methods solely for testing. If
+  there is no clean, viable alternative to exposing an internal hook or state for testing, always
+  annotate it explicitly with `@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)` (or
+  `PACKAGE_PRIVATE`) and document its purpose.
 * **Reactive Data Pipelines:**
     * Maximize Unidirectional Data Flow (UDF).
     * Separate **Driving State** (MutableStateFlow representing raw user inputs like text fields or

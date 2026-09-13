@@ -9,5 +9,6 @@ enum class AnalyticsParam(val paramName: String) {
     // endregion
     RESULT("result"),
     MESSAGE("message"),
-    VERSION("version")
+    VERSION("version"),
+    IS_ENABLED("is_enabled"),
 }
