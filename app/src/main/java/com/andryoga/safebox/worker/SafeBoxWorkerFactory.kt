@@ -7,6 +7,7 @@ import androidx.work.WorkerParameters
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
@@ -27,9 +28,10 @@ class SafeBoxWorkerFactory @Inject constructor(
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
+    private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
     private val safeBoxDatabase: SafeBoxDatabase,
     private val analyticsHelper: AnalyticsHelper,
-    private val dispatchersProvider: DispatchersProvider
+    private val dispatchersProvider: DispatchersProvider,
 ) : WorkerFactory() {
     override fun createWorker(
         appContext: Context,
@@ -48,8 +50,9 @@ class SafeBoxWorkerFactory @Inject constructor(
                     bankAccountDataDaoSecure,
                     bankCardDataDaoSecure,
                     secureNoteDataDaoSecure,
+                    authenticatorDataDaoSecure,
                     analyticsHelper,
-                    dispatchersProvider
+                    dispatchersProvider,
                 )
             }
 
@@ -64,7 +67,8 @@ class SafeBoxWorkerFactory @Inject constructor(
                     bankAccountDataDaoSecure,
                     bankCardDataDaoSecure,
                     secureNoteDataDaoSecure,
-                    analyticsHelper
+                    authenticatorDataDaoSecure,
+                    analyticsHelper,
                 )
             }
 

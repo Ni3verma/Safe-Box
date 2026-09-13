@@ -12,7 +12,9 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
@@ -69,6 +71,9 @@ class RestoreDataWorkerTest {
     @MockK(relaxUnitFun = true)
     lateinit var secureNoteDataDaoSecure: SecureNoteDataDaoSecure
 
+    @MockK(relaxUnitFun = true)
+    lateinit var authenticatorDataDaoSecure: AuthenticatorDataDaoSecure
+
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var tempDir: File
 
@@ -118,7 +123,8 @@ class RestoreDataWorkerTest {
                     bankAccountDataDaoSecure = bankAccountDataDaoSecure,
                     bankCardDataDaoSecure = bankCardDataDaoSecure,
                     secureNoteDataDaoSecure = secureNoteDataDaoSecure,
-                    analyticsHelper = analyticsHelper
+                    authenticatorDataDaoSecure = authenticatorDataDaoSecure,
+                    analyticsHelper = analyticsHelper,
                 )
             }
         }
@@ -139,14 +145,14 @@ class RestoreDataWorkerTest {
                 "notes",
                 "octocat",
                 1000L,
-                1000L
-            )
+                1000L,
+            ),
         )
         val loginJson = Json.encodeToString(ListSerializer(ExportLoginData.serializer()), loginList)
         val dummyCipherBytes = ByteArray(32) { 7 }
 
         val backupMap = WorkerTestFixtures.createBackupMap(
-            loginData = dummyCipherBytes
+            loginData = dummyCipherBytes,
         )
         val backupFile = File(tempDir, "ValidBackup.bak")
         WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
@@ -166,6 +172,7 @@ class RestoreDataWorkerTest {
 
         assertThat(result).isEqualTo(Result.success())
         verify(exactly = 1) { loginDataDaoSecure.deleteAllData() }
+        verify(exactly = 1) { authenticatorDataDaoSecure.deleteAllData() }
         verify(exactly = 1) {
             loginDataDaoSecure.insertMultipleLoginData(
                 match { list ->
@@ -175,7 +182,7 @@ class RestoreDataWorkerTest {
                             list[0].password == "secret" &&
                             list[0].notes == "notes" &&
                             list[0].userId == "octocat"
-                }
+                },
             )
         }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
@@ -239,4 +246,100 @@ class RestoreDataWorkerTest {
             .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isTrue()
     }
+
+    @Test
+    fun doWork_whenBackupContainsAuthenticatorData_restoresAuthenticatorRecords() = runTest {
+        val authList = listOf(
+            ExportAuthenticatorData(
+                "Google 2FA",
+                "JBSWY3DPEHPK3PXP",
+                1000L,
+                2000L,
+            ),
+        )
+        val authJson =
+            Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), authList)
+        val dummyCipherBytes = ByteArray(32) { 9 }
+
+        val backupMap = WorkerTestFixtures.createBackupMap(
+            authenticatorData = dummyCipherBytes,
+        )
+        val backupFile = File(tempDir, "AuthBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+        every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+        every {
+            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+        } returns authJson.toByteArray()
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+            .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+            .build()
+
+        val worker = buildWorker(inputData)
+        val result = worker.doWork()
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) { authenticatorDataDaoSecure.deleteAllData() }
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                match { list ->
+                    list.size == 1 &&
+                            list[0].title == "Google 2FA" &&
+                            list[0].secretKey == "JBSWY3DPEHPK3PXP"
+                },
+            )
+        }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
+    }
+
+    @Test
+    fun doWork_whenLegacyBackupDoesNotContainAuthenticatorData_completesSuccessfullyWithoutInsertingAuthenticators() =
+        runTest {
+            val loginList = listOf(
+                ExportLoginData(
+                    "Legacy Login",
+                    "https://example.com",
+                    "pwd",
+                    "note",
+                    "user",
+                    1000L,
+                    1000L,
+                ),
+            )
+            val loginJson =
+                Json.encodeToString(ListSerializer(ExportLoginData.serializer()), loginList)
+            val dummyCipherBytes = ByteArray(32) { 5 }
+
+            // Legacy backup without AUTHENTICATOR_DATA_KEY
+            val backupMap = WorkerTestFixtures.createBackupMap(
+                loginData = dummyCipherBytes,
+                authenticatorData = null,
+            )
+            val backupFile = File(tempDir, "LegacyBackup.bak")
+            WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+            every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+            every {
+                passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            } returns loginJson.toByteArray()
+
+            val inputData = Data.Builder()
+                .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+                .putString(
+                    CommonConstants.RESTORE_PARAM_FILE_URI,
+                    "file://${backupFile.absolutePath}"
+                )
+                .build()
+
+            val worker = buildWorker(inputData)
+            val result = worker.doWork()
+
+            assertThat(result).isEqualTo(Result.success())
+            verify(exactly = 1) { authenticatorDataDaoSecure.deleteAllData() }
+            verify(exactly = 0) { authenticatorDataDaoSecure.insertMultipleAuthenticatorData(any()) }
+            verify(exactly = 1) { loginDataDaoSecure.insertMultipleLoginData(any()) }
+            assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
+        }
 }
