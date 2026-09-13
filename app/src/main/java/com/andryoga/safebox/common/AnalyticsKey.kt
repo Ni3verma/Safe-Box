@@ -38,5 +38,7 @@ enum class AnalyticsKey(val eventName: String) {
     QR_SCANNER_SUCCESS("qr_scanner_success"),
     QR_SCANNER_CANCEL("qr_scanner_cancel"),
     QR_SCANNER_MANUAL_CLICK("qr_scanner_manual_click"),
+    // TODO: Not logged yet. Wire this up when the TOTP copy action is hoisted out of
+    //  TotpCodeField into SingleRecordViewModel, along with its ViewModel unit test.
     AUTHENTICATOR_COPY_CLICK("authenticator_copy_click"),
 }

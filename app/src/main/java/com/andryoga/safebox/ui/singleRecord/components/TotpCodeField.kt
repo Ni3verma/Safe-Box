@@ -77,6 +77,8 @@ fun TotpCodeField(
     }
 
     Column(
+        // TODO: Log AnalyticsKey.AUTHENTICATOR_COPY_CLICK here. Needs an onCopyClick callback
+        //  hoisted up to SingleRecordViewModel so the event stays unit testable.
         modifier = modifier.clickable(
             onClickLabel = stringResource(R.string.cd_copy_totp_code),
             onClick = { copyToClipboard(label, otpCode, copiedMessage) },
