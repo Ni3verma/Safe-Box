@@ -48,6 +48,8 @@ import timber.log.Timber
  * @param onCancelClick Callback invoked when user declines or cancels the dialog.
  * @param dismissDialogAction Action invoked to dismiss the dialog without taking further action.
  */
+// https://github.com/Ni3verma/Safe-Box/issues/239
+// TODO: Extract common PermissionRationaleDialog base component to share layout between CameraPermissionRationaleDialog and NotificationPermissionRationaleDialog
 @Composable
 fun CameraPermissionRationaleDialog(
     onAllowClick: (isRedirectingToSettings: Boolean) -> Unit,
