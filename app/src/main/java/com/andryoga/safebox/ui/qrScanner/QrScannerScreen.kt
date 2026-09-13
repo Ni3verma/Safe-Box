@@ -76,6 +76,7 @@ import com.andryoga.safebox.ui.utils.OnResume
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import timber.log.Timber
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Entry composable for the QR Code Scanner screen.
@@ -126,9 +127,6 @@ fun QrScannerScreen(
     onClose: () -> Unit,
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    val currentOnQrCodeScanned by rememberUpdatedState(onQrCodeScanned)
 
     var hasCameraPermission by remember {
         mutableStateOf(
@@ -155,15 +153,17 @@ fun QrScannerScreen(
         },
     )
 
-    var camera by remember { mutableStateOf<Camera?>(null) }
-
     OnResume {
         val isGranted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.CAMERA,
         ) == PackageManager.PERMISSION_GRANTED
-        if (isGranted && !hasCameraPermission) {
-            hasCameraPermission = true
+        if (isGranted) {
+            if (!hasCameraPermission) {
+                hasCameraPermission = true
+            }
+        } else if (uiState.isCameraPermissionAskedBefore == true && !uiState.showPermissionRationale) {
+            onAction(QrScannerScreenAction.OnShowPermissionRationale)
         }
     }
 
@@ -181,14 +181,6 @@ fun QrScannerScreen(
                 hasLaunchedInitialPrompt = true
                 Timber.i("Directly launching system camera permission prompt for the first time")
                 permissionLauncher.launch(Manifest.permission.CAMERA)
-            }
-        }
-    }
-
-    LaunchedEffect(uiState.isTorchEnabled, camera) {
-        camera?.let {
-            if (it.cameraInfo.hasFlashUnit()) {
-                it.cameraControl.enableTorch(uiState.isTorchEnabled)
             }
         }
     }
@@ -212,74 +204,119 @@ fun QrScannerScreen(
         },
         cameraPreview = {
             if (hasCameraPermission) {
-                val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
-
-                AndroidView(
-                    factory = { ctx ->
-                        val previewView = PreviewView(ctx).apply {
-                            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-                            scaleType = PreviewView.ScaleType.FILL_CENTER
-                        }
-
-                        val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-
-                        cameraProviderFuture.addListener(
-                            {
-                                val cameraProvider = cameraProviderFuture.get()
-                                val preview = Preview.Builder().build().also {
-                                    it.surfaceProvider = previewView.surfaceProvider
-                                }
-
-                                val imageAnalysis = ImageAnalysis.Builder()
-                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                                    .build()
-                                    .also { analysis ->
-                                        analysis.setAnalyzer(
-                                            cameraExecutor,
-                                            QrCodeAnalyzer(
-                                                scanner = barcodeScanner,
-                                                onQrCodeScanned = { currentOnQrCodeScanned(it) },
-                                            ),
-                                        )
-                                    }
-
-                                try {
-                                    cameraProvider.unbindAll()
-                                    camera = cameraProvider.bindToLifecycle(
-                                        lifecycleOwner,
-                                        CameraSelector.DEFAULT_BACK_CAMERA,
-                                        preview,
-                                        imageAnalysis,
-                                    )
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Use case binding failed")
-                                }
-                            },
-                            ContextCompat.getMainExecutor(ctx),
-                        )
-
-                        previewView
-                    },
+                QrCameraPreview(
+                    barcodeScanner = barcodeScanner,
+                    isTorchEnabled = uiState.isTorchEnabled,
+                    onQrCodeScanned = onQrCodeScanned,
                     modifier = Modifier.fillMaxSize(),
                 )
-
-                DisposableEffect(cameraExecutor) {
-                    onDispose {
-                        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-                        if (cameraProviderFuture.isDone) {
-                            try {
-                                cameraProviderFuture.get().unbindAll()
-                            } catch (e: Exception) {
-                                Timber.w(e, "Error unbinding CameraX on dispose")
-                            }
-                        }
-                        camera = null
-                        cameraExecutor.shutdown()
-                    }
-                }
             }
         },
     )
+}
+
+/**
+ * Encapsulated CameraX preview composable that manages the CameraX [PreviewView],
+ * background [ImageAnalysis.Analyzer] single-thread executor, hardware lifecycle binding,
+ * async disposal guards, and flashlight/torch controls.
+ */
+@Composable
+private fun QrCameraPreview(
+    barcodeScanner: BarcodeScanner,
+    isTorchEnabled: Boolean,
+    onQrCodeScanned: (ParsedTotpData) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val currentOnQrCodeScanned by rememberUpdatedState(onQrCodeScanned)
+    val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    val isDisposed = remember { AtomicBoolean(false) }
+    var camera by remember { mutableStateOf<Camera?>(null) }
+
+    LaunchedEffect(isTorchEnabled, camera) {
+        camera?.let {
+            if (it.cameraInfo.hasFlashUnit()) {
+                it.cameraControl.enableTorch(isTorchEnabled)
+            }
+        }
+    }
+
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx).apply {
+                implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+            }
+
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+            cameraProviderFuture.addListener(
+                {
+                    if (isDisposed.get()) {
+                        try {
+                            cameraProviderFuture.get().unbindAll()
+                        } catch (e: Exception) {
+                            Timber.w(e, "Error unbinding CameraX when disposed")
+                        }
+                        return@addListener
+                    }
+
+                    try {
+                        val cameraProvider = cameraProviderFuture.get()
+                        val preview = Preview.Builder().build().also {
+                            it.surfaceProvider = previewView.surfaceProvider
+                        }
+
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                            .build()
+                            .also { analysis ->
+                                analysis.setAnalyzer(
+                                    cameraExecutor,
+                                    QrCodeAnalyzer(
+                                        scanner = barcodeScanner,
+                                        onQrCodeScanned = { currentOnQrCodeScanned(it) },
+                                    ),
+                                )
+                            }
+
+                        cameraProvider.unbindAll()
+                        camera = cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            CameraSelector.DEFAULT_BACK_CAMERA,
+                            preview,
+                            imageAnalysis,
+                        )
+                    } catch (e: Exception) {
+                        Timber.e(e, "CameraX initialization or binding failed")
+                    }
+                },
+                ContextCompat.getMainExecutor(ctx),
+            )
+
+            previewView
+        },
+        modifier = modifier,
+    )
+
+    DisposableEffect(cameraExecutor) {
+        onDispose {
+            isDisposed.set(true)
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+            cameraProviderFuture.addListener(
+                {
+                    try {
+                        cameraProviderFuture.get().unbindAll()
+                    } catch (e: Exception) {
+                        Timber.w(e, "Error unbinding CameraX on dispose")
+                    }
+                },
+                ContextCompat.getMainExecutor(context),
+            )
+            camera = null
+            cameraExecutor.shutdown()
+        }
+    }
 }
 
 /**
