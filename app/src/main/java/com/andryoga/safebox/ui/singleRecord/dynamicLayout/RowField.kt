@@ -37,6 +37,7 @@ import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.MandatoryLabelText
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenAction
+import com.andryoga.safebox.ui.singleRecord.components.TotpCodeDisplayCard
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
@@ -59,47 +60,54 @@ fun RowField(
 
     Column {
         if (viewMode == ViewMode.VIEW) {
-            val label = stringResource(uiState.cell.label)
-            val formattedData = uiState.getFormattedData()
-            Column {
-                Text(
-                    text = label,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+            if (uiState.cell.isTotpCodeField) {
+                TotpCodeDisplayCard(
+                    secretKey = uiState.data,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
-                Text(
-                    text = formattedData, // show formatted data on the UI
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .clickable {
-                            scope.launch {
-                                Timber.i("setting clip entry for $label")
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                clipboard.setClipEntry(
-                                    ClipEntry(
-                                        ClipData.newPlainText(
-                                            label,
-                                            // while copying we copy the original data and not the formatted data
-                                            uiState.data
+            } else {
+                val label = stringResource(uiState.cell.label)
+                val formattedData = uiState.getFormattedData()
+                Column {
+                    Text(
+                        text = label,
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = formattedData, // show formatted data on the UI
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .padding(bottom = 8.dp)
+                            .clickable {
+                                scope.launch {
+                                    Timber.i("setting clip entry for $label")
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    clipboard.setClipEntry(
+                                        ClipEntry(
+                                            ClipData.newPlainText(
+                                                label,
+                                                // while copying we copy the original data and not the formatted data
+                                                uiState.data
+                                            )
                                         )
                                     )
-                                )
 
-                                // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
-                                // so need to show our own snackbar
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                    snackBarHost.currentSnackbarData?.dismiss()
-                                    snackBarHost.showSnackbar(
-                                        message = "Copied $label to clipboard",
-                                        duration = SnackbarDuration.Short
-                                    )
+                                    // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
+                                    // so need to show our own snackbar
+                                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                                        snackBarHost.currentSnackbarData?.dismiss()
+                                        snackBarHost.showSnackbar(
+                                            message = "Copied $label to clipboard",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
                                 }
                             }
-                        }
-                )
+                    )
+                }
             }
         } else {
             OutlinedTextField(

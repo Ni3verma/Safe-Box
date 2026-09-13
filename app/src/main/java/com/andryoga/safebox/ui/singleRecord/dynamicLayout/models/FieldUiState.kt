@@ -29,6 +29,7 @@ data class FieldUiState(
         val isCopyable: Boolean = false,
         val visualTransformation: VisualTransformation = VisualTransformation.None,
         val maxLength: Int = Int.MAX_VALUE,
+        val isTotpCodeField: Boolean = false,
     )
 
     /**

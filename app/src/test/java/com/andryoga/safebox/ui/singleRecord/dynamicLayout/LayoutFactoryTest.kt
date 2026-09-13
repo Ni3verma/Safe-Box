@@ -1,10 +1,13 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.AuthenticatorLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.LoginLayoutImpl
@@ -23,11 +26,15 @@ class LayoutFactoryTest {
     private val bankAccountRepo: BankAccountDataRepository = mockk(relaxed = true)
     private val bankCardRepo: BankCardDataRepository = mockk(relaxed = true)
     private val noteRepo: SecureNoteDataRepository = mockk(relaxed = true)
+    private val authenticatorRepo: AuthenticatorDataRepository = mockk(relaxed = true)
+    private val totpGenerator: TotpGenerator = mockk(relaxed = true)
 
     private val lazyLoginRepo: Lazy<LoginDataRepository> = mockk()
     private val lazyBankAccountRepo: Lazy<BankAccountDataRepository> = mockk()
     private val lazyBankCardRepo: Lazy<BankCardDataRepository> = mockk()
     private val lazyNoteRepo: Lazy<SecureNoteDataRepository> = mockk()
+    private val lazyAuthenticatorRepo: Lazy<AuthenticatorDataRepository> = mockk()
+    private val lazyTotpGenerator: Lazy<TotpGenerator> = mockk()
 
     private lateinit var layoutFactory: LayoutFactory
 
@@ -37,12 +44,16 @@ class LayoutFactoryTest {
         every { lazyBankAccountRepo.get() } returns bankAccountRepo
         every { lazyBankCardRepo.get() } returns bankCardRepo
         every { lazyNoteRepo.get() } returns noteRepo
+        every { lazyAuthenticatorRepo.get() } returns authenticatorRepo
+        every { lazyTotpGenerator.get() } returns totpGenerator
 
         layoutFactory = LayoutFactory(
             loginDataRepository = lazyLoginRepo,
             bankAccountDataRepository = lazyBankAccountRepo,
             bankCardDataRepository = lazyBankCardRepo,
-            noteDataRepository = lazyNoteRepo
+            noteDataRepository = lazyNoteRepo,
+            authenticatorDataRepository = lazyAuthenticatorRepo,
+            totpGenerator = lazyTotpGenerator,
         )
     }
 
@@ -72,6 +83,13 @@ class LayoutFactoryTest {
         val layout = layoutFactory.getLayout(404, RecordType.NOTE)
 
         assertThat(layout).isInstanceOf(NoteLayoutImpl::class.java)
+    }
+
+    @Test
+    fun getLayout_withAuthenticatorRecordType_returnsAuthenticatorLayoutImpl() {
+        val layout = layoutFactory.getLayout(505, RecordType.AUTHENTICATOR)
+
+        assertThat(layout).isInstanceOf(AuthenticatorLayoutImpl::class.java)
     }
 
     @Test

@@ -6,8 +6,10 @@ import android.content.Context
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
@@ -50,16 +52,21 @@ class SingleRecordViewModelTest {
     @MockK
     lateinit var singleRecordRouteProvider: SingleRecordRouteProvider
 
-    private lateinit var viewModel: SingleRecordViewModel
+    @MockK
+    lateinit var totpGenerator: TotpGenerator
 
+    private lateinit var viewModel: SingleRecordViewModel
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
 
-        every { layoutFactory.getLayout(any(), any()) } returns layout
+        every { layoutFactory.getLayout(any(), any(), any(), any()) } returns layout
         coEvery { layout.getLayoutPlan() } returns LayoutPlan(fieldUiState = emptyMap())
+        every { layout.checkMandatoryFields(any()) } returns false
         every { context.getString(any()) } returns "some string"
+        every { totpGenerator.isValidSecret(any()) } returns true
+        every { totpGenerator.generateCode(any(), any(), any(), any(), any()) } returns "123456"
     }
 
     private fun initViewModel() {
@@ -68,7 +75,8 @@ class SingleRecordViewModelTest {
             singleRecordRouteProvider,
             layoutFactory,
             context,
-            mainDispatcherRule.testDispatcherProvider
+            mainDispatcherRule.testDispatcherProvider,
+            totpGenerator,
         )
     }
 
@@ -277,6 +285,83 @@ class SingleRecordViewModelTest {
                 assertThat(emittedEvent).contains("Copyable : copy me")
                 assertThat(emittedEvent).doesNotContain("secret")
                 assertThat(emittedEvent).doesNotContain("don't copy me")
+                assertThat(emittedEvent).contains("some app link")
+            }
+        }
+
+    @Test
+    fun `initial state is correct for existing authenticator record`() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.AUTHENTICATOR,
+            1,
+        )
+        initViewModel()
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.isLoading).isFalse()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.VIEW)
+            assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isFalse()
+        }
+    }
+
+    @Test
+    fun `handleShareRecord emits shareContentEvent with formatted title and totp code for authenticator`() =
+        runTest {
+            val titleField = FieldUiState(
+                cell = mockk(relaxed = true) {
+                    every { isCopyable } returns true
+                    every { isPasswordField } returns false
+                    every { label } returns 101
+                },
+                data = "Google Authenticator",
+            )
+            val totpCodeField = FieldUiState(
+                cell = mockk(relaxed = true) {
+                    every { isCopyable } returns true
+                    every { isPasswordField } returns false
+                    every { isTotpCodeField } returns true
+                    every { label } returns 102
+                },
+                data = "JBSWY3DPEHPK3PXP",
+            )
+            val secretKeyField = FieldUiState(
+                cell = mockk(relaxed = true) {
+                    every { isCopyable } returns false
+                    every { isPasswordField } returns true
+                    every { label } returns 103
+                },
+                data = "JBSWY3DPEHPK3PXP",
+            )
+
+            val layoutPlan = LayoutPlan(
+                id = LayoutId.AUTHENTICATOR,
+                fieldUiState = mapOf(
+                    FieldId.AUTHENTICATOR_TITLE to titleField,
+                    FieldId.AUTHENTICATOR_TOTP_CODE to totpCodeField,
+                    FieldId.AUTHENTICATOR_SECRET_KEY to secretKeyField,
+                ),
+            )
+            coEvery { layout.getLayoutPlan() } returns layoutPlan
+            every { context.getString(any(), any()) } returns "some app link"
+            every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+                RecordType.AUTHENTICATOR,
+                1,
+            )
+            every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
+            every { totpGenerator.generateCode("JBSWY3DPEHPK3PXP") } returns "654321"
+
+            initViewModel()
+
+            viewModel.shareContentEvent.test {
+                viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+                advanceUntilIdle()
+
+                val emittedEvent = awaitItem()
+                assertThat(emittedEvent).isNotNull()
+                assertThat(emittedEvent).contains("Google Authenticator: 654321")
+                assertThat(emittedEvent).doesNotContain("JBSWY3DPEHPK3PXP")
                 assertThat(emittedEvent).contains("some app link")
             }
         }

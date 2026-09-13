@@ -1,5 +1,6 @@
 package com.andryoga.safebox.domain.mappers.record
 
+import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
@@ -41,5 +42,13 @@ fun SearchLoginData.toRecordListItem(): RecordListItem {
         subTitle = userId,
         recordType = RecordType.LOGIN
     )
+}
 
+fun SearchAuthenticatorData.toRecordListItem(): RecordListItem {
+    return RecordListItem(
+        id = key,
+        title = title,
+        subTitle = null,
+        recordType = RecordType.AUTHENTICATOR,
+    )
 }
