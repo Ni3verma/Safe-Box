@@ -7,12 +7,9 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.domain.models.record.RecordType
-import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
-import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
-import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,8 +30,7 @@ class SingleRecordViewModel @Inject constructor(
     singleRecordRouteProvider: SingleRecordRouteProvider,
     layoutFactory: LayoutFactory,
     @param:ApplicationContext private val context: Context,
-    private val dispatchersProvider: DispatchersProvider,
-    private val totpGenerator: TotpGenerator,
+    private val dispatchersProvider: DispatchersProvider
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
@@ -49,33 +45,22 @@ class SingleRecordViewModel @Inject constructor(
 
     init {
         val args = singleRecordRouteProvider.getRoute()
-        layout = layoutFactory.getLayout(
-            recordId = args.id,
-            recordType = args.recordType,
-            initialTitle = args.initialTitle,
-            initialSecretKey = args.initialSecretKey,
-        )
+        layout = layoutFactory.getLayout(args.id, args.recordType)
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
         viewModelScope.launch {
-            val layoutPlan = layout.getLayoutPlan()
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    layoutPlan = layoutPlan,
+                    layoutPlan = layout.getLayoutPlan(),
                     viewMode = if (args.id != null) ViewMode.VIEW else ViewMode.NEW,
-                    topAppBarUiState = if (args.id != null) {
-                        SingleRecordScreenUiState.TopAppBarUiState(
-                            isSaveButtonVisible = false,
-                            title = getTitleForTopAppBar(args.recordType),
-                        )
-                    } else {
-                        SingleRecordScreenUiState.TopAppBarUiState(
-                            isSaveButtonVisible = true,
-                            isSaveButtonEnabled = layout.checkMandatoryFields(layoutPlan.fieldUiState.values),
-                            title = getTitleForTopAppBar(args.recordType),
-                        )
-                    },
+                    topAppBarUiState = if (args.id != null) SingleRecordScreenUiState.TopAppBarUiState(
+                        isSaveButtonVisible = false,
+                        title = getTitleForTopAppBar(args.recordType)
+                    ) else SingleRecordScreenUiState.TopAppBarUiState(
+                        isSaveButtonVisible = true,
+                        title = getTitleForTopAppBar(args.recordType)
+                    )
                 )
             }
         }
@@ -97,7 +82,7 @@ class SingleRecordViewModel @Inject constructor(
                             fieldUiState = updatedUiState,
                         ),
                         topAppBarUiState = currentState.topAppBarUiState.copy(
-                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState.values)
+                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState)
                         )
                     )
                 }
@@ -141,29 +126,10 @@ class SingleRecordViewModel @Inject constructor(
         viewModelScope.launch(dispatchersProvider.io) {
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()
-            val layoutPlan = layout.getLayoutPlan()
 
-            if (layoutPlan.id == LayoutId.AUTHENTICATOR) {
-                val title = layoutPlan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data.orEmpty()
-                val secretKey = layoutPlan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data
-                    ?: layoutPlan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.data.orEmpty()
-                val totpCode = if (totpGenerator.isValidSecret(secretKey)) {
-                    totpGenerator.generateCode(secretKey)
-                } else {
-                    ""
-                }
-                dataStringBuffer.append("$title: $totpCode\n")
-            } else {
-                layoutPlan.fieldUiState.filter { (_, uiState) ->
-                    uiState.data.isEmpty().not() &&
-                            uiState.cell.isCopyable &&
-                            uiState.cell.isPasswordField.not()
-                }.forEach { (_, uiState) ->
-                    val cellTitle = context.getString(uiState.cell.label)
-
-                    // for the data, add formatted data because it is easier to read.
-                    dataStringBuffer.append("$cellTitle : ${uiState.getFormattedData()}\n")
-                }
+            layout.getShareableFields().forEach { shareableField ->
+                val cellTitle = context.getString(shareableField.label)
+                dataStringBuffer.append("$cellTitle : ${shareableField.value}\n")
             }
 
             dataStringBuffer.append(

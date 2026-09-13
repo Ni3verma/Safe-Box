@@ -8,9 +8,6 @@ data class SingleRecordScreenRoute(
     val recordType: RecordType,
     /**
      * null id means we are creating a new record.
-     * Otherwise, we are viewing/editing an existing record.
-     */
-    val id: Int? = null,
-    val initialTitle: String? = null,
-    val initialSecretKey: String? = null,
+     * Otherwise, we are viewing/editing an existing record.*/
+    val id: Int? = null
 )

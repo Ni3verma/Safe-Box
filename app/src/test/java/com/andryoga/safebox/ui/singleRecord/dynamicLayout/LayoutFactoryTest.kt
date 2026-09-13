@@ -12,6 +12,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLay
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.LoginLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.NoteLayoutImpl
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
@@ -96,9 +97,15 @@ class LayoutFactoryTest {
     fun checkMandatoryFields_allMandatoryFieldsFilled_evaluatesTrue() {
         val layout = layoutFactory.getLayout(null, RecordType.NOTE)
 
-        val fields = listOf(
-            FieldUiState(cell = FieldUiState.Cell(isMandatory = true), data = "Title Value"),
-            FieldUiState(cell = FieldUiState.Cell(isMandatory = false), data = "")
+        val fields = mapOf(
+            FieldId.NOTE_TITLE to FieldUiState(
+                cell = FieldUiState.Cell(isMandatory = true),
+                data = "Title Value",
+            ),
+            FieldId.NOTE_NOTES to FieldUiState(
+                cell = FieldUiState.Cell(isMandatory = false),
+                data = "",
+            ),
         )
 
         val isValid = layout.checkMandatoryFields(fields)
@@ -110,9 +117,15 @@ class LayoutFactoryTest {
     fun checkMandatoryFields_missingMandatoryField_evaluatesFalse() {
         val layout = layoutFactory.getLayout(null, RecordType.NOTE)
 
-        val fields = listOf(
-            FieldUiState(cell = FieldUiState.Cell(isMandatory = true), data = "   "),
-            FieldUiState(cell = FieldUiState.Cell(isMandatory = false), data = "Optional Value")
+        val fields = mapOf(
+            FieldId.NOTE_TITLE to FieldUiState(
+                cell = FieldUiState.Cell(isMandatory = true),
+                data = "   ",
+            ),
+            FieldId.NOTE_NOTES to FieldUiState(
+                cell = FieldUiState.Cell(isMandatory = false),
+                data = "Optional Value",
+            ),
         )
 
         val isValid = layout.checkMandatoryFields(fields)

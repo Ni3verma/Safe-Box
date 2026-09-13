@@ -32,6 +32,13 @@ fun getNoteRecordItem() = RecordListItem(
     recordType = RecordType.NOTE
 )
 
+fun getAuthenticatorRecordItem() = RecordListItem(
+    id = 1,
+    title = "GitHub - work",
+    subTitle = null,
+    recordType = RecordType.AUTHENTICATOR
+)
+
 fun getAppliedRecordTypeFilters(): List<UserInputs.RecordTypeFilter> {
     return listOf(
         UserInputs.RecordTypeFilter(RecordType.LOGIN, true),

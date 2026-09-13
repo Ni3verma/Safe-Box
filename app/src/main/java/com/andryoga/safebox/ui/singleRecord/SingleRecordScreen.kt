@@ -23,6 +23,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
+import com.andryoga.safebox.ui.previewHelper.getAuthenticatorLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
@@ -324,4 +325,33 @@ private fun SingleRecordScreenCardWithSomeFields2ReadOnlyPreview() {
         ),
         {}
     )
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenAuthenticatorPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getAuthenticatorLayoutPlan()
+            ),
+            {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SingleRecordScreenAuthenticatorReadOnlyPreview() {
+    SafeBoxTheme {
+        SingleRecordScreen(
+            SingleRecordScreenUiState(
+                isLoading = false,
+                layoutPlan = getAuthenticatorLayoutPlan(withData = true),
+                viewMode = ViewMode.VIEW
+            ),
+            {}
+        )
+    }
 }

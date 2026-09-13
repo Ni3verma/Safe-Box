@@ -38,15 +38,26 @@ class AuthenticatorLayoutImplTest {
         every { totpGenerator.isValidSecret(any()) } returns true
     }
 
+    private fun createLayout(recordId: Int? = null) = AuthenticatorLayoutImpl(
+        recordId = recordId,
+        authenticatorDataRepository = repository,
+        totpGenerator = totpGenerator,
+    )
+
+    private fun mandatoryFields(title: String, secretKey: String) = mapOf(
+        FieldId.AUTHENTICATOR_TITLE to FieldUiState(
+            cell = FieldUiState.Cell(label = R.string.title, isMandatory = true),
+            data = title,
+        ),
+        FieldId.AUTHENTICATOR_SECRET_KEY to FieldUiState(
+            cell = FieldUiState.Cell(label = R.string.secret_key, isMandatory = true),
+            data = secretKey,
+        ),
+    )
+
     @Test
     fun getLayoutPlan_existingRecord_returnsPopulatedLayoutPlan() = runTest {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = 10,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
-
-        val plan = layout.getLayoutPlan()
+        val plan = createLayout(recordId = 10).getLayoutPlan()
 
         assertThat(plan.id).isEqualTo(LayoutId.AUTHENTICATOR)
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data).isEqualTo("Google")
@@ -60,36 +71,30 @@ class AuthenticatorLayoutImplTest {
     }
 
     @Test
-    fun getLayoutPlan_newRecordWithInitialData_returnsPreFilledLayoutPlan() = runTest {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = null,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-            initialTitle = "GitHub",
-            initialSecretKey = "HXDMVJECJJWSRB3H",
-        )
-
-        val plan = layout.getLayoutPlan()
+    fun getLayoutPlan_newRecord_returnsEmptyLayoutPlan() = runTest {
+        val plan = createLayout().getLayoutPlan()
 
         assertThat(plan.id).isEqualTo(LayoutId.AUTHENTICATOR)
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data).isEqualTo("GitHub")
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.data).isEqualTo("HXDMVJECJJWSRB3H")
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEqualTo("HXDMVJECJJWSRB3H")
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data).isEmpty()
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEmpty()
         assertThat(plan.fieldUiState[FieldId.CREATION_DATE]?.data).isEmpty()
         assertThat(plan.fieldUiState[FieldId.UPDATE_DATE]?.data).isEmpty()
     }
 
     @Test
+    fun getLayoutPlan_totpCodeField_isNotMarkedCopyable() = runTest {
+        val plan = createLayout(recordId = 10).getLayoutPlan()
+
+        // the field holds the secret seed, so the generic share path must never pick it up
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.isCopyable).isFalse()
+    }
+
+    @Test
     fun saveLayout_newRecord_callsRepositoryUpsertWithTrimmedData() = runTest {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = null,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
         val dataSlot = slot<AuthenticatorData>()
         coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
 
-        layout.saveLayout(
+        createLayout().saveLayout(
             mapOf(
                 FieldId.AUTHENTICATOR_TITLE to "  My AWS  ",
                 FieldId.AUTHENTICATOR_SECRET_KEY to "  JBSWY3DPEHPK3PXP  ",
@@ -105,11 +110,7 @@ class AuthenticatorLayoutImplTest {
 
     @Test
     fun saveLayout_existingRecord_preservesCreationDate() = runTest {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = 10,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
+        val layout = createLayout(recordId = 10)
         layout.getLayoutPlan() // populates recordData
 
         val dataSlot = slot<AuthenticatorData>()
@@ -130,88 +131,54 @@ class AuthenticatorLayoutImplTest {
 
     @Test
     fun deleteLayout_existingRecord_callsRepositoryDelete() = runTest {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = 10,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
-
-        layout.deleteLayout()
+        createLayout(recordId = 10).deleteLayout()
 
         coVerify(exactly = 1) { repository.deleteAuthenticatorDataByKey(10) }
     }
 
     @Test
+    fun getShareableFields_sharesGeneratedCodeAndNeverTheSecret() = runTest {
+        every { totpGenerator.generateCode("JBSWY3DPEHPK3PXP") } returns "654321"
+
+        val shareableFields = createLayout(recordId = 10).getShareableFields()
+
+        assertThat(shareableFields).hasSize(2)
+        assertThat(shareableFields[0].label).isEqualTo(R.string.title)
+        assertThat(shareableFields[0].value).isEqualTo("Google")
+        assertThat(shareableFields[1].label).isEqualTo(R.string.totp_code)
+        assertThat(shareableFields[1].value).isEqualTo("654321")
+        assertThat(shareableFields.map { it.value }).doesNotContain("JBSWY3DPEHPK3PXP")
+    }
+
+    @Test
     fun checkMandatoryFields_validSecretAndTitle_evaluatesTrue() {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = null,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
         every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
 
-        val fields = listOf(
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.title, isMandatory = true),
-                data = "Google",
-            ),
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.secret_key, isMandatory = true),
-                data = "JBSWY3DPEHPK3PXP",
-            ),
+        val isValid = createLayout().checkMandatoryFields(
+            mandatoryFields(title = "Google", secretKey = "JBSWY3DPEHPK3PXP"),
         )
-
-        val isValid = layout.checkMandatoryFields(fields)
 
         assertThat(isValid).isTrue()
     }
 
     @Test
-    fun checkMandatoryFields_invalidSecret_evaluatesFalse() {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = null,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
+    fun checkMandatoryFields_secretNotDecodableAsBase32_evaluatesFalse() {
         every { totpGenerator.isValidSecret("INVALID_BASE32_189") } returns false
 
-        val fields = listOf(
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.title, isMandatory = true),
-                data = "Google",
-            ),
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.secret_key, isMandatory = true),
-                data = "INVALID_BASE32_189",
-            ),
+        val isValid = createLayout().checkMandatoryFields(
+            mandatoryFields(title = "Google", secretKey = "INVALID_BASE32_189"),
         )
-
-        val isValid = layout.checkMandatoryFields(fields)
 
         assertThat(isValid).isFalse()
     }
 
     @Test
     fun checkMandatoryFields_blankTitle_evaluatesFalse() {
-        val layout = AuthenticatorLayoutImpl(
-            recordId = null,
-            authenticatorDataRepository = repository,
-            totpGenerator = totpGenerator,
-        )
         every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
 
-        val fields = listOf(
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.title, isMandatory = true),
-                data = "   ",
-            ),
-            FieldUiState(
-                cell = FieldUiState.Cell(label = R.string.secret_key, isMandatory = true),
-                data = "JBSWY3DPEHPK3PXP",
-            ),
+        val isValid = createLayout().checkMandatoryFields(
+            mandatoryFields(title = "   ", secretKey = "JBSWY3DPEHPK3PXP"),
         )
-
-        val isValid = layout.checkMandatoryFields(fields)
 
         assertThat(isValid).isFalse()
     }

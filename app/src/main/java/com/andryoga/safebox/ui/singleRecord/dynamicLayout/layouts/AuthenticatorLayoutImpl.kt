@@ -10,27 +10,24 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ShareableField
 import java.util.Date
 
 /**
  * Implementation of [Layout] for 2FA TOTP Authenticator records.
  *
  * Manages the dynamic layout plan across view, edit, and creation modes for authenticator entries.
- * Enforces mandatory Base32 format validation for secrets and persists encrypted entries
- * via [AuthenticatorDataRepository].
+ * Enforces Base32 format validation for the secret seed and persists encrypted entries via
+ * [AuthenticatorDataRepository].
  *
  * @param recordId Unique identifier of the record, or null when creating a new record.
  * @param authenticatorDataRepository Repository for loading, upserting, and deleting authenticator entities.
- * @param totpGenerator Generator used to validate RFC 4648 Base32 secret seeds.
- * @param initialTitle Optional initial title value (e.g., pre-filled from QR code scan).
- * @param initialSecretKey Optional initial secret key value (e.g., pre-filled from QR code scan).
+ * @param totpGenerator Generator used to validate the Base32 seed and derive the shareable one-time code.
  */
 class AuthenticatorLayoutImpl(
     private val recordId: Int?,
     private val authenticatorDataRepository: AuthenticatorDataRepository,
     private val totpGenerator: TotpGenerator,
-    private val initialTitle: String? = null,
-    private val initialSecretKey: String? = null,
 ) : Layout {
     private var recordData: AuthenticatorData? = null
 
@@ -40,14 +37,11 @@ class AuthenticatorLayoutImpl(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
-        val title = data[FieldId.AUTHENTICATOR_TITLE]?.trim().orEmpty()
-        val secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY]?.trim().orEmpty()
-
         authenticatorDataRepository.upsertAuthenticatorData(
             AuthenticatorData(
                 id = recordId,
-                title = title,
-                secretKey = secretKey,
+                title = data[FieldId.AUTHENTICATOR_TITLE]?.trim().orEmpty(),
+                secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY]?.trim().orEmpty(),
                 creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             ),
@@ -62,22 +56,47 @@ class AuthenticatorLayoutImpl(
         }
     }
 
-    override fun checkMandatoryFields(fieldUiState: Collection<FieldUiState>): Boolean {
-        val mandatoryFilled = super.checkMandatoryFields(fieldUiState)
-        if (!mandatoryFilled) return false
+    /**
+     * Additionally enforces that the secret seed is valid RFC 4648 Base32.
+     *
+     * This runs on every keystroke in create/edit mode, where the user can hand type an arbitrary
+     * seed via the "enter key manually" fallback. Blocking Save here prevents persisting a record
+     * that could never produce a code.
+     *
+     * @param fieldUiState Current state of every field in the layout, keyed by [FieldId].
+     * @return true when the mandatory fields are filled and the secret seed is decodable.
+     */
+    override fun checkMandatoryFields(fieldUiState: Map<FieldId, FieldUiState>): Boolean {
+        if (super.checkMandatoryFields(fieldUiState).not()) return false
 
-        val secretKey = fieldUiState
-            .firstOrNull { it.cell.label == R.string.secret_key }
-            ?.data
-            ?.trim()
-            .orEmpty()
+        val secretKey = fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data?.trim().orEmpty()
         return totpGenerator.isValidSecret(secretKey)
     }
 
-    private fun getLayoutPlanInternal(): LayoutPlan {
-        val resolvedTitle = recordData?.title ?: initialTitle.orEmpty()
-        val resolvedSecretKey = recordData?.secretKey ?: initialSecretKey.orEmpty()
+    /**
+     * Shares the derived one-time code instead of the stored seed.
+     *
+     * The layout stores the Base32 secret in [FieldId.AUTHENTICATOR_TOTP_CODE] so that the UI can
+     * roll the code locally every second. Sharing that raw seed would hand over permanent access to
+     * the second factor, so the code valid at share time is shared instead.
+     *
+     * @return title and the currently valid one-time code.
+     */
+    override suspend fun getShareableFields(): List<ShareableField> {
+        val fieldUiState = getLayoutPlan().fieldUiState
+        val title = fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data.orEmpty()
+        val secretKey = fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data.orEmpty()
 
+        return listOf(
+            ShareableField(label = R.string.title, value = title),
+            ShareableField(
+                label = R.string.totp_code,
+                value = totpGenerator.generateCode(secretKey),
+            ),
+        )
+    }
+
+    private fun getLayoutPlanInternal(): LayoutPlan {
         return LayoutPlan(
             id = LayoutId.AUTHENTICATOR,
             arrangement = listOf(
@@ -94,16 +113,17 @@ class AuthenticatorLayoutImpl(
                         isMandatory = true,
                         isCopyable = true,
                     ),
-                    data = resolvedTitle,
+                    data = recordData?.title.orEmpty(),
                 ),
                 FieldId.AUTHENTICATOR_TOTP_CODE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.totp_code,
                         isVisibleOnlyInViewMode = true,
                         isTotpCodeField = true,
-                        isCopyable = true,
+                        // holds the secret seed, never the code, so it must never be shared as is.
+                        isCopyable = false,
                     ),
-                    data = resolvedSecretKey,
+                    data = recordData?.secretKey.orEmpty(),
                 ),
                 FieldId.AUTHENTICATOR_SECRET_KEY to FieldUiState(
                     cell = FieldUiState.Cell(
@@ -112,7 +132,7 @@ class AuthenticatorLayoutImpl(
                         isPasswordField = true,
                         visualTransformation = PasswordVisualTransformation(),
                     ),
-                    data = resolvedSecretKey,
+                    data = recordData?.secretKey.orEmpty(),
                 ),
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(

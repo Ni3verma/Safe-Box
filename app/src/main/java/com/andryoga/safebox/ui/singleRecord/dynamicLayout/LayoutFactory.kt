@@ -32,17 +32,10 @@ class LayoutFactory @Inject constructor(
      * and record screen should be pre filled with it's data.
      *
      * @param recordType: type of the record
-     * @param initialTitle: optional initial title for pre-filling new records
-     * @param initialSecretKey: optional initial secret key for pre-filling new records
      *
      * @return Layout for the given record type with pre-filled data if recordId is also passed.
      * */
-    fun getLayout(
-        recordId: Int?,
-        recordType: RecordType,
-        initialTitle: String? = null,
-        initialSecretKey: String? = null,
-    ): Layout {
+    fun getLayout(recordId: Int?, recordType: RecordType): Layout {
         return when (recordType) {
             RecordType.LOGIN -> LoginLayoutImpl(recordId, loginDataRepository.get())
             RecordType.CARD -> BankCardLayoutImpl(recordId, bankCardDataRepository.get())
@@ -52,11 +45,9 @@ class LayoutFactory @Inject constructor(
             )
             RecordType.NOTE -> NoteLayoutImpl(recordId, noteDataRepository.get())
             RecordType.AUTHENTICATOR -> AuthenticatorLayoutImpl(
-                recordId = recordId,
-                authenticatorDataRepository = authenticatorDataRepository.get(),
-                totpGenerator = totpGenerator.get(),
-                initialTitle = initialTitle,
-                initialSecretKey = initialSecretKey,
+                recordId,
+                authenticatorDataRepository.get(),
+                totpGenerator.get(),
             )
         }
     }
