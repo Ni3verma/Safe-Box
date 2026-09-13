@@ -1,7 +1,9 @@
 package com.andryoga.safebox.ui.core
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.os.Build
+import android.os.PersistableBundle
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -36,7 +38,14 @@ fun rememberCopyToClipboardAction(): (label: String, value: String, confirmation
             scope.launch {
                 Timber.i("setting clip entry for $label")
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(label, value)))
+                // flag the clip as sensitive so the Tiramisu+ clipboard preview overlay redacts
+                // it instead of showing the credential in clear text.
+                val clipData = ClipData.newPlainText(label, value).apply {
+                    description.extras = PersistableBundle().apply {
+                        putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                    }
+                }
+                clipboard.setClipEntry(ClipEntry(clipData))
 
                 // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
                 // so need to show our own snackbar only below it.

@@ -153,6 +153,18 @@ class AuthenticatorLayoutImplTest {
     }
 
     @Test
+    fun getShareableFields_invalidSecret_skipsCodeInsteadOfThrowing() = runTest {
+        // restore-from-backup can insert an undecodable seed, generateCode would throw on it.
+        every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns false
+        every { totpGenerator.generateCode(any()) } throws IllegalArgumentException("invalid")
+
+        val shareableFields = createLayout(recordId = 10).getShareableFields()
+
+        assertThat(shareableFields).hasSize(1)
+        assertThat(shareableFields.single().label).isEqualTo(R.string.title)
+    }
+
+    @Test
     fun checkMandatoryFields_validSecretAndTitle_evaluatesTrue() {
         every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
 

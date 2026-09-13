@@ -81,20 +81,30 @@ class AuthenticatorLayoutImpl(
      * roll the code locally every second. Sharing that raw seed would hand over permanent access to
      * the second factor, so the code valid at share time is shared instead.
      *
-     * @return title and the currently valid one-time code.
+     * Blank values are skipped to match the interface default, and an undecodable seed is skipped
+     * because [TotpGenerator.generateCode] throws on one. Both are reachable for records inserted
+     * by restore-from-backup, which does not validate the seed.
+     *
+     * @return title and the currently valid one-time code, omitting either if unusable.
      */
     override suspend fun getShareableFields(): List<ShareableField> {
         val fieldUiState = getLayoutPlan().fieldUiState
         val title = fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data.orEmpty()
         val secretKey = fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data.orEmpty()
 
-        return listOf(
-            ShareableField(label = R.string.title, value = title),
-            ShareableField(
-                label = R.string.totp_code,
-                value = totpGenerator.generateCode(secretKey),
-            ),
-        )
+        return buildList {
+            if (title.isNotBlank()) {
+                add(ShareableField(label = R.string.title, value = title))
+            }
+            if (totpGenerator.isValidSecret(secretKey)) {
+                add(
+                    ShareableField(
+                        label = R.string.totp_code,
+                        value = totpGenerator.generateCode(secretKey),
+                    ),
+                )
+            }
+        }
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {

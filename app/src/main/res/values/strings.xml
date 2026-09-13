@@ -184,4 +184,5 @@
     <string name="totp_code">One-time code</string>
     <string name="secret_key">Secret key</string>
     <string name="cd_copy_totp_code">Copy one-time code</string>
+    <string name="totp_invalid_secret_key">Invalid secret key, cannot generate code</string>
 </resources>

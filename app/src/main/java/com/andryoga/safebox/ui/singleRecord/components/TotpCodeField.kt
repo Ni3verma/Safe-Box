@@ -58,6 +58,18 @@ fun TotpCodeField(
     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
     val copyToClipboard = rememberCopyToClipboardAction()
 
+    /*
+     * Seeds are Base32 validated before save, but restore-from-backup inserts rows straight from
+     * the backup file without validating them, so a corrupt seed can still reach this screen.
+     * generateCode() throws on such a seed, which would crash composition, so degrade to an
+     * inline error instead.
+     */
+    val isValidSecret = remember(secretKey) { totpGenerator.isValidSecret(secretKey) }
+    if (isValidSecret.not()) {
+        InvalidSecretKeyField(label = label, modifier = modifier)
+        return
+    }
+
     val epochSeconds by produceState(initialValue = System.currentTimeMillis() / 1000) {
         while (true) {
             delay(1000)
@@ -121,6 +133,36 @@ fun TotpCodeField(
 }
 
 /**
+ * Fallback shown when the stored seed cannot produce a code.
+ *
+ * Keeps the record openable so the user can still read the title and repair or delete the entry,
+ * rather than the screen crashing on a corrupt seed.
+ *
+ * @param label Field label, kept identical to the healthy state for visual consistency.
+ * @param modifier Composable layout modifier.
+ */
+@Composable
+private fun InvalidSecretKeyField(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = stringResource(R.string.totp_invalid_secret_key),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(bottom = 8.dp),
+        )
+    }
+}
+
+/**
  * RFC 6238 default time step. Kept local to the UI layer because it only drives the countdown ring
  * and the code memoisation key, the engine owns its own default.
  */
@@ -131,5 +173,13 @@ private const val TOTP_PERIOD_SECONDS = 30L
 private fun TotpCodeFieldPreview() {
     SafeBoxTheme {
         TotpCodeField(secretKey = "JBSWY3DPEHPK3PXP")
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun TotpCodeFieldInvalidSecretPreview() {
+    SafeBoxTheme {
+        TotpCodeField(secretKey = "not-a-valid-base32-seed!")
     }
 }
