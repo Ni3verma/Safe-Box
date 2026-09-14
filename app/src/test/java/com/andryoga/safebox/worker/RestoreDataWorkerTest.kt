@@ -22,6 +22,7 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
+import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
@@ -124,6 +125,9 @@ class RestoreDataWorkerTest {
                     bankCardDataDaoSecure = bankCardDataDaoSecure,
                     secureNoteDataDaoSecure = secureNoteDataDaoSecure,
                     authenticatorDataDaoSecure = authenticatorDataDaoSecure,
+                    // real engine, it is stateless and pure, so the test exercises actual
+                    // Base32 validation rather than a stubbed answer.
+                    totpGenerator = TotpGeneratorImpl(),
                     analyticsHelper = analyticsHelper,
                 )
             }
@@ -291,6 +295,51 @@ class RestoreDataWorkerTest {
                 },
             )
         }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
+    }
+
+    @Test
+    fun doWork_whenAuthenticatorSecretIsNotDecodable_skipsRecordAndLogsCount() = runTest {
+        val authList = listOf(
+            ExportAuthenticatorData("Valid 2FA", "JBSWY3DPEHPK3PXP", 1000L, 2000L),
+            // '!' and '1' are outside the RFC 4648 Base32 alphabet, decode() would throw on this.
+            ExportAuthenticatorData("Corrupt 2FA", "not-base32!!1", 1000L, 2000L),
+            ExportAuthenticatorData("Empty 2FA", "", 1000L, 2000L),
+        )
+        val authJson =
+            Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), authList)
+        val dummyCipherBytes = ByteArray(32) { 9 }
+
+        val backupMap = WorkerTestFixtures.createBackupMap(
+            authenticatorData = dummyCipherBytes,
+        )
+        val backupFile = File(tempDir, "CorruptAuthBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+        every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+        every {
+            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+        } returns authJson.toByteArray()
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+            .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+            .build()
+
+        val worker = buildWorker(inputData)
+        val result = worker.doWork()
+
+        // the rest of the backup must still restore, one bad seed cannot fail the whole restore.
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                match { list ->
+                    list.size == 1 && list[0].title == "Valid 2FA"
+                },
+            )
+        }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
+            .isTrue()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
     }
 

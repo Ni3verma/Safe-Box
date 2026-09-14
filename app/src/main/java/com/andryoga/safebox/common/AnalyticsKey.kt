@@ -17,6 +17,10 @@ enum class AnalyticsKey(val eventName: String) {
     RESTORE_DATA_FAILURE("restore_data_failure"),
     RESTORE_DATA_WRONG_PASSWORD("restore_data_wrong_password"),
     RESTORE_STARTED("restore_started"),
+    // logged with AnalyticsParam.COUNT when a restore drops authenticator records whose stored
+    // seed is not decodable Base32. A non zero count means backup data and the current Base32
+    // validation have drifted apart.
+    RESTORE_INVALID_AUTHENTICATOR_SKIPPED("restore_invalid_authenticator_skipped"),
     NEW_SECURE_NOTE("new_secure_note"),
     NEW_BANK_CARD("new_bank_card"),
     NEW_LOGIN("new_login"),
