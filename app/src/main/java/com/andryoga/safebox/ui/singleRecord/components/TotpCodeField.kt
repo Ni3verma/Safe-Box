@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.core.CircularCountdownRing
@@ -98,7 +98,7 @@ fun TotpCodeField(
             }
             CircularCountdownRing(
                 remainingSeconds = totpCodeState.remainingSeconds,
-                totalSeconds = CommonConstants.TOTP_PERIOD_SECONDS,
+                totalSeconds = TotpDefaults.PERIOD_SECONDS,
             )
         }
     }

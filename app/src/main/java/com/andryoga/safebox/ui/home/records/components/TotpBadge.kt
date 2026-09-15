@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -60,7 +60,7 @@ fun TotpBadge(
     ) {
         CircularCountdownRing(
             remainingSeconds = totpCodeState.remainingSeconds,
-            totalSeconds = CommonConstants.TOTP_PERIOD_SECONDS,
+            totalSeconds = TotpDefaults.PERIOD_SECONDS,
             size = 24.dp,
             strokeWidth = 2.dp,
         )

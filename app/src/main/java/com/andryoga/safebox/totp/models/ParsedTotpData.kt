@@ -1,5 +1,7 @@
 package com.andryoga.safebox.totp.models
 
+import com.andryoga.safebox.totp.TotpDefaults
+
 /**
  * Immutable data model representing the parsed components of an `otpauth://totp/...` Key URI.
  *
@@ -13,6 +15,6 @@ data class ParsedTotpData(
     val title: String,
     val secretKey: String,
     val algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
-    val digits: Int = 6,
-    val period: Int = 30,
+    val digits: Int = TotpDefaults.DIGITS,
+    val period: Int = TotpDefaults.PERIOD_SECONDS,
 )

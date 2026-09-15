@@ -1,5 +1,6 @@
 package com.andryoga.safebox.totp.engine
 
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import java.nio.ByteBuffer
@@ -35,7 +36,7 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
         algorithm: TotpAlgorithm,
     ): String {
         require(period > 0) { "Period must be greater than 0" }
-        require(digits in 6..8) { "Digits must be between 6 and 8" }
+        require(digits in TotpDefaults.SUPPORTED_DIGITS) { "Digits must be between 6 and 8" }
 
         val keyBytes = Base32Utils.decode(secretBase32)
         require(keyBytes.isNotEmpty()) { "Secret key bytes cannot be empty" }

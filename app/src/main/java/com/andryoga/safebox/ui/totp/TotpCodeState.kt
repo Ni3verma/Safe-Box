@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import kotlinx.coroutines.delay
@@ -48,7 +49,7 @@ fun rememberTotpCodeState(
     }
 
     // keyed on the time step so the code is recomputed only when the window rolls over.
-    val code = remember(secretKey, epochSeconds / CommonConstants.TOTP_PERIOD_SECONDS) {
+    val code = remember(secretKey, epochSeconds / TotpDefaults.PERIOD_SECONDS) {
         totpGenerator.generateCode(secretBase32 = secretKey, timeSeconds = epochSeconds)
     }
     val remainingSeconds = remember(epochSeconds) {

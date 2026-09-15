@@ -47,9 +47,6 @@ object CommonConstants {
     const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
 
-    // RFC 6238 default time step, in seconds.
-    const val TOTP_PERIOD_SECONDS = 30
-
     // use below link to directly open playstore from the app. This should not be shared with
     // anyone as it doesn't come as hyperlink on text message. Use APP_PLAYSTORE_LINK_SHARE instead
     const val APP_PLAYSTORE_LINK =
