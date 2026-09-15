@@ -39,15 +39,13 @@ import com.andryoga.safebox.ui.utils.getTitle
  *
  * @param item Record to render.
  * @param onRecordClick Invoked when the card is tapped, to open the record.
- * @param onCopyTotpCode Invoked with the record id after its one-time code is copied. Hoisted so
- * the analytics event is logged in the ViewModel and stays unit testable. Defaulted because only
- * authenticator rows can ever raise it.
+ * @param onCopyTotpCode Invoked after an authenticator row's one-time code is copied.
  */
 @Composable
 fun RecordItem(
     item: RecordListItem,
     onRecordClick: (id: Int, recordType: RecordType) -> Unit,
-    onCopyTotpCode: (id: Int) -> Unit = {},
+    onCopyTotpCode: () -> Unit = {},
 ) {
     Card(
         modifier = Modifier
@@ -90,12 +88,11 @@ fun RecordItem(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                 )
-                // Authenticator rows have no static subtitle, so the live code takes that slot and
-                // the row keeps the same height as every other record type.
+                // authenticator rows have no static subtitle, so the live code takes that slot.
                 if (item.totpSecret != null) {
                     TotpBadge(
                         secretKey = item.totpSecret,
-                        onCopyClick = { onCopyTotpCode(item.id) },
+                        onCopyClick = onCopyTotpCode,
                     )
                 } else {
                     Text(

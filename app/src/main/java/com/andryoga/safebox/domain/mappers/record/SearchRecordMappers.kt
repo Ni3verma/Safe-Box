@@ -44,13 +44,8 @@ fun SearchLoginData.toRecordListItem(): RecordListItem {
     )
 }
 
-/**
- * Maps an authenticator record to a list row.
- *
- * [SearchAuthenticatorData.secretKey] is already decrypted by the secure DAO, so the seed is passed
- * straight through for the card to derive the rolling code. [RecordListItem.subTitle] stays null
- * because the one-time code occupies that slot instead of a static value.
- */
+// secretKey is already decrypted by the secure DAO.
+// subTitle stays null as the live code takes that slot.
 fun SearchAuthenticatorData.toRecordListItem(): RecordListItem {
     return RecordListItem(
         id = key,

@@ -19,27 +19,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.ui.core.CircularCountdownRing
-import com.andryoga.safebox.ui.core.TOTP_PERIOD_SECONDS
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
-import com.andryoga.safebox.ui.core.rememberTotpCodeState
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
+import com.andryoga.safebox.ui.totp.rememberTotpCodeState
 
 /**
  * Compact live one-time code shown on an authenticator row in the records list.
  *
- * Occupies the subtitle slot of [RecordItem], which is null for authenticator records, so the row
- * keeps the same height and layout as every other record type.
- *
- * Copying is exposed through a dedicated [IconButton] rather than by making the code text
- * clickable. The parent card is already clickable for navigation, and [IconButton] consumes its own
- * click, so tapping copy will not also open the record. A second overlapping tap target on the code
- * text itself would sit one line away from the card tap area and invite mis-taps.
- *
  * @param secretKey Base32 encoded secret seed for this record.
  * @param modifier Composable layout modifier.
- * @param onCopyClick Invoked after the code is copied, so the caller can log analytics. The code
- * itself is intentionally not passed back, there is no reason to widen where the value travels.
+ * @param onCopyClick Invoked after the code is copied, so the caller can log analytics.
  */
 @Composable
 fun TotpBadge(
@@ -69,7 +60,7 @@ fun TotpBadge(
     ) {
         CircularCountdownRing(
             remainingSeconds = totpCodeState.remainingSeconds,
-            totalSeconds = TOTP_PERIOD_SECONDS.toInt(),
+            totalSeconds = CommonConstants.TOTP_PERIOD_SECONDS,
             size = 24.dp,
             strokeWidth = 2.dp,
         )

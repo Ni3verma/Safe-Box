@@ -230,8 +230,8 @@ internal fun RecordsScreen(
                             RecordScreenAction.OnRecordClick(id, recordType)
                         )
                     },
-                    onCopyTotpCode = { id ->
-                        onScreenAction(RecordScreenAction.OnCopyTotpCode(id))
+                    onCopyTotpCode = {
+                        onScreenAction(RecordScreenAction.OnCopyTotpCode)
                     },
                 )
             }

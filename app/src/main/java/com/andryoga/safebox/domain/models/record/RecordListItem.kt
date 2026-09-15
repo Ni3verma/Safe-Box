@@ -3,9 +3,7 @@ package com.andryoga.safebox.domain.models.record
 /**
  * UI model for a single row on the records list screen.
  *
- * @property totpSecret Base32 seed, populated only for [RecordType.AUTHENTICATOR] rows so the card
- * can derive and roll the one-time code locally. Null for every other record type, which is why it
- * is defaulted rather than required at each mapper call site.
+ * @property totpSecret Base32 seed, set only for [RecordType.AUTHENTICATOR] rows.
  */
 data class RecordListItem(
     val id: Int,

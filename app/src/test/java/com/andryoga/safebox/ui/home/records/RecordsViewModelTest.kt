@@ -866,14 +866,8 @@ class RecordsViewModelTest {
         }
     }
 
-    /**
-     * Emits an empty authenticator list rather than sample records so that the existing
-     * [getExpectedDefaultRecords] assertions and record counts stay valid. Authenticator specific
-     * behaviour is covered by its own tests instead.
-     *
-     * The emission itself is mandatory: [kotlinx.coroutines.flow.combine] produces nothing until
-     * every source flow has emitted at least once.
-     */
+    // authenticators are emitted empty here so existing record count assertions stay valid. the
+    // emission is still mandatory: combine emits nothing until every source flow has emitted.
     private suspend fun TestScope.setupAndEmitDefaultRecords() {
         bankAccountDataFlow.emit(getBankAccountDataList(2))
         secureNoteDataFlow.emit(getSecureNoteDataList(2))
@@ -978,14 +972,18 @@ class RecordsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction with OnCopyTotpCode logs list copy event`() {
-        every { analyticsHelper.logEvent(any()) } just runs
+    fun `onScreenAction with OnCopyTotpCode logs copy event with records list source`() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
 
-        viewModel.onScreenAction(RecordScreenAction.OnCopyTotpCode(id = 7))
+        viewModel.onScreenAction(RecordScreenAction.OnCopyTotpCode)
 
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
         verify(exactly = 1) {
-            analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_LIST_COPY_CLICK)
+            analyticsHelper.logEvent(eq(AnalyticsKey.AUTHENTICATOR_COPY_CLICK), capture(slot))
         }
+        val builder = AnalyticsParamsBuilder()
+        slot.captured.invoke(builder)
+        assertThat(builder.params[AnalyticsParam.SOURCE.paramName]).isEqualTo("records_list")
     }
 
     private companion object {

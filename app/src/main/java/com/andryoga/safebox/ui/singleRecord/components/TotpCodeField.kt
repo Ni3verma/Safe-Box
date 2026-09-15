@@ -22,14 +22,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.core.CircularCountdownRing
-import com.andryoga.safebox.ui.core.TOTP_PERIOD_SECONDS
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
-import com.andryoga.safebox.ui.core.rememberTotpCodeState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
+import com.andryoga.safebox.ui.totp.rememberTotpCodeState
 
 /**
  * View mode field rendering the live rolling 2FA code derived from a stored Base32 seed.
@@ -37,10 +37,6 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
  * Styled like every other read only field in `SingleRecordScreen` (label above value) so the
  * authenticator record does not visually break the field list, with the value replaced by the
  * rolling code plus its countdown ring.
- *
- * The 1 second ticker lives in this composable via [produceState] so only this subtree recomposes
- * every second, leaving the rest of the screen untouched. The code itself is keyed on the time step
- * so it is recomputed only when the window actually rolls over, not on every tick.
  *
  * @param secretKey Base32 encoded secret seed, already validated at save time.
  * @param modifier Composable layout modifier.
@@ -57,12 +53,7 @@ fun TotpCodeField(
     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
     val copyToClipboard = rememberCopyToClipboardAction()
 
-    /*
-     * Seeds are Base32 validated before save, but restore-from-backup inserts rows straight from
-     * the backup file without validating them, so a corrupt seed can still reach this screen.
-     * generateCode() throws on such a seed, which would crash composition, so degrade to an
-     * inline error instead.
-     */
+    // restore-from-backup can insert an unvalidated seed, so degrade to an inline error.
     val totpCodeState = rememberTotpCodeState(secretKey = secretKey, totpGenerator = totpGenerator)
     if (totpCodeState == null) {
         InvalidSecretKeyField(label = label, modifier = modifier)
@@ -107,7 +98,7 @@ fun TotpCodeField(
             }
             CircularCountdownRing(
                 remainingSeconds = totpCodeState.remainingSeconds,
-                totalSeconds = TOTP_PERIOD_SECONDS.toInt(),
+                totalSeconds = CommonConstants.TOTP_PERIOD_SECONDS,
             )
         }
     }
