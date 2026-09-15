@@ -12,6 +12,14 @@ sealed interface RecordScreenAction {
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
 
     /**
+     * User copied the live one-time code from an authenticator row.
+     *
+     * Carries only the record id, never the code or the seed, so the secret does not travel through
+     * the action pipeline just to log an event.
+     */
+    data class OnCopyTotpCode(val id: Int) : RecordScreenAction
+
+    /**
      * User clicked allow on notification permission rationale dialog.
      * He may or may not accept it from system dialog now.
      * */

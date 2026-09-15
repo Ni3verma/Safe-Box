@@ -34,8 +34,21 @@ import com.andryoga.safebox.ui.previewHelper.getNoteRecordItem
 import com.andryoga.safebox.ui.utils.getIcon
 import com.andryoga.safebox.ui.utils.getTitle
 
+/**
+ * A single row on the records list.
+ *
+ * @param item Record to render.
+ * @param onRecordClick Invoked when the card is tapped, to open the record.
+ * @param onCopyTotpCode Invoked with the record id after its one-time code is copied. Hoisted so
+ * the analytics event is logged in the ViewModel and stays unit testable. Defaulted because only
+ * authenticator rows can ever raise it.
+ */
 @Composable
-fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: RecordType) -> Unit) {
+fun RecordItem(
+    item: RecordListItem,
+    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
+    onCopyTotpCode: (id: Int) -> Unit = {},
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,13 +90,22 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                 )
-                Text(
-                    text = item.subTitle ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                // Authenticator rows have no static subtitle, so the live code takes that slot and
+                // the row keeps the same height as every other record type.
+                if (item.totpSecret != null) {
+                    TotpBadge(
+                        secretKey = item.totpSecret,
+                        onCopyClick = { onCopyTotpCode(item.id) },
+                    )
+                } else {
+                    Text(
+                        text = item.subTitle ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
             }
 
             Text(

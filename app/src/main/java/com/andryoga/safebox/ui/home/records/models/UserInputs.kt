@@ -17,5 +17,6 @@ fun getDefaultRecordTypeFilters(): List<UserInputs.RecordTypeFilter> = listOf(
     UserInputs.RecordTypeFilter(RecordType.LOGIN, false),
     UserInputs.RecordTypeFilter(RecordType.CARD, false),
     UserInputs.RecordTypeFilter(RecordType.BANK_ACCOUNT, false),
-    UserInputs.RecordTypeFilter(RecordType.NOTE, false)
+    UserInputs.RecordTypeFilter(RecordType.NOTE, false),
+    UserInputs.RecordTypeFilter(RecordType.AUTHENTICATOR, false),
 )

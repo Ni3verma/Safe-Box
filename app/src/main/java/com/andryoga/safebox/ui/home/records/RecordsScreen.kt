@@ -53,6 +53,7 @@ import com.andryoga.safebox.ui.home.records.components.shouldShowNotificationPer
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.previewHelper.getAppliedRecordTypeFilters
+import com.andryoga.safebox.ui.previewHelper.getAuthenticatorRecordItem
 import com.andryoga.safebox.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
 import com.andryoga.safebox.ui.previewHelper.getLoginRecordItem
@@ -228,7 +229,10 @@ internal fun RecordsScreen(
                         onScreenAction(
                             RecordScreenAction.OnRecordClick(id, recordType)
                         )
-                    }
+                    },
+                    onCopyTotpCode = { id ->
+                        onScreenAction(RecordScreenAction.OnCopyTotpCode(id))
+                    },
                 )
             }
         }
@@ -386,8 +390,9 @@ fun RecordsScreenWithRecordsPreview() {
                     getCardRecordItem(),
                     getNoteRecordItem(),
                     getBankAccountRecordItem(),
+                    getAuthenticatorRecordItem(),
                 ),
-                totalDbRecords = 4
+                totalDbRecords = 5
             ),
             notificationPermissionState = NotificationPermissionState(),
             onRestoreFromBackup = {},

@@ -14,8 +14,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,10 +25,11 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.core.CircularCountdownRing
+import com.andryoga.safebox.ui.core.TOTP_PERIOD_SECONDS
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
+import com.andryoga.safebox.ui.core.rememberTotpCodeState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import kotlinx.coroutines.delay
 
 /**
  * View mode field rendering the live rolling 2FA code derived from a stored Base32 seed.
@@ -64,28 +63,10 @@ fun TotpCodeField(
      * generateCode() throws on such a seed, which would crash composition, so degrade to an
      * inline error instead.
      */
-    val isValidSecret = remember(secretKey) { totpGenerator.isValidSecret(secretKey) }
-    if (isValidSecret.not()) {
+    val totpCodeState = rememberTotpCodeState(secretKey = secretKey, totpGenerator = totpGenerator)
+    if (totpCodeState == null) {
         InvalidSecretKeyField(label = label, modifier = modifier)
         return
-    }
-
-    val epochSeconds by produceState(initialValue = System.currentTimeMillis() / 1000) {
-        while (true) {
-            delay(1000)
-            value = System.currentTimeMillis() / 1000
-        }
-    }
-
-    val otpCode = remember(secretKey, epochSeconds / TOTP_PERIOD_SECONDS) {
-        totpGenerator.generateCode(secretBase32 = secretKey, timeSeconds = epochSeconds)
-    }
-    val remainingSeconds = remember(epochSeconds) {
-        totpGenerator.getRemainingSeconds(timeSeconds = epochSeconds)
-    }
-    // grouped as "123 456" purely for readability, the raw code is what gets copied.
-    val formattedCode = remember(otpCode) {
-        "${otpCode.take(otpCode.length / 2)} ${otpCode.drop(otpCode.length / 2)}"
     }
 
     Column(
@@ -93,7 +74,7 @@ fun TotpCodeField(
         //  hoisted up to SingleRecordViewModel so the event stays unit testable.
         modifier = modifier.clickable(
             onClickLabel = stringResource(R.string.cd_copy_totp_code),
-            onClick = { copyToClipboard(label, otpCode, copiedMessage) },
+            onClick = { copyToClipboard(label, totpCodeState.code, copiedMessage) },
         ),
     ) {
         Text(
@@ -111,7 +92,7 @@ fun TotpCodeField(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = formattedCode,
+                    text = totpCodeState.formattedCode,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -125,7 +106,7 @@ fun TotpCodeField(
                 )
             }
             CircularCountdownRing(
-                remainingSeconds = remainingSeconds,
+                remainingSeconds = totpCodeState.remainingSeconds,
                 totalSeconds = TOTP_PERIOD_SECONDS.toInt(),
             )
         }
@@ -161,12 +142,6 @@ private fun InvalidSecretKeyField(
         )
     }
 }
-
-/**
- * RFC 6238 default time step. Kept local to the UI layer because it only drives the countdown ring
- * and the code memoisation key, the engine owns its own default.
- */
-private const val TOTP_PERIOD_SECONDS = 30L
 
 @LightDarkModePreview
 @Composable

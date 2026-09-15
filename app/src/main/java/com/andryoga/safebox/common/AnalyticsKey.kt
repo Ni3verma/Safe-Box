@@ -45,4 +45,8 @@ enum class AnalyticsKey(val eventName: String) {
     // TODO: Not logged yet. Wire this up when the TOTP copy action is hoisted out of
     //  TotpCodeField into SingleRecordViewModel, along with its ViewModel unit test.
     AUTHENTICATOR_COPY_CLICK("authenticator_copy_click"),
+
+    // copy from the records list row, kept separate from AUTHENTICATOR_COPY_CLICK so the two
+    // surfaces can be compared without needing an extra parameter dimension.
+    AUTHENTICATOR_LIST_COPY_CLICK("authenticator_list_copy_click"),
 }
