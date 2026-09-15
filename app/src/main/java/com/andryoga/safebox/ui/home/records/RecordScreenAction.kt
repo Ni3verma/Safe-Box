@@ -11,6 +11,9 @@ sealed interface RecordScreenAction {
     data class OnRecordClick(val id: Int, val recordType: RecordType) : RecordScreenAction
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
 
+    /** User copied the live one-time code from an authenticator row. */
+    object OnCopyTotpCode : RecordScreenAction
+
     /**
      * User clicked allow on notification permission rationale dialog.
      * He may or may not accept it from system dialog now.

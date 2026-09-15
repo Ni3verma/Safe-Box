@@ -1,5 +1,6 @@
 package com.andryoga.safebox.totp.engine.interfaces
 
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 
 /**
@@ -20,8 +21,8 @@ interface TotpGenerator {
     fun generateCode(
         secretBase32: String,
         timeSeconds: Long = System.currentTimeMillis() / 1000,
-        period: Int = 30,
-        digits: Int = 6,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
+        digits: Int = TotpDefaults.DIGITS,
         algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
     ): String
 
@@ -34,7 +35,7 @@ interface TotpGenerator {
      */
     fun getRemainingSeconds(
         timeSeconds: Long = System.currentTimeMillis() / 1000,
-        period: Int = 30,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
     ): Int
 
     /**

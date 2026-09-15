@@ -74,4 +74,37 @@ class SearchRecordMappersTest {
         assertThat(recordItem.subTitle).isEqualTo("admin@workplace.internal")
         assertThat(recordItem.recordType).isEqualTo(RecordType.LOGIN)
     }
+
+    @Test
+    fun searchAuthenticatorData_toRecordListItem_mapsSeedAndLeavesSubtitleNull() {
+        val searchAuthenticator = DomainTestFixtures.createSearchAuthenticatorData(
+            key = 505,
+            title = "GitHub - work",
+            secretKey = "JBSWY3DPEHPK3PXP",
+            creationDate = Date(1690000000000L)
+        )
+
+        val recordItem = searchAuthenticator.toRecordListItem()
+
+        assertThat(recordItem.id).isEqualTo(505)
+        assertThat(recordItem.title).isEqualTo("GitHub - work")
+        // the live code occupies the subtitle slot on the card, so no static subtitle is mapped.
+        assertThat(recordItem.subTitle).isNull()
+        assertThat(recordItem.totpSecret).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(recordItem.recordType).isEqualTo(RecordType.AUTHENTICATOR)
+    }
+
+    @Test
+    fun searchLoginData_toRecordListItem_leavesTotpSecretNull() {
+        val searchLogin = DomainTestFixtures.createSearchLoginData(
+            key = 404,
+            title = "Company Portal",
+            userId = "admin@workplace.internal",
+            creationDate = Date(1690000000000L)
+        )
+
+        val recordItem = searchLogin.toRecordListItem()
+
+        assertThat(recordItem.totpSecret).isNull()
+    }
 }

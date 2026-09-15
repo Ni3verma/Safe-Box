@@ -36,7 +36,8 @@ fun getAuthenticatorRecordItem() = RecordListItem(
     id = 1,
     title = "GitHub - work",
     subTitle = null,
-    recordType = RecordType.AUTHENTICATOR
+    recordType = RecordType.AUTHENTICATOR,
+    totpSecret = "JBSWY3DPEHPK3PXP",
 )
 
 fun getAppliedRecordTypeFilters(): List<UserInputs.RecordTypeFilter> {
