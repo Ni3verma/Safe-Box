@@ -12,6 +12,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ShareableField
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
@@ -23,7 +24,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
-import io.mockk.spyk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -52,13 +52,13 @@ class SingleRecordViewModelTest {
 
     private lateinit var viewModel: SingleRecordViewModel
 
-
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
 
         every { layoutFactory.getLayout(any(), any()) } returns layout
         coEvery { layout.getLayoutPlan() } returns LayoutPlan(fieldUiState = emptyMap())
+        every { layout.checkMandatoryFields(any()) } returns false
         every { context.getString(any()) } returns "some string"
     }
 
@@ -68,7 +68,7 @@ class SingleRecordViewModelTest {
             singleRecordRouteProvider,
             layoutFactory,
             context,
-            mainDispatcherRule.testDispatcherProvider
+            mainDispatcherRule.testDispatcherProvider,
         )
     }
 
@@ -195,88 +195,77 @@ class SingleRecordViewModelTest {
     }
 
     @Test
-    fun `handleShareRecord emits shareContentEvent with only copyable non-password and non-empty fields`() =
+    fun `handleShareRecord emits shareContentEvent with layout shareable fields and app link`() =
         runTest {
-            // 1. Arrange: Set up a mix of different field types
-            val copyableField = spyk(
-                FieldUiState(
-                    cell = mockk(relaxed = true) {
-                        every { isCopyable } returns true
-                        every { isPasswordField } returns false
-                        every { label } returns 101
-                    },
-                    data = "copy me"
-                )
+            coEvery { layout.getShareableFields() } returns listOf(
+                ShareableField(label = 101, value = "copy me"),
+                ShareableField(label = 102, value = "copy me too"),
             )
-            every { copyableField.getFormattedData() } returns "copy me"
-
-            val passwordField = spyk(
-                FieldUiState(
-                    cell = mockk(relaxed = true) {
-                        every { isCopyable } returns true
-                        every { isPasswordField } returns true
-                        every { label } returns 102
-                    },
-                    data = "secret"
-                )
-            )
-            every { passwordField.getFormattedData() } returns "secret"
-
-            val notCopyableField = spyk(
-                FieldUiState(
-                    cell = mockk(relaxed = true) {
-                        every { isCopyable } returns false
-                        every { isPasswordField } returns false
-                        every { label } returns 103
-                    },
-                    data = "don't copy me"
-                )
-            )
-            every { notCopyableField.getFormattedData() } returns "don't copy me"
-
-            val emptyField = spyk(
-                FieldUiState(
-                    cell = mockk(relaxed = true) {
-                        every { isCopyable } returns true
-                        every { isPasswordField } returns false
-                        every { label } returns 104
-                    },
-                    data = ""
-                )
-            )
-            every { emptyField.getFormattedData() } returns ""
-
-
-            val layoutPlan = LayoutPlan(
-                fieldUiState = mapOf(
-                    FieldId.LOGIN_TITLE to copyableField,
-                    FieldId.LOGIN_PASSWORD to passwordField,
-                    FieldId.LOGIN_NOTES to notCopyableField,
-                    FieldId.LOGIN_URL to emptyField
-                )
-            )
-            coEvery { layout.getLayoutPlan() } returns layoutPlan
-            every { context.getString(101) } returns "Copyable"
+            every { context.getString(101) } returns "First"
+            every { context.getString(102) } returns "Second"
             every { context.getString(any(), any()) } returns "some app link"
             every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
                 RecordType.LOGIN,
-                1
+                1,
             )
 
-
-            // 2. Arrange: Initialize the ViewModel AFTER mocks are set
             initViewModel()
 
-            // 3. Act & Assert with Turbine
             viewModel.shareContentEvent.test {
                 viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
                 advanceUntilIdle()
 
                 val emittedEvent = awaitItem()
                 assertThat(emittedEvent).isNotNull()
-                assertThat(emittedEvent).contains("Copyable : copy me")
-                assertThat(emittedEvent).doesNotContain("secret")
-                assertThat(emittedEvent).doesNotContain("don't copy me")
+                assertThat(emittedEvent).contains("First : copy me")
+                assertThat(emittedEvent).contains("Second : copy me too")
+                assertThat(emittedEvent).contains("some app link")
+            }
+        }
+
+    @Test
+    fun `initial state is correct for existing authenticator record`() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.AUTHENTICATOR,
+            1,
+        )
+        initViewModel()
+        viewModel.uiState.test {
+            awaitItem() // initial state
+            advanceUntilIdle()
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.isLoading).isFalse()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.VIEW)
+            assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isFalse()
+        }
+    }
+
+    @Test
+    fun `handleShareRecord shares authenticator code from layout without exposing secret`() =
+        runTest {
+            coEvery { layout.getShareableFields() } returns listOf(
+                ShareableField(label = 101, value = "Google Authenticator"),
+                ShareableField(label = 102, value = "654321"),
+            )
+            every { context.getString(101) } returns "Title"
+            every { context.getString(102) } returns "One-time code"
+            every { context.getString(any(), any()) } returns "some app link"
+            every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+                RecordType.AUTHENTICATOR,
+                1,
+            )
+
+            initViewModel()
+
+            viewModel.shareContentEvent.test {
+                viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+                advanceUntilIdle()
+
+                val emittedEvent = awaitItem()
+                assertThat(emittedEvent).isNotNull()
+                assertThat(emittedEvent).contains("Title : Google Authenticator")
+                assertThat(emittedEvent).contains("One-time code : 654321")
+                assertThat(emittedEvent).doesNotContain("JBSWY3DPEHPK3PXP")
                 assertThat(emittedEvent).contains("some app link")
             }
         }

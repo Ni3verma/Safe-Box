@@ -1,10 +1,13 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.AuthenticatorLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
@@ -17,7 +20,9 @@ class LayoutFactory @Inject constructor(
     private val loginDataRepository: Lazy<LoginDataRepository>,
     private val bankAccountDataRepository: Lazy<BankAccountDataRepository>,
     private val bankCardDataRepository: Lazy<BankCardDataRepository>,
-    private val noteDataRepository: Lazy<SecureNoteDataRepository>
+    private val noteDataRepository: Lazy<SecureNoteDataRepository>,
+    private val authenticatorDataRepository: Lazy<AuthenticatorDataRepository>,
+    private val totpGenerator: Lazy<TotpGenerator>,
 ) {
     /**
      * Returns the layout for the given record type. Data is pre filled if recordId is passed as well
@@ -36,9 +41,14 @@ class LayoutFactory @Inject constructor(
             RecordType.CARD -> BankCardLayoutImpl(recordId, bankCardDataRepository.get())
             RecordType.BANK_ACCOUNT -> BankAccountLayoutImpl(
                 recordId,
-                bankAccountDataRepository.get()
+                bankAccountDataRepository.get(),
             )
             RecordType.NOTE -> NoteLayoutImpl(recordId, noteDataRepository.get())
+            RecordType.AUTHENTICATOR -> AuthenticatorLayoutImpl(
+                recordId,
+                authenticatorDataRepository.get(),
+                totpGenerator.get(),
+            )
         }
     }
 }

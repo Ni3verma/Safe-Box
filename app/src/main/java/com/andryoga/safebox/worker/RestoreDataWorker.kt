@@ -28,6 +28,7 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -61,6 +62,7 @@ class RestoreDataWorker
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
     private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
+    private val totpGenerator: TotpGenerator,
     private val analyticsHelper: AnalyticsHelper,
 ) : CoroutineWorker(context, params) {
 
@@ -201,8 +203,9 @@ class RestoreDataWorker
             decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
-        val authenticatorData =
-            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
+        val authenticatorData = filterDecodableAuthenticatorData(
+            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]),
+        )
         recordTime("all data decrypted")
 
         restoreDataToDb(
@@ -213,6 +216,40 @@ class RestoreDataWorker
             authenticatorData,
         )
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
+    }
+
+    /**
+     * Drops authenticator records whose seed cannot be decoded as Base32.
+     *
+     * Successful decryption and deserialization prove the backup is authentic and well formed,
+     * they prove nothing about whether the seed is semantically usable. An undecodable seed can
+     * never produce a code and makes [TotpGenerator.generateCode] throw, so such records are
+     * skipped instead of being persisted.
+     *
+     * Only the offending records are dropped rather than failing the whole restore, because one
+     * bad 2FA seed must not cost the user every login, card and note in the backup.
+     *
+     * @param authenticatorData Records decoded from the backup, or null when the backup has none.
+     * @return Records safe to persist, or null when the input was null.
+     */
+    private fun filterDecodableAuthenticatorData(
+        authenticatorData: List<ExportAuthenticatorData>?,
+    ): List<ExportAuthenticatorData>? {
+        if (authenticatorData == null) return null
+
+        val (decodable, undecodable) = authenticatorData.partition {
+            totpGenerator.isValidSecret(it.secretKey)
+        }
+
+        if (undecodable.isNotEmpty()) {
+            // never log the seed itself, only how many were dropped.
+            Timber.w("$localTag skipped ${undecodable.size} authenticator records, invalid secret")
+            analyticsHelper.logEvent(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED) {
+                param(AnalyticsParam.COUNT, undecodable.size)
+            }
+        }
+
+        return decodable
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {

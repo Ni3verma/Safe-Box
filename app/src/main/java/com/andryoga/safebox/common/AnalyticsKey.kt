@@ -17,6 +17,10 @@ enum class AnalyticsKey(val eventName: String) {
     RESTORE_DATA_FAILURE("restore_data_failure"),
     RESTORE_DATA_WRONG_PASSWORD("restore_data_wrong_password"),
     RESTORE_STARTED("restore_started"),
+    // logged with AnalyticsParam.COUNT when a restore drops authenticator records whose stored
+    // seed is not decodable Base32. A non zero count means backup data and the current Base32
+    // validation have drifted apart.
+    RESTORE_INVALID_AUTHENTICATOR_SKIPPED("restore_invalid_authenticator_skipped"),
     NEW_SECURE_NOTE("new_secure_note"),
     NEW_BANK_CARD("new_bank_card"),
     NEW_LOGIN("new_login"),
@@ -38,4 +42,7 @@ enum class AnalyticsKey(val eventName: String) {
     QR_SCANNER_SUCCESS("qr_scanner_success"),
     QR_SCANNER_CANCEL("qr_scanner_cancel"),
     QR_SCANNER_MANUAL_CLICK("qr_scanner_manual_click"),
+    // TODO: Not logged yet. Wire this up when the TOTP copy action is hoisted out of
+    //  TotpCodeField into SingleRecordViewModel, along with its ViewModel unit test.
+    AUTHENTICATOR_COPY_CLICK("authenticator_copy_click"),
 }

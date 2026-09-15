@@ -15,6 +15,7 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import javax.inject.Inject
 
 /**
@@ -30,6 +31,7 @@ class SafeBoxWorkerFactory @Inject constructor(
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
     private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
     private val safeBoxDatabase: SafeBoxDatabase,
+    private val totpGenerator: TotpGenerator,
     private val analyticsHelper: AnalyticsHelper,
     private val dispatchersProvider: DispatchersProvider,
 ) : WorkerFactory() {
@@ -68,6 +70,7 @@ class SafeBoxWorkerFactory @Inject constructor(
                     bankCardDataDaoSecure,
                     secureNoteDataDaoSecure,
                     authenticatorDataDaoSecure,
+                    totpGenerator,
                     analyticsHelper,
                 )
             }
