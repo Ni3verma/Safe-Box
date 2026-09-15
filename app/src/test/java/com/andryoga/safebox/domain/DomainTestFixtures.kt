@@ -1,13 +1,16 @@
 package com.andryoga.safebox.domain
 
+import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
@@ -243,5 +246,45 @@ object DomainTestFixtures {
         title = title,
         userId = userId,
         creationDate = creationDate
+    )
+
+    fun createAuthenticatorData(
+        id: Int? = 5,
+        title: String = "Test 2FA Service",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = FIXED_CREATION_DATE,
+        updateDate: Date = FIXED_UPDATE_DATE,
+    ) = AuthenticatorData(
+        id = id,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
+    )
+
+    fun createAuthenticatorDataEntity(
+        key: Int = 5,
+        title: String = "Test 2FA Service",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = FIXED_CREATION_DATE,
+        updateDate: Date = FIXED_UPDATE_DATE,
+    ) = AuthenticatorDataEntity(
+        key = key,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
+    )
+
+    fun createSearchAuthenticatorData(
+        key: Int = 50,
+        title: String = "Search 2FA Service",
+        secretKey: String = "JBSWY3DPEHPK3PXP",
+        creationDate: Date = FIXED_CREATION_DATE,
+    ) = SearchAuthenticatorData(
+        key = key,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
     )
 }

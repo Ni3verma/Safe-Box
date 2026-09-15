@@ -233,4 +233,45 @@ class AddEditRecordMappersTest {
         assertThat(domain.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(domain.updateDate).isEqualTo(Date(1680000000000L))
     }
+
+    @Test
+    fun authenticatorData_toDbEntity_withNullId_mapsToZeroKeyAndGeneratesUpdateDate() {
+        val beforeTime = System.currentTimeMillis()
+        val authenticatorData = DomainTestFixtures.createAuthenticatorData(
+            id = null,
+            title = "GitHub 2FA",
+            secretKey = "JBSWY3DPEHPK3PXP",
+            creationDate = Date(1670000000000L),
+            updateDate = Date(1680000000000L),
+        )
+
+        val entity = authenticatorData.toDbEntity()
+        val afterTime = System.currentTimeMillis()
+
+        assertThat(entity.key).isEqualTo(0)
+        assertThat(entity.title).isEqualTo("GitHub 2FA")
+        assertThat(entity.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(entity.creationDate).isEqualTo(Date(1670000000000L))
+        assertThat(entity.updateDate.time).isAtLeast(beforeTime)
+        assertThat(entity.updateDate.time).isAtMost(afterTime)
+    }
+
+    @Test
+    fun authenticatorDataEntity_toAuthenticatorData_mapsAllFieldsAccurately() {
+        val entity = DomainTestFixtures.createAuthenticatorDataEntity(
+            key = 50,
+            title = "Google Authenticator",
+            secretKey = "HXDMVJECJJWSRB3H",
+            creationDate = Date(1670000000000L),
+            updateDate = Date(1680000000000L),
+        )
+
+        val domain = entity.toAuthenticatorData()
+
+        assertThat(domain.id).isEqualTo(50)
+        assertThat(domain.title).isEqualTo("Google Authenticator")
+        assertThat(domain.secretKey).isEqualTo("HXDMVJECJJWSRB3H")
+        assertThat(domain.creationDate).isEqualTo(Date(1670000000000L))
+        assertThat(domain.updateDate).isEqualTo(Date(1680000000000L))
+    }
 }

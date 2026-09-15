@@ -1,9 +1,11 @@
 package com.andryoga.safebox.domain.mappers.record
 
+import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
@@ -119,5 +121,25 @@ fun BankCardDataEntity.toCardData(): CardData {
         notes = notes,
         creationDate = creationDate,
         updateDate = updateDate
+    )
+}
+
+fun AuthenticatorData.toDbEntity(): AuthenticatorDataEntity {
+    return AuthenticatorDataEntity(
+        key = id ?: 0,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = Date(),
+    )
+}
+
+fun AuthenticatorDataEntity.toAuthenticatorData(): AuthenticatorData {
+    return AuthenticatorData(
+        id = key,
+        title = title,
+        secretKey = secretKey,
+        creationDate = creationDate,
+        updateDate = updateDate,
     )
 }

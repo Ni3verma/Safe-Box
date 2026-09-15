@@ -1,7 +1,5 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
-import android.content.ClipData
-import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,35 +12,29 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.MandatoryLabelText
+import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenAction
+import com.andryoga.safebox.ui.singleRecord.components.TotpCodeField
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @Composable
 fun RowField(
@@ -51,55 +43,42 @@ fun RowField(
     viewMode: ViewMode,
     screenAction: (SingleRecordScreenAction) -> Unit
 ) {
-    val clipboard = LocalClipboard.current
-    val scope = rememberCoroutineScope()
-    val haptic = LocalHapticFeedback.current
     var isPasswordVisible by remember { mutableStateOf(false) }
-    val snackBarHost = LocalSnackbarHostState.current
+    val copyToClipboard = rememberCopyToClipboardAction()
 
     Column {
         if (viewMode == ViewMode.VIEW) {
-            val label = stringResource(uiState.cell.label)
-            val formattedData = uiState.getFormattedData()
-            Column {
-                Text(
-                    text = label,
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = formattedData, // show formatted data on the UI
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .clickable {
-                            scope.launch {
-                                Timber.i("setting clip entry for $label")
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                clipboard.setClipEntry(
-                                    ClipEntry(
-                                        ClipData.newPlainText(
-                                            label,
-                                            // while copying we copy the original data and not the formatted data
-                                            uiState.data
-                                        )
-                                    )
-                                )
+            when (uiState.cell.type) {
+                FieldType.TOTP -> {
+                    // the stored value is the secret seed, so this field renders the derived
+                    // rolling code instead of the raw data.
+                    TotpCodeField(secretKey = uiState.data)
+                }
 
-                                // Android 13 (Tiramisu) introduced the system-level clipboard overlay.
-                                // so need to show our own snackbar
-                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                                    snackBarHost.currentSnackbarData?.dismiss()
-                                    snackBarHost.showSnackbar(
-                                        message = "Copied $label to clipboard",
-                                        duration = SnackbarDuration.Short
-                                    )
+                FieldType.DEFAULT_TEXT -> {
+                    val label = stringResource(uiState.cell.label)
+                    val formattedData = uiState.getFormattedData()
+                    val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
+                    Column {
+                        Text(
+                            text = label,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = formattedData, // show formatted data on the UI
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .clickable {
+                                    // while copying we copy the original data and not the formatted data
+                                    copyToClipboard(label, uiState.data, copiedMessage)
                                 }
-                            }
-                        }
-                )
+                        )
+                    }
+                }
             }
         } else {
             OutlinedTextField(

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.andryoga.safebox.data.db.Migration
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.dao.AuthenticatorDataDao
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.dao.BankCardDataDao
@@ -34,6 +35,7 @@ object CacheModule {
             Migration.MIGRATION_1_2,
             Migration.MIGRATION_2_3,
             Migration.MIGRATION_3_4,
+            Migration.MIGRATION_4_5,
         ).build()
     }
 
@@ -84,5 +86,13 @@ object CacheModule {
         safeBoxDatabase: SafeBoxDatabase
     ): BackupMetadataDao {
         return safeBoxDatabase.backupMetadataDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideAuthenticatorDataDao(
+        safeBoxDatabase: SafeBoxDatabase,
+    ): AuthenticatorDataDao {
+        return safeBoxDatabase.authenticatorDataDao()
     }
 }

@@ -8,6 +8,7 @@ object CommonConstants {
     const val ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING = "allowed_biometric_login_count_remaining"
     const val IS_NOTIFICATION_PERMISSION_ASKED_BEFORE = "is_notification_permission_asked_before"
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
+    const val IS_CAMERA_PERMISSION_ASKED_BEFORE = "is_camera_permission_asked_before"
 
     //        SHOULD ONLY be user for encrypted shared preference
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
@@ -24,6 +25,7 @@ object CommonConstants {
     const val BANK_ACCOUNT_DATA_KEY = "5"
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
+    const val AUTHENTICATOR_DATA_KEY = "8"
     const val BACKUP_VERSION = 2
 
     // Backup params

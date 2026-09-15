@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.ui.previewHelper.getAuthenticatorRecordItem
 import com.andryoga.safebox.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
 import com.andryoga.safebox.ui.previewHelper.getLoginRecordItem
@@ -125,6 +126,12 @@ private fun CardRecordItemPreview() {
 @Composable
 private fun NoteRecordItemPreview() {
     RecordItem(item = getNoteRecordItem(), onRecordClick = { _, _ -> })
+}
+
+@Preview
+@Composable
+private fun AuthenticatorRecordItemPreview() {
+    RecordItem(item = getAuthenticatorRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview

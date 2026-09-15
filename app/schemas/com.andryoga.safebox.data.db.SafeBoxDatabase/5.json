@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "4221d6ee39b0f23b75ff99341a8179ac",
+    "identityHash": "4cd28a470f1b9eb99e81fea28a59d7e1",
     "entities": [
       {
         "tableName": "bank_account_data",
@@ -339,11 +339,53 @@
             "key"
           ]
         }
+      },
+      {
+        "tableName": "authenticator_data",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `creationDate` INTEGER NOT NULL, `updateDate` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "key",
+            "columnName": "key",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "secretKey",
+            "columnName": "secretKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updateDate",
+            "columnName": "updateDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "key"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4221d6ee39b0f23b75ff99341a8179ac')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4cd28a470f1b9eb99e81fea28a59d7e1')"
     ]
   }
 }

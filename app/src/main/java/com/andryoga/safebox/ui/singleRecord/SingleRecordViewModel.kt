@@ -82,7 +82,7 @@ class SingleRecordViewModel @Inject constructor(
                             fieldUiState = updatedUiState,
                         ),
                         topAppBarUiState = currentState.topAppBarUiState.copy(
-                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState.values)
+                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState)
                         )
                     )
                 }
@@ -127,15 +127,9 @@ class SingleRecordViewModel @Inject constructor(
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()
 
-            layout.getLayoutPlan().fieldUiState.filter { (_, uiState) ->
-                uiState.data.isEmpty().not() &&
-                        uiState.cell.isCopyable &&
-                        uiState.cell.isPasswordField.not()
-            }.forEach { (_, uiState) ->
-                val cellTitle = context.getString(uiState.cell.label)
-
-                // for the data, add formatted data because it is easier to read.
-                dataStringBuffer.append("$cellTitle : ${uiState.getFormattedData()}\n")
+            layout.getShareableFields().forEach { shareableField ->
+                val cellTitle = context.getString(shareableField.label)
+                dataStringBuffer.append("$cellTitle : ${shareableField.value}\n")
             }
 
             dataStringBuffer.append(
@@ -149,7 +143,6 @@ class SingleRecordViewModel @Inject constructor(
 
             _shareContentEvent.emit(dataStringBuffer.toString())
         }
-
     }
 
     private fun goBackToViewMode() {
@@ -157,8 +150,8 @@ class SingleRecordViewModel @Inject constructor(
             it.copy(
                 viewMode = ViewMode.VIEW,
                 topAppBarUiState = it.topAppBarUiState.copy(
-                    isSaveButtonVisible = false
-                )
+                    isSaveButtonVisible = false,
+                ),
             )
         }
     }
@@ -170,6 +163,7 @@ class SingleRecordViewModel @Inject constructor(
                 RecordType.CARD -> R.string.type_display_card
                 RecordType.BANK_ACCOUNT -> R.string.type_display_account
                 RecordType.NOTE -> R.string.type_display_note
+                RecordType.AUTHENTICATOR -> R.string.type_display_authenticator
             }
         )
     }

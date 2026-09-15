@@ -4,17 +4,20 @@ import android.content.Context
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
+import com.andryoga.safebox.data.repository.AuthenticatorDataRepositoryImpl
 import com.andryoga.safebox.data.repository.BackupMetadataRepositoryImpl
 import com.andryoga.safebox.data.repository.BankAccountDataRepositoryImpl
 import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
 import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
 import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
 import com.andryoga.safebox.data.repository.UserDetailsRepositoryImpl
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -94,5 +97,14 @@ object RepositoryModule {
         analyticsHelper: AnalyticsHelper
     ): BackupMetadataRepository {
         return BackupMetadataRepositoryImpl(context, backupMetadataDao, analyticsHelper)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAuthenticatorDataRepo(
+        authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
+        analyticsHelper: AnalyticsHelper,
+    ): AuthenticatorDataRepository {
+        return AuthenticatorDataRepositoryImpl(authenticatorDataDaoSecure, analyticsHelper)
     }
 }

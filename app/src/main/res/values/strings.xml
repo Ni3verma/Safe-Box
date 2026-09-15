@@ -36,6 +36,7 @@
     <string name="type_display_card">Card</string>
     <string name="type_display_note">Note</string>
     <string name="type_display_login">Login</string>
+    <string name="type_display_authenticator">Authenticator</string>
 
     <!--    Bank card dialog-->
     <string name="number">Number </string>
@@ -169,4 +170,19 @@
     <string name="device_security_required_title">Device Security Required</string>
     <string name="device_security_required_body">Please enable device security (PIN, pattern, password, or biometrics) in your Android Settings to verify your identity before changing your master password.</string>
     <string name="open_settings">Open Settings</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Camera Permission Required</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box requires camera access to scan QR codes for two-factor authentication setup.</string>
+    <string name="qr_scanner_title">Scan QR Code</string>
+    <string name="qr_scanner_instruction">Align QR code within the frame</string>
+    <string name="enter_key_manually">Enter Key Manually</string>
+    <string name="flash_toggle_description">Toggle flash</string>
+    <string name="close">Close</string>
+    <string name="copied_to_clipboard">Copied %1$s to clipboard</string>
+    <!-- Authenticator -->
+    <string name="totp_code">One-time code</string>
+    <string name="secret_key">Secret key</string>
+    <string name="cd_copy_totp_code">Copy one-time code</string>
+    <string name="totp_invalid_secret_key">Invalid secret key, cannot generate code</string>
 </resources>
