@@ -34,8 +34,19 @@ import com.andryoga.safebox.ui.previewHelper.getNoteRecordItem
 import com.andryoga.safebox.ui.utils.getIcon
 import com.andryoga.safebox.ui.utils.getTitle
 
+/**
+ * A single row on the records list.
+ *
+ * @param item Record to render.
+ * @param onRecordClick Invoked when the card is tapped, to open the record.
+ * @param onCopyTotpCode Invoked after an authenticator row's one-time code is copied.
+ */
 @Composable
-fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: RecordType) -> Unit) {
+fun RecordItem(
+    item: RecordListItem,
+    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
+    onCopyTotpCode: () -> Unit = {},
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,13 +88,21 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                 )
-                Text(
-                    text = item.subTitle ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                // authenticator rows have no static subtitle, so the live code takes that slot.
+                if (item.totpSecret != null) {
+                    TotpBadge(
+                        secretKey = item.totpSecret,
+                        onCopyClick = onCopyTotpCode,
+                    )
+                } else {
+                    Text(
+                        text = item.subTitle ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
             }
 
             Text(

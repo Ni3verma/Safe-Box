@@ -31,7 +31,7 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
 @Composable
 fun CircularCountdownRing(
     remainingSeconds: Int,
-    totalSeconds: Int = 30,
+    totalSeconds: Int,
     modifier: Modifier = Modifier,
     size: Dp = 38.dp,
     strokeWidth: Dp = 3.dp,

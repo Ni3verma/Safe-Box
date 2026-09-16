@@ -8,6 +8,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -42,6 +43,7 @@ class RecordsViewModel @Inject constructor(
     secureNoteDataRepository: SecureNoteDataRepository,
     loginDataRepository: LoginDataRepository,
     cardDataRepository: BankCardDataRepository,
+    authenticatorDataRepository: AuthenticatorDataRepository,
     dispatchersProvider: DispatchersProvider,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val preferenceProvider: PreferenceProvider,
@@ -79,12 +81,14 @@ class RecordsViewModel @Inject constructor(
         bankAccountDataRepository.getAllBankAccountData(),
         secureNoteDataRepository.getAllSecureNoteData(),
         loginDataRepository.getAllLoginData(),
-        cardDataRepository.getAllBankCardData()
-    ) { bankAccountData, secureNoteData, loginData, cardData ->
+        cardDataRepository.getAllBankCardData(),
+        authenticatorDataRepository.getAllAuthenticatorData(),
+    ) { bankAccountData, secureNoteData, loginData, cardData, authenticatorData ->
         val combinedList = bankAccountData.map { it.toRecordListItem() } +
                 secureNoteData.map { it.toRecordListItem() } +
                 loginData.map { it.toRecordListItem() } +
-                cardData.map { it.toRecordListItem() }
+                cardData.map { it.toRecordListItem() } +
+                authenticatorData.map { it.toRecordListItem() }
         combinedList.sortedBy { it.title.lowercase() }
     }
         .flowOn(dispatchersProvider.default)
@@ -156,6 +160,12 @@ class RecordsViewModel @Inject constructor(
 
             is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet -> {
                 updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
+            }
+
+            RecordScreenAction.OnCopyTotpCode -> {
+                analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
+                    param(AnalyticsParam.SOURCE, COPY_SOURCE_RECORDS_LIST)
+                }
             }
 
             // these are handled in UI layer and flow should ideally never come here
@@ -267,5 +277,8 @@ class RecordsViewModel @Inject constructor(
     companion object {
         // ask for review after every 5th login
         const val ASK_FOR_REVIEW_AFTER_EVERY_LOGIN = 5
+
+        // value of AnalyticsParam.SOURCE for copy events raised from the records list
+        private const val COPY_SOURCE_RECORDS_LIST = "records_list"
     }
 }

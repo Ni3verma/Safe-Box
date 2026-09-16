@@ -44,11 +44,14 @@ fun SearchLoginData.toRecordListItem(): RecordListItem {
     )
 }
 
+// secretKey is already decrypted by the secure DAO.
+// subTitle stays null as the live code takes that slot.
 fun SearchAuthenticatorData.toRecordListItem(): RecordListItem {
     return RecordListItem(
         id = key,
         title = title,
         subTitle = null,
         recordType = RecordType.AUTHENTICATOR,
+        totpSecret = secretKey,
     )
 }

@@ -1,5 +1,6 @@
 package com.andryoga.safebox.totp.engine
 
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import java.net.URI
@@ -65,12 +66,12 @@ object TotpUriParser {
         }
 
         val digits = queryParams["digits"]?.toIntOrNull()?.let {
-            if (it in 6..8) it else 6
-        } ?: 6
+            if (it in TotpDefaults.SUPPORTED_DIGITS) it else TotpDefaults.DIGITS
+        } ?: TotpDefaults.DIGITS
 
         val period = queryParams["period"]?.toIntOrNull()?.let {
-            if (it > 0) it else 30
-        } ?: 30
+            if (it > 0) it else TotpDefaults.PERIOD_SECONDS
+        } ?: TotpDefaults.PERIOD_SECONDS
 
         return ParsedTotpData(
             title = title,

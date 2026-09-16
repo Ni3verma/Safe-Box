@@ -12,4 +12,5 @@ enum class AnalyticsParam(val paramName: String) {
     VERSION("version"),
     IS_ENABLED("is_enabled"),
     COUNT("count"),
+    SOURCE("source"),
 }
