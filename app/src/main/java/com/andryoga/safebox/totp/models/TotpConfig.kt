@@ -6,8 +6,7 @@ import com.andryoga.safebox.totp.TotpDefaults
  * Everything needed to derive a one-time code for a single authenticator record.
  *
  * These four values always travel together: a seed generates the wrong code when paired with the
- * wrong algorithm, digit count or time step. Grouping them keeps every layer from carrying three
- * extra loose scalars that are meaningful only for authenticator records.
+ * wrong algorithm, digit count or time step.
  *
  * @property secretKey Canonical Base32 secret seed, already normalized by the engine.
  * @property algorithm HMAC hash used for code derivation.

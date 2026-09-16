@@ -9,10 +9,8 @@ import java.util.Date
  * Room database entity representing a 2FA TOTP authenticator record stored in the database.
  * The [secretKey] field contains encrypted Base32 secret bytes.
  *
- * [algorithm], [digits] and [period] are the issuer's generation parameters. They are stored in
- * plain text: they are not secret, and encrypting them would make them unqueryable for no benefit.
- * Without them a record scanned from an issuer that does not use the RFC 6238 defaults would
- * silently generate wrong codes forever.
+ * [algorithm], [digits] and [period] are the issuer's generation parameters, stored in plain text
+ * because they are not secrets.
  */
 @Entity(tableName = "authenticator_data")
 data class AuthenticatorDataEntity(

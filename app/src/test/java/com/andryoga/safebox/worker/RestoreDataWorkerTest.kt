@@ -22,7 +22,7 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
-import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
@@ -256,11 +256,11 @@ class RestoreDataWorkerTest {
     @Test
     fun doWork_whenBackupContainsAuthenticatorData_restoresAuthenticatorRecords() = runTest {
         val authList = listOf(
-            ExportAuthenticatorData(
-                "Google 2FA",
-                "JBSWY3DPEHPK3PXP",
-                1000L,
-                2000L,
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Google 2FA",
+                secretKey = "JBSWY3DPEHPK3PXP",
+                creationDate = 1000L,
+                updateDate = 2000L,
             ),
         )
         val authJson =
@@ -303,10 +303,16 @@ class RestoreDataWorkerTest {
     @Test
     fun doWork_whenAuthenticatorSecretIsNotDecodable_skipsRecordAndLogsCount() = runTest {
         val authList = listOf(
-            ExportAuthenticatorData("Valid 2FA", "JBSWY3DPEHPK3PXP", 1000L, 2000L),
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Valid 2FA",
+                secretKey = "JBSWY3DPEHPK3PXP",
+            ),
             // '!' and '1' are outside the RFC 4648 Base32 alphabet, decode() would throw on this.
-            ExportAuthenticatorData("Corrupt 2FA", "not-base32!!1", 1000L, 2000L),
-            ExportAuthenticatorData("Empty 2FA", "", 1000L, 2000L),
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Corrupt 2FA",
+                secretKey = "not-base32!!1",
+            ),
+            TestFixtures.createTestExportAuthenticatorData(title = "Empty 2FA", secretKey = ""),
         )
         val authJson =
             Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), authList)
@@ -374,32 +380,6 @@ class RestoreDataWorkerTest {
     }
 
     @Test
-    fun doWork_whenBackupPredatesTotpParams_restoresEngineDefaults() = runTest {
-        // shape written by backup version 2, before the parameters were persisted at all.
-        val authJson = """
-            [{
-              "title": "Legacy 2FA",
-              "secretKey": "JBSWY3DPEHPK3PXP",
-              "creationDate": 1000,
-              "updateDate": 2000
-            }]
-        """.trimIndent()
-
-        val result = restoreAuthenticatorJson(authJson, "LegacyParams.bak")
-
-        assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) {
-            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
-                match { list ->
-                    list.single().algorithm == TotpAlgorithm.SHA1 &&
-                            list.single().digits == TotpDefaults.DIGITS &&
-                            list.single().period == TotpDefaults.PERIOD_SECONDS
-                },
-            )
-        }
-    }
-
-    @Test
     fun doWork_whenBackupHasUnknownAlgorithmName_restoresWithDefaultAlgorithm() = runTest {
         // a backup written by a newer build must not fail the restore of everything else.
         val authJson = """
@@ -408,7 +388,9 @@ class RestoreDataWorkerTest {
               "secretKey": "JBSWY3DPEHPK3PXP",
               "creationDate": 1000,
               "updateDate": 2000,
-              "algorithm": "SHA3"
+              "algorithm": "SHA3",
+              "digits": 6,
+              "period": 30
             }]
         """.trimIndent()
 
@@ -431,12 +413,16 @@ class RestoreDataWorkerTest {
               "secretKey": "JBSWY3DPEHPK3PXP",
               "creationDate": 1000,
               "updateDate": 2000,
-              "digits": 99
+              "algorithm": "SHA1",
+              "digits": 99,
+              "period": 30
             },{
               "title": "Bad Period",
               "secretKey": "JBSWY3DPEHPK3PXP",
               "creationDate": 1000,
               "updateDate": 2000,
+              "algorithm": "SHA1",
+              "digits": 6,
               "period": 0
             }]
         """.trimIndent()

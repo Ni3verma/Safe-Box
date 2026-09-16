@@ -257,10 +257,6 @@ class RestoreDataWorker
     /**
      * Reads the generation parameters out of a backup record.
      *
-     * Backups written before these parameters were persisted simply carry the model defaults, and
-     * an algorithm name this build does not recognise degrades to the RFC 6238 default rather than
-     * failing deserialization.
-     *
      * @return Config for this record, not yet validated.
      */
     private fun ExportAuthenticatorData.toTotpConfig(): TotpConfig {

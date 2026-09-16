@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
@@ -99,16 +98,9 @@ private fun TotpBadgePreview() {
 
 @Preview
 @Composable
-private fun TotpBadgeNonDefaultConfigPreview() {
+private fun TotpBadgeEightDigitCodePreview() {
     SafeBoxTheme {
-        TotpBadge(
-            config = TotpConfig(
-                secretKey = "JBSWY3DPEHPK3PXP",
-                algorithm = TotpAlgorithm.SHA256,
-                digits = 8,
-                period = 60,
-            ),
-        )
+        TotpBadge(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP", digits = 8))
     }
 }
 

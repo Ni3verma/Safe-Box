@@ -47,8 +47,7 @@ interface TotpGenerator {
      * Validates that a whole config can actually produce a code.
      *
      * Checks the parameters as well as the seed, because [generateCode] throws on an unsupported
-     * digit count or a non-positive period just as it does on an undecodable seed. Restore reads
-     * these values from a file, so they cannot be assumed to be in range.
+     * digit count or a non-positive period just as it does on an undecodable seed.
      *
      * @param config Seed and generation parameters to validate.
      * @return True when [generateCode] will succeed for this config.

@@ -26,8 +26,6 @@ object CommonConstants {
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
     const val AUTHENTICATOR_DATA_KEY = "8"
-    // 3 added the authenticator generation parameters to the "8" payload. Nothing branches on this
-    // value today, it is logged with restore analytics so a failure can be tied to a format.
     const val BACKUP_VERSION = 3
 
     // Backup params

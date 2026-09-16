@@ -7,9 +7,6 @@ import java.util.Date
 
 /**
  * Lightweight projection of [AuthenticatorDataEntity] used for record lists and searching.
- *
- * Carries the generation parameters alongside the seed because the records list renders a live
- * code for every authenticator row, which needs them to be correct.
  */
 data class SearchAuthenticatorData(
     val key: Int,

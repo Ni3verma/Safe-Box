@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
-import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
@@ -145,16 +144,9 @@ private fun TotpCodeFieldPreview() {
 
 @LightDarkModePreview
 @Composable
-private fun TotpCodeFieldNonDefaultConfigPreview() {
+private fun TotpCodeFieldEightDigitCodePreview() {
     SafeBoxTheme {
-        TotpCodeField(
-            config = TotpConfig(
-                secretKey = "JBSWY3DPEHPK3PXP",
-                algorithm = TotpAlgorithm.SHA256,
-                digits = 8,
-                period = 60,
-            ),
-        )
+        TotpCodeField(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP", digits = 8))
     }
 }
 
