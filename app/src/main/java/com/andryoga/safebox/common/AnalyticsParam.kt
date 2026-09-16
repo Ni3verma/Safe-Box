@@ -13,4 +13,5 @@ enum class AnalyticsParam(val paramName: String) {
     IS_ENABLED("is_enabled"),
     COUNT("count"),
     SOURCE("source"),
+    REASON("reason"),
 }

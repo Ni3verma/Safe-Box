@@ -42,6 +42,10 @@ enum class AnalyticsKey(val eventName: String) {
     QR_SCANNER_SUCCESS("qr_scanner_success"),
     QR_SCANNER_CANCEL("qr_scanner_cancel"),
     QR_SCANNER_MANUAL_CLICK("qr_scanner_manual_click"),
+    // logged with AnalyticsParam.REASON when a scanned otpauth URI cannot be turned into a
+    // record, for example an unsupported algorithm or a counter based (hotp) code.
+    QR_SCANNER_UNSUPPORTED_DIALOG_SHOW("qr_scanner_unsupported_show"),
+    QR_SCANNER_UNSUPPORTED_DIALOG_DISMISS("qr_scanner_unsupported_dismiss"),
     // TODO: not yet logged from the single record screen. Wire it up when the copy action is
     //  hoisted out of TotpCodeField into SingleRecordViewModel, along with its unit test.
     AUTHENTICATOR_COPY_CLICK("authenticator_copy_click"),

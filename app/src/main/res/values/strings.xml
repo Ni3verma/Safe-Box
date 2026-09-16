@@ -179,6 +179,12 @@
     <string name="enter_key_manually">Enter Key Manually</string>
     <string name="flash_toggle_description">Toggle flash</string>
     <string name="close">Close</string>
+    <string name="unsupported_qr_code_dialog_heading">Can\'t use this QR code</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box supports time-based (TOTP) codes only. This QR code is for a different kind of one-time password.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">The secret key in this QR code is missing or is not valid Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">This QR code uses a hashing algorithm Safe Box cannot compute. Only SHA1, SHA256 and SHA512 are supported.</string>
+    <string name="unsupported_qr_code_reason_digits">This QR code asks for a code length Safe Box cannot generate. Only 6 to 8 digits are supported.</string>
+    <string name="unsupported_qr_code_reason_period">This QR code specifies an invalid refresh interval.</string>
     <string name="copied_to_clipboard">Copied %1$s to clipboard</string>
     <!-- Authenticator -->
     <string name="totp_code">One-time code</string>

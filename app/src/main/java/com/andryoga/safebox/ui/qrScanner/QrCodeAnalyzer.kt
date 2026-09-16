@@ -1,12 +1,13 @@
 package com.andryoga.safebox.ui.qrScanner
 
 import androidx.annotation.OptIn
-import androidx.annotation.VisibleForTesting
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.andryoga.safebox.totp.engine.TotpUriParser
 import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpUriError
+import com.andryoga.safebox.totp.models.TotpUriParseResult
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.common.InputImage
 import timber.log.Timber
@@ -17,11 +18,13 @@ import timber.log.Timber
  *
  * @param scanner Injected [BarcodeScanner] instance configured for QR code detection.
  * @param onQrCodeScanned Callback invoked when a valid TOTP QR code is detected and parsed.
- * @param onScanFailed Optional callback invoked when ML Kit encounters a frame processing error.
+ * @param onUnsupportedQrCode Callback invoked when an `otpauth://` QR code is detected but cannot
+ * be used, so the screen can stop and explain why.
  */
 class QrCodeAnalyzer(
     private val scanner: BarcodeScanner,
     private val onQrCodeScanned: (ParsedTotpData) -> Unit,
+    private val onUnsupportedQrCode: (TotpUriError) -> Unit,
 ) : ImageAnalysis.Analyzer {
 
     @Volatile
@@ -49,14 +52,24 @@ class QrCodeAnalyzer(
                     if (isScanningActive) {
                         for (barcode in barcodes) {
                             val rawValue = barcode.rawValue
-                            if (!rawValue.isNullOrBlank()) {
-                                try {
-                                    val parsedData = TotpUriParser.parse(rawValue)
+                            if (rawValue.isNullOrBlank()) continue
+
+                            when (val result = TotpUriParser.parse(rawValue)) {
+                                is TotpUriParseResult.Success -> {
                                     isScanningActive = false
-                                    onQrCodeScanned(parsedData)
-                                    break
-                                } catch (e: Exception) {
-                                    Timber.d("Non-TOTP or malformed QR code scanned: %s", e.message)
+                                    onQrCodeScanned(result.data)
+                                    return@addOnSuccessListener
+                                }
+
+                                is TotpUriParseResult.Unsupported -> {
+                                    Timber.i("Unusable otpauth QR code scanned: %s", result.reason)
+                                    isScanningActive = false
+                                    onUnsupportedQrCode(result.reason)
+                                    return@addOnSuccessListener
+                                }
+
+                                TotpUriParseResult.NotTotpUri -> {
+                                    Timber.d("Non-TOTP QR code in frame, continuing to scan")
                                 }
                             }
                         }
@@ -75,9 +88,11 @@ class QrCodeAnalyzer(
     }
 
     /**
-     * Resets the analyzer to allow scanning new QR codes after a previous detection.
+     * Re-arms the analyzer after a detection so the next frames are inspected again.
+     *
+     * Called when the user dismisses the unsupported QR code message, which resumes scanning in
+     * place rather than forcing them out of the screen and back in.
      */
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun reset() {
         isScanningActive = true
     }
