@@ -124,7 +124,7 @@ class AuthenticatorDataDaoSecureTest {
             TestFixtures.createTestExportAuthenticatorData(
                 title = "Exported 2FA",
                 secretKey = "ENC[JBSWY3DPEHPK3PXP]",
-                algorithm = TotpAlgorithm.SHA512.name,
+                algorithm = TotpAlgorithm.SHA512,
                 digits = 8,
                 period = 60,
             ),
@@ -136,7 +136,7 @@ class AuthenticatorDataDaoSecureTest {
         assertThat(exported).hasSize(1)
         assertThat(exported[0].title).isEqualTo("Exported 2FA")
         assertThat(exported[0].secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
-        assertThat(exported[0].algorithm).isEqualTo(TotpAlgorithm.SHA512.name)
+        assertThat(exported[0].algorithm).isEqualTo(TotpAlgorithm.SHA512)
         assertThat(exported[0].digits).isEqualTo(8)
         assertThat(exported[0].period).isEqualTo(60)
     }

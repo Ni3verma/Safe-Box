@@ -262,7 +262,7 @@ class RestoreDataWorker
     private fun ExportAuthenticatorData.toTotpConfig(): TotpConfig {
         return TotpConfig(
             secretKey = secretKey,
-            algorithm = TotpAlgorithm.fromNameOrDefault(algorithm),
+            algorithm = algorithm,
             digits = digits,
             period = period,
         )

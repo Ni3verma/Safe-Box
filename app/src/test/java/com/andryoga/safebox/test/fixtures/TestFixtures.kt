@@ -438,7 +438,7 @@ object TestFixtures {
     fun createTestExportAuthenticatorData(
         title: String = "GitHub 2FA",
         secretKey: String = "JBSWY3DPEHPK3PXP",
-        algorithm: String = TotpAlgorithm.SHA1.name,
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
         digits: Int = TotpDefaults.DIGITS,
         period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Long = fixedDateLong,

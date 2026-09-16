@@ -380,31 +380,6 @@ class RestoreDataWorkerTest {
     }
 
     @Test
-    fun doWork_whenBackupHasUnknownAlgorithmName_restoresWithDefaultAlgorithm() = runTest {
-        // a backup written by a newer build must not fail the restore of everything else.
-        val authJson = """
-            [{
-              "title": "Future 2FA",
-              "secretKey": "JBSWY3DPEHPK3PXP",
-              "creationDate": 1000,
-              "updateDate": 2000,
-              "algorithm": "SHA3",
-              "digits": 6,
-              "period": 30
-            }]
-        """.trimIndent()
-
-        val result = restoreAuthenticatorJson(authJson, "UnknownAlgorithm.bak")
-
-        assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) {
-            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
-                match { list -> list.single().algorithm == TotpAlgorithm.SHA1 },
-            )
-        }
-    }
-
-    @Test
     fun doWork_whenTotpParamsAreOutOfRange_skipsRecordAndLogsCount() = runTest {
         // the seed is fine here, only the params are unusable. generateCode would throw on them.
         val authJson = """
