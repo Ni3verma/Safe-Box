@@ -3,6 +3,7 @@ package com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.domain.models.record.AuthenticatorData
+import com.andryoga.safebox.totp.engine.Base32Utils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
@@ -37,6 +38,7 @@ class AuthenticatorLayoutImplTest {
     fun setUp() {
         coEvery { repository.getAuthenticatorDataByKey(10) } returns sampleAuthenticator
         every { totpGenerator.isValidSecret(any()) } returns true
+        every { totpGenerator.normalizeSecret(any()) } answers { Base32Utils.sanitize(firstArg()) }
     }
 
     private fun createLayout(recordId: Int? = null) = AuthenticatorLayoutImpl(
@@ -108,6 +110,21 @@ class AuthenticatorLayoutImplTest {
         assertThat(captured.id).isNull()
         assertThat(captured.title).isEqualTo("My AWS")
         assertThat(captured.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+    }
+
+    @Test
+    fun saveLayout_secretKeyFormattedByIssuer_persistsCanonicalBase32() = runTest {
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        createLayout().saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "My AWS",
+                FieldId.AUTHENTICATOR_SECRET_KEY to " jbsw y3dp-ehpk3pxp== ",
+            ),
+        )
+
+        assertThat(dataSlot.captured.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test

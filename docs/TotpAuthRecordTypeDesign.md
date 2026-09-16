@@ -276,8 +276,11 @@ class AuthenticatorLayoutImpl(
 |-------------------------------------------------------------------------------------------------------------------------------|-------------|----------------------------------------------------------------------------------------|
 | [RecordType.kt](../app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt)                                 | Modified    | Added `AUTHENTICATOR` enum entry.                                                      |
 | [AddNewRecordBottomSheet.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt) | Modified    | Displays Authenticator option in the bottom sheet.                                     |
-| [RecordTypeFilterRow.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)         | Modified    | Adds filter chip for Authenticator records.                                            |
-| [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)                           | Modified    | Renders live TOTP code, timer, and clipboard copy button for Authenticator records.    |
+| [RecordsScreen.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsScreen.kt)                               | Modified    | Adds the Authenticator filter chip, driven from `uiState.recordTypeFilters`. There is no separate filter row component. |
+| [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)                           | Modified    | Renders `TotpBadge` in place of the subtitle for Authenticator rows.                   |
+| `TotpBadge.kt`                                                                                                                | **New**     | Compact live code, countdown ring and copy button for a records list row.              |
+| `TotpCodeField.kt`                                                                                                            | **New**     | Live code and countdown ring for the single record screen.                             |
+| `TotpCodeState.kt`                                                                                                            | **New**     | `rememberTotpCodeState`, the shared ticker and code derivation used by both surfaces.  |
 | `AuthenticatorLayoutImpl.kt`                                                                                                  | **New**     | Implements `Layout` interface for `SingleRecordScreen` (View/Edit/Create layout plan). |
 | `QrScannerScreen.kt` / Dialog                                                                                                 | **New**     | CameraX QR code scanner with ML Kit for instant `otpauth://` URI parsing.              |
 
@@ -292,13 +295,18 @@ class AuthenticatorLayoutImpl(
 * Export payload is encrypted with user's backup password and stored in `exportMap` under a new key
   constant:
   ```kotlin
-  CommonConstants.AUTHENTICATOR_DATA_KEY = "authenticator_data"
+  CommonConstants.AUTHENTICATOR_DATA_KEY = "8"
   ```
+  The key is the numeric string `"8"`, continuing the sequence already used by the other record
+  types (`"4"` login, `"5"` bank account, `"6"` bank card, `"7"` secure note). These keys are part of
+  the on-disk backup format, so they can never be renamed without breaking every existing backup.
 
 ### 6.2 Restore Changes ([RestoreDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt))
 
 * Decrypts `importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]` into `List<ExportAuthenticatorData>`.
 * Inserts records via `authenticatorDataDaoSecure.insertMultipleAuthenticatorData()`.
+* Seeds that cannot be decoded are dropped individually rather than failing the whole restore, so one
+  bad 2FA record never costs the user their logins, cards and notes.
 
 ### 6.3 Impact on Old Backup Files & Backward Compatibility
 
@@ -308,46 +316,75 @@ class AuthenticatorLayoutImpl(
 +------------------------------------+--------------------------------------------------------------+
 | Scenario                           | Behavior & Impact                                            |
 +------------------------------------+--------------------------------------------------------------+
-| Restoring Old Backups on New App   | 100% Backward Compatible. importMap["authenticator_data"] is  |
-|                                    | null; decrypt safely returns null and skips insertion        |
-|                                    | without errors. All Logins, Cards, Accounts & Notes restore. |
+| Restoring Old Backups on New App   | Backward Compatible. importMap["8"] is null; decrypt safely  |
+|                                    | returns null and skips insertion without errors. All Logins, |
+|                                    | Cards, Accounts & Notes restore.                             |
 +------------------------------------+--------------------------------------------------------------+
-| Restoring New Backups on Old App   | 100% Forward Compatible. Old app reads the Map and ignores   |
-|                                    | unrecognized "authenticator_data" key gracefully.            |
+| Restoring New Backups on Old App   | Forward Compatible. Old app reads the Map and ignores the    |
+|                                    | unrecognized "8" key gracefully.                             |
 +------------------------------------+--------------------------------------------------------------+
 ```
+
+> [!IMPORTANT]
+> Restore replaces the vault rather than merging into it. Every record type, authenticators
+> included, is deleted before the backup contents are inserted. Restoring a backup taken before
+> authenticator support therefore removes any authenticator records saved since. This is the
+> long-standing behaviour for all five types, and the restore screen warns about it up front.
 
 ---
 
 ## 7. Technical Stack & Best Practices Compliance
 
 * **100% Kotlin & Jetpack Compose:** Material 3 standards.
-* **Main Safety & Testability:** RFC 6238 calculation driven by injected `DispatchersProvider` and
-  verified with unit tests.
-* **Analytics Logging:** Events defined in `AnalyticsKey.kt` (`AUTHENTICATOR_ADD_CLICK`,
-  `AUTHENTICATOR_QR_SCAN_SUCCESS`, `AUTHENTICATOR_COPY_CLICK`, `AUTHENTICATOR_RECORD_SAVED`).
+* **Main Safety & Testability:** the RFC 6238 engine is deliberately **synchronous and stateless**,
+  not `DispatchersProvider` driven. One HMAC takes microseconds, so dispatching it off the main
+  thread would cost more than the calculation, and it would have to happen once per second per
+  visible row. Testability comes from injecting `timeSeconds` instead of a dispatcher, which makes
+  every RFC test vector a plain deterministic assertion.
+* **Analytics Logging:** events are defined in `AnalyticsKey.kt` — `AUTHENTICATOR_COPY_CLICK`
+  (carrying an `AnalyticsParam.SOURCE`), `QR_SCANNER_SUCCESS`, `QR_SCANNER_MANUAL_CLICK`,
+  `QR_SCANNER_CANCEL`, `QR_SCANNER_TORCH_TOGGLE`, the camera permission dialog events, and
+  `RESTORE_INVALID_AUTHENTICATOR_SKIPPED`.
 
 ---
 
 ## 8. Implementation Roadmap & MR Breakdown
 
-To ensure high code quality, testability, and zero risk to existing functionality, the work is
-partitioned into 6 modular Merge Requests (MRs):
+The work started as 6 Merge Requests and is now 12. Two things drove the growth: MR 6 was split
+because the records list and the QR add flow carry very different risk, and an audit of MR 1–5
+turned up defects and coverage gaps that needed scheduling. The MR numbers below are the current
+ones; earlier discussions used `6b` / `6c` labels that are now MR 9 and MR 7 respectively.
 
-```
-+---------------------------------------------------------------------------------------------------------------+
-|                                            Merge Request Roadmap                                              |
-+-----+---------------------------------------+---------------+-------------------------------------------------+
-| MR  | Title                                 | Size Estimate | Primary Scope                                   |
-+-----+---------------------------------------+---------------+-------------------------------------------------+
-| MR1 | Core TOTP Engine & URI Parser         | S (~250 LOC)  | RFC 6238 engine, Base32 decoder, URI parser, UTs|
-| MR2 | Data Layer & Room Migration           | M (~350 LOC)  | Schema migration, Entity, Secure DAO, Repo, UTs |
-| MR3 | Backup & Restore Integration          | S (~200 LOC)  | Export model, Backup/Restore worker keys, UTs   |
-| MR4 | CameraX & QR Code Scanner             | M (~300 LOC)  | ML Kit scanner, Viewfinder UI, Camera rationale |
-| MR5 | SingleRecordScreen (View/Edit/Create) | M (~400 LOC)  | AuthenticatorLayoutImpl, Live TOTP Composable   |
-| MR6 | Records List, Filter & Add Flow       | M (~350 LOC)  | List card copy UX, Filter chip, Add bottom sheet|
-+-----+---------------------------------------+---------------+-------------------------------------------------+
-```
+| MR    | Title                                 | Size         | Primary scope                                                                                     | Status      |
+|-------|---------------------------------------|--------------|---------------------------------------------------------------------------------------------------|-------------|
+| MR 1  | Core TOTP Engine & URI Parser         | S (~250 LOC) | RFC 6238 engine, Base32 decoder, URI parser, UTs                                                    | ✅ Merged   |
+| MR 2  | Data Layer & Room Migration           | M (~350 LOC) | Schema migration, entity, secure DAO, repository, UTs                                               | ✅ Merged   |
+| MR 3  | Backup & Restore Integration          | S (~200 LOC) | Export model, backup/restore worker keys, UTs                                                       | ✅ Merged   |
+| MR 4  | CameraX & QR Code Scanner             | M (~300 LOC) | ML Kit scanner, viewfinder UI, camera rationale                                                     | ✅ Merged   |
+| MR 5  | SingleRecordScreen (View/Edit/Create) | M (~400 LOC) | `AuthenticatorLayoutImpl`, live TOTP composable                                                     | ✅ Merged   |
+| MR 6  | Records List & Filter                 | M (~430 LOC) | List row live code and copy, filter chip, repository wiring                                         | ✅ Merged   |
+| MR 7  | TOTP Correctness Fixes                | S (~200 LOC) | Base32 length validation (crash fix), seed normalisation on save, this document                     | 🔄 Current  |
+| MR 8  | Persist TOTP Parameters               | M (~400 LOC) | Store `period` / `digits` / `algorithm` end to end, backup format carries them                      | ⬜ Pending  |
+| MR 9  | QR Add Flow & Seed Visibility         | L (~500 LOC) | Scanner navigation, direct camera launch, create pre-fill, camera lifecycle fixes, seed hidden outside creation | ⬜ Pending  |
+| MR 10 | UI & Engine Test Catch-up             | L (~450 LOC) | Compose UI tests for MR 1–9 components, real-crypto backup round trip, real migration assertions    | ⬜ Pending  |
+| MR 11 | Cross-Feature E2E Journeys            | M (~250 LOC) | Scan-to-save, manual fallback, filter, view/edit/delete journeys                                    | ⬜ Pending  |
+| MR 12 | Clipboard Auto-Clear                  | S (~150 LOC) | Vault-wide timed clipboard clear (not TOTP specific)                                                | ⬜ Pending  |
+
+Every MR branches from and targets the epic branch `feature/totp-record-type`, except where one
+depends on another. MR 12 is tracked here for visibility but is outside this epic.
+
+### Notable plan changes
+
+* **The "Scan QR vs Enter Manually" choice dialog was dropped.** Selecting Authenticator in the add
+  sheet launches the camera directly. Manual entry is reached from inside the scanner, which is
+  where a user who cannot scan actually is.
+* **Manual entry is kept.** On a phone-only app the most common enrolment is same-device, where the
+  QR is on the screen the user is looking at and cannot be scanned, and there is no gallery QR
+  decode to fall back on.
+* **The secret seed is hidden outside record creation** rather than masked. Masking would have left
+  the row tap-to-copy, which is the opposite of what is wanted for a seed.
+* **Clipboard auto-clear moved out of the epic.** It applies to passwords and card numbers just as
+  much as one-time codes, and a TOTP code self-expires in 30 seconds anyway.
 
 ### Detailed MR Scopes
 
@@ -374,12 +411,10 @@ partitioned into 6 modular Merge Requests (MRs):
 
 * **Scope:**
     * `ExportAuthenticatorData` model with `kotlinx.serialization`.
-    *
-  Update [BackupDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt)
-  with `CommonConstants.AUTHENTICATOR_DATA_KEY`.
-    *
-  Update [RestoreDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt)
-  to handle backward-compatible restoration.
+    * Update [BackupDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt)
+      with `CommonConstants.AUTHENTICATOR_DATA_KEY`.
+    * Update [RestoreDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/RestoreDataWorker.kt)
+      to handle backward-compatible restoration.
     * Unit tests validating backward compatibility when restoring backups with and without 2FA data.
 
 #### MR 4: CameraX & QR Scanner Viewfinder (Size: Medium, ~300 lines)
@@ -389,6 +424,11 @@ partitioned into 6 modular Merge Requests (MRs):
     * Camera runtime permission handling and rationale dialog.
     * `QrScannerScreen` / Viewfinder Composable returning parsed `TotpData`.
 
+> [!NOTE]
+> The scanner shipped without a navigation destination, so it is not yet reachable by a user. It is
+> wired up in MR 9, which is also where its camera lifecycle defects are fixed, since they are
+> untestable until then.
+
 #### MR 5: Single Record Integration (View / Edit / Create) (Size: Medium, ~400 lines)
 
 * **Scope:**
@@ -396,26 +436,79 @@ partitioned into 6 modular Merge Requests (MRs):
       to [RecordType.kt](../app/src/main/java/com/andryoga/safebox/domain/models/record/RecordType.kt).
     * Implement `AuthenticatorLayoutImpl`
       for [SingleRecordScreen.kt](../app/src/main/java/com/andryoga/safebox/ui/singleRecord/SingleRecordScreen.kt).
-    * Live rolling OTP code component with circular timer and toggleable/masked Secret Key.
-    * TopAppBar Share action formatting `"<Title>: <TOTP>"`.
+    * Live rolling OTP code component with circular timer.
+    * TopAppBar Share action sharing the current code, never the seed.
     * Unit tests for layout plan generation and save/edit workflows.
 
-#### MR 6: Records List, Filter & Add Flow Integration (Size: Medium, ~350 lines)
+#### MR 6: Records List & Filter (Size: Medium, ~430 lines)
 
 * **Scope:**
-    *
-  Update [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt)
-  with live TOTP code, timer countdown, and dedicated clipboard copy icon button.
-    * Add `Authenticator` chip
-      to [RecordTypeFilterRow.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordTypeFilterRow.kt)
-      and filter handling
+    * `TotpBadge` on authenticator rows
+      in [RecordItem.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/RecordItem.kt),
+      replacing the subtitle with the live code, countdown ring and a copy button.
+    * Authenticator filter chip and filter handling
       in [RecordsViewModel.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/RecordsViewModel.kt).
-    *
-  Update [AddNewRecordBottomSheet.kt](../app/src/main/java/com/andryoga/safebox/ui/home/records/components/AddNewRecordBottomSheet.kt)
-  with choice dialog ("Scan QR Code" vs "Enter Manually").
-    * Clipboard auto-clear logic and Android 13 sensitive content mask.
-    * Analytics events
-      in [AnalyticsKey.kt](../app/src/main/java/com/andryoga/safebox/common/AnalyticsKey.kt)
-      and full E2E / ViewModel test coverage.
+    * `rememberTotpCodeState` extracted so the list and the detail screen derive codes identically.
+    * `TotpDefaults` as the single source of the protocol defaults.
+    * `AUTHENTICATOR_COPY_CLICK` carrying an `AnalyticsParam.SOURCE`, plus ViewModel and mapper tests.
 
+#### MR 7: TOTP Correctness Fixes (Size: Small, ~200 lines)
 
+* **Scope:**
+    * **Base32 length validation.** `isValidBase32` checked characters but not length, so a
+      one-character seed passed validation and then decoded to zero bytes, which the generator
+      rejects by throwing. Validation now requires enough input to produce at least one byte.
+    * **Seed normalisation on save.** Setup keys are stored in the canonical form the decoder uses,
+      so the same secret cannot sit in the vault under several spellings.
+    * Refresh this document, which had drifted from the code in four places.
+
+> [!CAUTION]
+> The Base32 hole was crash-class. Typing `A` as a manual seed enabled Save, persisted the record,
+> and then threw from inside composition when the records list rendered it. The bad row survived, so
+> the crash repeated on every launch and the user could not reach the record to delete it, because
+> the list itself was what crashed. The same predicate guarded save, render and restore.
+
+#### MR 8: Persist TOTP Parameters (Size: Medium, ~400 lines)
+
+* **Scope:**
+    * `period`, `digits` and `algorithm` are parsed from the `otpauth://` URI and then discarded
+      today, so any issuer using non-default values would save cleanly and generate wrong codes
+      forever. Persist them end to end: entity and migration, secure DAO, repository, domain model,
+      list projection, and the composables that derive the code.
+    * Backup export model carries the new fields, with a default-fill path for older backups.
+    * Unit tests for a non-default URI surviving parse → save → read → code generation.
+
+> [!NOTE]
+> No new Room migration. `MIGRATION_4_5`, which creates `authenticator_data`, has not shipped in a
+> release, so the columns are added to its `CREATE TABLE` rather than bolted on by a version 6.
+
+#### MR 9: QR Add Flow & Seed Visibility (Size: Large, ~500 lines)
+
+* **Scope:**
+    * Wire `QrScannerScreenRoot` into navigation and launch the camera directly from the add sheet.
+    * Hand the scanned seed to the create screen through an in-memory, single-consumption holder.
+    * Hide the secret seed outside record creation, replacing the two visibility booleans on
+      `FieldUiState.Cell` with a single `visibleIn: Set<ViewMode>`.
+    * Camera lifecycle fixes carried over from the MR 1–5 audit.
+    * Log `AUTHENTICATOR_COPY_CLICK` from the detail screen as well as the list.
+
+> [!WARNING]
+> The scanned seed must not travel as a navigation argument. Route arguments are serialised into the
+> destination's `Bundle`, which `onSaveInstanceState` writes to unencrypted system storage outside
+> the vault, where it survives process death and is not cleared by auto-lock.
+
+#### MR 10: UI & Engine Test Catch-up (Size: Large, ~450 lines)
+
+* **Scope:** Compose UI tests for every component introduced in MR 1–9 that lacks one, authenticators
+  added to the real-crypto backup round trip, and `migration_4_5` asserting preserved data rather
+  than only schema shape.
+
+#### MR 11: Cross-Feature E2E Journeys (Size: Medium, ~250 lines)
+
+* **Scope:** scan-to-save, manual entry fallback, filtering, and view / edit / delete / copy journeys,
+  verified on Gradle Managed Devices.
+
+#### MR 12: Clipboard Auto-Clear (Size: Small, ~150 lines)
+
+* **Scope:** timed clipboard clear for everything copied through `rememberCopyToClipboardAction()`.
+  Tracked separately because it is vault-wide rather than TOTP specific.

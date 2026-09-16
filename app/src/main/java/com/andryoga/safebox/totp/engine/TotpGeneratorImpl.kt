@@ -87,4 +87,14 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
     override fun isValidSecret(secretBase32: String): Boolean {
         return Base32Utils.isValidBase32(secretBase32)
     }
+
+    /**
+     * Converts a secret to the canonical form the engine decodes.
+     *
+     * @param secretBase32 Secret as the user typed it or as an issuer formatted it.
+     * @return Uppercase secret with whitespace, hyphens and trailing padding removed.
+     */
+    override fun normalizeSecret(secretBase32: String): String {
+        return Base32Utils.sanitize(secretBase32)
+    }
 }

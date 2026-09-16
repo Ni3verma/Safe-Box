@@ -38,11 +38,12 @@ class AuthenticatorLayoutImpl(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
+        val secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY].orEmpty()
         authenticatorDataRepository.upsertAuthenticatorData(
             AuthenticatorData(
                 id = recordId,
                 title = data[FieldId.AUTHENTICATOR_TITLE]?.trim().orEmpty(),
-                secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY]?.trim().orEmpty(),
+                secretKey = totpGenerator.normalizeSecret(secretKey),
                 creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             ),

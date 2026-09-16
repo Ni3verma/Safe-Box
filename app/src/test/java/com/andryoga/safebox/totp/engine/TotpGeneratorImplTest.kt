@@ -224,4 +224,31 @@ class TotpGeneratorImplTest {
         assertThat(totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP")).isTrue()
         assertThat(totpGenerator.isValidSecret("invalid_secret_1234!")).isFalse()
     }
+
+    @Test
+    fun isValidSecret_withSecretTooShortToDecode_returnsFalseSoGenerateCodeIsNeverReached() {
+        assertThat(totpGenerator.isValidSecret("A")).isFalse()
+
+        // the guard has to hold, because generateCode throws on an empty decoded key.
+        assertThrows(IllegalArgumentException::class.java) {
+            totpGenerator.generateCode(secretBase32 = "A", timeSeconds = 100L)
+        }
+    }
+
+    @Test
+    fun normalizeSecret_returnsCanonicalFormThatGeneratesTheSameCode() {
+        val formatted = "jbsw y3dp-ehpk3pxp=="
+        val normalized = totpGenerator.normalizeSecret(formatted)
+
+        assertThat(normalized).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(totpGenerator.generateCode(secretBase32 = normalized, timeSeconds = 100L))
+            .isEqualTo(totpGenerator.generateCode(secretBase32 = formatted, timeSeconds = 100L))
+    }
+
+    @Test
+    fun normalizeSecret_isIdempotent() {
+        val once = totpGenerator.normalizeSecret("jbsw y3dp ehpk3pxp")
+
+        assertThat(totpGenerator.normalizeSecret(once)).isEqualTo(once)
+    }
 }

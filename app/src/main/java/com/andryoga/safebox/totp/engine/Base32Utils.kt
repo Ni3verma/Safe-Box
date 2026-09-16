@@ -11,6 +11,10 @@ import java.io.ByteArrayOutputStream
 object Base32Utils {
     private const val BASE32_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 
+    // Each character carries 5 bits, so two are the fewest that complete a byte. A lone character
+    // contributes 5 bits that decode() discards, returning an empty key the generator cannot use.
+    private const val MIN_ENCODED_LENGTH = 2
+
     /**
      * Decodes an RFC 4648 Base32 encoded string into its raw byte representation.
      *
@@ -49,14 +53,15 @@ object Base32Utils {
     }
 
     /**
-     * Checks if the provided string contains only valid RFC 4648 Base32 characters after sanitization.
+     * Checks if the provided string contains only valid RFC 4648 Base32 characters after sanitization,
+     * and is long enough to decode into at least one byte.
      *
      * @param encodedString String to validate.
-     * @return True if valid, false if blank or contains invalid characters.
+     * @return True if valid, false if too short or contains invalid characters.
      */
     fun isValidBase32(encodedString: String): Boolean {
         val sanitized = sanitize(encodedString)
-        if (sanitized.isEmpty()) return false
+        if (sanitized.length < MIN_ENCODED_LENGTH) return false
         return sanitized.all { BASE32_CHARS.indexOf(it) != -1 }
     }
 
@@ -66,7 +71,7 @@ object Base32Utils {
      * @param encodedString Raw Base32 string.
      * @return Normalized Base32 string.
      */
-    private fun sanitize(encodedString: String): String {
+    internal fun sanitize(encodedString: String): String {
         return encodedString
             .filterNot { it.isWhitespace() || it == '-' }
             .trimEnd('=')
