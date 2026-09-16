@@ -77,7 +77,6 @@ fun TotpBadge(
                 copyToClipboard(label, totpCodeState.code, copiedMessage)
                 onCopyClick()
             },
-            modifier = Modifier.size(32.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.ContentCopy,

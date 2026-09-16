@@ -43,8 +43,11 @@ fun rememberTotpCodeState(
 
     val epochSeconds by produceState(initialValue = System.currentTimeMillis() / 1000) {
         while (true) {
-            delay(CommonConstants.TIME_1_SECOND)
-            value = System.currentTimeMillis() / 1000
+            val nowMillis = System.currentTimeMillis()
+            value = nowMillis / 1000
+            // aligned to the next whole second so independent tickers stay in step with each other
+            // and with the real rollover, instead of drifting by their start offset.
+            delay(CommonConstants.TIME_1_SECOND - nowMillis % CommonConstants.TIME_1_SECOND)
         }
     }
 
