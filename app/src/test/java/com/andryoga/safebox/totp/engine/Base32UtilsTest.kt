@@ -80,4 +80,26 @@ class Base32UtilsTest {
         val expected = Base32Utils.decode("JBSWY3DPEHPK3PXP")
         assertThat(decoded).isEqualTo(expected)
     }
+
+    @Test
+    fun isValidBase32_withSecretTooShortToDecodeAByte_returnsFalse() {
+        // a single character carries only 5 bits, so decode() emits nothing.
+        assertThat(Base32Utils.decode("A")).isEmpty()
+        assertThat(Base32Utils.isValidBase32("A")).isFalse()
+        assertThat(Base32Utils.isValidBase32("a")).isFalse()
+        assertThat(Base32Utils.isValidBase32(" M ")).isFalse()
+        assertThat(Base32Utils.isValidBase32("M=======")).isFalse()
+    }
+
+    @Test
+    fun isValidBase32_withShortestDecodableSecret_returnsTrue() {
+        assertThat(Base32Utils.decode("MY")).isNotEmpty()
+        assertThat(Base32Utils.isValidBase32("MY")).isTrue()
+    }
+
+    @Test
+    fun sanitize_stripsFormattingAndUppercases() {
+        assertThat(Base32Utils.sanitize("jbsw y3dp-ehpk3pxp==")).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(Base32Utils.sanitize("JBSWY3DPEHPK3PXP")).isEqualTo("JBSWY3DPEHPK3PXP")
+    }
 }

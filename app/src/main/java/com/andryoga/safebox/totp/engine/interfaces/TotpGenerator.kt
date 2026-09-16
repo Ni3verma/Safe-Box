@@ -45,4 +45,13 @@ interface TotpGenerator {
      * @return True if valid RFC 4648 Base32, false otherwise.
      */
     fun isValidSecret(secretBase32: String): Boolean
+
+    /**
+     * Converts a secret to the canonical form the engine decodes, so the same seed is never stored
+     * under two different spellings.
+     *
+     * @param secretBase32 Secret as the user typed it or as an issuer formatted it.
+     * @return Uppercase secret with whitespace, hyphens and trailing padding removed.
+     */
+    fun normalizeSecret(secretBase32: String): String
 }

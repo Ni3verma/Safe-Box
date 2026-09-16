@@ -12,7 +12,7 @@ package com.andryoga.safebox.ui.singleRecord.dynamicLayout.models
  * forcing every new type to declare how it renders.
  */
 enum class FieldType {
-    /** Plain label above value, the behaviour every existing record type relies on. */
+    /** Plain label above value, the behavior every existing record type relies on. */
     DEFAULT_TEXT,
 
     /**
