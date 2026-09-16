@@ -51,20 +51,40 @@ class AuthenticatorDataDaoSecure @Inject constructor(
     }
 
     private fun encrypt(authenticatorDataEntity: AuthenticatorDataEntity): AuthenticatorDataEntity {
-        return authenticatorDataEntity.copy(
+        return AuthenticatorDataEntity(
+            key = authenticatorDataEntity.key,
+            title = authenticatorDataEntity.title,
             secretKey = symmetricKeyUtils.encrypt(authenticatorDataEntity.secretKey),
+            algorithm = authenticatorDataEntity.algorithm,
+            digits = authenticatorDataEntity.digits,
+            period = authenticatorDataEntity.period,
+            creationDate = authenticatorDataEntity.creationDate,
+            updateDate = authenticatorDataEntity.updateDate,
         )
     }
 
     private fun decrypt(authenticatorDataEntity: AuthenticatorDataEntity): AuthenticatorDataEntity {
-        return authenticatorDataEntity.copy(
+        return AuthenticatorDataEntity(
+            key = authenticatorDataEntity.key,
+            title = authenticatorDataEntity.title,
             secretKey = symmetricKeyUtils.decrypt(authenticatorDataEntity.secretKey),
+            algorithm = authenticatorDataEntity.algorithm,
+            digits = authenticatorDataEntity.digits,
+            period = authenticatorDataEntity.period,
+            creationDate = authenticatorDataEntity.creationDate,
+            updateDate = authenticatorDataEntity.updateDate,
         )
     }
 
     private fun decrypt(exportAuthenticatorData: ExportAuthenticatorData): ExportAuthenticatorData {
-        return exportAuthenticatorData.copy(
+        return ExportAuthenticatorData(
+            title = exportAuthenticatorData.title,
             secretKey = symmetricKeyUtils.decrypt(exportAuthenticatorData.secretKey),
+            creationDate = exportAuthenticatorData.creationDate,
+            updateDate = exportAuthenticatorData.updateDate,
+            algorithm = exportAuthenticatorData.algorithm,
+            digits = exportAuthenticatorData.digits,
+            period = exportAuthenticatorData.period,
         )
     }
 }

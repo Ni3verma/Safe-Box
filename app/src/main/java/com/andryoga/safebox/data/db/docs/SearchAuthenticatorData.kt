@@ -22,8 +22,14 @@ data class SearchAuthenticatorData(
             searchAuthenticatorData: SearchAuthenticatorData,
             symmetricKeyUtils: SymmetricKeyUtils,
         ): SearchAuthenticatorData {
-            return searchAuthenticatorData.copy(
+            return SearchAuthenticatorData(
+                key = searchAuthenticatorData.key,
+                title = searchAuthenticatorData.title,
                 secretKey = symmetricKeyUtils.decrypt(searchAuthenticatorData.secretKey),
+                algorithm = searchAuthenticatorData.algorithm,
+                digits = searchAuthenticatorData.digits,
+                period = searchAuthenticatorData.period,
+                creationDate = searchAuthenticatorData.creationDate,
             )
         }
 
