@@ -29,6 +29,8 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -219,12 +221,12 @@ class RestoreDataWorker
     }
 
     /**
-     * Drops authenticator records whose seed cannot be decoded as Base32.
+     * Drops authenticator records that cannot produce a code.
      *
      * Successful decryption and deserialization prove the backup is authentic and well formed,
-     * they prove nothing about whether the seed is semantically usable. An undecodable seed can
-     * never produce a code and makes [TotpGenerator.generateCode] throw, so such records are
-     * skipped instead of being persisted.
+     * they prove nothing about whether the record is semantically usable. An undecodable seed, an
+     * unsupported digit count or a non-positive period all make [TotpGenerator.generateCode] throw,
+     * so such records are skipped instead of being persisted.
      *
      * Only the offending records are dropped rather than failing the whole restore, because one
      * bad 2FA seed must not cost the user every login, card and note in the backup.
@@ -238,7 +240,7 @@ class RestoreDataWorker
         if (authenticatorData == null) return null
 
         val (decodable, undecodable) = authenticatorData.partition {
-            totpGenerator.isValidSecret(it.secretKey)
+            totpGenerator.isValidConfig(it.toTotpConfig())
         }
 
         if (undecodable.isNotEmpty()) {
@@ -250,6 +252,24 @@ class RestoreDataWorker
         }
 
         return decodable
+    }
+
+    /**
+     * Reads the generation parameters out of a backup record.
+     *
+     * Backups written before these parameters were persisted simply carry the model defaults, and
+     * an algorithm name this build does not recognise degrades to the RFC 6238 default rather than
+     * failing deserialization.
+     *
+     * @return Config for this record, not yet validated.
+     */
+    private fun ExportAuthenticatorData.toTotpConfig(): TotpConfig {
+        return TotpConfig(
+            secretKey = secretKey,
+            algorithm = TotpAlgorithm.fromNameOrDefault(algorithm),
+            digits = digits,
+            period = period,
+        )
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {
@@ -421,12 +441,16 @@ class RestoreDataWorker
             authenticatorData?.let {
                 authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
                     authenticatorData.map {
+                        val config = it.toTotpConfig()
                         AuthenticatorDataEntity(
-                            0,
-                            it.title,
-                            it.secretKey,
-                            Date(it.creationDate),
-                            Date(it.updateDate),
+                            key = 0,
+                            title = it.title,
+                            secretKey = config.secretKey,
+                            algorithm = config.algorithm,
+                            digits = config.digits,
+                            period = config.period,
+                            creationDate = Date(it.creationDate),
+                            updateDate = Date(it.updateDate),
                         )
                     },
                 )

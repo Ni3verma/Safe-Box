@@ -3,6 +3,7 @@ package com.andryoga.safebox.totp.engine
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -72,10 +73,12 @@ object TotpUriParser {
 
         return ParsedTotpData(
             title = title,
-            secretKey = cleanSecret,
-            algorithm = algorithm,
-            digits = digits,
-            period = period,
+            config = TotpConfig(
+                secretKey = cleanSecret,
+                algorithm = algorithm,
+                digits = digits,
+                period = period,
+            ),
         )
     }
 

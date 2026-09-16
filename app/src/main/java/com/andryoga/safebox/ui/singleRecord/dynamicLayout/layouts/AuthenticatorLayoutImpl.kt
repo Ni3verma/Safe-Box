@@ -6,6 +6,7 @@ import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
@@ -43,11 +44,26 @@ class AuthenticatorLayoutImpl(
             AuthenticatorData(
                 id = recordId,
                 title = data[FieldId.AUTHENTICATOR_TITLE]?.trim().orEmpty(),
-                secretKey = totpGenerator.normalizeSecret(secretKey),
+                config = buildConfig(totpGenerator.normalizeSecret(secretKey)),
                 creationDate = recordData?.creationDate ?: Date(),
                 updateDate = Date(),
             ),
         )
+    }
+
+    /**
+     * Pairs a seed with the generation parameters that belong to this record.
+     *
+     * The parameters are never edited on this screen, so they are read from the loaded record and
+     * fall back to the RFC 6238 defaults for a record being created by hand. A record created by
+     * scanning carries the issuer's parameters into [recordData] before the layout is built.
+     *
+     * @param secretKey Canonical Base32 seed to pair with the parameters.
+     * @return Config for this record.
+     */
+    private fun buildConfig(secretKey: String): TotpConfig {
+        val storedConfig = recordData?.config ?: return TotpConfig(secretKey = secretKey)
+        return storedConfig.copy(secretKey = secretKey)
     }
 
     override suspend fun deleteLayout() {
@@ -78,11 +94,11 @@ class AuthenticatorLayoutImpl(
     /**
      * Shares the derived one-time code instead of the stored seed.
      *
-     * The layout stores the Base32 secret in [FieldId.AUTHENTICATOR_TOTP_CODE] so that the UI can
-     * roll the code locally every second. Sharing that raw seed would hand over permanent access to
-     * the second factor, so the code valid at share time is shared instead.
+     * The layout stores the Base32 secret in [FieldId.AUTHENTICATOR_TOTP_DISPLAY] so that the UI
+     * can roll the code locally every second. Sharing that raw seed would hand over permanent
+     * access to the second factor, so the code valid at share time is shared instead.
      *
-     * Blank values are skipped to match the interface default, and an undecodable seed is skipped
+     * Blank values are skipped to match the interface default, and an unusable config is skipped
      * because [TotpGenerator.generateCode] throws on one. Both are reachable for records inserted
      * by restore-from-backup, which does not validate the seed.
      *
@@ -92,16 +108,17 @@ class AuthenticatorLayoutImpl(
         val fieldUiState = getLayoutPlan().fieldUiState
         val title = fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data.orEmpty()
         val secretKey = fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data.orEmpty()
+        val config = buildConfig(secretKey)
 
         return buildList {
             if (title.isNotBlank()) {
                 add(ShareableField(label = R.string.title, value = title))
             }
-            if (totpGenerator.isValidSecret(secretKey)) {
+            if (totpGenerator.isValidConfig(config)) {
                 add(
                     ShareableField(
                         label = R.string.totp_code,
-                        value = totpGenerator.generateCode(secretKey),
+                        value = totpGenerator.generateCode(config),
                     ),
                 )
             }
@@ -113,7 +130,7 @@ class AuthenticatorLayoutImpl(
             id = LayoutId.AUTHENTICATOR,
             arrangement = listOf(
                 listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TITLE)),
-                listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TOTP_CODE)),
+                listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TOTP_DISPLAY)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_SECRET_KEY)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
                 listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE)),
@@ -127,15 +144,15 @@ class AuthenticatorLayoutImpl(
                     ),
                     data = recordData?.title.orEmpty(),
                 ),
-                FieldId.AUTHENTICATOR_TOTP_CODE to FieldUiState(
+                FieldId.AUTHENTICATOR_TOTP_DISPLAY to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.totp_code,
                         isVisibleOnlyInViewMode = true,
-                        type = FieldType.TOTP,
+                        type = FieldType.Totp(buildConfig(recordData?.config?.secretKey.orEmpty())),
                         // holds the secret seed, never the code, so it must never be shared as is.
                         isCopyable = false,
                     ),
-                    data = recordData?.secretKey.orEmpty(),
+                    data = recordData?.config?.secretKey.orEmpty(),
                 ),
                 FieldId.AUTHENTICATOR_SECRET_KEY to FieldUiState(
                     cell = FieldUiState.Cell(
@@ -144,7 +161,7 @@ class AuthenticatorLayoutImpl(
                         isPasswordField = true,
                         visualTransformation = PasswordVisualTransformation(),
                     ),
-                    data = recordData?.secretKey.orEmpty(),
+                    data = recordData?.config?.secretKey.orEmpty(),
                 ),
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(

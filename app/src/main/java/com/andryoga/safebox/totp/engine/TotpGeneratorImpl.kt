@@ -2,7 +2,7 @@ package com.andryoga.safebox.totp.engine
 
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
-import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import java.nio.ByteBuffer
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -18,34 +18,30 @@ import kotlin.math.pow
 class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
 
     /**
-     * Computes the one-time code for the given secret key seed, epoch timestamp, and algorithm.
+     * Computes the one-time code for the given config and epoch timestamp.
      *
-     * @param secretBase32 Base32 encoded secret key.
+     * @param config Seed plus the algorithm, digit count and time step to derive the code with.
      * @param timeSeconds Unix timestamp in seconds.
-     * @param period Step duration in seconds (must be > 0).
-     * @param digits Code length in digits (must be 6..8).
-     * @param algorithm HMAC hashing algorithm.
-     * @return Formatted numeric code zero-padded to the specified digit length.
+     * @return Formatted numeric code zero-padded to the configured digit length.
      * @throws IllegalArgumentException If period <= 0, digits not in 6..8, or secret key bytes are empty.
      */
     override fun generateCode(
-        secretBase32: String,
+        config: TotpConfig,
         timeSeconds: Long,
-        period: Int,
-        digits: Int,
-        algorithm: TotpAlgorithm,
     ): String {
+        val period = config.period
+        val digits = config.digits
         require(period > 0) { "Period must be greater than 0" }
         require(digits in TotpDefaults.SUPPORTED_DIGITS) { "Digits must be between 6 and 8" }
 
-        val keyBytes = Base32Utils.decode(secretBase32)
+        val keyBytes = Base32Utils.decode(config.secretKey)
         require(keyBytes.isNotEmpty()) { "Secret key bytes cannot be empty" }
 
         val timeCounter = Math.floorDiv(timeSeconds, period.toLong())
         val timeBytes = ByteBuffer.allocate(Long.SIZE_BYTES).putLong(timeCounter).array()
 
-        val mac = Mac.getInstance(algorithm.hmacAlgorithm)
-        val macKey = SecretKeySpec(keyBytes, algorithm.hmacAlgorithm)
+        val mac = Mac.getInstance(config.algorithm.hmacAlgorithm)
+        val macKey = SecretKeySpec(keyBytes, config.algorithm.hmacAlgorithm)
         mac.init(macKey)
         val hash = mac.doFinal(timeBytes)
 
@@ -86,6 +82,18 @@ class TotpGeneratorImpl @Inject constructor() : TotpGenerator {
      */
     override fun isValidSecret(secretBase32: String): Boolean {
         return Base32Utils.isValidBase32(secretBase32)
+    }
+
+    /**
+     * Validates the seed together with the parameters [generateCode] would use.
+     *
+     * @param config Seed and generation parameters to validate.
+     * @return True when the seed decodes and both digits and period are in range.
+     */
+    override fun isValidConfig(config: TotpConfig): Boolean {
+        return isValidSecret(config.secretKey) &&
+                config.digits in TotpDefaults.SUPPORTED_DIGITS &&
+                config.period > 0
     }
 
     /**

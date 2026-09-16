@@ -5,9 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpConfig
 import kotlinx.coroutines.delay
 
 /**
@@ -24,22 +24,22 @@ data class TotpCodeState(
 )
 
 /**
- * Drives a one second ticker and derives the current one-time code from [secretKey].
+ * Drives a one second ticker and derives the current one-time code from [config].
  *
  * Shared by every surface that shows a live code so they cannot drift apart.
  *
- * @param secretKey Base32 encoded secret seed.
+ * @param config Seed plus the record's own generation parameters.
  * @param totpGenerator Stateless RFC 6238 engine, defaulted to keep callers previewable.
- * @return Live code state, or null when [secretKey] cannot produce a code. Callers must render a
+ * @return Live code state, or null when [config] cannot produce a code. Callers must render a
  * fallback for null, since restore-from-backup can insert an unvalidated seed.
  */
 @Composable
 fun rememberTotpCodeState(
-    secretKey: String,
+    config: TotpConfig,
     totpGenerator: TotpGenerator = remember { TotpGeneratorImpl() },
 ): TotpCodeState? {
-    val isValidSecret = remember(secretKey) { totpGenerator.isValidSecret(secretKey) }
-    if (isValidSecret.not()) return null
+    val isValidConfig = remember(config) { totpGenerator.isValidConfig(config) }
+    if (isValidConfig.not()) return null
 
     val epochSeconds by produceState(initialValue = System.currentTimeMillis() / 1000) {
         while (true) {
@@ -52,11 +52,11 @@ fun rememberTotpCodeState(
     }
 
     // keyed on the time step so the code is recomputed only when the window rolls over.
-    val code = remember(secretKey, epochSeconds / TotpDefaults.PERIOD_SECONDS) {
-        totpGenerator.generateCode(secretBase32 = secretKey, timeSeconds = epochSeconds)
+    val code = remember(config, epochSeconds / config.period) {
+        totpGenerator.generateCode(config = config, timeSeconds = epochSeconds)
     }
-    val remainingSeconds = remember(epochSeconds) {
-        totpGenerator.getRemainingSeconds(timeSeconds = epochSeconds)
+    val remainingSeconds = remember(epochSeconds, config.period) {
+        totpGenerator.getRemainingSeconds(timeSeconds = epochSeconds, period = config.period)
     }
 
     return remember(code, remainingSeconds) {

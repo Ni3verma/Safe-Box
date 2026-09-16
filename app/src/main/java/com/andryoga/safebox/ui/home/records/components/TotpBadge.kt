@@ -19,7 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -28,13 +29,13 @@ import com.andryoga.safebox.ui.totp.rememberTotpCodeState
 /**
  * Compact live one-time code shown on an authenticator row in the records list.
  *
- * @param secretKey Base32 encoded secret seed for this record.
+ * @param config Seed plus the record's own generation parameters.
  * @param modifier Composable layout modifier.
  * @param onCopyClick Invoked after the code is copied, so the caller can log analytics.
  */
 @Composable
 fun TotpBadge(
-    secretKey: String,
+    config: TotpConfig,
     modifier: Modifier = Modifier,
     onCopyClick: () -> Unit = {},
 ) {
@@ -42,7 +43,7 @@ fun TotpBadge(
     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
     val copyToClipboard = rememberCopyToClipboardAction()
 
-    val totpCodeState = rememberTotpCodeState(secretKey = secretKey)
+    val totpCodeState = rememberTotpCodeState(config = config)
     if (totpCodeState == null) {
         Text(
             text = stringResource(R.string.totp_invalid_secret_key),
@@ -60,7 +61,7 @@ fun TotpBadge(
     ) {
         CircularCountdownRing(
             remainingSeconds = totpCodeState.remainingSeconds,
-            totalSeconds = TotpDefaults.PERIOD_SECONDS,
+            totalSeconds = config.period,
             size = 24.dp,
             strokeWidth = 2.dp,
         )
@@ -92,7 +93,22 @@ fun TotpBadge(
 @Composable
 private fun TotpBadgePreview() {
     SafeBoxTheme {
-        TotpBadge(secretKey = "JBSWY3DPEHPK3PXP")
+        TotpBadge(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"))
+    }
+}
+
+@Preview
+@Composable
+private fun TotpBadgeNonDefaultConfigPreview() {
+    SafeBoxTheme {
+        TotpBadge(
+            config = TotpConfig(
+                secretKey = "JBSWY3DPEHPK3PXP",
+                algorithm = TotpAlgorithm.SHA256,
+                digits = 8,
+                period = 60,
+            ),
+        )
     }
 }
 
@@ -100,6 +116,6 @@ private fun TotpBadgePreview() {
 @Composable
 private fun TotpBadgeInvalidSecretPreview() {
     SafeBoxTheme {
-        TotpBadge(secretKey = "not-a-valid-base32-seed!")
+        TotpBadge(config = TotpConfig(secretKey = "not-a-valid-base32-seed!"))
     }
 }

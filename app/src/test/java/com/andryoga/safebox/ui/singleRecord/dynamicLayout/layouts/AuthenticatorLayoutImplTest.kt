@@ -5,6 +5,8 @@ import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataReposito
 import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.Base32Utils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
@@ -26,10 +28,18 @@ class AuthenticatorLayoutImplTest {
     private val totpGenerator: TotpGenerator = mockk(relaxed = true)
 
     private val sampleDate = Date(1700000000000L)
+
+    // deliberately non default so that any param dropped on the way to the UI or to save shows up.
+    private val sampleConfig = TotpConfig(
+        secretKey = "JBSWY3DPEHPK3PXP",
+        algorithm = TotpAlgorithm.SHA256,
+        digits = 8,
+        period = 60,
+    )
     private val sampleAuthenticator = AuthenticatorData(
         id = 10,
         title = "Google",
-        secretKey = "JBSWY3DPEHPK3PXP",
+        config = sampleConfig,
         creationDate = sampleDate,
         updateDate = sampleDate,
     )
@@ -38,6 +48,7 @@ class AuthenticatorLayoutImplTest {
     fun setUp() {
         coEvery { repository.getAuthenticatorDataByKey(10) } returns sampleAuthenticator
         every { totpGenerator.isValidSecret(any()) } returns true
+        every { totpGenerator.isValidConfig(any()) } returns true
         every { totpGenerator.normalizeSecret(any()) } answers { Base32Utils.sanitize(firstArg()) }
     }
 
@@ -64,10 +75,12 @@ class AuthenticatorLayoutImplTest {
 
         assertThat(plan.id).isEqualTo(LayoutId.AUTHENTICATOR)
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data).isEqualTo("Google")
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.data).isEqualTo("JBSWY3DPEHPK3PXP")
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.type)
-            .isEqualTo(FieldType.TOTP)
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.isVisibleOnlyInViewMode).isTrue()
+
+        val totpField = plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_DISPLAY]
+        assertThat(totpField?.data).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(totpField?.cell?.type).isEqualTo(FieldType.Totp(sampleConfig))
+        assertThat(totpField?.cell?.isVisibleOnlyInViewMode).isTrue()
+
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEqualTo("JBSWY3DPEHPK3PXP")
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.cell?.isPasswordField).isTrue()
         assertThat(plan.fieldUiState[FieldId.CREATION_DATE]?.data).isEqualTo(sampleDate.toString())
@@ -90,7 +103,8 @@ class AuthenticatorLayoutImplTest {
         val plan = createLayout(recordId = 10).getLayoutPlan()
 
         // the field holds the secret seed, so the generic share path must never pick it up
-        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_CODE]?.cell?.isCopyable).isFalse()
+        val totpField = plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_DISPLAY]
+        assertThat(totpField?.cell?.isCopyable).isFalse()
     }
 
     @Test
@@ -109,7 +123,7 @@ class AuthenticatorLayoutImplTest {
         val captured = dataSlot.captured
         assertThat(captured.id).isNull()
         assertThat(captured.title).isEqualTo("My AWS")
-        assertThat(captured.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(captured.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test
@@ -124,7 +138,7 @@ class AuthenticatorLayoutImplTest {
             ),
         )
 
-        assertThat(dataSlot.captured.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(dataSlot.captured.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test
@@ -149,6 +163,40 @@ class AuthenticatorLayoutImplTest {
     }
 
     @Test
+    fun saveLayout_existingRecord_preservesStoredGenerationParams() = runTest {
+        // the params are not editable on this screen, so an edit must not silently reset them.
+        val layout = createLayout(recordId = 10)
+        layout.getLayoutPlan() // populates recordData
+
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        layout.saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "Google Updated",
+                FieldId.AUTHENTICATOR_SECRET_KEY to "JBSWY3DPEHPK3PXP",
+            ),
+        )
+
+        assertThat(dataSlot.captured.config).isEqualTo(sampleConfig)
+    }
+
+    @Test
+    fun saveLayout_newRecord_fallsBackToDefaultGenerationParams() = runTest {
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        createLayout().saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "My AWS",
+                FieldId.AUTHENTICATOR_SECRET_KEY to "JBSWY3DPEHPK3PXP",
+            ),
+        )
+
+        assertThat(dataSlot.captured.config).isEqualTo(TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"))
+    }
+
+    @Test
     fun deleteLayout_existingRecord_callsRepositoryDelete() = runTest {
         createLayout(recordId = 10).deleteLayout()
 
@@ -157,7 +205,7 @@ class AuthenticatorLayoutImplTest {
 
     @Test
     fun getShareableFields_sharesGeneratedCodeAndNeverTheSecret() = runTest {
-        every { totpGenerator.generateCode("JBSWY3DPEHPK3PXP") } returns "654321"
+        every { totpGenerator.generateCode(sampleConfig, any()) } returns "654321"
 
         val shareableFields = createLayout(recordId = 10).getShareableFields()
 
@@ -170,10 +218,12 @@ class AuthenticatorLayoutImplTest {
     }
 
     @Test
-    fun getShareableFields_invalidSecret_skipsCodeInsteadOfThrowing() = runTest {
-        // restore-from-backup can insert an undecodable seed, generateCode would throw on it.
-        every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns false
-        every { totpGenerator.generateCode(any()) } throws IllegalArgumentException("invalid")
+    fun getShareableFields_invalidConfig_skipsCodeInsteadOfThrowing() = runTest {
+        // restore-from-backup can insert an unusable seed or param, generateCode would throw on it.
+        every { totpGenerator.isValidConfig(any()) } returns false
+        every {
+            totpGenerator.generateCode(any(), any())
+        } throws IllegalArgumentException("invalid")
 
         val shareableFields = createLayout(recordId = 10).getShareableFields()
 

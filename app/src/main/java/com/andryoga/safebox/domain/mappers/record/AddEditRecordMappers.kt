@@ -10,6 +10,7 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.totp.models.TotpConfig
 import java.util.Date
 
 fun NoteData.toDbEntity(): SecureNoteDataEntity {
@@ -128,7 +129,10 @@ fun AuthenticatorData.toDbEntity(): AuthenticatorDataEntity {
     return AuthenticatorDataEntity(
         key = id ?: 0,
         title = title,
-        secretKey = secretKey,
+        secretKey = config.secretKey,
+        algorithm = config.algorithm,
+        digits = config.digits,
+        period = config.period,
         creationDate = creationDate,
         updateDate = Date(),
     )
@@ -138,7 +142,12 @@ fun AuthenticatorDataEntity.toAuthenticatorData(): AuthenticatorData {
     return AuthenticatorData(
         id = key,
         title = title,
-        secretKey = secretKey,
+        config = TotpConfig(
+            secretKey = secretKey,
+            algorithm = algorithm,
+            digits = digits,
+            period = period,
+        ),
         creationDate = creationDate,
         updateDate = updateDate,
     )

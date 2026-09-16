@@ -50,32 +50,25 @@ class AuthenticatorDataDaoSecure @Inject constructor(
         authenticatorDataDao.deleteAllData()
     }
 
+    // these helpers exist to change exactly one field, so copy() states that directly instead of
+    // re-listing four untouched ones. It also matters for ExportAuthenticatorData specifically:
+    // its generation params carry defaults so that pre v3 backups deserialize, which means a
+    // handwritten constructor that forgets them compiles clean and resets them on every backup.
     private fun encrypt(authenticatorDataEntity: AuthenticatorDataEntity): AuthenticatorDataEntity {
-        return AuthenticatorDataEntity(
-            key = authenticatorDataEntity.key,
-            title = authenticatorDataEntity.title,
+        return authenticatorDataEntity.copy(
             secretKey = symmetricKeyUtils.encrypt(authenticatorDataEntity.secretKey),
-            creationDate = authenticatorDataEntity.creationDate,
-            updateDate = authenticatorDataEntity.updateDate,
         )
     }
 
     private fun decrypt(authenticatorDataEntity: AuthenticatorDataEntity): AuthenticatorDataEntity {
-        return AuthenticatorDataEntity(
-            key = authenticatorDataEntity.key,
-            title = authenticatorDataEntity.title,
+        return authenticatorDataEntity.copy(
             secretKey = symmetricKeyUtils.decrypt(authenticatorDataEntity.secretKey),
-            creationDate = authenticatorDataEntity.creationDate,
-            updateDate = authenticatorDataEntity.updateDate,
         )
     }
 
     private fun decrypt(exportAuthenticatorData: ExportAuthenticatorData): ExportAuthenticatorData {
-        return ExportAuthenticatorData(
-            title = exportAuthenticatorData.title,
+        return exportAuthenticatorData.copy(
             secretKey = symmetricKeyUtils.decrypt(exportAuthenticatorData.secretKey),
-            creationDate = exportAuthenticatorData.creationDate,
-            updateDate = exportAuthenticatorData.updateDate,
         )
     }
 }

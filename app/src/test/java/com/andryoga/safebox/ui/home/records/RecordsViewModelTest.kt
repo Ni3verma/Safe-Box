@@ -24,6 +24,8 @@ import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.ui.home.records.RecordsViewModel.Companion.ASK_FOR_REVIEW_AFTER_EVERY_LOGIN
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
@@ -862,7 +864,15 @@ class RecordsViewModelTest {
 
     private fun getAuthenticatorDataList(size: Int): List<SearchAuthenticatorData> {
         return (1..size).map {
-            SearchAuthenticatorData(it, "Authenticator $it", VALID_BASE32_SECRET, Date(0))
+            SearchAuthenticatorData(
+                key = it,
+                title = "Authenticator $it",
+                secretKey = VALID_BASE32_SECRET,
+                algorithm = TotpAlgorithm.SHA256,
+                digits = NON_DEFAULT_DIGITS,
+                period = NON_DEFAULT_PERIOD,
+                creationDate = Date(0),
+            )
         }
     }
 
@@ -937,7 +947,14 @@ class RecordsViewModelTest {
 
             val record = expectMostRecentItem().records.single()
             assertThat(record.recordType).isEqualTo(RecordType.AUTHENTICATOR)
-            assertThat(record.totpSecret).isEqualTo(VALID_BASE32_SECRET)
+            assertThat(record.totpConfig).isEqualTo(
+                TotpConfig(
+                    secretKey = VALID_BASE32_SECRET,
+                    algorithm = TotpAlgorithm.SHA256,
+                    digits = NON_DEFAULT_DIGITS,
+                    period = NON_DEFAULT_PERIOD,
+                ),
+            )
             assertThat(record.subTitle).isNull()
         }
     }
@@ -989,5 +1006,9 @@ class RecordsViewModelTest {
     private companion object {
         // RFC 4648 Base32, decodes cleanly so TotpGenerator treats it as a usable seed.
         const val VALID_BASE32_SECRET = "JBSWY3DPEHPK3PXP"
+
+        // deliberately different from TotpDefaults so the mapping cannot pass by coincidence.
+        const val NON_DEFAULT_DIGITS = 8
+        const val NON_DEFAULT_PERIOD = 60
     }
 }

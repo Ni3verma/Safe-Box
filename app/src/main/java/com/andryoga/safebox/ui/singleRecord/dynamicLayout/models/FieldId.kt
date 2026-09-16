@@ -37,7 +37,8 @@ enum class FieldId {
 
     // AUTHENTICATOR field ids
     AUTHENTICATOR_TITLE,
-    AUTHENTICATOR_TOTP_CODE,
+    // holds the seed; the rolling code is derived at render time, hence DISPLAY and not CODE.
+    AUTHENTICATOR_TOTP_DISPLAY,
     AUTHENTICATOR_SECRET_KEY,
 
     // common field ids

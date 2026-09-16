@@ -12,7 +12,9 @@ data class FieldUiState(
     val data: String = "",
 ) {
     /*
-     * This holds the static properties of the cell.
+     * This holds the properties of the cell that are fixed once the layout plan is built.
+     * Unlike [data], nothing here is ever updated by user input. A property may still be derived
+     * from the record being shown, e.g. the TOTP generation parameters carried by [FieldType.Totp].
      * */
     @Immutable
     data class Cell(
@@ -29,7 +31,7 @@ data class FieldUiState(
         val isCopyable: Boolean = false,
         val visualTransformation: VisualTransformation = VisualTransformation.None,
         val maxLength: Int = Int.MAX_VALUE,
-        val type: FieldType = FieldType.DEFAULT_TEXT,
+        val type: FieldType = FieldType.DefaultText,
     )
 
     /**

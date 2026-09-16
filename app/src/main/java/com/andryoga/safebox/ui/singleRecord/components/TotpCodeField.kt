@@ -22,9 +22,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
@@ -38,14 +39,14 @@ import com.andryoga.safebox.ui.totp.rememberTotpCodeState
  * authenticator record does not visually break the field list, with the value replaced by the
  * rolling code plus its countdown ring.
  *
- * @param secretKey Base32 encoded secret seed, already validated at save time.
+ * @param config Seed plus the record's own generation parameters, validated at save time.
  * @param modifier Composable layout modifier.
  * @param totpGenerator Stateless RFC 6238 engine. Defaulted so this composable stays previewable
  * and testable without reaching into DI from the composition.
  */
 @Composable
 fun TotpCodeField(
-    secretKey: String,
+    config: TotpConfig,
     modifier: Modifier = Modifier,
     totpGenerator: TotpGenerator = remember { TotpGeneratorImpl() },
 ) {
@@ -54,7 +55,7 @@ fun TotpCodeField(
     val copyToClipboard = rememberCopyToClipboardAction()
 
     // restore-from-backup can insert an unvalidated seed, so degrade to an inline error.
-    val totpCodeState = rememberTotpCodeState(secretKey = secretKey, totpGenerator = totpGenerator)
+    val totpCodeState = rememberTotpCodeState(config = config, totpGenerator = totpGenerator)
     if (totpCodeState == null) {
         InvalidSecretKeyField(label = label, modifier = modifier)
         return
@@ -98,7 +99,7 @@ fun TotpCodeField(
             }
             CircularCountdownRing(
                 remainingSeconds = totpCodeState.remainingSeconds,
-                totalSeconds = TotpDefaults.PERIOD_SECONDS,
+                totalSeconds = config.period,
             )
         }
     }
@@ -138,7 +139,22 @@ private fun InvalidSecretKeyField(
 @Composable
 private fun TotpCodeFieldPreview() {
     SafeBoxTheme {
-        TotpCodeField(secretKey = "JBSWY3DPEHPK3PXP")
+        TotpCodeField(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"))
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun TotpCodeFieldNonDefaultConfigPreview() {
+    SafeBoxTheme {
+        TotpCodeField(
+            config = TotpConfig(
+                secretKey = "JBSWY3DPEHPK3PXP",
+                algorithm = TotpAlgorithm.SHA256,
+                digits = 8,
+                period = 60,
+            ),
+        )
     }
 }
 
@@ -146,6 +162,6 @@ private fun TotpCodeFieldPreview() {
 @Composable
 private fun TotpCodeFieldInvalidSecretPreview() {
     SafeBoxTheme {
-        TotpCodeField(secretKey = "not-a-valid-base32-seed!")
+        TotpCodeField(config = TotpConfig(secretKey = "not-a-valid-base32-seed!"))
     }
 }

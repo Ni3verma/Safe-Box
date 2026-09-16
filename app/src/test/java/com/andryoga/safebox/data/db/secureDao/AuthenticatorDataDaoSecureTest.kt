@@ -6,6 +6,7 @@ import com.andryoga.safebox.data.db.dao.AuthenticatorDataDao
 import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
+import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -123,6 +124,9 @@ class AuthenticatorDataDaoSecureTest {
             TestFixtures.createTestExportAuthenticatorData(
                 title = "Exported 2FA",
                 secretKey = "ENC[JBSWY3DPEHPK3PXP]",
+                algorithm = TotpAlgorithm.SHA512.name,
+                digits = 8,
+                period = 60,
             ),
         )
         coEvery { authenticatorDataDao.exportAllData() } returns encryptedExport
@@ -132,6 +136,9 @@ class AuthenticatorDataDaoSecureTest {
         assertThat(exported).hasSize(1)
         assertThat(exported[0].title).isEqualTo("Exported 2FA")
         assertThat(exported[0].secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(exported[0].algorithm).isEqualTo(TotpAlgorithm.SHA512.name)
+        assertThat(exported[0].digits).isEqualTo(8)
+        assertThat(exported[0].period).isEqualTo(60)
     }
 
     @Test
@@ -139,5 +146,42 @@ class AuthenticatorDataDaoSecureTest {
         authenticatorDataDaoSecure.deleteAllData()
 
         verify(exactly = 1) { authenticatorDataDao.deleteAllData() }
+    }
+
+    @Test
+    fun upsertAuthenticatorData_shouldLeaveGenerationParamsUnencrypted() = runTest {
+        // only the seed is a secret. encrypting the params would make them unreadable as columns.
+        val inputEntity = TestFixtures.createTestAuthenticatorDataEntity(
+            secretKey = "JBSWY3DPEHPK3PXP",
+            algorithm = TotpAlgorithm.SHA512,
+            digits = 8,
+            period = 60,
+        )
+        val slot = slot<AuthenticatorDataEntity>()
+        coEvery { authenticatorDataDao.upsertAuthenticatorData(capture(slot)) } returns Unit
+
+        authenticatorDataDaoSecure.upsertAuthenticatorData(inputEntity)
+
+        assertThat(slot.captured.algorithm).isEqualTo(TotpAlgorithm.SHA512)
+        assertThat(slot.captured.digits).isEqualTo(8)
+        assertThat(slot.captured.period).isEqualTo(60)
+    }
+
+    @Test
+    fun getAuthenticatorDataByKey_shouldReturnGenerationParamsUntouched() = runTest {
+        val encryptedEntity = TestFixtures.createTestAuthenticatorDataEntity(
+            key = 42,
+            secretKey = "ENC[HXDMVJECJJWSRB3H]",
+            algorithm = TotpAlgorithm.SHA256,
+            digits = 7,
+            period = 45,
+        )
+        coEvery { authenticatorDataDao.getAuthenticatorDataByKey(42) } returns encryptedEntity
+
+        val decrypted = authenticatorDataDaoSecure.getAuthenticatorDataByKey(42)
+
+        assertThat(decrypted.algorithm).isEqualTo(TotpAlgorithm.SHA256)
+        assertThat(decrypted.digits).isEqualTo(7)
+        assertThat(decrypted.period).isEqualTo(45)
     }
 }
