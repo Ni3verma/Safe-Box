@@ -21,10 +21,8 @@ object TotpUriParser {
     /**
      * Parses an `otpauth://totp/...` URI string into a [TotpUriParseResult].
      *
-     * The Key URI spec marks `algorithm`, `digits` and `period` as optional, so an absent parameter
-     * falls back to its [TotpDefaults] value. A parameter that is present but unsupported is
-     * rejected instead: substituting a default there would store a record that generates a
-     * plausible looking code which never matches the server, with nothing to tell the user why.
+     * An absent `algorithm`, `digits` or `period` falls back to its [TotpDefaults] value, per the
+     * Key URI spec. A value that is present but unsupported is rejected rather than defaulted.
      *
      * @param uriString Full raw URI scanned from a QR code or entered by the user.
      * @return [TotpUriParseResult.Success] with the parsed data, [TotpUriParseResult.NotTotpUri]
@@ -100,8 +98,8 @@ object TotpUriParser {
     /**
      * Maps a Key URI `algorithm` token to a supported [TotpAlgorithm].
      *
-     * Matching is done against string literals rather than [TotpAlgorithm.entries] and
-     * [Enum.name] so the mapping survives minification of the enum constant names.
+     * Matched against literals, not [TotpAlgorithm.entries] and [Enum.name], so the mapping
+     * survives minification of the enum constant names.
      *
      * @param rawAlgorithm Raw parameter value from the URI, in any casing.
      * @return Matching algorithm, or null when Safe-Box cannot compute that hash.
@@ -116,9 +114,6 @@ object TotpUriParser {
 
     /**
      * Reads a query parameter, treating a blank value as absent.
-     *
-     * An issuer that emits `digits=` has expressed no preference, so it defaults rather than
-     * failing the whole scan.
      *
      * @param key Lowercase parameter name.
      * @return Trimmed value, or null when the parameter is missing or blank.

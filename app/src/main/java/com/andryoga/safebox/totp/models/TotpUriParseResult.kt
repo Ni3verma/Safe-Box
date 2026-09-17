@@ -3,11 +3,9 @@ package com.andryoga.safebox.totp.models
 /**
  * Outcome of parsing an `otpauth://` Key URI.
  *
- * Modelled as a result rather than a thrown exception because the camera sweeps whatever is in
- * frame: meeting a QR code that is not a TOTP URI is a routine outcome, not an exceptional one.
- * The cases also need opposite handling, which a single exception type cannot express: an
- * unrelated QR code must be ignored silently so scanning continues, while an `otpauth://` URI
- * Safe-Box cannot use must stop the scan and explain itself.
+ * A result rather than a thrown exception because the three cases need opposite handling: an
+ * unrelated QR code must be ignored so scanning continues, while an `otpauth://` URI Safe-Box
+ * cannot use must stop the scan and explain itself.
  */
 sealed interface TotpUriParseResult {
 

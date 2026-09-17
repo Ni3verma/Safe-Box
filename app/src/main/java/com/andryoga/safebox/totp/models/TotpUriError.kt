@@ -3,9 +3,8 @@ package com.andryoga.safebox.totp.models
 /**
  * Reasons an `otpauth://` URI cannot be turned into a usable authenticator record.
  *
- * Every rejection the parser can produce is enumerated here so the scanner can map each one to a
- * user-facing explanation and to an analytics reason, with the compiler enforcing that both
- * mappings stay complete.
+ * Enumerating them lets the scanner map each to an explanation and an analytics reason, with the
+ * compiler enforcing that both mappings stay complete.
  */
 enum class TotpUriError {
     /** URI is `otpauth://` but not the time based (`totp`) variant. */

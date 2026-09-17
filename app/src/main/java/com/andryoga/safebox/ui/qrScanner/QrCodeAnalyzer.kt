@@ -90,8 +90,7 @@ class QrCodeAnalyzer(
     /**
      * Re-arms the analyzer after a detection so the next frames are inspected again.
      *
-     * Called when the user dismisses the unsupported QR code message, which resumes scanning in
-     * place rather than forcing them out of the screen and back in.
+     * Called when the user dismisses the unsupported QR code message.
      */
     fun reset() {
         isScanningActive = true

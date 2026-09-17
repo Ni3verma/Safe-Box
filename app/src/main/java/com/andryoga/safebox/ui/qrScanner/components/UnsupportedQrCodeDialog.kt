@@ -34,9 +34,6 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
 /**
  * Dialog explaining why a scanned `otpauth://` QR code cannot be turned into a record.
  *
- * Shown instead of letting the scan fail silently, which previously left the viewfinder looking
- * frozen while it kept rejecting the same code on every frame.
- *
  * @param reason Which part of the scanned URI Safe-Box rejected.
  * @param onDismiss Callback invoked to close the dialog and resume scanning.
  */
@@ -52,50 +49,69 @@ fun UnsupportedQrCodeDialog(
             dismissOnClickOutside = false,
         ),
     ) {
-        Card(
-            shape = RoundedCornerShape(16.dp),
+        UnsupportedQrCodeDialogContent(
+            reason = reason,
+            onDismiss = onDismiss,
+        )
+    }
+}
+
+/**
+ * Card body of [UnsupportedQrCodeDialog], separated from the [Dialog] wrapper so it can be
+ * rendered by a `@Preview`. Layoutlib composes into a single view hierarchy and cannot draw the
+ * separate window a `Dialog` creates, so previewing the wrapper shows nothing.
+ *
+ * @param reason Which part of the scanned URI Safe-Box rejected.
+ * @param onDismiss Callback invoked to close the dialog and resume scanning.
+ */
+@Composable
+private fun UnsupportedQrCodeDialogContent(
+    reason: TotpUriError,
+    onDismiss: () -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+            Icon(
+                imageVector = Icons.Filled.ErrorOutline,
+                contentDescription = null,
+                modifier = Modifier.size(80.dp),
+                tint = MaterialTheme.colorScheme.error,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.unsupported_qr_code_dialog_heading),
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(reason.messageResId()),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.ErrorOutline,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.error,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(R.string.unsupported_qr_code_dialog_heading),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = stringResource(reason.messageResId()),
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                ) {
-                    Text(stringResource(R.string.common_ok))
-                }
+                Text(stringResource(R.string.common_ok))
             }
         }
     }
@@ -117,9 +133,9 @@ private fun TotpUriError.messageResId(): Int = when (this) {
 
 @LightDarkModePreview
 @Composable
-private fun UnsupportedQrCodeDialogPreview() {
+private fun UnsupportedQrCodeDialogContentPreview() {
     SafeBoxTheme {
-        UnsupportedQrCodeDialog(
+        UnsupportedQrCodeDialogContent(
             reason = TotpUriError.UNSUPPORTED_ALGORITHM,
             onDismiss = {},
         )
