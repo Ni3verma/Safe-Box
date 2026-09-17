@@ -1,5 +1,8 @@
 package com.andryoga.safebox.ui.qrScanner
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
@@ -14,6 +17,7 @@ import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.common.truth.Truth.assertThat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -145,14 +149,10 @@ class QrScannerViewModelTest {
     }
 
     @Test
-    fun onPermissionRationaleAllowClicked_whenNotRedirectingToSettings_shouldDismissDialogAndLogAllowClick() {
+    fun onPermissionRationaleAllowClicked_shouldDismissDialogAndLogAllowClick() {
         viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
 
-        viewModel.onAction(
-            QrScannerScreenAction.OnPermissionRationaleAllowClicked(
-                isRedirectingToSettings = false
-            )
-        )
+        viewModel.onAction(QrScannerScreenAction.OnPermissionRationaleAllowClicked)
 
         assertThat(viewModel.showPermissionRationale.value).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)).isTrue()
@@ -160,18 +160,82 @@ class QrScannerViewModelTest {
     }
 
     @Test
-    fun onPermissionRationaleAllowClicked_whenRedirectingToSettings_shouldDismissDialogAndLogOpenSettingsClick() {
-        viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
+    fun onCameraPermissionPermanentlyDenied_shouldReShowRationaleOfferingSettings() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            awaitItem()
 
-        viewModel.onAction(
-            QrScannerScreenAction.OnPermissionRationaleAllowClicked(
-                isRedirectingToSettings = true
-            )
-        )
+            viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+
+            val denied = awaitItem()
+            assertThat(denied.isPermissionPermanentlyDenied).isTrue()
+            assertThat(denied.showPermissionRationale).isTrue()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)).isTrue()
+    }
+
+    @Test
+    fun onOpenAppSettingsClicked_shouldDismissDialogAndLogSettingsOpenClick() {
+        viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+
+        viewModel.onAction(QrScannerScreenAction.OnOpenAppSettingsClicked)
 
         assertThat(viewModel.showPermissionRationale.value).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)).isTrue()
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)).isFalse()
+    }
+
+    @Test
+    fun onCameraBound_shouldExposeFlashCapabilityOfBoundCamera() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            awaitItem()
+
+            viewModel.onAction(QrScannerScreenAction.OnCameraBound(hasFlashUnit = true))
+
+            assertThat(awaitItem().hasFlashUnit).isTrue()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun onCameraBound_whenCameraHasNoFlashUnit_shouldKeepFlashCapabilityDisabled() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            val loaded = awaitItem()
+            assertThat(loaded.hasFlashUnit).isFalse()
+
+            viewModel.onAction(QrScannerScreenAction.OnCameraBound(hasFlashUnit = false))
+
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun onTorchStateChanged_shouldReconcileTorchFlagWithHardwareWithoutLoggingToggle() {
+        viewModel.onAction(QrScannerScreenAction.OnToggleTorch)
+        assertThat(viewModel.isTorchEnabled.value).isTrue()
+
+        viewModel.onAction(QrScannerScreenAction.OnTorchStateChanged(isEnabled = false))
+
+        assertThat(viewModel.isTorchEnabled.value).isFalse()
+        assertThat(analyticsHelper.count(AnalyticsKey.QR_SCANNER_TORCH_TOGGLE)).isEqualTo(1)
+    }
+
+    @Test
+    fun onCleared_shouldCloseBarcodeScanner() {
+        val viewModelStore = ViewModelStore()
+        val factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = viewModel as T
+        }
+        ViewModelProvider(viewModelStore, factory)[QrScannerViewModel::class.java]
+
+        viewModelStore.clear()
+
+        verify(exactly = 1) { mockBarcodeScanner.close() }
     }
 
     @Test

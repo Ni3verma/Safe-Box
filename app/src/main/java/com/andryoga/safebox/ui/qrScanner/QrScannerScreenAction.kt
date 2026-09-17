@@ -9,6 +9,8 @@ import com.andryoga.safebox.totp.models.TotpUriError
 sealed interface QrScannerScreenAction {
     object OnScannerVisible : QrScannerScreenAction
     object OnToggleTorch : QrScannerScreenAction
+    class OnCameraBound(val hasFlashUnit: Boolean) : QrScannerScreenAction
+    class OnTorchStateChanged(val isEnabled: Boolean) : QrScannerScreenAction
     class OnQrCodeScanned(val totpData: ParsedTotpData) : QrScannerScreenAction
     class OnUnsupportedQrCodeScanned(val reason: TotpUriError) : QrScannerScreenAction
     object OnUnsupportedQrCodeDismissed : QrScannerScreenAction
@@ -16,9 +18,9 @@ sealed interface QrScannerScreenAction {
     object OnCloseClicked : QrScannerScreenAction
     object OnShowPermissionRationale : QrScannerScreenAction
     object OnPermissionRationaleDismissed : QrScannerScreenAction
-    class OnPermissionRationaleAllowClicked(val isRedirectingToSettings: Boolean) :
-        QrScannerScreenAction
-
+    object OnPermissionRationaleAllowClicked : QrScannerScreenAction
     object OnPermissionRationaleCancelClicked : QrScannerScreenAction
+    object OnCameraPermissionPermanentlyDenied : QrScannerScreenAction
+    object OnOpenAppSettingsClicked : QrScannerScreenAction
     object OnInitialCameraPermissionRequested : QrScannerScreenAction
 }

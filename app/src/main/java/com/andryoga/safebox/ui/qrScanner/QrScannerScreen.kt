@@ -8,6 +8,7 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.TorchState
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
@@ -64,8 +65,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Observer
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.models.ParsedTotpData
@@ -77,6 +80,8 @@ import com.andryoga.safebox.ui.qrScanner.components.UnsupportedQrCodeDialog
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnResume
 import com.andryoga.safebox.ui.utils.OnStart
+import com.andryoga.safebox.ui.utils.findActivity
+import com.andryoga.safebox.ui.utils.openAppSettings
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import timber.log.Timber
 import java.util.concurrent.Executors
@@ -158,8 +163,15 @@ fun QrScannerScreen(
             onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
             if (!isGranted) {
                 Timber.w("Camera permission denied by user")
-                if (uiState.isCameraPermissionAskedBefore == true) {
-                    onAction(QrScannerScreenAction.OnShowPermissionRationale)
+                // Immediately after a denial this flag is false only when the system refused to
+                // prompt at all. Reading it before requesting cannot tell a permanent denial
+                // apart from a fresh install or a permission revoked from system settings.
+                val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
+                    context.findActivity(),
+                    Manifest.permission.CAMERA,
+                )
+                if (!canAskAgain) {
+                    onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
                 }
             }
         },
@@ -202,11 +214,13 @@ fun QrScannerScreen(
         onClose = onClose,
         onToggleTorch = { onAction(QrScannerScreenAction.OnToggleTorch) },
         onEnterKeyManually = onEnterKeyManually,
-        onPermissionRationaleAllow = { isRedirectingToSettings ->
-            onAction(QrScannerScreenAction.OnPermissionRationaleAllowClicked(isRedirectingToSettings))
-            if (!isRedirectingToSettings) {
-                permissionLauncher.launch(Manifest.permission.CAMERA)
-            }
+        onPermissionRationaleAllow = {
+            onAction(QrScannerScreenAction.OnPermissionRationaleAllowClicked)
+            permissionLauncher.launch(Manifest.permission.CAMERA)
+        },
+        onPermissionRationaleOpenSettings = {
+            onAction(QrScannerScreenAction.OnOpenAppSettingsClicked)
+            context.openAppSettings()
         },
         onPermissionRationaleCancel = {
             onAction(QrScannerScreenAction.OnPermissionRationaleCancelClicked)
@@ -223,6 +237,12 @@ fun QrScannerScreen(
                     barcodeScanner = barcodeScanner,
                     isTorchEnabled = uiState.isTorchEnabled,
                     isScanPaused = uiState.unsupportedQrError != null,
+                    onCameraBound = { hasFlashUnit ->
+                        onAction(QrScannerScreenAction.OnCameraBound(hasFlashUnit))
+                    },
+                    onTorchStateChanged = { isEnabled ->
+                        onAction(QrScannerScreenAction.OnTorchStateChanged(isEnabled))
+                    },
                     onQrCodeScanned = onQrCodeScanned,
                     onUnsupportedQrCode = { reason ->
                         onAction(QrScannerScreenAction.OnUnsupportedQrCodeScanned(reason))
@@ -241,12 +261,18 @@ fun QrScannerScreen(
  *
  * @param isScanPaused Whether detection is currently suspended because an unusable code is being
  * explained to the user. Clearing it re-arms the analyzer without rebuilding the camera session.
+ * @param onCameraBound Reports whether the bound camera has a flash unit, so the torch control is
+ * only offered on hardware that can honour it.
+ * @param onTorchStateChanged Reports the torch state read back from the camera, which is how the
+ * flag recovers after CameraX turns the torch off on an unbind.
  */
 @Composable
 private fun QrCameraPreview(
     barcodeScanner: BarcodeScanner,
     isTorchEnabled: Boolean,
     isScanPaused: Boolean,
+    onCameraBound: (hasFlashUnit: Boolean) -> Unit,
+    onTorchStateChanged: (isEnabled: Boolean) -> Unit,
     onQrCodeScanned: (ParsedTotpData) -> Unit,
     onUnsupportedQrCode: (TotpUriError) -> Unit,
     modifier: Modifier = Modifier,
@@ -255,6 +281,8 @@ private fun QrCameraPreview(
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnQrCodeScanned by rememberUpdatedState(onQrCodeScanned)
     val currentOnUnsupportedQrCode by rememberUpdatedState(onUnsupportedQrCode)
+    val currentOnCameraBound by rememberUpdatedState(onCameraBound)
+    val currentOnTorchStateChanged by rememberUpdatedState(onTorchStateChanged)
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val isDisposed = remember { AtomicBoolean(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
@@ -267,10 +295,21 @@ private fun QrCameraPreview(
         )
     }
 
+    // Hoisted out of the binding callback so disposal can detach the analyzer from it.
+    val imageAnalysis = remember {
+        ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+    }
+
     LaunchedEffect(isScanPaused, qrCodeAnalyzer) {
         if (!isScanPaused) {
             qrCodeAnalyzer.reset()
         }
+    }
+
+    LaunchedEffect(camera) {
+        currentOnCameraBound(camera?.cameraInfo?.hasFlashUnit() == true)
     }
 
     LaunchedEffect(isTorchEnabled, camera) {
@@ -279,6 +318,16 @@ private fun QrCameraPreview(
                 it.cameraControl.enableTorch(isTorchEnabled)
             }
         }
+    }
+
+    DisposableEffect(camera, lifecycleOwner) {
+        val boundCamera = camera
+        val torchState = boundCamera?.cameraInfo?.torchState
+        val observer = Observer<Int> { state ->
+            currentOnTorchStateChanged(state == TorchState.ON)
+        }
+        torchState?.observe(lifecycleOwner, observer)
+        onDispose { torchState?.removeObserver(observer) }
     }
 
     AndroidView(
@@ -305,13 +354,7 @@ private fun QrCameraPreview(
                         val preview = Preview.Builder().build().also {
                             it.surfaceProvider = previewView.surfaceProvider
                         }
-
-                        val imageAnalysis = ImageAnalysis.Builder()
-                            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                            .build()
-                            .also { analysis ->
-                                analysis.setAnalyzer(cameraExecutor, qrCodeAnalyzer)
-                            }
+                        imageAnalysis.setAnalyzer(cameraExecutor, qrCodeAnalyzer)
 
                         cameraProvider.unbindAll()
                         camera = cameraProvider.bindToLifecycle(
@@ -335,6 +378,7 @@ private fun QrCameraPreview(
     DisposableEffect(cameraExecutor) {
         onDispose {
             isDisposed.set(true)
+            camera = null
             val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
             cameraProviderFuture.addListener(
                 {
@@ -343,11 +387,13 @@ private fun QrCameraPreview(
                     } catch (e: Exception) {
                         Timber.w(e, "Error unbinding CameraX on dispose")
                     }
+                    // Both steps must follow the unbind: CameraX keeps feeding frames to the
+                    // analyzer until then, and a shut down executor rejects them.
+                    imageAnalysis.clearAnalyzer()
+                    cameraExecutor.shutdown()
                 },
                 ContextCompat.getMainExecutor(context),
             )
-            camera = null
-            cameraExecutor.shutdown()
         }
     }
 }
@@ -363,7 +409,8 @@ fun QrScannerViewfinderContent(
     onClose: () -> Unit,
     onToggleTorch: () -> Unit,
     onEnterKeyManually: () -> Unit,
-    onPermissionRationaleAllow: (isRedirectingToSettings: Boolean) -> Unit,
+    onPermissionRationaleAllow: () -> Unit,
+    onPermissionRationaleOpenSettings: () -> Unit,
     onPermissionRationaleCancel: () -> Unit,
     onPermissionRationaleDismiss: () -> Unit,
     onUnsupportedQrCodeDismiss: () -> Unit,
@@ -407,12 +454,25 @@ fun QrScannerViewfinderContent(
                 fontWeight = FontWeight.Bold,
             )
 
-            IconButton(onClick = onToggleTorch) {
-                Icon(
-                    imageVector = if (uiState.isTorchEnabled) Icons.Filled.FlashOn else Icons.Filled.FlashOff,
-                    contentDescription = stringResource(R.string.flash_toggle_description),
-                    tint = if (uiState.isTorchEnabled) MaterialTheme.colorScheme.primary else Color.White,
-                )
+            if (uiState.hasFlashUnit) {
+                IconButton(onClick = onToggleTorch) {
+                    Icon(
+                        imageVector = if (uiState.isTorchEnabled) {
+                            Icons.Filled.FlashOn
+                        } else {
+                            Icons.Filled.FlashOff
+                        },
+                        contentDescription = stringResource(R.string.flash_toggle_description),
+                        tint = if (uiState.isTorchEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.White
+                        },
+                    )
+                }
+            } else {
+                // Keeps the title centred now that the trailing control can be absent.
+                Spacer(modifier = Modifier.size(48.dp))
             }
         }
 
@@ -457,7 +517,9 @@ fun QrScannerViewfinderContent(
 
         if (uiState.showPermissionRationale) {
             CameraPermissionRationaleDialog(
+                isPermanentlyDenied = uiState.isPermissionPermanentlyDenied,
                 onAllowClick = onPermissionRationaleAllow,
+                onOpenSettingsClick = onPermissionRationaleOpenSettings,
                 onCancelClick = onPermissionRationaleCancel,
                 dismissDialogAction = onPermissionRationaleDismiss,
             )
@@ -529,11 +591,12 @@ private fun QrScannerScreenPreview() {
     SafeBoxTheme {
         Surface {
             QrScannerViewfinderContent(
-                uiState = QrScannerUiState(isTorchEnabled = false),
+                uiState = QrScannerUiState(isTorchEnabled = false, hasFlashUnit = true),
                 onClose = {},
                 onToggleTorch = {},
                 onEnterKeyManually = {},
                 onPermissionRationaleAllow = {},
+                onPermissionRationaleOpenSettings = {},
                 onPermissionRationaleCancel = {},
                 onPermissionRationaleDismiss = {},
                 onUnsupportedQrCodeDismiss = {},

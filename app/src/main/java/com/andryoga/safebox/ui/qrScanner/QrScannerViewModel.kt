@@ -42,10 +42,14 @@ class QrScannerViewModel @Inject constructor(
     private val _isTorchEnabled = MutableStateFlow(false)
     val isTorchEnabled: StateFlow<Boolean> = _isTorchEnabled.asStateFlow()
 
+    private val _hasFlashUnit = MutableStateFlow(false)
+
     private val _showPermissionRationale = MutableStateFlow(false)
     val showPermissionRationale: StateFlow<Boolean> = _showPermissionRationale.asStateFlow()
 
     private val _isCameraPermissionAskedBefore = MutableStateFlow<Boolean?>(null)
+
+    private val _isPermissionPermanentlyDenied = MutableStateFlow(false)
 
     private val _unsupportedQrError = MutableStateFlow<TotpUriError?>(null)
 
@@ -58,16 +62,21 @@ class QrScannerViewModel @Inject constructor(
         }
     }
 
+    // The torch pair is pre-combined because combine only has typed overloads up to five flows.
     val uiState: StateFlow<QrScannerUiState> = combine(
-        _isTorchEnabled,
+        combine(_isTorchEnabled, _hasFlashUnit, ::Pair),
         _showPermissionRationale,
         _isCameraPermissionAskedBefore,
+        _isPermissionPermanentlyDenied,
         _unsupportedQrError,
-    ) { isTorchEnabled, showRationale, isAskedBefore, unsupportedQrError ->
+    ) { torch, showRationale, isAskedBefore, isPermanentlyDenied, unsupportedQrError ->
+        val (isTorchEnabled, hasFlashUnit) = torch
         QrScannerUiState(
             isTorchEnabled = isTorchEnabled,
+            hasFlashUnit = hasFlashUnit,
             showPermissionRationale = showRationale,
             isCameraPermissionAskedBefore = isAskedBefore,
+            isPermissionPermanentlyDenied = isPermanentlyDenied,
             unsupportedQrError = unsupportedQrError,
         )
     }.stateIn(
@@ -75,6 +84,11 @@ class QrScannerViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = QrScannerUiState(),
     )
+
+    override fun onCleared() {
+        super.onCleared()
+        barcodeScanner.close()
+    }
 
     fun onAction(action: QrScannerScreenAction) {
         when (action) {
@@ -87,6 +101,14 @@ class QrScannerViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_TORCH_TOGGLE) {
                     param(AnalyticsParam.IS_ENABLED, _isTorchEnabled.value)
                 }
+            }
+
+            is QrScannerScreenAction.OnCameraBound -> {
+                _hasFlashUnit.value = action.hasFlashUnit
+            }
+
+            is QrScannerScreenAction.OnTorchStateChanged -> {
+                _isTorchEnabled.value = action.isEnabled
             }
 
             is QrScannerScreenAction.OnQrCodeScanned -> {
@@ -123,13 +145,20 @@ class QrScannerViewModel @Inject constructor(
                 _showPermissionRationale.value = false
             }
 
-            is QrScannerScreenAction.OnPermissionRationaleAllowClicked -> {
+            QrScannerScreenAction.OnPermissionRationaleAllowClicked -> {
                 _showPermissionRationale.value = false
-                if (action.isRedirectingToSettings) {
-                    analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)
-                } else {
-                    analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)
-                }
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)
+            }
+
+            QrScannerScreenAction.OnCameraPermissionPermanentlyDenied -> {
+                _isPermissionPermanentlyDenied.value = true
+                _showPermissionRationale.value = true
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+            }
+
+            QrScannerScreenAction.OnOpenAppSettingsClicked -> {
+                _showPermissionRationale.value = false
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)
             }
 
             QrScannerScreenAction.OnPermissionRationaleCancelClicked -> {
