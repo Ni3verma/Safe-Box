@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "4cd28a470f1b9eb99e81fea28a59d7e1",
+    "identityHash": "6b377bb84a62a6aac18fb4d7ec5e08ee",
     "entities": [
       {
         "tableName": "bank_account_data",
@@ -342,7 +342,7 @@
       },
       {
         "tableName": "authenticator_data",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `creationDate` INTEGER NOT NULL, `updateDate` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `secretKey` TEXT NOT NULL, `algorithm` TEXT NOT NULL, `digits` INTEGER NOT NULL, `period` INTEGER NOT NULL, `creationDate` INTEGER NOT NULL, `updateDate` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "key",
@@ -360,6 +360,24 @@
             "fieldPath": "secretKey",
             "columnName": "secretKey",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "algorithm",
+            "columnName": "algorithm",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "digits",
+            "columnName": "digits",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "period",
+            "columnName": "period",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -385,7 +403,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4cd28a470f1b9eb99e81fea28a59d7e1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6b377bb84a62a6aac18fb4d7ec5e08ee')"
     ]
   }
 }

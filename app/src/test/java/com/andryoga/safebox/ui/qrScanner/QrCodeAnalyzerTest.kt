@@ -111,7 +111,7 @@ class QrCodeAnalyzerTest {
 
         verify(exactly = 1) { imageProxy.close() }
         assertThat(scannedTotpData).isNotNull()
-        assertThat(scannedTotpData?.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(scannedTotpData?.config?.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
 
         val secondImageProxy = mockk<ImageProxy>(relaxed = true)
         analyzer.analyze(secondImageProxy)

@@ -131,7 +131,7 @@ class AuthenticatorDataRepositoryImplTest {
 
         assertThat(result.id).isEqualTo(30)
         assertThat(result.title).isEqualTo("Discord 2FA")
-        assertThat(result.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(result.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test

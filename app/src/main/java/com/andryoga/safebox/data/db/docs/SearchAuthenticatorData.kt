@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.db.docs
 
 import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.models.TotpAlgorithm
 import java.util.Date
 
 /**
@@ -11,6 +12,9 @@ data class SearchAuthenticatorData(
     val key: Int,
     val title: String,
     val secretKey: String,
+    val algorithm: TotpAlgorithm,
+    val digits: Int,
+    val period: Int,
     val creationDate: Date,
 ) {
     companion object {
@@ -22,6 +26,9 @@ data class SearchAuthenticatorData(
                 key = searchAuthenticatorData.key,
                 title = searchAuthenticatorData.title,
                 secretKey = symmetricKeyUtils.decrypt(searchAuthenticatorData.secretKey),
+                algorithm = searchAuthenticatorData.algorithm,
+                digits = searchAuthenticatorData.digits,
+                period = searchAuthenticatorData.period,
                 creationDate = searchAuthenticatorData.creationDate,
             )
         }

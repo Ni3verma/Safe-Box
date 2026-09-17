@@ -15,6 +15,9 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import java.util.Date
 
 /**
@@ -252,12 +255,20 @@ object DomainTestFixtures {
         id: Int? = 5,
         title: String = "Test 2FA Service",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = FIXED_CREATION_DATE,
         updateDate: Date = FIXED_UPDATE_DATE,
     ) = AuthenticatorData(
         id = id,
         title = title,
-        secretKey = secretKey,
+        config = TotpConfig(
+            secretKey = secretKey,
+            algorithm = algorithm,
+            digits = digits,
+            period = period,
+        ),
         creationDate = creationDate,
         updateDate = updateDate,
     )
@@ -266,12 +277,18 @@ object DomainTestFixtures {
         key: Int = 5,
         title: String = "Test 2FA Service",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = FIXED_CREATION_DATE,
         updateDate: Date = FIXED_UPDATE_DATE,
     ) = AuthenticatorDataEntity(
         key = key,
         title = title,
         secretKey = secretKey,
+        algorithm = algorithm,
+        digits = digits,
+        period = period,
         creationDate = creationDate,
         updateDate = updateDate,
     )
@@ -280,11 +297,17 @@ object DomainTestFixtures {
         key: Int = 50,
         title: String = "Search 2FA Service",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = FIXED_CREATION_DATE,
     ) = SearchAuthenticatorData(
         key = key,
         title = title,
         secretKey = secretKey,
+        algorithm = algorithm,
+        digits = digits,
+        period = period,
         creationDate = creationDate,
     )
 }

@@ -7,6 +7,7 @@ import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.models.TotpConfig
 
 fun SearchSecureNoteData.toRecordListItem(): RecordListItem {
     return RecordListItem(
@@ -52,6 +53,11 @@ fun SearchAuthenticatorData.toRecordListItem(): RecordListItem {
         title = title,
         subTitle = null,
         recordType = RecordType.AUTHENTICATOR,
-        totpSecret = secretKey,
+        totpConfig = TotpConfig(
+            secretKey = secretKey,
+            algorithm = algorithm,
+            digits = digits,
+            period = period,
+        ),
     )
 }

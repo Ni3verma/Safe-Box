@@ -26,7 +26,7 @@ object CommonConstants {
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
     const val AUTHENTICATOR_DATA_KEY = "8"
-    const val BACKUP_VERSION = 2
+    const val BACKUP_VERSION = 3
 
     // Backup params
     const val BACKUP_PARAM_PASSWORD = "0"

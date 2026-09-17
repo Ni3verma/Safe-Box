@@ -2,6 +2,8 @@ package com.andryoga.safebox.domain.mappers.record
 
 import com.andryoga.safebox.domain.DomainTestFixtures
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.util.Date
@@ -81,6 +83,9 @@ class SearchRecordMappersTest {
             key = 505,
             title = "GitHub - work",
             secretKey = "JBSWY3DPEHPK3PXP",
+            algorithm = TotpAlgorithm.SHA256,
+            digits = 8,
+            period = 60,
             creationDate = Date(1690000000000L)
         )
 
@@ -90,12 +95,19 @@ class SearchRecordMappersTest {
         assertThat(recordItem.title).isEqualTo("GitHub - work")
         // the live code occupies the subtitle slot on the card, so no static subtitle is mapped.
         assertThat(recordItem.subTitle).isNull()
-        assertThat(recordItem.totpSecret).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(recordItem.totpConfig).isEqualTo(
+            TotpConfig(
+                secretKey = "JBSWY3DPEHPK3PXP",
+                algorithm = TotpAlgorithm.SHA256,
+                digits = 8,
+                period = 60,
+            ),
+        )
         assertThat(recordItem.recordType).isEqualTo(RecordType.AUTHENTICATOR)
     }
 
     @Test
-    fun searchLoginData_toRecordListItem_leavesTotpSecretNull() {
+    fun searchLoginData_toRecordListItem_leavesTotpConfigNull() {
         val searchLogin = DomainTestFixtures.createSearchLoginData(
             key = 404,
             title = "Company Portal",
@@ -105,6 +117,6 @@ class SearchRecordMappersTest {
 
         val recordItem = searchLogin.toRecordListItem()
 
-        assertThat(recordItem.totpSecret).isNull()
+        assertThat(recordItem.totpConfig).isNull()
     }
 }

@@ -89,9 +89,9 @@ fun RecordItem(
                     maxLines = 1,
                 )
                 // authenticator rows have no static subtitle, so the live code takes that slot.
-                if (item.totpSecret != null) {
+                if (item.totpConfig != null) {
                     TotpBadge(
-                        secretKey = item.totpSecret,
+                        config = item.totpConfig,
                         onCopyClick = onCopyTotpCode,
                     )
                 } else {

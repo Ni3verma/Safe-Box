@@ -8,6 +8,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.google.common.truth.Truth.assertThat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import io.mockk.mockk
@@ -80,7 +81,10 @@ class QrScannerViewModelTest {
 
     @Test
     fun onQrCodeScanned_shouldLogQrScannerSuccessAnalyticsEvent() {
-        val dummyData = ParsedTotpData(title = "GitHub", secretKey = "JBSWY3DPEHPK3PXP")
+        val dummyData = ParsedTotpData(
+            title = "GitHub",
+            config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"),
+        )
 
         viewModel.onAction(QrScannerScreenAction.OnQrCodeScanned(dummyData))
 

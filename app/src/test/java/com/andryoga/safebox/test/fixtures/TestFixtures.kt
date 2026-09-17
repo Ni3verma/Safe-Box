@@ -23,6 +23,9 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
+import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import java.util.Date
 
 object TestFixtures {
@@ -376,12 +379,20 @@ object TestFixtures {
         id: Int? = 1,
         title: String = "GitHub 2FA",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = fixedDate,
         updateDate: Date = fixedDate,
     ) = AuthenticatorData(
         id = id,
         title = title,
-        secretKey = secretKey,
+        config = TotpConfig(
+            secretKey = secretKey,
+            algorithm = algorithm,
+            digits = digits,
+            period = period,
+        ),
         creationDate = creationDate,
         updateDate = updateDate,
     )
@@ -390,12 +401,18 @@ object TestFixtures {
         key: Int = 1,
         title: String = "GitHub 2FA",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = fixedDate,
         updateDate: Date = fixedDate,
     ) = AuthenticatorDataEntity(
         key = key,
         title = title,
         secretKey = secretKey,
+        algorithm = algorithm,
+        digits = digits,
+        period = period,
         creationDate = creationDate,
         updateDate = updateDate,
     )
@@ -404,17 +421,26 @@ object TestFixtures {
         key: Int = 1,
         title: String = "GitHub 2FA",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Date = fixedDate,
     ) = SearchAuthenticatorData(
         key = key,
         title = title,
         secretKey = secretKey,
+        algorithm = algorithm,
+        digits = digits,
+        period = period,
         creationDate = creationDate,
     )
 
     fun createTestExportAuthenticatorData(
         title: String = "GitHub 2FA",
         secretKey: String = "JBSWY3DPEHPK3PXP",
+        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
+        digits: Int = TotpDefaults.DIGITS,
+        period: Int = TotpDefaults.PERIOD_SECONDS,
         creationDate: Long = fixedDateLong,
         updateDate: Long = fixedDateLong,
     ) = ExportAuthenticatorData(
@@ -422,5 +448,8 @@ object TestFixtures {
         secretKey = secretKey,
         creationDate = creationDate,
         updateDate = updateDate,
+        algorithm = algorithm,
+        digits = digits,
+        period = period,
     )
 }

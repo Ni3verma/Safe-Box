@@ -48,14 +48,14 @@ fun RowField(
 
     Column {
         if (viewMode == ViewMode.VIEW) {
-            when (uiState.cell.type) {
-                FieldType.TOTP -> {
+            when (val fieldType = uiState.cell.type) {
+                is FieldType.Totp -> {
                     // the stored value is the secret seed, so this field renders the derived
                     // rolling code instead of the raw data.
-                    TotpCodeField(secretKey = uiState.data)
+                    TotpCodeField(config = fieldType.config)
                 }
 
-                FieldType.DEFAULT_TEXT -> {
+                FieldType.DefaultText -> {
                     val label = stringResource(uiState.cell.label)
                     val formattedData = uiState.getFormattedData()
                     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)

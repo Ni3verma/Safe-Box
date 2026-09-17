@@ -13,10 +13,10 @@ class TotpUriParserTest {
         val parsed = TotpUriParser.parse(uri)
 
         assertThat(parsed.title).isEqualTo("Google - alex@gmail.com")
-        assertThat(parsed.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
-        assertThat(parsed.algorithm).isEqualTo(TotpAlgorithm.SHA1)
-        assertThat(parsed.digits).isEqualTo(6)
-        assertThat(parsed.period).isEqualTo(30)
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parsed.config.algorithm).isEqualTo(TotpAlgorithm.SHA1)
+        assertThat(parsed.config.digits).isEqualTo(6)
+        assertThat(parsed.config.period).isEqualTo(30)
     }
 
     @Test
@@ -26,7 +26,7 @@ class TotpUriParserTest {
         val parsed = TotpUriParser.parse(uri)
 
         assertThat(parsed.title).isEqualTo("GitHub Corp - user@corp.com")
-        assertThat(parsed.secretKey).isEqualTo("MZXW6YTB")
+        assertThat(parsed.config.secretKey).isEqualTo("MZXW6YTB")
     }
 
     @Test
@@ -36,10 +36,10 @@ class TotpUriParserTest {
         val parsed = TotpUriParser.parse(uri)
 
         assertThat(parsed.title).isEqualTo("AWS - admin")
-        assertThat(parsed.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
-        assertThat(parsed.algorithm).isEqualTo(TotpAlgorithm.SHA256)
-        assertThat(parsed.digits).isEqualTo(8)
-        assertThat(parsed.period).isEqualTo(60)
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parsed.config.algorithm).isEqualTo(TotpAlgorithm.SHA256)
+        assertThat(parsed.config.digits).isEqualTo(8)
+        assertThat(parsed.config.period).isEqualTo(60)
     }
 
     @Test
@@ -48,7 +48,7 @@ class TotpUriParserTest {
         val parsed = TotpUriParser.parse(uri)
 
         assertThat(parsed.title).isEqualTo("SecuritySystem")
-        assertThat(parsed.algorithm).isEqualTo(TotpAlgorithm.SHA512)
+        assertThat(parsed.config.algorithm).isEqualTo(TotpAlgorithm.SHA512)
     }
 
     @Test
@@ -56,7 +56,7 @@ class TotpUriParserTest {
         val uri = "otpauth://totp/Service?secret=jbsw-y3dp ehpk-3pxp"
         val parsed = TotpUriParser.parse(uri)
 
-        assertThat(parsed.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test
@@ -64,7 +64,7 @@ class TotpUriParserTest {
         val uri = "otpauth://totp/Service?secret=jbsw-y3dp%09ehpk-3pxp=="
         val parsed = TotpUriParser.parse(uri)
 
-        assertThat(parsed.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
     }
 
     @Test

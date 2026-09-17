@@ -55,6 +55,9 @@ class AuthenticatorDataDaoSecure @Inject constructor(
             key = authenticatorDataEntity.key,
             title = authenticatorDataEntity.title,
             secretKey = symmetricKeyUtils.encrypt(authenticatorDataEntity.secretKey),
+            algorithm = authenticatorDataEntity.algorithm,
+            digits = authenticatorDataEntity.digits,
+            period = authenticatorDataEntity.period,
             creationDate = authenticatorDataEntity.creationDate,
             updateDate = authenticatorDataEntity.updateDate,
         )
@@ -65,6 +68,9 @@ class AuthenticatorDataDaoSecure @Inject constructor(
             key = authenticatorDataEntity.key,
             title = authenticatorDataEntity.title,
             secretKey = symmetricKeyUtils.decrypt(authenticatorDataEntity.secretKey),
+            algorithm = authenticatorDataEntity.algorithm,
+            digits = authenticatorDataEntity.digits,
+            period = authenticatorDataEntity.period,
             creationDate = authenticatorDataEntity.creationDate,
             updateDate = authenticatorDataEntity.updateDate,
         )
@@ -76,6 +82,9 @@ class AuthenticatorDataDaoSecure @Inject constructor(
             secretKey = symmetricKeyUtils.decrypt(exportAuthenticatorData.secretKey),
             creationDate = exportAuthenticatorData.creationDate,
             updateDate = exportAuthenticatorData.updateDate,
+            algorithm = exportAuthenticatorData.algorithm,
+            digits = exportAuthenticatorData.digits,
+            period = exportAuthenticatorData.period,
         )
     }
 }

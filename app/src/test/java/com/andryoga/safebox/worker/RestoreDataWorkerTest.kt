@@ -22,7 +22,9 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
+import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
+import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
@@ -44,6 +46,11 @@ import java.nio.file.Files
 import javax.crypto.BadPaddingException
 
 class RestoreDataWorkerTest {
+
+    companion object {
+        /** Backup version written by the last released build, before authenticators existed. */
+        private const val LEGACY_BACKUP_VERSION: Byte = 2
+    }
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -254,11 +261,11 @@ class RestoreDataWorkerTest {
     @Test
     fun doWork_whenBackupContainsAuthenticatorData_restoresAuthenticatorRecords() = runTest {
         val authList = listOf(
-            ExportAuthenticatorData(
-                "Google 2FA",
-                "JBSWY3DPEHPK3PXP",
-                1000L,
-                2000L,
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Google 2FA",
+                secretKey = "JBSWY3DPEHPK3PXP",
+                creationDate = 1000L,
+                updateDate = 2000L,
             ),
         )
         val authJson =
@@ -301,10 +308,16 @@ class RestoreDataWorkerTest {
     @Test
     fun doWork_whenAuthenticatorSecretIsNotDecodable_skipsRecordAndLogsCount() = runTest {
         val authList = listOf(
-            ExportAuthenticatorData("Valid 2FA", "JBSWY3DPEHPK3PXP", 1000L, 2000L),
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Valid 2FA",
+                secretKey = "JBSWY3DPEHPK3PXP",
+            ),
             // '!' and '1' are outside the RFC 4648 Base32 alphabet, decode() would throw on this.
-            ExportAuthenticatorData("Corrupt 2FA", "not-base32!!1", 1000L, 2000L),
-            ExportAuthenticatorData("Empty 2FA", "", 1000L, 2000L),
+            TestFixtures.createTestExportAuthenticatorData(
+                title = "Corrupt 2FA",
+                secretKey = "not-base32!!1",
+            ),
+            TestFixtures.createTestExportAuthenticatorData(title = "Empty 2FA", secretKey = ""),
         )
         val authJson =
             Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), authList)
@@ -344,6 +357,69 @@ class RestoreDataWorkerTest {
     }
 
     @Test
+    fun doWork_whenBackupCarriesNonDefaultTotpParams_restoresThemInsteadOfDefaults() = runTest {
+        val authJson = """
+            [{
+              "title": "Google 2FA",
+              "secretKey": "JBSWY3DPEHPK3PXP",
+              "creationDate": 1000,
+              "updateDate": 2000,
+              "algorithm": "SHA512",
+              "digits": 8,
+              "period": 60
+            }]
+        """.trimIndent()
+
+        val result = restoreAuthenticatorJson(authJson, "NonDefaultParams.bak")
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                match { list ->
+                    list.single().algorithm == TotpAlgorithm.SHA512 &&
+                            list.single().digits == 8 &&
+                            list.single().period == 60
+                },
+            )
+        }
+    }
+
+    @Test
+    fun doWork_whenTotpParamsAreOutOfRange_skipsRecordAndLogsCount() = runTest {
+        // the seed is fine here, only the params are unusable. generateCode would throw on them.
+        val authJson = """
+            [{
+              "title": "Bad Digits",
+              "secretKey": "JBSWY3DPEHPK3PXP",
+              "creationDate": 1000,
+              "updateDate": 2000,
+              "algorithm": "SHA1",
+              "digits": 99,
+              "period": 30
+            },{
+              "title": "Bad Period",
+              "secretKey": "JBSWY3DPEHPK3PXP",
+              "creationDate": 1000,
+              "updateDate": 2000,
+              "algorithm": "SHA1",
+              "digits": 6,
+              "period": 0
+            }]
+        """.trimIndent()
+
+        val result = restoreAuthenticatorJson(authJson, "OutOfRangeParams.bak")
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                match { list -> list.isEmpty() },
+            )
+        }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
+            .isTrue()
+    }
+
+    @Test
     fun doWork_whenLegacyBackupDoesNotContainAuthenticatorData_completesSuccessfullyWithoutInsertingAuthenticators() =
         runTest {
             val loginList = listOf(
@@ -361,8 +437,9 @@ class RestoreDataWorkerTest {
                 Json.encodeToString(ListSerializer(ExportLoginData.serializer()), loginList)
             val dummyCipherBytes = ByteArray(32) { 5 }
 
-            // Legacy backup without AUTHENTICATOR_DATA_KEY
+            // Backup written by the released build: version 2, no AUTHENTICATOR_DATA_KEY.
             val backupMap = WorkerTestFixtures.createBackupMap(
+                version = LEGACY_BACKUP_VERSION,
                 loginData = dummyCipherBytes,
                 authenticatorData = null,
             )
@@ -391,4 +468,36 @@ class RestoreDataWorkerTest {
             verify(exactly = 1) { loginDataDaoSecure.insertMultipleLoginData(any()) }
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
         }
+
+    /**
+     * Runs a full restore whose authenticator payload decrypts to [authJson].
+     *
+     * The payload is supplied as raw json rather than as an encoded [ExportAuthenticatorData] so
+     * that backups written by older and newer builds can be reproduced exactly.
+     *
+     * @param authJson Decrypted authenticator payload the worker should parse.
+     * @param fileName Name for the temporary backup file, unique per test.
+     * @return Result of the worker run.
+     */
+    private suspend fun restoreAuthenticatorJson(
+        authJson: String,
+        fileName: String,
+    ): ListenableWorker.Result {
+        val dummyCipherBytes = ByteArray(32) { 9 }
+        val backupMap = WorkerTestFixtures.createBackupMap(authenticatorData = dummyCipherBytes)
+        val backupFile = File(tempDir, fileName)
+        WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+        every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+        every {
+            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+        } returns authJson.toByteArray()
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+            .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+            .build()
+
+        return buildWorker(inputData).doWork()
+    }
 }

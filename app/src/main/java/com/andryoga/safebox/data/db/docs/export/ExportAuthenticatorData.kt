@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.db.docs.export
 
 import androidx.annotation.Keep
+import com.andryoga.safebox.totp.models.TotpAlgorithm
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,4 +14,7 @@ data class ExportAuthenticatorData(
     val secretKey: String,
     val creationDate: Long,
     val updateDate: Long,
+    val algorithm: TotpAlgorithm,
+    val digits: Int,
+    val period: Int,
 )

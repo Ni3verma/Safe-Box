@@ -1,7 +1,7 @@
 package com.andryoga.safebox.totp.engine.interfaces
 
 import com.andryoga.safebox.totp.TotpDefaults
-import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 
 /**
  * Contract for generating Time-Based One-Time Passwords (TOTP) conforming to RFC 6238.
@@ -9,21 +9,18 @@ import com.andryoga.safebox.totp.models.TotpAlgorithm
 interface TotpGenerator {
 
     /**
-     * Generates a deterministic time-based one-time password code for the given secret and timestamp.
+     * Generates a deterministic time-based one-time password for the given config and timestamp.
      *
-     * @param secretBase32 Base32 encoded secret key seed.
+     * The seed and its generation parameters are taken together so a record's stored parameters can
+     * never be silently replaced by engine defaults.
+     *
+     * @param config Seed plus the algorithm, digit count and time step to derive the code with.
      * @param timeSeconds Current unix timestamp in seconds (defaults to system epoch).
-     * @param period Time step window in seconds (default is 30s).
-     * @param digits Length of the returned OTP code (typically 6, supports 6..8).
-     * @param algorithm HMAC hashing algorithm (default is [TotpAlgorithm.SHA1]).
      * @return Formatted zero-padded string of digits representing the one-time password.
      */
     fun generateCode(
-        secretBase32: String,
+        config: TotpConfig,
         timeSeconds: Long = System.currentTimeMillis() / 1000,
-        period: Int = TotpDefaults.PERIOD_SECONDS,
-        digits: Int = TotpDefaults.DIGITS,
-        algorithm: TotpAlgorithm = TotpAlgorithm.SHA1,
     ): String
 
     /**
@@ -45,6 +42,17 @@ interface TotpGenerator {
      * @return True if valid RFC 4648 Base32, false otherwise.
      */
     fun isValidSecret(secretBase32: String): Boolean
+
+    /**
+     * Validates that a whole config can actually produce a code.
+     *
+     * Checks the parameters as well as the seed, because [generateCode] throws on an unsupported
+     * digit count or a non-positive period just as it does on an undecodable seed.
+     *
+     * @param config Seed and generation parameters to validate.
+     * @return True when [generateCode] will succeed for this config.
+     */
+    fun isValidConfig(config: TotpConfig): Boolean
 
     /**
      * Converts a secret to the canonical form the engine decodes, so the same seed is never stored

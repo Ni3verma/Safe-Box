@@ -3,6 +3,7 @@ package com.andryoga.safebox.ui.previewHelper
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.andryoga.safebox.R
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
@@ -271,7 +272,7 @@ fun getAuthenticatorLayoutPlan(withData: Boolean = false): LayoutPlan {
         id = LayoutId.AUTHENTICATOR,
         arrangement = listOf(
             listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TITLE)),
-            listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TOTP_CODE)),
+            listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_TOTP_DISPLAY)),
             listOf(LayoutPlan.Field(fieldId = FieldId.AUTHENTICATOR_SECRET_KEY)),
             listOf(LayoutPlan.Field(fieldId = FieldId.CREATION_DATE)),
             listOf(LayoutPlan.Field(fieldId = FieldId.UPDATE_DATE))
@@ -283,11 +284,13 @@ fun getAuthenticatorLayoutPlan(withData: Boolean = false): LayoutPlan {
                 ),
                 data = if (withData) "GitHub - work" else ""
             ),
-            FieldId.AUTHENTICATOR_TOTP_CODE to FieldUiState(
+            FieldId.AUTHENTICATOR_TOTP_DISPLAY to FieldUiState(
                 cell = FieldUiState.Cell(
                     label = R.string.totp_code,
                     isVisibleOnlyInViewMode = true,
-                    type = FieldType.TOTP
+                    type = FieldType.Totp(
+                        TotpConfig(secretKey = if (withData) "JBSWY3DPEHPK3PXP" else "")
+                    )
                 ),
                 // this field always holds the Base32 seed, the code is derived while rendering
                 data = if (withData) "JBSWY3DPEHPK3PXP" else ""

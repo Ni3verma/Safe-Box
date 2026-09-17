@@ -25,6 +25,7 @@ import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
+import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -339,7 +340,12 @@ class BackupDataWorkerTest {
             coEvery { bankCardDataDaoSecure.exportAllData() } returns emptyList()
             coEvery { secureNoteDataDaoSecure.exportAllData() } returns emptyList()
             coEvery { authenticatorDataDaoSecure.exportAllData() } returns listOf(
-                ExportAuthenticatorData("GitHub 2FA", "JBSWY3DPEHPK3PXP", 1000L, 2000L),
+                TestFixtures.createTestExportAuthenticatorData(
+                    title = "GitHub 2FA",
+                    secretKey = "JBSWY3DPEHPK3PXP",
+                    creationDate = 1000L,
+                    updateDate = 2000L,
+                ),
             )
 
             val inputData = Data.Builder()
@@ -418,11 +424,11 @@ class BackupDataWorkerTest {
                 ),
             )
             coEvery { authenticatorDataDaoSecure.exportAllData() } returns listOf(
-                ExportAuthenticatorData(
-                    "Google 2FA",
-                    "JBSWY3DPEHPK3PXP",
-                    1000L,
-                    2000L,
+                TestFixtures.createTestExportAuthenticatorData(
+                    title = "Google 2FA",
+                    secretKey = "JBSWY3DPEHPK3PXP",
+                    creationDate = 1000L,
+                    updateDate = 2000L,
                 ),
             )
 

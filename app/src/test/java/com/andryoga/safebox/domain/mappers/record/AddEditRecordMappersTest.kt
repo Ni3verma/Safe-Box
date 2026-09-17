@@ -1,6 +1,8 @@
 package com.andryoga.safebox.domain.mappers.record
 
 import com.andryoga.safebox.domain.DomainTestFixtures
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.util.Date
@@ -241,6 +243,9 @@ class AddEditRecordMappersTest {
             id = null,
             title = "GitHub 2FA",
             secretKey = "JBSWY3DPEHPK3PXP",
+            algorithm = TotpAlgorithm.SHA256,
+            digits = 8,
+            period = 60,
             creationDate = Date(1670000000000L),
             updateDate = Date(1680000000000L),
         )
@@ -251,6 +256,9 @@ class AddEditRecordMappersTest {
         assertThat(entity.key).isEqualTo(0)
         assertThat(entity.title).isEqualTo("GitHub 2FA")
         assertThat(entity.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(entity.algorithm).isEqualTo(TotpAlgorithm.SHA256)
+        assertThat(entity.digits).isEqualTo(8)
+        assertThat(entity.period).isEqualTo(60)
         assertThat(entity.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(entity.updateDate.time).isAtLeast(beforeTime)
         assertThat(entity.updateDate.time).isAtMost(afterTime)
@@ -262,6 +270,9 @@ class AddEditRecordMappersTest {
             key = 50,
             title = "Google Authenticator",
             secretKey = "HXDMVJECJJWSRB3H",
+            algorithm = TotpAlgorithm.SHA512,
+            digits = 7,
+            period = 45,
             creationDate = Date(1670000000000L),
             updateDate = Date(1680000000000L),
         )
@@ -270,7 +281,14 @@ class AddEditRecordMappersTest {
 
         assertThat(domain.id).isEqualTo(50)
         assertThat(domain.title).isEqualTo("Google Authenticator")
-        assertThat(domain.secretKey).isEqualTo("HXDMVJECJJWSRB3H")
+        assertThat(domain.config).isEqualTo(
+            TotpConfig(
+                secretKey = "HXDMVJECJJWSRB3H",
+                algorithm = TotpAlgorithm.SHA512,
+                digits = 7,
+                period = 45,
+            ),
+        )
         assertThat(domain.creationDate).isEqualTo(Date(1670000000000L))
         assertThat(domain.updateDate).isEqualTo(Date(1680000000000L))
     }
