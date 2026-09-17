@@ -95,8 +95,29 @@ class TotpUriParserTest {
     }
 
     @Test
-    fun parse_withMalformedUri_returnsNotTotpUri() {
+    fun parse_withIllegalCharacterInLabel_returnsMalformedUri() {
         val uri = "otpauth://totp/Service?secret=JBSWY3DPEHPK3PXP|extra"
+
+        assertThat(parseUnsupportedReason(uri)).isEqualTo(TotpUriError.MALFORMED_URI)
+    }
+
+    @Test
+    fun parse_withCaretInLabel_returnsMalformedUri() {
+        val uri = "otpauth://totp/ACME^Co:alex@acme.com?secret=JBSWY3DPEHPK3PXP"
+
+        assertThat(parseUnsupportedReason(uri)).isEqualTo(TotpUriError.MALFORMED_URI)
+    }
+
+    @Test
+    fun parse_withInvalidPercentEscapeInLabel_returnsMalformedUri() {
+        val uri = "otpauth://totp/50%OffCo:alex@acme.com?secret=JBSWY3DPEHPK3PXP"
+
+        assertThat(parseUnsupportedReason(uri)).isEqualTo(TotpUriError.MALFORMED_URI)
+    }
+
+    @Test
+    fun parse_withMalformedUriOfAnotherScheme_returnsNotTotpUri() {
+        val uri = "https://example.com/totp^path"
 
         assertThat(TotpUriParser.parse(uri)).isEqualTo(TotpUriParseResult.NotTotpUri)
     }

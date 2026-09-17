@@ -7,6 +7,13 @@ package com.andryoga.safebox.totp.models
  * compiler enforcing that both mappings stay complete.
  */
 enum class TotpUriError {
+    /**
+     * Payload declares the `otpauth` scheme but is not a well formed URI, so nothing after the
+     * scheme could be read. Typically an illegal character such as `^`, `|` or a stray `%` left
+     * unescaped in the issuer or account label.
+     */
+    MALFORMED_URI,
+
     /** URI is `otpauth://` but not the time based (`totp`) variant. */
     UNSUPPORTED_OTP_TYPE,
 

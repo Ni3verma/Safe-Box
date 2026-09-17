@@ -124,6 +124,7 @@ private fun UnsupportedQrCodeDialogContent(
  */
 @StringRes
 private fun TotpUriError.messageResId(): Int = when (this) {
+    TotpUriError.MALFORMED_URI -> R.string.unsupported_qr_code_reason_malformed
     TotpUriError.UNSUPPORTED_OTP_TYPE -> R.string.unsupported_qr_code_reason_otp_type
     TotpUriError.INVALID_SECRET -> R.string.unsupported_qr_code_reason_invalid_secret
     TotpUriError.UNSUPPORTED_ALGORITHM -> R.string.unsupported_qr_code_reason_algorithm
