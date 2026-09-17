@@ -9,6 +9,7 @@ import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpConfig
+import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.common.truth.Truth.assertThat
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import io.mockk.mockk
@@ -239,5 +240,63 @@ class QrScannerViewModelTest {
 
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun onUnsupportedQrCodeScanned_shouldExposeReasonAndLogShowEventWithReasonParam() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            awaitItem()
+
+            viewModel.onAction(
+                QrScannerScreenAction.OnUnsupportedQrCodeScanned(
+                    TotpUriError.UNSUPPORTED_ALGORITHM,
+                ),
+            )
+
+            val withError = awaitItem()
+            assertThat(withError.unsupportedQrError).isEqualTo(TotpUriError.UNSUPPORTED_ALGORITHM)
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_SHOW))
+            .isTrue()
+        val event = analyticsHelper.loggedEvents
+            .first { it.key == AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_SHOW }
+        assertThat(event.params[AnalyticsParam.REASON.paramName]).isEqualTo("unsupported_algorithm")
+    }
+
+    @Test
+    fun onUnsupportedQrCodeScanned_shouldReportEachReasonWithItsOwnAnalyticsValue() {
+        TotpUriError.entries.forEach { reason ->
+            viewModel.onAction(QrScannerScreenAction.OnUnsupportedQrCodeScanned(reason))
+        }
+
+        val reportedValues = analyticsHelper.loggedEvents
+            .filter { it.key == AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_SHOW }
+            .map { it.params[AnalyticsParam.REASON.paramName] }
+
+        assertThat(reportedValues).containsNoDuplicates()
+        assertThat(reportedValues).hasSize(TotpUriError.entries.size)
+    }
+
+    @Test
+    fun onUnsupportedQrCodeDismissed_shouldClearErrorAndLogDismissEvent() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            awaitItem()
+
+            viewModel.onAction(
+                QrScannerScreenAction.OnUnsupportedQrCodeScanned(TotpUriError.INVALID_SECRET),
+            )
+            assertThat(awaitItem().unsupportedQrError).isEqualTo(TotpUriError.INVALID_SECRET)
+
+            viewModel.onAction(QrScannerScreenAction.OnUnsupportedQrCodeDismissed)
+            assertThat(awaitItem().unsupportedQrError).isNull()
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_DISMISS))
+            .isTrue()
     }
 }

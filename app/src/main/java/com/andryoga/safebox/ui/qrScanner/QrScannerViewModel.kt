@@ -8,6 +8,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,8 @@ class QrScannerViewModel @Inject constructor(
 
     private val _isCameraPermissionAskedBefore = MutableStateFlow<Boolean?>(null)
 
+    private val _unsupportedQrError = MutableStateFlow<TotpUriError?>(null)
+
     init {
         viewModelScope.launch(dispatchersProvider.io) {
             _isCameraPermissionAskedBefore.value = preferenceProvider.getBooleanPref(
@@ -57,11 +60,13 @@ class QrScannerViewModel @Inject constructor(
         _isTorchEnabled,
         _showPermissionRationale,
         _isCameraPermissionAskedBefore,
-    ) { isTorchEnabled, showRationale, isAskedBefore ->
+        _unsupportedQrError,
+    ) { isTorchEnabled, showRationale, isAskedBefore, unsupportedQrError ->
         QrScannerUiState(
             isTorchEnabled = isTorchEnabled,
             showPermissionRationale = showRationale,
             isCameraPermissionAskedBefore = isAskedBefore,
+            unsupportedQrError = unsupportedQrError,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -84,6 +89,18 @@ class QrScannerViewModel @Inject constructor(
 
             is QrScannerScreenAction.OnQrCodeScanned -> {
                 analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_SUCCESS)
+            }
+
+            is QrScannerScreenAction.OnUnsupportedQrCodeScanned -> {
+                _unsupportedQrError.value = action.reason
+                analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_SHOW) {
+                    param(AnalyticsParam.REASON, action.reason.toAnalyticsValue())
+                }
+            }
+
+            QrScannerScreenAction.OnUnsupportedQrCodeDismissed -> {
+                _unsupportedQrError.value = null
+                analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_DISMISS)
             }
 
             QrScannerScreenAction.OnEnterKeyManuallyClicked -> {
@@ -128,4 +145,21 @@ class QrScannerViewModel @Inject constructor(
             }
         }
     }
+}
+
+/**
+ * Maps a URI rejection reason to the value reported to analytics.
+ *
+ * Literals, not [Enum.name]: the names are only read in minified release builds, which are also
+ * the only builds that report analytics.
+ *
+ * @return Stable snake case identifier for the reason.
+ */
+private fun TotpUriError.toAnalyticsValue(): String = when (this) {
+    TotpUriError.MALFORMED_URI -> "malformed_uri"
+    TotpUriError.UNSUPPORTED_OTP_TYPE -> "unsupported_otp_type"
+    TotpUriError.INVALID_SECRET -> "invalid_secret"
+    TotpUriError.UNSUPPORTED_ALGORITHM -> "unsupported_algorithm"
+    TotpUriError.UNSUPPORTED_DIGITS -> "unsupported_digits"
+    TotpUriError.UNSUPPORTED_PERIOD -> "unsupported_period"
 }

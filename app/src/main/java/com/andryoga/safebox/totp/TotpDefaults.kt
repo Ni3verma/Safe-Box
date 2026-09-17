@@ -1,8 +1,8 @@
 package com.andryoga.safebox.totp
 
 /**
- * RFC 6238 / Key URI defaults applied whenever an `otpauth://` URI omits a parameter or supplies an
- * out of range value.
+ * RFC 6238 / Key URI defaults applied whenever an `otpauth://` URI omits a parameter. A parameter
+ * that is present but out of range is rejected by the parser instead of being defaulted.
  *
  * Lives inside the `totp` package rather than app level constants so the engine keeps depending on
  * nothing outside itself, and UI surfaces depend inwards on the engine.

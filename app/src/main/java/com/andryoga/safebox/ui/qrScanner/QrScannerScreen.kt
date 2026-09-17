@@ -69,8 +69,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpUriError
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.qrScanner.components.CameraPermissionRationaleDialog
+import com.andryoga.safebox.ui.qrScanner.components.UnsupportedQrCodeDialog
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnResume
 import com.google.mlkit.vision.barcode.BarcodeScanner
@@ -202,12 +204,19 @@ fun QrScannerScreen(
         onPermissionRationaleDismiss = {
             onAction(QrScannerScreenAction.OnPermissionRationaleDismissed)
         },
+        onUnsupportedQrCodeDismiss = {
+            onAction(QrScannerScreenAction.OnUnsupportedQrCodeDismissed)
+        },
         cameraPreview = {
             if (hasCameraPermission) {
                 QrCameraPreview(
                     barcodeScanner = barcodeScanner,
                     isTorchEnabled = uiState.isTorchEnabled,
+                    isScanPaused = uiState.unsupportedQrError != null,
                     onQrCodeScanned = onQrCodeScanned,
+                    onUnsupportedQrCode = { reason ->
+                        onAction(QrScannerScreenAction.OnUnsupportedQrCodeScanned(reason))
+                    },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -219,20 +228,40 @@ fun QrScannerScreen(
  * Encapsulated CameraX preview composable that manages the CameraX [PreviewView],
  * background [ImageAnalysis.Analyzer] single-thread executor, hardware lifecycle binding,
  * async disposal guards, and flashlight/torch controls.
+ *
+ * @param isScanPaused Whether detection is currently suspended because an unusable code is being
+ * explained to the user. Clearing it re-arms the analyzer without rebuilding the camera session.
  */
 @Composable
 private fun QrCameraPreview(
     barcodeScanner: BarcodeScanner,
     isTorchEnabled: Boolean,
+    isScanPaused: Boolean,
     onQrCodeScanned: (ParsedTotpData) -> Unit,
+    onUnsupportedQrCode: (TotpUriError) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnQrCodeScanned by rememberUpdatedState(onQrCodeScanned)
+    val currentOnUnsupportedQrCode by rememberUpdatedState(onUnsupportedQrCode)
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
     val isDisposed = remember { AtomicBoolean(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
+
+    val qrCodeAnalyzer = remember(barcodeScanner) {
+        QrCodeAnalyzer(
+            scanner = barcodeScanner,
+            onQrCodeScanned = { currentOnQrCodeScanned(it) },
+            onUnsupportedQrCode = { currentOnUnsupportedQrCode(it) },
+        )
+    }
+
+    LaunchedEffect(isScanPaused, qrCodeAnalyzer) {
+        if (!isScanPaused) {
+            qrCodeAnalyzer.reset()
+        }
+    }
 
     LaunchedEffect(isTorchEnabled, camera) {
         camera?.let {
@@ -271,13 +300,7 @@ private fun QrCameraPreview(
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                             .build()
                             .also { analysis ->
-                                analysis.setAnalyzer(
-                                    cameraExecutor,
-                                    QrCodeAnalyzer(
-                                        scanner = barcodeScanner,
-                                        onQrCodeScanned = { currentOnQrCodeScanned(it) },
-                                    ),
-                                )
+                                analysis.setAnalyzer(cameraExecutor, qrCodeAnalyzer)
                             }
 
                         cameraProvider.unbindAll()
@@ -321,7 +344,8 @@ private fun QrCameraPreview(
 
 /**
  * Viewfinder UI rendering camera background slot, cutout overlay, top navigation controls,
- * bottom instruction with manual entry button, and permission rationale dialog.
+ * bottom instruction with manual entry button, permission rationale dialog, and the unusable
+ * QR code explanation.
  */
 @Composable
 fun QrScannerViewfinderContent(
@@ -332,6 +356,7 @@ fun QrScannerViewfinderContent(
     onPermissionRationaleAllow: (isRedirectingToSettings: Boolean) -> Unit,
     onPermissionRationaleCancel: () -> Unit,
     onPermissionRationaleDismiss: () -> Unit,
+    onUnsupportedQrCodeDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     cameraPreview: @Composable () -> Unit = {},
 ) {
@@ -427,6 +452,13 @@ fun QrScannerViewfinderContent(
                 dismissDialogAction = onPermissionRationaleDismiss,
             )
         }
+
+        uiState.unsupportedQrError?.let { reason ->
+            UnsupportedQrCodeDialog(
+                reason = reason,
+                onDismiss = onUnsupportedQrCodeDismiss,
+            )
+        }
     }
 }
 
@@ -494,6 +526,7 @@ private fun QrScannerScreenPreview() {
                 onPermissionRationaleAllow = {},
                 onPermissionRationaleCancel = {},
                 onPermissionRationaleDismiss = {},
+                onUnsupportedQrCodeDismiss = {},
             )
         }
     }

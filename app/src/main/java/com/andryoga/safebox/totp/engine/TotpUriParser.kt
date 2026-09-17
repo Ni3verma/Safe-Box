@@ -4,6 +4,9 @@ import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
+import com.andryoga.safebox.totp.models.TotpUriError
+import com.andryoga.safebox.totp.models.TotpUriParseResult
+import timber.log.Timber
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -15,72 +18,130 @@ import java.nio.charset.StandardCharsets
  * output digits, and time step period.
  */
 object TotpUriParser {
+    private const val OTPAUTH_SCHEME = "otpauth"
 
     /**
-     * Parses an `otpauth://totp/...` URI string into a [ParsedTotpData] model.
+     * Parses an `otpauth://totp/...` URI string into a [TotpUriParseResult].
+     *
+     * An absent `algorithm`, `digits` or `period` falls back to its [TotpDefaults] value, per the
+     * Key URI spec. A value that is present but unsupported is rejected rather than defaulted.
      *
      * @param uriString Full raw URI scanned from a QR code or entered by the user.
-     * @return [ParsedTotpData] containing validated title, cleaned secret, algorithm, digits, and period.
-     * @throws IllegalArgumentException If URI is malformed, scheme is not 'otpauth', type is not 'totp',
-     * or the secret key parameter is missing or invalid Base32.
+     * @return [TotpUriParseResult.Success] with the parsed data, [TotpUriParseResult.NotTotpUri]
+     * when the payload is not an `otpauth://` URI, or [TotpUriParseResult.Unsupported] when it is
+     * one but cannot be used, including when it is too malformed to read.
      */
-    fun parse(uriString: String): ParsedTotpData {
+    fun parse(uriString: String): TotpUriParseResult {
         val sanitizedUriString = uriString.trim().replace(" ", "%20")
-        val uri = try {
-            URI(sanitizedUriString)
+        return try {
+            parseOtpauthUri(sanitizedUriString)
         } catch (e: Exception) {
-            throw IllegalArgumentException("Malformed OTP URI", e)
+            Timber.i(e, "could not parse scanned payload as a URI")
+            // the scheme has to be read off the raw text: a URI that failed to build exposes no
+            // components. An unreadable otpauth payload is a QR code the user pointed at on
+            // purpose, so it earns an explanation rather than being skipped as unrelated content.
+            if (sanitizedUriString.startsWith("$OTPAUTH_SCHEME:", ignoreCase = true)) {
+                TotpUriParseResult.Unsupported(TotpUriError.MALFORMED_URI)
+            } else {
+                TotpUriParseResult.NotTotpUri
+            }
         }
+    }
 
-        require(uri.scheme?.equals("otpauth", ignoreCase = true) == true) {
-            "Invalid URI scheme. Expected 'otpauth', found: '${uri.scheme}'"
+    /**
+     * Reads a sanitized payload that is already known to be trimmed and space escaped.
+     *
+     * @param sanitizedUriString Payload with surrounding whitespace removed and spaces escaped.
+     * @return Outcome of the parse.
+     * @throws Exception when the payload is not a well formed URI. [parse] converts this into a
+     * result; the work is split out so that no step here needs its own guard.
+     */
+    private fun parseOtpauthUri(sanitizedUriString: String): TotpUriParseResult {
+        val uri = URI(sanitizedUriString)
+
+        if (uri.scheme?.equals(OTPAUTH_SCHEME, ignoreCase = true) != true) {
+            return TotpUriParseResult.NotTotpUri
         }
 
         val type = uri.host ?: uri.authority
-        require(type?.equals("totp", ignoreCase = true) == true) {
-            "Unsupported OTP type: '$type'. Only 'totp' is supported."
+        if (type?.equals("totp", ignoreCase = true) != true) {
+            return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_OTP_TYPE)
         }
 
         val queryParams = parseQueryParams(uri.rawQuery)
 
-        val rawSecret = queryParams["secret"]
-        require(!rawSecret.isNullOrBlank()) {
-            "Missing 'secret' query parameter in OTP URI"
-        }
+        val rawSecret = queryParams.optionalParam("secret")
+            ?: return TotpUriParseResult.Unsupported(TotpUriError.INVALID_SECRET)
         val cleanSecret = Base32Utils.sanitize(rawSecret)
-        require(Base32Utils.isValidBase32(cleanSecret)) {
-            "Invalid Base32 secret key in OTP URI"
+        if (!Base32Utils.isValidBase32(cleanSecret)) {
+            return TotpUriParseResult.Unsupported(TotpUriError.INVALID_SECRET)
+        }
+
+        val algorithmParam = queryParams.optionalParam("algorithm")
+        val algorithm = if (algorithmParam == null) {
+            TotpAlgorithm.SHA1
+        } else {
+            parseAlgorithm(algorithmParam)
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_ALGORITHM)
+        }
+
+        val digitsParam = queryParams.optionalParam("digits")
+        val digits = if (digitsParam == null) {
+            TotpDefaults.DIGITS
+        } else {
+            digitsParam.toIntOrNull()?.takeIf { it in TotpDefaults.SUPPORTED_DIGITS }
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_DIGITS)
+        }
+
+        val periodParam = queryParams.optionalParam("period")
+        val period = if (periodParam == null) {
+            TotpDefaults.PERIOD_SECONDS
+        } else {
+            periodParam.toIntOrNull()?.takeIf { it > 0 }
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_PERIOD)
         }
 
         val decodedLabel = uri.path?.trimStart('/') ?: ""
+        val title = computeTitle(decodedLabel, queryParams["issuer"])
 
-        val issuerParam = queryParams["issuer"]
-        val title = computeTitle(decodedLabel, issuerParam)
-
-        val algorithm = when (queryParams["algorithm"]?.uppercase()) {
-            "SHA256" -> TotpAlgorithm.SHA256
-            "SHA512" -> TotpAlgorithm.SHA512
-            else -> TotpAlgorithm.SHA1
-        }
-
-        val digits = queryParams["digits"]?.toIntOrNull()?.let {
-            if (it in TotpDefaults.SUPPORTED_DIGITS) it else TotpDefaults.DIGITS
-        } ?: TotpDefaults.DIGITS
-
-        val period = queryParams["period"]?.toIntOrNull()?.let {
-            if (it > 0) it else TotpDefaults.PERIOD_SECONDS
-        } ?: TotpDefaults.PERIOD_SECONDS
-
-        return ParsedTotpData(
-            title = title,
-            config = TotpConfig(
-                secretKey = cleanSecret,
-                algorithm = algorithm,
-                digits = digits,
-                period = period,
+        return TotpUriParseResult.Success(
+            ParsedTotpData(
+                title = title,
+                config = TotpConfig(
+                    secretKey = cleanSecret,
+                    algorithm = algorithm,
+                    digits = digits,
+                    period = period,
+                ),
             ),
         )
     }
+
+    /**
+     * Maps a Key URI `algorithm` token to a supported [TotpAlgorithm].
+     *
+     * Matched against literals, not [TotpAlgorithm.entries] and [Enum.name], so the mapping
+     * survives minification of the enum constant names.
+     *
+     * @param rawAlgorithm Raw parameter value from the URI, in any casing.
+     * @return Matching algorithm, or null when Safe-Box cannot compute that hash.
+     */
+    private fun parseAlgorithm(rawAlgorithm: String): TotpAlgorithm? =
+        when (rawAlgorithm.uppercase()) {
+            "SHA1" -> TotpAlgorithm.SHA1
+            "SHA256" -> TotpAlgorithm.SHA256
+            "SHA512" -> TotpAlgorithm.SHA512
+            else -> null
+        }
+
+    /**
+     * Reads a query parameter, treating a blank value as absent.
+     *
+     * @param key Lowercase parameter name.
+     * @return Trimmed value, or null when the parameter is missing or blank.
+     */
+    private fun Map<String, String>.optionalParam(key: String): String? =
+        this[key]?.trim()?.takeIf { it.isNotBlank() }
 
     /**
      * Parses the raw query string into a case-insensitive map of parameter key-value pairs.
