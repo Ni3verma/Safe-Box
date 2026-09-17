@@ -156,6 +156,7 @@ class QrScannerViewModel @Inject constructor(
  * @return Stable snake case identifier for the reason.
  */
 private fun TotpUriError.toAnalyticsValue(): String = when (this) {
+    TotpUriError.MALFORMED_URI -> "malformed_uri"
     TotpUriError.UNSUPPORTED_OTP_TYPE -> "unsupported_otp_type"
     TotpUriError.INVALID_SECRET -> "invalid_secret"
     TotpUriError.UNSUPPORTED_ALGORITHM -> "unsupported_algorithm"

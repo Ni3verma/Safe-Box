@@ -6,6 +6,7 @@ import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.andryoga.safebox.totp.models.TotpUriParseResult
+import timber.log.Timber
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets
  * output digits, and time step period.
  */
 object TotpUriParser {
+    private const val OTPAUTH_SCHEME = "otpauth"
 
     /**
      * Parses an `otpauth://totp/...` URI string into a [TotpUriParseResult].
@@ -27,17 +29,37 @@ object TotpUriParser {
      * @param uriString Full raw URI scanned from a QR code or entered by the user.
      * @return [TotpUriParseResult.Success] with the parsed data, [TotpUriParseResult.NotTotpUri]
      * when the payload is not an `otpauth://` URI, or [TotpUriParseResult.Unsupported] when it is
-     * one but cannot be used.
+     * one but cannot be used, including when it is too malformed to read.
      */
     fun parse(uriString: String): TotpUriParseResult {
         val sanitizedUriString = uriString.trim().replace(" ", "%20")
-        val uri = try {
-            URI(sanitizedUriString)
-        } catch (_: Exception) {
-            return TotpUriParseResult.NotTotpUri
+        return try {
+            parseOtpauthUri(sanitizedUriString)
+        } catch (e: Exception) {
+            Timber.i(e, "could not parse scanned payload as a URI")
+            // the scheme has to be read off the raw text: a URI that failed to build exposes no
+            // components. An unreadable otpauth payload is a QR code the user pointed at on
+            // purpose, so it earns an explanation rather than being skipped as unrelated content.
+            if (sanitizedUriString.startsWith("$OTPAUTH_SCHEME:", ignoreCase = true)) {
+                TotpUriParseResult.Unsupported(TotpUriError.MALFORMED_URI)
+            } else {
+                TotpUriParseResult.NotTotpUri
+            }
         }
+    }
 
-        if (uri.scheme?.equals("otpauth", ignoreCase = true) != true) {
+    /**
+     * Reads a sanitized payload that is already known to be trimmed and space escaped.
+     *
+     * @param sanitizedUriString Payload with surrounding whitespace removed and spaces escaped.
+     * @return Outcome of the parse.
+     * @throws Exception when the payload is not a well formed URI. [parse] converts this into a
+     * result; the work is split out so that no step here needs its own guard.
+     */
+    private fun parseOtpauthUri(sanitizedUriString: String): TotpUriParseResult {
+        val uri = URI(sanitizedUriString)
+
+        if (uri.scheme?.equals(OTPAUTH_SCHEME, ignoreCase = true) != true) {
             return TotpUriParseResult.NotTotpUri
         }
 

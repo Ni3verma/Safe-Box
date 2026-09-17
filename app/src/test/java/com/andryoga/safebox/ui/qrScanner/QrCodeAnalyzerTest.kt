@@ -124,6 +124,22 @@ class QrCodeAnalyzerTest {
     }
 
     @Test
+    fun analyze_whenMalformedOtpauthCodeDetected_reportsReasonAndStopsScanning() {
+        val imageProxy = analyzeFrameContaining(
+            "otpauth://totp/ACME^Co:user@example.com?secret=JBSWY3DPEHPK3PXP",
+        )
+
+        verify(exactly = 1) { imageProxy.close() }
+        assertThat(unsupportedReason).isEqualTo(TotpUriError.MALFORMED_URI)
+        assertThat(scannedTotpData).isNull()
+
+        val secondImageProxy = mockk<ImageProxy>(relaxed = true)
+        analyzer.analyze(secondImageProxy)
+
+        verify(exactly = 0) { secondImageProxy.image }
+    }
+
+    @Test
     fun analyze_whenUnrelatedQrCodeDetected_keepsScanningWithoutReportingAnError() {
         val imageProxy = analyzeFrameContaining("https://example.com/not-an-otp-code")
 

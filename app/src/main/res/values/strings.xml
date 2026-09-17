@@ -180,6 +180,7 @@
     <string name="flash_toggle_description">Toggle flash</string>
     <string name="close">Close</string>
     <string name="unsupported_qr_code_dialog_heading">Can\'t use this QR code</string>
+    <string name="unsupported_qr_code_reason_malformed">This QR code is damaged or badly formatted, so Safe Box could not read it.</string>
     <string name="unsupported_qr_code_reason_otp_type">Safe Box supports time-based (TOTP) codes only. This QR code is for a different kind of one-time password.</string>
     <string name="unsupported_qr_code_reason_invalid_secret">The secret key in this QR code is missing or is not valid Base32.</string>
     <string name="unsupported_qr_code_reason_algorithm">This QR code uses a hashing algorithm Safe Box cannot compute. Only SHA1, SHA256 and SHA512 are supported.</string>
