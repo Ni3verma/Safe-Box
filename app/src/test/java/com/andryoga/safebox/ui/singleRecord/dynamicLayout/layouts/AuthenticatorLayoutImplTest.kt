@@ -5,6 +5,7 @@ import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataReposito
 import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.Base32Utils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
@@ -43,6 +44,10 @@ class AuthenticatorLayoutImplTest {
         creationDate = sampleDate,
         updateDate = sampleDate,
     )
+    private val scannedData = ParsedTotpData(
+        title = "Google - alex@gmail.com",
+        config = sampleConfig,
+    )
 
     @Before
     fun setUp() {
@@ -52,10 +57,14 @@ class AuthenticatorLayoutImplTest {
         every { totpGenerator.normalizeSecret(any()) } answers { Base32Utils.sanitize(firstArg()) }
     }
 
-    private fun createLayout(recordId: Int? = null) = AuthenticatorLayoutImpl(
+    private fun createLayout(
+        recordId: Int? = null,
+        scannedTotpData: ParsedTotpData? = null,
+    ) = AuthenticatorLayoutImpl(
         recordId = recordId,
         authenticatorDataRepository = repository,
         totpGenerator = totpGenerator,
+        scannedTotpData = scannedTotpData,
     )
 
     private fun mandatoryFields(title: String, secretKey: String) = mapOf(
@@ -96,6 +105,53 @@ class AuthenticatorLayoutImplTest {
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEmpty()
         assertThat(plan.fieldUiState[FieldId.CREATION_DATE]?.data).isEmpty()
         assertThat(plan.fieldUiState[FieldId.UPDATE_DATE]?.data).isEmpty()
+    }
+
+    @Test
+    fun getLayoutPlan_scannedRecord_prefillsTitleAndSeedFromScan() = runTest {
+        val plan = createLayout(scannedTotpData = scannedData).getLayoutPlan()
+
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data)
+            .isEqualTo("Google - alex@gmail.com")
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data)
+            .isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_DISPLAY]?.cell?.type)
+            .isEqualTo(FieldType.Totp(sampleConfig))
+    }
+
+    @Test
+    fun saveLayout_scannedRecord_persistsIssuerParametersInsteadOfDefaults() = runTest {
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        createLayout(scannedTotpData = scannedData).saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "Google",
+                FieldId.AUTHENTICATOR_SECRET_KEY to "JBSWY3DPEHPK3PXP",
+            ),
+        )
+
+        val captured = dataSlot.captured.config
+        assertThat(captured.algorithm).isEqualTo(TotpAlgorithm.SHA256)
+        assertThat(captured.digits).isEqualTo(8)
+        assertThat(captured.period).isEqualTo(60)
+    }
+
+    @Test
+    fun saveLayout_scannedSeedEdited_keepsIssuerParametersWithEditedSeed() = runTest {
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        createLayout(scannedTotpData = scannedData).saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "Google",
+                FieldId.AUTHENTICATOR_SECRET_KEY to "MFRGGZDFMZTWQ2LK",
+            ),
+        )
+
+        val captured = dataSlot.captured.config
+        assertThat(captured.secretKey).isEqualTo("MFRGGZDFMZTWQ2LK")
+        assertThat(captured.algorithm).isEqualTo(TotpAlgorithm.SHA256)
     }
 
     @Test

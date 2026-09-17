@@ -70,11 +70,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpUriError
+import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.qrScanner.components.CameraPermissionRationaleDialog
 import com.andryoga.safebox.ui.qrScanner.components.UnsupportedQrCodeDialog
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnResume
+import com.andryoga.safebox.ui.utils.OnStart
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import timber.log.Timber
 import java.util.concurrent.Executors
@@ -83,18 +85,26 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Entry composable for the QR Code Scanner screen.
  *
- * @param onQrCodeScanned Callback invoked when a valid TOTP QR code is scanned and parsed.
+ * @param mainViewModel Shared view model owning the app bar state for the home nav graph.
+ * @param onQrCodeScanned Callback invoked once a usable TOTP QR code has been scanned and handed
+ * to [ScannedTotpHolder]. The parsed payload is deliberately not passed here so the seed never
+ * reaches the navigation layer.
  * @param onEnterKeyManually Callback invoked when the user selects manual credential entry.
  * @param onClose Callback invoked to dismiss or navigate back from the scanner.
  */
 @Composable
 fun QrScannerScreenRoot(
-    onQrCodeScanned: (ParsedTotpData) -> Unit,
+    mainViewModel: MainViewModel,
+    onQrCodeScanned: () -> Unit,
     onEnterKeyManually: () -> Unit,
     onClose: () -> Unit,
 ) {
     val viewModel = hiltViewModel<QrScannerViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+
+    OnStart {
+        mainViewModel.hideTopBar()
+    }
 
     QrScannerScreen(
         uiState = uiState,
@@ -102,7 +112,7 @@ fun QrScannerScreenRoot(
         onAction = viewModel::onAction,
         onQrCodeScanned = { totpData ->
             viewModel.onAction(QrScannerScreenAction.OnQrCodeScanned(totpData))
-            onQrCodeScanned(totpData)
+            onQrCodeScanned()
         },
         onEnterKeyManually = {
             viewModel.onAction(QrScannerScreenAction.OnEnterKeyManuallyClicked)

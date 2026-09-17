@@ -6,6 +6,7 @@ import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
@@ -25,11 +26,14 @@ import java.util.Date
  * @param recordId Unique identifier of the record, or null when creating a new record.
  * @param authenticatorDataRepository Repository for loading, upserting, and deleting authenticator entities.
  * @param totpGenerator Generator used to validate the Base32 seed and derive the shareable one-time code.
+ * @param scannedTotpData Payload of a QR code the user just scanned, or null when the record is
+ * being created by hand or opened for view/edit.
  */
 class AuthenticatorLayoutImpl(
     private val recordId: Int?,
     private val authenticatorDataRepository: AuthenticatorDataRepository,
     private val totpGenerator: TotpGenerator,
+    private val scannedTotpData: ParsedTotpData? = null,
 ) : Layout {
     private var recordData: AuthenticatorData? = null
 
@@ -54,16 +58,18 @@ class AuthenticatorLayoutImpl(
     /**
      * Pairs a seed with the generation parameters that belong to this record.
      *
-     * The parameters are never edited on this screen, so they are read from the loaded record and
-     * fall back to the RFC 6238 defaults for a record being created by hand. A record created by
-     * scanning carries the issuer's parameters into [recordData] before the layout is built.
+     * The parameters are never edited on this screen, so they are read from the loaded record, then
+     * from the scanned QR code, and only fall back to the RFC 6238 defaults for a record the user
+     * is typing in by hand.
      *
      * @param secretKey Canonical Base32 seed to pair with the parameters.
      * @return Config for this record.
      */
     private fun buildConfig(secretKey: String): TotpConfig {
-        val storedConfig = recordData?.config ?: return TotpConfig(secretKey = secretKey)
-        return storedConfig.copy(secretKey = secretKey)
+        val sourceConfig = recordData?.config
+            ?: scannedTotpData?.config
+            ?: return TotpConfig(secretKey = secretKey)
+        return sourceConfig.copy(secretKey = secretKey)
     }
 
     override suspend fun deleteLayout() {
@@ -126,6 +132,10 @@ class AuthenticatorLayoutImpl(
     }
 
     private fun getLayoutPlanInternal(): LayoutPlan {
+        val title = recordData?.title ?: scannedTotpData?.title.orEmpty()
+        val secretKey = recordData?.config?.secretKey
+            ?: scannedTotpData?.config?.secretKey.orEmpty()
+
         return LayoutPlan(
             id = LayoutId.AUTHENTICATOR,
             arrangement = listOf(
@@ -142,17 +152,17 @@ class AuthenticatorLayoutImpl(
                         isMandatory = true,
                         isCopyable = true,
                     ),
-                    data = recordData?.title.orEmpty(),
+                    data = title,
                 ),
                 FieldId.AUTHENTICATOR_TOTP_DISPLAY to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.totp_code,
                         isVisibleOnlyInViewMode = true,
-                        type = FieldType.Totp(buildConfig(recordData?.config?.secretKey.orEmpty())),
+                        type = FieldType.Totp(buildConfig(secretKey)),
                         // holds the secret seed, never the code, so it must never be shared as is.
                         isCopyable = false,
                     ),
-                    data = recordData?.config?.secretKey.orEmpty(),
+                    data = secretKey,
                 ),
                 FieldId.AUTHENTICATOR_SECRET_KEY to FieldUiState(
                     cell = FieldUiState.Cell(
@@ -161,7 +171,7 @@ class AuthenticatorLayoutImpl(
                         isPasswordField = true,
                         visualTransformation = PasswordVisualTransformation(),
                     ),
-                    data = recordData?.config?.secretKey.orEmpty(),
+                    data = secretKey,
                 ),
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(

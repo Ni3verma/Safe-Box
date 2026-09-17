@@ -19,10 +19,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
@@ -35,6 +37,8 @@ import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.records.RecordsScreenRoot
 import com.andryoga.safebox.ui.home.settings.SettingsScreenRoot
+import com.andryoga.safebox.ui.qrScanner.QrScannerRoute
+import com.andryoga.safebox.ui.qrScanner.QrScannerScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
@@ -120,7 +124,13 @@ fun HomeScreen(
                     RecordsScreenRoot(
                         mainViewModel = mainViewModel,
                         onAddNewRecord = { recordType ->
-                            nestedNavController.navigate(route = SingleRecordScreenRoute(recordType))
+                            if (recordType == RecordType.AUTHENTICATOR) {
+                                nestedNavController.navigate(route = QrScannerRoute)
+                            } else {
+                                nestedNavController.navigate(
+                                    route = SingleRecordScreenRoute(recordType)
+                                )
+                            }
                         },
                         onRestoreFromBackup = {
                             nestedNavController.navigate(
@@ -153,6 +163,20 @@ fun HomeScreen(
                         mainViewModel = mainViewModel
                     )
                 }
+                composable<QrScannerRoute> {
+                    QrScannerScreenRoot(
+                        mainViewModel = mainViewModel,
+                        onQrCodeScanned = {
+                            nestedNavController.navigateToNewAuthenticatorRecord()
+                        },
+                        onEnterKeyManually = {
+                            nestedNavController.navigateToNewAuthenticatorRecord()
+                        },
+                        onClose = {
+                            nestedNavController.popBackStack()
+                        },
+                    )
+                }
                 composable<SingleRecordScreenRoute> {
                     SingleRecordScreenRoot(
                         mainViewModel = mainViewModel,
@@ -175,6 +199,18 @@ private fun isUserOnHomeRouteScreen(currentDestination: NavDestination?): Boolea
         hasRoute<HomeRouteType.RecordRoute>() || hasRoute<HomeRouteType.BackupAndRestoreRoute>() ||
                 hasRoute<HomeRouteType.SettingsRoute>()
     } ?: false
+}
+
+/**
+ * Opens the create screen for a new authenticator record and drops the scanner from the back stack.
+ *
+ * Both scanner exits that create a record use this, so pressing back from the create screen
+ * returns to the records list rather than reopening the camera on a code that was already read.
+ */
+private fun NavHostController.navigateToNewAuthenticatorRecord() {
+    navigate(route = SingleRecordScreenRoute(RecordType.AUTHENTICATOR)) {
+        popUpTo<QrScannerRoute> { inclusive = true }
+    }
 }
 
 @Serializable
