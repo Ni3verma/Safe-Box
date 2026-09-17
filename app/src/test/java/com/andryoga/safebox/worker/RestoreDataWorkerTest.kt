@@ -47,6 +47,11 @@ import javax.crypto.BadPaddingException
 
 class RestoreDataWorkerTest {
 
+    companion object {
+        /** Backup version written by the last released build, before authenticators existed. */
+        private const val LEGACY_BACKUP_VERSION: Byte = 2
+    }
+
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -432,8 +437,9 @@ class RestoreDataWorkerTest {
                 Json.encodeToString(ListSerializer(ExportLoginData.serializer()), loginList)
             val dummyCipherBytes = ByteArray(32) { 5 }
 
-            // Legacy backup without AUTHENTICATOR_DATA_KEY
+            // Backup written by the released build: version 2, no AUTHENTICATOR_DATA_KEY.
             val backupMap = WorkerTestFixtures.createBackupMap(
+                version = LEGACY_BACKUP_VERSION,
                 loginData = dummyCipherBytes,
                 authenticatorData = null,
             )
