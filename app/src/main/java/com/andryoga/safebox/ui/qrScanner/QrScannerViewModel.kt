@@ -173,8 +173,9 @@ class QrScannerViewModel @Inject constructor(
                         toPermissionOutcome(action.isGranted, action.canAskAgain),
                     )
                 }
-                if (!action.isGranted && !action.canAskAgain) {
-                    _isPermissionPermanentlyDenied.value = true
+                val isPermanentlyDenied = !action.isGranted && !action.canAskAgain
+                _isPermissionPermanentlyDenied.value = isPermanentlyDenied
+                if (isPermanentlyDenied) {
                     showPermissionRationale()
                 }
             }
