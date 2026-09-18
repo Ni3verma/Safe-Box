@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,14 +21,18 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -58,7 +63,7 @@ class RecordsSearchAndFilterE2ETest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
-    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+    lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
     lateinit var userDetailsRepository: UserDetailsRepository
@@ -74,6 +79,9 @@ class RecordsSearchAndFilterE2ETest {
 
     @Inject
     lateinit var secureNoteDataRepository: SecureNoteDataRepository
+
+    @Inject
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
 
     @Inject
     lateinit var settingsDataStore: SettingsDataStore
@@ -461,6 +469,66 @@ class RecordsSearchAndFilterE2ETest {
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
             composeTestRule.onNodeWithText("Amazon Shopping").assertIsDisplayed()
             composeTestRule.onNodeWithText("Chase Sapphire Card").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun selectAuthenticatorFilterChip_shouldDisplayOnlyAuthenticatorRecordWithLiveCode() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+
+            loginDataRepository.upsertLoginData(
+                LoginData(
+                    id = 841,
+                    title = "Login Item",
+                    url = null,
+                    userId = "user@login.com",
+                    password = "secret",
+                    notes = null,
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+
+            authenticatorDataRepository.upsertAuthenticatorData(
+                AuthenticatorData(
+                    id = 842,
+                    title = "Authenticator Item",
+                    config = TotpConfig(secretKey = E2ETestUtils.TEST_TOTP_SECRET_KEY),
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+            E2ETestUtils.waitForRecordTitle(composeTestRule, "Authenticator Item")
+
+            composeTestRule.onNodeWithText("Login Item").assertIsDisplayed()
+            composeTestRule.onNodeWithText("Authenticator Item").assertIsDisplayed()
+
+            // the chip row scrolls horizontally and authenticator is the last record type, so the
+            // chip starts off screen on a phone sized viewport.
+            val authenticatorChipLabel = context.getString(R.string.type_display_authenticator)
+            composeTestRule.onNode(
+                hasText(authenticatorChipLabel) and hasRole(Role.Checkbox)
+            ).performScrollTo().performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText("Login Item")).fetchSemanticsNodes().isEmpty()
+            }
+
+            composeTestRule.onNodeWithText("Authenticator Item").assertIsDisplayed()
+            composeTestRule.onNodeWithText("Login Item").assertDoesNotExist()
+            composeTestRule.onNodeWithContentDescription(
+                context.getString(R.string.cd_copy_totp_code),
+                useUnmergedTree = true
+            ).assertIsDisplayed()
         }
     }
 }
