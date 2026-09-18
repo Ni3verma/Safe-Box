@@ -206,10 +206,14 @@ private fun isUserOnHomeRouteScreen(currentDestination: NavDestination?): Boolea
  *
  * Both scanner exits that create a record use this, so pressing back from the create screen
  * returns to the records list rather than reopening the camera on a code that was already read.
+ *
+ * `launchSingleTop` covers a double tap on the manual entry button: the second navigation finds
+ * the scanner already popped, so `popUpTo` alone would let it stack a duplicate create screen.
  */
 private fun NavHostController.navigateToNewAuthenticatorRecord() {
     navigate(route = SingleRecordScreenRoute(RecordType.AUTHENTICATOR)) {
         popUpTo<QrScannerRoute> { inclusive = true }
+        launchSingleTop = true
     }
 }
 
