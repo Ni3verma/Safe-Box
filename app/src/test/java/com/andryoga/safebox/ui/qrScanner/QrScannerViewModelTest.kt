@@ -202,6 +202,28 @@ class QrScannerViewModelTest {
         }
 
     @Test
+    fun onCameraPermissionResult_whenGrantedAfterPermanentDenial_shouldClearPermanentDenial() =
+        runTest {
+            viewModel.uiState.test {
+                awaitItem()
+                awaitItem()
+
+                viewModel.onAction(permanentlyDeniedResult())
+                assertThat(awaitItem().isPermissionPermanentlyDenied).isTrue()
+
+                viewModel.onAction(
+                    QrScannerScreenAction.OnCameraPermissionResult(
+                        isGranted = true,
+                        canAskAgain = false,
+                    ),
+                )
+
+                assertThat(awaitItem().isPermissionPermanentlyDenied).isFalse()
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun onCameraPermissionResult_whenDeniedButRetryable_shouldNotOfferSettingsOrShowRationale() {
         viewModel.onAction(
             QrScannerScreenAction.OnCameraPermissionResult(
