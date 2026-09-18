@@ -52,7 +52,12 @@ fun RowField(
                 is FieldType.Totp -> {
                     // the stored value is the secret seed, so this field renders the derived
                     // rolling code instead of the raw data.
-                    TotpCodeField(config = fieldType.config)
+                    TotpCodeField(
+                        config = fieldType.config,
+                        onCopyClick = {
+                            screenAction(SingleRecordScreenAction.OnCopyTotpCode)
+                        },
+                    )
                 }
 
                 FieldType.DefaultText -> {

@@ -5,7 +5,10 @@ package com.andryoga.safebox.ui.singleRecord
 import android.content.Context
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
@@ -51,10 +54,12 @@ class SingleRecordViewModelTest {
     lateinit var singleRecordRouteProvider: SingleRecordRouteProvider
 
     private lateinit var viewModel: SingleRecordViewModel
+    private lateinit var analyticsHelper: FakeAnalyticsHelper
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
+        analyticsHelper = FakeAnalyticsHelper()
 
         every { layoutFactory.getLayout(any(), any()) } returns layout
         coEvery { layout.getLayoutPlan() } returns LayoutPlan(fieldUiState = emptyMap())
@@ -69,6 +74,7 @@ class SingleRecordViewModelTest {
             layoutFactory,
             context,
             mainDispatcherRule.testDispatcherProvider,
+            analyticsHelper,
         )
     }
 
@@ -269,4 +275,19 @@ class SingleRecordViewModelTest {
                 assertThat(emittedEvent).contains("some app link")
             }
         }
+
+    @Test
+    fun onCopyTotpCode_shouldLogCopyClickWithRecordDetailSource() {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.AUTHENTICATOR,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnCopyTotpCode)
+
+        val event = analyticsHelper.loggedEvents
+            .first { it.key == AnalyticsKey.AUTHENTICATOR_COPY_CLICK }
+        assertThat(event.params[AnalyticsParam.SOURCE.paramName]).isEqualTo("record_detail")
+    }
 }

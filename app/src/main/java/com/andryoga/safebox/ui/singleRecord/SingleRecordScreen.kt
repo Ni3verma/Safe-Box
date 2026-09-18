@@ -126,50 +126,23 @@ fun SingleRecordScreen(
                     .fillMaxWidth()
             ) {
                 val weightOfEachField = remember(uiState.viewMode) {
-                    if (uiState.viewMode == ViewMode.VIEW) {
-                        val nonEmptyFields = fields.count {
-                            val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
-                            fieldUiState != null && fieldUiState.data.isNotBlank()
-                        }
-                        if (nonEmptyFields == 0) {
-                            // all the fields of row are empty in view mode, so we will not show
-                            // anything on the screen. so we can return 1F here.
-                            1F
-                        } else {
-                            1F / nonEmptyFields
-                        }
+                    val visibleFields = fields.count {
+                        val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
+                        fieldUiState != null && fieldUiState.isVisibleIn(uiState.viewMode)
+                    }
+                    if (visibleFields == 0) {
+                        // the whole row is hidden, so nothing is laid out and the weight is
+                        // never actually used.
+                        1F
                     } else {
-                        1F / fields.size
+                        1F / visibleFields
                     }
                 }
 
                 fields.forEachIndexed { columnIndex, field ->
                     val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
-                    val isVisibleOnlyInViewMode = fieldUiState.cell.isVisibleOnlyInViewMode
 
-                    /**
-                     * two conditions to show a field:
-                     * 1. we have opened the screen in view mode. i.e. user clicked on a saved record.
-                     * in this case all of the non-empty fields should be visible including fields such as creation date
-                     *
-                     * 2. field is "NOT" visible "only" in view mode. e.g. title field.
-                     * i.e we can edit it and it was entered by user while saving
-                     * some fields like creationDate are only visible in View mode.
-                     * */
-
-                    if (uiState.viewMode == ViewMode.VIEW && fieldUiState.data.isNotBlank()) {
-                        // we are in view mode and the data for the field is not blank, so we can show it
-                        Box(Modifier.weight(weightOfEachField)) {
-                            RowField(
-                                fieldId = field.fieldId,
-                                uiState = fieldUiState,
-                                viewMode = uiState.viewMode,
-                                screenAction = screenAction
-                            )
-                        }
-                    } else if (uiState.viewMode != ViewMode.VIEW && !isVisibleOnlyInViewMode) {
-                        // we are in edit mode/ or new record mode, so all the fields should be
-                        // shown except for the one that should be shown in only view mode
+                    if (fieldUiState.isVisibleIn(uiState.viewMode)) {
                         Box(Modifier.weight(weightOfEachField)) {
                             RowField(
                                 fieldId = field.fieldId,

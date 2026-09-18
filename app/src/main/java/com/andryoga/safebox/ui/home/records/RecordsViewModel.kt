@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
@@ -164,7 +165,7 @@ class RecordsViewModel @Inject constructor(
 
             RecordScreenAction.OnCopyTotpCode -> {
                 analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
-                    param(AnalyticsParam.SOURCE, COPY_SOURCE_RECORDS_LIST)
+                    param(AnalyticsParam.SOURCE, AnalyticsSource.RECORDS_LIST.value)
                 }
             }
 
@@ -277,8 +278,5 @@ class RecordsViewModel @Inject constructor(
     companion object {
         // ask for review after every 5th login
         const val ASK_FOR_REVIEW_AFTER_EVERY_LOGIN = 5
-
-        // value of AnalyticsParam.SOURCE for copy events raised from the records list
-        private const val COPY_SOURCE_RECORDS_LIST = "records_list"
     }
 }

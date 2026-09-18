@@ -12,6 +12,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -88,10 +89,12 @@ class AuthenticatorLayoutImplTest {
         val totpField = plan.fieldUiState[FieldId.AUTHENTICATOR_TOTP_DISPLAY]
         assertThat(totpField?.data).isEqualTo("JBSWY3DPEHPK3PXP")
         assertThat(totpField?.cell?.type).isEqualTo(FieldType.Totp(sampleConfig))
-        assertThat(totpField?.cell?.isVisibleOnlyInViewMode).isTrue()
+        assertThat(totpField?.cell?.visibleIn).containsExactly(ViewMode.VIEW)
 
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data).isEqualTo("JBSWY3DPEHPK3PXP")
         assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.cell?.isPasswordField).isTrue()
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.cell?.visibleIn)
+            .containsExactly(ViewMode.NEW)
         assertThat(plan.fieldUiState[FieldId.CREATION_DATE]?.data).isEqualTo(sampleDate.toString())
         assertThat(plan.fieldUiState[FieldId.UPDATE_DATE]?.data).isEqualTo(sampleDate.toString())
     }
@@ -318,5 +321,18 @@ class AuthenticatorLayoutImplTest {
         )
 
         assertThat(isValid).isFalse()
+    }
+
+    @Test
+    fun checkMandatoryFields_existingRecordWithSeedHiddenInEditMode_evaluatesTrue() = runTest {
+        every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
+        val layout = createLayout(recordId = 10)
+        val plan = layout.getLayoutPlan()
+
+        // the seed cell is never rendered in edit mode, so this proves validation reads the
+        // data prefilled from the record rather than anything the user could have typed.
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.isVisibleIn(ViewMode.EDIT))
+            .isFalse()
+        assertThat(layout.checkMandatoryFields(plan.fieldUiState)).isTrue()
     }
 }

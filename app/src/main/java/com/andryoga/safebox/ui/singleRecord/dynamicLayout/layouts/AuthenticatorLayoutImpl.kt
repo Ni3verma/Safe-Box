@@ -14,6 +14,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ShareableField
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import java.util.Date
 
 /**
@@ -157,7 +158,7 @@ class AuthenticatorLayoutImpl(
                 FieldId.AUTHENTICATOR_TOTP_DISPLAY to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.totp_code,
-                        isVisibleOnlyInViewMode = true,
+                        visibleIn = setOf(ViewMode.VIEW),
                         type = FieldType.Totp(buildConfig(secretKey)),
                         // holds the secret seed, never the code, so it must never be shared as is.
                         isCopyable = false,
@@ -169,6 +170,9 @@ class AuthenticatorLayoutImpl(
                         label = R.string.secret_key,
                         isMandatory = true,
                         isPasswordField = true,
+                        // the seed is entered once and never shown again, so viewing or editing a
+                        // saved record cannot put the second factor back on screen.
+                        visibleIn = setOf(ViewMode.NEW),
                         visualTransformation = PasswordVisualTransformation(),
                     ),
                     data = secretKey,
@@ -176,14 +180,14 @@ class AuthenticatorLayoutImpl(
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.created_on,
-                        isVisibleOnlyInViewMode = true,
+                        visibleIn = setOf(ViewMode.VIEW),
                     ),
                     data = recordData?.creationDate?.toString().orEmpty(),
                 ),
                 FieldId.UPDATE_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.updated_on,
-                        isVisibleOnlyInViewMode = true,
+                        visibleIn = setOf(ViewMode.VIEW),
                     ),
                     data = recordData?.updateDate?.toString().orEmpty(),
                 ),
