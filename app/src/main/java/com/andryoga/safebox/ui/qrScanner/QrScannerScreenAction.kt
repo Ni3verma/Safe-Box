@@ -20,7 +20,7 @@ sealed interface QrScannerScreenAction {
     object OnPermissionRationaleDismissed : QrScannerScreenAction
     object OnPermissionRationaleAllowClicked : QrScannerScreenAction
     object OnPermissionRationaleCancelClicked : QrScannerScreenAction
-    object OnCameraPermissionPermanentlyDenied : QrScannerScreenAction
+    class OnCameraPermissionResult(val isGranted: Boolean, val canAskAgain: Boolean) :
+        QrScannerScreenAction
     object OnOpenAppSettingsClicked : QrScannerScreenAction
-    object OnInitialCameraPermissionRequested : QrScannerScreenAction
 }

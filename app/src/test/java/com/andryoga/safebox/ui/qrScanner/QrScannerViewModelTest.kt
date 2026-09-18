@@ -152,7 +152,7 @@ class QrScannerViewModelTest {
     fun onShowPermissionRationale_whenAlreadyVisible_shouldLogShowEventOnlyOnce() {
         viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
         viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
-        viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+        viewModel.onAction(permanentlyDeniedResult())
 
         assertThat(viewModel.showPermissionRationale.value).isTrue()
         assertThat(analyticsHelper.count(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW))
@@ -182,25 +182,73 @@ class QrScannerViewModelTest {
     }
 
     @Test
-    fun onCameraPermissionPermanentlyDenied_shouldReShowRationaleOfferingSettings() = runTest {
-        viewModel.uiState.test {
-            awaitItem()
-            awaitItem()
+    fun onCameraPermissionResult_whenPermanentlyDenied_shouldReShowRationaleOfferingSettings() =
+        runTest {
+            viewModel.uiState.test {
+                awaitItem()
+                awaitItem()
 
-            viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+                viewModel.onAction(permanentlyDeniedResult())
 
-            val denied = awaitItem()
-            assertThat(denied.isPermissionPermanentlyDenied).isTrue()
-            assertThat(denied.showPermissionRationale).isTrue()
-            cancelAndIgnoreRemainingEvents()
+                val denied = awaitItem()
+                assertThat(denied.isPermissionPermanentlyDenied).isTrue()
+                assertThat(denied.showPermissionRationale).isTrue()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            assertThat(
+                analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW),
+            ).isTrue()
         }
 
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)).isTrue()
+    @Test
+    fun onCameraPermissionResult_whenDeniedButRetryable_shouldNotOfferSettingsOrShowRationale() {
+        viewModel.onAction(
+            QrScannerScreenAction.OnCameraPermissionResult(
+                isGranted = false,
+                canAskAgain = true,
+            ),
+        )
+
+        assertThat(viewModel.showPermissionRationale.value).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW))
+            .isFalse()
+    }
+
+    @Test
+    fun onCameraPermissionResult_whenGranted_shouldReportGrantedOutcome() {
+        viewModel.onAction(
+            QrScannerScreenAction.OnCameraPermissionResult(
+                isGranted = true,
+                canAskAgain = false,
+            ),
+        )
+
+        assertThat(loggedPermissionOutcome()).isEqualTo("granted")
+    }
+
+    @Test
+    fun onCameraPermissionResult_whenDeniedButRetryable_shouldReportDeniedOutcome() {
+        viewModel.onAction(
+            QrScannerScreenAction.OnCameraPermissionResult(
+                isGranted = false,
+                canAskAgain = true,
+            ),
+        )
+
+        assertThat(loggedPermissionOutcome()).isEqualTo("denied")
+    }
+
+    @Test
+    fun onCameraPermissionResult_whenPermanentlyDenied_shouldReportPermanentlyDeniedOutcome() {
+        viewModel.onAction(permanentlyDeniedResult())
+
+        assertThat(loggedPermissionOutcome()).isEqualTo("permanently_denied")
     }
 
     @Test
     fun onOpenAppSettingsClicked_shouldDismissDialogAndLogSettingsOpenClick() {
-        viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+        viewModel.onAction(permanentlyDeniedResult())
 
         viewModel.onAction(QrScannerScreenAction.OnOpenAppSettingsClicked)
 
@@ -305,7 +353,7 @@ class QrScannerViewModelTest {
     }
 
     @Test
-    fun onInitialCameraPermissionRequested_shouldUpdateUiStateAndPersistPreference() = runTest {
+    fun onCameraPermissionResult_shouldUpdateUiStateAndPersistPreference() = runTest {
         viewModel.uiState.test {
             val initial = awaitItem()
             assertThat(initial.isCameraPermissionAskedBefore).isNull()
@@ -313,7 +361,12 @@ class QrScannerViewModelTest {
             val loaded = awaitItem()
             assertThat(loaded.isCameraPermissionAskedBefore).isFalse()
 
-            viewModel.onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
+            viewModel.onAction(
+                QrScannerScreenAction.OnCameraPermissionResult(
+                    isGranted = true,
+                    canAskAgain = false,
+                ),
+            )
 
             val updated = awaitItem()
             assertThat(updated.isCameraPermissionAskedBefore).isTrue()
@@ -407,4 +460,13 @@ class QrScannerViewModelTest {
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.QR_SCANNER_UNSUPPORTED_DIALOG_DISMISS))
             .isTrue()
     }
+
+    private fun permanentlyDeniedResult() = QrScannerScreenAction.OnCameraPermissionResult(
+        isGranted = false,
+        canAskAgain = false,
+    )
+
+    private fun loggedPermissionOutcome(): Any? = analyticsHelper.loggedEvents
+        .first { it.key == AnalyticsKey.CAMERA_PERMISSION_RESULT }
+        .params[AnalyticsParam.RESULT.paramName]
 }

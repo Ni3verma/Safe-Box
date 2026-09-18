@@ -37,6 +37,7 @@ enum class AnalyticsKey(val eventName: String) {
     CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK("camera_perm_dialog_allow_click"),
     CAMERA_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK("camera_perm_dialog_cancel_click"),
     CAMERA_PERMISSION_SETTINGS_OPEN_CLICK("camera_perm_settings_open_click"),
+    CAMERA_PERMISSION_RESULT("camera_perm_result"),
     QR_SCANNER_SHOW("qr_scanner_show"),
     QR_SCANNER_TORCH_TOGGLE("qr_scanner_torch_toggle"),
     QR_SCANNER_SUCCESS("qr_scanner_success"),

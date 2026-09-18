@@ -160,25 +160,23 @@ fun QrScannerScreen(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             hasCameraPermission = isGranted
-            onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
             if (!isGranted) {
                 Timber.w("Camera permission denied by user")
-                // Only the permanently denied case needs handling here, and only because Allow
-                // becomes a silent no-op once the system stops prompting, leaving app settings
-                // as the sole recovery. A denial that can still be retried needs nothing: the
-                // user said no, so nothing is re-asked until they act again.
-                //
-                // Read after the denial rather than before the request. Beforehand, false is
-                // ambiguous between "never asked" and "permanently denied", which is why a
-                // permission revoked from system settings used to read as permanently denied.
-                val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
-                    context.findActivity(),
-                    Manifest.permission.CAMERA,
-                )
-                if (!canAskAgain) {
-                    onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
-                }
             }
+            // Read after the denial rather than before the request. Beforehand, false is
+            // ambiguous between "never asked" and "permanently denied", which is why a permission
+            // revoked from system settings used to read as permanently denied. Granted results
+            // report false too, hence the guard.
+            val canAskAgain = !isGranted && ActivityCompat.shouldShowRequestPermissionRationale(
+                context.findActivity(),
+                Manifest.permission.CAMERA,
+            )
+            onAction(
+                QrScannerScreenAction.OnCameraPermissionResult(
+                    isGranted = isGranted,
+                    canAskAgain = canAskAgain,
+                ),
+            )
         },
     )
 

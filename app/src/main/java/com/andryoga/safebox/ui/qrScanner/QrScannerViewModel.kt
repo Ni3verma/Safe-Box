@@ -149,11 +149,6 @@ class QrScannerViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)
             }
 
-            QrScannerScreenAction.OnCameraPermissionPermanentlyDenied -> {
-                _isPermissionPermanentlyDenied.value = true
-                showPermissionRationale()
-            }
-
             QrScannerScreenAction.OnOpenAppSettingsClicked -> {
                 _showPermissionRationale.value = false
                 analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)
@@ -164,13 +159,23 @@ class QrScannerViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK)
             }
 
-            QrScannerScreenAction.OnInitialCameraPermissionRequested -> {
+            is QrScannerScreenAction.OnCameraPermissionResult -> {
                 _isCameraPermissionAskedBefore.value = true
                 viewModelScope.launch(dispatchersProvider.io) {
                     preferenceProvider.upsertBooleanPref(
                         CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE,
                         true,
                     )
+                }
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RESULT) {
+                    param(
+                        AnalyticsParam.RESULT,
+                        toPermissionOutcome(action.isGranted, action.canAskAgain),
+                    )
+                }
+                if (!action.isGranted && !action.canAskAgain) {
+                    _isPermissionPermanentlyDenied.value = true
+                    showPermissionRationale()
                 }
             }
         }
@@ -188,6 +193,22 @@ class QrScannerViewModel @Inject constructor(
         if (_showPermissionRationale.value) return
         _showPermissionRationale.value = true
         analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+    }
+
+    /**
+     * Flattens a permission result into the three outcomes worth measuring separately.
+     *
+     * A retryable denial can still be recovered by asking again, while a permanent one can only
+     * be recovered from system settings, so they are reported apart rather than as one denial.
+     *
+     * @param isGranted Whether the permission was granted.
+     * @param canAskAgain Whether the system will still show a prompt on a further request.
+     * @return Stable snake case identifier for the outcome.
+     */
+    private fun toPermissionOutcome(isGranted: Boolean, canAskAgain: Boolean): String = when {
+        isGranted -> "granted"
+        canAskAgain -> "denied"
+        else -> "permanently_denied"
     }
 }
 
