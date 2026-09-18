@@ -163,18 +163,19 @@ fun QrScannerScreen(
             onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
             if (!isGranted) {
                 Timber.w("Camera permission denied by user")
+                // Only the permanently denied case needs handling here, and only because Allow
+                // becomes a silent no-op once the system stops prompting, leaving app settings
+                // as the sole recovery. A denial that can still be retried needs nothing: the
+                // user said no, so nothing is re-asked until they act again.
+                //
                 // Read after the denial rather than before the request. Beforehand, false is
                 // ambiguous between "never asked" and "permanently denied", which is why a
                 // permission revoked from system settings used to read as permanently denied.
-                // After a denial, true means the user can still be prompted and false means
-                // they cannot, whether the system refused to prompt or this was the final refusal.
                 val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
                     context.findActivity(),
                     Manifest.permission.CAMERA,
                 )
-                if (canAskAgain) {
-                    onAction(QrScannerScreenAction.OnShowPermissionRationale)
-                } else {
+                if (!canAskAgain) {
                     onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
                 }
             }
