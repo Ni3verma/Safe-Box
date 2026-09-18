@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -125,19 +124,13 @@ fun SingleRecordScreen(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                val weightOfEachField = remember(uiState.viewMode) {
-                    val visibleFields = fields.count {
-                        val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
-                        fieldUiState != null && fieldUiState.isVisibleIn(uiState.viewMode)
-                    }
-                    if (visibleFields == 0) {
-                        // the whole row is hidden, so nothing is laid out and the weight is
-                        // never actually used.
-                        1F
-                    } else {
-                        1F / visibleFields
-                    }
+                val visibleFields = fields.count {
+                    val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
+                    fieldUiState != null && fieldUiState.isVisibleIn(uiState.viewMode)
                 }
+                // counting one or two cells is cheaper than memoising it, and recomputing keeps
+                // the weight honest if a cell ever becomes visible based on its data.
+                val weightOfEachField = if (visibleFields == 0) 1F else 1F / visibleFields
 
                 fields.forEachIndexed { columnIndex, field ->
                     val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
