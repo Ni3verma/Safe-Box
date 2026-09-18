@@ -209,6 +209,25 @@ class TotpUriParserTest {
         assertThat(parsed.title).isEqualTo("user@gmail.com")
     }
 
+    @Test
+    fun parse_withIssuerDifferentFromLabelPrefix_keepsBothNames() {
+        // issuers that rebrand leave the old name in the label prefix, and dropping either one
+        // would leave two accounts looking identical in the records list.
+        val uri = "otpauth://totp/OldBrand:alex@gmail.com" +
+            "?secret=JBSWY3DPEHPK3PXP&issuer=NewBrand"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("NewBrand (OldBrand) - alex@gmail.com")
+    }
+
+    @Test
+    fun parse_withIssuerMatchingLabelPrefixInDifferentCase_doesNotRepeatTheName() {
+        val uri = "otpauth://totp/GOOGLE:alex@gmail.com?secret=JBSWY3DPEHPK3PXP&issuer=Google"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("Google - alex@gmail.com")
+    }
+
     private fun parseSuccessfully(uri: String): ParsedTotpData {
         val result = TotpUriParser.parse(uri)
 
