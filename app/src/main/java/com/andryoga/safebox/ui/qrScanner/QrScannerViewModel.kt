@@ -28,6 +28,7 @@ import javax.inject.Inject
  * @param analyticsHelper Injected analytics logger for tracking user actions.
  * @param preferenceProvider Injected preference store to track permission request history.
  * @param dispatchersProvider Injected coroutine dispatcher abstraction for predictable virtual-time testing.
+ * @param scannedTotpHolder Hand-off used to carry a successful scan to the create-record screen.
  */
 @HiltViewModel
 class QrScannerViewModel @Inject constructor(
@@ -35,6 +36,7 @@ class QrScannerViewModel @Inject constructor(
     private val analyticsHelper: AnalyticsHelper,
     private val preferenceProvider: PreferenceProvider,
     private val dispatchersProvider: DispatchersProvider,
+    private val scannedTotpHolder: ScannedTotpHolder,
 ) : ViewModel() {
 
     private val _isTorchEnabled = MutableStateFlow(false)
@@ -88,6 +90,7 @@ class QrScannerViewModel @Inject constructor(
             }
 
             is QrScannerScreenAction.OnQrCodeScanned -> {
+                scannedTotpHolder.put(action.totpData)
                 analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_SUCCESS)
             }
 

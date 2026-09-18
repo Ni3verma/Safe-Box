@@ -8,6 +8,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.common.truth.Truth.assertThat
@@ -28,6 +29,7 @@ class QrScannerViewModelTest {
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var fakePreferenceProvider: FakePreferenceProvider
     private lateinit var mockBarcodeScanner: BarcodeScanner
+    private lateinit var scannedTotpHolder: ScannedTotpHolder
     private lateinit var viewModel: QrScannerViewModel
 
     @Before
@@ -35,11 +37,13 @@ class QrScannerViewModelTest {
         analyticsHelper = FakeAnalyticsHelper()
         fakePreferenceProvider = FakePreferenceProvider()
         mockBarcodeScanner = mockk(relaxed = true)
+        scannedTotpHolder = ScannedTotpHolder()
         viewModel = QrScannerViewModel(
             barcodeScanner = mockBarcodeScanner,
             analyticsHelper = analyticsHelper,
             preferenceProvider = fakePreferenceProvider,
             dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
+            scannedTotpHolder = scannedTotpHolder,
         )
     }
 
@@ -90,6 +94,23 @@ class QrScannerViewModelTest {
         viewModel.onAction(QrScannerScreenAction.OnQrCodeScanned(dummyData))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.QR_SCANNER_SUCCESS)).isTrue()
+    }
+
+    @Test
+    fun onQrCodeScanned_shouldHandScannedDataToHolderWithIssuerParameters() {
+        val dummyData = ParsedTotpData(
+            title = "GitHub",
+            config = TotpConfig(
+                secretKey = "JBSWY3DPEHPK3PXP",
+                algorithm = TotpAlgorithm.SHA512,
+                digits = 8,
+                period = 60,
+            ),
+        )
+
+        viewModel.onAction(QrScannerScreenAction.OnQrCodeScanned(dummyData))
+
+        assertThat(scannedTotpHolder.consume()).isEqualTo(dummyData)
     }
 
     @Test
@@ -185,6 +206,7 @@ class QrScannerViewModelTest {
             analyticsHelper = analyticsHelper,
             preferenceProvider = prefProvider,
             dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
+            scannedTotpHolder = scannedTotpHolder,
         )
         vm.uiState.test {
             val initial = awaitItem()

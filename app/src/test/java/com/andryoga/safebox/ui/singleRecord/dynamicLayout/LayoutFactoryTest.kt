@@ -7,6 +7,9 @@ import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpConfig
+import com.andryoga.safebox.ui.qrScanner.ScannedTotpHolder
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.AuthenticatorLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
@@ -36,17 +39,27 @@ class LayoutFactoryTest {
     private val lazyNoteRepo: Lazy<SecureNoteDataRepository> = mockk()
     private val lazyAuthenticatorRepo: Lazy<AuthenticatorDataRepository> = mockk()
     private val lazyTotpGenerator: Lazy<TotpGenerator> = mockk()
+    private val lazyScannedTotpHolder: Lazy<ScannedTotpHolder> = mockk()
 
+    private val scannedData = ParsedTotpData(
+        title = "Google - alex@gmail.com",
+        config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"),
+    )
+
+    private lateinit var scannedTotpHolder: ScannedTotpHolder
     private lateinit var layoutFactory: LayoutFactory
 
     @Before
     fun setUp() {
+        scannedTotpHolder = ScannedTotpHolder()
+
         every { lazyLoginRepo.get() } returns loginRepo
         every { lazyBankAccountRepo.get() } returns bankAccountRepo
         every { lazyBankCardRepo.get() } returns bankCardRepo
         every { lazyNoteRepo.get() } returns noteRepo
         every { lazyAuthenticatorRepo.get() } returns authenticatorRepo
         every { lazyTotpGenerator.get() } returns totpGenerator
+        every { lazyScannedTotpHolder.get() } returns scannedTotpHolder
 
         layoutFactory = LayoutFactory(
             loginDataRepository = lazyLoginRepo,
@@ -55,6 +68,7 @@ class LayoutFactoryTest {
             noteDataRepository = lazyNoteRepo,
             authenticatorDataRepository = lazyAuthenticatorRepo,
             totpGenerator = lazyTotpGenerator,
+            scannedTotpHolder = lazyScannedTotpHolder,
         )
     }
 
@@ -91,6 +105,33 @@ class LayoutFactoryTest {
         val layout = layoutFactory.getLayout(505, RecordType.AUTHENTICATOR)
 
         assertThat(layout).isInstanceOf(AuthenticatorLayoutImpl::class.java)
+    }
+
+    @Test
+    fun getLayout_newAuthenticatorRecord_consumesScannedData() {
+        scannedTotpHolder.put(scannedData)
+
+        layoutFactory.getLayout(null, RecordType.AUTHENTICATOR)
+
+        assertThat(scannedTotpHolder.consume()).isNull()
+    }
+
+    @Test
+    fun getLayout_existingAuthenticatorRecord_leavesScannedDataUntouched() {
+        scannedTotpHolder.put(scannedData)
+
+        layoutFactory.getLayout(505, RecordType.AUTHENTICATOR)
+
+        assertThat(scannedTotpHolder.consume()).isEqualTo(scannedData)
+    }
+
+    @Test
+    fun getLayout_nonAuthenticatorRecordType_leavesScannedDataUntouched() {
+        scannedTotpHolder.put(scannedData)
+
+        layoutFactory.getLayout(null, RecordType.LOGIN)
+
+        assertThat(scannedTotpHolder.consume()).isEqualTo(scannedData)
     }
 
     @Test

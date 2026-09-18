@@ -7,6 +7,7 @@ import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.ui.qrScanner.ScannedTotpHolder
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.AuthenticatorLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
@@ -23,6 +24,7 @@ class LayoutFactory @Inject constructor(
     private val noteDataRepository: Lazy<SecureNoteDataRepository>,
     private val authenticatorDataRepository: Lazy<AuthenticatorDataRepository>,
     private val totpGenerator: Lazy<TotpGenerator>,
+    private val scannedTotpHolder: Lazy<ScannedTotpHolder>,
 ) {
     /**
      * Returns the layout for the given record type. Data is pre filled if recordId is passed as well
@@ -48,6 +50,13 @@ class LayoutFactory @Inject constructor(
                 recordId,
                 authenticatorDataRepository.get(),
                 totpGenerator.get(),
+                // only a record being created can come from a scan, so an existing record must
+                // never drain the hand-off and lose a scan the user is still on their way to save.
+                scannedTotpData = if (recordId == null) {
+                    scannedTotpHolder.get().consume()
+                } else {
+                    null
+                },
             )
         }
     }
