@@ -163,14 +163,18 @@ fun QrScannerScreen(
             onAction(QrScannerScreenAction.OnInitialCameraPermissionRequested)
             if (!isGranted) {
                 Timber.w("Camera permission denied by user")
-                // Immediately after a denial this flag is false only when the system refused to
-                // prompt at all. Reading it before requesting cannot tell a permanent denial
-                // apart from a fresh install or a permission revoked from system settings.
+                // Read after the denial rather than before the request. Beforehand, false is
+                // ambiguous between "never asked" and "permanently denied", which is why a
+                // permission revoked from system settings used to read as permanently denied.
+                // After a denial, true means the user can still be prompted and false means
+                // they cannot, whether the system refused to prompt or this was the final refusal.
                 val canAskAgain = ActivityCompat.shouldShowRequestPermissionRationale(
                     context.findActivity(),
                     Manifest.permission.CAMERA,
                 )
-                if (!canAskAgain) {
+                if (canAskAgain) {
+                    onAction(QrScannerScreenAction.OnShowPermissionRationale)
+                } else {
                     onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
                 }
             }
@@ -309,7 +313,10 @@ private fun QrCameraPreview(
     }
 
     LaunchedEffect(camera) {
-        currentOnCameraBound(camera?.cameraInfo?.hasFlashUnit() == true)
+        // Only report a bound camera. Reporting false while camera is still null would drop the
+        // torch control on first composition and again on every configuration change.
+        val boundCamera = camera ?: return@LaunchedEffect
+        currentOnCameraBound(boundCamera.cameraInfo.hasFlashUnit())
     }
 
     LaunchedEffect(isTorchEnabled, camera) {
@@ -592,6 +599,26 @@ private fun QrScannerScreenPreview() {
         Surface {
             QrScannerViewfinderContent(
                 uiState = QrScannerUiState(isTorchEnabled = false, hasFlashUnit = true),
+                onClose = {},
+                onToggleTorch = {},
+                onEnterKeyManually = {},
+                onPermissionRationaleAllow = {},
+                onPermissionRationaleOpenSettings = {},
+                onPermissionRationaleCancel = {},
+                onPermissionRationaleDismiss = {},
+                onUnsupportedQrCodeDismiss = {},
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun QrScannerScreenPreviewWithoutFlash() {
+    SafeBoxTheme {
+        Surface {
+            QrScannerViewfinderContent(
+                uiState = QrScannerUiState(isTorchEnabled = false, hasFlashUnit = false),
                 onClose = {},
                 onToggleTorch = {},
                 onEnterKeyManually = {},

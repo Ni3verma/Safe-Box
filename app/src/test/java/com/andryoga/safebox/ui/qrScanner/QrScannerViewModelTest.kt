@@ -149,6 +149,28 @@ class QrScannerViewModelTest {
     }
 
     @Test
+    fun onShowPermissionRationale_whenAlreadyVisible_shouldLogShowEventOnlyOnce() {
+        viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
+        viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
+        viewModel.onAction(QrScannerScreenAction.OnCameraPermissionPermanentlyDenied)
+
+        assertThat(viewModel.showPermissionRationale.value).isTrue()
+        assertThat(analyticsHelper.count(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW))
+            .isEqualTo(1)
+    }
+
+    @Test
+    fun onShowPermissionRationale_afterDismissal_shouldLogShowEventAgain() {
+        viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
+        viewModel.onAction(QrScannerScreenAction.OnPermissionRationaleDismissed)
+
+        viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
+
+        assertThat(analyticsHelper.count(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW))
+            .isEqualTo(2)
+    }
+
+    @Test
     fun onPermissionRationaleAllowClicked_shouldDismissDialogAndLogAllowClick() {
         viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
 

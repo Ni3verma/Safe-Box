@@ -137,8 +137,7 @@ class QrScannerViewModel @Inject constructor(
             }
 
             QrScannerScreenAction.OnShowPermissionRationale -> {
-                _showPermissionRationale.value = true
-                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+                showPermissionRationale()
             }
 
             QrScannerScreenAction.OnPermissionRationaleDismissed -> {
@@ -152,8 +151,7 @@ class QrScannerViewModel @Inject constructor(
 
             QrScannerScreenAction.OnCameraPermissionPermanentlyDenied -> {
                 _isPermissionPermanentlyDenied.value = true
-                _showPermissionRationale.value = true
-                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+                showPermissionRationale()
             }
 
             QrScannerScreenAction.OnOpenAppSettingsClicked -> {
@@ -176,6 +174,20 @@ class QrScannerViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Shows the rationale dialog, logging the analytics event only when it was not already
+     * visible.
+     *
+     * A single denial can reach here from more than one trigger, such as the permission result
+     * and the screen resuming once the system prompt closes, so the event counts dialog
+     * appearances rather than requests to show it.
+     */
+    private fun showPermissionRationale() {
+        if (_showPermissionRationale.value) return
+        _showPermissionRationale.value = true
+        analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
     }
 }
 
