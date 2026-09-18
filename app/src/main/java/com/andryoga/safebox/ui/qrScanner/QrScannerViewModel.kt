@@ -42,10 +42,14 @@ class QrScannerViewModel @Inject constructor(
     private val _isTorchEnabled = MutableStateFlow(false)
     val isTorchEnabled: StateFlow<Boolean> = _isTorchEnabled.asStateFlow()
 
+    private val _hasFlashUnit = MutableStateFlow(false)
+
     private val _showPermissionRationale = MutableStateFlow(false)
     val showPermissionRationale: StateFlow<Boolean> = _showPermissionRationale.asStateFlow()
 
     private val _isCameraPermissionAskedBefore = MutableStateFlow<Boolean?>(null)
+
+    private val _isPermissionPermanentlyDenied = MutableStateFlow(false)
 
     private val _unsupportedQrError = MutableStateFlow<TotpUriError?>(null)
 
@@ -58,16 +62,21 @@ class QrScannerViewModel @Inject constructor(
         }
     }
 
+    // The torch pair is pre-combined because combine only has typed overloads up to five flows.
     val uiState: StateFlow<QrScannerUiState> = combine(
-        _isTorchEnabled,
+        combine(_isTorchEnabled, _hasFlashUnit, ::Pair),
         _showPermissionRationale,
         _isCameraPermissionAskedBefore,
+        _isPermissionPermanentlyDenied,
         _unsupportedQrError,
-    ) { isTorchEnabled, showRationale, isAskedBefore, unsupportedQrError ->
+    ) { torch, showRationale, isAskedBefore, isPermanentlyDenied, unsupportedQrError ->
+        val (isTorchEnabled, hasFlashUnit) = torch
         QrScannerUiState(
             isTorchEnabled = isTorchEnabled,
+            hasFlashUnit = hasFlashUnit,
             showPermissionRationale = showRationale,
             isCameraPermissionAskedBefore = isAskedBefore,
+            isPermissionPermanentlyDenied = isPermanentlyDenied,
             unsupportedQrError = unsupportedQrError,
         )
     }.stateIn(
@@ -75,6 +84,11 @@ class QrScannerViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = QrScannerUiState(),
     )
+
+    override fun onCleared() {
+        super.onCleared()
+        barcodeScanner.close()
+    }
 
     fun onAction(action: QrScannerScreenAction) {
         when (action) {
@@ -87,6 +101,14 @@ class QrScannerViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.QR_SCANNER_TORCH_TOGGLE) {
                     param(AnalyticsParam.IS_ENABLED, _isTorchEnabled.value)
                 }
+            }
+
+            is QrScannerScreenAction.OnCameraBound -> {
+                _hasFlashUnit.value = action.hasFlashUnit
+            }
+
+            is QrScannerScreenAction.OnTorchStateChanged -> {
+                _isTorchEnabled.value = action.isEnabled
             }
 
             is QrScannerScreenAction.OnQrCodeScanned -> {
@@ -115,21 +137,21 @@ class QrScannerViewModel @Inject constructor(
             }
 
             QrScannerScreenAction.OnShowPermissionRationale -> {
-                _showPermissionRationale.value = true
-                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+                showPermissionRationale()
             }
 
             QrScannerScreenAction.OnPermissionRationaleDismissed -> {
                 _showPermissionRationale.value = false
             }
 
-            is QrScannerScreenAction.OnPermissionRationaleAllowClicked -> {
+            QrScannerScreenAction.OnPermissionRationaleAllowClicked -> {
                 _showPermissionRationale.value = false
-                if (action.isRedirectingToSettings) {
-                    analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)
-                } else {
-                    analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)
-                }
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_ALLOW_CLICK)
+            }
+
+            QrScannerScreenAction.OnOpenAppSettingsClicked -> {
+                _showPermissionRationale.value = false
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_SETTINGS_OPEN_CLICK)
             }
 
             QrScannerScreenAction.OnPermissionRationaleCancelClicked -> {
@@ -137,7 +159,7 @@ class QrScannerViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK)
             }
 
-            QrScannerScreenAction.OnInitialCameraPermissionRequested -> {
+            is QrScannerScreenAction.OnCameraPermissionResult -> {
                 _isCameraPermissionAskedBefore.value = true
                 viewModelScope.launch(dispatchersProvider.io) {
                     preferenceProvider.upsertBooleanPref(
@@ -145,8 +167,49 @@ class QrScannerViewModel @Inject constructor(
                         true,
                     )
                 }
+                analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RESULT) {
+                    param(
+                        AnalyticsParam.RESULT,
+                        toPermissionOutcome(action.isGranted, action.canAskAgain),
+                    )
+                }
+                val isPermanentlyDenied = !action.isGranted && !action.canAskAgain
+                _isPermissionPermanentlyDenied.value = isPermanentlyDenied
+                if (isPermanentlyDenied) {
+                    showPermissionRationale()
+                }
             }
         }
+    }
+
+    /**
+     * Shows the rationale dialog, logging the analytics event only when it was not already
+     * visible.
+     *
+     * A single denial can reach here from more than one trigger, such as the permission result
+     * and the screen resuming once the system prompt closes, so the event counts dialog
+     * appearances rather than requests to show it.
+     */
+    private fun showPermissionRationale() {
+        if (_showPermissionRationale.value) return
+        _showPermissionRationale.value = true
+        analyticsHelper.logEvent(AnalyticsKey.CAMERA_PERMISSION_RATIONALE_DIALOG_SHOW)
+    }
+
+    /**
+     * Flattens a permission result into the three outcomes worth measuring separately.
+     *
+     * A retryable denial can still be recovered by asking again, while a permanent one can only
+     * be recovered from system settings, so they are reported apart rather than as one denial.
+     *
+     * @param isGranted Whether the permission was granted.
+     * @param canAskAgain Whether the system will still show a prompt on a further request.
+     * @return Stable snake case identifier for the outcome.
+     */
+    private fun toPermissionOutcome(isGranted: Boolean, canAskAgain: Boolean): String = when {
+        isGranted -> "granted"
+        canAskAgain -> "denied"
+        else -> "permanently_denied"
     }
 }
 

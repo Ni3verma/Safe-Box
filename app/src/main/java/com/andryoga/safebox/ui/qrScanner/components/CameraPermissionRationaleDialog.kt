@@ -1,9 +1,5 @@
 package com.andryoga.safebox.ui.qrScanner.components
 
-import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,19 +27,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.core.app.ActivityCompat
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.findActivity
-import timber.log.Timber
 
 /**
  * Dialog displaying a rationale explaining why Safe-Box requires camera access
  * to scan authenticator QR codes.
  *
- * @param onAllowClick Callback invoked when user confirms permission request, with flag indicating
- * whether user is redirected to Settings (if permanently denied).
+ * @param isPermanentlyDenied Whether a request was already denied by the system without showing a
+ * prompt. When true the confirm button offers app settings, because re-requesting is a no-op.
+ * @param onAllowClick Callback invoked when the user asks to be prompted for the permission.
+ * @param onOpenSettingsClick Callback invoked when the user chooses to fix the permission from
+ * the system app settings page.
  * @param onCancelClick Callback invoked when user declines or cancels the dialog.
  * @param dismissDialogAction Action invoked to dismiss the dialog without taking further action.
  */
@@ -52,12 +47,12 @@ import timber.log.Timber
 // TODO: Extract common PermissionRationaleDialog base component to share layout between CameraPermissionRationaleDialog and NotificationPermissionRationaleDialog
 @Composable
 fun CameraPermissionRationaleDialog(
-    onAllowClick: (isRedirectingToSettings: Boolean) -> Unit,
+    isPermanentlyDenied: Boolean,
+    onAllowClick: () -> Unit,
+    onOpenSettingsClick: () -> Unit,
     onCancelClick: () -> Unit,
     dismissDialogAction: () -> Unit,
 ) {
-    val context = LocalContext.current
-
     Dialog(
         onDismissRequest = { dismissDialogAction() },
         properties = DialogProperties(
@@ -114,39 +109,19 @@ fun CameraPermissionRationaleDialog(
                         Text(stringResource(R.string.common_cancel))
                     }
                     Button(
-                        onClick = {
-                            val activity = try {
-                                context.findActivity()
-                            } catch (_: Exception) {
-                                null
-                            }
-
-                            val shouldShowRationale = activity?.let {
-                                ActivityCompat.shouldShowRequestPermissionRationale(
-                                    it,
-                                    Manifest.permission.CAMERA,
-                                )
-                            } ?: false
-
-                            dismissDialogAction()
-                            if (shouldShowRationale) {
-                                Timber.i("Requesting camera permission via system dialog")
-                                onAllowClick(false)
-                            } else {
-                                onAllowClick(true)
-                                Timber.i("Opening application details settings for camera permission")
-                                val intent =
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = Uri.fromParts("package", context.packageName, null)
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                context.startActivity(intent)
-                            }
-                        },
+                        onClick = if (isPermanentlyDenied) onOpenSettingsClick else onAllowClick,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                     ) {
-                        Text(stringResource(R.string.allow))
+                        Text(
+                            stringResource(
+                                if (isPermanentlyDenied) {
+                                    R.string.open_settings
+                                } else {
+                                    R.string.allow
+                                },
+                            ),
+                        )
                     }
                 }
             }
@@ -159,7 +134,23 @@ fun CameraPermissionRationaleDialog(
 private fun CameraPermissionRationaleDialogPreview() {
     SafeBoxTheme {
         CameraPermissionRationaleDialog(
+            isPermanentlyDenied = false,
             onAllowClick = {},
+            onOpenSettingsClick = {},
+            onCancelClick = {},
+            dismissDialogAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun CameraPermissionRationaleDialogPermanentlyDeniedPreview() {
+    SafeBoxTheme {
+        CameraPermissionRationaleDialog(
+            isPermanentlyDenied = true,
+            onAllowClick = {},
+            onOpenSettingsClick = {},
             onCancelClick = {},
             dismissDialogAction = {},
         )
