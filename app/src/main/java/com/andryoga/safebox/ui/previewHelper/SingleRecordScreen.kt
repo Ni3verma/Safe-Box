@@ -9,6 +9,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldType
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 
 fun getLoginLayoutPlan(withData: Boolean = false): LayoutPlan {
     return LayoutPlan(
@@ -50,13 +51,13 @@ fun getLoginLayoutPlan(withData: Boolean = false): LayoutPlan {
             ),
             FieldId.CREATION_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
             ),
             FieldId.UPDATE_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
             )
@@ -134,13 +135,13 @@ fun getBankAccountLayoutPlan(withData: Boolean = false): LayoutPlan {
             ),
             FieldId.CREATION_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
             ),
             FieldId.UPDATE_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
             )
@@ -193,13 +194,13 @@ fun getCardLayoutPlan(
         ),
         FieldId.CREATION_DATE to FieldUiState(
             cell = FieldUiState.Cell(
-                label = R.string.created_on, isVisibleOnlyInViewMode = true
+                label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
             ),
             data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
         ),
         FieldId.UPDATE_DATE to FieldUiState(
             cell = FieldUiState.Cell(
-                label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
             ),
             data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
         )
@@ -253,13 +254,13 @@ fun getNoteLayoutPlan(withData: Boolean = false): LayoutPlan {
             ),
             FieldId.CREATION_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
             ),
             FieldId.UPDATE_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
             )
@@ -287,7 +288,7 @@ fun getAuthenticatorLayoutPlan(withData: Boolean = false): LayoutPlan {
             FieldId.AUTHENTICATOR_TOTP_DISPLAY to FieldUiState(
                 cell = FieldUiState.Cell(
                     label = R.string.totp_code,
-                    isVisibleOnlyInViewMode = true,
+                    visibleIn = setOf(ViewMode.VIEW),
                     type = FieldType.Totp(
                         TotpConfig(secretKey = if (withData) "JBSWY3DPEHPK3PXP" else "")
                     )
@@ -300,19 +301,20 @@ fun getAuthenticatorLayoutPlan(withData: Boolean = false): LayoutPlan {
                     label = R.string.secret_key,
                     isMandatory = true,
                     isPasswordField = true,
+                    visibleIn = setOf(ViewMode.NEW),
                     visualTransformation = PasswordVisualTransformation()
                 ),
                 data = if (withData) "JBSWY3DPEHPK3PXP" else ""
             ),
             FieldId.CREATION_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.created_on, isVisibleOnlyInViewMode = true
+                    label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:39 AM" else ""
             ),
             FieldId.UPDATE_DATE to FieldUiState(
                 cell = FieldUiState.Cell(
-                    label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                    label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
                 ),
                 data = if (withData) "Wednesday, 23 Sept 2025 11:40 AM" else ""
             )

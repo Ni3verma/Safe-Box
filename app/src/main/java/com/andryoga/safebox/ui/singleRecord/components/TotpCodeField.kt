@@ -40,12 +40,16 @@ import com.andryoga.safebox.ui.totp.rememberTotpCodeState
  *
  * @param config Seed plus the record's own generation parameters, validated at save time.
  * @param modifier Composable layout modifier.
+ * @param onCopyClick Notifies the caller that the code was copied. The clipboard write stays here
+ * because it needs the Compose clipboard handle; only the event is hoisted so it can be logged
+ * from a unit testable place.
  * @param totpGenerator Stateless RFC 6238 engine. Defaulted so this composable stays previewable
  * and testable without reaching into DI from the composition.
  */
 @Composable
 fun TotpCodeField(
     config: TotpConfig,
+    onCopyClick: () -> Unit,
     modifier: Modifier = Modifier,
     totpGenerator: TotpGenerator = remember { TotpGeneratorImpl() },
 ) {
@@ -61,11 +65,12 @@ fun TotpCodeField(
     }
 
     Column(
-        // TODO: Log AnalyticsKey.AUTHENTICATOR_COPY_CLICK here. Needs an onCopyClick callback
-        //  hoisted up to SingleRecordViewModel so the event stays unit testable.
         modifier = modifier.clickable(
             onClickLabel = stringResource(R.string.cd_copy_totp_code),
-            onClick = { copyToClipboard(label, totpCodeState.code, copiedMessage) },
+            onClick = {
+                copyToClipboard(label, totpCodeState.code, copiedMessage)
+                onCopyClick()
+            },
         ),
     ) {
         Text(
@@ -138,7 +143,7 @@ private fun InvalidSecretKeyField(
 @Composable
 private fun TotpCodeFieldPreview() {
     SafeBoxTheme {
-        TotpCodeField(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"))
+        TotpCodeField(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"), onCopyClick = {})
     }
 }
 
@@ -146,7 +151,10 @@ private fun TotpCodeFieldPreview() {
 @Composable
 private fun TotpCodeFieldEightDigitCodePreview() {
     SafeBoxTheme {
-        TotpCodeField(config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP", digits = 8))
+        TotpCodeField(
+            config = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP", digits = 8),
+            onCopyClick = {},
+        )
     }
 }
 
@@ -154,6 +162,9 @@ private fun TotpCodeFieldEightDigitCodePreview() {
 @Composable
 private fun TotpCodeFieldInvalidSecretPreview() {
     SafeBoxTheme {
-        TotpCodeField(config = TotpConfig(secretKey = "not-a-valid-base32-seed!"))
+        TotpCodeField(
+            config = TotpConfig(secretKey = "not-a-valid-base32-seed!"),
+            onCopyClick = {},
+        )
     }
 }

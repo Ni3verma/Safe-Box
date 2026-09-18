@@ -385,7 +385,7 @@ class SingleRecordScreenTest {
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.created_on,
-                        isVisibleOnlyInViewMode = true
+                        visibleIn = setOf(ViewMode.VIEW)
                     ),
                     data = "12 Jul 2026, 10:00 AM"
                 )

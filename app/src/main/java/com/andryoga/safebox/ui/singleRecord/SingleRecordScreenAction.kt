@@ -13,4 +13,5 @@ sealed interface SingleRecordScreenAction {
     object OnEditClicked : SingleRecordScreenAction
     object OnShareClicked : SingleRecordScreenAction
     object OnDeleteClicked : SingleRecordScreenAction
+    object OnCopyTotpCode : SingleRecordScreenAction
 }
