@@ -9,12 +9,16 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.test.fakes.FakeClipboard
 import com.andryoga.safebox.test.fakes.FakeTotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,6 +34,20 @@ class TotpBadgeTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val clipboard = FakeClipboard()
+
+    @Before
+    fun setup() {
+        // Copying goes through the production rememberCopyToClipboardAction, which schedules the
+        // clipboard clear via WorkManager.getInstance. AndroidManifest removes
+        // WorkManagerInitializer, so without standing WorkManager up here this test would either
+        // resolve a Hilt entry point it never registered, or silently inherit the instance left
+        // behind by whichever Hilt test happened to run earlier in the same process.
+        // SynchronousExecutor also keeps the scheduled clear out of the app's real work database.
+        val configuration = Configuration.Builder()
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+    }
 
     @Test
     fun validSeed_shouldDisplaySplitCodeAndCopyAffordance() {
