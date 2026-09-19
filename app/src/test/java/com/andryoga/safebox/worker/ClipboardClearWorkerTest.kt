@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
 import android.os.PersistableBundle
 import androidx.work.Data
 import androidx.work.ListenableWorker
@@ -100,7 +101,7 @@ class ClipboardClearWorkerTest {
         val result = buildWorker("expected-clip-id").doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) { clipboardManager.setPrimaryClip(any()) }
+        verifyClipboardCleared()
         val event = analyticsHelper.loggedEvents.single()
         assertThat(event.key).isEqualTo(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)
         assertThat(event.params[AnalyticsParam.RESULT.paramName]).isEqualTo("verified")
@@ -130,7 +131,7 @@ class ClipboardClearWorkerTest {
         val result = buildWorker("expected-clip-id").doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) { clipboardManager.setPrimaryClip(any()) }
+        verifyClipboardCleared()
         val event = analyticsHelper.loggedEvents.single()
         assertThat(event.key).isEqualTo(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)
         assertThat(event.params[AnalyticsParam.RESULT.paramName]).isEqualTo("unverified")
@@ -143,9 +144,17 @@ class ClipboardClearWorkerTest {
         val result = buildWorker("expected-clip-id").doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) { clipboardManager.setPrimaryClip(any()) }
+        verifyClipboardCleared()
         val event = analyticsHelper.loggedEvents.single()
         assertThat(event.key).isEqualTo(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)
         assertThat(event.params[AnalyticsParam.RESULT.paramName]).isEqualTo("unverified")
+    }
+
+    private fun verifyClipboardCleared() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            verify(exactly = 1) { clipboardManager.clearPrimaryClip() }
+        } else {
+            verify(exactly = 1) { clipboardManager.setPrimaryClip(any()) }
+        }
     }
 }
