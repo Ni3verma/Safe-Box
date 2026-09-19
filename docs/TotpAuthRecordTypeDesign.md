@@ -105,8 +105,9 @@ flowchart TD
 ```
 
 `rememberTotpCodeState` holds the ticker and the derivation, and is shared by `TotpBadge` in the
-list and `TotpCodeField` on the detail screen, so both surfaces can never disagree about the current
-code. Only the badge recomposes each second; the list itself does not.
+list and `TotpCodeField` on the detail screen, so both surfaces derive the code the same way and
+align to the same time step. Each call site still runs its own ticker. Only the badge recomposes
+each second; the list itself does not.
 
 ---
 
@@ -212,14 +213,18 @@ It also overrides `checkMandatoryFields` to additionally require a decodable Bas
 
 ### Supported Key URI parameters
 
-Anything outside this table is rejected with a specific
+A parameter below that is **present with an unsupported value** is rejected with a specific
 [TotpUriError](../app/src/main/java/com/andryoga/safebox/totp/models/TotpUriError.kt) and explained
-to the user, rather than being silently coerced.
+to the user, rather than being silently coerced. A query key that is not in this table is ignored:
+the Key URI spec lets an issuer add its own, and rejecting those would fail QR codes that are
+otherwise perfectly usable.
 
 | Parameter   | Accepted                                                          | Default when absent |
 |-------------|-------------------------------------------------------------------|---------------------|
 | type        | `totp` only; `hotp` is rejected                                     | n/a, required       |
+| label       | Path segment, used as the account part of the title                 | empty title         |
 | `secret`    | Valid RFC 4648 Base32, long enough to decode to at least one byte   | n/a, required       |
+| `issuer`    | Free text, prefixed to the label as `Issuer - Account`              | label alone         |
 | `algorithm` | `SHA1`, `SHA256`, `SHA512`                                          | `SHA1`              |
 | `digits`    | `6`–`8`                                                             | `6`                 |
 | `period`    | Any positive integer                                                | `30`                |
