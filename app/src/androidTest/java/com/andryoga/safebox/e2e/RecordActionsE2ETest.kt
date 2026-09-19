@@ -577,6 +577,7 @@ class RecordActionsE2ETest {
             E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.totp_code))
             composeTestRule.onNodeWithText(context.getString(R.string.totp_code))
                 .assertIsDisplayed()
+            composeTestRule.onNode(E2ETestUtils.hasLiveTotpCode()).assertIsDisplayed()
 
             // the seed is stored on the code field but must only ever leave it as a derived code,
             // and the secret key field itself is create-only.

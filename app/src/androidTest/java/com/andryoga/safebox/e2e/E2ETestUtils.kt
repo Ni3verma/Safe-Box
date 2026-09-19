@@ -6,6 +6,8 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
@@ -58,6 +60,10 @@ object E2ETestUtils {
     const val TEST_MASTER_PASSWORD = "Qwerty@@123"
     const val TEST_MASTER_HINT = "E2E Master Hint"
     const val TEST_TOTP_SECRET_KEY = "JBSWY3DPEHPK3PXP"
+
+    // TotpCodeState splits the six digit code into two halves for readability, e.g. "123 456".
+    private const val TOTP_CODE_PATTERN = "\\d{3} \\d{3}"
+
     val TEST_DATE: Date = Date(1700000000000L)
 
     /**
@@ -559,6 +565,21 @@ object E2ETestUtils {
             .onFirst()
             .performClick()
     }
+
+    /**
+     * Matches a node that renders a live one-time code, in the two-halves form produced by
+     * `TotpCodeState`.
+     *
+     * The real generator derives its output from the wall clock, so an end-to-end test cannot pin
+     * the exact digits without racing the time step rollover. Matching the shape proves the code
+     * was actually derived and drawn, which an assertion on the static label alone cannot.
+     */
+    fun hasLiveTotpCode(): SemanticsMatcher =
+        SemanticsMatcher("renders a formatted one-time code") { node ->
+            node.config.getOrNull(SemanticsProperties.Text)
+                .orEmpty()
+                .any { Regex(TOTP_CODE_PATTERN).matches(it.text) }
+        }
 }
 
 /**

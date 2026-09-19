@@ -529,6 +529,7 @@ class RecordsSearchAndFilterE2ETest {
                 context.getString(R.string.cd_copy_totp_code),
                 useUnmergedTree = true
             ).assertIsDisplayed()
+            composeTestRule.onNode(E2ETestUtils.hasLiveTotpCode()).assertIsDisplayed()
         }
     }
 }
