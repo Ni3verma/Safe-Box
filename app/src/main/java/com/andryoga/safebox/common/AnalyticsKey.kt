@@ -48,4 +48,8 @@ enum class AnalyticsKey(val eventName: String) {
     // logged from both the records list and the record detail screen, told apart by
     // AnalyticsParam.SOURCE. See AnalyticsSource.
     AUTHENTICATOR_COPY_CLICK("authenticator_copy_click"),
+    CLIPBOARD_AUTO_CLEARED("clipboard_auto_cleared"),
+
+    // the clipboard moved on to a clip this app did not write, so it was left untouched.
+    CLIPBOARD_AUTO_CLEAR_SKIPPED("clipboard_auto_clear_skipped"),
 }

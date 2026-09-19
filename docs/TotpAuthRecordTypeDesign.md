@@ -105,8 +105,9 @@ flowchart TD
 ```
 
 `rememberTotpCodeState` holds the ticker and the derivation, and is shared by `TotpBadge` in the
-list and `TotpCodeField` on the detail screen, so both surfaces can never disagree about the current
-code. Only the badge recomposes each second; the list itself does not.
+list and `TotpCodeField` on the detail screen, so both surfaces derive the code the same way and
+align to the same time step. Each call site still runs its own ticker. Only the badge recomposes
+each second; the list itself does not.
 
 ---
 
@@ -209,17 +210,22 @@ It also overrides `checkMandatoryFields` to additionally require a decodable Bas
 | A seed that cannot be decoded is **dropped individually** during restore | One bad authenticator record must never cost the user their logins, cards and notes. |
 | There is **no "scan or type" chooser**; the camera opens directly and manual entry lives inside the scanner | Manual entry is reached from where a user who cannot scan actually is, and it is kept because same-device enrolment is the common case on a phone-only app. |
 | The in-app "copied" snackbar is suppressed on Android 13+ | The system shows its own clipboard overlay from Tiramisu onwards, so showing both is a double confirmation. |
+| Every copy is wiped from the clipboard after a **fixed 30 seconds**, scheduled through WorkManager | A plain coroutine dies with the process, which is exactly when the clear matters: the user copies a code and leaves for another app. The delay is not configurable because a setting for it buys nothing over a sane default. |
 
 ### Supported Key URI parameters
 
-Anything outside this table is rejected with a specific
+A parameter below that is **present with an unsupported value** is rejected with a specific
 [TotpUriError](../app/src/main/java/com/andryoga/safebox/totp/models/TotpUriError.kt) and explained
-to the user, rather than being silently coerced.
+to the user, rather than being silently coerced. A query key that is not in this table is ignored:
+the Key URI spec lets an issuer add its own, and rejecting those would fail QR codes that are
+otherwise perfectly usable.
 
 | Parameter   | Accepted                                                          | Default when absent |
 |-------------|-------------------------------------------------------------------|---------------------|
 | type        | `totp` only; `hotp` is rejected                                     | n/a, required       |
+| label       | Path segment, used as the account part of the title                 | empty title         |
 | `secret`    | Valid RFC 4648 Base32, long enough to decode to at least one byte   | n/a, required       |
+| `issuer`    | Free text, prefixed to the label as `Issuer - Account`              | label alone         |
 | `algorithm` | `SHA1`, `SHA256`, `SHA512`                                          | `SHA1`              |
 | `digits`    | `6`–`8`                                                             | `6`                 |
 | `period`    | Any positive integer                                                | `30`                |
@@ -229,5 +235,8 @@ to the user, rather than being silently coerced.
 * **Codes follow the device clock.** The ticker reads `System.currentTimeMillis()` with no NTP check
   or skew correction, so a device with a wrong clock silently produces codes the server rejects,
   with nothing in the UI explaining why.
-* **A copied code stays on the clipboard** until something else overwrites it. Timed auto-clear is
-  tracked separately because it applies to passwords and card numbers just as much.
+* **The clipboard clear cannot always prove the clip is still ours.** Each clip carries an id the
+  worker matches before wiping, but from Android 10 a backgrounded app cannot read the clipboard at
+  all, so in that case it clears without checking. A value copied from another app inside the 30
+  second window can be wiped along with ours. Skipping instead would disable the feature in the one
+  situation it exists for.

@@ -15,7 +15,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Data
+import androidx.work.ListenableWorker.Result
+import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
@@ -33,6 +37,8 @@ import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.worker.ClipboardClearWorker
+import com.andryoga.safebox.worker.SafeBoxWorkerFactory
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -90,6 +96,9 @@ class RecordActionsE2ETest {
 
     @Inject
     lateinit var activeSessionManager: ActiveSessionManager
+
+    @Inject
+    lateinit var workerFactory: SafeBoxWorkerFactory
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
@@ -659,11 +668,7 @@ class RecordActionsE2ETest {
         E2ETestUtils.launchUnlockedScenario(composeTestRule, context) { scenario ->
             E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
 
-            composeTestRule.onNodeWithContentDescription(
-                context.getString(R.string.cd_copy_totp_code),
-                useUnmergedTree = true
-            ).onParent().performClick()
-            composeTestRule.waitForIdle()
+            copyTotpCodeFromRowBadge()
 
             // Tiramisu and above suppress the in-app confirmation in favour of the system
             // clipboard overlay, so the clipboard itself is the only observable outcome.
@@ -679,5 +684,82 @@ class RecordActionsE2ETest {
             composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
                 .assertIsDisplayed()
         }
+    }
+
+    @Test
+    fun runClipboardClearWorkerAfterCopy_shouldWipeTheCopiedCodeFromTheClipboard() {
+        val targetTitle = "Authenticator Record To Auto Clear"
+        seedUnlockedStateWithAuthenticator(id = 725, title = targetTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) { scenario ->
+            E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
+            copyTotpCodeFromRowBadge()
+
+            var clipId: String? = null
+            scenario.onActivity { activity ->
+                val clipboardManager = activity.getSystemService(ClipboardManager::class.java)
+                clipId = clipboardManager.primaryClipDescription?.extras
+                    ?.getString(CommonConstants.CLIPBOARD_CLIP_ID)
+            }
+            // without the tag the worker could never tell our clip apart from anyone else's.
+            assertThat(clipId).isNotNull()
+
+            assertThat(runClipboardClearWorker(clipId)).isEqualTo(Result.success())
+
+            var remainingText: String? = null
+            scenario.onActivity { activity ->
+                val clipboardManager = activity.getSystemService(ClipboardManager::class.java)
+                remainingText = clipboardManager.primaryClip?.getItemAt(0)?.text?.toString()
+            }
+            assertThat(remainingText).isNull()
+        }
+    }
+
+    @Test
+    fun runClipboardClearWorkerForAnOlderClip_shouldLeaveTheCurrentClipboardUntouched() {
+        val targetTitle = "Authenticator Record To Keep Copied"
+        seedUnlockedStateWithAuthenticator(id = 726, title = targetTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) { scenario ->
+            E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
+            copyTotpCodeFromRowBadge()
+
+            // a clear queued for an earlier copy must not wipe whatever is on the clipboard now,
+            // otherwise the user loses a value they deliberately copied afterwards.
+            assertThat(runClipboardClearWorker("a-stale-clip-id")).isEqualTo(Result.success())
+
+            var remainingText: String? = null
+            scenario.onActivity { activity ->
+                val clipboardManager = activity.getSystemService(ClipboardManager::class.java)
+                remainingText = clipboardManager.primaryClip?.getItemAt(0)?.text?.toString()
+            }
+            assertThat(remainingText).matches("\\d{6}")
+        }
+    }
+
+    private fun copyTotpCodeFromRowBadge() {
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.cd_copy_totp_code),
+            useUnmergedTree = true
+        ).onParent().performClick()
+        composeTestRule.waitForIdle()
+    }
+
+    /**
+     * Runs the clear worker directly instead of waiting out its real initial delay.
+     *
+     * @param clipId Id the worker should treat as the clip it queued the clear for.
+     * @return Worker result, so a caller can assert the run itself did not fail.
+     */
+    private fun runClipboardClearWorker(clipId: String?): Result = runBlocking {
+        TestListenableWorkerBuilder<ClipboardClearWorker>(context)
+            .setInputData(
+                Data.Builder()
+                    .putString(CommonConstants.CLIPBOARD_CLIP_ID, clipId)
+                    .build()
+            )
+            .setWorkerFactory(workerFactory)
+            .build()
+            .doWork()
     }
 }
