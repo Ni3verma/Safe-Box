@@ -91,7 +91,7 @@ fun CameraPermissionRationaleDialog(
                 Text(
                     text = stringResource(R.string.camera_permission_rationale_dialog_body),
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
 
