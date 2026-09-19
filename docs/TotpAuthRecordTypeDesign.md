@@ -210,6 +210,7 @@ It also overrides `checkMandatoryFields` to additionally require a decodable Bas
 | A seed that cannot be decoded is **dropped individually** during restore | One bad authenticator record must never cost the user their logins, cards and notes. |
 | There is **no "scan or type" chooser**; the camera opens directly and manual entry lives inside the scanner | Manual entry is reached from where a user who cannot scan actually is, and it is kept because same-device enrolment is the common case on a phone-only app. |
 | The in-app "copied" snackbar is suppressed on Android 13+ | The system shows its own clipboard overlay from Tiramisu onwards, so showing both is a double confirmation. |
+| Every copy is wiped from the clipboard after a **fixed 30 seconds**, scheduled through WorkManager | A plain coroutine dies with the process, which is exactly when the clear matters: the user copies a code and leaves for another app. The delay is not configurable because a setting for it buys nothing over a sane default. |
 
 ### Supported Key URI parameters
 
@@ -234,5 +235,8 @@ otherwise perfectly usable.
 * **Codes follow the device clock.** The ticker reads `System.currentTimeMillis()` with no NTP check
   or skew correction, so a device with a wrong clock silently produces codes the server rejects,
   with nothing in the UI explaining why.
-* **A copied code stays on the clipboard** until something else overwrites it. Timed auto-clear is
-  tracked separately because it applies to passwords and card numbers just as much.
+* **The clipboard clear cannot always prove the clip is still ours.** Each clip carries an id the
+  worker matches before wiping, but from Android 10 a backgrounded app cannot read the clipboard at
+  all, so in that case it clears without checking. A value copied from another app inside the 30
+  second window can be wiped along with ours. Skipping instead would disable the feature in the one
+  situation it exists for.
