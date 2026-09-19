@@ -373,9 +373,11 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_randomizedRecordsAllTypes_shouldRestore100PercentFieldEquality() {
         runBlocking {
-            val seed = System.currentTimeMillis()
-            val random = kotlin.random.Random(seed)
-            timber.log.Timber.i("Running restoreFromBackup_randomizedRecordsAllTypes with SEED: $seed")
+            // Pinned rather than wall clock derived: this assertion compares a whole round trip,
+            // so a run that goes red is only diagnosable if the exact record set can be recreated.
+            val seed = RANDOMISED_RECORD_SEED
+            val random = Random(seed)
+            Timber.i("Running restoreFromBackup_randomizedRecordsAllTypes with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -828,9 +830,13 @@ class BackupAndRestoreWorkersTest {
     /**
      * Builds an authenticator record whose every generation parameter is randomised.
      *
-     * The seed is drawn from the RFC 4648 Base32 alphabet so the record is one the app would
-     * actually accept, and the algorithm, digit count and period all vary so a round trip that
-     * silently defaulted any of them would fail the equality assertion.
+     * The seed is drawn from the RFC 4648 Base32 alphabet and given a length the encoding can
+     * actually produce, so the record is one the app would accept. Length matters as much as the
+     * alphabet here: Base32Utils.isValidBase32 rejects a seed whose length leaves 1, 3 or 6
+     * characters over a full quantum, and [RestoreDataWorker] then drops such a record on restore
+     * by design, which would fail the round trip assertion for a reason that is not a round trip
+     * defect. The algorithm, digit count and period all vary so a round trip that silently
+     * defaulted any of them would fail the equality assertion.
      *
      * @param id Stable identifier, also used to keep titles unique.
      * @param random Seeded source so a failing run can be reproduced from the logged seed.
@@ -844,7 +850,7 @@ class BackupAndRestoreWorkersTest {
             id = id,
             title = "Authenticator_${id}_${randomFrom(textPool, 6, random)}",
             config = TotpConfig(
-                secretKey = randomFrom(base32Pool, 16 + random.nextInt(17), random),
+                secretKey = randomFrom(base32Pool, REPRESENTABLE_SEED_LENGTHS.random(random), random),
                 algorithm = TotpAlgorithm.entries[random.nextInt(TotpAlgorithm.entries.size)],
                 digits = TotpDefaults.SUPPORTED_DIGITS.random(random),
                 period = 15 + random.nextInt(46),
@@ -852,5 +858,15 @@ class BackupAndRestoreWorkersTest {
             creationDate = Date(1700000000000L + random.nextInt(1000000)),
             updateDate = Date(1700000000000L + random.nextInt(1000000))
         )
+    }
+
+    private companion object {
+        // Any fixed value works, this one is arbitrary. What matters is that it does not change
+        // between runs, so a failure reported from CI can be reproduced locally.
+        private const val RANDOMISED_RECORD_SEED = 20260919L
+
+        // A Base32 quantum is 8 characters and a trailing partial group can only be 2, 4, 5 or 7
+        // of them, so a length leaving 1, 3 or 6 over is one no encoder could ever emit.
+        private val REPRESENTABLE_SEED_LENGTHS = (16..32).filter { it % 8 !in setOf(1, 3, 6) }
     }
 }
