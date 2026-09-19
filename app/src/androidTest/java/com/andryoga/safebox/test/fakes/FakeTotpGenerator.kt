@@ -1,5 +1,6 @@
 package com.andryoga.safebox.test.fakes
 
+import com.andryoga.safebox.totp.engine.Base32Utils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 
@@ -29,5 +30,6 @@ class FakeTotpGenerator(
 
     override fun isValidConfig(config: TotpConfig): Boolean = isValid
 
-    override fun normalizeSecret(secretBase32: String): String = secretBase32.uppercase()
+    // Delegates to the same helper as the real engine so the fake cannot drift from the contract.
+    override fun normalizeSecret(secretBase32: String): String = Base32Utils.sanitize(secretBase32)
 }
