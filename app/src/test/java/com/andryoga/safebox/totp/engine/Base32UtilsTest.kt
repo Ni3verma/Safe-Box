@@ -102,4 +102,26 @@ class Base32UtilsTest {
         assertThat(Base32Utils.sanitize("jbsw y3dp-ehpk3pxp==")).isEqualTo("JBSWY3DPEHPK3PXP")
         assertThat(Base32Utils.sanitize("JBSWY3DPEHPK3PXP")).isEqualTo("JBSWY3DPEHPK3PXP")
     }
+
+    @Test
+    fun isValidBase32_withImpossibleFinalQuantumLength_returnsFalse() {
+        // no Base32 encoder can emit a group of 1, 3 or 6 characters: those bits never complete a
+        // byte, so decode() drops them and the seed silently loses data.
+        assertThat(Base32Utils.isValidBase32("MZX")).isFalse()
+        assertThat(Base32Utils.isValidBase32("MZXW6Y")).isFalse()
+        assertThat(Base32Utils.isValidBase32("MZXW6YTBO")).isFalse()
+        assertThat(Base32Utils.isValidBase32("MZXW6YTBOIQ")).isFalse()
+        assertThat(Base32Utils.isValidBase32("JBSWY3DPEHPK3P")).isFalse()
+    }
+
+    @Test
+    fun isValidBase32_withEveryProducibleFinalQuantumLength_returnsTrue() {
+        assertThat(Base32Utils.isValidBase32("MY")).isTrue()
+        assertThat(Base32Utils.isValidBase32("MZXQ")).isTrue()
+        assertThat(Base32Utils.isValidBase32("MZXW6")).isTrue()
+        assertThat(Base32Utils.isValidBase32("MZXW6YQ")).isTrue()
+        assertThat(Base32Utils.isValidBase32("MZXW6YTB")).isTrue()
+        assertThat(Base32Utils.isValidBase32("MZXW6YTBOI")).isTrue()
+        assertThat(Base32Utils.isValidBase32("JBSWY3DPEHPK3PX")).isTrue()
+    }
 }

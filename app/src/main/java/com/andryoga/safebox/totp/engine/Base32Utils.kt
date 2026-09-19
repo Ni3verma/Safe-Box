@@ -15,6 +15,9 @@ object Base32Utils {
     // contributes 5 bits that decode() discards, returning an empty key the generator cannot use.
     private const val MIN_ENCODED_LENGTH = 2
 
+    // 8 characters carry 40 bits, the smallest whole number of bytes a Base32 group can encode.
+    private const val CHARS_PER_QUANTUM = 8
+
     /**
      * Decodes an RFC 4648 Base32 encoded string into its raw byte representation.
      *
@@ -54,14 +57,22 @@ object Base32Utils {
 
     /**
      * Checks if the provided string contains only valid RFC 4648 Base32 characters after sanitization,
-     * and is long enough to decode into at least one byte.
+     * is long enough to decode into at least one byte, and has a length a Base32 encoder could
+     * actually produce.
      *
      * @param encodedString String to validate.
-     * @return True if valid, false if too short or contains invalid characters.
+     * @return True if valid, false if too short, wrongly sized, or containing invalid characters.
      */
     fun isValidBase32(encodedString: String): Boolean {
         val sanitized = sanitize(encodedString)
         if (sanitized.length < MIN_ENCODED_LENGTH) return false
+        when (sanitized.length % CHARS_PER_QUANTUM) {
+            // A full quantum is 8 characters carrying 5 bytes, so a trailing partial group can only
+            // be 2, 4, 5 or 7 characters. 1, 3 or 6 leftover characters carry bits that cannot
+            // complete a byte, so decode() drops them: such a seed would be accepted and then
+            // silently generate codes the issuer can never match.
+            1, 3, 6 -> return false
+        }
         return sanitized.all { BASE32_CHARS.indexOf(it) != -1 }
     }
 
