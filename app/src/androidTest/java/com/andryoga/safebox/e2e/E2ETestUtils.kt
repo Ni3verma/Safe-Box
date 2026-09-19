@@ -6,6 +6,8 @@ import android.app.Activity
 import android.content.Context
 import android.net.Uri
 import android.view.inputmethod.InputMethodManager
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
@@ -28,12 +30,14 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
@@ -42,6 +46,7 @@ import com.andryoga.safebox.e2e.E2ETestUtils.TEST_MASTER_PASSWORD
 import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import java.util.Date
@@ -54,6 +59,11 @@ object E2ETestUtils {
 
     const val TEST_MASTER_PASSWORD = "Qwerty@@123"
     const val TEST_MASTER_HINT = "E2E Master Hint"
+    const val TEST_TOTP_SECRET_KEY = "JBSWY3DPEHPK3PXP"
+
+    // TotpCodeState splits the six digit code into two halves for readability, e.g. "123 456".
+    private const val TOTP_CODE_PATTERN = "\\d{3} \\d{3}"
+
     val TEST_DATE: Date = Date(1700000000000L)
 
     /**
@@ -132,7 +142,7 @@ object E2ETestUtils {
     }
 
     /**
-     * Pre-seeds the database with comprehensive sample records across all 4 vault item types
+     * Pre-seeds the database with comprehensive sample records across all 5 vault item types
      * to guarantee deterministic testing for search, filter, and detail screens without UI interaction.
      */
     suspend fun setupSeededVaultRecords(
@@ -140,12 +150,14 @@ object E2ETestUtils {
         loginDataRepository: LoginDataRepository,
         bankCardDataRepository: BankCardDataRepository,
         bankAccountDataRepository: BankAccountDataRepository,
-        secureNoteDataRepository: SecureNoteDataRepository
+        secureNoteDataRepository: SecureNoteDataRepository,
+        authenticatorDataRepository: AuthenticatorDataRepository
     ) {
         safeBoxDatabase.loginDataDao().deleteAllData()
         safeBoxDatabase.bankCardDataDao().deleteAllData()
         safeBoxDatabase.bankAccountDataDao().deleteAllData()
         safeBoxDatabase.secureNoteDataDao().deleteAllData()
+        safeBoxDatabase.authenticatorDataDao().deleteAllData()
         loginDataRepository.upsertLoginData(
             LoginData(
                 id = 901,
@@ -194,6 +206,15 @@ object E2ETestUtils {
                 id = 904,
                 title = "Wifi Router Secrets",
                 notes = "SSID: SafeBox_5G\nPassword: SecureWifiPassword#2026\nAdmin IP: 192.168.1.1",
+                creationDate = TEST_DATE,
+                updateDate = TEST_DATE
+            )
+        )
+        authenticatorDataRepository.upsertAuthenticatorData(
+            AuthenticatorData(
+                id = 905,
+                title = "GitHub Authenticator",
+                config = TotpConfig(secretKey = TEST_TOTP_SECRET_KEY),
                 creationDate = TEST_DATE,
                 updateDate = TEST_DATE
             )
@@ -474,6 +495,91 @@ object E2ETestUtils {
             timeoutMillis = timeoutMillis
         )
     }
+
+    /**
+     * Marks the camera permission as already requested once before.
+     *
+     * The scanner only fires the system permission prompt on the very first request, and a system
+     * dialog cannot be driven from Compose. Flagging the permission as previously asked routes the
+     * screen down its in-app rationale branch instead, which keeps the whole journey inside the
+     * Compose semantics tree and is also the state a user who already declined once would be in.
+     */
+    suspend fun setupCameraPermissionAskedState(preferenceProvider: PreferenceProvider) {
+        preferenceProvider.upsertBooleanPref(
+            CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE,
+            true
+        )
+    }
+
+    /**
+     * Opens the QR scanner through the add-record bottom sheet and clears the rationale dialog.
+     *
+     * Requires [setupCameraPermissionAskedState] to have run, because the dialog is only
+     * deterministic on the previously-asked branch.
+     */
+    fun openQrScannerAndDismissRationale(
+        composeTestRule: ComposeTestRule,
+        context: Context
+    ) {
+        clickAddNewRecordOption(
+            composeTestRule,
+            context,
+            R.string.type_display_authenticator
+        )
+        waitForText(composeTestRule, context.getString(R.string.qr_scanner_title))
+        waitForText(
+            composeTestRule,
+            context.getString(R.string.camera_permission_rationale_dialog_heading)
+        )
+        composeTestRule.onNodeWithText(context.getString(R.string.common_cancel)).performClick()
+        composeTestRule.waitForIdle()
+    }
+
+    /**
+     * Walks the full manual-entry fallback: add-record sheet, QR scanner, then the create screen
+     * for a new authenticator record.
+     */
+    fun openAuthenticatorCreateScreenViaManualEntry(
+        composeTestRule: ComposeTestRule,
+        context: Context
+    ) {
+        openQrScannerAndDismissRationale(composeTestRule, context)
+        composeTestRule.onNodeWithText(context.getString(R.string.enter_key_manually))
+            .performClick()
+        // the scanner hides the top app bar, so the Save action reappearing is the signal that the
+        // create screen has taken over.
+        waitForText(composeTestRule, context.getString(R.string.save))
+    }
+
+    /**
+     * Opens a record by tapping its title on the Home [RecordsScreen].
+     *
+     * Deliberately taps the title text rather than the merged row node. An authenticator row's
+     * centre falls inside the 48dp minimum touch target of the live badge's copy button, so
+     * tapping the row centre copies the code instead of opening the record.
+     *
+     * @param title Exact title of the record to open.
+     */
+    fun clickRecordRowByTitle(composeTestRule: ComposeTestRule, title: String) {
+        composeTestRule.onAllNodes(hasText(title), useUnmergedTree = true)
+            .onFirst()
+            .performClick()
+    }
+
+    /**
+     * Matches a node that renders a live one-time code, in the two-halves form produced by
+     * `TotpCodeState`.
+     *
+     * The real generator derives its output from the wall clock, so an end-to-end test cannot pin
+     * the exact digits without racing the time step rollover. Matching the shape proves the code
+     * was actually derived and drawn, which an assertion on the static label alone cannot.
+     */
+    fun hasLiveTotpCode(): SemanticsMatcher =
+        SemanticsMatcher("renders a formatted one-time code") { node ->
+            node.config.getOrNull(SemanticsProperties.Text)
+                .orEmpty()
+                .any { Regex(TOTP_CODE_PATTERN).matches(it.text) }
+        }
 }
 
 /**

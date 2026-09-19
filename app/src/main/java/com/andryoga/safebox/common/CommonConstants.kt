@@ -8,6 +8,7 @@ object CommonConstants {
     const val ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING = "allowed_biometric_login_count_remaining"
     const val IS_NOTIFICATION_PERMISSION_ASKED_BEFORE = "is_notification_permission_asked_before"
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
+    const val IS_CAMERA_PERMISSION_ASKED_BEFORE = "is_camera_permission_asked_before"
 
     //        SHOULD ONLY be user for encrypted shared preference
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
@@ -24,7 +25,8 @@ object CommonConstants {
     const val BANK_ACCOUNT_DATA_KEY = "5"
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
-    const val BACKUP_VERSION = 2
+    const val AUTHENTICATOR_DATA_KEY = "8"
+    const val BACKUP_VERSION = 3
 
     // Backup params
     const val BACKUP_PARAM_PASSWORD = "0"
@@ -40,6 +42,14 @@ object CommonConstants {
 
     // Backup metadata
     const val WORKER_NAME_RESTORE_DATA = "RESTORE_SAFE_BOX_DATA_WORK"
+
+    // Clipboard auto clear
+    const val WORKER_NAME_CLEAR_CLIPBOARD = "CLEAR_CLIPBOARD_WORK"
+    const val CLIPBOARD_CLEAR_DELAY_SECONDS = 30L
+
+    // identifies the clip this app put on the clipboard, so the worker can leave a later clip
+    // from another app alone. Shared between the ClipDescription extras and the worker input.
+    const val CLIPBOARD_CLIP_ID = "clip_id"
 
     //        Other
     const val TIME_1_SECOND = 1000L

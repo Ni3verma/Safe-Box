@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -42,6 +44,7 @@ class RecordsViewModel @Inject constructor(
     secureNoteDataRepository: SecureNoteDataRepository,
     loginDataRepository: LoginDataRepository,
     cardDataRepository: BankCardDataRepository,
+    authenticatorDataRepository: AuthenticatorDataRepository,
     dispatchersProvider: DispatchersProvider,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val preferenceProvider: PreferenceProvider,
@@ -79,12 +82,14 @@ class RecordsViewModel @Inject constructor(
         bankAccountDataRepository.getAllBankAccountData(),
         secureNoteDataRepository.getAllSecureNoteData(),
         loginDataRepository.getAllLoginData(),
-        cardDataRepository.getAllBankCardData()
-    ) { bankAccountData, secureNoteData, loginData, cardData ->
+        cardDataRepository.getAllBankCardData(),
+        authenticatorDataRepository.getAllAuthenticatorData(),
+    ) { bankAccountData, secureNoteData, loginData, cardData, authenticatorData ->
         val combinedList = bankAccountData.map { it.toRecordListItem() } +
                 secureNoteData.map { it.toRecordListItem() } +
                 loginData.map { it.toRecordListItem() } +
-                cardData.map { it.toRecordListItem() }
+                cardData.map { it.toRecordListItem() } +
+                authenticatorData.map { it.toRecordListItem() }
         combinedList.sortedBy { it.title.lowercase() }
     }
         .flowOn(dispatchersProvider.default)
@@ -156,6 +161,12 @@ class RecordsViewModel @Inject constructor(
 
             is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet -> {
                 updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
+            }
+
+            RecordScreenAction.OnCopyTotpCode -> {
+                analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
+                    param(AnalyticsParam.SOURCE, AnalyticsSource.RECORDS_LIST.value)
+                }
             }
 
             // these are handled in UI layer and flow should ideally never come here

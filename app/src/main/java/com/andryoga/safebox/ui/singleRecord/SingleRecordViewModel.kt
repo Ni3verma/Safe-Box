@@ -4,6 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.R
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.domain.models.record.RecordType
@@ -30,7 +34,8 @@ class SingleRecordViewModel @Inject constructor(
     singleRecordRouteProvider: SingleRecordRouteProvider,
     layoutFactory: LayoutFactory,
     @param:ApplicationContext private val context: Context,
-    private val dispatchersProvider: DispatchersProvider
+    private val dispatchersProvider: DispatchersProvider,
+    private val analyticsHelper: AnalyticsHelper
 ) : ViewModel() {
     private val _uiState: MutableStateFlow<SingleRecordScreenUiState> =
         MutableStateFlow(SingleRecordScreenUiState())
@@ -82,7 +87,7 @@ class SingleRecordViewModel @Inject constructor(
                             fieldUiState = updatedUiState,
                         ),
                         topAppBarUiState = currentState.topAppBarUiState.copy(
-                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState.values)
+                            isSaveButtonEnabled = layout.checkMandatoryFields(updatedUiState)
                         )
                     )
                 }
@@ -118,6 +123,12 @@ class SingleRecordViewModel @Inject constructor(
             }
 
             SingleRecordScreenAction.OnShareClicked -> handleShareRecord()
+
+            SingleRecordScreenAction.OnCopyTotpCode -> {
+                analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
+                    param(AnalyticsParam.SOURCE, AnalyticsSource.RECORD_DETAIL.value)
+                }
+            }
         }
     }
 
@@ -127,15 +138,9 @@ class SingleRecordViewModel @Inject constructor(
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()
 
-            layout.getLayoutPlan().fieldUiState.filter { (_, uiState) ->
-                uiState.data.isEmpty().not() &&
-                        uiState.cell.isCopyable &&
-                        uiState.cell.isPasswordField.not()
-            }.forEach { (_, uiState) ->
-                val cellTitle = context.getString(uiState.cell.label)
-
-                // for the data, add formatted data because it is easier to read.
-                dataStringBuffer.append("$cellTitle : ${uiState.getFormattedData()}\n")
+            layout.getShareableFields().forEach { shareableField ->
+                val cellTitle = context.getString(shareableField.label)
+                dataStringBuffer.append("$cellTitle : ${shareableField.value}\n")
             }
 
             dataStringBuffer.append(
@@ -149,7 +154,6 @@ class SingleRecordViewModel @Inject constructor(
 
             _shareContentEvent.emit(dataStringBuffer.toString())
         }
-
     }
 
     private fun goBackToViewMode() {
@@ -157,8 +161,8 @@ class SingleRecordViewModel @Inject constructor(
             it.copy(
                 viewMode = ViewMode.VIEW,
                 topAppBarUiState = it.topAppBarUiState.copy(
-                    isSaveButtonVisible = false
-                )
+                    isSaveButtonVisible = false,
+                ),
             )
         }
     }
@@ -170,6 +174,7 @@ class SingleRecordViewModel @Inject constructor(
                 RecordType.CARD -> R.string.type_display_card
                 RecordType.BANK_ACCOUNT -> R.string.type_display_account
                 RecordType.NOTE -> R.string.type_display_note
+                RecordType.AUTHENTICATOR -> R.string.type_display_authenticator
             }
         )
     }

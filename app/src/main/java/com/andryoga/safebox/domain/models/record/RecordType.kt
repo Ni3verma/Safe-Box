@@ -7,5 +7,6 @@ enum class RecordType {
     LOGIN,
     CARD,
     BANK_ACCOUNT,
-    NOTE
+    NOTE,
+    AUTHENTICATOR,
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.ui.previewHelper.getAuthenticatorRecordItem
 import com.andryoga.safebox.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
 import com.andryoga.safebox.ui.previewHelper.getLoginRecordItem
@@ -33,8 +34,19 @@ import com.andryoga.safebox.ui.previewHelper.getNoteRecordItem
 import com.andryoga.safebox.ui.utils.getIcon
 import com.andryoga.safebox.ui.utils.getTitle
 
+/**
+ * A single row on the records list.
+ *
+ * @param item Record to render.
+ * @param onRecordClick Invoked when the card is tapped, to open the record.
+ * @param onCopyTotpCode Invoked after an authenticator row's one-time code is copied.
+ */
 @Composable
-fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: RecordType) -> Unit) {
+fun RecordItem(
+    item: RecordListItem,
+    onRecordClick: (id: Int, recordType: RecordType) -> Unit,
+    onCopyTotpCode: () -> Unit = {},
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -76,13 +88,21 @@ fun RecordItem(item: RecordListItem, onRecordClick: (id: Int, recordType: Record
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                 )
-                Text(
-                    text = item.subTitle ?: "",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.secondary,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
-                )
+                // authenticator rows have no static subtitle, so the live code takes that slot.
+                if (item.totpConfig != null) {
+                    TotpBadge(
+                        config = item.totpConfig,
+                        onCopyClick = onCopyTotpCode,
+                    )
+                } else {
+                    Text(
+                        text = item.subTitle ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 1
+                    )
+                }
             }
 
             Text(
@@ -125,6 +145,12 @@ private fun CardRecordItemPreview() {
 @Composable
 private fun NoteRecordItemPreview() {
     RecordItem(item = getNoteRecordItem(), onRecordClick = { _, _ -> })
+}
+
+@Preview
+@Composable
+private fun AuthenticatorRecordItemPreview() {
+    RecordItem(item = getAuthenticatorRecordItem(), onRecordClick = { _, _ -> })
 }
 
 @Preview

@@ -11,20 +11,26 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
+import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
 import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
+import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -57,7 +63,9 @@ class RestoreDataWorker
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
     private val secureNoteDataDaoSecure: SecureNoteDataDaoSecure,
-    private val analyticsHelper: AnalyticsHelper
+    private val authenticatorDataDaoSecure: AuthenticatorDataDaoSecure,
+    private val totpGenerator: TotpGenerator,
+    private val analyticsHelper: AnalyticsHelper,
 ) : CoroutineWorker(context, params) {
 
     private val localTag = "restore data worker -> "
@@ -197,10 +205,67 @@ class RestoreDataWorker
             decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
+        val authenticatorData = filterDecodableAuthenticatorData(
+            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]),
+        )
         recordTime("all data decrypted")
 
-        restoreDataToDb(loginData, bankAccountData, bankCardData, secureNoteData)
+        restoreDataToDb(
+            loginData,
+            bankAccountData,
+            bankCardData,
+            secureNoteData,
+            authenticatorData,
+        )
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
+    }
+
+    /**
+     * Drops authenticator records that cannot produce a code.
+     *
+     * Successful decryption and deserialization prove the backup is authentic and well formed,
+     * they prove nothing about whether the record is semantically usable. An undecodable seed, an
+     * unsupported digit count or a non-positive period all make [TotpGenerator.generateCode] throw,
+     * so such records are skipped instead of being persisted.
+     *
+     * Only the offending records are dropped rather than failing the whole restore, because one
+     * bad 2FA seed must not cost the user every login, card and note in the backup.
+     *
+     * @param authenticatorData Records decoded from the backup, or null when the backup has none.
+     * @return Records safe to persist, or null when the input was null.
+     */
+    private fun filterDecodableAuthenticatorData(
+        authenticatorData: List<ExportAuthenticatorData>?,
+    ): List<ExportAuthenticatorData>? {
+        if (authenticatorData == null) return null
+
+        val (decodable, undecodable) = authenticatorData.partition {
+            totpGenerator.isValidConfig(it.toTotpConfig())
+        }
+
+        if (undecodable.isNotEmpty()) {
+            // never log the seed itself, only how many were dropped.
+            Timber.w("$localTag skipped ${undecodable.size} authenticator records, invalid secret")
+            analyticsHelper.logEvent(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED) {
+                param(AnalyticsParam.COUNT, undecodable.size)
+            }
+        }
+
+        return decodable
+    }
+
+    /**
+     * Reads the generation parameters out of a backup record.
+     *
+     * @return Config for this record, not yet validated.
+     */
+    private fun ExportAuthenticatorData.toTotpConfig(): TotpConfig {
+        return TotpConfig(
+            secretKey = secretKey,
+            algorithm = algorithm,
+            digits = digits,
+            period = period,
+        )
     }
 
     private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {
@@ -271,11 +336,37 @@ class RestoreDataWorker
         }
     }
 
+    /**
+     * Decrypts and deserializes TOTP authenticator records from the encrypted backup byte array.
+     *
+     * @param authenticatorDataByteArray The encrypted payload from the backup archive, or null if absent.
+     * @return Decrypted list of [ExportAuthenticatorData], or null if the input payload is null.
+     */
+    private fun decryptAuthenticatorData(
+        authenticatorDataByteArray: ByteArray?,
+    ): List<ExportAuthenticatorData>? {
+        return if (authenticatorDataByteArray != null) {
+            val json = String(
+                passwordBasedEncryption.encryptDecrypt(
+                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    authenticatorDataByteArray,
+                    salt,
+                    iv,
+                    false,
+                ),
+            )
+            Json.decodeFromString(ListSerializer(ExportAuthenticatorData.serializer()), json)
+        } else {
+            null
+        }
+    }
+
     private fun restoreDataToDb(
         loginData: List<ExportLoginData>?,
         bankAccountData: List<ExportBankAccountData>?,
         bankCardData: List<ExportBankCardData>?,
-        secureNoteData: List<ExportSecureNoteData>?
+        secureNoteData: List<ExportSecureNoteData>?,
+        authenticatorData: List<ExportAuthenticatorData>?,
     ) {
         Timber.i("starting transaction")
         safeBoxDatabase.runInTransaction {
@@ -341,6 +432,26 @@ class RestoreDataWorker
                 )
             }
             recordTime("restored secure note data")
+
+            authenticatorDataDaoSecure.deleteAllData()
+            authenticatorData?.let {
+                authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                    authenticatorData.map {
+                        val config = it.toTotpConfig()
+                        AuthenticatorDataEntity(
+                            key = 0,
+                            title = it.title,
+                            secretKey = config.secretKey,
+                            algorithm = config.algorithm,
+                            digits = config.digits,
+                            period = config.period,
+                            creationDate = Date(it.creationDate),
+                            updateDate = Date(it.updateDate),
+                        )
+                    },
+                )
+            }
+            recordTime("restored authenticator data")
         }
     }
 
