@@ -36,7 +36,10 @@ object TotpUriParser {
         return try {
             parseOtpauthUri(sanitizedUriString)
         } catch (e: Exception) {
-            Timber.i(e, "could not parse scanned payload as a URI")
+            // only the exception type, never the exception itself: URISyntaxException quotes the
+            // rejected URI in its message, which would put the scanned seed into logcat and, via
+            // the release Timber tree, into Crashlytics.
+            Timber.i("could not parse scanned payload as a URI: ${e.javaClass.simpleName}")
             // the scheme has to be read off the raw text: a URI that failed to build exposes no
             // components. An unreadable otpauth payload is a QR code the user pointed at on
             // purpose, so it earns an explanation rather than being skipped as unrelated content.
