@@ -216,8 +216,8 @@ class QrScannerViewModel @Inject constructor(
 /**
  * Maps a URI rejection reason to the value reported to analytics.
  *
- * Literals, not [Enum.name]: the names are only read in minified release builds, which are also
- * the only builds that report analytics.
+ * Literals, not [Enum.name], so renaming an enum constant cannot silently split a metric across
+ * two names.
  *
  * @return Stable snake case identifier for the reason.
  */

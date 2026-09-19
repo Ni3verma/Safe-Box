@@ -123,8 +123,8 @@ object TotpUriParser {
     /**
      * Maps a Key URI `algorithm` token to a supported [TotpAlgorithm].
      *
-     * Matched against literals, not [TotpAlgorithm.entries] and [Enum.name], so the mapping
-     * survives minification of the enum constant names.
+     * Matched against literals, not [TotpAlgorithm.entries], so renaming an enum constant cannot
+     * silently change which QR codes parse.
      *
      * @param rawAlgorithm Raw parameter value from the URI, in any casing.
      * @return Matching algorithm, or null when Safe-Box cannot compute that hash.
