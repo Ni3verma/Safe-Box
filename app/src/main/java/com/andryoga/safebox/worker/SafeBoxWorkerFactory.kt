@@ -75,6 +75,14 @@ class SafeBoxWorkerFactory @Inject constructor(
                 )
             }
 
+            ClipboardClearWorker::class.java.name -> {
+                ClipboardClearWorker(
+                    appContext,
+                    workerParameters,
+                    analyticsHelper,
+                )
+            }
+
             else -> {
                 null
             }

@@ -43,6 +43,14 @@ object CommonConstants {
     // Backup metadata
     const val WORKER_NAME_RESTORE_DATA = "RESTORE_SAFE_BOX_DATA_WORK"
 
+    // Clipboard auto clear
+    const val WORKER_NAME_CLEAR_CLIPBOARD = "CLEAR_CLIPBOARD_WORK"
+    const val CLIPBOARD_CLEAR_DELAY_SECONDS = 30L
+
+    // identifies the clip this app put on the clipboard, so the worker can leave a later clip
+    // from another app alone. Shared between the ClipDescription extras and the worker input.
+    const val CLIPBOARD_CLIP_ID = "clip_id"
+
     //        Other
     const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
