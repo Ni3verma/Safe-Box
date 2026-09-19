@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
@@ -12,6 +13,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.home.records.models.UserInputs
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -231,5 +233,76 @@ class RecordsScreenTest {
             .performScrollToIndex(50)
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("LAST_RECORD_INDEX_50").assertIsDisplayed()
+    }
+
+    @Test
+    fun authenticatorRecord_shouldReplaceSubtitleWithLiveCodeBadge() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = RecordsUiState(
+                        isLoading = false,
+                        records = listOf(authenticatorRecord()),
+                        totalDbRecords = 1
+                    ),
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = {},
+                    onScreenAction = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("Google - alex@gmail.com").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(context.getString(R.string.cd_copy_totp_code))
+            .assertIsDisplayed()
+        // the badge takes the subtitle slot, so a subtitle set on the item must not also render.
+        composeTestRule.onNodeWithText(AUTHENTICATOR_SUBTITLE).assertDoesNotExist()
+    }
+
+    @Test
+    fun clickAuthenticatorCopyIcon_shouldEmitCopyActionWithoutOpeningTheRecord() {
+        var copyActionCount = 0
+        var recordClicked = false
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = RecordsUiState(
+                        isLoading = false,
+                        records = listOf(authenticatorRecord()),
+                        totalDbRecords = 1
+                    ),
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = {},
+                    onScreenAction = { action ->
+                        when (action) {
+                            is RecordScreenAction.OnCopyTotpCode -> copyActionCount++
+                            is RecordScreenAction.OnRecordClick -> recordClicked = true
+                            else -> Unit
+                        }
+                    }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithContentDescription(context.getString(R.string.cd_copy_totp_code))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(copyActionCount).isEqualTo(1)
+        // the icon sits inside the row, so a leaking click would also navigate away from the list.
+        assertThat(recordClicked).isFalse()
+    }
+
+    private fun authenticatorRecord() = RecordListItem(
+        id = 301,
+        title = "Google - alex@gmail.com",
+        subTitle = AUTHENTICATOR_SUBTITLE,
+        recordType = RecordType.AUTHENTICATOR,
+        totpConfig = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"),
+    )
+
+    companion object {
+        private const val AUTHENTICATOR_SUBTITLE = "should not be rendered"
     }
 }

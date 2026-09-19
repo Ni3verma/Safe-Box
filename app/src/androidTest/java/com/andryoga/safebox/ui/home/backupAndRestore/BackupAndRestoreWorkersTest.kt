@@ -8,17 +8,22 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
@@ -67,6 +72,9 @@ class BackupAndRestoreWorkersTest {
 
     @Inject
     lateinit var secureNoteDataRepository: SecureNoteDataRepository
+
+    @Inject
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
 
     @Inject
     lateinit var backupMetadataRepository: BackupMetadataRepository
@@ -366,6 +374,8 @@ class BackupAndRestoreWorkersTest {
             val expectedAccounts: List<BankAccountData> =
                 (1..5).map { createRandomBankAccountData(it, random) }
             val expectedNotes: List<NoteData> = (1..5).map { createRandomNoteData(it, random) }
+            val expectedAuthenticators: List<AuthenticatorData> =
+                (1..5).map { createRandomAuthenticatorData(it, random) }
 
             for (item in expectedLogins) {
                 loginDataRepository.upsertLoginData(item)
@@ -379,6 +389,9 @@ class BackupAndRestoreWorkersTest {
             for (item in expectedNotes) {
                 secureNoteDataRepository.upsertSecureNoteData(item)
             }
+            for (item in expectedAuthenticators) {
+                authenticatorDataRepository.upsertAuthenticatorData(item)
+            }
 
             val initialLogins = loginDataRepository.getAllLoginData().first()
                 .map { loginDataRepository.getLoginDataByKey(it.key) }
@@ -388,6 +401,8 @@ class BackupAndRestoreWorkersTest {
                 .map { bankAccountDataRepository.getBankAccountDataByKey(it.key) }
             val initialNotes = secureNoteDataRepository.getAllSecureNoteData().first()
                 .map { secureNoteDataRepository.getSecureNoteDataByKey(it.key) }
+            val initialAuthenticators = authenticatorDataRepository.getAllAuthenticatorData().first()
+                .map { authenticatorDataRepository.getAuthenticatorDataByKey(it.key) }
 
             val backupDir = File(context.cacheDir, "backup_random_all")
             backupDir.deleteRecursively()
@@ -446,6 +461,9 @@ class BackupAndRestoreWorkersTest {
                 .map { bankAccountDataRepository.getBankAccountDataByKey(it.key) }
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
                 .map { secureNoteDataRepository.getSecureNoteDataByKey(it.key) }
+            val restoredAuthenticators =
+                authenticatorDataRepository.getAllAuthenticatorData().first()
+                    .map { authenticatorDataRepository.getAuthenticatorDataByKey(it.key) }
 
             assertThat(restoredLogins.map { it.copy(id = 0) }).containsExactlyElementsIn(
                 initialLogins.map { it.copy(id = 0) })
@@ -461,6 +479,11 @@ class BackupAndRestoreWorkersTest {
                     id = 0
                 )
             })
+            // TotpConfig equality covers the algorithm, digit count and period, which the backup
+            // file carries as text. A code generated from a restored record is only correct if all
+            // four values survive together.
+            assertThat(restoredAuthenticators.map { it.copy(id = 0) }).containsExactlyElementsIn(
+                initialAuthenticators.map { it.copy(id = 0) })
         }
     }
 
@@ -787,6 +810,35 @@ class BackupAndRestoreWorkersTest {
                     random
                 )
             }\nLine 3: ${randomFrom(notePool, 20, random)}",
+            creationDate = Date(1700000000000L + random.nextInt(1000000)),
+            updateDate = Date(1700000000000L + random.nextInt(1000000))
+        )
+    }
+
+    /**
+     * Builds an authenticator record whose every generation parameter is randomised.
+     *
+     * The seed is drawn from the RFC 4648 Base32 alphabet so the record is one the app would
+     * actually accept, and the algorithm, digit count and period all vary so a round trip that
+     * silently defaulted any of them would fail the equality assertion.
+     *
+     * @param id Stable identifier, also used to keep titles unique.
+     * @param random Seeded source so a failing run can be reproduced from the logged seed.
+     * @return Randomised authenticator record.
+     */
+    private fun createRandomAuthenticatorData(id: Int, random: Random): AuthenticatorData {
+        val base32Pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+        val textPool =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/ 🔑🔐"
+        return AuthenticatorData(
+            id = id,
+            title = "Authenticator_${id}_${randomFrom(textPool, 6, random)}",
+            config = TotpConfig(
+                secretKey = randomFrom(base32Pool, 16 + random.nextInt(17), random),
+                algorithm = TotpAlgorithm.entries[random.nextInt(TotpAlgorithm.entries.size)],
+                digits = TotpDefaults.SUPPORTED_DIGITS.random(random),
+                period = 15 + random.nextInt(46),
+            ),
             creationDate = Date(1700000000000L + random.nextInt(1000000)),
             updateDate = Date(1700000000000L + random.nextInt(1000000))
         )
