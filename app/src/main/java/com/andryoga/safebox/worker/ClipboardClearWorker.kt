@@ -42,7 +42,10 @@ class ClipboardClearWorker
             return Result.success()
         }
 
-        val description = clipboardManager.primaryClipDescription
+        // AOSP returns null when the caller may not read the clipboard rather than throwing, but a
+        // throw is folded into the same null: both mean "cannot verify", and an unverifiable
+        // clipboard must still be cleared rather than left holding the credential.
+        val description = runCatching { clipboardManager.primaryClipDescription }.getOrNull()
         val currentClipId = description?.extras?.getString(CommonConstants.CLIPBOARD_CLIP_ID)
         val expectedClipId = inputData.getString(CommonConstants.CLIPBOARD_CLIP_ID)
         if (description != null && currentClipId != expectedClipId) {
