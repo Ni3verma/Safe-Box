@@ -133,7 +133,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc01")
@@ -162,7 +163,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc02")
@@ -203,6 +205,12 @@ class BackupAndRestoreWorkersTest {
 
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
             assertThat(restoredNotes.any { it.title == "Wifi Router Secrets" }).isTrue()
+
+            val restoredAuthenticators = authenticatorDataRepository.getAllAuthenticatorData().first()
+            assertThat(restoredAuthenticators.any {
+                it.title == "GitHub Authenticator" &&
+                    it.secretKey == E2ETestUtils.TEST_TOTP_SECRET_KEY
+            }).isTrue()
         }
 
     @Test
@@ -213,7 +221,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc03")
@@ -309,7 +318,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc05")

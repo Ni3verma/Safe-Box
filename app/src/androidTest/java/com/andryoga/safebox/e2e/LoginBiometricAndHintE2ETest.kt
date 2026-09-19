@@ -19,6 +19,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
@@ -66,7 +67,7 @@ class LoginBiometricAndHintE2ETest {
     lateinit var activeSessionManager: ActiveSessionManager
 
     @Inject
-    lateinit var fakeDeviceSecurityAuthProvider: com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
+    lateinit var fakeDeviceSecurityAuthProvider: FakeDeviceSecurityAuthProvider
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

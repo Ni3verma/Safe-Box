@@ -22,6 +22,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -83,6 +84,9 @@ class CrossFeatureUserJourneysE2ETest {
     lateinit var secureNoteDataRepository: SecureNoteDataRepository
 
     @Inject
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
+
+    @Inject
     lateinit var backupMetadataRepository: BackupMetadataRepository
 
     @Inject
@@ -127,7 +131,8 @@ class CrossFeatureUserJourneysE2ETest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
             E2ETestUtils.setupSettingsState(
                 settingsDataStore,
@@ -151,6 +156,12 @@ class CrossFeatureUserJourneysE2ETest {
                 }.getOrDefault(false)
             }
             composeTestRule.onNodeWithText("Apple ID Login").assertIsDisplayed()
+            composeTestRule.onNodeWithText("GitHub Authenticator").assertIsDisplayed()
+            composeTestRule.onNodeWithContentDescription(
+                context.getString(R.string.cd_copy_totp_code),
+                useUnmergedTree = true
+            ).assertIsDisplayed()
+            composeTestRule.onNode(E2ETestUtils.hasLiveTotpCode()).assertIsDisplayed()
 
             // Step 2: Add New Record (Add Item)
             E2ETestUtils.clickAddNewRecordOption(
@@ -202,6 +213,7 @@ class CrossFeatureUserJourneysE2ETest {
             }
             composeTestRule.onNodeWithText("E2E Test Secret Note").assertIsDisplayed()
             composeTestRule.onNodeWithText("Apple ID Login").assertDoesNotExist()
+            composeTestRule.onNodeWithText("GitHub Authenticator").assertDoesNotExist()
 
             composeTestRule.waitForIdle()
             val clearDesc = context.getString(R.string.cd_clear_search_bar)

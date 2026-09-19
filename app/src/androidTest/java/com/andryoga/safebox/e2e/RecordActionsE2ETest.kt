@@ -2,12 +2,15 @@
 
 package com.andryoga.safebox.e2e
 
+import android.content.ClipboardManager
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,17 +18,22 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -54,7 +62,7 @@ class RecordActionsE2ETest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
-    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+    lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
     lateinit var userDetailsRepository: UserDetailsRepository
@@ -73,6 +81,9 @@ class RecordActionsE2ETest {
 
     @Inject
     lateinit var bankAccountDataRepository: BankAccountDataRepository
+
+    @Inject
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
 
     @Inject
     lateinit var settingsDataStore: SettingsDataStore
@@ -524,6 +535,149 @@ class RecordActionsE2ETest {
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
                 .assertDoesNotExist()
+        }
+    }
+
+    /**
+     * Seeds an unlocked vault holding a single authenticator record.
+     *
+     * @param id Primary key of the record, unique per test so a leaked row cannot mask a failure.
+     * @param title Record title the test drives its assertions from.
+     */
+    private fun seedUnlockedStateWithAuthenticator(id: Int, title: String) {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+
+            authenticatorDataRepository.upsertAuthenticatorData(
+                AuthenticatorData(
+                    id = id,
+                    title = title,
+                    config = TotpConfig(secretKey = E2ETestUtils.TEST_TOTP_SECRET_KEY),
+                    creationDate = Date(),
+                    updateDate = Date()
+                )
+            )
+        }
+    }
+
+    @Test
+    fun openAuthenticatorRecordInViewMode_shouldShowOneTimeCodeAndNeverExposeSecretKey() {
+        val targetTitle = "Authenticator For View Test"
+        seedUnlockedStateWithAuthenticator(id = 721, title = targetTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
+            E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
+            E2ETestUtils.clickRecordRowByTitle(composeTestRule, targetTitle)
+
+            E2ETestUtils.waitForText(composeTestRule, context.getString(R.string.totp_code))
+            composeTestRule.onNodeWithText(context.getString(R.string.totp_code))
+                .assertIsDisplayed()
+            composeTestRule.onNode(E2ETestUtils.hasLiveTotpCode()).assertIsDisplayed()
+
+            // the seed is stored on the code field but must only ever leave it as a derived code,
+            // and the secret key field itself is create-only.
+            composeTestRule.onNode(hasText(E2ETestUtils.TEST_TOTP_SECRET_KEY, substring = true))
+                .assertDoesNotExist()
+            composeTestRule.onNodeWithText(context.getString(R.string.secret_key))
+                .assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun editExistingAuthenticatorRecord_shouldSaveUpdatedTitleAndReflectInRecordsList() {
+        val initialTitle = "Original Authenticator Record"
+        val updatedTitle = "Updated Authenticator Record"
+        seedUnlockedStateWithAuthenticator(id = 722, title = initialTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
+            E2ETestUtils.waitForRecordTitle(composeTestRule, initialTitle)
+            E2ETestUtils.clickRecordRowByTitle(composeTestRule, initialTitle)
+
+            val editDesc = context.getString(R.string.cd_action_edit)
+            composeTestRule.waitUntilNodeDisplayed(matcher = hasContentDescription(editDesc))
+            composeTestRule.onNodeWithContentDescription(editDesc).performClick()
+
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(
+                    context.getString(R.string.title),
+                    substring = true
+                )
+            ).performTextReplacement(updatedTitle)
+
+            val saveText = context.getString(R.string.save)
+            composeTestRule.onNodeWithText(saveText).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(saveText)).fetchSemanticsNodes().isEmpty()
+            }
+
+            composeTestRule.onNodeWithText(updatedTitle).assertIsDisplayed()
+            composeTestRule.onNodeWithText(initialTitle).assertDoesNotExist()
+            // renaming must not disturb the stored config, so the live badge has to survive.
+            composeTestRule.onNodeWithContentDescription(
+                context.getString(R.string.cd_copy_totp_code),
+                useUnmergedTree = true
+            ).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun deleteExistingAuthenticatorRecord_shouldRemoveRecordFromList() {
+        val targetTitle = "Authenticator Record To Delete"
+        seedUnlockedStateWithAuthenticator(id = 723, title = targetTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) {
+            E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
+            E2ETestUtils.clickRecordRowByTitle(composeTestRule, targetTitle)
+
+            val deleteDesc = context.getString(R.string.cd_action_delete)
+            composeTestRule.waitUntilNodeDisplayed(matcher = hasContentDescription(deleteDesc))
+            composeTestRule.onNodeWithContentDescription(deleteDesc).performClick()
+
+            composeTestRule.onNodeWithText(context.getString(R.string.delete_this_record))
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.confirm)).performClick()
+            composeTestRule.waitUntil(timeoutMillis = 15000L) {
+                composeTestRule.onAllNodes(hasText(targetTitle)).fetchSemanticsNodes().isEmpty()
+            }
+
+            composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
+            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+                .assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun clickCopyOnAuthenticatorRowBadge_shouldCopyDerivedCodeAndNotTheStoredSeed() {
+        val targetTitle = "Authenticator Record To Copy"
+        seedUnlockedStateWithAuthenticator(id = 724, title = targetTitle)
+
+        E2ETestUtils.launchUnlockedScenario(composeTestRule, context) { scenario ->
+            E2ETestUtils.waitForRecordTitle(composeTestRule, targetTitle)
+
+            composeTestRule.onNodeWithContentDescription(
+                context.getString(R.string.cd_copy_totp_code),
+                useUnmergedTree = true
+            ).onParent().performClick()
+            composeTestRule.waitForIdle()
+
+            // Tiramisu and above suppress the in-app confirmation in favour of the system
+            // clipboard overlay, so the clipboard itself is the only observable outcome.
+            var copiedText: String? = null
+            scenario.onActivity { activity ->
+                val clipboardManager = activity.getSystemService(ClipboardManager::class.java)
+                copiedText = clipboardManager.primaryClip?.getItemAt(0)?.text?.toString()
+            }
+
+            // sharing the seed would hand over the second factor permanently, so only the code
+            // valid right now may reach the clipboard.
+            assertThat(copiedText).matches("\\d{6}")
+            composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
+                .assertIsDisplayed()
         }
     }
 }
