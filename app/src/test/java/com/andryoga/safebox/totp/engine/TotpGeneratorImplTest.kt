@@ -1,5 +1,6 @@
 package com.andryoga.safebox.totp.engine
 
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.google.common.truth.Truth.assertThat
@@ -302,5 +303,26 @@ class TotpGeneratorImplTest {
         val once = totpGenerator.normalizeSecret("jbsw y3dp ehpk3pxp")
 
         assertThat(totpGenerator.normalizeSecret(once)).isEqualTo(once)
+    }
+
+    @Test
+    fun generateCodeAndGetRemainingSeconds_withDefaultEpochSeconds_returnValidLiveValues() {
+        val generatorInterface: TotpGenerator = totpGenerator
+        val code = generatorInterface.generateCode(config = sha1Config6Digits)
+        val remaining = generatorInterface.getRemainingSeconds(period = 30)
+
+        assertThat(code).hasLength(6)
+        assertThat(code.all { it.isDigit() }).isTrue()
+        assertThat(remaining).isIn(1..30)
+    }
+
+    @Test
+    fun getRemainingSeconds_withNonPositivePeriod_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException::class.java) {
+            totpGenerator.getRemainingSeconds(period = 0, timeSeconds = 100L)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            totpGenerator.getRemainingSeconds(period = -15, timeSeconds = 100L)
+        }
     }
 }

@@ -223,7 +223,7 @@ otherwise perfectly usable.
 | Parameter   | Accepted                                                          | Default when absent |
 |-------------|-------------------------------------------------------------------|---------------------|
 | type        | `totp` only; `hotp` is rejected                                     | n/a, required       |
-| label       | Path segment, used as the account part of the title                 | empty title         |
+| label       | Path segment, used as the account part of the title                 | `"Authenticator Account"` (when `issuer` is also absent) |
 | `secret`    | Valid RFC 4648 Base32, long enough to decode to at least one byte   | n/a, required       |
 | `issuer`    | Free text, prefixed to the label as `Issuer - Account`              | label alone         |
 | `algorithm` | `SHA1`, `SHA256`, `SHA512`                                          | `SHA1`              |

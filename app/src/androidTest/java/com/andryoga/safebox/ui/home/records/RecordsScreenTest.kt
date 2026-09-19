@@ -10,6 +10,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
@@ -18,6 +21,7 @@ import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.home.records.models.UserInputs
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +36,21 @@ class RecordsScreenTest {
     val composeTestRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Before
+    fun setup() {
+        // The authenticator row's copy icon goes through the production
+        // rememberCopyToClipboardAction, which schedules the clipboard clear via
+        // WorkManager.getInstance. AndroidManifest removes WorkManagerInitializer, so without
+        // standing WorkManager up here this test would either resolve a Hilt entry point it never
+        // registered, or silently inherit the instance left behind by whichever Hilt test happened
+        // to run earlier in the same process. SynchronousExecutor also keeps the scheduled clear
+        // out of the app's real work database.
+        val configuration = Configuration.Builder()
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+    }
 
     @Test
     fun initialStateZeroRecords_shouldShowNoRecordsTextAndButtons() {

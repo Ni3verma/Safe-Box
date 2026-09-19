@@ -9,6 +9,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -63,7 +64,9 @@ class ClipboardClearWorker
                 clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""))
             }
             Timber.i("cleared the copied credential from the clipboard")
-            analyticsHelper.logEvent(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)
+            analyticsHelper.logEvent(AnalyticsKey.CLIPBOARD_AUTO_CLEARED) {
+                param(AnalyticsParam.RESULT, if (description != null) "verified" else "unverified")
+            }
             Result.success()
         } catch (e: Exception) {
             Timber.e(e, "failed to clear the clipboard")

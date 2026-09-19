@@ -58,18 +58,23 @@ class QrCodeAnalyzerTest {
 
     @Test
     fun reset_resetsScanningActiveState() {
-        val imageProxy = mockk<ImageProxy>(relaxed = true)
-        every { imageProxy.image } returns null
+        analyzeFrameContaining(
+            "otpauth://totp/First:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=First",
+        )
+        assertThat(scannedTotpData?.title).isEqualTo("First - user@example.com")
 
-        analyzer.analyze(imageProxy)
+        // Before reset(), subsequent frames are ignored while scanning is inactive.
+        val ignoredImageProxy = mockk<ImageProxy>(relaxed = true)
+        analyzer.analyze(ignoredImageProxy)
+        verify(exactly = 0) { ignoredImageProxy.image }
+
         analyzer.reset()
 
-        val secondImageProxy = mockk<ImageProxy>(relaxed = true)
-        every { secondImageProxy.image } returns null
-        analyzer.analyze(secondImageProxy)
-
-        verify(exactly = 1) { secondImageProxy.close() }
-        assertThat(scannedTotpData).isNull()
+        analyzeFrameContaining(
+            "otpauth://totp/Second:user@example.com?secret=MZXW6YTB&issuer=Second",
+        )
+        assertThat(scannedTotpData?.title).isEqualTo("Second - user@example.com")
+        assertThat(scannedTotpData?.config?.secretKey).isEqualTo("MZXW6YTB")
     }
 
     @Test

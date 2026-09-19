@@ -81,6 +81,16 @@ android {
             applicationIdSuffix ".debug"
             debuggable true
             minifyEnabled false
+            /**
+             * Gated behind -Pcoverage so that everyday debug builds stay fast.
+             *
+             * enableAndroidTestCoverage makes AGP run JaCoCo offline instrumentation over every
+             * class packaged into the APK, which slows down both assembly and the instrumented
+             * run. Coverage is only ever needed on demand for test gap analysis, so it is opted
+             * into explicitly rather than paid for on every build.
+             * */
+            enableUnitTestCoverage = project.hasProperty("coverage")
+            enableAndroidTestCoverage = project.hasProperty("coverage")
         }
         release {
             minifyEnabled true

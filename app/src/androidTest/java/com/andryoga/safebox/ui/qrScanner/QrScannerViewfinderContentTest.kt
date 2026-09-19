@@ -1,5 +1,8 @@
 package com.andryoga.safebox.ui.qrScanner
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -49,7 +52,10 @@ class QrScannerViewfinderContentTest {
         setViewfinderContent(QrScannerUiState(hasFlashUnit = false))
 
         composeTestRule.onNodeWithContentDescription(
-            context.getString(R.string.flash_toggle_description),
+            context.getString(R.string.cd_turn_flash_on),
+        ).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.cd_turn_flash_off),
         ).assertDoesNotExist()
     }
 
@@ -57,16 +63,30 @@ class QrScannerViewfinderContentTest {
     fun cameraWithFlashUnit_shouldShowTorchControlAndReportToggle() {
         var toggleClicks = 0
         setViewfinderContent(
-            uiState = QrScannerUiState(hasFlashUnit = true),
+            uiState = QrScannerUiState(hasFlashUnit = true, isTorchEnabled = false),
             onToggleTorch = { toggleClicks++ },
         )
 
         composeTestRule.onNodeWithContentDescription(
-            context.getString(R.string.flash_toggle_description),
+            context.getString(R.string.cd_turn_flash_on),
         ).performClick()
         composeTestRule.waitForIdle()
 
         assertThat(toggleClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun cameraWithTorchEnabled_shouldShowTurnFlashOffContentDescription() {
+        setViewfinderContent(
+            uiState = QrScannerUiState(hasFlashUnit = true, isTorchEnabled = true),
+        )
+
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.cd_turn_flash_off),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(
+            context.getString(R.string.cd_turn_flash_on),
+        ).assertDoesNotExist()
     }
 
     @Test
@@ -144,6 +164,42 @@ class QrScannerViewfinderContentTest {
         composeTestRule.waitForIdle()
 
         assertThat(dismissClicks).isEqualTo(1)
+    }
+
+    @Test
+    fun unsupportedQrError_shouldDisplayExpectedReasonMessageForEveryErrorVariant() {
+        val expectedMessageResByError = mapOf(
+            TotpUriError.UNSUPPORTED_OTP_TYPE to R.string.unsupported_qr_code_reason_otp_type,
+            TotpUriError.UNSUPPORTED_ALGORITHM to R.string.unsupported_qr_code_reason_algorithm,
+            TotpUriError.UNSUPPORTED_DIGITS to R.string.unsupported_qr_code_reason_digits,
+            TotpUriError.UNSUPPORTED_PERIOD to R.string.unsupported_qr_code_reason_period,
+            TotpUriError.INVALID_SECRET to R.string.unsupported_qr_code_reason_invalid_secret,
+            TotpUriError.MALFORMED_URI to R.string.unsupported_qr_code_reason_malformed,
+        )
+        assertThat(expectedMessageResByError.keys)
+            .containsExactlyElementsIn(TotpUriError.entries)
+
+        var currentError by mutableStateOf(TotpUriError.MALFORMED_URI)
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                QrScannerViewfinderContent(
+                    uiState = QrScannerUiState(unsupportedQrError = currentError),
+                    onClose = {},
+                    onToggleTorch = {},
+                    onEnterKeyManually = {},
+                    onPermissionRationaleAllow = {},
+                    onPermissionRationaleOpenSettings = {},
+                    onPermissionRationaleCancel = {},
+                    onPermissionRationaleDismiss = {},
+                    onUnsupportedQrCodeDismiss = {},
+                )
+            }
+        }
+
+        expectedMessageResByError.forEach { (error, messageRes) ->
+            composeTestRule.runOnIdle { currentError = error }
+            composeTestRule.onNodeWithText(context.getString(messageRes)).assertIsDisplayed()
+        }
     }
 
     @Test

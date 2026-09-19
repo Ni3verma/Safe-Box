@@ -44,7 +44,9 @@ class AuthenticatorLayoutImpl(
     }
 
     override suspend fun saveLayout(data: Map<FieldId, String>) {
-        val secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY].orEmpty()
+        val secretKey = data[FieldId.AUTHENTICATOR_SECRET_KEY]
+            ?.takeIf { it.isNotBlank() }
+            ?: recordData?.config?.secretKey.orEmpty()
         authenticatorDataRepository.upsertAuthenticatorData(
             AuthenticatorData(
                 id = recordId,

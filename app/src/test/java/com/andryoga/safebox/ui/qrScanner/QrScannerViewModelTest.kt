@@ -46,7 +46,6 @@ class QrScannerViewModelTest {
             barcodeScanner = mockBarcodeScanner,
             analyticsHelper = analyticsHelper,
             preferenceProvider = fakePreferenceProvider,
-            dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
             scannedTotpHolder = scannedTotpHolder,
         )
     }
@@ -361,7 +360,6 @@ class QrScannerViewModelTest {
             barcodeScanner = mockBarcodeScanner,
             analyticsHelper = analyticsHelper,
             preferenceProvider = prefProvider,
-            dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
             scannedTotpHolder = scannedTotpHolder,
         )
         vm.uiState.test {

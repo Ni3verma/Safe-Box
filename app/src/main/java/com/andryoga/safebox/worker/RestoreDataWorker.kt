@@ -34,8 +34,10 @@ import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -205,8 +207,8 @@ class RestoreDataWorker
             decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
-        val authenticatorData = filterDecodableAuthenticatorData(
-            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]),
+        val authenticatorData = decryptAuthenticatorData(
+            importMap[CommonConstants.AUTHENTICATOR_DATA_KEY],
         )
         recordTime("all data decrypted")
 
@@ -232,10 +234,12 @@ class RestoreDataWorker
      * bad 2FA seed must not cost the user every login, card and note in the backup.
      *
      * @param authenticatorData Records decoded from the backup, or null when the backup has none.
+     * @param deserializationFailedCount Number of array elements skipped due to per-record schema errors.
      * @return Records safe to persist, or null when the input was null.
      */
     private fun filterDecodableAuthenticatorData(
         authenticatorData: List<ExportAuthenticatorData>?,
+        deserializationFailedCount: Int = 0,
     ): List<ExportAuthenticatorData>? {
         if (authenticatorData == null) return null
 
@@ -243,11 +247,12 @@ class RestoreDataWorker
             totpGenerator.isValidConfig(it.toTotpConfig())
         }
 
-        if (undecodable.isNotEmpty()) {
+        val skippedCount = deserializationFailedCount + undecodable.size
+        if (skippedCount > 0) {
             // never log the seed itself, only how many were dropped.
-            Timber.w("$localTag skipped ${undecodable.size} authenticator records, invalid secret")
+            Timber.w("$localTag skipped $skippedCount authenticator records, invalid secret or schema")
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED) {
-                param(AnalyticsParam.COUNT, undecodable.size)
+                param(AnalyticsParam.COUNT, skippedCount)
             }
         }
 
@@ -355,7 +360,19 @@ class RestoreDataWorker
                     false,
                 ),
             )
-            Json.decodeFromString(ListSerializer(ExportAuthenticatorData.serializer()), json)
+            val jsonArray = Json.parseToJsonElement(json).jsonArray
+            val decodedRecords = mutableListOf<ExportAuthenticatorData>()
+            var deserializationFailedCount = 0
+            for (element in jsonArray) {
+                try {
+                    decodedRecords.add(
+                        Json.decodeFromJsonElement(ExportAuthenticatorData.serializer(), element),
+                    )
+                } catch (_: SerializationException) {
+                    deserializationFailedCount++
+                }
+            }
+            filterDecodableAuthenticatorData(decodedRecords, deserializationFailedCount)
         } else {
             null
         }

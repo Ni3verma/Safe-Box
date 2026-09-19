@@ -370,6 +370,7 @@ class BackupDataWorkerTest {
                 @Suppress("UNCHECKED_CAST")
                 it.readObject() as Map<String, ByteArray?>
             }
+            assertThat(backupMap[CommonConstants.VERSION_KEY]?.single()).isEqualTo(3.toByte())
             val authenticatorBytes = backupMap[CommonConstants.AUTHENTICATOR_DATA_KEY]
             assertThat(authenticatorBytes).isNotNull()
             val restoredJson = String(
