@@ -468,7 +468,13 @@ fun QrScannerViewfinderContent(
                         } else {
                             Icons.Filled.FlashOff
                         },
-                        contentDescription = stringResource(R.string.flash_toggle_description),
+                        contentDescription = stringResource(
+                            if (uiState.isTorchEnabled) {
+                                R.string.cd_turn_flash_off
+                            } else {
+                                R.string.cd_turn_flash_on
+                            },
+                        ),
                         tint = if (uiState.isTorchEnabled) {
                             MaterialTheme.colorScheme.primary
                         } else {

@@ -61,8 +61,8 @@ object E2ETestUtils {
     const val TEST_MASTER_HINT = "E2E Master Hint"
     const val TEST_TOTP_SECRET_KEY = "JBSWY3DPEHPK3PXP"
 
-    // TotpCodeState splits the six digit code into two halves for readability, e.g. "123 456".
-    private const val TOTP_CODE_PATTERN = "\\d{3} \\d{3}"
+    // TotpCodeState splits 6, 7, and 8 digit codes into two halves for readability, e.g. "123 456" or "1234 5678".
+    private const val TOTP_CODE_PATTERN = "\\d{3,4} \\d{3,4}"
 
     val TEST_DATE: Date = Date(1700000000000L)
 

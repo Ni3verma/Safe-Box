@@ -228,6 +228,40 @@ class TotpUriParserTest {
         assertThat(parsed.title).isEqualTo("Google - alex@gmail.com")
     }
 
+    @Test
+    fun parse_withExplicitSha1Algorithm_setsSha1Enum() {
+        val uri = "otpauth://totp/Service?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.config.algorithm).isEqualTo(TotpAlgorithm.SHA1)
+    }
+
+    @Test
+    fun parse_withColonAndBlankAccountInLabel_fallsBackToPrefix() {
+        val uri = "otpauth://totp/GitHub:?secret=JBSWY3DPEHPK3PXP"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("GitHub")
+    }
+
+    @Test
+    fun parse_withBlankLabelAndBlankIssuer_fallsBackToDefaultAuthenticatorAccountTitle() {
+        val emptyPathUri = "otpauth://totp/?secret=JBSWY3DPEHPK3PXP"
+        val emptyColonUri = "otpauth://totp/:?secret=JBSWY3DPEHPK3PXP"
+
+        assertThat(parseSuccessfully(emptyPathUri).title).isEqualTo("Authenticator Account")
+        assertThat(parseSuccessfully(emptyColonUri).title).isEqualTo("Authenticator Account")
+    }
+
+    @Test
+    fun parse_withLiteralPlusInLabelAndIssuerQueryParam_preservesPlusCharacters() {
+        val uri =
+            "otpauth://totp/C++:dev+ops@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Google+Cloud"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("Google+Cloud (C++) - dev+ops@example.com")
+    }
+
     private fun parseSuccessfully(uri: String): ParsedTotpData {
         val result = TotpUriParser.parse(uri)
 

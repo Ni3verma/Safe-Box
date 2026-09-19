@@ -10,6 +10,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
@@ -351,8 +352,11 @@ class RestoreDataWorkerTest {
                 },
             )
         }
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
-            .isTrue()
+        val skippedEvent = analyticsHelper.loggedEvents.first {
+            it.key == AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED
+        }
+        assertThat(skippedEvent.params[AnalyticsParam.COUNT.paramName])
+            .isEqualTo(2)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
     }
 
@@ -415,8 +419,11 @@ class RestoreDataWorkerTest {
                 match { list -> list.isEmpty() },
             )
         }
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
-            .isTrue()
+        val skippedEvent = analyticsHelper.loggedEvents.first {
+            it.key == AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED
+        }
+        assertThat(skippedEvent.params[AnalyticsParam.COUNT.paramName])
+            .isEqualTo(2)
     }
 
     @Test

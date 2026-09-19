@@ -502,7 +502,7 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_sparseCategories_whenOnlyLoginsExist_shouldRestoreLoginsAndHandleEmptyCategories() {
         runBlocking {
-            val seed = System.currentTimeMillis()
+            val seed = RANDOMISED_RECORD_SEED
             val random = Random(seed)
             Timber.i("Running restoreFromBackup_sparseCategories with SEED: $seed")
 
@@ -581,7 +581,7 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_randomizedBulkVolume_shouldRestoreLargeDatasetAccurately() {
         runBlocking {
-            val seed = System.currentTimeMillis()
+            val seed = RANDOMISED_RECORD_SEED
             val random = Random(seed)
             Timber.i("Running restoreFromBackup_randomizedBulkVolume with SEED: $seed")
 

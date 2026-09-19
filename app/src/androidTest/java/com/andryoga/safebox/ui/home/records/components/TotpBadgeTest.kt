@@ -15,6 +15,8 @@ import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.test.fakes.FakeClipboard
 import com.andryoga.safebox.test.fakes.FakeTotpGenerator
+import com.andryoga.safebox.totp.engine.Base32Utils
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
@@ -22,6 +24,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Component-level Compose UI Test suite for [TotpBadge], the live code shown on a records list row.
@@ -50,12 +53,47 @@ class TotpBadgeTest {
     }
 
     @Test
-    fun validSeed_shouldDisplaySplitCodeAndCopyAffordance() {
-        setBadgeContent(generator = FakeTotpGenerator(code = "123456"))
+    fun validSeed_shouldDisplaySplitCodeCountdownSecondsAndCopyAffordance() {
+        setBadgeContent(generator = FakeTotpGenerator(code = "123456", remainingSeconds = 17))
 
         composeTestRule.onNodeWithText("123 456").assertIsDisplayed()
+        composeTestRule.onNodeWithText("17").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription(context.getString(R.string.cd_copy_totp_code))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun tickerLoop_whenSecondAdvances_updatesDisplayedCodeAndCountdown() {
+        val codeTicks = AtomicInteger(0)
+        val remainingTicks = AtomicInteger(0)
+        val steppingGenerator = object : TotpGenerator {
+            override fun generateCode(config: TotpConfig, timeSeconds: Long): String =
+                if (codeTicks.getAndIncrement() == 0) "111222" else "333444"
+
+            override fun getRemainingSeconds(timeSeconds: Long, period: Int): Int =
+                if (remainingTicks.getAndIncrement() == 0) 29 else 28
+
+            override fun isValidSecret(secretBase32: String): Boolean = true
+
+            override fun isValidConfig(config: TotpConfig): Boolean = true
+
+            override fun normalizeSecret(secretBase32: String): String =
+                Base32Utils.sanitize(secretBase32)
+        }
+
+        setBadgeContent(
+            config = TotpConfig(secretKey = SECRET_KEY, period = 1),
+            generator = steppingGenerator,
+        )
+
+        composeTestRule.onNodeWithText("111 222").assertIsDisplayed()
+        composeTestRule.onNodeWithText("29").assertIsDisplayed()
+
+        composeTestRule.waitUntil(timeoutMillis = 3_000L) {
+            codeTicks.get() >= 2
+        }
+        composeTestRule.onNodeWithText("333 444").assertIsDisplayed()
+        composeTestRule.onNodeWithText("28").assertIsDisplayed()
     }
 
     @Test
@@ -107,7 +145,7 @@ class TotpBadgeTest {
 
     private fun setBadgeContent(
         config: TotpConfig = TotpConfig(secretKey = SECRET_KEY),
-        generator: FakeTotpGenerator = FakeTotpGenerator(),
+        generator: TotpGenerator = FakeTotpGenerator(),
         onCopyClick: () -> Unit = {},
     ) {
         composeTestRule.setContent {
