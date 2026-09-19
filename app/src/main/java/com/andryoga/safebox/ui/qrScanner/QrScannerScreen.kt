@@ -57,8 +57,10 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -199,13 +201,13 @@ fun QrScannerScreen(
     }
 
     LaunchedEffect(hasCameraPermission, uiState.isCameraPermissionAskedBefore) {
-        if (!hasCameraPermission) {
+        if (!hasCameraPermission && !hasLaunchedInitialPrompt) {
             val askedBefore = uiState.isCameraPermissionAskedBefore ?: return@LaunchedEffect
+            hasLaunchedInitialPrompt = true
             if (askedBefore) {
                 Timber.i("Camera permission previously asked; showing educational rationale dialog")
                 onAction(QrScannerScreenAction.OnShowPermissionRationale)
-            } else if (!hasLaunchedInitialPrompt) {
-                hasLaunchedInitialPrompt = true
+            } else {
                 Timber.i("Directly launching system camera permission prompt for the first time")
                 permissionLauncher.launch(Manifest.permission.CAMERA)
             }
@@ -549,7 +551,11 @@ private fun QrScannerOverlay(
     modifier: Modifier = Modifier,
     primaryColor: Color,
 ) {
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.graphicsLayer {
+            compositingStrategy = CompositingStrategy.Offscreen
+        },
+    ) {
         val cutoutSize = (size.minDimension * 0.7f).coerceAtMost(300.dp.toPx())
         val left = (size.width - cutoutSize) / 2f
         val top = (size.height - cutoutSize) / 2.4f

@@ -100,7 +100,7 @@ private fun UnsupportedQrCodeDialogContent(
             Text(
                 text = stringResource(reason.messageResId()),
                 fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onBackground,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
 

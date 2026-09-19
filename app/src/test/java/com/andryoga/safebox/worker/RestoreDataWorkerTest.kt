@@ -469,6 +469,40 @@ class RestoreDataWorkerTest {
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
         }
 
+    @Test
+    fun doWork_whenAuthenticatorHasUnknownAlgorithm_skipsOffendingRecordAndRestoresValidOnes() = runTest {
+        val authJson = """
+            [{
+              "title": "Future Algorithm Entry",
+              "secretKey": "JBSWY3DPEHPK3PXP",
+              "creationDate": 1000,
+              "updateDate": 2000,
+              "algorithm": "BLAKE2B",
+              "digits": 6,
+              "period": 30
+            },{
+              "title": "Valid SHA1 Entry",
+              "secretKey": "JBSWY3DPEHPK3PXP",
+              "creationDate": 1000,
+              "updateDate": 2000,
+              "algorithm": "SHA1",
+              "digits": 6,
+              "period": 30
+            }]
+        """.trimIndent()
+
+        val result = restoreAuthenticatorJson(authJson, "UnknownAlgorithm.bak")
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(
+                match { list -> list.size == 1 && list[0].title == "Valid SHA1 Entry" },
+            )
+        }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
+            .isTrue()
+    }
+
     /**
      * Runs a full restore whose authenticator payload decrypts to [authJson].
      *
