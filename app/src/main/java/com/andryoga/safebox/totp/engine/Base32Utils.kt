@@ -77,14 +77,20 @@ object Base32Utils {
     }
 
     /**
-     * Normalizes a Base32 string by stripping whitespace, hyphens, and padding, and converting to uppercase.
+     * Normalizes a Base32 string by stripping whitespace, separators, and padding, and converting
+     * to uppercase.
+     *
+     * `+` is dropped for the same reason as `-`: neither is in the RFC 4648 alphabet, so both can
+     * only ever be readability separators. It matters for `+` in particular because the Key URI
+     * query decoder follows RFC 3986 and leaves a literal `+` in place, so an issuer that writes a
+     * spaced seed in form-encoded style would otherwise hand us a seed that fails validation.
      *
      * @param encodedString Raw Base32 string.
      * @return Normalized Base32 string.
      */
     internal fun sanitize(encodedString: String): String {
         return encodedString
-            .filterNot { it.isWhitespace() || it == '-' }
+            .filterNot { it.isWhitespace() || it == '-' || it == '+' }
             .trimEnd('=')
             .uppercase()
     }

@@ -133,7 +133,8 @@ fun SingleRecordScreen(
                 val weightOfEachField = if (visibleFields == 0) 1F else 1F / visibleFields
 
                 fields.forEachIndexed { columnIndex, field ->
-                    val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]!!
+                    val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]
+                        ?: return@forEachIndexed
 
                     if (fieldUiState.isVisibleIn(uiState.viewMode)) {
                         Box(Modifier.weight(weightOfEachField)) {

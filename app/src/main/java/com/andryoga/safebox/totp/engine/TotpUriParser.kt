@@ -123,8 +123,8 @@ object TotpUriParser {
     /**
      * Maps a Key URI `algorithm` token to a supported [TotpAlgorithm].
      *
-     * Matched against literals, not [TotpAlgorithm.entries] and [Enum.name], so the mapping
-     * survives minification of the enum constant names.
+     * Matched against literals, not [TotpAlgorithm.entries], so renaming an enum constant cannot
+     * silently change which QR codes parse.
      *
      * @param rawAlgorithm Raw parameter value from the URI, in any casing.
      * @return Matching algorithm, or null when Safe-Box cannot compute that hash.
@@ -160,12 +160,12 @@ object TotpUriParser {
                 val keyValue = param.split("=", limit = 2)
                 if (keyValue.size == 2) {
                     val key = try {
-                        URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8.name())
+                        decodeQueryComponent(keyValue[0])
                     } catch (e: Exception) {
                         keyValue[0]
                     }
                     val value = try {
-                        URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8.name())
+                        decodeQueryComponent(keyValue[1])
                     } catch (e: Exception) {
                         keyValue[1]
                     }
@@ -176,6 +176,15 @@ object TotpUriParser {
             }
             .toMap()
     }
+
+    /**
+     * Decodes a percent-encoded query component while preserving literal `+` characters.
+     *
+     * [URLDecoder] implements HTML form decoding (`application/x-www-form-urlencoded`), which
+     * turns `+` into a space; Key URIs follow RFC 3986 where `+` in an issuer or label is literal.
+     */
+    private fun decodeQueryComponent(raw: String): String =
+        URLDecoder.decode(raw.replace("+", "%2B"), StandardCharsets.UTF_8.name())
 
     /**
      * Derives a clean, human-readable account title from the URI label and issuer parameter.
@@ -224,7 +233,6 @@ object TotpUriParser {
             }
 
             label.isNotBlank() -> label
-            trimmedIssuer != null -> trimmedIssuer
             else -> "Authenticator Account"
         }
     }

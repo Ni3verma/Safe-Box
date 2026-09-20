@@ -34,8 +34,10 @@ import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import timber.log.Timber
 import java.io.File
 import java.io.FileInputStream
@@ -205,8 +207,11 @@ class RestoreDataWorker
             decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
         val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
+        val decodedAuthenticators =
+            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
         val authenticatorData = filterDecodableAuthenticatorData(
-            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY]),
+            decodedAuthenticators?.records,
+            decodedAuthenticators?.deserializationFailedCount ?: 0,
         )
         recordTime("all data decrypted")
 
@@ -232,10 +237,13 @@ class RestoreDataWorker
      * bad 2FA seed must not cost the user every login, card and note in the backup.
      *
      * @param authenticatorData Records decoded from the backup, or null when the backup has none.
+     * @param deserializationFailedCount Elements [decryptAuthenticatorData] could not deserialize
+     * at all. They leave no record to inspect here, so they are counted rather than filtered.
      * @return Records safe to persist, or null when the input was null.
      */
     private fun filterDecodableAuthenticatorData(
         authenticatorData: List<ExportAuthenticatorData>?,
+        deserializationFailedCount: Int,
     ): List<ExportAuthenticatorData>? {
         if (authenticatorData == null) return null
 
@@ -243,11 +251,12 @@ class RestoreDataWorker
             totpGenerator.isValidConfig(it.toTotpConfig())
         }
 
-        if (undecodable.isNotEmpty()) {
+        val skippedCount = deserializationFailedCount + undecodable.size
+        if (skippedCount > 0) {
             // never log the seed itself, only how many were dropped.
-            Timber.w("$localTag skipped ${undecodable.size} authenticator records, invalid secret")
+            Timber.w("$localTag skipped $skippedCount authenticator records, invalid secret or schema")
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED) {
-                param(AnalyticsParam.COUNT, undecodable.size)
+                param(AnalyticsParam.COUNT, skippedCount)
             }
         }
 
@@ -337,28 +346,57 @@ class RestoreDataWorker
     }
 
     /**
+     * Authenticator records read out of a backup, paired with the number of array elements that
+     * could not be deserialized at all.
+     *
+     * The count travels with the records because a failed element leaves nothing behind to inspect
+     * later, yet it still has to be reported as skipped.
+     *
+     * @property records Elements that deserialized, not yet checked for semantic usability.
+     * @property deserializationFailedCount Elements dropped because they did not match the schema.
+     */
+    private data class DecodedAuthenticators(
+        val records: List<ExportAuthenticatorData>,
+        val deserializationFailedCount: Int,
+    )
+
+    /**
      * Decrypts and deserializes TOTP authenticator records from the encrypted backup byte array.
      *
+     * Elements are decoded one at a time rather than through [ListSerializer], so a single record
+     * written by a future build, for example with an algorithm this version does not know, is
+     * dropped on its own instead of aborting a restore that also carries the user's logins, cards
+     * and notes.
+     *
      * @param authenticatorDataByteArray The encrypted payload from the backup archive, or null if absent.
-     * @return Decrypted list of [ExportAuthenticatorData], or null if the input payload is null.
+     * @return Decoded records and the count of undecodable elements, or null if the payload is null.
      */
     private fun decryptAuthenticatorData(
         authenticatorDataByteArray: ByteArray?,
-    ): List<ExportAuthenticatorData>? {
-        return if (authenticatorDataByteArray != null) {
-            val json = String(
-                passwordBasedEncryption.encryptDecrypt(
-                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
-                    authenticatorDataByteArray,
-                    salt,
-                    iv,
-                    false,
-                ),
-            )
-            Json.decodeFromString(ListSerializer(ExportAuthenticatorData.serializer()), json)
-        } else {
-            null
+    ): DecodedAuthenticators? {
+        if (authenticatorDataByteArray == null) return null
+
+        val json = String(
+            passwordBasedEncryption.encryptDecrypt(
+                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                authenticatorDataByteArray,
+                salt,
+                iv,
+                false,
+            ),
+        )
+        val decodedRecords = mutableListOf<ExportAuthenticatorData>()
+        var deserializationFailedCount = 0
+        for (element in Json.parseToJsonElement(json).jsonArray) {
+            try {
+                decodedRecords.add(
+                    Json.decodeFromJsonElement(ExportAuthenticatorData.serializer(), element),
+                )
+            } catch (_: SerializationException) {
+                deserializationFailedCount++
+            }
         }
+        return DecodedAuthenticators(decodedRecords, deserializationFailedCount)
     }
 
     private fun restoreDataToDb(

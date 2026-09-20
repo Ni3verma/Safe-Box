@@ -241,6 +241,23 @@ class AuthenticatorLayoutImplTest {
     }
 
     @Test
+    fun saveLayout_existingRecordWithoutSecretInMap_fallsBackToStoredSecretKey() = runTest {
+        val layout = createLayout(recordId = 10)
+        layout.getLayoutPlan()
+
+        val dataSlot = slot<AuthenticatorData>()
+        coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit
+
+        layout.saveLayout(
+            mapOf(
+                FieldId.AUTHENTICATOR_TITLE to "Google Title Only",
+            ),
+        )
+
+        assertThat(dataSlot.captured.config.secretKey).isEqualTo(sampleConfig.secretKey)
+    }
+
+    @Test
     fun saveLayout_newRecord_fallsBackToDefaultGenerationParams() = runTest {
         val dataSlot = slot<AuthenticatorData>()
         coEvery { repository.upsertAuthenticatorData(capture(dataSlot)) } returns Unit

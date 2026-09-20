@@ -6,7 +6,6 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.mlkit.vision.barcode.BarcodeScanner
@@ -27,7 +26,6 @@ import javax.inject.Inject
  * @param barcodeScanner Injected ML Kit [BarcodeScanner] instance for QR code scanning.
  * @param analyticsHelper Injected analytics logger for tracking user actions.
  * @param preferenceProvider Injected preference store to track permission request history.
- * @param dispatchersProvider Injected coroutine dispatcher abstraction for predictable virtual-time testing.
  * @param scannedTotpHolder Hand-off used to carry a successful scan to the create-record screen.
  */
 @HiltViewModel
@@ -35,7 +33,6 @@ class QrScannerViewModel @Inject constructor(
     val barcodeScanner: BarcodeScanner,
     private val analyticsHelper: AnalyticsHelper,
     private val preferenceProvider: PreferenceProvider,
-    private val dispatchersProvider: DispatchersProvider,
     private val scannedTotpHolder: ScannedTotpHolder,
 ) : ViewModel() {
 
@@ -54,7 +51,7 @@ class QrScannerViewModel @Inject constructor(
     private val _unsupportedQrError = MutableStateFlow<TotpUriError?>(null)
 
     init {
-        viewModelScope.launch(dispatchersProvider.io) {
+        viewModelScope.launch {
             _isCameraPermissionAskedBefore.value = preferenceProvider.getBooleanPref(
                 CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE,
                 false,
@@ -161,7 +158,7 @@ class QrScannerViewModel @Inject constructor(
 
             is QrScannerScreenAction.OnCameraPermissionResult -> {
                 _isCameraPermissionAskedBefore.value = true
-                viewModelScope.launch(dispatchersProvider.io) {
+                viewModelScope.launch {
                     preferenceProvider.upsertBooleanPref(
                         CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE,
                         true,
@@ -216,8 +213,8 @@ class QrScannerViewModel @Inject constructor(
 /**
  * Maps a URI rejection reason to the value reported to analytics.
  *
- * Literals, not [Enum.name]: the names are only read in minified release builds, which are also
- * the only builds that report analytics.
+ * Literals, not [Enum.name], so renaming an enum constant cannot silently split a metric across
+ * two names.
  *
  * @return Stable snake case identifier for the reason.
  */
