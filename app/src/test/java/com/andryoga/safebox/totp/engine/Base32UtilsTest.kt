@@ -104,6 +104,16 @@ class Base32UtilsTest {
     }
 
     @Test
+    fun sanitize_withFormEncodedSpaces_stripsPlusSeparators() {
+        // the Key URI query decoder keeps a literal '+' per RFC 3986, so a seed written in
+        // form-encoded style reaches us with '+' where the issuer meant a space.
+        assertThat(Base32Utils.sanitize("JBSW+Y3DP+EHPK+3PXP")).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(Base32Utils.isValidBase32("JBSW+Y3DP+EHPK+3PXP")).isTrue()
+        assertThat(Base32Utils.decode("JBSW+Y3DP+EHPK+3PXP"))
+            .isEqualTo(Base32Utils.decode("JBSWY3DPEHPK3PXP"))
+    }
+
+    @Test
     fun isValidBase32_withImpossibleFinalQuantumLength_returnsFalse() {
         // no Base32 encoder can emit a group of 1, 3 or 6 characters: those bits never complete a
         // byte, so decode() drops them and the seed silently loses data.

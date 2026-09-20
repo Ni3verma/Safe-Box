@@ -191,7 +191,12 @@ fun QrScannerScreen(
             if (!hasCameraPermission) {
                 hasCameraPermission = true
             }
-        } else if (uiState.isCameraPermissionAskedBefore == true && !uiState.showPermissionRationale) {
+        } else if (uiState.isPermissionPermanentlyDenied && !uiState.showPermissionRationale) {
+            // Gated on a permanent denial rather than on isCameraPermissionAskedBefore, which also
+            // flips true straight after a first, retryable denial. OnCameraPermissionResult
+            // deliberately stays quiet in that case, and the permission result is dispatched before
+            // ON_RESUME, so the looser condition would resurrect the very dialog the view model
+            // just chose not to show.
             onAction(QrScannerScreenAction.OnShowPermissionRationale)
         }
     }

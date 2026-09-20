@@ -506,8 +506,11 @@ class RestoreDataWorkerTest {
                 match { list -> list.size == 1 && list[0].title == "Valid SHA1 Entry" },
             )
         }
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED))
-            .isTrue()
+        val skippedEvent = analyticsHelper.loggedEvents.first {
+            it.key == AnalyticsKey.RESTORE_INVALID_AUTHENTICATOR_SKIPPED
+        }
+        assertThat(skippedEvent.params[AnalyticsParam.COUNT.paramName])
+            .isEqualTo(1)
     }
 
     /**
