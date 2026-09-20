@@ -1,0 +1,144 @@
+# Persistence and cryptography
+
+How Safe-Box stores data, what encrypts what, and where the sharp edges are.
+
+## Storage layers
+
+There are **five** independent persistence layers. Most bugs that destroy user data involve one of
+them getting out of step with the others, which is why a Room migration test alone is never
+sufficient coverage.
+
+| Layer | Holds |
+|---|---|
+| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted |
+| `EncryptedSharedPreferences` | signup state, other secrets |
+| Plain `SharedPreferences` | login counters, permission-asked flags |
+| DataStore | settings/preferences |
+| `AndroidKeyStore` | the field-encryption key — **not** file-backed, not in `/data/data` |
+| WorkManager's own DB | scheduled backup and clipboard-clear work |
+
+## Field encryption
+
+`di/SecurityModule.kt`:
+
+```kotlin
+private fun getSymmetricKey(): SecretKey {
+    val alias = "symmetricDataKey"
+    val keyStore = KeyStore.getInstance("AndroidKeyStore")
+    keyStore.load(null)
+    if (!keyStore.containsAlias(alias)) {
+        // ... AES / GCM / NoPadding / setRandomizedEncryptionRequired(true)
+        keyGenerator.generateKey()
+    }
+    return (keyStore.getEntry(alias, null) as KeyStore.SecretKeyEntry).secretKey
+}
+```
+
+> [!CAUTION]
+> **The highest-severity failure mode in the app.** If the alias is ever lost, this silently
+> creates a *new* key. Nothing throws. Every existing record becomes permanently undecryptable and
+> the user sees a vault full of garbage with no explanation.
+>
+> Because the key lives in the Keystore and not in `/data/data`, it is invisible to Room migration
+> tests, to backup/restore tests, and to any `/data` snapshot. The only thing that can catch a
+> regression here is an **upgrade test that installs an old build, writes records, upgrades in
+> place, and compares decrypted field values**. See
+> [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md).
+
+Encryption is per-field, applied in the `secureDao` layer
+(`data/db/secureDao/*DaoSecure.kt`), so DAOs above it deal in plaintext.
+
+## Backup file format
+
+Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
+
+- **Container:** a Java-serialized `HashMap<String, ByteArray>`.
+- **Keys** are terse numeric strings from `CommonConstants`:
+
+  | Key | Contents |
+  |---|---|
+  | `"0"` | `BACKUP_VERSION` (currently **3**) |
+  | `"1"` | PBE salt |
+  | `"2"` | cipher IV |
+  | `"3"` | creation date |
+  | `"4"`–`"8"` | login / bank account / bank card / secure note / authenticator payloads |
+
+- **Encryption:** payloads are PBE-encrypted with a **backup password supplied by the user at
+  export time**. This is *not* the vault master password and *not* the Keystore key — which is why
+  a `.bak` remains restorable even if the Keystore key is lost.
+- **File name:** `yyyyMMddHHmmssSSS.bak`, mime `application/octet-stream`.
+- **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
+  directory.
+
+### Version history
+
+| `BACKUP_VERSION` | Change |
+|---|---|
+| 1 | original; `creationDate` stored as a **1-byte** value |
+| 2 | `creationDate` widened to an **8-byte** `Long` |
+| 3 | adds `AUTHENTICATOR_DATA_KEY` (TOTP records) |
+
+Both `creationDate` widths are still handled on read:
+
+```kotlin
+val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
+    ByteBuffer.wrap(creationDateBytes).long
+} else {
+    creationDateBytes[0].toLong()
+}
+```
+
+Older files simply have no entry for newer keys, and the reader uses `importMap[KEY]` without `!!`,
+so absence is safe. **Preserve that property when adding a key.**
+
+### Deserialization hardening
+
+`RestoreDataWorker` subclasses `ObjectInputStream` and overrides `resolveClass` with an allowlist:
+`java.util.HashMap`, `LinkedHashMap`, `Map`, `String`, `[B`, `Number`, `Integer`, `Long`. Anything
+else throws `InvalidClassException`. **Do not widen this** — a password manager deserializing
+arbitrary classes from a user-supplied file is a remote-code-execution primitive.
+
+## Restore semantics
+
+`restoreDataToDb` runs inside `safeBoxDatabase.runInTransaction { }` and, per table, does
+`deleteAllData()` followed by bulk insert.
+
+> [!IMPORTANT]
+> Restore is a **destructive replace, not a merge**. After a restore the record count equals the
+> file's count exactly. Any test asserting additive behaviour is wrong.
+
+Failure classification is `RestoreFailureReason`:
+
+| Value | Trigger |
+|---|---|
+| `INCORRECT_PASSWORD` | `BadPaddingException` during decrypt |
+| `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
+| `UNKNOWN_ERROR` | anything else |
+
+### Authenticator records are filtered, not fatal
+
+`filterDecodableAuthenticatorData` drops authenticator rows that cannot produce a code — an
+undecodable Base32 seed, an unsupported digit count, a non-positive period — and counts elements
+that failed to deserialize at all. The rest of the restore proceeds.
+
+This is deliberate: one bad 2FA seed must not cost the user every login, card and note in the
+backup. A skipped count is surfaced to the UI.
+
+## Room
+
+- Current version **5**; exported schemas live in `app/schemas/` and are also mounted as androidTest
+  assets so migration tests can read them.
+- `Migration.ALL` in `data/db/Migration.kt` is the canonical list; `CacheModule` does
+  `.addMigrations(*Migration.ALL)`. `MigrationTest` asserts
+  `Migration.ALL.maxOf { it.endVersion } == currentSchemaVersion()`, so bumping the DB without
+  adding a migration fails loudly.
+- **No `fallbackToDestructiveMigration` anywhere.** Adding one would convert a migration bug into
+  total, silent data loss.
+- `MIGRATION_4_5` only **adds** the authenticator table. It does not `ALTER` any encrypted table,
+  which is why it is low risk.
+
+## Related
+
+- [Testing strategy](../testing/testing-strategy.md)
+- [Upgrade testing](../testing/upgrade-testing.md)
+- [TOTP record type design](../TotpAuthRecordTypeDesign.md)
