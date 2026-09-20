@@ -28,4 +28,14 @@ enum class TotpUriError {
 
     /** `period` is present but is not a positive number of seconds. */
     UNSUPPORTED_PERIOD,
+
+    /**
+     * A parameter that decides which code gets generated appears more than once with conflicting
+     * values, so there is no single correct way to read the URI.
+     *
+     * Rejected rather than resolved by a last-one-wins rule: the user would have no way to tell
+     * which of two seeds was stored, and a QR code built this way is far more likely to be an
+     * attempt to smuggle a second seed past them than an issuer's mistake.
+     */
+    AMBIGUOUS_PARAMETERS,
 }

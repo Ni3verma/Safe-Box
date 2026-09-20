@@ -106,6 +106,29 @@ class SingleRecordViewModelTest {
             assertThat(uiState.isLoading).isFalse()
             assertThat(uiState.viewMode).isEqualTo(ViewMode.NEW)
             assertThat(uiState.topAppBarUiState.isSaveButtonVisible).isTrue()
+            // checkMandatoryFields says no for an empty create screen, so seeding the flag at init
+            // must not hand the user a Save button for a record with nothing in it.
+            assertThat(uiState.topAppBarUiState.isSaveButtonEnabled).isFalse()
+        }
+    }
+
+    @Test
+    fun initialState_whenLayoutOpensAlreadyComplete_enablesSaveWithoutAnEdit() = runTest {
+        // how a scanned QR code arrives: the layout prefills title and seed, so the user never
+        // types anything and OnCellValueUpdate, the only other place Save is recomputed, never
+        // fires. Save has to be usable from the first frame.
+        every { layout.checkMandatoryFields(any()) } returns true
+        every { singleRecordRouteProvider.getRoute() } returns
+            SingleRecordScreenRoute(RecordType.AUTHENTICATOR)
+        initViewModel()
+
+        viewModel.uiState.test {
+            awaitItem()
+            advanceUntilIdle()
+
+            val uiState = expectMostRecentItem()
+            assertThat(uiState.viewMode).isEqualTo(ViewMode.NEW)
+            assertThat(uiState.topAppBarUiState.isSaveButtonEnabled).isTrue()
         }
     }
 

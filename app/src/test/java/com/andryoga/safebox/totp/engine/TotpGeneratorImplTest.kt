@@ -325,4 +325,23 @@ class TotpGeneratorImplTest {
             totpGenerator.getRemainingSeconds(period = -15, timeSeconds = 100L)
         }
     }
+
+    @Test
+    fun generateCode_withKeyLongerThanHmacBlockSize_matchesIndependentlyComputedCodes() {
+        // 256 Base32 characters decode to 160 key bytes. RFC 2104 says a key past the hash block
+        // size, 64 bytes for SHA1, is hashed down first rather than truncated, so a decoder that
+        // quietly dropped the tail would still produce plausible looking codes. Expected values
+        // were computed outside this codebase with python hmac/hashlib.
+        val config = TotpConfig(
+            secretKey = "JBSWY3DPEHPK3PXP".repeat(16),
+            algorithm = TotpAlgorithm.SHA1,
+            digits = 6,
+        )
+
+        assertThat(totpGenerator.generateCode(config, timeSeconds = 59L)).isEqualTo("763783")
+        assertThat(totpGenerator.generateCode(config, timeSeconds = 1111111109L))
+            .isEqualTo("498298")
+        assertThat(totpGenerator.generateCode(config, timeSeconds = 1234567890L))
+            .isEqualTo("309849")
+    }
 }

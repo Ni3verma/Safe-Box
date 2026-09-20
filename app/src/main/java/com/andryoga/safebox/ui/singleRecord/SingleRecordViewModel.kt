@@ -54,18 +54,22 @@ class SingleRecordViewModel @Inject constructor(
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
         viewModelScope.launch {
+            val layoutPlan = layout.getLayoutPlan()
+            val isNewRecord = args.id == null
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    layoutPlan = layout.getLayoutPlan(),
-                    viewMode = if (args.id != null) ViewMode.VIEW else ViewMode.NEW,
-                    topAppBarUiState = if (args.id != null) SingleRecordScreenUiState.TopAppBarUiState(
-                        isSaveButtonVisible = false,
-                        title = getTitleForTopAppBar(args.recordType)
-                    ) else SingleRecordScreenUiState.TopAppBarUiState(
-                        isSaveButtonVisible = true,
-                        title = getTitleForTopAppBar(args.recordType)
-                    )
+                    layoutPlan = layoutPlan,
+                    viewMode = if (isNewRecord) ViewMode.NEW else ViewMode.VIEW,
+                    topAppBarUiState = SingleRecordScreenUiState.TopAppBarUiState(
+                        title = getTitleForTopAppBar(args.recordType),
+                        isSaveButtonVisible = isNewRecord,
+                        // a layout can open already complete, which is how a scanned QR code
+                        // arrives: title and seed are prefilled and the user has nothing left to
+                        // type. Seeding this from the plan keeps Save usable in that case, since
+                        // OnCellValueUpdate is the only other place it is ever recomputed.
+                        isSaveButtonEnabled = layout.checkMandatoryFields(layoutPlan.fieldUiState),
+                    ),
                 )
             }
         }

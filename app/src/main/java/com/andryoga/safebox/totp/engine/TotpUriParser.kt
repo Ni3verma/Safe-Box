@@ -6,7 +6,6 @@ import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.andryoga.safebox.totp.models.TotpUriParseResult
-import timber.log.Timber
 import java.net.URI
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -35,11 +34,7 @@ object TotpUriParser {
         val sanitizedUriString = uriString.trim().replace(" ", "%20")
         return try {
             parseOtpauthUri(sanitizedUriString)
-        } catch (e: Exception) {
-            // only the exception type, never the exception itself: URISyntaxException quotes the
-            // rejected URI in its message, which would put the scanned seed into logcat and, via
-            // the release Timber tree, into Crashlytics.
-            Timber.i("could not parse scanned payload as a URI: ${e.javaClass.simpleName}")
+        } catch (_: Exception) {
             // the scheme has to be read off the raw text: a URI that failed to build exposes no
             // components. An unreadable otpauth payload is a QR code the user pointed at on
             // purpose, so it earns an explanation rather than being skipped as unrelated content.
@@ -71,7 +66,11 @@ object TotpUriParser {
             return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_OTP_TYPE)
         }
 
-        val queryParams = parseQueryParams(uri.rawQuery)
+        val groupedParams = parseQueryParams(uri.rawQuery)
+        if (hasConflictingParams(groupedParams)) {
+            return TotpUriParseResult.Unsupported(TotpUriError.AMBIGUOUS_PARAMETERS)
+        }
+        val queryParams = groupedParams.mapValues { it.value.first() }
 
         val rawSecret = queryParams.optionalParam("secret")
             ?: return TotpUriParseResult.Unsupported(TotpUriError.INVALID_SECRET)
@@ -147,12 +146,38 @@ object TotpUriParser {
         this[key]?.trim()?.takeIf { it.isNotBlank() }
 
     /**
-     * Parses the raw query string into a case-insensitive map of parameter key-value pairs.
+     * Parameters whose value decides which code the record will produce.
+     *
+     * A repeat of any of these with a different value makes the URI unreadable, so they are
+     * checked for conflicts. `issuer` and unrecognized extras such as `image` are left out: a
+     * repeat there only affects the title, which the user can see and correct on the save screen.
+     */
+    private val CODE_DETERMINING_PARAMS = setOf("secret", "algorithm", "digits", "period")
+
+    /**
+     * Reports whether any code-determining parameter was given more than one distinct value.
+     *
+     * Exact repeats are tolerated, since `secret=X&secret=X` names one seed no matter how many
+     * times it is written.
+     *
+     * @param groupedParams Every value seen for each parameter name, in order of appearance.
+     * @return true when the URI cannot be read as naming a single configuration.
+     */
+    private fun hasConflictingParams(groupedParams: Map<String, List<String>>): Boolean =
+        CODE_DETERMINING_PARAMS.any { key ->
+            groupedParams[key].orEmpty().distinct().size > 1
+        }
+
+    /**
+     * Parses the raw query string, keeping every value seen for each parameter name.
+     *
+     * Values are grouped rather than collapsed so that [hasConflictingParams] can still see a
+     * repeated parameter; a plain map would hide the duplicate behind a last-one-wins overwrite.
      *
      * @param rawQuery The raw query string from the URI.
-     * @return Map of decoded query parameter names (in lowercase) to their values.
+     * @return Map of decoded, lowercased parameter names to the values seen for each.
      */
-    private fun parseQueryParams(rawQuery: String?): Map<String, String> {
+    private fun parseQueryParams(rawQuery: String?): Map<String, List<String>> {
         if (rawQuery.isNullOrBlank()) return emptyMap()
 
         return rawQuery.split("&")
@@ -174,7 +199,7 @@ object TotpUriParser {
                     null
                 }
             }
-            .toMap()
+            .groupBy({ it.first }, { it.second })
     }
 
     /**

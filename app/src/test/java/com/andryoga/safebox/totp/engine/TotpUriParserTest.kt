@@ -1,5 +1,6 @@
 package com.andryoga.safebox.totp.engine
 
+import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpUriError
@@ -260,6 +261,96 @@ class TotpUriParserTest {
         val parsed = parseSuccessfully(uri)
 
         assertThat(parsed.title).isEqualTo("Google+Cloud (C++) - dev+ops@example.com")
+    }
+
+    @Test
+    fun parse_withConflictingDuplicateSecret_returnsAmbiguousParametersInsteadOfPickingOne() {
+        val uri = "otpauth://totp/Acme:dup@example.com?secret=JBSWY3DPEHPK3PXP" +
+            "&secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+
+        assertThat(parseUnsupportedReason(uri)).isEqualTo(TotpUriError.AMBIGUOUS_PARAMETERS)
+    }
+
+    @Test
+    fun parse_withConflictingDuplicateGenerationParams_returnsAmbiguousParameters() {
+        val digitsUri = "otpauth://totp/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP&digits=6&digits=8"
+        val periodUri = "otpauth://totp/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP&period=30&period=60"
+        val algorithmUri =
+            "otpauth://totp/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP&algorithm=SHA1&algorithm=SHA256"
+
+        assertThat(parseUnsupportedReason(digitsUri)).isEqualTo(TotpUriError.AMBIGUOUS_PARAMETERS)
+        assertThat(parseUnsupportedReason(periodUri)).isEqualTo(TotpUriError.AMBIGUOUS_PARAMETERS)
+        assertThat(parseUnsupportedReason(algorithmUri))
+            .isEqualTo(TotpUriError.AMBIGUOUS_PARAMETERS)
+    }
+
+    @Test
+    fun parse_withHarmlessDuplicateParams_stillParses() {
+        // an identical repeat names one value, and a repeated issuer only affects the title, which
+        // the user sees and can correct before saving. Neither is worth refusing the QR code over.
+        val repeatedSecretUri =
+            "otpauth://totp/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP&secret=JBSWY3DPEHPK3PXP"
+        val repeatedIssuerUri =
+            "otpauth://totp/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP&issuer=One&issuer=Two"
+
+        assertThat(parseSuccessfully(repeatedSecretUri).config.secretKey)
+            .isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parseSuccessfully(repeatedIssuerUri).config.secretKey)
+            .isEqualTo("JBSWY3DPEHPK3PXP")
+    }
+
+    @Test
+    fun parse_withUppercaseSchemeAndType_parsesCaseInsensitively() {
+        // RFC 3986 makes the scheme and authority case insensitive, and issuers do emit them
+        // uppercase. Losing either ignoreCase flag would reject a perfectly valid QR code.
+        val uri = "OTPAUTH://TOTP/AcmeCorp:alice@example.com?secret=JBSWY3DPEHPK3PXP"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("AcmeCorp - alice@example.com")
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+    }
+
+    @Test
+    fun parse_withOtpTypeThatMerelyStartsWithTotp_returnsUnsupportedOtpType() {
+        // guards the exact-match check: a prefix comparison would accept these as time based.
+        val suffixedUri = "otpauth://totp_random_99x/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP"
+        val unrelatedUri = "otpauth://xyz_auth_123/Acme:a@example.com?secret=JBSWY3DPEHPK3PXP"
+
+        assertThat(parseUnsupportedReason(suffixedUri))
+            .isEqualTo(TotpUriError.UNSUPPORTED_OTP_TYPE)
+        assertThat(parseUnsupportedReason(unrelatedUri))
+            .isEqualTo(TotpUriError.UNSUPPORTED_OTP_TYPE)
+    }
+
+    @Test
+    fun parse_withBlankLabelButIssuerParam_usesIssuerAsTitle() {
+        val uri = "otpauth://totp/?secret=JBSWY3DPEHPK3PXP&issuer=AcmeCorp"
+
+        assertThat(parseSuccessfully(uri).title).isEqualTo("AcmeCorp")
+    }
+
+    @Test
+    fun parse_withUnknownExtraParams_ignoresThemAndKeepsTotpParams() {
+        // the image value carries its own '=' and ':', so this also pins the limit = 2 split that
+        // stops a value being chopped at its first '='.
+        val uri = "otpauth://totp/Acme:extra@example.com?secret=JBSWY3DPEHPK3PXP" +
+            "&issuer=Acme&random_flag=true&image=https://example.com/logo.png?v=2&foo=123"
+        val parsed = parseSuccessfully(uri)
+
+        assertThat(parsed.title).isEqualTo("Acme - extra@example.com")
+        assertThat(parsed.config.secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(parsed.config.digits).isEqualTo(TotpDefaults.DIGITS)
+        assertThat(parsed.config.period).isEqualTo(TotpDefaults.PERIOD_SECONDS)
+    }
+
+    @Test
+    fun parse_withSecretLongerThanHmacBlockSize_keepsEveryCharacter() {
+        // 256 Base32 characters decode to a 160 byte key, well past the 64 byte SHA1 block size.
+        // The matching generator test proves the key still produces the right code.
+        val longSecret = "JBSWY3DPEHPK3PXP".repeat(16)
+        val uri = "otpauth://totp/Acme:longkey@example.com?secret=$longSecret"
+
+        assertThat(parseSuccessfully(uri).config.secretKey).isEqualTo(longSecret)
     }
 
     private fun parseSuccessfully(uri: String): ParsedTotpData {

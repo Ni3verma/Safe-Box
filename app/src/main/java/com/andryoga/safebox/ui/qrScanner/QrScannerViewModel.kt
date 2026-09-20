@@ -225,4 +225,5 @@ private fun TotpUriError.toAnalyticsValue(): String = when (this) {
     TotpUriError.UNSUPPORTED_ALGORITHM -> "unsupported_algorithm"
     TotpUriError.UNSUPPORTED_DIGITS -> "unsupported_digits"
     TotpUriError.UNSUPPORTED_PERIOD -> "unsupported_period"
+    TotpUriError.AMBIGUOUS_PARAMETERS -> "ambiguous_parameters"
 }

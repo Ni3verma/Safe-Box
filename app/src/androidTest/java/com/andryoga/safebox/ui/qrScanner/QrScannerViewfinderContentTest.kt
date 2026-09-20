@@ -175,6 +175,7 @@ class QrScannerViewfinderContentTest {
             TotpUriError.UNSUPPORTED_PERIOD to R.string.unsupported_qr_code_reason_period,
             TotpUriError.INVALID_SECRET to R.string.unsupported_qr_code_reason_invalid_secret,
             TotpUriError.MALFORMED_URI to R.string.unsupported_qr_code_reason_malformed,
+            TotpUriError.AMBIGUOUS_PARAMETERS to R.string.unsupported_qr_code_reason_ambiguous,
         )
         assertThat(expectedMessageResByError.keys)
             .containsExactlyElementsIn(TotpUriError.entries)

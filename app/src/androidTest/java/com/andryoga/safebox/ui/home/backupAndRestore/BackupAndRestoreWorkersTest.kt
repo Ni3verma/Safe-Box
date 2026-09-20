@@ -37,6 +37,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import timber.log.Timber
 import java.io.File
@@ -56,6 +57,9 @@ class BackupAndRestoreWorkersTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testName = TestName()
 
     @Inject
     lateinit var workerFactory: SafeBoxWorkerFactory
@@ -90,6 +94,32 @@ class BackupAndRestoreWorkersTest {
     @Before
     fun setup() {
         hiltRule.inject()
+    }
+
+    /**
+     * Supplies the seed for a randomized run.
+     *
+     * A fresh seed every execution is the point of these tests: the value of generating records at
+     * random is that each run explores a different corner of the input space, so pinning a
+     * constant would quietly reduce them to yet another fixed fixture. The cost of that is a
+     * failure you cannot reproduce, which is what the override is for. Every assertion in these
+     * tests reports its seed, and passing that seed back replays the exact dataset:
+     *
+     * ```
+     * ./gradlew :app:connectedDebugAndroidTest \
+     *   -Pandroid.testInstrumentationRunnerArguments.class=com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreWorkersTest \
+     *   -Pandroid.testInstrumentationRunnerArguments.backupSeed=-8421705573201664511
+     * ```
+     *
+     * @return The override seed when one was passed to the instrumentation, otherwise a new one.
+     */
+    private fun randomSeed(): Long {
+        val seed = InstrumentationRegistry.getArguments()
+            .getString(SEED_ARGUMENT_KEY)
+            ?.toLongOrNull()
+            ?: Random.nextLong()
+        Timber.i("Running ${testName.methodName} with SEED: $seed")
+        return seed
     }
 
     private suspend fun runBackupWorker(password: String = testPassword): Result {
@@ -375,9 +405,8 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_randomizedRecordsAllTypes_shouldRestore100PercentFieldEquality() {
         runBlocking {
-            val seed = Random.nextLong()
+            val seed = randomSeed()
             val random = Random(seed)
-            Timber.i("Running restoreFromBackup_randomizedRecordsAllTypes with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -507,9 +536,8 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_sparseCategories_whenOnlyLoginsExist_shouldRestoreLoginsAndHandleEmptyCategories() {
         runBlocking {
-            val seed = Random.nextLong()
+            val seed = randomSeed()
             val random = Random(seed)
-            Timber.i("Running restoreFromBackup_sparseCategories with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -593,9 +621,8 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_randomizedBulkVolume_shouldRestoreLargeDatasetAccurately() {
         runBlocking {
-            val seed = Random.nextLong()
+            val seed = randomSeed()
             val random = Random(seed)
-            Timber.i("Running restoreFromBackup_randomizedBulkVolume with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -880,5 +907,8 @@ class BackupAndRestoreWorkersTest {
         // A Base32 quantum is 8 characters and a trailing partial group can only be 2, 4, 5 or 7
         // of them, so a length leaving 1, 3 or 6 over is one no encoder could ever emit.
         private val REPRESENTABLE_SEED_LENGTHS = (16..32).filter { it % 8 !in setOf(1, 3, 6) }
+
+        // Instrumentation argument that replays a specific randomized dataset. See [randomSeed].
+        private const val SEED_ARGUMENT_KEY = "backupSeed"
     }
 }

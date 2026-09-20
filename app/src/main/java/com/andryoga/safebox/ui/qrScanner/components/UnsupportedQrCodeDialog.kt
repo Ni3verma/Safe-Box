@@ -130,6 +130,7 @@ private fun TotpUriError.messageResId(): Int = when (this) {
     TotpUriError.UNSUPPORTED_ALGORITHM -> R.string.unsupported_qr_code_reason_algorithm
     TotpUriError.UNSUPPORTED_DIGITS -> R.string.unsupported_qr_code_reason_digits
     TotpUriError.UNSUPPORTED_PERIOD -> R.string.unsupported_qr_code_reason_period
+    TotpUriError.AMBIGUOUS_PARAMETERS -> R.string.unsupported_qr_code_reason_ambiguous
 }
 
 @LightDarkModePreview

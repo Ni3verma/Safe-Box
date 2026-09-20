@@ -352,4 +352,19 @@ class AuthenticatorLayoutImplTest {
             .isFalse()
         assertThat(layout.checkMandatoryFields(plan.fieldUiState)).isTrue()
     }
+
+    @Test
+    fun checkMandatoryFields_planPrefilledFromScannedQrCode_evaluatesTrueBeforeAnyEdit() = runTest {
+        every { totpGenerator.isValidSecret("JBSWY3DPEHPK3PXP") } returns true
+        val layout = createLayout(scannedTotpData = scannedData)
+        val plan = layout.getLayoutPlan()
+
+        // a scan fills both mandatory cells, so the user has nothing left to type. The view model
+        // seeds the Save button from exactly this call, and it has to say yes on the first frame.
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_TITLE]?.data)
+            .isEqualTo("Google - alex@gmail.com")
+        assertThat(plan.fieldUiState[FieldId.AUTHENTICATOR_SECRET_KEY]?.data)
+            .isEqualTo("JBSWY3DPEHPK3PXP")
+        assertThat(layout.checkMandatoryFields(plan.fieldUiState)).isTrue()
+    }
 }

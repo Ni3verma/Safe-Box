@@ -23,8 +23,15 @@ import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.qrScanner.ScannedTotpHolder
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -308,4 +315,54 @@ class AddNewRecordFlowsE2ETest {
                 .assertIsDisplayed()
         }
     }
+
+    @Test
+    fun authenticatorCreateScreenPrefilledFromScan_shouldEnableSaveWithoutAnyTyping() {
+        setupUnlockedStateWithScannerRationale()
+        val scannedTitle = "AcmeCorp - alice@example.com"
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            // the camera cannot be pointed at a real code from an instrumentation test, so the
+            // scan is reproduced at its hand-off point: this is the very object the scanner
+            // writes, and the create screen consumes it without knowing who filled it.
+            scenario.onActivity { activity ->
+                EntryPointAccessors.fromActivity(activity, ScannedTotpEntryPoint::class.java)
+                    .scannedTotpHolder()
+                    .put(
+                        ParsedTotpData(
+                            title = scannedTitle,
+                            config = TotpConfig(secretKey = E2ETestUtils.TEST_TOTP_SECRET_KEY),
+                        ),
+                    )
+            }
+            E2ETestUtils.openAuthenticatorCreateScreenViaManualEntry(composeTestRule, context)
+
+            composeTestRule.onNode(
+                hasSetTextAction() and hasText(scannedTitle, substring = true)
+            ).assertIsDisplayed()
+            // nothing has been typed, so this is the whole point: a scan leaves the user with no
+            // field left to touch, and Save must be usable rather than merely visible.
+            composeTestRule.onNodeWithText(context.getString(R.string.save)).assertIsEnabled()
+
+            composeTestRule.onNodeWithText(context.getString(R.string.save)).performClick()
+            E2ETestUtils.waitForRecordTitle(composeTestRule, scannedTitle)
+
+            composeTestRule.onNode(E2ETestUtils.hasLiveTotpCode()).assertIsDisplayed()
+        }
+    }
+}
+
+/**
+ * Reaches the activity retained [ScannedTotpHolder] so a test can stand in for the QR scanner.
+ *
+ * [ScannedTotpHolder] is `@ActivityRetainedScoped`, so field injection into the test class would
+ * hand back a different instance from the one the create screen reads. Resolving it from the
+ * running activity guarantees both sides share the hand-off.
+ */
+@EntryPoint
+@InstallIn(ActivityComponent::class)
+interface ScannedTotpEntryPoint {
+    fun scannedTotpHolder(): ScannedTotpHolder
 }

@@ -187,6 +187,7 @@
     <string name="unsupported_qr_code_reason_algorithm">This QR code uses a hashing algorithm Safe Box cannot compute. Only SHA1, SHA256 and SHA512 are supported.</string>
     <string name="unsupported_qr_code_reason_digits">This QR code asks for a code length Safe Box cannot generate. Only 6 to 8 digits are supported.</string>
     <string name="unsupported_qr_code_reason_period">This QR code specifies an invalid refresh interval.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">This QR code gives conflicting settings for the same value, so Safe Box cannot tell which one it is meant to use.</string>
     <string name="copied_to_clipboard">Copied %1$s to clipboard</string>
     <!-- Authenticator -->
     <string name="totp_code">One-time code</string>
