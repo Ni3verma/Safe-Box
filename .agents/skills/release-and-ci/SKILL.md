@@ -87,27 +87,47 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+### Current authentication state
+
+Verified 2026-09-21. `gh` **is** authenticated on this machine with a fine-grained token scoped to
+this repository. `gh auth status` shows **no** `Token scopes:` line — that absence is how you tell a
+fine-grained token from a classic OAuth grant. If you ever see `Token scopes: 'gist', 'read:org',
+'repo'`, that is gh's default browser OAuth flow and it carries **full write access**; flag it.
+
+Permissions, probed rather than assumed:
+
+| Operation | Result | Meaning |
+|---|---|---|
+| Any read (PRs, releases, runs, checks) | works | read granted across the board |
+| `PUT` a file via the contents API | `403` | `Contents` is read-only |
+| Create an issue | `404` on a bogus path, creation allowed | `Issues` is **read + write**, granted deliberately so the agent can file issues |
+
 > [!IMPORTANT]
-> `gh` requires a token even for **read-only** access to a public repository. If it prints
-> `To get started with GitHub CLI, please run: gh auth login`, it is unauthenticated — that is a
-> one-time step only the repository owner can perform. **Never attempt to authenticate on the
-> user's behalf or handle their token.**
->
-> **Do not silently fall back.** Say so explicitly, state the cost, and ask. Measured 2026-09-21:
-> `gh pr view 241 --comments` is **one** tool call; the unauthenticated equivalent took **eight**
-> (four `curl` calls plus four hand-written JSON parsers) for the same answer, and raw JSON through
-> context on top. Mentioning it in passing while proceeding anyway is not flagging it — it reads as
-> "handled" and leaves the tax in place indefinitely.
->
-> If the user wants `gh` usable without granting write access, the answer is a **fine-grained token
-> scoped to this repo with every permission read-only** (`Metadata`, `Contents`, `Pull requests`,
-> `Issues`, `Actions`), installed via `gh auth login --with-token`. Note this does **not** restrict
-> `git push`, which uses a separate credential.
+> Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from
+> here**. A `PATCH` probe against a non-existent PR returned `404` rather than `403`, so PR-write is
+> formally unproven — GitHub does not order existence and permission checks consistently. Treat the
+> permission list in the GitHub UI as authoritative, not a probe's status code.
+
+> [!IMPORTANT]
+> **`git push` does not work from the agent and is not covered by the token.** It uses a completely
+> separate credential, and this machine has no HTTPS credential helper configured: `git push` hangs
+> on `Username for 'https://github.com':` and must be cancelled. Commit locally, then **ask the user
+> to push**. Do not try to supply credentials. Observed 2026-09-21 pushing `docs/agent-knowledge-base`.
+
+> [!IMPORTANT]
+> **Do not silently fall back to unauthenticated access.** If `gh` ever prints
+> `To get started with GitHub CLI, please run: gh auth login`, say so explicitly, state the cost, and
+> ask — re-authenticating is a one-time step only the repository owner can perform, and you must
+> never handle their token. Measured 2026-09-21: `gh pr view 241 --comments` is **one** tool call;
+> the unauthenticated equivalent took **eight** (four `curl` calls plus four hand-written JSON
+> parsers) for the same answer, plus raw JSON through context. Mentioning it in passing while
+> proceeding anyway is not flagging it — it reads as "handled" and leaves the tax in place.
 
 ### Fallback when `gh` is unauthenticated
 
-Use this only after flagging the above. The repository is public, so the unauthenticated REST API
-still works for reads and needs no credentials at all:
+Historical; `gh` is authenticated as of 2026-09-21, so this should not be needed. Use it only after
+flagging the above. The repository is public, so the unauthenticated REST API still works for reads
+and needs no credentials at all:
 
 ```bash
 curl -s "https://api.github.com/repos/Ni3verma/Safe-Box/releases?per_page=10"
