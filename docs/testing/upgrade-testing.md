@@ -456,17 +456,37 @@ document triage ownership.
 ## 11. Open decisions
 
 Grouped by the MR they block. Each carries a recommended default, so accepting all defaults is a
-valid position.
+valid position. The MR0 group is settled and kept here as the decision record.
 
-### Blocks MR0 (time-sensitive)
+### Blocks MR0 — decided
 
-1. **Capture `v2_pre_totp.bak` now.** Install `v2.1.4.0-rc3`, create records of every type, export,
-   and commit the file. Roughly 30 minutes. *Recommendation: do it before the TOTP branch merges —
-   it is unreproducible afterwards.*
-2. **Fixture credentials.** The vault master password and the backup password are committed in
-   plain text. *Recommendation: `Upgrade@Test1` and `Fixture@Backup1`.*
-3. **How rich the baseline vault should be.** *Recommendation: 3 records per type, one with every
-   optional field populated and one with only mandatory fields.*
+1. **Capture of `v2_pre_totp.bak` — deferred, owned by the maintainer.** MR0 cannot start without
+   the file. Procedure: install the `v2.1.4.0-rc3` release APK on a clean emulator, sign up with the
+   credentials below, create the records described in item 3, export a backup, pull the `.bak` off
+   the device, and commit it. It is unreproducible once TOTP ships.
+2. **Fixture credentials — settled.**
+
+   | | Value | Constrained by |
+   |---|---|---|
+   | Vault master password | `Upgrade@Test12` | `PasswordValidator` |
+   | Password hint | `upgrade fixture` | must be non-blank |
+   | Backup file password | `Fixture@Backup1` | unconstrained |
+
+   `PasswordValidator.validate()` (`app/src/main/java/com/andryoga/safebox/ui/core/password/PasswordValidator.kt`)
+   requires all five of: non-blank; mixed case; **at least two digits** (`MIN_NUMERIC_COUNT = 2`); at
+   least one non-alphanumeric character; and length ≥ 7 (`MIN_PASSWORD_LENGTH`). A password with a
+   single digit fails `LESS_NUMERIC_COUNT` — which is why the fixture uses two.
+
+   Signup is additionally gated on a non-blank hint (`isSignupButtonEnabled` is
+   `validatorState == PASSWORD_IS_OK && hint.isNotBlank()`), so the fixture needs one. It is typed,
+   never asserted on.
+
+   The backup password is unconstrained — `PasswordValidator` is referenced only by
+   `SignupViewModel` and `UpdatePasswordDialog`, never by the export/import flow.
+3. **Baseline vault richness — accepted.** Three records per type; within each type, one record with
+   every optional field populated and one with only the mandatory fields. Without a record that
+   populates the optional fields, a dropped-column migration bug is invisible: a null is
+   indistinguishable from a value that was never set.
 
 ### Blocks MR1
 

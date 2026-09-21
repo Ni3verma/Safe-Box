@@ -58,6 +58,10 @@ upgrade test must be `qa → qa`.
 - `BACKUP_VERSION = 3` in `common/CommonConstants.kt`.
 - Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE`,
   `AUTHENTICATOR`.
+- **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
+  mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
+  hint. Applies to signup and change-password only — **not** to the backup file password, which is
+  unconstrained. Any password you invent for a test or fixture must satisfy all five.
 
 Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md)
 
