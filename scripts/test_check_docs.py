@@ -197,6 +197,43 @@ class LinkCheckTest(unittest.TestCase):
 
         self.assertEqual([(source, target)], absolute)
 
+    def test_bracketed_reference_destination_may_contain_spaces(self):
+        """CommonMark allows spaces inside `<...>`, so the whole token must be captured."""
+        self.write("my guide.md", "# guide")
+        source = self.write("source.md", "see [guide][docs]\n\n[docs]: <./my guide.md>\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([], missing)
+
+    def test_angle_bracketed_inline_destination_is_unwrapped(self):
+        self.write("target.md", "# target")
+        source = self.write("source.md", "see [doc](<./target.md>)")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([], missing)
+
+    def test_bracketed_inline_destination_may_contain_spaces(self):
+        self.write("my guide.md", "# guide")
+        source = self.write("source.md", "see [doc](<./my guide.md>)")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([], missing)
+
+    def test_windows_rooted_target_without_a_drive_is_reported_absolute(self):
+        """`\\docs\\a.md` has a root but no drive, so `is_absolute()` alone misses it."""
+        target = "\\docs\\a.md"
+        source = self.write("source.md", "see [doc](%s)" % target)
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([(source, target)], absolute)
+
     def test_colon_in_a_relative_name_is_not_mistaken_for_a_drive(self):
         """A Windows drive is a single letter, so `notes:draft.md` stays relative."""
         source = self.write("source.md", "see [doc](./notes:draft.md)")

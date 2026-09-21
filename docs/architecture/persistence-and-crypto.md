@@ -79,6 +79,24 @@ Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 - **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
   directory.
 
+#### How damage to the shared inputs presents
+
+Password, salt and IV feed every payload, so damaging any of them affects all record types at
+once. They do **not** fail the same way, and the difference matters when diagnosing a file:
+
+| Damaged input | Symptom |
+|---|---|
+| Password or salt | wrong derived key, so every payload throws `BadPaddingException` |
+| IV | **no exception at all** |
+
+The IV case is the trap. In CBC mode the IV only affects the *first* plaintext block, and the
+PKCS5 padding lives in the *last* one — so `decrypt()` validates and returns successfully, having
+garbled 16 bytes. Anything that treats "decrypted without throwing" as "valid" will happily print
+the result. `scripts/InspectBackup.java` therefore checks that the plaintext is actually a JSON
+array before counting it; before that check it reported a bit-flipped IV as `0 record(s)` and
+exited `0`, i.e. a corrupt backup looked like an empty one. (Verified 2026-09-21 by flipping the
+16 IV bytes of the committed fixture.)
+
 ### Version history
 
 | `BACKUP_VERSION` | Change |

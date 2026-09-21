@@ -3,6 +3,8 @@ import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -65,6 +67,17 @@ public class InspectBackup {
     private static final long MAX_DEPTH = 20;
     private static final long MAX_REFERENCES = 10_000;
 
+    /**
+     * Total size cap, checked before the file is opened.
+     *
+     * MAX_ARRAY_LENGTH bounds each array separately, so a map of ten maximal byte arrays would
+     * satisfy every filter bound above while still forcing roughly 640 MiB of allocation inside
+     * readObject(). A serialised map cannot be smaller than the arrays it carries, so capping the
+     * file bounds the whole object graph. 64 MiB leaves four orders of magnitude of headroom over
+     * the 2 KB fixture and far more than any real vault needs.
+     */
+    private static final long MAX_FILE_BYTES = 64L * 1024 * 1024;
+
     // Keys as defined in CommonConstants.
     private static final Map<String, String> DATA_KEYS = new TreeMap<>();
 
@@ -84,6 +97,16 @@ public class InspectBackup {
         }
         String path = args[0];
         char[] password = args[1].toCharArray();
+
+        // Checked before the stream is opened: once readObject() starts, the allocation has
+        // already happened and no filter callback can undo it.
+        long size = Files.size(Paths.get(path));
+        if (size > MAX_FILE_BYTES) {
+            System.err.println("Refusing to read " + path + ": " + size + " bytes exceeds the "
+                + MAX_FILE_BYTES + " byte cap. A real backup is a few kilobytes, so a file this"
+                + " large is either not a backup or is crafted to exhaust memory.");
+            System.exit(1);
+        }
 
         HashMap<String, byte[]> map;
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
@@ -141,8 +164,21 @@ public class InspectBackup {
             attempted++;
             try {
                 String json = new String(decrypt(password, blob, salt, iv), StandardCharsets.UTF_8);
-                System.out.println(pad(entry.getValue()) + " : " + countRecords(json) + " record(s)");
-                System.out.println(indent(json));
+                if (!looksLikeRecordArray(json)) {
+                    // A damaged IV does not throw. In CBC mode it corrupts only the first
+                    // plaintext block, so padding still validates and decrypt() returns happily.
+                    // Without this check the tool printed the mangled text, let the brace counter
+                    // report "0 record(s)" off the broken quote parity, and exited 0 - presenting
+                    // a corrupt backup as a readable but empty one.
+                    failed++;
+                    System.out.println(pad(entry.getValue()) + " : CORRUPT - decrypted without"
+                        + " error but the result is not a record array; the shared IV or this"
+                        + " payload is damaged");
+                    System.out.println(indent(preview(json)));
+                } else {
+                    System.out.println(pad(entry.getValue()) + " : " + countRecords(json) + " record(s)");
+                    System.out.println(indent(json));
+                }
             } catch (Exception e) {
                 // Keep going rather than propagating. The whole point of this tool is inspecting
                 // damaged files, and aborting on the first bad payload hides every type after it -
@@ -157,18 +193,20 @@ public class InspectBackup {
         }
 
         // Exit non-zero so a caller or CI step cannot mistake a failed inspection for a clean one.
-        // Whether *everything* failed is the diagnostic that matters: decryption uses one password,
-        // salt and IV for every type, so a uniform failure implicates the password, while a partial
-        // failure proves the password is right and localises the damage to those payloads.
+        // Whether *everything* failed is the diagnostic that matters, but it narrows the cause to
+        // the shared inputs rather than to the password alone: password, salt and IV all feed every
+        // type, so corrupt-but-present salt or IV bytes fail uniformly too. Only the per-type
+        // payloads are excluded.
         if (failed > 0) {
             if (failed == attempted) {
                 System.err.println("Error: all " + failed + " record type(s) failed to decrypt."
-                    + " One password, salt and IV cover every type, so a uniform failure points at"
-                    + " the backup password rather than at file corruption.");
+                    + " Password, salt and IV are shared by every type, so the cause is one of"
+                    + " those - either a wrong backup password or corrupt salt/IV bytes - rather"
+                    + " than damage to the individual payloads.");
             } else {
                 System.err.println("Error: " + failed + " of " + attempted + " record type(s) failed"
-                    + " to decrypt. The others decoded, so the password is correct and those"
-                    + " specific payloads are damaged.");
+                    + " to decrypt. The others decoded, so the password, salt and IV are all"
+                    + " correct and those specific payloads are damaged.");
             }
             System.exit(1);
         }
@@ -251,6 +289,32 @@ public class InspectBackup {
             builder.append(' ');
         }
         return builder.toString();
+    }
+
+    /**
+     * Reports whether decrypted plaintext has the shape every record payload must have.
+     *
+     * BackupDataWorker always serialises a JSON array, so anything else means the bytes are not
+     * what they claim to be even though the cipher accepted them. This is the only signal for a
+     * damaged IV: CBC corrupts just the first plaintext block, leaving the padding in the final
+     * block intact, so decrypt() succeeds and returns partly-garbage text.
+     *
+     * @param json Decrypted plaintext.
+     * @return True when the text is a JSON array and can be counted and printed.
+     */
+    private static boolean looksLikeRecordArray(String json) {
+        String trimmed = json.trim();
+        return trimmed.startsWith("[") && trimmed.endsWith("]");
+    }
+
+    /**
+     * Truncates text for display, so a corrupt payload shows its damage without flooding output.
+     *
+     * @param text Text to abbreviate.
+     * @return At most 120 characters, with an ellipsis when truncated.
+     */
+    private static String preview(String text) {
+        return text.length() <= 120 ? text : text.substring(0, 120) + "...";
     }
 
     /** Counts top level JSON objects by tracking brace depth outside of string literals. */

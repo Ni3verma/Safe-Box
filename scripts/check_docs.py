@@ -37,13 +37,19 @@ STRAY_MARKUP = (
     "<ArtifactMetadata>",
 )
 
-LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+# A destination may be wrapped in pointy brackets, and CommonMark allows spaces inside them, so
+# the bracketed form is matched as a whole token before falling back to a bare run of non-space
+# characters. Both link forms below share this alternation; handling it in only one of them is how
+# `[label](<./doc.md>)` previously ended up being looked up on disk with the brackets attached.
+DESTINATION = r"(<[^<>\n]*>|[^)\s]+)"
+
+LINK = re.compile(r"\[[^\]]*\]\(" + DESTINATION + r"\)")
 
 # CommonMark link reference definitions: `[label]: destination "optional title"`, indented by at
 # most three spaces. Without this, `[guide][docs]` paired with `[docs]: /etc/hosts` bypasses every
 # check below, which is the same silent-bypass class of defect the absolute-target handling exists
 # to prevent.
-REFERENCE_DEFINITION = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(\S+)", re.MULTILINE)
+REFERENCE_DEFINITION = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(<[^<>\n]*>|\S+)", re.MULTILINE)
 
 EXTERNAL = ("http://", "https://", "mailto:", "#")
 
@@ -66,22 +72,38 @@ def is_absolute_target(target):
     """
     if target.startswith(ABSOLUTE_PREFIXES):
         return True
-    # Drive-qualified and UNC paths. Safe on POSIX-looking input: "foo:bar.md" and "docs/x.md" are
-    # both reported relative, because a Windows drive is a single letter.
-    return pathlib.PureWindowsPath(target).is_absolute()
+    # Drive-qualified, UNC, and drive-relative rooted paths. `is_absolute()` is deliberately not
+    # used: it is False for `\docs\x.md`, which has a root but no drive, so that form would be
+    # treated as relative and could pass by resolving against whatever drive happens to be current.
+    # Safe on POSIX-looking input: "foo:bar.md" and "docs/x.md" have neither drive nor root.
+    windows_target = pathlib.PureWindowsPath(target)
+    return bool(windows_target.drive or windows_target.root)
 
 
 def link_targets(text):
     """Yields every link destination in a document, inline and reference-style alike.
 
     @param text: Full markdown source.
-    @return: Iterator of raw destination strings.
+    @return: Iterator of raw destination strings, with any pointy brackets removed.
     """
     for target in LINK.findall(text):
-        yield target
+        yield strip_brackets(target)
     for target in REFERENCE_DEFINITION.findall(text):
-        # A destination may be wrapped in angle brackets: `[label]: <path with space.md>`.
-        yield target.strip("<>")
+        yield strip_brackets(target)
+
+
+def strip_brackets(target):
+    """Removes a CommonMark pointy-bracket wrapper from a link destination.
+
+    Only a matched pair is removed, so a destination that merely contains an angle bracket is
+    left alone rather than being silently truncated.
+
+    @param target: Raw destination as captured from the source.
+    @return: The destination without its surrounding brackets.
+    """
+    if target.startswith("<") and target.endswith(">"):
+        return target[1:-1]
+    return target
 
 
 def read_markdown(path):
