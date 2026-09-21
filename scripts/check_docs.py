@@ -37,6 +37,19 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 EXTERNAL = ("http://", "https://", "mailto:", "#")
 
 
+def read_markdown(path):
+    """Reads a markdown file as UTF-8 regardless of the ambient locale.
+
+    Encoding is pinned rather than left to the platform default: these documents contain em
+    dashes, arrows and comparison operators, so under a C/POSIX locale the default encoding
+    raises UnicodeDecodeError and takes out the pre-commit hook and the CI step along with it.
+
+    @param path: Path to the markdown file.
+    @return: File contents as str.
+    """
+    return path.read_text(encoding="utf-8")
+
+
 def markdown_files():
     for directory in SCAN_DIRS:
         root = ROOT / directory
@@ -50,7 +63,7 @@ def markdown_files():
 def check_stray_markup(files):
     failures = []
     for path in files:
-        for number, line in enumerate(path.read_text().splitlines(), start=1):
+        for number, line in enumerate(read_markdown(path).splitlines(), start=1):
             if any(marker in line for marker in STRAY_MARKUP):
                 failures.append((path, number, line.strip()[:80]))
     return failures
@@ -59,7 +72,7 @@ def check_stray_markup(files):
 def check_links(files):
     failures = []
     for path in files:
-        for target in LINK.findall(path.read_text()):
+        for target in LINK.findall(read_markdown(path)):
             if target.startswith(EXTERNAL):
                 continue
             resolved = (path.parent / target.split("#")[0]).resolve()

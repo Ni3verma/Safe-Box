@@ -38,6 +38,10 @@ public class InspectBackup {
 
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
+        if (args.length < 2) {
+            System.err.println("Usage: java InspectBackup <file.bak> <backupPassword>");
+            System.exit(1);
+        }
         String path = args[0];
         char[] password = args[1].toCharArray();
 
@@ -60,6 +64,14 @@ public class InspectBackup {
             System.out.println("creationDate    : " + new String(creationDate, StandardCharsets.UTF_8));
         }
         System.out.println();
+
+        // Without salt and IV no blob can be decrypted. Returning here keeps the header dump above
+        // (which is the useful diagnostic for a corrupt file) and avoids an opaque NPE from
+        // decrypt() that would obscure the real problem.
+        if (salt == null || iv == null) {
+            System.err.println("Error: backup is missing its salt or IV; cannot decrypt any record data.");
+            return;
+        }
 
         for (Map.Entry<String, String> entry : DATA_KEYS.entrySet()) {
             byte[] blob = map.get(entry.getKey());
