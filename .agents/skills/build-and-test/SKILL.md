@@ -29,13 +29,42 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | All unit tests | `:app:testDebugUnitTest` |
 | Build the instrumentation APK | `:app:assembleDebugAndroidTest` |
 | All instrumentation tests on a connected device | `:app:connectedDebugAndroidTest` |
-| One instrumentation class | `:app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>` |
+| One instrumentation class (**one only** — see Traps) | `:app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>` |
 | Managed device (no device needed, matches CI) | `:app:pixel8Api34DebugAndroidTest` |
 | Coverage (opt-in, slow) | add `-Pcoverage` |
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
 
 ## Traps
+
+### `BUILD SUCCESSFUL` does not mean your tests ran
+
+`connectedDebugAndroidTest` exits 0 when the class filter matches **nothing**, and — observed
+2026-09-21 — when it matches only *some* of the classes you asked for. A comma-separated filter:
+
+```
+-Pandroid.testInstrumentationRunnerArguments.class=a.b.MigrationTest,a.b.ClipboardActionsTest
+```
+
+ran `MigrationTest` only, reported `BUILD SUCCESSFUL in 15s`, and never mentioned that the second
+class was skipped. **Run one class per invocation**, and always confirm what executed:
+
+```bash
+python3 -c "
+import glob, xml.etree.ElementTree as ET
+for f in glob.glob('app/build/outputs/androidTest-results/**/*.xml', recursive=True):
+    r = ET.parse(f).getroot()
+    print(f, 'tests=', r.get('tests'), 'failures=', r.get('failures'))
+    for ts in r.iter('testsuite'):
+        print('  ', ts.get('name'), ts.get('tests'))
+"
+```
+
+Note the results file is `TEST-<device name>.xml` and the device name contains **spaces and
+parentheses** (`TEST-Pixel_8_API_35(AVD) - 15.xml`), so quote the path. The root element is
+`<testsuites>` with one nested `<testsuite>` per class — parsing only the root tag finds nothing.
+
+Never report a test run as passing on the strength of the Gradle exit code alone.
 
 ### The emulator runs out of disk and it looks like an app bug
 

@@ -92,11 +92,22 @@ gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a su
 > `To get started with GitHub CLI, please run: gh auth login`, it is unauthenticated — that is a
 > one-time step only the repository owner can perform. **Never attempt to authenticate on the
 > user's behalf or handle their token.**
+>
+> **Do not silently fall back.** Say so explicitly, state the cost, and ask. Measured 2026-09-21:
+> `gh pr view 241 --comments` is **one** tool call; the unauthenticated equivalent took **eight**
+> (four `curl` calls plus four hand-written JSON parsers) for the same answer, and raw JSON through
+> context on top. Mentioning it in passing while proceeding anyway is not flagging it — it reads as
+> "handled" and leaves the tax in place indefinitely.
+>
+> If the user wants `gh` usable without granting write access, the answer is a **fine-grained token
+> scoped to this repo with every permission read-only** (`Metadata`, `Contents`, `Pull requests`,
+> `Issues`, `Actions`), installed via `gh auth login --with-token`. Note this does **not** restrict
+> `git push`, which uses a separate credential.
 
 ### Fallback when `gh` is unauthenticated
 
-The repository is public, so the unauthenticated REST API still works for reads and needs no
-credentials at all:
+Use this only after flagging the above. The repository is public, so the unauthenticated REST API
+still works for reads and needs no credentials at all:
 
 ```bash
 curl -s "https://api.github.com/repos/Ni3verma/Safe-Box/releases?per_page=10"

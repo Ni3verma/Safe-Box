@@ -21,6 +21,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Deliberately placed before the JDK, Gradle and emulator setup: it needs none of them and
+      # finishes in well under a second, so a documentation problem is reported without first
+      # paying for a toolchain. python3 is preinstalled on ubuntu-latest.
+      - name: Validate documentation
+        run: python3 scripts/check_docs.py
+
       - name: set up JDK 17
         uses: actions/setup-java@v6
         with:
