@@ -134,3 +134,14 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   user every login, card and note in the backup.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
+- **`CICD/cicd.gradle` is orphaned** — no build script applies it, since `331ee64` ("Compose UI -
+  v2.x"). Two consequences, both verified 2026-09-21: the `copyGitHooks` / `installGitHooks` tasks
+  **do not exist**, and **`./gradlew detekt` fails with "Task 'detekt' not found"**. Detekt is
+  declared `apply false` in the root `build.gradle` and never applied to `:app`, so no detekt task
+  is registered anywhere and `CICD/detekt.yml` is not in effect.
+- **Git hooks must be installed by hand** as a result:
+  `cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`.
+  The installed copy silently drifts; check with
+  `diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh`. It was ~8 months stale when found.
+- The pre-commit hook runs **`git add -u`** during detekt auto-correction. Running
+  `git hook run pre-commit` while you have unstaged work will therefore stage it.
