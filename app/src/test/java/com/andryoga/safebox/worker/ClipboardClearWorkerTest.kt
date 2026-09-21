@@ -150,6 +150,29 @@ class ClipboardClearWorkerTest {
         assertThat(event.params[AnalyticsParam.RESULT.paramName]).isEqualTo("unverified")
     }
 
+    /**
+     * The clear itself can be refused by the system, for example by a SecurityException on OEM
+     * builds that restrict clipboard writes from background work.
+     *
+     * This is the last line of defence against a copied password sitting on the clipboard
+     * indefinitely, so the worker has to report failure and let WorkManager retry. Swallowing the
+     * exception and returning success would mark the credential as cleared while it is still there.
+     */
+    @Test
+    fun doWork_whenClearingTheClipboardThrows_returnsFailureSoTheWipeIsRetried() = runTest {
+        every { clipboardManager.primaryClipDescription } returns null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            every { clipboardManager.clearPrimaryClip() } throws SecurityException("clear denied")
+        } else {
+            every { clipboardManager.setPrimaryClip(any()) } throws SecurityException("clear denied")
+        }
+
+        val result = buildWorker("expected-clip-id").doWork()
+
+        assertThat(result).isEqualTo(Result.failure())
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)).isFalse()
+    }
+
     private fun verifyClipboardCleared() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             verify(exactly = 1) { clipboardManager.clearPrimaryClip() }
