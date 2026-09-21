@@ -12,7 +12,9 @@ data class FieldUiState(
     val data: String = "",
 ) {
     /*
-     * This holds the static properties of the cell.
+     * This holds the properties of the cell that are fixed once the layout plan is built.
+     * Unlike [data], nothing here is ever updated by user input. A property may still be derived
+     * from the record being shown, e.g. the TOTP generation parameters carried by [FieldType.Totp].
      * */
     @Immutable
     data class Cell(
@@ -24,11 +26,13 @@ data class FieldUiState(
         val maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
         val keyboardType: KeyboardType = KeyboardType.Unspecified,
 
-        // If set to true, this cell will be visible only in view mode. e.g. creation date
-        val isVisibleOnlyInViewMode: Boolean = false,
+        // Modes this cell renders in. Defaults to every mode; narrow it to restrict a cell, e.g.
+        // a creation date is setOf(VIEW) and an authenticator seed is setOf(NEW).
+        val visibleIn: Set<ViewMode> = ViewMode.entries.toSet(),
         val isCopyable: Boolean = false,
         val visualTransformation: VisualTransformation = VisualTransformation.None,
         val maxLength: Int = Int.MAX_VALUE,
+        val type: FieldType = FieldType.DefaultText,
     )
 
     /**
@@ -48,4 +52,16 @@ data class FieldUiState(
         return result
     }
 
+    /**
+     * Decides whether this field renders in [viewMode].
+     *
+     * View mode additionally hides blank fields, so a record saved without an optional value does
+     * not show a stranded label. Create and edit modes render any allowed cell regardless, because
+     * the user needs the empty input to type into.
+     *
+     * @param viewMode Mode the screen is currently showing.
+     * @return true when the field should be laid out.
+     */
+    fun isVisibleIn(viewMode: ViewMode): Boolean =
+        viewMode in cell.visibleIn && (viewMode != ViewMode.VIEW || data.isNotBlank())
 }

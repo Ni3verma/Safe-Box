@@ -92,8 +92,9 @@ class PasswordBasedEncryptionImplTest {
         val correctPassword = "CorrectPassword123".toCharArray()
         val wrongPassword = "WrongPassword123".toCharArray()
         val data = "SecretPayload".toByteArray(Charsets.UTF_8)
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
+        // fixed for the same determinism reason documented in the tampered padding test below.
+        val salt = ByteArray(PasswordBasedEncryptionImpl.Constants.SALT_SIZE) { it.toByte() }
+        val iv = ByteArray(PasswordBasedEncryptionImpl.Constants.IV_SIZE) { it.toByte() }
 
         val encrypted = pbe.encryptDecrypt(correctPassword, data, salt, iv, encrypt = true)
 
@@ -106,8 +107,21 @@ class PasswordBasedEncryptionImplTest {
     fun decrypt_withTamperedPaddingBlock_throwsGeneralSecurityException() {
         val password = "PasswordForTamperTest".toCharArray()
         val data = "UncorruptedPlaintextData".toByteArray(Charsets.UTF_8)
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
+
+        /*
+         * Deliberately fixed salt and IV instead of the random ones used by the other tests.
+         *
+         * AES/CBC/PKCS5Padding carries no MAC, so corrupting the final ciphertext block simply
+         * scrambles the final plaintext block. Decryption then fails only when the scrambled
+         * trailing bytes do not happen to form valid PKCS#5 padding, which is roughly a 1 in 256
+         * chance. With a random salt and IV the ciphertext differed on every run, so this test
+         * failed intermittently. Pinning both inputs makes key derivation and encryption fully
+         * deterministic, which makes the outcome stable.
+         *
+         * Do not switch these back to getRandomSalt()/getRandomIV().
+         */
+        val salt = ByteArray(PasswordBasedEncryptionImpl.Constants.SALT_SIZE) { it.toByte() }
+        val iv = ByteArray(PasswordBasedEncryptionImpl.Constants.IV_SIZE) { it.toByte() }
 
         val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
         encrypted[encrypted.size - 1] = (encrypted[encrypted.size - 1].toInt() xor 0xFF).toByte()

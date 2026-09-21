@@ -8,22 +8,28 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
+import com.andryoga.safebox.domain.models.record.AuthenticatorData
 import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
@@ -31,10 +37,12 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import timber.log.Timber
 import java.io.File
 import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -49,6 +57,9 @@ class BackupAndRestoreWorkersTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
+    val testName = TestName()
 
     @Inject
     lateinit var workerFactory: SafeBoxWorkerFactory
@@ -69,6 +80,9 @@ class BackupAndRestoreWorkersTest {
     lateinit var secureNoteDataRepository: SecureNoteDataRepository
 
     @Inject
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
+
+    @Inject
     lateinit var backupMetadataRepository: BackupMetadataRepository
 
     @Inject
@@ -80,6 +94,32 @@ class BackupAndRestoreWorkersTest {
     @Before
     fun setup() {
         hiltRule.inject()
+    }
+
+    /**
+     * Supplies the seed for a randomized run.
+     *
+     * A fresh seed every execution is the point of these tests: the value of generating records at
+     * random is that each run explores a different corner of the input space, so pinning a
+     * constant would quietly reduce them to yet another fixed fixture. The cost of that is a
+     * failure you cannot reproduce, which is what the override is for. Every assertion in these
+     * tests reports its seed, and passing that seed back replays the exact dataset:
+     *
+     * ```
+     * ./gradlew :app:connectedDebugAndroidTest \
+     *   -Pandroid.testInstrumentationRunnerArguments.class=com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreWorkersTest \
+     *   -Pandroid.testInstrumentationRunnerArguments.backupSeed=-8421705573201664511
+     * ```
+     *
+     * @return The override seed when one was passed to the instrumentation, otherwise a new one.
+     */
+    private fun randomSeed(): Long {
+        val seed = InstrumentationRegistry.getArguments()
+            .getString(SEED_ARGUMENT_KEY)
+            ?.toLongOrNull()
+            ?: Random.nextLong()
+        Timber.i("Running ${testName.methodName} with SEED: $seed")
+        return seed
     }
 
     private suspend fun runBackupWorker(password: String = testPassword): Result {
@@ -125,7 +165,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc01")
@@ -154,7 +195,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc02")
@@ -195,6 +237,12 @@ class BackupAndRestoreWorkersTest {
 
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
             assertThat(restoredNotes.any { it.title == "Wifi Router Secrets" }).isTrue()
+
+            val restoredAuthenticators = authenticatorDataRepository.getAllAuthenticatorData().first()
+            assertThat(restoredAuthenticators.any {
+                it.title == "GitHub Authenticator" &&
+                    it.secretKey == E2ETestUtils.TEST_TOTP_SECRET_KEY
+            }).isTrue()
         }
 
     @Test
@@ -205,7 +253,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc03")
@@ -301,7 +350,8 @@ class BackupAndRestoreWorkersTest {
                 loginDataRepository,
                 bankCardDataRepository,
                 bankAccountDataRepository,
-                secureNoteDataRepository
+                secureNoteDataRepository,
+                authenticatorDataRepository
             )
 
             val backupDir = File(context.cacheDir, "backup_tc05")
@@ -355,9 +405,8 @@ class BackupAndRestoreWorkersTest {
     @Test
     fun restoreFromBackup_randomizedRecordsAllTypes_shouldRestore100PercentFieldEquality() {
         runBlocking {
-            val seed = System.currentTimeMillis()
-            val random = kotlin.random.Random(seed)
-            timber.log.Timber.i("Running restoreFromBackup_randomizedRecordsAllTypes with SEED: $seed")
+            val seed = randomSeed()
+            val random = Random(seed)
 
             safeBoxDatabase.clearAllTables()
 
@@ -366,6 +415,8 @@ class BackupAndRestoreWorkersTest {
             val expectedAccounts: List<BankAccountData> =
                 (1..5).map { createRandomBankAccountData(it, random) }
             val expectedNotes: List<NoteData> = (1..5).map { createRandomNoteData(it, random) }
+            val expectedAuthenticators: List<AuthenticatorData> =
+                (1..5).map { createRandomAuthenticatorData(it, random) }
 
             for (item in expectedLogins) {
                 loginDataRepository.upsertLoginData(item)
@@ -379,6 +430,9 @@ class BackupAndRestoreWorkersTest {
             for (item in expectedNotes) {
                 secureNoteDataRepository.upsertSecureNoteData(item)
             }
+            for (item in expectedAuthenticators) {
+                authenticatorDataRepository.upsertAuthenticatorData(item)
+            }
 
             val initialLogins = loginDataRepository.getAllLoginData().first()
                 .map { loginDataRepository.getLoginDataByKey(it.key) }
@@ -388,6 +442,8 @@ class BackupAndRestoreWorkersTest {
                 .map { bankAccountDataRepository.getBankAccountDataByKey(it.key) }
             val initialNotes = secureNoteDataRepository.getAllSecureNoteData().first()
                 .map { secureNoteDataRepository.getSecureNoteDataByKey(it.key) }
+            val initialAuthenticators = authenticatorDataRepository.getAllAuthenticatorData().first()
+                .map { authenticatorDataRepository.getAuthenticatorDataByKey(it.key) }
 
             val backupDir = File(context.cacheDir, "backup_random_all")
             backupDir.deleteRecursively()
@@ -407,14 +463,18 @@ class BackupAndRestoreWorkersTest {
                 )
                 .setWorkerFactory(workerFactory)
                 .build()
-            assertThat(backupWorker.doWork()).isEqualTo(Result.success())
+            assertWithMessage("Backup failed with SEED: $seed")
+                .that(backupWorker.doWork())
+                .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
                 f.name.startsWith("SafeBoxBackup") && (f.name.endsWith(".bak") || f.name.endsWith(".bak.bin") || f.name.contains(
                     ".bak"
                 ))
             }?.firstOrNull()
-            assertThat(generatedFile).isNotNull()
+            assertWithMessage("Generated backup file missing with SEED: $seed")
+                .that(generatedFile)
+                .isNotNull()
 
             safeBoxDatabase.clearAllTables()
             assertThat(loginDataRepository.getAllLoginData().first().isEmpty()).isTrue()
@@ -436,7 +496,9 @@ class BackupAndRestoreWorkersTest {
                 .build()
 
             val result = restoreWorker.doWork()
-            assertThat(result).isEqualTo(Result.success())
+            assertWithMessage("Restore failed with SEED: $seed")
+                .that(result)
+                .isEqualTo(Result.success())
 
             val restoredLogins = loginDataRepository.getAllLoginData().first()
                 .map { loginDataRepository.getLoginDataByKey(it.key) }
@@ -446,30 +508,36 @@ class BackupAndRestoreWorkersTest {
                 .map { bankAccountDataRepository.getBankAccountDataByKey(it.key) }
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
                 .map { secureNoteDataRepository.getSecureNoteDataByKey(it.key) }
+            val restoredAuthenticators =
+                authenticatorDataRepository.getAllAuthenticatorData().first()
+                    .map { authenticatorDataRepository.getAuthenticatorDataByKey(it.key) }
 
-            assertThat(restoredLogins.map { it.copy(id = 0) }).containsExactlyElementsIn(
-                initialLogins.map { it.copy(id = 0) })
-            assertThat(restoredCards.map { it.copy(id = 0) }).containsExactlyElementsIn(initialCards.map {
-                it.copy(
-                    id = 0
-                )
-            })
-            assertThat(restoredAccounts.map { it.copy(id = 0) }).containsExactlyElementsIn(
-                initialAccounts.map { it.copy(id = 0) })
-            assertThat(restoredNotes.map { it.copy(id = 0) }).containsExactlyElementsIn(initialNotes.map {
-                it.copy(
-                    id = 0
-                )
-            })
+            assertWithMessage("Logins mismatch with SEED: $seed")
+                .that(restoredLogins.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialLogins.map { it.copy(id = 0) })
+            assertWithMessage("Cards mismatch with SEED: $seed")
+                .that(restoredCards.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialCards.map { it.copy(id = 0) })
+            assertWithMessage("Accounts mismatch with SEED: $seed")
+                .that(restoredAccounts.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialAccounts.map { it.copy(id = 0) })
+            assertWithMessage("Notes mismatch with SEED: $seed")
+                .that(restoredNotes.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialNotes.map { it.copy(id = 0) })
+            // TotpConfig equality covers the algorithm, digit count and period, which the backup
+            // file carries as text. A code generated from a restored record is only correct if all
+            // four values survive together.
+            assertWithMessage("Authenticators mismatch with SEED: $seed")
+                .that(restoredAuthenticators.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialAuthenticators.map { it.copy(id = 0) })
         }
     }
 
     @Test
     fun restoreFromBackup_sparseCategories_whenOnlyLoginsExist_shouldRestoreLoginsAndHandleEmptyCategories() {
         runBlocking {
-            val seed = System.currentTimeMillis()
+            val seed = randomSeed()
             val random = Random(seed)
-            Timber.i("Running restoreFromBackup_sparseCategories with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -499,14 +567,18 @@ class BackupAndRestoreWorkersTest {
                 )
                 .setWorkerFactory(workerFactory)
                 .build()
-            assertThat(backupWorker.doWork()).isEqualTo(Result.success())
+            assertWithMessage("Backup failed with SEED: $seed")
+                .that(backupWorker.doWork())
+                .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
                 f.name.startsWith("SafeBoxBackup") && (f.name.endsWith(".bak") || f.name.endsWith(".bak.bin") || f.name.contains(
                     ".bak"
                 ))
             }?.firstOrNull()
-            assertThat(generatedFile).isNotNull()
+            assertWithMessage("Generated backup file missing with SEED: $seed")
+                .that(generatedFile)
+                .isNotNull()
 
             safeBoxDatabase.clearAllTables()
 
@@ -527,7 +599,9 @@ class BackupAndRestoreWorkersTest {
                 .build()
 
             val result = restoreWorker.doWork()
-            assertThat(result).isEqualTo(Result.success())
+            assertWithMessage("Restore failed with SEED: $seed")
+                .that(result)
+                .isEqualTo(Result.success())
 
             val restoredLogins = loginDataRepository.getAllLoginData().first()
                 .map { loginDataRepository.getLoginDataByKey(it.key) }
@@ -535,20 +609,20 @@ class BackupAndRestoreWorkersTest {
             val restoredAccounts = bankAccountDataRepository.getAllBankAccountData().first()
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
 
-            assertThat(restoredLogins.map { it.copy(id = 0) }).containsExactlyElementsIn(
-                initialLogins.map { it.copy(id = 0) })
-            assertThat(restoredCards).isEmpty()
-            assertThat(restoredAccounts).isEmpty()
-            assertThat(restoredNotes).isEmpty()
+            assertWithMessage("Logins mismatch with SEED: $seed")
+                .that(restoredLogins.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialLogins.map { it.copy(id = 0) })
+            assertWithMessage("Cards not empty with SEED: $seed").that(restoredCards).isEmpty()
+            assertWithMessage("Accounts not empty with SEED: $seed").that(restoredAccounts).isEmpty()
+            assertWithMessage("Notes not empty with SEED: $seed").that(restoredNotes).isEmpty()
         }
     }
 
     @Test
     fun restoreFromBackup_randomizedBulkVolume_shouldRestoreLargeDatasetAccurately() {
         runBlocking {
-            val seed = System.currentTimeMillis()
+            val seed = randomSeed()
             val random = Random(seed)
-            Timber.i("Running restoreFromBackup_randomizedBulkVolume with SEED: $seed")
 
             safeBoxDatabase.clearAllTables()
 
@@ -598,14 +672,18 @@ class BackupAndRestoreWorkersTest {
                 )
                 .setWorkerFactory(workerFactory)
                 .build()
-            assertThat(backupWorker.doWork()).isEqualTo(Result.success())
+            assertWithMessage("Backup failed with SEED: $seed")
+                .that(backupWorker.doWork())
+                .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
                 f.name.startsWith("SafeBoxBackup") && (f.name.endsWith(".bak") || f.name.endsWith(".bak.bin") || f.name.contains(
                     ".bak"
                 ))
             }?.firstOrNull()
-            assertThat(generatedFile).isNotNull()
+            assertWithMessage("Generated backup file missing with SEED: $seed")
+                .that(generatedFile)
+                .isNotNull()
 
             safeBoxDatabase.clearAllTables()
 
@@ -626,7 +704,9 @@ class BackupAndRestoreWorkersTest {
                 .build()
 
             val result = restoreWorker.doWork()
-            assertThat(result).isEqualTo(Result.success())
+            assertWithMessage("Restore failed with SEED: $seed")
+                .that(result)
+                .isEqualTo(Result.success())
 
             val restoredLogins = loginDataRepository.getAllLoginData().first()
                 .map { loginDataRepository.getLoginDataByKey(it.key) }
@@ -637,20 +717,18 @@ class BackupAndRestoreWorkersTest {
             val restoredNotes = secureNoteDataRepository.getAllSecureNoteData().first()
                 .map { secureNoteDataRepository.getSecureNoteDataByKey(it.key) }
 
-            assertThat(restoredLogins.map { it.copy(id = 0) }).containsExactlyElementsIn(
-                initialLogins.map { it.copy(id = 0) })
-            assertThat(restoredCards.map { it.copy(id = 0) }).containsExactlyElementsIn(initialCards.map {
-                it.copy(
-                    id = 0
-                )
-            })
-            assertThat(restoredAccounts.map { it.copy(id = 0) }).containsExactlyElementsIn(
-                initialAccounts.map { it.copy(id = 0) })
-            assertThat(restoredNotes.map { it.copy(id = 0) }).containsExactlyElementsIn(initialNotes.map {
-                it.copy(
-                    id = 0
-                )
-            })
+            assertWithMessage("Logins mismatch with SEED: $seed")
+                .that(restoredLogins.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialLogins.map { it.copy(id = 0) })
+            assertWithMessage("Cards mismatch with SEED: $seed")
+                .that(restoredCards.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialCards.map { it.copy(id = 0) })
+            assertWithMessage("Accounts mismatch with SEED: $seed")
+                .that(restoredAccounts.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialAccounts.map { it.copy(id = 0) })
+            assertWithMessage("Notes mismatch with SEED: $seed")
+                .that(restoredNotes.map { it.copy(id = 0) })
+                .containsExactlyElementsIn(initialNotes.map { it.copy(id = 0) })
         }
     }
 
@@ -702,14 +780,14 @@ class BackupAndRestoreWorkersTest {
             name = "Holder_${id}_${randomFrom(textPool, 5, random)}",
             number = (1..16).map { random.nextInt(10).toString() }.joinToString(""),
             expiryDate = String.format(
-                java.util.Locale.ROOT,
+                Locale.ROOT,
                 "%02d%02d",
                 random.nextInt(12) + 1,
                 random.nextInt(10) + 25
             ),
-            cvv = String.format(java.util.Locale.ROOT, "%03d", random.nextInt(1000)),
+            cvv = String.format(Locale.ROOT, "%03d", random.nextInt(1000)),
             pin = if (random.nextBoolean()) String.format(
-                java.util.Locale.ROOT,
+                Locale.ROOT,
                 "%04d",
                 random.nextInt(10000)
             ) else null,
@@ -790,5 +868,47 @@ class BackupAndRestoreWorkersTest {
             creationDate = Date(1700000000000L + random.nextInt(1000000)),
             updateDate = Date(1700000000000L + random.nextInt(1000000))
         )
+    }
+
+    /**
+     * Builds an authenticator record whose every generation parameter is randomised.
+     *
+     * The seed is drawn from the RFC 4648 Base32 alphabet and given a length the encoding can
+     * actually produce, so the record is one the app would accept. Length matters as much as the
+     * alphabet here: Base32Utils.isValidBase32 rejects a seed whose length leaves 1, 3 or 6
+     * characters over a full quantum, and [RestoreDataWorker] then drops such a record on restore
+     * by design, which would fail the round trip assertion for a reason that is not a round trip
+     * defect. The algorithm, digit count and period all vary so a round trip that silently
+     * defaulted any of them would fail the equality assertion.
+     *
+     * @param id Stable identifier, also used to keep titles unique.
+     * @param random Seeded source so a failing run can be reproduced from the logged seed.
+     * @return Randomised authenticator record.
+     */
+    private fun createRandomAuthenticatorData(id: Int, random: Random): AuthenticatorData {
+        val base32Pool = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+        val textPool =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/ 🔑🔐"
+        return AuthenticatorData(
+            id = id,
+            title = "Authenticator_${id}_${randomFrom(textPool, 6, random)}",
+            config = TotpConfig(
+                secretKey = randomFrom(base32Pool, REPRESENTABLE_SEED_LENGTHS.random(random), random),
+                algorithm = TotpAlgorithm.entries[random.nextInt(TotpAlgorithm.entries.size)],
+                digits = TotpDefaults.SUPPORTED_DIGITS.random(random),
+                period = 15 + random.nextInt(46),
+            ),
+            creationDate = Date(1700000000000L + random.nextInt(1000000)),
+            updateDate = Date(1700000000000L + random.nextInt(1000000))
+        )
+    }
+
+    private companion object {
+        // A Base32 quantum is 8 characters and a trailing partial group can only be 2, 4, 5 or 7
+        // of them, so a length leaving 1, 3 or 6 over is one no encoder could ever emit.
+        private val REPRESENTABLE_SEED_LENGTHS = (16..32).filter { it % 8 !in setOf(1, 3, 6) }
+
+        // Instrumentation argument that replays a specific randomized dataset. See [randomSeed].
+        private const val SEED_ARGUMENT_KEY = "backupSeed"
     }
 }

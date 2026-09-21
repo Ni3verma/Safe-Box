@@ -1,8 +1,10 @@
 package com.andryoga.safebox.ui.singleRecord
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -14,6 +16,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
+import com.andryoga.safebox.test.fakes.FakeClipboard
+import com.andryoga.safebox.ui.previewHelper.getAuthenticatorLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
@@ -385,7 +389,7 @@ class SingleRecordScreenTest {
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
                         label = R.string.created_on,
-                        isVisibleOnlyInViewMode = true
+                        visibleIn = setOf(ViewMode.VIEW)
                     ),
                     data = "12 Jul 2026, 10:00 AM"
                 )
@@ -467,7 +471,7 @@ class SingleRecordScreenTest {
 
     @Test
     fun copyableField_clickingInViewModeShouldCopyToClipboard() {
-        var clipboardEntry: androidx.compose.ui.platform.ClipEntry? = null
+        val clipboard = FakeClipboard()
 
         val copyLayoutPlan = LayoutPlan(
             id = LayoutId.LOGIN,
@@ -486,20 +490,7 @@ class SingleRecordScreenTest {
         )
 
         composeTestRule.setContent {
-            androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalClipboard provides object :
-                    androidx.compose.ui.platform.Clipboard {
-                    override suspend fun getClipEntry(): androidx.compose.ui.platform.ClipEntry? =
-                        clipboardEntry
-
-                    override suspend fun setClipEntry(clipEntry: androidx.compose.ui.platform.ClipEntry?) {
-                        clipboardEntry = clipEntry
-                    }
-
-                    override val nativeClipboard: android.content.ClipboardManager
-                        get() = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                }
-            ) {
+            CompositionLocalProvider(LocalClipboard provides clipboard) {
                 SafeBoxTheme {
                     SingleRecordScreen(
                         uiState = SingleRecordScreenUiState(
@@ -516,7 +507,67 @@ class SingleRecordScreenTest {
         composeTestRule.onNodeWithText("copyable@user.com").performClick()
         composeTestRule.waitForIdle()
 
-        assertThat(clipboardEntry).isNotNull()
-        assertThat(clipboardEntry?.clipData?.getItemAt(0)?.text?.toString()).isEqualTo("copyable@user.com")
+        assertThat(clipboard.lastCopiedText).isEqualTo("copyable@user.com")
+    }
+
+    @Test
+    fun authenticatorNewMode_shouldShowSeedInputAndHideLiveCodeAndDates() {
+        setAuthenticatorContent(ViewMode.NEW)
+
+        // an editable cell exposes its content rather than its Material label, so the seed input
+        // is identified by the value it holds.
+        composeTestRule.onNodeWithText(AUTHENTICATOR_SEED).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.totp_code)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.created_on)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.updated_on)).assertDoesNotExist()
+    }
+
+    @Test
+    fun authenticatorViewMode_shouldShowLiveCodeAndHideSeed() {
+        setAuthenticatorContent(ViewMode.VIEW)
+
+        composeTestRule.onNodeWithText(context.getString(R.string.totp_code)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.created_on)).assertIsDisplayed()
+        // the seed is write once: it is never redisplayed after the record is created.
+        composeTestRule.onNodeWithText(context.getString(R.string.secret_key)).assertDoesNotExist()
+    }
+
+    @Test
+    fun authenticatorEditMode_shouldShowOnlyTitleAndHideSeedAndLiveCode() {
+        setAuthenticatorContent(ViewMode.EDIT)
+
+        composeTestRule.onNodeWithText(AUTHENTICATOR_TITLE).assertIsDisplayed()
+        composeTestRule.onNodeWithText(AUTHENTICATOR_SEED).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.totp_code)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.created_on)).assertDoesNotExist()
+    }
+
+    @Test
+    fun authenticatorViewMode_shouldNotLeakTheSeedAsText() {
+        setAuthenticatorContent(ViewMode.VIEW)
+
+        // the plan still carries the seed as field data; only the rendering is suppressed, so this
+        // guards against a future change that reintroduces it through a different cell.
+        composeTestRule.onNodeWithText(AUTHENTICATOR_SEED).assertDoesNotExist()
+    }
+
+    private fun setAuthenticatorContent(viewMode: ViewMode) {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SingleRecordScreen(
+                    uiState = SingleRecordScreenUiState(
+                        isLoading = false,
+                        viewMode = viewMode,
+                        layoutPlan = getAuthenticatorLayoutPlan(withData = true)
+                    ),
+                    screenAction = {}
+                )
+            }
+        }
+    }
+
+    companion object {
+        private const val AUTHENTICATOR_TITLE = "GitHub - work"
+        private const val AUTHENTICATOR_SEED = "JBSWY3DPEHPK3PXP"
     }
 }

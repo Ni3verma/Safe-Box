@@ -1,0 +1,264 @@
+package com.andryoga.safebox.totp.engine
+
+import com.andryoga.safebox.totp.TotpDefaults
+import com.andryoga.safebox.totp.models.ParsedTotpData
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
+import com.andryoga.safebox.totp.models.TotpUriError
+import com.andryoga.safebox.totp.models.TotpUriParseResult
+import java.net.URI
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+
+/**
+ * Parser for standard Key URI format (`otpauth://totp/...`) used in QR codes for Two-Factor Authentication.
+ *
+ * Extracts and normalizes the account/issuer label, Base32 secret key, hashing algorithm,
+ * output digits, and time step period.
+ */
+object TotpUriParser {
+    private const val OTPAUTH_SCHEME = "otpauth"
+
+    /**
+     * Parses an `otpauth://totp/...` URI string into a [TotpUriParseResult].
+     *
+     * An absent `algorithm`, `digits` or `period` falls back to its [TotpDefaults] value, per the
+     * Key URI spec. A value that is present but unsupported is rejected rather than defaulted.
+     *
+     * @param uriString Full raw URI scanned from a QR code or entered by the user.
+     * @return [TotpUriParseResult.Success] with the parsed data, [TotpUriParseResult.NotTotpUri]
+     * when the payload is not an `otpauth://` URI, or [TotpUriParseResult.Unsupported] when it is
+     * one but cannot be used, including when it is too malformed to read.
+     */
+    fun parse(uriString: String): TotpUriParseResult {
+        val sanitizedUriString = uriString.trim().replace(" ", "%20")
+        return try {
+            parseOtpauthUri(sanitizedUriString)
+        } catch (_: Exception) {
+            // the scheme has to be read off the raw text: a URI that failed to build exposes no
+            // components. An unreadable otpauth payload is a QR code the user pointed at on
+            // purpose, so it earns an explanation rather than being skipped as unrelated content.
+            if (sanitizedUriString.startsWith("$OTPAUTH_SCHEME:", ignoreCase = true)) {
+                TotpUriParseResult.Unsupported(TotpUriError.MALFORMED_URI)
+            } else {
+                TotpUriParseResult.NotTotpUri
+            }
+        }
+    }
+
+    /**
+     * Reads a sanitized payload that is already known to be trimmed and space escaped.
+     *
+     * @param sanitizedUriString Payload with surrounding whitespace removed and spaces escaped.
+     * @return Outcome of the parse.
+     * @throws Exception when the payload is not a well formed URI. [parse] converts this into a
+     * result; the work is split out so that no step here needs its own guard.
+     */
+    private fun parseOtpauthUri(sanitizedUriString: String): TotpUriParseResult {
+        val uri = URI(sanitizedUriString)
+
+        if (uri.scheme?.equals(OTPAUTH_SCHEME, ignoreCase = true) != true) {
+            return TotpUriParseResult.NotTotpUri
+        }
+
+        val type = uri.host ?: uri.authority
+        if (type?.equals("totp", ignoreCase = true) != true) {
+            return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_OTP_TYPE)
+        }
+
+        val groupedParams = parseQueryParams(uri.rawQuery)
+        if (hasConflictingParams(groupedParams)) {
+            return TotpUriParseResult.Unsupported(TotpUriError.AMBIGUOUS_PARAMETERS)
+        }
+        val queryParams = groupedParams.mapValues { it.value.first() }
+
+        val rawSecret = queryParams.optionalParam("secret")
+            ?: return TotpUriParseResult.Unsupported(TotpUriError.INVALID_SECRET)
+        val cleanSecret = Base32Utils.sanitize(rawSecret)
+        if (!Base32Utils.isValidBase32(cleanSecret)) {
+            return TotpUriParseResult.Unsupported(TotpUriError.INVALID_SECRET)
+        }
+
+        val algorithmParam = queryParams.optionalParam("algorithm")
+        val algorithm = if (algorithmParam == null) {
+            TotpAlgorithm.SHA1
+        } else {
+            parseAlgorithm(algorithmParam)
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_ALGORITHM)
+        }
+
+        val digitsParam = queryParams.optionalParam("digits")
+        val digits = if (digitsParam == null) {
+            TotpDefaults.DIGITS
+        } else {
+            digitsParam.toIntOrNull()?.takeIf { it in TotpDefaults.SUPPORTED_DIGITS }
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_DIGITS)
+        }
+
+        val periodParam = queryParams.optionalParam("period")
+        val period = if (periodParam == null) {
+            TotpDefaults.PERIOD_SECONDS
+        } else {
+            periodParam.toIntOrNull()?.takeIf { it > 0 }
+                ?: return TotpUriParseResult.Unsupported(TotpUriError.UNSUPPORTED_PERIOD)
+        }
+
+        val decodedLabel = uri.path?.trimStart('/') ?: ""
+        val title = computeTitle(decodedLabel, queryParams["issuer"])
+
+        return TotpUriParseResult.Success(
+            ParsedTotpData(
+                title = title,
+                config = TotpConfig(
+                    secretKey = cleanSecret,
+                    algorithm = algorithm,
+                    digits = digits,
+                    period = period,
+                ),
+            ),
+        )
+    }
+
+    /**
+     * Maps a Key URI `algorithm` token to a supported [TotpAlgorithm].
+     *
+     * Matched against literals, not [TotpAlgorithm.entries], so renaming an enum constant cannot
+     * silently change which QR codes parse.
+     *
+     * @param rawAlgorithm Raw parameter value from the URI, in any casing.
+     * @return Matching algorithm, or null when Safe-Box cannot compute that hash.
+     */
+    private fun parseAlgorithm(rawAlgorithm: String): TotpAlgorithm? =
+        when (rawAlgorithm.uppercase()) {
+            "SHA1" -> TotpAlgorithm.SHA1
+            "SHA256" -> TotpAlgorithm.SHA256
+            "SHA512" -> TotpAlgorithm.SHA512
+            else -> null
+        }
+
+    /**
+     * Reads a query parameter, treating a blank value as absent.
+     *
+     * @param key Lowercase parameter name.
+     * @return Trimmed value, or null when the parameter is missing or blank.
+     */
+    private fun Map<String, String>.optionalParam(key: String): String? =
+        this[key]?.trim()?.takeIf { it.isNotBlank() }
+
+    /**
+     * Parameters whose value decides which code the record will produce.
+     *
+     * A repeat of any of these with a different value makes the URI unreadable, so they are
+     * checked for conflicts. `issuer` and unrecognized extras such as `image` are left out: a
+     * repeat there only affects the title, which the user can see and correct on the save screen.
+     */
+    private val CODE_DETERMINING_PARAMS = setOf("secret", "algorithm", "digits", "period")
+
+    /**
+     * Reports whether any code-determining parameter was given more than one distinct value.
+     *
+     * Exact repeats are tolerated, since `secret=X&secret=X` names one seed no matter how many
+     * times it is written.
+     *
+     * @param groupedParams Every value seen for each parameter name, in order of appearance.
+     * @return true when the URI cannot be read as naming a single configuration.
+     */
+    private fun hasConflictingParams(groupedParams: Map<String, List<String>>): Boolean =
+        CODE_DETERMINING_PARAMS.any { key ->
+            groupedParams[key].orEmpty().distinct().size > 1
+        }
+
+    /**
+     * Parses the raw query string, keeping every value seen for each parameter name.
+     *
+     * Values are grouped rather than collapsed so that [hasConflictingParams] can still see a
+     * repeated parameter; a plain map would hide the duplicate behind a last-one-wins overwrite.
+     *
+     * @param rawQuery The raw query string from the URI.
+     * @return Map of decoded, lowercased parameter names to the values seen for each.
+     */
+    private fun parseQueryParams(rawQuery: String?): Map<String, List<String>> {
+        if (rawQuery.isNullOrBlank()) return emptyMap()
+
+        return rawQuery.split("&")
+            .mapNotNull { param ->
+                val keyValue = param.split("=", limit = 2)
+                if (keyValue.size == 2) {
+                    val key = try {
+                        decodeQueryComponent(keyValue[0])
+                    } catch (e: Exception) {
+                        keyValue[0]
+                    }
+                    val value = try {
+                        decodeQueryComponent(keyValue[1])
+                    } catch (e: Exception) {
+                        keyValue[1]
+                    }
+                    key.lowercase() to value
+                } else {
+                    null
+                }
+            }
+            .groupBy({ it.first }, { it.second })
+    }
+
+    /**
+     * Decodes a percent-encoded query component while preserving literal `+` characters.
+     *
+     * [URLDecoder] implements HTML form decoding (`application/x-www-form-urlencoded`), which
+     * turns `+` into a space; Key URIs follow RFC 3986 where `+` in an issuer or label is literal.
+     */
+    private fun decodeQueryComponent(raw: String): String =
+        URLDecoder.decode(raw.replace("+", "%2B"), StandardCharsets.UTF_8.name())
+
+    /**
+     * Derives a clean, human-readable account title from the URI label and issuer parameter.
+     *
+     * @param decodedLabel Decoded label component from the URI path.
+     * @param issuerParam Optional issuer query parameter value.
+     * @return Formatted title (e.g. "Issuer - Account" or "Account").
+     */
+    private fun computeTitle(decodedLabel: String, issuerParam: String?): String {
+        val trimmedIssuer = issuerParam?.trim()?.takeIf { it.isNotBlank() }
+
+        if (decodedLabel.isBlank() && trimmedIssuer != null) {
+            return trimmedIssuer
+        }
+
+        if (decodedLabel.contains(":")) {
+            val parts = decodedLabel.split(":", limit = 2)
+            val prefix = parts[0].trim()
+            val account = parts[1].trim()
+
+            val issuer = trimmedIssuer ?: prefix.takeIf { it.isNotBlank() }
+
+            return when {
+                issuer != null && account.isNotBlank() -> {
+                    if (prefix.isNotBlank() && !issuer.equals(prefix, ignoreCase = true)) {
+                        "$issuer ($prefix) - $account"
+                    } else {
+                        "$issuer - $account"
+                    }
+                }
+
+                issuer != null -> issuer
+                account.isNotBlank() -> account
+                else -> "Authenticator Account"
+            }
+        }
+
+        val label = decodedLabel.trim()
+        return when {
+            trimmedIssuer != null && label.isNotBlank() -> {
+                if (!label.contains(trimmedIssuer, ignoreCase = true)) {
+                    "$trimmedIssuer - $label"
+                } else {
+                    label
+                }
+            }
+
+            label.isNotBlank() -> label
+            else -> "Authenticator Account"
+        }
+    }
+}

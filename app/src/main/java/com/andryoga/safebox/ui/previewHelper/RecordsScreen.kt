@@ -2,6 +2,7 @@ package com.andryoga.safebox.ui.previewHelper
 
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.records.models.UserInputs
 
 fun getLoginRecordItem() = RecordListItem(
@@ -30,6 +31,14 @@ fun getNoteRecordItem() = RecordListItem(
     title = "Android learnings",
     subTitle = null,
     recordType = RecordType.NOTE
+)
+
+fun getAuthenticatorRecordItem() = RecordListItem(
+    id = 1,
+    title = "GitHub - work",
+    subTitle = null,
+    recordType = RecordType.AUTHENTICATOR,
+    totpConfig = TotpConfig(secretKey = "JBSWY3DPEHPK3PXP"),
 )
 
 fun getAppliedRecordTypeFilters(): List<UserInputs.RecordTypeFilter> {

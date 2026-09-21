@@ -10,10 +10,12 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Exceptions
+import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
 import com.andryoga.safebox.data.db.docs.SearchLoginData
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
@@ -22,6 +24,8 @@ import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.totp.models.TotpAlgorithm
+import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.ui.home.records.RecordsViewModel.Companion.ASK_FOR_REVIEW_AFTER_EVERY_LOGIN
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
@@ -66,6 +70,9 @@ class RecordsViewModelTest {
     lateinit var cardDataRepository: BankCardDataRepository
 
     @MockK
+    lateinit var authenticatorDataRepository: AuthenticatorDataRepository
+
+    @MockK
     lateinit var backupMetadataRepository: BackupMetadataRepository
 
     @MockK
@@ -82,6 +89,8 @@ class RecordsViewModelTest {
     private val secureNoteDataFlow = MutableSharedFlow<List<SearchSecureNoteData>>(replay = 1)
     private val loginDataFlow = MutableSharedFlow<List<SearchLoginData>>(replay = 1)
     private val cardDataFlow = MutableSharedFlow<List<SearchBankCardData>>(replay = 1)
+    private val authenticatorDataFlow =
+        MutableSharedFlow<List<SearchAuthenticatorData>>(replay = 1)
 
     @Before
     fun setUp() {
@@ -91,12 +100,14 @@ class RecordsViewModelTest {
         every { secureNoteDataRepository.getAllSecureNoteData() } returns secureNoteDataFlow
         every { loginDataRepository.getAllLoginData() } returns loginDataFlow
         every { cardDataRepository.getAllBankCardData() } returns cardDataFlow
+        every { authenticatorDataRepository.getAllAuthenticatorData() } returns authenticatorDataFlow
 
         viewModel = RecordsViewModel(
             bankAccountDataRepository,
             secureNoteDataRepository,
             loginDataRepository,
             cardDataRepository,
+            authenticatorDataRepository,
             mainDispatcherRule.testDispatcherProvider,
             backupMetadataRepository,
             preferenceProvider,
@@ -373,6 +384,9 @@ class RecordsViewModelTest {
             viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.CARD))
             viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.BANK_ACCOUNT))
             viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.LOGIN))
+            viewModel.onScreenAction(
+                RecordScreenAction.OnToggleRecordTypeFilter(RecordType.AUTHENTICATOR)
+            )
             advanceUntilIdle()
 
             val lastState = expectMostRecentItem()
@@ -424,6 +438,7 @@ class RecordsViewModelTest {
             secureNoteDataFlow.emit(getSecureNoteDataList(2))
             loginDataFlow.emit(emptyList()) // No Logins
             cardDataFlow.emit(getBankCardDataList(2))
+            authenticatorDataFlow.emit(emptyList())
             advanceUntilIdle()
 
             // Filter explicitly by LOGIN
@@ -847,11 +862,28 @@ class RecordsViewModelTest {
         }
     }
 
+    private fun getAuthenticatorDataList(size: Int): List<SearchAuthenticatorData> {
+        return (1..size).map {
+            SearchAuthenticatorData(
+                key = it,
+                title = "Authenticator $it",
+                secretKey = VALID_BASE32_SECRET,
+                algorithm = TotpAlgorithm.SHA256,
+                digits = NON_DEFAULT_DIGITS,
+                period = NON_DEFAULT_PERIOD,
+                creationDate = Date(0),
+            )
+        }
+    }
+
+    // authenticators are emitted empty here so existing record count assertions stay valid. the
+    // emission is still mandatory: combine emits nothing until every source flow has emitted.
     private suspend fun TestScope.setupAndEmitDefaultRecords() {
         bankAccountDataFlow.emit(getBankAccountDataList(2))
         secureNoteDataFlow.emit(getSecureNoteDataList(2))
         loginDataFlow.emit(getLoginDataList(2))
         cardDataFlow.emit(getBankCardDataList(2))
+        authenticatorDataFlow.emit(emptyList())
         advanceUntilIdle()
     }
 
@@ -860,6 +892,7 @@ class RecordsViewModelTest {
         secureNoteDataFlow.emit(emptyList())
         loginDataFlow.emit(emptyList())
         cardDataFlow.emit(emptyList())
+        authenticatorDataFlow.emit(emptyList())
         advanceUntilIdle()
     }
 
@@ -885,4 +918,97 @@ class RecordsViewModelTest {
         RecordListItem(1, "Secure Note 1", null, RecordType.NOTE, "NOTE_1"),
         RecordListItem(2, "Secure Note 2", null, RecordType.NOTE, "NOTE_2")
     ).sortedBy { it.title.lowercase() }
+
+    @Test
+    fun `authenticatorRecords appear in records list sorted with other types`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            bankAccountDataFlow.emit(emptyList())
+            secureNoteDataFlow.emit(emptyList())
+            loginDataFlow.emit(emptyList())
+            cardDataFlow.emit(getBankCardDataList(1))
+            authenticatorDataFlow.emit(getAuthenticatorDataList(1))
+            advanceUntilIdle()
+
+            val lastState = expectMostRecentItem()
+            assertThat(lastState.totalDbRecords).isEqualTo(2)
+            assertThat(lastState.records.map { it.title })
+                .containsExactly("Authenticator 1", "Card 1").inOrder()
+        }
+    }
+
+    @Test
+    fun `authenticatorRecord carries decrypted seed so the card can derive the code`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            setupAndEmitEmptyRecords()
+            authenticatorDataFlow.emit(getAuthenticatorDataList(1))
+            advanceUntilIdle()
+
+            val record = expectMostRecentItem().records.single()
+            assertThat(record.recordType).isEqualTo(RecordType.AUTHENTICATOR)
+            assertThat(record.totpConfig).isEqualTo(
+                TotpConfig(
+                    secretKey = VALID_BASE32_SECRET,
+                    algorithm = TotpAlgorithm.SHA256,
+                    digits = NON_DEFAULT_DIGITS,
+                    period = NON_DEFAULT_PERIOD,
+                ),
+            )
+            assertThat(record.subTitle).isNull()
+        }
+    }
+
+    @Test
+    fun `authenticatorFilter shows only authenticator records`() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            setupAndEmitDefaultRecords()
+            authenticatorDataFlow.emit(getAuthenticatorDataList(2))
+            advanceUntilIdle()
+
+            viewModel.onScreenAction(
+                RecordScreenAction.OnToggleRecordTypeFilter(RecordType.AUTHENTICATOR)
+            )
+            advanceUntilIdle()
+
+            val lastState = expectMostRecentItem()
+            assertThat(lastState.records).hasSize(2)
+            assertThat(lastState.records.map { it.recordType }.toSet())
+                .containsExactly(RecordType.AUTHENTICATOR)
+        }
+    }
+
+    @Test
+    fun `defaultRecordTypeFilters include authenticator`() {
+        val filters = viewModel.uiState.value.recordTypeFilters
+
+        assertThat(filters.map { it.recordType }).contains(RecordType.AUTHENTICATOR)
+        assertThat(filters.single { it.recordType == RecordType.AUTHENTICATOR }.isSelected)
+            .isFalse()
+    }
+
+    @Test
+    fun `onScreenAction with OnCopyTotpCode logs copy event with records list source`() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+
+        viewModel.onScreenAction(RecordScreenAction.OnCopyTotpCode)
+
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
+        verify(exactly = 1) {
+            analyticsHelper.logEvent(eq(AnalyticsKey.AUTHENTICATOR_COPY_CLICK), capture(slot))
+        }
+        val builder = AnalyticsParamsBuilder()
+        slot.captured.invoke(builder)
+        assertThat(builder.params[AnalyticsParam.SOURCE.paramName]).isEqualTo("records_list")
+    }
+
+    private companion object {
+        // RFC 4648 Base32, decodes cleanly so TotpGenerator treats it as a usable seed.
+        const val VALID_BASE32_SECRET = "JBSWY3DPEHPK3PXP"
+
+        // deliberately different from TotpDefaults so the mapping cannot pass by coincidence.
+        const val NON_DEFAULT_DIGITS = 8
+        const val NON_DEFAULT_PERIOD = 60
+    }
 }

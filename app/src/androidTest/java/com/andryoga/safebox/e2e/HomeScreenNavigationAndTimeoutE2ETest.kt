@@ -21,6 +21,7 @@ import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
@@ -51,7 +52,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
-    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+    lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
     lateinit var userDetailsRepository: UserDetailsRepository

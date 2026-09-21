@@ -8,6 +8,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldUiState
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import java.util.Date
 
 class NoteLayoutImpl(
@@ -71,13 +72,13 @@ class NoteLayoutImpl(
                 ),
                 FieldId.CREATION_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.created_on, isVisibleOnlyInViewMode = true
+                        label = R.string.created_on, visibleIn = setOf(ViewMode.VIEW)
                     ),
                     data = recordData?.creationDate?.toString().orEmpty()
                 ),
                 FieldId.UPDATE_DATE to FieldUiState(
                     cell = FieldUiState.Cell(
-                        label = R.string.updated_on, isVisibleOnlyInViewMode = true
+                        label = R.string.updated_on, visibleIn = setOf(ViewMode.VIEW)
                     ),
                     data = recordData?.updateDate?.toString().orEmpty()
                 ),

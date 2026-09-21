@@ -53,6 +53,8 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.findActivity
 import timber.log.Timber
 
+// https://github.com/Ni3verma/Safe-Box/issues/239
+// TODO: Extract common PermissionRationaleDialog base component to share layout between NotificationPermissionRationaleDialog and CameraPermissionRationaleDialog
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 fun NotificationPermissionRationaleDialog(

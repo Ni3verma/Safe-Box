@@ -37,6 +37,8 @@ kotlinxSerializationJson = "1.11.0"
 biometric = "1.1.0"
 playReview = "2.0.2"
 dataStore = "1.2.1"
+camerax = "1.4.1"
+mlkitBarcodeScanning = "17.3.0"
 
 [libraries]
 # AndroidX Core
@@ -105,6 +107,13 @@ play-review = { group = "com.google.android.play", name = "review", version.ref 
 play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "playReview" }
 data-store-pref = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "dataStore" }
 
+# CameraX & ML Kit
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+mlkit-barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "mlkitBarcodeScanning" }
+
 [bundles]
 androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]
 compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
@@ -116,6 +125,7 @@ work = ["work-runtime-ktx", "work-testing"]
 firebase = ["firebase-crashlytics", "firebase-analytics"]
 room = ["room-runtime", "room-testing"]
 play-review = ["play-review", "play-review-ktx"]
+camera = ["androidx-camera-core", "androidx-camera-camera2", "androidx-camera-lifecycle", "androidx-camera-view", "mlkit-barcode-scanning"]
 
 [plugins]
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

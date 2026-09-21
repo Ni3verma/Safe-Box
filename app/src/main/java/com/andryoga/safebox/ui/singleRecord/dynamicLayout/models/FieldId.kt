@@ -35,9 +35,15 @@ enum class FieldId {
     NOTE_TITLE,
     NOTE_NOTES,
 
+    // AUTHENTICATOR field ids
+    AUTHENTICATOR_TITLE,
+    // holds the seed; the rolling code is derived at render time, hence DISPLAY and not CODE.
+    AUTHENTICATOR_TOTP_DISPLAY,
+    AUTHENTICATOR_SECRET_KEY,
+
     // common field ids
     CREATION_DATE,
-    UPDATE_DATE
+    UPDATE_DATE,
 
     // todo: title and notes can also be common field ids ideally. see if possible
 }

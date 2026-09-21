@@ -1,10 +1,14 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
+import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.ui.qrScanner.ScannedTotpHolder
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.AuthenticatorLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankAccountLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.BankCardLayoutImpl
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
@@ -17,7 +21,10 @@ class LayoutFactory @Inject constructor(
     private val loginDataRepository: Lazy<LoginDataRepository>,
     private val bankAccountDataRepository: Lazy<BankAccountDataRepository>,
     private val bankCardDataRepository: Lazy<BankCardDataRepository>,
-    private val noteDataRepository: Lazy<SecureNoteDataRepository>
+    private val noteDataRepository: Lazy<SecureNoteDataRepository>,
+    private val authenticatorDataRepository: Lazy<AuthenticatorDataRepository>,
+    private val totpGenerator: Lazy<TotpGenerator>,
+    private val scannedTotpHolder: Lazy<ScannedTotpHolder>,
 ) {
     /**
      * Returns the layout for the given record type. Data is pre filled if recordId is passed as well
@@ -36,9 +43,21 @@ class LayoutFactory @Inject constructor(
             RecordType.CARD -> BankCardLayoutImpl(recordId, bankCardDataRepository.get())
             RecordType.BANK_ACCOUNT -> BankAccountLayoutImpl(
                 recordId,
-                bankAccountDataRepository.get()
+                bankAccountDataRepository.get(),
             )
             RecordType.NOTE -> NoteLayoutImpl(recordId, noteDataRepository.get())
+            RecordType.AUTHENTICATOR -> AuthenticatorLayoutImpl(
+                recordId,
+                authenticatorDataRepository.get(),
+                totpGenerator.get(),
+                // only a record being created can come from a scan, so an existing record must
+                // never drain the hand-off and lose a scan the user is still on their way to save.
+                scannedTotpData = if (recordId == null) {
+                    scannedTotpHolder.get().consume()
+                } else {
+                    null
+                },
+            )
         }
     }
 }

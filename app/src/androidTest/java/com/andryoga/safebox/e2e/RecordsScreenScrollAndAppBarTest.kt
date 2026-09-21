@@ -24,6 +24,7 @@ import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.domain.mappers.record.toRecordListItem
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -54,7 +55,7 @@ class RecordsScreenScrollAndAppBarTest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
-    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+    lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
     lateinit var userDetailsRepository: UserDetailsRepository

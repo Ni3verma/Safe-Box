@@ -23,6 +23,7 @@ import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -53,7 +54,7 @@ class RecordActionsComprehensiveE2ETest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
-    lateinit var preferenceProvider: com.andryoga.safebox.providers.interfaces.PreferenceProvider
+    lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
     lateinit var userDetailsRepository: UserDetailsRepository
