@@ -132,4 +132,19 @@ object Migration {
             Timber.i("$migrationMessage success")
         }
     }
+
+    /**
+     * Every migration this app knows about, ordered oldest first.
+     *
+     * Single source of truth deliberately: the database builder and the migration tests both read
+     * this array, so adding a migration here is enough to wire it into production and to pull it
+     * into the full-chain upgrade test. Keeping two hand-maintained lists in sync is exactly how a
+     * migration ends up shipped but unregistered.
+     */
+    val ALL = arrayOf(
+        MIGRATION_1_2,
+        MIGRATION_2_3,
+        MIGRATION_3_4,
+        MIGRATION_4_5,
+    )
 }

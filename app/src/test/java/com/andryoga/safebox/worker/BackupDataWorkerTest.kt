@@ -537,4 +537,47 @@ class BackupDataWorkerTest {
         assertThat(fakeBackupMetadataRepo.deleted).isTrue()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isTrue()
     }
+
+    /**
+     * The write to the chosen backup directory can fail for reasons entirely outside the app's
+     * control: the SD card is pulled, the tree permission is revoked, or the folder is deleted
+     * between the user picking it and the worker running.
+     *
+     * The worker must surface that as a failure. Reporting success here would tell the user their
+     * vault is backed up when no file was written at all, which is the quietest possible way to
+     * lose everything.
+     */
+    @Test
+    fun doWork_whenWritingTheBackupFileFails_reportsFailureInsteadOfClaimingSuccess() = runTest {
+        fakeBackupMetadataRepo.metadata = BackupPathData(
+            uriString = "file://${tempDir.absolutePath}",
+            path = tempDir.absolutePath,
+            lastBackupTime = "Just now"
+        )
+
+        coEvery { loginDataDaoSecure.exportAllData() } returns listOf(
+            ExportLoginData("GitHub", "https://github.com", "secret", "notes", "user", 1000L, 1000L)
+        )
+        coEvery { bankAccountDataDaoSecure.exportAllData() } returns emptyList()
+        coEvery { bankCardDataDaoSecure.exportAllData() } returns emptyList()
+        coEvery { secureNoteDataDaoSecure.exportAllData() } returns emptyList()
+        coEvery { authenticatorDataDaoSecure.exportAllData() } returns emptyList()
+
+        // Removing the directory after the path was recorded mirrors a folder that disappeared
+        // between the user picking it and the worker running. FileOutputStream then throws.
+        tempDir.deleteRecursively()
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
+            .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+            .build()
+
+        val result = buildWorker(inputData).doWork()
+
+        assertThat(result).isEqualTo(Result.failure())
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isTrue()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
+        // A run that never wrote a file must not move the "last backed up" timestamp forward.
+        assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+    }
 }
