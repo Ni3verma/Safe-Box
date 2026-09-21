@@ -35,6 +35,25 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
 
+### Python tooling
+
+`scripts/check_docs.py` has a stdlib-`unittest` suite. No `pip install` anywhere in this pipeline —
+the checker runs in a bare shell, the pre-commit hook and CI, so it must work without a virtualenv.
+The machine has Python 3.9.6 and **no pytest**.
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py' -v   # 18 tests, ~0.15s
+python3 scripts/check_docs.py                               # the checker itself
+```
+
+CI runs both, tests first, before the JDK is even installed.
+
+> [!WARNING]
+> **Setting `LC_ALL=C` does not give you a non-UTF-8 Python.** PEP 538 coerces the C locale to
+> C.UTF-8 and PEP 540 can force UTF-8 mode, so a test that only sets `LC_ALL=C` passes even with the
+> encoding bug present. Reproducing it needs `PYTHONCOERCECLOCALE=0` and `PYTHONUTF8=0` as well.
+> Caught by deleting the fix and finding the test still green.
+
 ## Traps
 
 ### `BUILD SUCCESSFUL` does not mean your tests ran

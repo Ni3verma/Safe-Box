@@ -21,9 +21,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      # Deliberately placed before the JDK, Gradle and emulator setup: it needs none of them and
-      # finishes in well under a second, so a documentation problem is reported without first
+      # Deliberately placed before the JDK, Gradle and emulator setup: these need none of them and
+      # finish in well under a second, so a documentation problem is reported without first
       # paying for a toolchain. python3 is preinstalled on ubuntu-latest.
+      #
+      # The checker's own tests run first. A silent checker is indistinguishable from a passing
+      # one, and three real defects in it were caught by review rather than by it failing, so the
+      # validation step below is only meaningful if the tool behind it is known good. Stdlib
+      # unittest only - no pip install anywhere in this pipeline.
+      - name: Test documentation tooling
+        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+
       - name: Validate documentation
         run: python3 scripts/check_docs.py
 
