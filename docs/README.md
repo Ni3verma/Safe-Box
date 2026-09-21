@@ -32,8 +32,18 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 
 ## Validating this set
 
-```bash
-python3 scripts/check_docs.py
-```
+Two checks, both run in CI and neither needing Gradle:
 
-Fails on broken relative links and on stray agent-harness markup left in file tails.
+| Check | Command |
+|---|---|
+| Broken relative links | `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'` |
+| Stray agent markup, Windows link targets | `git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
+
+`DOCS_POLICY_PATTERN` is defined once, in
+[the pre-commit hook](../CICD/gitHooks/pre-commit.sh) — source that file to get it, rather than
+copying the regex around. It is deliberately not reproduced here: the pattern matches its own text,
+so pasting it into a markdown file makes the check fail on that file.
+
+The policy check also runs in the pre-commit hook, restricted to the markdown you have staged. See
+[the build-and-test skill](../.agents/skills/build-and-test/SKILL.md) for how to get `lychee`, which
+is not installed by default.

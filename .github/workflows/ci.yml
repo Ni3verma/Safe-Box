@@ -40,13 +40,18 @@ jobs:
       # Two rules lychee cannot express. Stray agent markup is repo-specific, and lychee parses a
       # Windows drive-qualified target such as C:\docs\a.md as a "c:" URI scheme and excludes it
       # from checking entirely, so that form has to be caught by pattern. The pattern is kept
-      # identical to DOCS_POLICY_PATTERN in CICD/gitHooks/pre-commit.sh; the *scope* deliberately
-      # differs - CI sweeps the whole tree as a backstop, the hook only looks at staged markdown so
-      # a pre-existing violation elsewhere cannot block an unrelated commit.
+      # identical to DOCS_POLICY_PATTERN in CICD/gitHooks/pre-commit.sh.
+      #
+      # git grep over a bare '*.md' pathspec rather than a directory list: stray markup can land in
+      # any markdown file, including README.md and CONTRIBUTING.md at the root, and a hardcoded list
+      # silently stops covering whatever directory gets added next. It also only sees tracked files,
+      # so .git and build output are never walked. Scope still differs from the hook, deliberately -
+      # CI sweeps everything as a backstop, the hook looks only at what is staged so a pre-existing
+      # violation elsewhere cannot block an unrelated commit.
       - name: Check documentation policy
         run: |
-          if grep -rnE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \
-               .agents docs upgrade-test --include='*.md'; then
+          if git grep -nE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \
+               -- '*.md'; then
             echo "::error::Documentation policy violations found (see matches above)."
             exit 1
           fi

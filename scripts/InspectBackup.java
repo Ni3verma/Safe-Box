@@ -3,8 +3,6 @@ import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -67,17 +65,6 @@ public class InspectBackup {
     private static final long MAX_DEPTH = 20;
     private static final long MAX_REFERENCES = 10_000;
 
-    /**
-     * Total size cap, checked before the file is opened.
-     *
-     * MAX_ARRAY_LENGTH bounds each array separately, so a map of ten maximal byte arrays would
-     * satisfy every filter bound above while still forcing roughly 640 MiB of allocation inside
-     * readObject(). A serialised map cannot be smaller than the arrays it carries, so capping the
-     * file bounds the whole object graph. 64 MiB leaves four orders of magnitude of headroom over
-     * the 2 KB fixture and far more than any real vault needs.
-     */
-    private static final long MAX_FILE_BYTES = 64L * 1024 * 1024;
-
     // Keys as defined in CommonConstants.
     private static final Map<String, String> DATA_KEYS = new TreeMap<>();
 
@@ -98,22 +85,13 @@ public class InspectBackup {
         String path = args[0];
         char[] password = args[1].toCharArray();
 
-        // Checked before the stream is opened: once readObject() starts, the allocation has
-        // already happened and no filter callback can undo it.
-        long size = Files.size(Paths.get(path));
-        if (size > MAX_FILE_BYTES) {
-            System.err.println("Refusing to read " + path + ": " + size + " bytes exceeds the "
-                + MAX_FILE_BYTES + " byte cap. A real backup is a few kilobytes, so a file this"
-                + " large is either not a backup or is crafted to exhaust memory.");
-            System.exit(1);
-        }
-
         HashMap<String, byte[]> map;
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
             // readObject() instantiates whatever the stream names, before the cast below ever runs.
-            // This tool exists to inspect *suspect* backup files, so a hostile .bak is squarely in
-            // its threat model. Restrict the stream to the three types a backup can legitimately
-            // contain; the app's own RestoreDataWorker allowlists resolveClass for the same reason.
+            // The allowlist is one line and turns "pointed at the wrong file" into a named failure
+            // instead of arbitrary construction; the app's RestoreDataWorker overrides resolveClass
+            // for the same reason. There is no size or DoS guard here on purpose - the .bak files
+            // this reads are ones we make ourselves and are a few kilobytes.
             in.setObjectInputFilter(InspectBackup::filterBackupClasses);
             map = (HashMap<String, byte[]>) in.readObject();
         }

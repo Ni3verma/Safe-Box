@@ -129,11 +129,13 @@ run_docs_policy_check() {
   # Repo-wide enforcement is CI's job; this hook's job is "do not let me add one".
   #
   # Read NUL-delimited into an array rather than interpolating the list: a path containing a space
-  # would otherwise word-split into two nonexistent pathspecs.
+  # would otherwise word-split into two nonexistent pathspecs. R is in the filter because rename
+  # detection is on by default, so a file renamed *and* edited in one commit reports as R and would
+  # otherwise skip the check entirely; --name-only gives the post-image path, which is what we want.
   local files=()
   while IFS= read -r -d '' file; do
     files+=("$file")
-  done < <(git diff --cached --name-only --diff-filter=ACM -z -- '*.md')
+  done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.md')
 
   if [ ${#files[@]} -eq 0 ]; then
     log_info "No markdown staged, skipping."

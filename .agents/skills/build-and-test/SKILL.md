@@ -49,7 +49,17 @@ Two checks, in two places, neither needing Gradle:
 | Check | Where | Command |
 |---|---|---|
 | Broken relative links | CI (`lycheeverse/lychee-action`) | `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'` |
-| Stray agent markup, Windows link targets | pre-commit hook | `git grep --cached -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
+| Stray agent markup, Windows link targets | CI | `git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
+| Same, limited to what you staged | pre-commit hook | `git grep --cached -nE "$DOCS_POLICY_PATTERN" -- "${files[@]}"` |
+
+`DOCS_POLICY_PATTERN` lives in `CICD/gitHooks/pre-commit.sh`. The hook builds `files` from
+`git diff --cached --name-only --diff-filter=ACMR -z -- '*.md'`, so it only ever sees this commit's
+markdown — a violation someone else left in an untouched file is CI's problem, not yours.
+
+> [!WARNING]
+> Never paste the literal pattern into a markdown file. It contains the very strings it searches
+> for, so the file immediately matches itself and CI fails on the documentation describing the
+> check. Refer to it by name.
 
 lychee is **not installed on this machine** and there is no `brew`, `cargo` or `npm` to install it
 with. Grab the prebuilt binary if you need to check links locally:
