@@ -29,9 +29,15 @@ DETEKT_GRADLE_TASK="detekt"             # The specific Gradle task
 DETEKT_REPORT_DIR="app/build/reports/detekt"
 DETEKT_HTML_REPORT_PATH="${DETEKT_REPORT_DIR}/detekt.html"
 
-# Validates the committed documentation set: stray agent tool markup and broken relative links.
-# Cheap enough (well under a second, no Gradle) to run on every commit.
-DOCS_CHECK_SCRIPT="scripts/check_docs.py"
+# Documentation policy rules that no off-the-shelf linter can know about, so they stay here:
+#
+#   1. Stray agent tool markup. Files authored by an AI agent can pick up the harness's own
+#      XML-ish wrappers after the real content. This has happened more than once.
+#   2. Windows drive-qualified link targets. lychee parses "C:\docs\a.md" as a "c:" URI scheme
+#      and silently excludes it, so that one case has to be caught by pattern.
+#
+# Broken and absolute links are *not* checked here - lychee does that in CI, properly.
+DOCS_POLICY_PATTERN='</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]'
 
 # Prefix for log messages from this script
 LOG_PREFIX="[PRE-COMMIT-HOOK]"
@@ -103,54 +109,27 @@ check_restricted_files() {
   return "$restricted_file_found" # Return the flag
 }
 
-# --- Documentation Check Logic ---
-# Runs scripts/check_docs.py over the curated markdown set.
-# Returns 0 on success or when the check cannot be run, 1 when the check itself fails.
+# --- Documentation Policy Check ---
+# Greps the staged markdown for the two rules in DOCS_POLICY_PATTERN.
+# Returns 0 when clean, 1 when a rule is violated.
 #
-# Deliberately non-fatal when python3 or the script is missing: a contributor without python3
-# should not be blocked from committing Kotlin, and this check guards documentation only.
-run_docs_check() {
-  if [ ! -f "$DOCS_CHECK_SCRIPT" ]; then
-    log_info "Skipping documentation check, $DOCS_CHECK_SCRIPT not found."
-    return 0
-  fi
+# `git grep --cached` reads the index directly, so this inspects exactly what is about to be
+# committed. That matters in both directions: an unstaged fix must not mask a broken staged file,
+# and an unstaged broken file must not block a commit that does not include it. It also means no
+# temporary copy of the tree, and therefore nothing to clean up.
+#
+# Link checking deliberately lives in CI (lychee), not here - it needs a binary this hook cannot
+# assume is installed, and a broken link is not worth blocking a local commit over.
+run_docs_policy_check() {
+  log_info "Checking documentation policy on staged markdown..."
 
-  if ! command -v python3 &> /dev/null; then
-    log_info "Skipping documentation check, python3 is not on PATH."
-    return 0
-  fi
+  local offenders
+  offenders=$(git grep --cached -nE "$DOCS_POLICY_PATTERN" -- '*.md') || return 0
 
-  log_info "Validating documentation..."
-
-  # Validate the *staged* snapshot, not the working tree. Running against the working tree gets it
-  # wrong in both directions: an unstaged fix would mask a broken staged file and let it through,
-  # and an unstaged broken file would block a commit that does not even include it.
-  # git checkout-index materialises exactly what is about to be committed into a scratch directory.
-  local staged_tree
-  staged_tree=$(mktemp -d)
-  # shellcheck disable=SC2064  # expand staged_tree now, not at trap time.
-  trap "rm -rf '$staged_tree'" RETURN
-
-  if ! git checkout-index --all --prefix="$staged_tree/" 2> /dev/null; then
-    log_info "Skipping documentation check, could not materialise the staged tree."
-    return 0
-  fi
-
-  # The checker derives the repository root from its own location, so invoking the copy inside
-  # staged_tree scopes it to the staged content.
-  if [ ! -f "$staged_tree/$DOCS_CHECK_SCRIPT" ]; then
-    log_info "Skipping documentation check, $DOCS_CHECK_SCRIPT is not staged."
-    return 0
-  fi
-
-  # The script prints the offending file, line and reason, so let its output through unfiltered.
-  if (cd "$staged_tree" && python3 "$DOCS_CHECK_SCRIPT"); then
-    return 0
-  fi
-
-  log_error "Documentation check failed on the staged content. Fix the problems listed above,"
-  log_error "stage the fix, or re-run against your working tree with:"
-  log_error "  python3 $DOCS_CHECK_SCRIPT"
+  log_error "Documentation policy violations in staged content:"
+  printf '%s\n' "$offenders" >&2
+  log_error "Stray agent markup must be deleted; Windows drive-qualified link targets must be"
+  log_error "replaced with a path relative to the file."
   return 1
 }
 
@@ -237,10 +216,10 @@ if ! check_restricted_files; then
   exit 1 # Fail the Git commit
 fi
 
-# 2. Validate documentation. Ordered before Detekt because it takes milliseconds and needs no
-# Gradle daemon, so a documentation problem surfaces without paying for a build first.
-if ! run_docs_check; then
-  log_error "Documentation pre-commit check failed. Aborting commit."
+# 2. Check documentation policy. Ordered before Detekt because it is a single grep over the index
+# and needs no toolchain, so a violation surfaces without paying for a build first.
+if ! run_docs_policy_check; then
+  log_error "Documentation policy check failed. Aborting commit."
   exit 1 # Fail the Git commit
 fi
 

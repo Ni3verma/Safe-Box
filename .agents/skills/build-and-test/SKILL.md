@@ -42,24 +42,29 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
 
-### Python tooling
+### Documentation checks
 
-`scripts/check_docs.py` has a stdlib-`unittest` suite. No `pip install` anywhere in this pipeline —
-the checker runs in a bare shell, the pre-commit hook and CI, so it must work without a virtualenv.
-The machine has Python 3.9.6 and **no pytest**.
+Two checks, in two places, neither needing Gradle:
+
+| Check | Where | Command |
+|---|---|---|
+| Broken relative links | CI (`lycheeverse/lychee-action`) | `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'` |
+| Stray agent markup, Windows link targets | pre-commit hook | `git grep --cached -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
+
+lychee is **not installed on this machine** and there is no `brew`, `cargo` or `npm` to install it
+with. Grab the prebuilt binary if you need to check links locally:
 
 ```bash
-python3 -m unittest discover -s scripts -p 'test_*.py' -v   # 18 tests, ~0.15s
-python3 scripts/check_docs.py                               # the checker itself
+curl -sSL -o lychee.tar.gz \
+  https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-aarch64-apple-darwin.tar.gz
+tar xzf lychee.tar.gz && ./lychee-aarch64-apple-darwin/lychee --version
 ```
 
-CI runs both, tests first, before the JDK is even installed.
-
-> [!WARNING]
-> **Setting `LC_ALL=C` does not give you a non-UTF-8 Python.** PEP 538 coerces the C locale to
-> C.UTF-8 and PEP 540 can force UTF-8 mode, so a test that only sets `LC_ALL=C` passes even with the
-> encoding bug present. Reproducing it needs `PYTHONCOERCECLOCALE=0` and `PYTHONUTF8=0` as well.
-> Caught by deleting the fix and finding the test still green.
+> [!NOTE]
+> lychee treats a Windows drive-qualified target such as `C:\docs\a.md` as a `c:` **URI scheme**
+> and reports it `EXCLUDED` with exit 0 — it is skipped, not checked. `--include '.*'` does not
+> override this and there is no `--fail-on-unsupported`. That single case is why the grep exists
+> alongside lychee rather than being deleted with the rest. (Verified 2026-09-21 against v0.24.2.)
 
 ## Traps
 

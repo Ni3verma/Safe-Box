@@ -22,18 +22,32 @@ jobs:
           persist-credentials: false
 
       # Deliberately placed before the JDK, Gradle and emulator setup: these need none of them and
-      # finish in well under a second, so a documentation problem is reported without first
-      # paying for a toolchain. python3 is preinstalled on ubuntu-latest.
+      # finish in seconds, so a documentation problem is reported without first paying for a
+      # toolchain.
       #
-      # The checker's own tests run first. A silent checker is indistinguishable from a passing
-      # one, and three real defects in it were caught by review rather than by it failing, so the
-      # validation step below is only meaningful if the tool behind it is known good. Stdlib
-      # unittest only - no pip install anywhere in this pipeline.
-      - name: Test documentation tooling
-        run: python3 -m unittest discover -s scripts -p 'test_*.py' -v
+      # --offline restricts lychee to local files, so this never makes a network request and can
+      # never fail because someone else's site is down. It resolves relative links, reference-style
+      # definitions and bracketed destinations through a real CommonMark parser, and reports
+      # root-relative targets like /etc/hosts as unresolvable rather than silently accepting them.
+      - name: Check documentation links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --offline --no-progress
+            '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'
+          fail: true
 
-      - name: Validate documentation
-        run: python3 scripts/check_docs.py
+      # Two rules lychee cannot express. Stray agent markup is repo-specific, and lychee parses a
+      # Windows drive-qualified target such as C:\docs\a.md as a "c:" URI scheme and excludes it
+      # from checking entirely, so that form has to be caught by pattern. Kept identical to
+      # DOCS_POLICY_PATTERN in CICD/gitHooks/pre-commit.sh.
+      - name: Check documentation policy
+        run: |
+          if grep -rnE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \
+               .agents docs upgrade-test --include='*.md'; then
+            echo "::error::Documentation policy violations found (see matches above)."
+            exit 1
+          fi
 
       - name: set up JDK 17
         uses: actions/setup-java@v6

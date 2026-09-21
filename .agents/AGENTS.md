@@ -141,6 +141,8 @@ is confidently wrong.
 * **Split a file when it exceeds roughly 300 lines** or covers two unrelated topics. New files must
   be linked from [`docs/README.md`](../docs/README.md) or from the relevant index, otherwise nobody
   will find them.
-* **Validate before committing:** `python3 scripts/check_docs.py`. It catches broken relative links
-  and closing tags from the agent's own tool-call format leaking into file tails — both of which
-  have shipped before.
+* **Validate before committing:** the pre-commit hook greps staged markdown for closing tags from
+  the agent's own tool-call format leaking into file tails, which has shipped before. Broken
+  relative links are checked in CI by [lychee](https://lychee.cli.rs); to check them locally,
+  install it and run
+  `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'`.
