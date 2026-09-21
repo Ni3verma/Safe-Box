@@ -19,6 +19,13 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 (`BypassSandbox: true`). Gradle usually works sandboxed once dependencies are cached; if it fails
 on dependency resolution, run it unsandboxed.
 
+**`git commit` inherits both constraints**, because the pre-commit hook shells out to Gradle. Run it
+as `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" git commit ...` and
+outside the sandbox. Neither failure names the hook as the cause: without `JAVA_HOME` it reports
+`Unable to locate a Java Runtime`, and inside the sandbox it reports
+`Could not connect to the Gradle daemon` followed by twenty lines of daemon log. (Verified
+2026-09-21.)
+
 Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — `aapt2`, `apksigner`,
 `dexdump` are all there. `apksigner` is a Java program, so it needs the same `JAVA_HOME`.
 
