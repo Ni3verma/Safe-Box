@@ -52,22 +52,21 @@ upgrade test must be `qa → qa`.
 
 ## Persistence & crypto
 
-- Room DB version: **4 on `master`**, **5 on `feature/totp-record-type`** (unmerged). Exported
-  schemas in `app/schemas/`, also wired in as androidTest assets.
+- Room DB version: **5** (`data/db/SafeBoxDatabase.kt`). Exported schemas `1.json`–`5.json` in
+  `app/schemas/`, also wired in as androidTest assets.
 - `Migration.ALL` in `data/db/Migration.kt` is the single source of truth for the migration list;
-  `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Keep both in sync via that array.
-  **Exists on `feature/totp-record-type` only** (commit `5e898dd`); `master` still has the list
-  hand-written inside `CacheModule`.
+  `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Add a migration there and it is
+  wired into both production and the full-chain migration test.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
 - Field encryption: AES-GCM key in `AndroidKeyStore` under alias **`symmetricDataKey`**
   (`di/SecurityModule.kt`). The provider does `if (!keyStore.containsAlias(alias)) generateKey()`,
   so a lost alias **silently regenerates** and every stored record becomes undecryptable with no
   error. This is the single highest-severity failure mode in the app.
-- `BACKUP_VERSION` in `common/CommonConstants.kt`: **2 on `master`**, **3 on
-  `feature/totp-record-type`**. Version 3 added `AUTHENTICATOR_DATA_KEY = "8"` to the export map;
-  a v2 file simply has no key `"8"`.
-- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE` on
-  `master`, plus `AUTHENTICATOR` on `feature/totp-record-type`.
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
+  `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`, which is what
+  makes `upgrade-test/src/main/assets/fixtures/v2_pre_totp.bak` a valid pre-TOTP fixture.
+- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE`,
+  `AUTHENTICATOR`.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
   mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
   hint. Applies to signup and change-password only — **not** to the backup file password, which is
