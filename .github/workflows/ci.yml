@@ -39,8 +39,10 @@ jobs:
 
       # Two rules lychee cannot express. Stray agent markup is repo-specific, and lychee parses a
       # Windows drive-qualified target such as C:\docs\a.md as a "c:" URI scheme and excludes it
-      # from checking entirely, so that form has to be caught by pattern. Kept identical to
-      # DOCS_POLICY_PATTERN in CICD/gitHooks/pre-commit.sh.
+      # from checking entirely, so that form has to be caught by pattern. The pattern is kept
+      # identical to DOCS_POLICY_PATTERN in CICD/gitHooks/pre-commit.sh; the *scope* deliberately
+      # differs - CI sweeps the whole tree as a backstop, the hook only looks at staged markdown so
+      # a pre-existing violation elsewhere cannot block an unrelated commit.
       - name: Check documentation policy
         run: |
           if grep -rnE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \

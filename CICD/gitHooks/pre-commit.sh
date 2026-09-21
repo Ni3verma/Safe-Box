@@ -123,8 +123,25 @@ check_restricted_files() {
 run_docs_policy_check() {
   log_info "Checking documentation policy on staged markdown..."
 
+  # Only the markdown staged for *this* commit. `git grep --cached` alone would search the whole
+  # index, so a pre-existing violation in an untouched file would block every later commit,
+  # including pure Kotlin ones - punishing whoever commits next rather than whoever introduced it.
+  # Repo-wide enforcement is CI's job; this hook's job is "do not let me add one".
+  #
+  # Read NUL-delimited into an array rather than interpolating the list: a path containing a space
+  # would otherwise word-split into two nonexistent pathspecs.
+  local files=()
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(git diff --cached --name-only --diff-filter=ACM -z -- '*.md')
+
+  if [ ${#files[@]} -eq 0 ]; then
+    log_info "No markdown staged, skipping."
+    return 0
+  fi
+
   local offenders
-  offenders=$(git grep --cached -nE "$DOCS_POLICY_PATTERN" -- '*.md') || return 0
+  offenders=$(git grep --cached -nE "$DOCS_POLICY_PATTERN" -- "${files[@]}") || return 0
 
   log_error "Documentation policy violations in staged content:"
   printf '%s\n' "$offenders" >&2
