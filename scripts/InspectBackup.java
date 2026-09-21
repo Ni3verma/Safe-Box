@@ -54,6 +54,17 @@ public class InspectBackup {
         "[B"
     );
 
+    /**
+     * Stream bounds for the deserialization filter.
+     *
+     * Sized well above anything a real backup produces - the committed fixture is under 2 KB, and
+     * the structure is a flat map of at most nine byte arrays - while still preventing a crafted
+     * file from declaring a huge array or a deeply nested graph and exhausting memory locally.
+     */
+    private static final long MAX_ARRAY_LENGTH = 64L * 1024 * 1024;
+    private static final long MAX_DEPTH = 20;
+    private static final long MAX_REFERENCES = 10_000;
+
     // Keys as defined in CommonConstants.
     private static final Map<String, String> DATA_KEYS = new TreeMap<>();
 
@@ -106,9 +117,21 @@ public class InspectBackup {
         }
 
         for (Map.Entry<String, String> entry : DATA_KEYS.entrySet()) {
-            byte[] blob = map.get(entry.getKey());
+            String key = entry.getKey();
+            // Absent and present-but-null mean very different things and must not be conflated.
+            // BackupDataWorker stores null when a record type has no rows, so a v3 backup with no
+            // authenticator records has key "8" present holding null. Reporting that as "absent"
+            // would make it look like a pre-TOTP v2 file, which is exactly the distinction the
+            // upgrade-test fixture depends on.
+            if (!map.containsKey(key)) {
+                System.out.println(pad(entry.getValue()) + " : key \"" + key
+                    + "\" absent - this backup version predates the type");
+                continue;
+            }
+            byte[] blob = map.get(key);
             if (blob == null) {
-                System.out.println(pad(entry.getValue()) + " : key absent from file");
+                System.out.println(pad(entry.getValue()) + " : key \"" + key
+                    + "\" present but null - the type is supported, there were no records");
                 continue;
             }
             String json = new String(decrypt(password, blob, salt, iv), StandardCharsets.UTF_8);
@@ -130,6 +153,19 @@ public class InspectBackup {
      *     REJECTED otherwise.
      */
     private static ObjectInputFilter.Status filterBackupClasses(ObjectInputFilter.FilterInfo info) {
+        // Bound the stream before looking at classes. These checks arrive with a null serialClass,
+        // and answering UNDECIDED leaves them *unlimited* rather than defaulted, so a crafted file
+        // could exhaust memory during readObject() without ever naming a disallowed class.
+        if (info.depth() > MAX_DEPTH
+            || info.references() > MAX_REFERENCES
+            || info.arrayLength() > MAX_ARRAY_LENGTH) {
+            System.err.println("Rejected backup: exceeds a stream resource limit"
+                + " (depth=" + info.depth()
+                + ", references=" + info.references()
+                + ", arrayLength=" + info.arrayLength() + ")");
+            return ObjectInputFilter.Status.REJECTED;
+        }
+
         Class<?> serialClass = info.serialClass();
         if (serialClass == null) {
             return ObjectInputFilter.Status.UNDECIDED;

@@ -142,6 +142,70 @@ class LinkCheckTest(unittest.TestCase):
         self.assertEqual([], absolute)
         self.assertEqual([], missing)
 
+    def test_reference_style_definition_to_missing_file_is_reported(self):
+        """Reference links bypassed every check until their definitions were extracted."""
+        source = self.write("source.md", "see [guide][docs]\n\n[docs]: ./gone.md\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([(source, "./gone.md")], missing)
+
+    def test_reference_style_definition_with_absolute_target_is_reported(self):
+        source = self.write("source.md", "see [guide][docs]\n\n[docs]: /etc/hosts\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([(source, "/etc/hosts")], absolute)
+
+    def test_reference_style_definition_to_existing_file_passes(self):
+        self.write("target.md", "# target")
+        source = self.write("source.md", "see [guide][docs]\n\n[docs]: ./target.md\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([], missing)
+
+    def test_angle_bracketed_reference_destination_is_unwrapped(self):
+        self.write("target.md", "# target")
+        source = self.write("source.md", "see [guide][docs]\n\n[docs]: <./target.md>\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], missing)
+
+    def test_external_reference_destination_is_skipped(self):
+        source = self.write("source.md", "see [spec][cm]\n\n[cm]: https://spec.commonmark.org\n")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([], missing)
+
+    def test_windows_drive_target_is_reported_absolute(self):
+        source = self.write("source.md", "see [doc](C:/docs/a.md)")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([(source, "C:/docs/a.md")], absolute)
+
+    def test_windows_unc_target_is_reported_absolute(self):
+        target = "\\\\server\\share\\a.md"
+        source = self.write("source.md", "see [doc](%s)" % target)
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([(source, target)], absolute)
+
+    def test_colon_in_a_relative_name_is_not_mistaken_for_a_drive(self):
+        """A Windows drive is a single letter, so `notes:draft.md` stays relative."""
+        source = self.write("source.md", "see [doc](./notes:draft.md)")
+
+        absolute, missing = check_docs.check_links([source])
+
+        self.assertEqual([], absolute)
+        self.assertEqual([(source, "./notes:draft.md")], missing)
+
 
 class StrayMarkupTest(unittest.TestCase):
     """Covers check_stray_markup, which catches agent harness wrappers left in a file."""
