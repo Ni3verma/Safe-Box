@@ -108,13 +108,16 @@ public class InspectBackup {
         System.out.println("creationDate    : " + formatCreationDate(creationDate));
         System.out.println();
 
-        // Without salt and IV no blob can be decrypted. Returning here keeps the header dump above
+        // Without salt and IV no blob can be decrypted. Reporting here keeps the header dump above
         // (which is the useful diagnostic for a corrupt file) and avoids an opaque NPE from
         // decrypt() that would obscure the real problem.
         if (salt == null || iv == null) {
             System.err.println("Error: backup is missing its salt or IV; cannot decrypt any record data.");
-            return;
+            System.exit(1);
         }
+
+        int attempted = 0;
+        int failed = 0;
 
         for (Map.Entry<String, String> entry : DATA_KEYS.entrySet()) {
             String key = entry.getKey();
@@ -134,10 +137,40 @@ public class InspectBackup {
                     + "\" present but null - the type is supported, there were no records");
                 continue;
             }
-            String json = new String(decrypt(password, blob, salt, iv), StandardCharsets.UTF_8);
-            System.out.println(pad(entry.getValue()) + " : " + countRecords(json) + " record(s)");
-            System.out.println(indent(json));
+
+            attempted++;
+            try {
+                String json = new String(decrypt(password, blob, salt, iv), StandardCharsets.UTF_8);
+                System.out.println(pad(entry.getValue()) + " : " + countRecords(json) + " record(s)");
+                System.out.println(indent(json));
+            } catch (Exception e) {
+                // Keep going rather than propagating. The whole point of this tool is inspecting
+                // damaged files, and aborting on the first bad payload hides every type after it -
+                // including the readable ones that tell you how much of the backup survived.
+                // getMessage() is routinely null for BadPaddingException, hence the class name.
+                failed++;
+                System.out.println(pad(entry.getValue()) + " : DECRYPTION FAILED - "
+                    + e.getClass().getSimpleName()
+                    + (e.getMessage() == null ? "" : ": " + e.getMessage()));
+            }
             System.out.println();
+        }
+
+        // Exit non-zero so a caller or CI step cannot mistake a failed inspection for a clean one.
+        // Whether *everything* failed is the diagnostic that matters: decryption uses one password,
+        // salt and IV for every type, so a uniform failure implicates the password, while a partial
+        // failure proves the password is right and localises the damage to those payloads.
+        if (failed > 0) {
+            if (failed == attempted) {
+                System.err.println("Error: all " + failed + " record type(s) failed to decrypt."
+                    + " One password, salt and IV cover every type, so a uniform failure points at"
+                    + " the backup password rather than at file corruption.");
+            } else {
+                System.err.println("Error: " + failed + " of " + attempted + " record type(s) failed"
+                    + " to decrypt. The others decoded, so the password is correct and those"
+                    + " specific payloads are damaged.");
+            }
+            System.exit(1);
         }
     }
 
@@ -146,11 +179,13 @@ public class InspectBackup {
      *
      * Called by ObjectInputStream for every class in the stream, and also for the stream-wide
      * depth, array-length and reference-count checks. Those latter calls carry a null serialClass
-     * and are answered UNDECIDED so the JVM's built-in limits continue to apply.
+     * and are bounded explicitly here, because answering UNDECIDED leaves them *unlimited* rather
+     * than falling back to a default.
      *
      * @param info Filter callback carrying the class under consideration, if any.
-     * @return ALLOWED for the backup container's own types, UNDECIDED for non-class checks,
-     *     REJECTED otherwise.
+     * @return REJECTED if a stream resource limit is exceeded or the class is not allowlisted,
+     *     ALLOWED for the backup container's own types, UNDECIDED for non-class checks within
+     *     the limits.
      */
     private static ObjectInputFilter.Status filterBackupClasses(ObjectInputFilter.FilterInfo info) {
         // Bound the stream before looking at classes. These checks arrive with a null serialClass,
