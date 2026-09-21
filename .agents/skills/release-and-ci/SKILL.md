@@ -34,7 +34,9 @@ fails the build if the runner lacks the exact `ndkVersion` from `app/build.gradl
 def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger() + 15
 ```
 
-- Local builds get `9999999`, so a local APK always installs over any CI build.
+- Local builds get `9999999`, so a local APK installs over any CI build **while
+  `GITHUB_RUN_NUMBER` stays below 9999985**. That is the entire practical range, but it is a
+  consequence of the sentinel rather than a guarantee — do not rely on it in a test assertion.
 - `versionName` is derived from `GITHUB_REF_NAME`: `v2.0.4.0` → `2.0.4.0`; a branch → `<branch>-build.<code>`; nothing → `LOCAL-build`.
 - Tag format is **`vMAJOR.MINOR.DBVERSION.FIX`**. The third component tracks the **Room schema
   version**, so bumping the DB requires bumping it in the next tag.
@@ -99,8 +101,8 @@ Permissions, probed rather than assumed:
 | Operation | Result | Meaning |
 |---|---|---|
 | Any read (PRs, releases, runs, checks) | works | read granted across the board |
-| `PUT` a file via the contents API | `403` | `Contents` is read-only |
-| Create an issue | `404` on a bogus path, creation allowed | `Issues` is **read + write**, granted deliberately so the agent can file issues |
+| `PUT` a file via the contents API | `403` | `Contents` is read-only — conclusive |
+| Create an issue | not probed destructively | `Issues` is **read + write** per the owner's explicit grant, not per a probe. A `404` would prove nothing either way; the only conclusive test is actually creating an issue, which should not be done to check a permission. |
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from

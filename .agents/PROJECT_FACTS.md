@@ -70,7 +70,8 @@ upgrade test must be `qa → qa`.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
   mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
   hint. Applies to signup and change-password only — **not** to the backup file password, which is
-  unconstrained. Any password you invent for a test or fixture must satisfy all five.
+  unconstrained. Any **vault master password** you invent for a test or fixture must satisfy all
+  five; backup-file passwords need not.
 
 Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md)
 
@@ -80,18 +81,25 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   `OpenDocumentTree`, created as mime `application/octet-stream`.
 - Restore: `OpenDocument` with mimes `application/octet-stream`, `application/x-trash`,
   `application/x-binary`.
-- Payload is a Java-serialized `HashMap<String, ByteArray>`, PBE-encrypted with a **user-supplied
-  backup password** that is independent of the vault master password. Keys are strings `"0"`–`"8"`:
-  `0` version, `1` salt, `2` IV, `3` creation date, then one key per record type (`4` login,
+- Payload is a Java-serialized **`LinkedHashMap<String, ByteArray>`** (Kotlin's `mutableMapOf()`),
+  PBE-encrypted with a **user-supplied backup password** independent of the vault master password.
+  Keys `"0"`–`"8"`: version, salt, IV, creation date, then one per record type (`4` login,
   `5` bank account, `6` bank card, `7` secure note, `8` authenticator).
+- Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
+  still read. Decoding it as UTF-8 prints control characters and looks like corruption.
 - PBE parameters (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
-  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, 256-byte salt, 16-byte IV. Each record-type
-  value is UTF-8 JSON encrypted with these.
-- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java` — it reimplements the
-  above and prints record counts plus the decrypted JSON. Verified 2026-09-21.
-- `ObjectInputStream.resolveClass` is allowlisted — do not widen it.
+  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, 256-byte salt, 16-byte IV.
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`. Verified 2026-09-21.
+- `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — do not widen it. A
+  `resolveClass` allowlist and an `ObjectInputFilter` allowlist see **different** class sets and
+  cannot be copied between each other; if you need the filter form, take it from
+  [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md) rather than the app.
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
-  table inside `runInTransaction`. Post-restore counts equal the file's counts exactly.
+  table inside `runInTransaction`. Post-restore counts equal the file's counts exactly **for every
+  type except authenticator**. `filterDecodableAuthenticatorData` partitions authenticator records
+  on `totpGenerator.isValidConfig(...)` and **silently drops the invalid ones** (logging a count and
+  firing `RESTORE_INVALID_AUTHENTICATOR_SKIPPED`), so a file containing a malformed seed restores
+  fewer authenticator rows than it holds. Assert `<=` for authenticators, `==` for the rest.
 - `RestoreFailureReason`: `INCORRECT_PASSWORD`, `CORRUPT_OR_INVALID_FILE`, `UNKNOWN_ERROR`.
 
 ## Testing

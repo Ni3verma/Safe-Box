@@ -6,7 +6,7 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 
 ## Architecture
 
-- [Persistence and cryptography](architecture/persistence-and-crypto.md) — the five storage layers,
+- [Persistence and cryptography](architecture/persistence-and-crypto.md) — the six storage layers,
   the `symmetricDataKey` Keystore failure mode, the backup file format and its version history,
   restore semantics.
 - [TOTP auth record type design](TotpAuthRecordTypeDesign.md)

@@ -1,8 +1,14 @@
 import java.io.FileInputStream;
+import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
@@ -24,6 +30,29 @@ public class InspectBackup {
     private static final int KEY_LENGTH = 256;
     private static final String KEY_FACTORY_ALGO = "PBKDF2WithHmacSHA1";
     private static final String CIPHER_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+
+    /**
+     * Classes permitted while reading the backup container.
+     *
+     * Derived by instrumenting a real .bak rather than copied from the app: an ObjectInputFilter
+     * and RestoreDataWorker's resolveClass override are consulted on *different* sets of classes,
+     * so the two allowlists cannot be identical.
+     *
+     * - LinkedHashMap is the actual top-level type. BackupDataWorker builds the container with
+     *   Kotlin's mutableMapOf(), which is a LinkedHashMap, not a HashMap.
+     * - HashMap appears as LinkedHashMap's superclass descriptor.
+     * - [Ljava.util.Map$Entry; is reached through the class descriptors and is seen by a filter but
+     *   not by resolveClass, which is why the app's list omits it. Dropping it here fails on every
+     *   valid file.
+     * - java.lang.String is deliberately absent: strings are written as TC_STRING with no class
+     *   descriptor, so the filter is never consulted for them.
+     */
+    private static final Set<String> ALLOWED_CLASS_NAMES = Set.of(
+        "java.util.LinkedHashMap",
+        "java.util.HashMap",
+        "[Ljava.util.Map$Entry;",
+        "[B"
+    );
 
     // Keys as defined in CommonConstants.
     private static final Map<String, String> DATA_KEYS = new TreeMap<>();
@@ -47,6 +76,11 @@ public class InspectBackup {
 
         HashMap<String, byte[]> map;
         try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
+            // readObject() instantiates whatever the stream names, before the cast below ever runs.
+            // This tool exists to inspect *suspect* backup files, so a hostile .bak is squarely in
+            // its threat model. Restrict the stream to the three types a backup can legitimately
+            // contain; the app's own RestoreDataWorker allowlists resolveClass for the same reason.
+            in.setObjectInputFilter(InspectBackup::filterBackupClasses);
             map = (HashMap<String, byte[]>) in.readObject();
         }
 
@@ -60,9 +94,7 @@ public class InspectBackup {
         System.out.println("BACKUP_VERSION  : " + (versionBytes == null ? "MISSING" : versionBytes[0]));
         System.out.println("salt length     : " + (salt == null ? "MISSING" : salt.length));
         System.out.println("iv length       : " + (iv == null ? "MISSING" : iv.length));
-        if (creationDate != null) {
-            System.out.println("creationDate    : " + new String(creationDate, StandardCharsets.UTF_8));
-        }
+        System.out.println("creationDate    : " + formatCreationDate(creationDate));
         System.out.println();
 
         // Without salt and IV no blob can be decrypted. Returning here keeps the header dump above
@@ -84,6 +116,62 @@ public class InspectBackup {
             System.out.println(indent(json));
             System.out.println();
         }
+    }
+
+    /**
+     * Restricts deserialization to the shape a Safe-Box backup actually has.
+     *
+     * Called by ObjectInputStream for every class in the stream, and also for the stream-wide
+     * depth, array-length and reference-count checks. Those latter calls carry a null serialClass
+     * and are answered UNDECIDED so the JVM's built-in limits continue to apply.
+     *
+     * @param info Filter callback carrying the class under consideration, if any.
+     * @return ALLOWED for the backup container's own types, UNDECIDED for non-class checks,
+     *     REJECTED otherwise.
+     */
+    private static ObjectInputFilter.Status filterBackupClasses(ObjectInputFilter.FilterInfo info) {
+        Class<?> serialClass = info.serialClass();
+        if (serialClass == null) {
+            return ObjectInputFilter.Status.UNDECIDED;
+        }
+        // Matched on the serialised name so this reads identically to the app's allowlist; byte[]
+        // arrives as "[B", which is the form RestoreDataWorker lists too.
+        if (ALLOWED_CLASS_NAMES.contains(serialClass.getName())) {
+            return ObjectInputFilter.Status.ALLOWED;
+        }
+        System.err.println("Rejected unexpected class in backup stream: " + serialClass.getName());
+        return ObjectInputFilter.Status.REJECTED;
+    }
+
+    /**
+     * Renders the backup's creation timestamp.
+     *
+     * BackupDataWorker writes this as ByteBuffer.allocate(Long.SIZE_BYTES).putLong(currentTimeMillis),
+     * so it is 8 raw big-endian bytes, not text. Decoding it as UTF-8 prints control characters and
+     * looks like corruption when the file is in fact fine.
+     *
+     * BACKUP_VERSION 1 stored it as a single byte instead, and RestoreDataWorker still reads both
+     * widths, so this mirrors that branch rather than rejecting an old but valid file.
+     *
+     * @param creationDate Raw value of map key "3", may be null or either supported width.
+     * @return Human-readable local timestamp, or a diagnostic string when it cannot be decoded.
+     */
+    private static String formatCreationDate(byte[] creationDate) {
+        if (creationDate == null) {
+            return "MISSING";
+        }
+        long epochMillis;
+        if (creationDate.length >= Long.BYTES) {
+            epochMillis = ByteBuffer.wrap(creationDate).getLong();
+        } else if (creationDate.length == 1) {
+            // BACKUP_VERSION 1 shape; the value is not a real epoch, so report it as-is.
+            return "v1 single-byte value: " + creationDate[0];
+        } else {
+            return "UNEXPECTED LENGTH " + creationDate.length;
+        }
+        return DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            .format(Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()))
+            + "  (epochMillis=" + epochMillis + ")";
     }
 
     private static String pad(String value) {

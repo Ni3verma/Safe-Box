@@ -4,7 +4,7 @@ How Safe-Box stores data, what encrypts what, and where the sharp edges are.
 
 ## Storage layers
 
-There are **five** independent persistence layers. Most bugs that destroy user data involve one of
+There are **six** independent persistence layers. Most bugs that destroy user data involve one of
 them getting out of step with the others, which is why a Room migration test alone is never
 sufficient coverage.
 
@@ -52,7 +52,9 @@ Encryption is per-field, applied in the `secureDao` layer
 
 Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 
-- **Container:** a Java-serialized `HashMap<String, ByteArray>`.
+- **Container:** a Java-serialized `LinkedHashMap<String, ByteArray>`. `BackupDataWorker` builds it
+  with Kotlin's `mutableMapOf()`, so `java.util.LinkedHashMap` — not `HashMap` — is the class
+  actually written to the file.
 - **Keys** are terse numeric strings from `CommonConstants`:
 
   | Key | Contents |
@@ -97,6 +99,21 @@ so absence is safe. **Preserve that property when adding a key.**
 `java.util.HashMap`, `LinkedHashMap`, `Map`, `String`, `[B`, `Number`, `Integer`, `Long`. Anything
 else throws `InvalidClassException`. **Do not widen this** — a password manager deserializing
 arbitrary classes from a user-supplied file is a remote-code-execution primitive.
+
+> [!WARNING]
+> **A `resolveClass` allowlist and an `ObjectInputFilter` allowlist are not interchangeable.** They
+> are consulted on different sets of classes, so copying one into the other fails. Reading a real
+> `.bak` through a filter — as `scripts/InspectBackup.java` does — requires exactly:
+>
+> ```
+> java.util.LinkedHashMap, java.util.HashMap, [Ljava.util.Map$Entry;, [B
+> ```
+>
+> `[Ljava.util.Map$Entry;` is reached through the class descriptors and is **invisible to
+> `resolveClass`**, which is why the list above omits it. Conversely `java.lang.String` is never
+> seen by a filter, because strings are written as `TC_STRING` with no class descriptor. Established
+> 2026-09-21 by instrumenting the committed fixture after a copied allowlist rejected every valid
+> file.
 
 ## Restore semantics
 

@@ -50,15 +50,27 @@ ran `MigrationTest` only, reported `BUILD SUCCESSFUL in 15s`, and never mentione
 class was skipped. **Run one class per invocation**, and always confirm what executed:
 
 ```bash
+rm -rf app/build/outputs/androidTest-results
+# ... run the single-class connectedDebugAndroidTest invocation here ...
 python3 -c "
-import glob, xml.etree.ElementTree as ET
-for f in glob.glob('app/build/outputs/androidTest-results/**/*.xml', recursive=True):
+import glob, os, time, xml.etree.ElementTree as ET
+files = glob.glob('app/build/outputs/androidTest-results/**/*.xml', recursive=True)
+if not files:
+    raise SystemExit('NO RESULTS FILE - the run produced nothing, treat as failure')
+for f in files:
+    age = time.time() - os.path.getmtime(f)
     r = ET.parse(f).getroot()
-    print(f, 'tests=', r.get('tests'), 'failures=', r.get('failures'))
+    print(f, f'age={age:.0f}s', 'tests=', r.get('tests'), 'failures=', r.get('failures'))
     for ts in r.iter('testsuite'):
         print('  ', ts.get('name'), ts.get('tests'))
 "
 ```
+
+> [!WARNING]
+> **Delete the results directory before the run.** Gradle does not clear it, so the recursive glob
+> will otherwise match an XML from an earlier invocation and report it as though it were this run's
+> — the exact silent-success failure this check exists to catch. The age column is the backstop: a
+> file older than the run just performed is stale, not evidence.
 
 Note the results file is `TEST-<device name>.xml` and the device name contains **spaces and
 parentheses** (`TEST-Pixel_8_API_35(AVD) - 15.xml`), so quote the path. The root element is

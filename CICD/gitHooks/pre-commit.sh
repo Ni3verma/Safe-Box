@@ -122,12 +122,34 @@ run_docs_check() {
 
   log_info "Validating documentation..."
 
-  # The script prints the offending file, line and reason, so let its output through unfiltered.
-  if python3 "$DOCS_CHECK_SCRIPT"; then
+  # Validate the *staged* snapshot, not the working tree. Running against the working tree gets it
+  # wrong in both directions: an unstaged fix would mask a broken staged file and let it through,
+  # and an unstaged broken file would block a commit that does not even include it.
+  # git checkout-index materialises exactly what is about to be committed into a scratch directory.
+  local staged_tree
+  staged_tree=$(mktemp -d)
+  # shellcheck disable=SC2064  # expand staged_tree now, not at trap time.
+  trap "rm -rf '$staged_tree'" RETURN
+
+  if ! git checkout-index --all --prefix="$staged_tree/" 2> /dev/null; then
+    log_info "Skipping documentation check, could not materialise the staged tree."
     return 0
   fi
 
-  log_error "Documentation check failed. Fix the problems listed above, or re-run with:"
+  # The checker derives the repository root from its own location, so invoking the copy inside
+  # staged_tree scopes it to the staged content.
+  if [ ! -f "$staged_tree/$DOCS_CHECK_SCRIPT" ]; then
+    log_info "Skipping documentation check, $DOCS_CHECK_SCRIPT is not staged."
+    return 0
+  fi
+
+  # The script prints the offending file, line and reason, so let its output through unfiltered.
+  if (cd "$staged_tree" && python3 "$DOCS_CHECK_SCRIPT"); then
+    return 0
+  fi
+
+  log_error "Documentation check failed on the staged content. Fix the problems listed above,"
+  log_error "stage the fix, or re-run against your working tree with:"
   log_error "  python3 $DOCS_CHECK_SCRIPT"
   return 1
 }
