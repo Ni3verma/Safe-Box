@@ -10,6 +10,11 @@ task so you do not re-derive things that are already known.
 - Facts only. Behavioural rules go in [AGENTS.md](AGENTS.md). Procedures go in `skills/`.
   Long-form reasoning goes in `docs/`.
 - If a fact turns out to be wrong, **fix it in place** rather than adding a contradicting entry.
+- **Facts here describe `master` unless a branch is named.** Unmerged feature branches change some
+  of them. Run `git branch --show-current` before trusting anything version-specific, and mark any
+  fact that differs across branches with both values. A fact recorded from a feature branch but
+  written as if it were universal will send you reading the wrong source file — this has already
+  happened once with `BACKUP_VERSION`.
 
 ---
 
@@ -47,17 +52,22 @@ upgrade test must be `qa → qa`.
 
 ## Persistence & crypto
 
-- Room DB version **5**; exported schemas in `app/schemas/`, also wired in as androidTest assets.
+- Room DB version: **4 on `master`**, **5 on `feature/totp-record-type`** (unmerged). Exported
+  schemas in `app/schemas/`, also wired in as androidTest assets.
 - `Migration.ALL` in `data/db/Migration.kt` is the single source of truth for the migration list;
   `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Keep both in sync via that array.
+  **Exists on `feature/totp-record-type` only** (commit `5e898dd`); `master` still has the list
+  hand-written inside `CacheModule`.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
 - Field encryption: AES-GCM key in `AndroidKeyStore` under alias **`symmetricDataKey`**
   (`di/SecurityModule.kt`). The provider does `if (!keyStore.containsAlias(alias)) generateKey()`,
   so a lost alias **silently regenerates** and every stored record becomes undecryptable with no
   error. This is the single highest-severity failure mode in the app.
-- `BACKUP_VERSION = 3` in `common/CommonConstants.kt`.
-- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE`,
-  `AUTHENTICATOR`.
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **2 on `master`**, **3 on
+  `feature/totp-record-type`**. Version 3 added `AUTHENTICATOR_DATA_KEY = "8"` to the export map;
+  a v2 file simply has no key `"8"`.
+- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE` on
+  `master`, plus `AUTHENTICATOR` on `feature/totp-record-type`.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
   mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
   hint. Applies to signup and change-password only — **not** to the backup file password, which is
@@ -72,7 +82,14 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - Restore: `OpenDocument` with mimes `application/octet-stream`, `application/x-trash`,
   `application/x-binary`.
 - Payload is a Java-serialized `HashMap<String, ByteArray>`, PBE-encrypted with a **user-supplied
-  backup password** that is independent of the vault master password.
+  backup password** that is independent of the vault master password. Keys are strings `"0"`–`"8"`:
+  `0` version, `1` salt, `2` IV, `3` creation date, then one key per record type (`4` login,
+  `5` bank account, `6` bank card, `7` secure note, `8` authenticator).
+- PBE parameters (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
+  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, 256-byte salt, 16-byte IV. Each record-type
+  value is UTF-8 JSON encrypted with these.
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java` — it reimplements the
+  above and prints record counts plus the decrypted JSON. Verified 2026-09-21.
 - `ObjectInputStream.resolveClass` is allowlisted — do not widen it.
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
   table inside `runInTransaction`. Post-restore counts equal the file's counts exactly.

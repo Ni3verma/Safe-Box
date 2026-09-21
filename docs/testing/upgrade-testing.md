@@ -151,7 +151,7 @@ each, binary, and never edited after creation, so plain git is fine — no LFS n
 | Fixture | Produced by | Guards |
 |---|---|---|
 | `v1_legacy.bak` | `v1.3.3.0` QA APK (oldest with an archived APK) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
-| `v2_pre_totp.bak` | **`v2.1.4.0-rc3` — capture before TOTP merges** | the format the entire current user base has on disk |
+| `v2_pre_totp.bak` | **`v2.1.4.0-rc3` — captured 2026-09-21** | the format the entire current user base has on disk |
 | `v3_current.bak` | this branch | the new format including authenticators |
 | `v3_adversarial.bak` | this branch, hand-seeded | emoji + RTL + 4000-char fields, all-optionals-empty record, max-length card number, a `SHA512`/8-digit/60s authenticator, an authenticator with an **invalid Base32 seed**, duplicate titles |
 | `corrupt.bak` | `head -c 2048 v3_current.bak` | the `CORRUPT_OR_INVALID_FILE` path, and that a failed restore leaves the vault intact |
@@ -160,8 +160,11 @@ All use one fixed backup password committed in the harness. Synthetic data only 
 vault.
 
 > [!CAUTION]
-> `v2_pre_totp.bak` is the only irreversible item in this whole design. Once TOTP ships, the format
-> your current users have on disk can no longer be produced. Capturing it takes about 30 minutes.
+> `v2_pre_totp.bak` is the only irreversible item in this whole design, and it now **exists**:
+> `BACKUP_VERSION = 2`, 2 login / 2 bank account / 2 bank card / 1 secure note, no authenticator
+> key. Once TOTP ships, this format can no longer be produced, so the risk has moved from failing
+> to capture it to losing it. Never regenerate it, never "clean up" its contents, and verify with
+> `scripts/InspectBackup.java` rather than by opening it.
 
 ---
 
@@ -458,12 +461,14 @@ document triage ownership.
 Grouped by the MR they block. Each carries a recommended default, so accepting all defaults is a
 valid position. The MR0 group is settled and kept here as the decision record.
 
-### Blocks MR0 — decided
+### Blocks MR0 — done
 
-1. **Capture of `v2_pre_totp.bak` — deferred, owned by the maintainer.** MR0 cannot start without
-   the file. Procedure: install the `v2.1.4.0-rc3` release APK on a clean emulator, sign up with the
-   credentials below, create the records described in item 3, export a backup, pull the `.bak` off
-   the device, and commit it. It is unreproducible once TOTP ships.
+1. **`v2_pre_totp.bak` — captured and verified.** Lives at
+   `upgrade-test/src/main/assets/fixtures/v2_pre_totp.bak`, with provenance, contents and a
+   SHA-256 in the [README](../../upgrade-test/src/main/assets/fixtures/README.md) beside it.
+   It was decrypted with `scripts/InspectBackup.java` before being committed, confirming
+   `BACKUP_VERSION = 2`, a 256-byte salt, a 16-byte IV, and **no key `"8"`** — that is, the
+   pre-TOTP format this whole exercise exists to preserve. **MR0 is unblocked.**
 2. **Fixture credentials — settled.**
 
    | | Value | Constrained by |
@@ -483,10 +488,15 @@ valid position. The MR0 group is settled and kept here as the decision record.
 
    The backup password is unconstrained — `PasswordValidator` is referenced only by
    `SignupViewModel` and `UpdatePasswordDialog`, never by the export/import flow.
-3. **Baseline vault richness — accepted.** Three records per type; within each type, one record with
-   every optional field populated and one with only the mandatory fields. Without a record that
-   populates the optional fields, a dropped-column migration bug is invisible: a null is
-   indistinguishable from a value that was never set.
+3. **Baseline vault richness — captured as two records per type**, one with every optional field
+   populated and one with only the mandatory fields. This is the shape that matters: without a
+   record populating the optional fields, a dropped-column migration bug is invisible, because a
+   null is indistinguishable from a value that was never set.
+
+   > [!IMPORTANT]
+   > `SECURE_NOTE` has **one** record, not two. Its entity is `title` + `notes` and both are
+   > mandatory, so the "mandatory only" and "all fields" shapes are the same record. Assertions
+   > must expect 1 for secure notes and 2 for every other type, or the suite fails on its first run.
 
 ### Blocks MR1
 

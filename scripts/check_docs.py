@@ -23,7 +23,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Directories whose markdown is part of the curated knowledge base.
-SCAN_DIRS = (".agents", "docs")
+SCAN_DIRS = (".agents", "docs", "upgrade-test")
 
 STRAY_MARKUP = (
     "</CodeContent>",
@@ -39,7 +39,12 @@ EXTERNAL = ("http://", "https://", "mailto:", "#")
 
 def markdown_files():
     for directory in SCAN_DIRS:
-        yield from sorted((ROOT / directory).rglob("*.md"))
+        root = ROOT / directory
+        # A listed directory may legitimately be absent, for example before the upgrade-test
+        # module is created. That is not a documentation failure.
+        if not root.is_dir():
+            continue
+        yield from sorted(root.rglob("*.md"))
 
 
 def check_stray_markup(files):
