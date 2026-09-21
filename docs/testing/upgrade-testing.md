@@ -498,14 +498,18 @@ valid position. The MR0 group is settled and kept here as the decision record.
    > mandatory, so the "mandatory only" and "all fields" shapes are the same record. Assertions
    > must expect 1 for secure notes and 2 for every other type, or the suite fails on its first run.
 
-### Blocks MR1
+### Blocks MR1 — done
 
-4. **Is a new Gradle module acceptable?** It adds `:upgrade-test` to every `./gradlew tasks` and a
-   small configuration cost. *Recommendation: yes — section 3 explains why there is no alternative.*
-5. **Module name.** *Recommendation: `upgrade-test`. Alternative if you expect to add release-build
-   smoke tests later: `e2e-blackbox`, since the same module would host both.*
-6. **API levels to test on.** Upgrade behaviour can differ on older platforms, and your `minSdk` is
-   24. *Recommendation: start with API 34 only; add API 24 in MR5 if the runtime budget allows.*
+Answered 2026-09-21. **MR1 is unblocked.**
+
+4. **A new Gradle module is acceptable.** `:upgrade-test` will appear in `./gradlew tasks` and adds a
+   small configuration cost to every build; that is accepted. Section 3 explains why there is no
+   in-process alternative — the test must survive the app process being replaced.
+5. **Module name is `upgrade-test`.** `e2e-blackbox` was considered and rejected as premature; the
+   module can be renamed if release-build smoke tests are ever added to it.
+6. **API 34 only to start.** API 24 is deferred to MR5, and only if the runtime budget allows. Note
+   the emulator available locally is a Pixel 8 on **API 35**, so the CI API level and the local one
+   differ deliberately — do not assume a local pass implies a CI pass.
 
 ### Blocks MR6
 
