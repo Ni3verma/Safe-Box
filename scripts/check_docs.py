@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Validates the committed documentation set.
 
-Two checks, both cheap and both guarding defects that have actually happened:
+Three checks, all cheap and all guarding defects that have actually happened:
 
 1. **Stray tool markup.** Files authored by an AI agent can end up with the agent harness's own
    XML-ish wrappers (`</CodeContent>`, `<parameter name="...">`) appended after the real content.
    It renders as garbage and is easy to miss in review.
-2. **Broken relative links.** Cross-references are how this documentation set stays navigable, and
+2. **Absolute link targets.** A link beginning with `/` or `file://` depends on one machine's
+   filesystem layout. Left to `pathlib` these resolve against the *filesystem* root, so
+   `/docs/x.md` is reported missing while `/etc/hosts` silently passes — a false pass in a link
+   checker is worse than a false failure, so these are rejected as their own category.
+3. **Broken relative links.** Cross-references are how this documentation set stays navigable, and
    they rot silently whenever a file is renamed or moved.
 
 Run from the repository root:
@@ -35,6 +39,12 @@ STRAY_MARKUP = (
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
 EXTERNAL = ("http://", "https://", "mailto:", "#")
+
+# Targets that are neither external nor usefully relative. Left to pathlib these silently resolve
+# against the *filesystem* root: "/docs/x.md" becomes "/docs/x.md", and "/etc/hosts" would resolve
+# to a real file and pass. A committed doc must not depend on a machine's absolute layout, so these
+# are rejected outright with an explanation rather than link-checked.
+ABSOLUTE = ("/", "file://")
 
 
 def read_markdown(path):
@@ -70,15 +80,24 @@ def check_stray_markup(files):
 
 
 def check_links(files):
-    failures = []
+    """Resolves every non-external link target relative to the file containing it.
+
+    @param files: Markdown paths to inspect.
+    @return: Two lists - (path, target) for absolute targets, and for targets that do not exist.
+    """
+    absolute = []
+    missing = []
     for path in files:
         for target in LINK.findall(read_markdown(path)):
             if target.startswith(EXTERNAL):
                 continue
+            if target.startswith(ABSOLUTE):
+                absolute.append((path, target))
+                continue
             resolved = (path.parent / target.split("#")[0]).resolve()
             if not resolved.exists():
-                failures.append((path, target))
-    return failures
+                missing.append((path, target))
+    return absolute, missing
 
 
 def main():
@@ -88,14 +107,20 @@ def main():
         return 1
 
     markup = check_stray_markup(files)
-    links = check_links(files)
+    absolute, missing = check_links(files)
 
     for path, number, snippet in markup:
         print(f"STRAY MARKUP  {path.relative_to(ROOT)}:{number}  {snippet}")
-    for path, target in links:
+    for path, target in absolute:
+        print(
+            f"ABSOLUTE LINK {path.relative_to(ROOT)} -> {target}\n"
+            f"              use a path relative to the file instead; an absolute target depends "
+            f"on one machine's layout"
+        )
+    for path, target in missing:
         print(f"BROKEN LINK   {path.relative_to(ROOT)} -> {target}")
 
-    total = len(markup) + len(links)
+    total = len(markup) + len(absolute) + len(missing)
     print(f"\nchecked {len(files)} markdown files, {total} problem(s)")
     return 1 if total else 0
 
