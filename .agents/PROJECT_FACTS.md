@@ -10,11 +10,9 @@ task so you do not re-derive things that are already known.
 - Facts only. Behavioural rules go in [AGENTS.md](AGENTS.md). Procedures go in `skills/`.
   Long-form reasoning goes in `docs/`.
 - If a fact turns out to be wrong, **fix it in place** rather than adding a contradicting entry.
-- **Facts here describe `master` unless a branch is named.** Unmerged feature branches change some
-  of them. Run `git branch --show-current` before trusting anything version-specific, and mark any
-  fact that differs across branches with both values. A fact recorded from a feature branch but
-  written as if it were universal will send you reading the wrong source file — this has already
-  happened once with `BACKUP_VERSION`.
+- **Facts here describe `master` unless a branch is named.** Run `git branch --show-current` before
+  trusting anything version-specific, and record both values for any fact that differs across
+  branches — writing a feature-branch fact as universal has already misled once (`BACKUP_VERSION`).
 
 ---
 
@@ -43,12 +41,8 @@ upgrade test must be `qa → qa`.
 - `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15`. Local builds therefore get `9999999`.
 - `versionName` comes from `GITHUB_REF_NAME`; local builds are `LOCAL-build`.
 - Tag convention is **`vMAJOR.MINOR.DBVERSION.FIX`** — the third component is the **Room schema
-  version**. `v2.0.4.0` shipped DB v4.
-
-> [!IMPORTANT]
-> The Room schema is now **version 5**. Per the tag convention the next release must be
-> `v2.x.5.0`, not `v2.1.4.x`. Verified: `SafeBoxDatabase.kt` `version = 5`, and
-> `app/schemas/...SafeBoxDatabase/` contains `1.json`–`5.json`. (2026-09-20)
+  version**. `v2.0.4.0` shipped DB v4; the schema is now **5**, so the next release must be
+  `v2.x.5.0`, not `v2.1.4.x`. (Verified 2026-09-20.)
 
 ## Persistence & crypto
 
@@ -81,10 +75,14 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   `OpenDocumentTree`, created as mime `application/octet-stream`.
 - Restore: `OpenDocument` with mimes `application/octet-stream`, `application/x-trash`,
   `application/x-binary`.
-- Payload is a Java-serialized **`LinkedHashMap<String, ByteArray>`** (Kotlin's `mutableMapOf()`),
+- Payload is a Java-serialized **`LinkedHashMap<String, ByteArray?>`** (Kotlin's `mutableMapOf()`),
   PBE-encrypted with a **user-supplied backup password** independent of the vault master password.
   Keys `"0"`–`"8"`: version, salt, IV, creation date, then one per record type (`4` login,
   `5` bank account, `6` bank card, `7` secure note, `8` authenticator).
+- **Absent key and null value are different signals.** `encrypt*Data` returns `null` for a record
+  type with no rows, so the key is present holding null. Absent means the file predates the key;
+  null means the type is supported and the vault had none. Conflating them reads a v3 backup with
+  no TOTP records as a pre-TOTP v2 file.
 - Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
   still read. Decoding it as UTF-8 prints control characters and looks like corruption.
 - PBE parameters (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**

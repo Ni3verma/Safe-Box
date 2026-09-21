@@ -38,13 +38,50 @@ STRAY_MARKUP = (
 )
 
 LINK = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+
+# CommonMark link reference definitions: `[label]: destination "optional title"`, indented by at
+# most three spaces. Without this, `[guide][docs]` paired with `[docs]: /etc/hosts` bypasses every
+# check below, which is the same silent-bypass class of defect the absolute-target handling exists
+# to prevent.
+REFERENCE_DEFINITION = re.compile(r"^ {0,3}\[[^\]]+\]:\s*(\S+)", re.MULTILINE)
+
 EXTERNAL = ("http://", "https://", "mailto:", "#")
 
 # Targets that are neither external nor usefully relative. Left to pathlib these silently resolve
 # against the *filesystem* root: "/docs/x.md" becomes "/docs/x.md", and "/etc/hosts" would resolve
 # to a real file and pass. A committed doc must not depend on a machine's absolute layout, so these
 # are rejected outright with an explanation rather than link-checked.
-ABSOLUTE = ("/", "file://")
+ABSOLUTE_PREFIXES = ("/", "file://")
+
+
+def is_absolute_target(target):
+    """Reports whether a link destination is absolute on any platform we might run on.
+
+    The POSIX prefix check alone is not enough. CI is Linux, but the hook is Bash and runs under
+    Git Bash on Windows, where `C:\\docs\\x.md` or `\\\\server\\share\\x.md` would otherwise be
+    treated as relative - and could pass by happening to exist on that machine.
+
+    @param target: Raw link destination, already known not to be external.
+    @return: True when the target is absolute and must be rejected rather than resolved.
+    """
+    if target.startswith(ABSOLUTE_PREFIXES):
+        return True
+    # Drive-qualified and UNC paths. Safe on POSIX-looking input: "foo:bar.md" and "docs/x.md" are
+    # both reported relative, because a Windows drive is a single letter.
+    return pathlib.PureWindowsPath(target).is_absolute()
+
+
+def link_targets(text):
+    """Yields every link destination in a document, inline and reference-style alike.
+
+    @param text: Full markdown source.
+    @return: Iterator of raw destination strings.
+    """
+    for target in LINK.findall(text):
+        yield target
+    for target in REFERENCE_DEFINITION.findall(text):
+        # A destination may be wrapped in angle brackets: `[label]: <path with space.md>`.
+        yield target.strip("<>")
 
 
 def read_markdown(path):
@@ -88,10 +125,10 @@ def check_links(files):
     absolute = []
     missing = []
     for path in files:
-        for target in LINK.findall(read_markdown(path)):
+        for target in link_targets(read_markdown(path)):
             if target.startswith(EXTERNAL):
                 continue
-            if target.startswith(ABSOLUTE):
+            if is_absolute_target(target):
                 absolute.append((path, target))
                 continue
             resolved = (path.parent / target.split("#")[0]).resolve()

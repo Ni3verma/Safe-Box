@@ -52,9 +52,16 @@ Encryption is per-field, applied in the `secureDao` layer
 
 Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 
-- **Container:** a Java-serialized `LinkedHashMap<String, ByteArray>`. `BackupDataWorker` builds it
+- **Container:** a Java-serialized `LinkedHashMap<String, ByteArray?>`. `BackupDataWorker` builds it
   with Kotlin's `mutableMapOf()`, so `java.util.LinkedHashMap` — not `HashMap` — is the class
   actually written to the file.
+
+  > [!IMPORTANT]
+  > The value type is **nullable, and the null is meaningful.** Each `encrypt*Data` helper returns
+  > `null` when that record type has no rows, so the key is written **present with a null value**.
+  > An *absent* key means the file predates that key; a *null* value means the type is supported and
+  > the vault simply had none. Conflating them misreads a v3 backup with no TOTP records as a
+  > pre-TOTP v2 file — exactly the distinction `v2_pre_totp.bak` exists to capture.
 - **Keys** are terse numeric strings from `CommonConstants`:
 
   | Key | Contents |

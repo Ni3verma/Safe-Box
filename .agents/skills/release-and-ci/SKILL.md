@@ -96,13 +96,15 @@ this repository. `gh auth status` shows **no** `Token scopes:` line — that abs
 fine-grained token from a classic OAuth grant. If you ever see `Token scopes: 'gist', 'read:org',
 'repo'`, that is gh's default browser OAuth flow and it carries **full write access**; flag it.
 
-Permissions, probed rather than assumed:
+Permissions as granted in the GitHub UI. **The grant is the authority; probes only corroborate it.**
+A status code cannot prove a permission on its own — GitHub does not order existence and permission
+checks consistently, and a `403` can come from repository rules rather than the token.
 
-| Operation | Result | Meaning |
+| Permission | Granted | Corroborating probe |
 |---|---|---|
-| Any read (PRs, releases, runs, checks) | works | read granted across the board |
-| `PUT` a file via the contents API | `403` | `Contents` is read-only — conclusive |
-| Create an issue | not probed destructively | `Issues` is **read + write** per the owner's explicit grant, not per a probe. A `404` would prove nothing either way; the only conclusive test is actually creating an issue, which should not be done to check a permission. |
+| Reads (PRs, releases, runs, checks) | read | every read command works |
+| `Contents` | read | `PUT` via the contents API returned `403` |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | none — creating an issue is the only conclusive test and must not be run just to check a permission |
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from
