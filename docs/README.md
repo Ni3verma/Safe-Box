@@ -40,9 +40,15 @@ Two checks, both run in CI and neither needing Gradle:
 | Stray agent markup, Windows link targets | `git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
 
 `DOCS_POLICY_PATTERN` is defined once, in
-[the pre-commit hook](../CICD/gitHooks/pre-commit.sh) — source that file to get it, rather than
-copying the regex around. It is deliberately not reproduced here: the pattern matches its own text,
-so pasting it into a markdown file makes the check fail on that file.
+[the pre-commit hook](../CICD/gitHooks/pre-commit.sh), and is therefore not set in your shell. Load
+it from there rather than copying the regex around — it is deliberately not reproduced in any
+markdown file, because the pattern matches its own text and the check would then fail on the file
+documenting it:
+
+```bash
+DOCS_POLICY_PATTERN=$(sed -n "s/^DOCS_POLICY_PATTERN='\(.*\)'$/\1/p" CICD/gitHooks/pre-commit.sh)
+git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'
+```
 
 The policy check also runs in the pre-commit hook, restricted to the markdown you have staged. See
 [the build-and-test skill](../.agents/skills/build-and-test/SKILL.md) for how to get `lychee`, which
