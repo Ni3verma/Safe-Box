@@ -99,7 +99,8 @@ jobs:
           # identical to what the harness is exercised with locally.
           #
           # MR6 must drop this. Once the upgrade test runs inside the release pipeline it has to
-          # install the actual RC artifact, not a rebuild with an invented version.
+          # install the actual RC artifact, not a rebuild with an invented version. Tracked as a
+          # blocking row in docs/testing/upgrade-testing.md, "Carried-forward debt".
           GITHUB_RUN_NUMBER: 9999984
         run: ./gradlew assembleQa :upgrade-test:assembleDebug
 

@@ -479,10 +479,10 @@ Three things settled during implementation that later MRs inherit rather than re
 | Failures carry a **window hierarchy dump**, not a screenshot | Step 8 of section 3 says screenshots. A hierarchy is greppable, diffable, and names the nodes a selector failed to match; a PNG from a headless CI emulator is not. Screenshots can be added later if a visual bug ever escapes. |
 | Launch waits on the **expected screen**, never on the app owning the foreground window, and re-issues the launch intent on each retry | A system biometric sheet takes the foreground on any device with a fingerprint enrolled, and the back press that dismisses it can also send the task home. See [upgrade-harness-operations.md](upgrade-harness-operations.md#launching-the-app). |
 
-Deliberately **not** in MR1, despite being cheap: fixture pushing and the SAF picker (MR2), the
-logcat crash sentinel (MR3, Group 9), and certificate verification on the downloaded baseline — a
-signing mismatch currently surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` mid-run rather than as
-a named error up front. Worth adding whenever someone is next in `fetch-baseline-apk.sh`.
+Deliberately **not** in MR1, despite being cheap: fixture pushing and the SAF picker (MR2) and the
+logcat crash sentinel (MR3, Group 9). MR1 also leaves two things behind that a later stage has to
+remove rather than merely add to — both are rows in [Carried-forward debt](#carried-forward-debt),
+which is the list to check when planning any later MR.
 
 ### MR2 — fixtures and seeding
 
@@ -511,6 +511,20 @@ Wire into `release.yml` behind the RC condition, enable the derived matrix, uplo
 document triage ownership.
 
 - Acceptance: a real RC tag runs it and the result is visible on the PR.
+- **Blocking**: every row of the debt register below is cleared. MR6 is the last stage, so anything
+  still open here ships.
+
+### Carried-forward debt
+
+Workarounds that were correct for the stage that introduced them and become wrong if they survive.
+Each row names the stage that must remove it and the check that proves it is gone. **The feature
+branch does not merge to master with an open row**, and each MR re-checks the register rather than
+discovering the debt from a code comment.
+
+| Introduced | What | Why it must not survive | Cleared by | Proof |
+|---|---|---|---|---|
+| MR1 | `upgrade-test.yml` pins `GITHUB_RUN_NUMBER: 9999984` on the build step, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
+| MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
 
 ---
 

@@ -117,10 +117,23 @@ Whenever you discover something durable, record it **in the same change** that p
 | A command, flag, environment quirk or trap | the relevant `.agents/skills/<name>/SKILL.md` |
 | An explanation, design or data-format detail | `docs/` |
 | A decision that was expensive to reach, or an approach that was ruled out | a new ADR in `docs/decisions/` |
+| Anything that changes the plan of a staged effort | that effort's design doc, in the same change |
 
 A finding qualifies as durable if re-deriving it would cost more than a couple of minutes, or if a
 future reader would plausibly reach the wrong conclusion without it. Debugging noise and one-off
 observations do not qualify.
+
+**Keep the plan current while the work is in flight.** When a stage lands, rewrite its section to
+what was actually delivered and what it settled, and correct anything the implementation disproved
+— a plan that still describes the intention after the code exists is worse than no plan, because
+the next stage is planned against a fiction.
+
+**Record carried-forward debt where the stage that must remove it will look.** If a change ships a
+workaround, pin, stub or deliberate omission that a *later* stage has to undo, add it to that
+effort's design doc as a register row naming what must go, which stage must remove it, and the
+check that proves it is gone — in the same change that creates it. A code comment is not enough: it
+is invisible when the later stage is being planned, which is exactly when the debt needs to be
+visible. Nothing merges with a register row still open against a stage that has already shipped.
 
 ### Curate, do not accumulate
 
