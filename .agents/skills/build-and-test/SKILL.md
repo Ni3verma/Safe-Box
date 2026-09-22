@@ -90,6 +90,29 @@ tar xzf lychee.tar.gz && ./lychee-aarch64-apple-darwin/lychee --version
 > override this and there is no `--fail-on-unsupported`. That single case is why the grep exists
 > alongside lychee rather than being deleted with the rest. (Verified 2026-09-21 against v0.24.2.)
 
+## Git hooks
+
+`CICD/cicd.gradle` is orphaned, so the `copyGitHooks` / `installGitHooks` tasks do not exist and
+nothing installs the hook for you:
+
+```bash
+cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+```
+
+The installed copy is a snapshot and drifts silently — it was roughly eight months stale when this
+was found. Check before trusting a green local commit:
+
+```bash
+diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh
+```
+
+> [!WARNING]
+> The hook runs **`git add -u`** during detekt auto-correction. Running `git hook run pre-commit`
+> to try it out while you have unstaged work will therefore stage that work.
+
+Expect `Detekt task is not available in this build` on every commit. That is the orphaned
+`cicd.gradle` again, and the hook continues past it.
+
 ## Traps
 
 ### `BUILD SUCCESSFUL` does not mean your tests ran

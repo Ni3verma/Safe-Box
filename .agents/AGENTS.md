@@ -131,8 +131,21 @@ is confidently wrong.
 * **Update in place over appending.** If a fact changes, fix the existing entry; never leave two
   entries that contradict each other.
 * **Delete what is no longer true.** Stale guidance actively misleads.
-* **Budget the always-read file.** `PROJECT_FACTS.md` stays under ~150 lines. If it grows past
-  that, move detail into `docs/` or a skill and leave a one-line pointer behind.
+* **Budget the always-read file, and evict to stay inside it.** `PROJECT_FACTS.md` stays under ~150
+  lines. The knowledge base as a whole is expected to grow forever; the file that is loaded on
+  *every* request is not, because it is paid for on every request whether or not it is relevant.
+  It is a working set, not an archive. When a new fact does not fit, evict in this order:
+    1. **Promote to enforcement.** If an existing fact can become a lint/detekt rule, a unit test or
+       a CI gate, do that and delete the fact — nobody has to read what the build already refuses to
+       let you get wrong. This is the only eviction that makes the file smaller as the project
+       grows, so try it first.
+    2. **Demote to the tier that owns it.** A fact that only matters inside one subsystem, or only
+       while running one tool, belongs in that subsystem's `docs/` page or that
+       `skills/<name>/SKILL.md`. Leave at most a one-line pointer.
+    3. **Delete what has decayed.** A fact that is now obvious from the code, cheap to re-derive, or
+       simply no longer true costs more than it saves.
+  If nothing can be evicted, the project has genuinely acquired a new always-relevant invariant —
+  say so in the change description rather than quietly busting the budget.
 * **Every fact must carry its evidence** — the command, file path or observation that establishes
   it — and a date when it could plausibly go stale.
 * **Prefer enforcement over prose.** If a rule can be expressed as a lint rule, a detekt/ktlint
@@ -141,6 +154,17 @@ is confidently wrong.
 * **Split a file when it exceeds roughly 300 lines** or covers two unrelated topics. New files must
   be linked from [`docs/README.md`](../docs/README.md) or from the relevant index, otherwise nobody
   will find them.
+    * **Design and plan documents are exempt from the line count.** A design doc is read on demand
+      by whoever is working on that feature, not on every task, so its cost is not the same kind of
+      cost. Splitting one mid-flight separates a decision from its rationale, which is exactly what
+      makes such docs worth keeping. Judge them by whether they cover one coherent effort, not by
+      length.
+    * **They are expected to shrink as the work lands.** Once a staged plan is implemented, prune
+      it: replace operational sections with a pointer to the runbook that is now the source of
+      truth, collapse each delivered stage to what it decided rather than what it proposed, and
+      when the whole effort is merged, reduce the document to its lasting design content or
+      supersede it with an ADR. A design doc that is still growing after its last MR merged has
+      become an archive and should be curated like one.
 * **Validate before committing:** the pre-commit hook greps staged markdown for closing tags from
   the agent's own tool-call format leaking into file tails, which has shipped before. Broken
   relative links are checked in CI by [lychee](https://lychee.cli.rs); to check them locally,
