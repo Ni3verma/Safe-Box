@@ -45,15 +45,17 @@ fi
 # Newest first, stable only, and only releases that actually carry the APK this test installs.
 # A prerelease baseline tests a state no real user is in, since Play only ever serves stable
 # builds.
+#
+# One REST call rather than `gh release list` followed by a `gh release view` per tag: the list
+# subcommand cannot return assets (`gh release list --json assets` errors with "Unknown JSON
+# field"), so the obvious spelling costs one network round-trip per release and is the slowest part
+# of the job. The REST payload already carries them.
 candidates=$(
-    gh release list --repo "$REPO" --limit 100 --json tagName,isDraft,isPrerelease \
-        --jq '.[] | select(.isDraft == false) | select(.isPrerelease == false) | .tagName' |
-        while IFS= read -r tag; do
-            if gh release view "$tag" --repo "$REPO" --json assets \
-                --jq '.assets[].name' 2>/dev/null | grep -qx 'SafeBox-qa.apk'; then
-                printf '%s\n' "$tag"
-            fi
-        done
+    gh api "repos/$REPO/releases?per_page=100" \
+        --jq '.[]
+              | select(.draft == false and .prerelease == false)
+              | select(any(.assets[]; .name == "SafeBox-qa.apk"))
+              | .tag_name'
 )
 
 if [ -z "$candidates" ]; then

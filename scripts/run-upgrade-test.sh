@@ -103,6 +103,17 @@ baseline_code=$(apk_version_code "$baseline_apk")
 new_code=$(apk_version_code "$new_apk")
 echo "Baseline versionCode=$baseline_code, build under test versionCode=$new_code"
 
+# An empty value here is not a low version, it is a broken read - a truncated APK, or an aapt2 that
+# printed something unexpected. Left unchecked, `[ "" -le 23 ]` aborts the script with "integer
+# expression expected", which points at the comparison rather than at the APK that caused it.
+for code in "$baseline_code" "$new_code"; do
+    if ! printf '%s' "$code" | grep -qE '^[0-9]+$'; then
+        echo "error: could not read a versionCode from the APKs ('$baseline_code', '$new_code')." >&2
+        echo "       $AAPT2 dump badging produced no 'package: versionCode=' line." >&2
+        exit 1
+    fi
+done
+
 # Checked before installing anything, because `adb install -r` on a lower versionCode fails with
 # INSTALL_FAILED_VERSION_DOWNGRADE halfway through the run and the cause is far less obvious there.
 if [ "$new_code" -le "$baseline_code" ]; then

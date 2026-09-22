@@ -140,6 +140,7 @@ are harness-level ones:
 | `instrumentation component could not be started` | the harness APK is not installed, or the runner name drifted from the manifest |
 | `no launch intent for com.andryoga.safebox.qa` | app not installed, or the `<queries>` entry no longer matches its applicationId |
 | `declares applicationId '...debug'` | a debug APK was passed; only `qa → qa` can upgrade |
+| `the build under test (N) does not supersede the baseline` | on CI, `GITHUB_RUN_NUMBER` counts runs of that one workflow, so a new workflow builds a `versionCode` below released ones — the job pins it, see `upgrade-test.yml` |
 | `could not read firstInstallTime` | the install did not take, or `dumpsys package` output changed shape |
 | `no aapt2 found under .../build-tools` | `ANDROID_HOME` points at an SDK with no build-tools |
 | `<tag> has no SafeBox-qa.apk asset` | releases before the upload step existed — `v1.0.0`, `v1.1.0`, `v1.2.2.0` — carry none |

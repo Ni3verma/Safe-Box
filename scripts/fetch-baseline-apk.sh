@@ -33,6 +33,14 @@ fi
 
 # A truncated download is still a file. An APK is a zip, so this costs nothing and turns a corrupt
 # artifact into a clear message rather than an INSTALL_PARSE_FAILED five minutes later.
+#
+# The two failures are separated on purpose: without the first check, a machine with no unzip
+# reports every download as corrupt, which is the wrong thing to go looking for. The check is not
+# skipped when the tool is missing - a silently unverified baseline is what this exists to prevent.
+if ! command -v unzip > /dev/null 2>&1; then
+    echo "error: unzip is required to verify the downloaded APK, and is not installed." >&2
+    exit 1
+fi
 if ! unzip -l "$apk" AndroidManifest.xml > /dev/null 2>&1; then
     echo "error: $apk is not a readable APK - the download is corrupt." >&2
     exit 1

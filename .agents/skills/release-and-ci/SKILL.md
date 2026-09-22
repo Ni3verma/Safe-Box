@@ -41,6 +41,14 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
 - Tag format is **`vMAJOR.MINOR.DBVERSION.FIX`**. The third component tracks the **Room schema
   version**, so bumping the DB requires bumping it in the next tag.
 
+> [!WARNING]
+> `GITHUB_RUN_NUMBER` counts runs of **one workflow**, not of the repository. A workflow added by a
+> pull request starts at 1, so its builds get `versionCode` 16 while released builds are in the
+> twenties. Anything that installs a freshly built APK over a released one must override it —
+> `upgrade-test.yml` sets `GITHUB_RUN_NUMBER: 9999984` on its build step to get the same 9999999
+> local builds use. Observed 2026-09-22: run 1 of `upgrade-test.yml` aborted with
+> `the build under test (16) does not supersede the baseline (23)`.
+
 ## Signing
 
 | Build type | Properties file | In CI as |
