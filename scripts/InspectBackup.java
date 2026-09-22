@@ -103,7 +103,10 @@ public class InspectBackup {
         byte[] iv = map.get("2");
         byte[] creationDate = map.get("3");
 
-        System.out.println("BACKUP_VERSION  : " + (versionBytes == null ? "MISSING" : versionBytes[0]));
+        // Length-checked like formatCreationDate below: a damaged length field can decode to a
+        // zero-byte array, and this tool's job is to diagnose such a file, not die on it.
+        System.out.println("BACKUP_VERSION  : " + (versionBytes == null ? "MISSING"
+            : versionBytes.length == 0 ? "EMPTY" : versionBytes[0]));
         System.out.println("salt length     : " + (salt == null ? "MISSING" : salt.length));
         System.out.println("iv length       : " + (iv == null ? "MISSING" : iv.length));
         System.out.println("creationDate    : " + formatCreationDate(creationDate));
