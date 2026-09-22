@@ -90,19 +90,21 @@ jobs:
       # qa, not debug: three build types mean three applicationIds, and Android refuses to upgrade
       # one into another. qa -> qa is the only vehicle available.
       - name: Build the QA APK under test and the harness
-        env:
-          # app/build.gradle computes versionCode as (GITHUB_RUN_NUMBER ?: 9999984) + 15, and
-          # GITHUB_RUN_NUMBER counts runs of *this* workflow only. A workflow added by this PR
-          # therefore starts at 1 and builds versionCode 16, which is below the 23 of the released
-          # baseline, and the run aborts before installing anything. Pinning the variable to the
-          # same fallback local builds use yields 9999999: higher than anything ever shipped, and
-          # identical to what the harness is exercised with locally.
-          #
-          # MR6 must drop this. Once the upgrade test runs inside the release pipeline it has to
-          # install the actual RC artifact, not a rebuild with an invented version. Tracked as a
-          # blocking row in docs/testing/upgrade-testing.md, "Carried-forward debt".
-          GITHUB_RUN_NUMBER: 9999984
-        run: ./gradlew assembleQa :upgrade-test:assembleDebug
+        # app/build.gradle computes versionCode as (GITHUB_RUN_NUMBER ?: 9999984) + 15, and
+        # GITHUB_RUN_NUMBER counts runs of *this* workflow only. A workflow added by this PR starts
+        # at 1, so it builds versionCode 16 against a baseline of 23 and the run aborts before
+        # installing anything. Assigning the fallback local builds use yields 9999999.
+        #
+        # It has to be set on the command, not in `env:`. GITHUB_RUN_NUMBER is a default variable,
+        # and the docs are explicit that "if you attempt to override the value of one of these
+        # default variables, the assignment is ignored" - which it silently was, in run
+        # 35725851102, where the build still came out as versionCode 17. A shell assignment is an
+        # ordinary child-process variable and Actions has no say in it.
+        #
+        # MR6 must drop this. Once the upgrade test runs inside the release pipeline it has to
+        # install the actual RC artifact, not a rebuild with an invented version. Tracked as a
+        # blocking row in docs/testing/upgrade-testing.md, "Carried-forward debt".
+        run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa :upgrade-test:assembleDebug
 
       - name: Enable KVM hardware acceleration
         run: |

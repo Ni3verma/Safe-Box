@@ -44,10 +44,24 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
 > [!WARNING]
 > `GITHUB_RUN_NUMBER` counts runs of **one workflow**, not of the repository. A workflow added by a
 > pull request starts at 1, so its builds get `versionCode` 16 while released builds are in the
-> twenties. Anything that installs a freshly built APK over a released one must override it —
-> `upgrade-test.yml` sets `GITHUB_RUN_NUMBER: 9999984` on its build step to get the same 9999999
-> local builds use. Observed 2026-09-22: run 1 of `upgrade-test.yml` aborted with
-> `the build under test (16) does not supersede the baseline (23)`.
+> twenties. Anything that installs a freshly built APK over a released one has to override it.
+>
+> **`env:` cannot do it.** It is a default variable, and the docs say "if you attempt to override
+> the value of one of these default variables, the assignment is ignored" — silently. Observed
+> twice on 2026-09-22: run 1 of `upgrade-test.yml` failed with `the build under test (16) does not
+> supersede the baseline (23)`, and after adding `env: GITHUB_RUN_NUMBER: 9999984` run 2 failed the
+> same way with 17, the value simply tracking the run number. Assign it on the command instead,
+> where it is an ordinary child-process variable:
+>
+> ```yaml
+> run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa
+> ```
+>
+> When checking such an override locally, pick a value that is **not** the fallback. `9999984`
+> produces `versionCode` 9999999 — which is exactly what setting nothing produces, so a green
+> result proves nothing about whether the variable arrived. Use a distinguishable one:
+> `GITHUB_RUN_NUMBER=5000 ./gradlew :app:help -q` printing `Building SafeBox: LOCAL-build (5015)`
+> does prove it, including that the value survives the Gradle daemon. Verified 2026-09-22.
 
 ## Signing
 
