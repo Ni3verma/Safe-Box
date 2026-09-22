@@ -37,7 +37,7 @@ DETEKT_HTML_REPORT_PATH="${DETEKT_REPORT_DIR}/detekt.html"
 #      and silently excludes it, so that one case has to be caught by pattern.
 #
 # Broken and absolute links are *not* checked here - lychee does that in CI, properly.
-DOCS_POLICY_PATTERN='</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]'
+DOCS_POLICY_PATTERN='</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\([[:space:]]*|\]:[[:space:]]*)<?[A-Za-z]:[\\/]'
 
 # Prefix for log messages from this script
 LOG_PREFIX="[PRE-COMMIT-HOOK]"

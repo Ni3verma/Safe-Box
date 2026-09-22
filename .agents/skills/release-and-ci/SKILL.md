@@ -65,14 +65,16 @@ the upload step.** There is already a comment in `build.gradle` saying so.
 
 ## The APK archive
 
-`release_on_github` attaches everything it downloaded, so every tag carries:
+`release_on_github` attaches everything it downloaded, so every tag **cut after the upload step
+existed** carries:
 
 - `SafeBox-qa.apk` — minified, release-like, stably signed
 - `app-release.aab` (since `v2.1.4.0-rc1`)
 
-This is a **permanent, addressable archive of every shipped QA build**. Of 18 releases, 15 carry a
-QA APK; the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`) predate the upload step, so the
-oldest usable baseline is `v1.3.3.0`.
+This is a **permanent, addressable archive of every shipped QA build** from `v1.3.3.0` onwards. Of
+18 releases, 15 carry a QA APK; the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`) predate the
+upload step, so the oldest usable baseline is `v1.3.3.0`. Resolve a baseline against that floor
+rather than assuming any tag will do.
 
 ## GitHub tooling
 

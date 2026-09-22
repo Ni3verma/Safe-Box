@@ -50,7 +50,7 @@ jobs:
       # violation elsewhere cannot block an unrelated commit.
       - name: Check documentation policy
         run: |
-          if git grep -nE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\(|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \
+          if git grep -nE '</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\([[:space:]]*|\]:[[:space:]]*)<?[A-Za-z]:[\\/]' \
                -- '*.md'; then
             echo "::error::Documentation policy violations found (see matches above)."
             exit 1
