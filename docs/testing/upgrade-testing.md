@@ -468,8 +468,14 @@ on the baseline, upgrade, assert the unlock screen appears.
   `firstInstallTime` unchanged across the upgrade, and a run fails loudly if zero tests executed.
   Getting there took a fourth run: the first stability attempt was 2 green of 3, and the failure was
   a real device-specific flake in the launch recovery, not noise —
-  [Launching the app](upgrade-harness-operations.md#launching-the-app) records it. **Not yet
-  exercised on CI's API 34 image.**
+  [Launching the app](upgrade-harness-operations.md#launching-the-app) records it.
+- **Green on CI's API 34 `aosp_atd` image**, run
+  [35727125638](https://github.com/Ni3verma/Safe-Box/actions/runs/35727125638): baseline
+  `versionCode` 23 upgraded to 9999999, `firstInstallTime` `12:32:26` identical before and after,
+  both phases reporting `OK (1 test)` through the guard. It took three CI runs to get there and
+  neither failure was in the harness: both were the build under test carrying a `versionCode`
+  *below* the released baseline, because `GITHUB_RUN_NUMBER` counts runs of one workflow and
+  `env:` cannot override it. Recorded in the release-and-ci skill.
 
 Three things settled during implementation that later MRs inherit rather than re-decide:
 
