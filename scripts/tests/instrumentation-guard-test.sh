@@ -120,6 +120,43 @@ android.util.AndroidException: INSTRUMENTATION_FAILED'
 # than a failure - which would abort the script with a misleading message.
 expect fail "unparseable_output" 1 'Broadcast completed: result=0'
 
+# A run killed after the runner announced its plan but before JUnit printed a summary: adb
+# disconnect, device reboot, or a CI step timeout. `numtests=2` is the planned size, so counting it
+# would report two executed tests when possibly none finished.
+expect fail "cut_short_before_summary" 1 'INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: class=com.andryoga.safebox.upgradetest.UpgradeSmokeTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: test=signUpOnBaselineBuild
+INSTRUMENTATION_STATUS_CODE: 1'
+
+# A minimum of 0 would make the guard accept the exact run it exists to reject, so it is refused as
+# an argument rather than honoured.
+expect fail "zero_min_tests" 0 'INSTRUMENTATION_RESULT: stream=
+
+Time: 0
+
+OK (0 tests)
+
+INSTRUMENTATION_CODE: -1'
+
+# Both of these used to fall through to "OK": `[ 1 -lt x ]` fails with "integer expression
+# expected" and returns 2, which is not 0, so the failure branch was never taken.
+expect fail "non_numeric_min_tests" "one" 'INSTRUMENTATION_RESULT: stream=
+
+Time: 1.0
+
+OK (1 test)
+
+INSTRUMENTATION_CODE: -1'
+
+expect fail "negative_min_tests" -1 'INSTRUMENTATION_RESULT: stream=
+
+Time: 1.0
+
+OK (1 test)
+
+INSTRUMENTATION_CODE: -1'
+
 printf '' > "$work_dir/empty.txt"
 run_case fail "empty_output_file" "$work_dir/empty.txt" 1
 run_case fail "missing_output_file" "$work_dir/does-not-exist.txt" 1

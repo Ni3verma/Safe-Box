@@ -1,9 +1,16 @@
 name: Upgrade Test (manual)
 
-# workflow_dispatch only, deliberately. This is the MR1 skeleton: it proves the harness can install
-# a shipped QA APK, seed it, upgrade in place and re-run against the same /data. Wiring it into the
-# release pipeline behind the RC condition, with the derived baseline matrix, is MR6 - see
+# Never runs automatically. This is the MR1 skeleton: it proves the harness can install a shipped
+# QA APK, seed it, upgrade in place and re-run against the same /data. Wiring it into the release
+# pipeline behind the RC condition, with the derived baseline matrix, is MR6 - see
 # docs/testing/upgrade-testing.md section 10.
+#
+# Two triggers, because workflow_dispatch alone cannot reach this branch: GitHub only offers the
+# "Run workflow" button, and only accepts an API dispatch, for workflows that exist on the default
+# branch. Until this merges to master there is no way to dispatch it at all. Labelling the pull
+# request runs the workflow from the PR's own head branch, which is the only way to get evidence
+# that the job works before the job is merged - and stays useful afterwards for the MRs that add
+# phases, since an ordinary push still costs nothing.
 on:
   workflow_dispatch:
     inputs:
@@ -13,9 +20,13 @@ on:
           (previous, schema-boundary, oldest) or an explicit tag such as v2.0.4.0.
         required: true
         default: previous
+  pull_request:
+    types: [ labeled ]
 
 jobs:
   upgrade_test:
+    # An unlabelled push must not start a 20-minute emulator job, so the label is the whole gate.
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'run-upgrade-test'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,31 +50,42 @@ jobs:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
           cache-read-only: false
 
+      # BASELINE_INPUT arrives as an environment variable rather than being interpolated into the
+      # script body. A `${{ }}` expansion is pasted in as source before bash ever sees it, so a
+      # quote in the input would end the assignment and the rest would run as commands; the label
+      # path has no input at all and falls back to the default rule.
       - name: Resolve the baseline tag
         id: baseline
         env:
           GH_TOKEN: ${{ github.token }}
+          BASELINE_INPUT: ${{ inputs.baseline || 'previous' }}
         run: |
-          INPUT='${{ inputs.baseline }}'
-          case "$INPUT" in
+          case "$BASELINE_INPUT" in
             previous|schema-boundary|oldest)
-              TAG=$(./scripts/resolve-baselines.sh --rule "$INPUT")
+              TAG=$(./scripts/resolve-baselines.sh --rule "$BASELINE_INPUT")
               ;;
             *)
-              TAG="$INPUT"
+              # Anything not a known rule is treated as an explicit tag, and must look like one -
+              # this value reaches a shell argument and an artifact name further down.
+              if ! printf '%s' "$BASELINE_INPUT" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(-rc[0-9]+)?$'; then
+                echo "::error::'$BASELINE_INPUT' is neither a baseline rule nor a vMAJOR.MINOR.DB.FIX tag"
+                exit 1
+              fi
+              TAG="$BASELINE_INPUT"
               ;;
           esac
           if [ -z "$TAG" ]; then
-            echo "::error::could not resolve a baseline from '$INPUT'"
+            echo "::error::could not resolve a baseline from '$BASELINE_INPUT'"
             exit 1
           fi
           echo "Baseline: $TAG"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          printf 'tag=%s\n' "$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download the baseline QA APK
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/fetch-baseline-apk.sh '${{ steps.baseline.outputs.tag }}' old-apk/
+          BASELINE_TAG: ${{ steps.baseline.outputs.tag }}
+        run: ./scripts/fetch-baseline-apk.sh "$BASELINE_TAG" old-apk/
 
       # qa, not debug: three build types mean three applicationIds, and Android refuses to upgrade
       # one into another. qa -> qa is the only vehicle available.

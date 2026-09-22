@@ -17,7 +17,7 @@ How to run, extend and debug the APK-over-APK harness. The *why* lives in
 | Guard's own tests | `scripts/tests/instrumentation-guard-test.sh` | device-free, run by `ci.yml` on every PR |
 | Baseline resolution | `scripts/resolve-baselines.sh` | derives tags from the release list |
 | Baseline download | `scripts/fetch-baseline-apk.sh` | pulls `SafeBox-qa.apk` off a GitHub Release |
-| CI job | `.github/workflows/upgrade-test.yml` | `workflow_dispatch` only until MR6 |
+| CI job | `.github/workflows/upgrade-test.yml` | manual only until MR6: dispatch, or the `run-upgrade-test` PR label |
 
 The module is a self-instrumenting `com.android.test` module with **no compile dependency on
 `:app`** — `:upgrade-test:assembleDebug` runs zero `:app` tasks. Do not add one; that coupling is
@@ -34,8 +34,19 @@ exactly what ADR-0001 says breaks against minified builds.
 Output lands in `upgrade-test-out/` (override with a third argument): one
 `instrumentation-<phase>.txt` per phase, plus `logcat.txt`, collected even on failure.
 
-In CI, dispatch **Upgrade Test (manual)** and give it a rule (`previous`, `schema-boundary`,
-`oldest`) or an explicit tag.
+In CI there are two ways in, and neither runs on its own:
+
+- dispatch **Upgrade Test (manual)** with a rule (`previous`, `schema-boundary`, `oldest`) or an
+  explicit `vMAJOR.MINOR.DB.FIX` tag — anything else is rejected;
+- add the **`run-upgrade-test`** label to a pull request, which runs it from that PR's head branch
+  against the `previous` baseline. Removing and re-adding the label runs it again.
+
+> [!IMPORTANT]
+> The label path exists because `workflow_dispatch` is unusable on a branch whose workflow file has
+> not reached the default branch yet: GitHub only shows the "Run workflow" button, and only accepts
+> an API dispatch, for workflows present on `master`. Before this file merges, the workflow is
+> invisible to `gh workflow list` and cannot be dispatched at all — which is exactly when the first
+> evidence that the job works is most needed.
 
 > [!NOTE]
 > The CI emulator is **API 34**; the emulator available locally is a Pixel 8 on **API 35**. The
@@ -48,15 +59,17 @@ A phase is one `@Test` method plus one line in the orchestrator. To add one:
 1. Write the method in `UpgradeSmokeTest` (or a new class alongside it).
 2. Add `run_phase <label> <methodName> <minimum-tests>` to `run-upgrade-test.sh`, in the position
    relative to `adb install -r` that the phase needs.
-3. Raise the minimum-test count if the phase should run more than one method.
+3. Leave the minimum-test count at `1`, and add a separate `run_phase` call for each further
+   method. One call selects exactly one method, so any higher minimum can only ever fail.
 
 Phases are invoked one method at a time by `-e class <fqcn>#<method>`. That is not stylistic:
 
 - a comma-separated filter silently runs only the first class and reports success;
 - a filter matching nothing exits 0 printing `OK (0 tests)`.
 
-`assert_instrumentation_ran` is what makes both fatal. **Never add a phase that bypasses it**, and
-never let `min_tests` be 0.
+`assert_instrumentation_ran` is what makes both fatal. **Never add a phase that bypasses it.** A
+`min_tests` of 0, or anything that is not a positive integer, is rejected by the guard itself — it
+used to be accepted, and `0` made the guard pass the very run it exists to catch.
 
 ## Writing selectors
 

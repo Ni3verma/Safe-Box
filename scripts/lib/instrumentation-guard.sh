@@ -10,14 +10,18 @@
 # This file is meant to be sourced. It can also be run directly for a one-off check:
 #   scripts/lib/instrumentation-guard.sh <output-file> <min-tests>
 
-# Extracts the number of tests JUnit reported as executed.
+# Extracts the number of tests JUnit reported as **executed**.
 #
 # Reads, in order of authority:
 #   1. "OK (N tests)"        - the success summary
 #   2. "Tests run: N, ..."   - the failure summary
-#   3. "numtests=N"          - per-test status lines, used only when neither summary is present,
-#                              which happens when the run is cut short mid-way
-# Prints the count, or nothing at all if the output contains no evidence of any test at all.
+# Prints the count, or nothing at all if neither summary is present.
+#
+# `numtests=N` from the per-test status lines is deliberately **not** used as a fallback. It is the
+# size the runner announced *before* executing anything, so a run killed halfway - adb disconnect,
+# device reboot, CI step timeout - still carries the full planned count while having proved nothing.
+# Neither summary line appearing means the run did not reach the end, which is a failure, not a
+# count to be recovered.
 instrumentation_test_count() {
     local output_file="$1"
     local count
@@ -28,18 +32,7 @@ instrumentation_test_count() {
         return 0
     fi
 
-    count=$(sed -n 's/^Tests run: \([0-9]\{1,\}\).*/\1/p' "$output_file" | tail -n 1)
-    if [ -n "$count" ]; then
-        printf '%s\n' "$count"
-        return 0
-    fi
-
-    # sort -n over every reported numtests: the value is the size of the whole run, so the largest
-    # one seen is the count the runner intended to execute.
-    count=$(sed -n 's/.*numtests=\([0-9]\{1,\}\).*/\1/p' "$output_file" | sort -n | tail -n 1)
-    if [ -n "$count" ]; then
-        printf '%s\n' "$count"
-    fi
+    sed -n 's/^Tests run: \([0-9]\{1,\}\).*/\1/p' "$output_file" | tail -n 1
 }
 
 # Fails unless the instrumentation run executed at least <min-tests> tests and all of them passed.
@@ -52,6 +45,16 @@ assert_instrumentation_ran() {
     local output_file="$1"
     local min_tests="$2"
     local count
+
+    # Validated before anything else, because both bad values fail *open*. A non-numeric minimum
+    # makes `[ "$count" -lt "$min_tests" ]` abort with "integer expression expected" and return 2,
+    # which is not 0, so the comparison is skipped and the function falls through to reporting
+    # success. A minimum of 0 accepts `OK (0 tests)` - the precise run this guard exists to reject.
+    if ! printf '%s' "$min_tests" | grep -qE '^[1-9][0-9]*$'; then
+        echo "FATAL: min-tests must be a positive integer, got '$min_tests'." >&2
+        echo "       A phase that tolerates zero tests is not a phase." >&2
+        return 1
+    fi
 
     if [ ! -s "$output_file" ]; then
         echo "FATAL: instrumentation produced no output at all ($output_file)." >&2
@@ -74,8 +77,10 @@ assert_instrumentation_ran() {
 
     count=$(instrumentation_test_count "$output_file")
     if [ -z "$count" ]; then
-        echo "FATAL: could not determine how many tests ran from $output_file." >&2
-        echo "       No 'OK (n tests)', no 'Tests run:' and no 'numtests='. Assume zero." >&2
+        echo "FATAL: $output_file carries no end-of-run summary." >&2
+        echo "       Neither 'OK (n tests)' nor 'Tests run:' is present, so the run was cut short" >&2
+        echo "       before JUnit finished. Any per-test 'numtests' in there is the planned size," >&2
+        echo "       not what executed, and is not counted." >&2
         return 1
     fi
 

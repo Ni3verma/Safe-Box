@@ -396,9 +396,10 @@ tag build.
 
 Commands, how to add a phase, selector rules and harness-level triage are in
 [upgrade-harness-operations.md](upgrade-harness-operations.md). The short version:
-`.github/workflows/upgrade-test.yml` is `workflow_dispatch`-only and takes a rule or an explicit
-tag, and Gradle only ever *assembles* the harness — the upgrade happens between the two on-device
-phases, so no single Gradle task can straddle it.
+`.github/workflows/upgrade-test.yml` never runs on its own — it is dispatched with a rule or an
+explicit tag, or triggered by the `run-upgrade-test` label on a pull request, which is the only
+entry point available before the file reaches `master`. Gradle only ever *assembles* the harness —
+the upgrade happens between the two on-device phases, so no single Gradle task can straddle it.
 
 ### The zero-test guard
 
@@ -459,8 +460,8 @@ Install `v2.1.4.0-rc3`, create a representative vault, export a backup, commit i
 ### MR1 — harness skeleton, end to end, no assertions — **delivered**
 
 `upgrade-test` module, `scripts/resolve-baselines.sh`, `scripts/fetch-baseline-apk.sh`,
-`scripts/run-upgrade-test.sh`, plus a `workflow_dispatch`-only CI job. One smoke test: sign up on
-the baseline, upgrade, assert the unlock screen appears.
+`scripts/run-upgrade-test.sh`, plus a CI job that only ever runs manually. One smoke test: sign up
+on the baseline, upgrade, assert the unlock screen appears.
 
 - Proved the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
 - Acceptance met locally against `v2.0.4.0` on API 35: three consecutive green runs, each with

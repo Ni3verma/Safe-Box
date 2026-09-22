@@ -91,6 +91,33 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+### A new `workflow_dispatch` workflow cannot be run before it merges
+
+GitHub resolves workflows from the **default branch**. A workflow file that exists only on a feature
+branch has no "Run workflow" button, is absent from `gh workflow list`, and `gh workflow run --ref
+<branch>` cannot find it — the docs say the dispatch trigger requires the workflow to be on the
+default branch, and dispatching against another ref only works *after* it has run at least once.
+Verified 2026-09-22: `.github/workflows/upgrade-test.yml` existed on `upgrade-test/mr1-harness-skeleton`
+and `gh workflow list --all` did not list it.
+
+This is a chicken-and-egg problem for any PR whose entire point is a new job: it cannot be proved
+until it is merged unproved. The way out is a trigger that runs from the PR's own head branch —
+`pull_request` workflows use the workflow file from the head branch for same-repo PRs. Gate it on a
+label so ordinary pushes cost nothing:
+
+```yaml
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [ labeled ]
+jobs:
+  job:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'run-upgrade-test'
+```
+
+Remove and re-add the label to run it again. Note that `inputs.*` is empty on the label path, so
+give every input a fallback (`${{ inputs.x || 'default' }}`).
+
 ### Current authentication state
 
 Verified 2026-09-21. `gh` **is** authenticated on this machine with a fine-grained token scoped to
