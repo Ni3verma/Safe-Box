@@ -155,7 +155,14 @@ checks consistently, and a `403` can come from repository rules rather than the 
 |---|---|---|
 | Reads (PRs, releases, runs, checks) | read | every read command works |
 | `Contents` | read | `PUT` via the contents API returned `403` |
-| `Issues` | **read + write**, granted deliberately so the agent can file issues | none — creating an issue is the only conclusive test and must not be run just to check a permission |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | writing to an *issue* is untested — creating one just to check is not worth it — but **labels on a pull request are refused**, see below |
+
+> [!IMPORTANT]
+> **Labels cannot be changed from here.** `DELETE /repos/Ni3verma/Safe-Box/issues/259/labels/run-upgrade-test`
+> returns `403 Resource not accessible by personal access token` (2026-09-22). This is a conclusive
+> negative: the label existed and was applied, so it is a permission result, not a 404 in disguise.
+> Anything driven by a label — including re-running the upgrade test, which needs the label removed
+> and re-added — has to be done by a human in the UI. Ask; do not retry.
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from
