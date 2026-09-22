@@ -78,11 +78,26 @@ fi
 
 # The schema version the build under test is on, taken from the exported Room schemas rather than
 # from a tag: the tag for the build under test does not exist yet when this runs.
-current_schema=$(
-    find "$SCHEMA_DIR" -name '*.json' -exec basename {} .json \; | sort -n | tail -n 1
-)
+#
+# `find` runs only if the directory is there. `pipefail` is on, so a missing directory would
+# otherwise abort the assignment with find's raw "No such file or directory" and never reach the
+# message below that says what to do about it.
+current_schema=""
+if [ -d "$SCHEMA_DIR" ]; then
+    current_schema=$(
+        find "$SCHEMA_DIR" -name '*.json' -exec basename {} .json \; | sort -n | tail -n 1
+    )
+fi
 if [ -z "$current_schema" ]; then
     echo "error: no exported Room schemas under $SCHEMA_DIR - run this from the repo root." >&2
+    exit 1
+fi
+# A non-numeric version would not crash the `-ge` comparison further down, it would make the test
+# itself fail, and a failing test inside an `if` condition simply reads as false - every release
+# would then look older than the current schema and every one of them would be added as a
+# baseline. Silent over-selection is worse than stopping here.
+if ! printf '%s' "$current_schema" | grep -qE '^[0-9]+$'; then
+    echo "error: schema version '$current_schema' under $SCHEMA_DIR is not a number." >&2
     exit 1
 fi
 
@@ -136,6 +151,15 @@ fi
 
 # De-duplicate while preserving the order the rules produced; the rules overlap often.
 selected=$(printf '%s' "$selected" | awk 'NF && !seen[$0]++')
+
+# Not reachable today - `previous` and `all` always take the head of `candidates`, which is already
+# known non-empty - but an empty result is the most dangerous outcome this script has. Printing
+# `{"from_tag":[]}` would run zero upgrade jobs and leave the workflow green, the same class of
+# hole as a silent `OK (0 tests)`. Anything that produces no baseline is a bug, so say so.
+if [ -z "$selected" ]; then
+    echo "error: rule '$rule' selected no baseline tag." >&2
+    exit 1
+fi
 
 if [ "$rule" != "all" ]; then
     printf '%s\n' "$selected" | head -n 1

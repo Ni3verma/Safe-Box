@@ -72,9 +72,12 @@ class UpgradeSmokeTest {
     fun unlockScreenAppearsAfterUpgrade() {
         launchAppUnderTest(UNLOCK_HEADING)
 
+        // Waits rather than querying once: the heading and the field are separate semantics nodes,
+        // and a slow device can publish them in different frames. A one-shot `findObject` here
+        // would report "no password field" for a screen that was merely a frame behind.
         assertNotNull(
             "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${describeScreen()}",
-            device.findObject(By.text(UNLOCK_PASSWORD_LABEL)),
+            device.wait(Until.findObject(By.text(UNLOCK_PASSWORD_LABEL)), FIND_TIMEOUT_MS),
         )
     }
 

@@ -123,9 +123,13 @@ Verified 2026-09-22: `.github/workflows/upgrade-test.yml` existed on `upgrade-te
 and `gh workflow list --all` did not list it.
 
 This is a chicken-and-egg problem for any PR whose entire point is a new job: it cannot be proved
-until it is merged unproved. The way out is a trigger that runs from the PR's own head branch —
-`pull_request` workflows use the workflow file from the head branch for same-repo PRs. Gate it on a
-label so ordinary pushes cost nothing:
+until it is merged unproved. The way out is a trigger that resolves from the PR rather than from
+the default branch: `pull_request` runs the workflow file taken from the PR's **merge commit**
+(`GITHUB_REF` is `refs/pull/N/merge`), which for a same-repo PR is the branch's version of the file
+merged into the base. Two consequences follow: what runs is the merged result rather than the head
+branch alone, and **a PR with a merge conflict fires no `pull_request` run at all** — the conflict
+has to be resolved before the job can be triggered. Gate it on a label so ordinary pushes cost
+nothing:
 
 ```yaml
 on:
