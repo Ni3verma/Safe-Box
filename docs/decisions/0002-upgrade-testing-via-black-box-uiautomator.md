@@ -1,7 +1,7 @@
 # ADR-0002 — Upgrade and release-build testing via a black-box UI Automator module
 
-- **Status:** Accepted (design); implementation not started
-- **Date:** 2026-09-20
+- **Status:** Accepted. **Skeleton implemented** 2026-09-22 (MR1); assertions land in MR2–MR5
+- **Date:** 2026-09-20, implementation status updated 2026-09-22
 - **Supersedes:** nothing. **Depends on:** [ADR-0001](0001-instrumentation-tests-run-on-debug-only.md)
 
 ## Decision
@@ -10,7 +10,14 @@ Release-build confidence and upgrade confidence come from a **separate `com.andr
 self-instrumenting, driving the app through UI Automator**, with zero compile-time dependency on
 `:app`.
 
-Design detail lives in [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md).
+Design detail lives in [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md); operating
+it is in [upgrade-harness-operations.md](../testing/upgrade-harness-operations.md).
+
+> [!NOTE]
+> The two structural claims below are no longer predictions. Verified 2026-09-22 on the shipped
+> module: `:upgrade-test:assembleDebug` executes **no `:app` task at all**, and the merged manifest
+> sets `targetPackage` to the harness's own package, so the app is genuinely not the instrumentation
+> target. An in-place `adb install -r` between two phases does not disturb the harness.
 
 ## Why this shape
 

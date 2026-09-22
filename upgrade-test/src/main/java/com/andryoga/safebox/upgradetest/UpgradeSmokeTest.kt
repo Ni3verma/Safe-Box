@@ -49,9 +49,8 @@ class UpgradeSmokeTest {
      */
     @Test
     fun signUpOnBaselineBuild() {
-        launchAppUnderTest()
+        launchAppUnderTest(SIGNUP_HEADING)
 
-        awaitText(SIGNUP_HEADING)
         textField(SIGNUP_PASSWORD_LABEL).text = MASTER_PASSWORD
         textField(SIGNUP_HINT_LABEL).text = PASSWORD_HINT
         awaitObject(By.text(SIGNUP_BUTTON).enabled(true)).click()
@@ -71,27 +70,57 @@ class UpgradeSmokeTest {
      */
     @Test
     fun unlockScreenAppearsAfterUpgrade() {
-        launchAppUnderTest()
+        launchAppUnderTest(UNLOCK_HEADING)
 
-        awaitText(UNLOCK_HEADING)
         assertNotNull(
             "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${describeScreen()}",
             device.findObject(By.text(UNLOCK_PASSWORD_LABEL)),
         )
     }
 
-    private fun launchAppUnderTest() {
+    /**
+     * Starts the app under test and waits for the screen the caller expects, re-launching it if
+     * the screen does not appear.
+     *
+     * Waiting on the *expected screen* rather than on "the app owns the foreground window" is
+     * deliberate. On any device with an enrolled fingerprint the unlock screen immediately raises a
+     * system biometric sheet, which is drawn by SystemUI — the app stops being the foreground
+     * package, and a `By.pkg(APP_PACKAGE).depth(0)` wait can never succeed even though the app is
+     * running perfectly. Observed on a Pixel 8 API 35 emulator on 2026-09-22; CI's `aosp-atd` image
+     * has nothing enrolled, so this would have been a flake that only ever reproduced locally.
+     *
+     * Backing out of the prompt is exactly what a user who wants to type their password does, and
+     * the app handles it through `onErrorOrCancel`. The back press only happens after a wait has
+     * fully timed out, so it cannot cut short a merely slow launch. It is not reliable on its own
+     * though: on a gesture-navigation device the same press was seen to dismiss the sheet *and*
+     * send the task to the launcher (`RecentsController.finishInner: toHome=true`), after which
+     * the test was asserting against the home screen. Hence every attempt starts the launch intent
+     * again — bringing a backgrounded task forward is harmless, and the prompt is not re-armed
+     * because the app only offers biometric unlock once per process.
+     *
+     * @param expectedHeading text that identifies the screen the app should land on
+     * @return the heading node, so callers can assert further against it
+     */
+    private fun launchAppUnderTest(expectedHeading: String): UiObject2 {
         val context = InstrumentationRegistry.getInstrumentation().context
         val intent = context.packageManager.getLaunchIntentForPackage(APP_PACKAGE)
             ?: error(
                 "no launch intent for $APP_PACKAGE - it is not installed, or the <queries> entry " +
                     "in this module's manifest no longer matches its applicationId",
             )
-        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        check(device.wait(Until.hasObject(By.pkg(APP_PACKAGE).depth(0)), LAUNCH_TIMEOUT_MS)) {
-            "$APP_PACKAGE did not reach the foreground within ${LAUNCH_TIMEOUT_MS}ms" +
-                describeScreen()
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+        repeat(LAUNCH_ATTEMPTS) { attempt ->
+            context.startActivity(intent)
+            val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else FIND_TIMEOUT_MS
+            device.wait(Until.findObject(By.text(expectedHeading)), timeout)
+                ?.let { return it }
+            device.pressBack()
         }
+        error(
+            "'$expectedHeading' never appeared in $LAUNCH_ATTEMPTS attempts at launching " +
+                "$APP_PACKAGE, even after dismissing a possible system prompt${describeScreen()}",
+        )
     }
 
     private fun awaitText(text: String): UiObject2 = awaitObject(By.text(text))
@@ -150,5 +179,10 @@ class UpgradeSmokeTest {
         const val LAUNCH_TIMEOUT_MS = 30_000L
         const val FIND_TIMEOUT_MS = 15_000L
         const val SIGN_UP_TIMEOUT_MS = 15_000L
+
+        // Two extra tries are enough for the one recoverable cause seen so far (a system prompt
+        // stealing the window, plus the back press that dismisses it landing on the launcher).
+        // Anything still failing after that is a real defect and should fail fast.
+        const val LAUNCH_ATTEMPTS = 3
     }
 }

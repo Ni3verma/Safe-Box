@@ -1,0 +1,151 @@
+# Upgrade harness — operations
+
+How to run, extend and debug the APK-over-APK harness. The *why* lives in
+[upgrade-testing.md](upgrade-testing.md); this file is the part you need when writing the next MR.
+
+---
+
+## What exists
+
+| Piece | Path | Responsibility |
+|---|---|---|
+| Gradle module | `upgrade-test/` | builds the instrumentation APK. **Assembled only, never run, by Gradle** |
+| On-device driver | `upgrade-test/src/main/java/.../UpgradeSmokeTest.kt` | UI Automator, one `@Test` per phase |
+| Fixtures | `upgrade-test/src/main/assets/fixtures/` | golden `.bak` files, packaged into the harness APK |
+| Host orchestrator | `scripts/run-upgrade-test.sh` | install, seed, upgrade, re-run, collect |
+| Zero-test guard | `scripts/lib/instrumentation-guard.sh` | decides whether a run actually happened |
+| Guard's own tests | `scripts/tests/instrumentation-guard-test.sh` | device-free, run by `ci.yml` on every PR |
+| Baseline resolution | `scripts/resolve-baselines.sh` | derives tags from the release list |
+| Baseline download | `scripts/fetch-baseline-apk.sh` | pulls `SafeBox-qa.apk` off a GitHub Release |
+| CI job | `.github/workflows/upgrade-test.yml` | `workflow_dispatch` only until MR6 |
+
+The module is a self-instrumenting `com.android.test` module with **no compile dependency on
+`:app`** — `:upgrade-test:assembleDebug` runs zero `:app` tasks. Do not add one; that coupling is
+exactly what ADR-0001 says breaks against minified builds.
+
+## Running it
+
+```bash
+./scripts/fetch-baseline-apk.sh v2.0.4.0 old-apk/          # needs gh, network
+./gradlew assembleQa :upgrade-test:assembleDebug
+./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
+```
+
+Output lands in `upgrade-test-out/` (override with a third argument): one
+`instrumentation-<phase>.txt` per phase, plus `logcat.txt`, collected even on failure.
+
+In CI, dispatch **Upgrade Test (manual)** and give it a rule (`previous`, `schema-boundary`,
+`oldest`) or an explicit tag.
+
+> [!NOTE]
+> The CI emulator is **API 34**; the emulator available locally is a Pixel 8 on **API 35**. The
+> difference is deliberate (decision 6) — a local pass does not imply a CI pass.
+
+## Adding a phase
+
+A phase is one `@Test` method plus one line in the orchestrator. To add one:
+
+1. Write the method in `UpgradeSmokeTest` (or a new class alongside it).
+2. Add `run_phase <label> <methodName> <minimum-tests>` to `run-upgrade-test.sh`, in the position
+   relative to `adb install -r` that the phase needs.
+3. Raise the minimum-test count if the phase should run more than one method.
+
+Phases are invoked one method at a time by `-e class <fqcn>#<method>`. That is not stylistic:
+
+- a comma-separated filter silently runs only the first class and reports success;
+- a filter matching nothing exits 0 printing `OK (0 tests)`.
+
+`assert_instrumentation_ran` is what makes both fatal. **Never add a phase that bypasses it**, and
+never let `min_tests` be 0.
+
+## Writing selectors
+
+Production code contains **no `Modifier.testTag`** and the APK under test is minified, so
+everything is found by visible text or content description.
+
+| Trap | Detail |
+|---|---|
+| Mandatory field labels carry an asterisk | `MandatoryLabelText` appends `*` **inside the same text node**, so the signup password label is `Password*`, not `Password`. The unlock screen uses a plain `Text`, so there it really is `Password`. |
+| Label and input are different nodes | Find the label, then search its parent for `By.clazz("android.widget.EditText")`. |
+| Masked fields render as bullets | Tap `content-desc="Toggle sensitive data visibility"` first — it exists in the shipped APK. |
+| `By.text(String)` is an exact match | It quotes the argument, so `Password*` is safe to pass literally. |
+| Copy changes break tests | The cost of black-box selectors. Keep every string in the `companion object`, never inline. |
+
+Every lookup must fail with the window hierarchy attached. `describeScreen()` does this; use it in
+all new failure messages. A CI failure reading `NullPointerException at line 47`, on an emulator
+nobody can attach to, is worthless.
+
+## Launching the app
+
+The driver resolves a launch intent through `PackageManager`, which needs the `<queries>` entry in
+`upgrade-test/src/main/AndroidManifest.xml`. If the app's `applicationId` ever changes, that entry
+must change with it or the launch fails with a null intent.
+
+> [!IMPORTANT]
+> **Never wait on `By.pkg(APP_PACKAGE).depth(0)` to decide the app is up.** On a device with an
+> enrolled fingerprint, the unlock screen raises a system biometric sheet the instant it appears.
+> That sheet belongs to **SystemUI**, so the app stops being the foreground package and the wait
+> times out after 30 s while the app is running perfectly — reported as
+> `did not reach the foreground`, with no crash in logcat. Observed on a Pixel 8 API 35 emulator,
+> 2026-09-22.
+>
+> `launchAppUnderTest(expectedHeading)` waits on the expected screen's text instead and, if that
+> times out, presses back to dismiss the prompt. The app treats that as `onErrorOrCancel` and falls
+> back to the password field, which is what a user who wants to type their password does.
+>
+> The back press is **not** sufficient on its own. On a gesture-navigation device it was also seen
+> to send the task to the launcher (`RecentsController.finishInner: toHome=true` in logcat), after
+> which the test asserted against the home screen and failed with `unlock screen has no 'Password'
+> field` — with a launcher hierarchy attached. So each of the three attempts re-issues the launch
+> intent; bringing a backgrounded task forward is harmless, and the prompt is not re-armed because
+> the app offers biometric unlock only once per process.
+>
+> CI's `aosp-atd` image has no biometric enrolled, so both of these are flakes that reproduce
+> **only locally**. Do not "fix" them by deleting the recovery path because CI is green.
+
+## What the orchestrator already guarantees
+
+Do not re-implement these in a test:
+
+- both APKs declare `com.andryoga.safebox.qa` — a debug or release APK is rejected before any
+  install, because three build types mean three applicationIds and none can upgrade into another;
+- the build under test has a strictly higher `versionCode` than the baseline;
+- the upgrade is `adb install -r` with **no `-d`**, after `am force-stop` — never `pm clear`, never
+  `uninstall`;
+- `firstInstallTime` is non-empty before the upgrade and unchanged after it, and `versionCode`
+  changed — together, proof that `/data` survived rather than the app being reinstalled;
+- every phase executed at least its minimum number of tests, and none failed.
+
+## Triage
+
+App-level symptoms are in [upgrade-testing.md section 9](upgrade-testing.md#9-failure-triage). These
+are harness-level ones:
+
+| Symptom | Cause |
+|---|---|
+| `0 test(s) executed, expected at least 1` | the `-e class` filter matches nothing — usually a renamed or misspelled method |
+| `instrumentation component could not be started` | the harness APK is not installed, or the runner name drifted from the manifest |
+| `no launch intent for com.andryoga.safebox.qa` | app not installed, or the `<queries>` entry no longer matches its applicationId |
+| `declares applicationId '...debug'` | a debug APK was passed; only `qa → qa` can upgrade |
+| `could not read firstInstallTime` | the install did not take, or `dumpsys package` output changed shape |
+| `no aapt2 found under .../build-tools` | `ANDROID_HOME` points at an SDK with no build-tools |
+| `<tag> has no SafeBox-qa.apk asset` | releases before the upload step existed — `v1.0.0`, `v1.1.0`, `v1.2.2.0` — carry none |
+| Test times out in `launchAppUnderTest` after four or five runs | the emulator `/data` partition is full; see the build-and-test skill |
+| An assertion fails and the attached hierarchy is `nexuslauncher`, not the app | the app was sent home rather than merely backgrounded — see [Launching the app](#launching-the-app) |
+
+## Baseline resolution
+
+`resolve-baselines.sh` reads the release list and applies three rules, filtering to stable releases
+that actually carry a `SafeBox-qa.apk`. As of 2026-09-22 it emits:
+
+```json
+{"from_tag":["v2.0.4.0","v1.3.3.1","v1.3.3.0"]}
+```
+
+`--rule previous|schema-boundary|oldest` prints a single tag instead, which is what the manual
+workflow uses. The current Room schema is read from `app/schemas/`, not from a tag, because the tag
+for the build under test does not exist yet when the script runs.
+
+An optional floor lives in `upgrade-test/oldest-supported.txt`, one tag on a line. It does not
+exist by default and should stay that way until "how far back do we support" is an actual product
+decision.

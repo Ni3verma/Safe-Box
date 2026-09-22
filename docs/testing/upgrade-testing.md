@@ -107,8 +107,8 @@ which is exactly what makes it unable to run against a minified build
 So: a new `com.android.test` module, **self-instrumenting**, with no compile dependency on `:app`.
 
 ```groovy
-// upgrade-test/build.gradle
-plugins { id 'com.android.test'; id 'org.jetbrains.kotlin.android' }
+// upgrade-test/build.gradle — as shipped
+plugins { alias(libs.plugins.android.test) }
 
 android {
     namespace 'com.andryoga.safebox.upgradetest'
@@ -117,13 +117,19 @@ android {
     defaultConfig {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
+    kotlin { jvmToolchain(17) }
 }
 
 dependencies {
     implementation libs.androidx.test.uiautomator
     implementation libs.androidx.test.ext.junit
+    implementation libs.androidx.test.runner
 }
 ```
+
+No Kotlin plugin is applied: AGP 9 has built-in Kotlin support and `:app` applies none either.
+Note also that `alias(...)` only resolves if the root `build.gradle` declares the same plugin
+`apply false` — otherwise Gradle reports "already on the classpath with an unknown version".
 
 `self-instrumenting` — the same mechanism Macrobenchmark uses — makes the test process target
 *itself* rather than the app. Three consequences:
@@ -388,17 +394,11 @@ tag build.
 
 ### Running the harness
 
-`.github/workflows/upgrade-test.yml` is `workflow_dispatch`-only and takes one input: a rule
-(`previous`, `schema-boundary`, `oldest`) or an explicit tag. By hand, against a connected device:
-
-```bash
-./scripts/fetch-baseline-apk.sh v2.0.4.0 old-apk/
-./gradlew assembleQa :upgrade-test:assembleDebug
-./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
-```
-
-Gradle only ever *assembles* the harness. It never runs it, because the upgrade happens between the
-two on-device phases and no single Gradle task can straddle an `adb install`.
+Commands, how to add a phase, selector rules and harness-level triage are in
+[upgrade-harness-operations.md](upgrade-harness-operations.md). The short version:
+`.github/workflows/upgrade-test.yml` is `workflow_dispatch`-only and takes a rule or an explicit
+tag, and Gradle only ever *assembles* the harness — the upgrade happens between the two on-device
+phases, so no single Gradle task can straddle it.
 
 ### The zero-test guard
 
@@ -421,6 +421,11 @@ parsed by `assert_instrumentation_ran` in `scripts/lib/instrumentation-guard.sh`
 unless a minimum number of tests actually executed and passed. That function has its own
 device-free test suite, `scripts/tests/instrumentation-guard-test.sh`, run on every PR by `ci.yml`
 — the guard rotting silently would restore the exact problem it was written to prevent.
+
+The same reasoning applies to every other check in the harness. A comparison between two values
+that were both read as empty strings passes and proves nothing, so `firstInstallTime` is asserted
+non-empty before it is compared. Treat "this check cannot fail" as a bug of the same severity as
+"this check is wrong".
 
 ---
 
@@ -451,16 +456,32 @@ Install `v2.1.4.0-rc3`, create a representative vault, export a backup, commit i
 - Review size: a binary fixture plus ~40 lines of markdown.
 - Acceptance: the `.bak` restores cleanly on `v2.1.4.0-rc3` and the runbook lists every record.
 
-### MR1 — harness skeleton, end to end, no assertions
+### MR1 — harness skeleton, end to end, no assertions — **delivered**
 
 `upgrade-test` module, `scripts/resolve-baselines.sh`, `scripts/fetch-baseline-apk.sh`,
-`scripts/run-upgrade-test.sh`, plus a `workflow_dispatch`-only CI job. One smoke test: launch and
-assert the unlock screen appears.
+`scripts/run-upgrade-test.sh`, plus a `workflow_dispatch`-only CI job. One smoke test: sign up on
+the baseline, upgrade, assert the unlock screen appears.
 
-- Proves the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
-- Acceptance: a green manual run that genuinely upgrades in place, **and fails loudly if zero tests
-  executed**. That guard is mandatory; a silent `tests=0` is what made the previous attempt
-  worthless.
+- Proved the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
+- Acceptance met locally against `v2.0.4.0` on API 35: three consecutive green runs, each with
+  `firstInstallTime` unchanged across the upgrade, and a run fails loudly if zero tests executed.
+  Getting there took a fourth run: the first stability attempt was 2 green of 3, and the failure was
+  a real device-specific flake in the launch recovery, not noise —
+  [Launching the app](upgrade-harness-operations.md#launching-the-app) records it. **Not yet
+  exercised on CI's API 34 image.**
+
+Three things settled during implementation that later MRs inherit rather than re-decide:
+
+| Decision | Why |
+|---|---|
+| The smoke test **signs up on the baseline** | A fresh install lands on signup, so "assert the unlock screen appears" is vacuous without it — and signup is what generates the `symmetricDataKey` alias in the first place. |
+| Failures carry a **window hierarchy dump**, not a screenshot | Step 8 of section 3 says screenshots. A hierarchy is greppable, diffable, and names the nodes a selector failed to match; a PNG from a headless CI emulator is not. Screenshots can be added later if a visual bug ever escapes. |
+| Launch waits on the **expected screen**, never on the app owning the foreground window, and re-issues the launch intent on each retry | A system biometric sheet takes the foreground on any device with a fingerprint enrolled, and the back press that dismisses it can also send the task home. See [upgrade-harness-operations.md](upgrade-harness-operations.md#launching-the-app). |
+
+Deliberately **not** in MR1, despite being cheap: fixture pushing and the SAF picker (MR2), the
+logcat crash sentinel (MR3, Group 9), and certificate verification on the downloaded baseline — a
+signing mismatch currently surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` mid-run rather than as
+a named error up front. Worth adding whenever someone is next in `fetch-baseline-apk.sh`.
 
 ### MR2 — fixtures and seeding
 

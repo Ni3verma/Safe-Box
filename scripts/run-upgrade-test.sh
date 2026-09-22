@@ -64,6 +64,10 @@ apk_version_code() {
     "$AAPT2" dump badging "$1" | sed -n "s/^package:.*versionCode='\([0-9]\{1,\}\)'.*/\1/p" | head -n 1
 }
 
+apk_package() {
+    "$AAPT2" dump badging "$1" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1
+}
+
 # dumpsys pads its output and emits CRLF line endings through adb shell, so values are trimmed
 # rather than used raw.
 installed_field() {
@@ -81,6 +85,19 @@ collect_logcat() {
     echo "Artifacts in $out_dir/"
 }
 trap collect_logcat EXIT
+
+# Handing this script a debug or release APK by mistake is the easiest way to make the whole
+# exercise meaningless, and it does not fail obviously: the wrong package installs fine, and the
+# driver then reports only that it cannot find a launch intent.
+for apk in "$baseline_apk" "$new_apk"; do
+    pkg=$(apk_package "$apk")
+    if [ "$pkg" != "$APP_PACKAGE" ]; then
+        echo "error: $apk declares applicationId '$pkg', expected '$APP_PACKAGE'." >&2
+        echo "       Three build types mean three applicationIds, and Android refuses to upgrade" >&2
+        echo "       one into another. qa -> qa is the only vehicle that exists." >&2
+        exit 1
+    fi
+done
 
 baseline_code=$(apk_version_code "$baseline_apk")
 new_code=$(apk_version_code "$new_apk")
@@ -102,6 +119,13 @@ adb logcat -c || true
 echo "== Install baseline =="
 adb install "$baseline_apk"
 first_install_before=$(installed_field firstInstallTime)
+# An unreadable value would reduce the comparison after the upgrade to two empty strings, which
+# succeeds and proves nothing - the same class of vacuous pass as a zero-test run.
+if [ -z "$first_install_before" ]; then
+    echo "error: could not read firstInstallTime for $APP_PACKAGE after installing the baseline." >&2
+    echo "       Either the install did not take, or dumpsys output has changed shape." >&2
+    exit 1
+fi
 echo "firstInstallTime=$first_install_before"
 
 echo "== Install harness =="
