@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 
 # !!!!!!!!!!!!!!!!!!  IMPORTANT  !!!!!!!!!!!!!!!!!!!!!!!!
-# If you want to test your changes in pre commit script, do the changes and run below
-# git add . && ./gradlew :app:copyGitHooks && git hook run pre-commit
+# Editing this file does NOT update the hook git runs. The installed copy lives at
+# .git/hooks/pre-commit and must be refreshed by hand:
+#
+#   cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#   git hook run pre-commit
+#
+# There used to be a `copyGitHooks` Gradle task for this, defined in CICD/cicd.gradle, but that
+# file stopped being applied by any build script in 331ee64 ("Compose UI - v2.x"). The task no
+# longer exists, which is why an installed hook can silently drift years behind this file.
+# Check for drift with: diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh
 
 # Exit immediately if a command exits with a non-zero status
 set -e
@@ -20,6 +28,16 @@ DETEKT_GRADLE_TASK="detekt"             # The specific Gradle task
 # Path to the Detekt HTML report relative to the project root
 DETEKT_REPORT_DIR="app/build/reports/detekt"
 DETEKT_HTML_REPORT_PATH="${DETEKT_REPORT_DIR}/detekt.html"
+
+# Documentation policy rules that no off-the-shelf linter can know about, so they stay here:
+#
+#   1. Stray agent tool markup. Files authored by an AI agent can pick up the harness's own
+#      XML-ish wrappers after the real content. This has happened more than once.
+#   2. Windows drive-qualified link targets. lychee parses "C:\docs\a.md" as a "c:" URI scheme
+#      and silently excludes it, so that one case has to be caught by pattern.
+#
+# Broken and absolute links are *not* checked here - lychee does that in CI, properly.
+DOCS_POLICY_PATTERN='</?CodeContent>|<parameter name="|</parameter>|<ArtifactMetadata>|(\]\([[:space:]]*|\]:[[:space:]]*)<?[A-Za-z]:[\\/]'
 
 # Prefix for log messages from this script
 LOG_PREFIX="[PRE-COMMIT-HOOK]"
@@ -91,6 +109,49 @@ check_restricted_files() {
   return "$restricted_file_found" # Return the flag
 }
 
+# --- Documentation Policy Check ---
+# Greps the staged markdown for the two rules in DOCS_POLICY_PATTERN.
+# Returns 0 when clean, 1 when a rule is violated.
+#
+# `git grep --cached` reads the index directly, so this inspects exactly what is about to be
+# committed. That matters in both directions: an unstaged fix must not mask a broken staged file,
+# and an unstaged broken file must not block a commit that does not include it. It also means no
+# temporary copy of the tree, and therefore nothing to clean up.
+#
+# Link checking deliberately lives in CI (lychee), not here - it needs a binary this hook cannot
+# assume is installed, and a broken link is not worth blocking a local commit over.
+run_docs_policy_check() {
+  log_info "Checking documentation policy on staged markdown..."
+
+  # Only the markdown staged for *this* commit. `git grep --cached` alone would search the whole
+  # index, so a pre-existing violation in an untouched file would block every later commit,
+  # including pure Kotlin ones - punishing whoever commits next rather than whoever introduced it.
+  # Repo-wide enforcement is CI's job; this hook's job is "do not let me add one".
+  #
+  # Read NUL-delimited into an array rather than interpolating the list: a path containing a space
+  # would otherwise word-split into two nonexistent pathspecs. R is in the filter because rename
+  # detection is on by default, so a file renamed *and* edited in one commit reports as R and would
+  # otherwise skip the check entirely; --name-only gives the post-image path, which is what we want.
+  local files=()
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(git diff --cached --name-only --diff-filter=ACMR -z -- '*.md')
+
+  if [ ${#files[@]} -eq 0 ]; then
+    log_info "No markdown staged, skipping."
+    return 0
+  fi
+
+  local offenders
+  offenders=$(git grep --cached -nE "$DOCS_POLICY_PATTERN" -- "${files[@]}") || return 0
+
+  log_error "Documentation policy violations in staged content:"
+  printf '%s\n' "$offenders" >&2
+  log_error "Stray agent markup must be deleted; Windows drive-qualified link targets must be"
+  log_error "replaced with a path relative to the file."
+  return 1
+}
+
 # --- Main Detekt Check Logic ---
 # Runs Detekt workflow with auto-correction and validation.
 # Returns 0 on success, 1 on failure (if unfixable issues remain).
@@ -111,6 +172,21 @@ run_detekt_workflow() {
   fi
 
   if [ "$detekt_auto_correct_exit_code" -ne 0 ]; then
+    # A missing task is not a code-quality failure, and must not block the commit. The Detekt
+    # plugin is declared with `apply false` and CICD/cicd.gradle - which registers the task and
+    # points it at CICD/detekt.yml - is not applied by any build script, so on this tree
+    # `./gradlew detekt` fails because the task does not exist. Treat that as "unavailable".
+    #
+    # Gradle words this two different ways depending on how the task was named, so match both:
+    #   bare name      -> "Task 'detekt' not found in root project ... and its subprojects."
+    #   qualified path -> "Cannot locate tasks that match ':app:detekt'"
+    if grep -qE "Cannot locate tasks that match|Task '.*' not found in root project" "$temp_output_file"; then
+      log_error "Detekt task is not available in this build, skipping the Detekt check."
+      log_error "CICD/cicd.gradle is not applied by any build script, so the task is never registered."
+      rm -f "$temp_output_file"
+      return 0
+    fi
+
     log_info "Detekt --auto-correct detected fixable issues (first pass exit code: $detekt_auto_correct_exit_code)."
     log_info "Attempting to stage auto-corrected changes and validate (second pass)..."
 
@@ -159,7 +235,14 @@ if ! check_restricted_files; then
   exit 1 # Fail the Git commit
 fi
 
-# 2. Proceed with Detekt checks
+# 2. Check documentation policy. Ordered before Detekt because it is a single grep over the index
+# and needs no toolchain, so a violation surfaces without paying for a build first.
+if ! run_docs_policy_check; then
+  log_error "Documentation policy check failed. Aborting commit."
+  exit 1 # Fail the Git commit
+fi
+
+# 3. Proceed with Detekt checks
 if ! run_detekt_workflow; then
   log_error "Detekt pre-commit check failed. Aborting commit."
   exit 1 # Fail the Git commit
