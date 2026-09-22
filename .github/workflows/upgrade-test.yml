@@ -1,0 +1,94 @@
+name: Upgrade Test (manual)
+
+# workflow_dispatch only, deliberately. This is the MR1 skeleton: it proves the harness can install
+# a shipped QA APK, seed it, upgrade in place and re-run against the same /data. Wiring it into the
+# release pipeline behind the RC condition, with the derived baseline matrix, is MR6 - see
+# docs/testing/upgrade-testing.md section 10.
+on:
+  workflow_dispatch:
+    inputs:
+      baseline:
+        description: >-
+          Baseline to upgrade from: a rule resolved by scripts/resolve-baselines.sh
+          (previous, schema-boundary, oldest) or an explicit tag such as v2.0.4.0.
+        required: true
+        default: previous
+
+jobs:
+  upgrade_test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      # The harness is only as trustworthy as the check that says tests actually ran, so that
+      # check is itself tested, first, before any emulator time is spent.
+      - name: Verify the zero-test guard
+        run: ./scripts/tests/instrumentation-guard-test.sh
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Resolve the baseline tag
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          INPUT='${{ inputs.baseline }}'
+          case "$INPUT" in
+            previous|schema-boundary|oldest)
+              TAG=$(./scripts/resolve-baselines.sh --rule "$INPUT")
+              ;;
+            *)
+              TAG="$INPUT"
+              ;;
+          esac
+          if [ -z "$TAG" ]; then
+            echo "::error::could not resolve a baseline from '$INPUT'"
+            exit 1
+          fi
+          echo "Baseline: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Download the baseline QA APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/fetch-baseline-apk.sh '${{ steps.baseline.outputs.tag }}' old-apk/
+
+      # qa, not debug: three build types mean three applicationIds, and Android refuses to upgrade
+      # one into another. qa -> qa is the only vehicle available.
+      - name: Build the QA APK under test and the harness
+        run: ./gradlew assembleQa :upgrade-test:assembleDebug
+
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # API 34 only to start (decision 6). aosp-atd is sufficient because ML Kit is the bundled
+      # barcode-scanning artifact, so no Google Play services are needed.
+      - name: Run the upgrade test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          script: ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
+
+      - name: Upload harness output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: upgrade-test-${{ steps.baseline.outputs.tag }}
+          path: upgrade-test-out/

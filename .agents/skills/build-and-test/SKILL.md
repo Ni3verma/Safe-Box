@@ -41,6 +41,8 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | Coverage (opt-in, slow) | add `-Pcoverage` |
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
+| Build the upgrade harness (assembles only — never runs it) | `:upgrade-test:assembleDebug` |
+| Run the upgrade test | `./scripts/run-upgrade-test.sh <baseline.apk> <new.apk>` |
 
 ### Documentation checks
 
@@ -130,6 +132,35 @@ parentheses** (`TEST-Pixel_8_API_35(AVD) - 15.xml`), so quote the path. The root
 `<testsuites>` with one nested `<testsuite>` per class — parsing only the root tag finds nothing.
 
 Never report a test run as passing on the strength of the Gradle exit code alone.
+
+#### `am instrument` behaves the same way, and there is a guard for it
+
+Driving instrumentation directly over adb — which the upgrade harness does, because the upgrade
+happens between two on-device runs — has the identical hazard. A method name with a typo produces
+this and exits **0** (verified on a real device, 2026-09-22):
+
+```
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.001
+
+OK (0 tests)
+
+INSTRUMENTATION_CODE: -1
+```
+
+Note `INSTRUMENTATION_CODE: -1` means *success* here — it is an `Activity.RESULT_OK`, not an error.
+
+Do not hand-roll the check. Capture the output and hand it to the shared guard, which also rejects
+crashes, startup failures and unparseable output:
+
+```bash
+adb shell am instrument -w -r -e class '<fqcn>#<method>' <pkg>/<runner> 2>&1 | tee out.txt
+./scripts/lib/instrumentation-guard.sh out.txt 1   # exit 1 unless >= 1 test ran and passed
+```
+
+It is also sourceable (`assert_instrumentation_ran <file> <min-tests>`) and has its own device-free
+test suite at `scripts/tests/instrumentation-guard-test.sh`, which `ci.yml` runs on every PR.
 
 ### The emulator runs out of disk and it looks like an app bug
 

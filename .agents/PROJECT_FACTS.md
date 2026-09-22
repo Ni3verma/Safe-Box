@@ -112,6 +112,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Verified 2026-09-20.
 - ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
   required and `aosp-atd` images are sufficient.
+- **`:upgrade-test`** is a self-instrumenting `com.android.test` module for black-box upgrade
+  testing. `:upgrade-test:assembleDebug` runs **zero `:app` tasks** (verified 2026-09-22), so R8
+  cannot break it. Gradle only assembles it — `scripts/run-upgrade-test.sh` installs and drives it.
 
 Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md)
 
@@ -144,6 +147,10 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   **do not exist**, and **`./gradlew detekt` fails with "Task 'detekt' not found"**. Detekt is
   declared `apply false` in the root `build.gradle` and never applied to `:app`, so no detekt task
   is registered anywhere and `CICD/detekt.yml` is not in effect.
+- A subproject can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also declares
+  it `apply false`**. Otherwise Gradle fails with "the plugin is already on the classpath with an
+  unknown version", because AGP arrives a second time via the root `buildscript` classpath. This
+  bites when adding any new Android module. (Verified 2026-09-22.)
 - **Git hooks must be installed by hand** as a result:
   `cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`.
   The installed copy silently drifts; check with

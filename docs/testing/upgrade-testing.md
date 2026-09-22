@@ -386,6 +386,42 @@ nothing new is being introduced infrastructurally.
 Expect roughly 8–10 minutes per baseline, running in parallel, so about 10 minutes added to an RC
 tag build.
 
+### Running the harness
+
+`.github/workflows/upgrade-test.yml` is `workflow_dispatch`-only and takes one input: a rule
+(`previous`, `schema-boundary`, `oldest`) or an explicit tag. By hand, against a connected device:
+
+```bash
+./scripts/fetch-baseline-apk.sh v2.0.4.0 old-apk/
+./gradlew assembleQa :upgrade-test:assembleDebug
+./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
+```
+
+Gradle only ever *assembles* the harness. It never runs it, because the upgrade happens between the
+two on-device phases and no single Gradle task can straddle an `adb install`.
+
+### The zero-test guard
+
+`am instrument` exits 0 when the class filter matches nothing. Verified on a real device
+2026-09-22, a method name with a typo produces exactly this and nothing else:
+
+```
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.001
+
+OK (0 tests)
+
+INSTRUMENTATION_CODE: -1
+```
+
+An empty run is therefore indistinguishable from a passing one to anything that reads the exit
+code, which is what made the previous attempt at this harness worthless. Every phase's output is
+parsed by `assert_instrumentation_ran` in `scripts/lib/instrumentation-guard.sh`, which fails
+unless a minimum number of tests actually executed and passed. That function has its own
+device-free test suite, `scripts/tests/instrumentation-guard-test.sh`, run on every PR by `ci.yml`
+— the guard rotting silently would restore the exact problem it was written to prevent.
+
 ---
 
 ## 9. Failure triage
