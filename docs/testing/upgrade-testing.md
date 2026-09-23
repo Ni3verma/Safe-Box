@@ -547,8 +547,10 @@ written means guessing at its contents and re-capturing later:
 
 - Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
   is not directly observable through a black-box UI, so Phase A ends by writing an oracle file on
-  the device — per-type record counts, every field of one known record per type, the password hint
-  and the settings moved off their defaults — which the host pulls and diffs across runs. Values
+  the device — per-type record counts, every field of one known record per type, the backup
+  location and the settings moved off their defaults — which the host pulls and diffs across runs.
+  Not the password hint: reading it needs the app locked, which Phase A never does, so it is a
+  debt row against MR3 rather than part of this oracle. Values
   that legitimately vary (the current TOTP code, timestamps) are excluded by construction rather
   than filtered afterwards, so a diff is always a real defect.
 - Also in scope, found while starting the stage: the orchestrator resolves its target device once
