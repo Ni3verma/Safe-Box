@@ -614,6 +614,16 @@ success and the run failed 20 s later looking for a row that never existed. `typ
 for the field to read back non-empty. Ten local runs had passed over this every time, which is the
 argument for running the job on CI before merging rather than after.
 
+**Acceptance met on CI, 2026-09-23**, run
+[35883960498](https://github.com/Ni3verma/Safe-Box/actions/runs/35883960498): both phases reported
+`OK (1 test)` through the guard, and the oracle it pulled is **byte-identical to the local one** —
+MD5 `b20702ff15ea5e1dd8c44bcdc99c7717`, 43 lines, `diff` clean. That is a stronger result than the
+job passing. The same vault description now comes back from two different system images (AOSP
+`default` vs the Google-APIs local emulator), two API levels (34 vs 35) and two device profiles
+(`pixel_6` vs Pixel 8, 411 dpi vs 420 dpi), which is the evidence that the oracle describes the
+*data* rather than the device it was read on — exactly the property MR3 needs before it can treat
+a pre/post diff as a defect. **MR2 is complete.**
+
 The review on PR #261 found seven real defects, all latent rather than currently failing, and the
 acceptance was re-run afterwards: the same MD5, which is what establishes that the fixes changed
 robustness and not behaviour. Two are worth carrying forward:

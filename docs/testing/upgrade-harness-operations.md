@@ -166,13 +166,16 @@ is the device's own name (`sdk_gphone64_arm64` locally, something else everywher
 > it opened perfectly.
 
 > [!CAUTION]
-> **Never run this harness on an `*_atd` image.** ATD ("Automated Test Device") images strip the
+> **Do not run this harness on an ATD image.** ATD ("Automated Test Device") images strip the
 > system apps a test is assumed not to need, and DocumentsUI is one of them. `ACTION_OPEN_DOCUMENT`
 > then resolves to `com.android.fakesystemapp`, a placeholder with an empty action bar, and the
 > failure reads identically to the package-name problem above — which is how it costs an hour.
 > Tell them apart from the hierarchy in the failure message: a package of
-> `com.android.fakesystemapp`, on a `320x640` screen, means the image, not the selector. Evidence:
-> run [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921).
+> `com.android.fakesystemapp`, on a `320x640` screen, means the image, not the selector.
+> Measured on `aosp_atd` in run
+> [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921). `google_atd` is
+> **not** tested here; the app reduction is a property of ATD rather than of the AOSP variant, so
+> treat it as equally unusable until someone shows otherwise.
 
 > [!CAUTION]
 > **Setting a field's text is not the same as the app having the text.** `ACTION_SET_TEXT` returns
