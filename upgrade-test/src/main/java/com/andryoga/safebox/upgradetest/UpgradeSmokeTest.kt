@@ -228,8 +228,8 @@ class UpgradeSmokeTest {
      * deliberate. On any device with an enrolled fingerprint the unlock screen immediately raises a
      * system biometric sheet, which is drawn by SystemUI — the app stops being the foreground
      * package, and a `By.pkg(APP_PACKAGE).depth(0)` wait can never succeed even though the app is
-     * running perfectly. Observed on a Pixel 8 API 35 emulator on 2026-09-22; CI's `aosp-atd` image
-     * has nothing enrolled, so this would have been a flake that only ever reproduced locally.
+     * running perfectly. Observed on a Pixel 8 API 35 emulator on 2026-09-22; CI's emulator has
+     * nothing enrolled, so this would have been a flake that only ever reproduced locally.
      *
      * Backing out of the prompt is exactly what a user who wants to type their password does, and
      * the app handles it through `onErrorOrCancel`. The back press only happens after a wait has

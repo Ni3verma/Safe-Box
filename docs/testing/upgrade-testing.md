@@ -502,7 +502,8 @@ on the baseline, upgrade, assert the unlock screen appears.
   Getting there took a fourth run: the first stability attempt was 2 green of 3, and the failure was
   a real device-specific flake in the launch recovery, not noise —
   [Launching the app](upgrade-harness-operations.md#launching-the-app) records it.
-- **Green on CI's API 34 `aosp_atd` image**, run
+- **Green on CI's API 34 `aosp_atd` image** — the target at the time; MR2 had to move off it
+  because ATD ships no DocumentsUI — run
   [35818905257](https://github.com/Ni3verma/Safe-Box/actions/runs/35818905257) against the final
   commit: `Baseline: v2.0.4.0` resolved by the script rather than typed in, baseline `versionCode`
   23 upgraded to 9999999, `firstInstallTime` `04:38:49` identical before and after, both phases
