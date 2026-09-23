@@ -127,6 +127,33 @@ must change with it or the launch fails with a null intent.
 > CI's `aosp-atd` image has no biometric enrolled, so both of these are flakes that reproduce
 > **only locally**. Do not "fix" them by deleting the recovery path because CI is green.
 
+## Seeding the vault
+
+Phase A signs up and then restores `v2_pre_totp.bak` through the real document picker and the real
+restore worker. Three things about that path were established by driving it, not by reading code,
+and each one costs an afternoon to rediscover.
+
+**The fixture is pushed by the host, not by the test.** Instrumentation can only write to
+app-private storage, which the picker cannot see. `scripts/run-upgrade-test.sh` pushes it to
+`/sdcard/Download` and then asks MediaProvider to rescan, because DocumentsUI lists that root from
+the media database rather than from the filesystem — a pushed file nobody announced is on disk but
+not offered. The file *name* is passed on to the instrumentation with `-e fixtureFile`, so the host
+is its single owner.
+
+**The picker does not open where the file is.** It opens on *Recent*, which on a fresh emulator
+shows `No items`, so waiting for the filename on the first screen always times out.
+[SafDocumentPicker](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/SafDocumentPicker.kt)
+opens the roots drawer and chooses `Downloads` explicitly. Do not select the root below it — that
+is the device's own name (`sdk_gphone64_arm64` locally, something else everywhere else).
+
+> [!IMPORTANT]
+> **"Data has been successfully restored." is not a completion signal.** The dialog appears while
+> the records list is still catching up: asserting immediately after it reproducibly found five of
+> the seven restored records, and the two missing ones were simply not in the view hierarchy yet.
+> Anything reading restored data must wait for it. Note also that a list short enough to fit on
+> screen exposes **no** `scrollable` node at all, so "scroll to find it" silently does nothing —
+> which is why the helper waits first and treats a missing scroll container as normal.
+
 ## What the orchestrator already guarantees
 
 Do not re-implement these in a test:

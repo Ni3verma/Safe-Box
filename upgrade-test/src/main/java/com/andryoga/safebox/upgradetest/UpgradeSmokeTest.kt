@@ -4,7 +4,6 @@ import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -12,54 +11,58 @@ import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.ByteArrayOutputStream
 
 /**
- * Minimal end-to-end proof that the harness can drive the shipped QA APK across an in-place
- * upgrade. This is the MR1 skeleton: it establishes just enough state on the baseline build to make
- * the post-upgrade screen meaningful, and asserts nothing about the vault's contents. Data
- * integrity assertions arrive in MR3.
+ * End-to-end proof that the harness can drive the shipped QA APK across an in-place upgrade.
+ *
+ * Phase A establishes state on the baseline build — an account, and a vault seeded from a golden
+ * backup through the real system document picker. Phase B asserts only that the upgraded build
+ * still knows an account exists; assertions about the vault's *contents* surviving the upgrade
+ * arrive in MR3.
  *
  * The two tests are **ordered and stateful across processes**, which is unusual and deliberate:
- * [signUpOnBaselineBuild] runs against the baseline APK and [unlockScreenAppearsAfterUpgrade] runs
- * against the build under test, after the host has replaced the app underneath. They are therefore
- * never run in the same invocation — scripts/run-upgrade-test.sh selects one at a time by method
- * filter, which is also why a filter typo has to be fatal rather than a silent zero-test pass.
+ * [seedVaultOnBaselineBuild] runs against the baseline APK and [unlockScreenAppearsAfterUpgrade]
+ * runs against the build under test, after the host has replaced the app underneath. They are
+ * therefore never run in the same invocation — scripts/run-upgrade-test.sh selects one at a time by
+ * method filter, which is also why a filter typo has to be fatal rather than a silent zero-test
+ * pass.
  *
  * Everything is selected by visible text, because production code contains no `Modifier.testTag`
- * and the APK under test is minified.
+ * and the APK under test is minified. Note that the text Phase A drives belongs to the **baseline
+ * release**, not to this branch: reading current sources to write these selectors is the wrong
+ * reference, and they were instead read off the installed baseline.
  */
 @RunWith(AndroidJUnit4::class)
 class UpgradeSmokeTest {
 
     private lateinit var device: UiDevice
+    private lateinit var ui: UiSupport
 
     @Before
     fun setUp() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        ui = UiSupport(device)
     }
 
     /**
-     * Phase A. Creates an account on the baseline build.
+     * Phase A. Creates an account on the baseline build and seeds it from a golden backup.
      *
      * Signing up is the cheapest action that makes the upgrade worth testing at all: it writes the
      * password hash to `EncryptedSharedPreferences` and generates the `symmetricDataKey`
      * AndroidKeyStore alias. Without it the upgraded app would land on signup and the phase B
      * assertion would be vacuous.
+     *
+     * Restoring a fixture on top of that is what gives later stages something to assert *about*.
+     * It is done through the real picker and the real restore worker rather than by pushing a
+     * database file, because a restore is the only supported way to get records into the vault
+     * without ~50 taps, and it exercises the production write path while doing so.
      */
     @Test
-    fun signUpOnBaselineBuild() {
+    fun seedVaultOnBaselineBuild() {
         launchAppUnderTest(SIGNUP_HEADING)
-
-        textField(SIGNUP_PASSWORD_LABEL).text = MASTER_PASSWORD
-        textField(SIGNUP_HINT_LABEL).text = PASSWORD_HINT
-        awaitObject(By.text(SIGNUP_BUTTON).enabled(true)).click()
-
-        // Leaving the signup heading behind is the only "signed up" signal available without
-        // asserting on home-screen content, which belongs to MR2.
-        check(device.wait(Until.gone(By.text(SIGNUP_HEADING)), SIGN_UP_TIMEOUT_MS)) {
-            "still on the signup screen after tapping '$SIGNUP_BUTTON'${describeScreen()}"
-        }
+        signUp()
+        restoreGoldenBackup()
+        assertFixtureRecordsPresent()
     }
 
     /**
@@ -76,10 +79,87 @@ class UpgradeSmokeTest {
         // and a slow device can publish them in different frames. A one-shot `findObject` here
         // would report "no password field" for a screen that was merely a frame behind.
         assertNotNull(
-            "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${describeScreen()}",
-            device.wait(Until.findObject(By.text(UNLOCK_PASSWORD_LABEL)), FIND_TIMEOUT_MS),
+            "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${ui.describeScreen()}",
+            device.wait(Until.findObject(By.text(UNLOCK_PASSWORD_LABEL)), UiSupport.FIND_TIMEOUT_MS),
         )
     }
+
+    private fun signUp() {
+        ui.textField(SIGNUP_PASSWORD_LABEL).text = MASTER_PASSWORD
+        ui.textField(SIGNUP_HINT_LABEL).text = PASSWORD_HINT
+        ui.awaitObject(By.text(SIGNUP_BUTTON).enabled(true)).click()
+
+        // Leaving the signup heading behind is the only "signed up" signal available without
+        // asserting on home-screen content, which belongs to MR2.
+        check(device.wait(Until.gone(By.text(SIGNUP_HEADING)), SIGN_UP_TIMEOUT_MS)) {
+            "still on the signup screen after tapping '$SIGNUP_BUTTON'${ui.describeScreen()}"
+        }
+    }
+
+    /**
+     * Restores the golden backup the host pushed to Downloads.
+     *
+     * Entry is through the empty vault's own "Restore data" shortcut rather than the Backup &
+     * Restore tab: it is one tap instead of two, and it only exists while the vault is empty, so it
+     * doubles as a check that sign-up really did leave an empty vault.
+     *
+     * The fixture's file name arrives as an instrumentation argument instead of being duplicated
+     * here, because the host is what puts the file on the device — two copies of that name would
+     * eventually disagree, and the failure would look like a picker bug.
+     */
+    private fun restoreGoldenBackup() {
+        val fixtureFile = requiredArgument(FIXTURE_ARGUMENT)
+
+        ui.awaitText(RESTORE_DATA_BUTTON).click()
+        SafDocumentPicker(ui).selectFromDownloads(fixtureFile)
+
+        ui.awaitText(RESTORE_PROMPT)
+        ui.textField(RESTORE_PASSWORD_LABEL).text = BACKUP_PASSWORD
+        ui.awaitText(CONFIRM_BUTTON).click()
+
+        // The restore runs through a WorkManager worker that decrypts and re-encrypts every record,
+        // so it is allowed far longer than an ordinary UI transition.
+        ui.awaitText(RESTORE_SUCCESS_MESSAGE, RESTORE_TIMEOUT_MS)
+        ui.awaitText(OK_BUTTON).click()
+    }
+
+    /**
+     * Asserts every record the fixture contains is listed.
+     *
+     * "Data has been successfully restored." is the app's own claim, and a claim is not evidence: a
+     * restore that decrypted the file but wrote nothing would still show it. Checking the titles
+     * turns Phase A into something that fails where the defect is, rather than leaving Phase C to
+     * fail confusingly against an empty vault.
+     *
+     * All the titles are collected before failing so the message names everything missing, not just
+     * the first one.
+     */
+    private fun assertFixtureRecordsPresent() {
+        ui.awaitText(RECORDS_TAB).click()
+
+        val missing = FIXTURE_RECORD_TITLES.filter { ui.scrollToText(it) == null }
+        check(missing.isEmpty()) {
+            "the restore reported success, but ${missing.size} of ${FIXTURE_RECORD_TITLES.size} " +
+                "fixture records are not listed: $missing${ui.describeScreen()}"
+        }
+    }
+
+    /**
+     * Reads an instrumentation argument, failing loudly when it is absent.
+     *
+     * No default is provided on purpose. A default would let a hand-run `am instrument` silently
+     * disagree with what the host actually pushed, which is precisely the kind of quiet mismatch
+     * this harness exists to catch.
+     *
+     * @param name argument name, passed by the host as `-e <name> <value>`
+     * @return the argument's value
+     */
+    private fun requiredArgument(name: String): String =
+        InstrumentationRegistry.getArguments().getString(name)
+            ?: error(
+                "missing instrumentation argument '$name'. scripts/run-upgrade-test.sh passes it; " +
+                    "a hand-run invocation needs -e $name <value>",
+            )
 
     /**
      * Starts the app under test and waits for the screen the caller expects, re-launching it if
@@ -115,48 +195,15 @@ class UpgradeSmokeTest {
 
         repeat(LAUNCH_ATTEMPTS) { attempt ->
             context.startActivity(intent)
-            val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else FIND_TIMEOUT_MS
+            val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else UiSupport.FIND_TIMEOUT_MS
             device.wait(Until.findObject(By.text(expectedHeading)), timeout)
                 ?.let { return it }
             device.pressBack()
         }
         error(
             "'$expectedHeading' never appeared in $LAUNCH_ATTEMPTS attempts at launching " +
-                "$APP_PACKAGE, even after dismissing a possible system prompt${describeScreen()}",
+                "$APP_PACKAGE, even after dismissing a possible system prompt${ui.describeScreen()}",
         )
-    }
-
-    private fun awaitText(text: String): UiObject2 = awaitObject(By.text(text))
-
-    private fun awaitObject(selector: BySelector): UiObject2 =
-        device.wait(Until.findObject(selector), FIND_TIMEOUT_MS)
-            ?: error("could not find $selector within ${FIND_TIMEOUT_MS}ms${describeScreen()}")
-
-    /**
-     * Resolves the editable field belonging to a Compose `OutlinedTextField`.
-     *
-     * The label and the editable node are separate leaves, so the label is located first and its
-     * container searched for the `EditText` that Compose exposes to the accessibility layer.
-     */
-    private fun textField(label: String): UiObject2 {
-        val labelNode = awaitText(label)
-        return labelNode.parent?.findObject(By.clazz("android.widget.EditText"))
-            ?: error("no editable field beside the '$label' label${describeScreen()}")
-    }
-
-    /**
-     * A CI failure on an emulator nobody can attach to is only actionable if it carries the screen
-     * with it, so every failure message in this class ends with the window hierarchy.
-     */
-    private fun describeScreen(): String = buildString {
-        append("\ncurrent window hierarchy:\n")
-        append(runCatching { device.windowHierarchy() }.getOrElse { "  <unavailable: $it>" })
-    }
-
-    private fun UiDevice.windowHierarchy(): String {
-        val sink = ByteArrayOutputStream()
-        dumpWindowHierarchy(sink)
-        return sink.toString(Charsets.UTF_8.name())
     }
 
     private companion object {
@@ -166,6 +213,10 @@ class UpgradeSmokeTest {
         // password must satisfy PasswordValidator: mixed case, two digits, a symbol, length >= 7.
         const val MASTER_PASSWORD = "Upgrade@Test12"
         const val PASSWORD_HINT = "upgrade fixture"
+
+        // Independent of the master password: a .bak is encrypted under a password chosen at export
+        // time. This one is recorded in upgrade-test/src/main/assets/fixtures/README.md.
+        const val BACKUP_PASSWORD = "Fixture@Backup1"
 
         const val SIGNUP_HEADING = "Welcome !"
         const val UNLOCK_HEADING = "Welcome Back !"
@@ -179,9 +230,36 @@ class UpgradeSmokeTest {
         const val SIGNUP_HINT_LABEL = "Hint*"
         const val UNLOCK_PASSWORD_LABEL = "Password"
 
+        // The restore dialog's own field. Spelled separately from UNLOCK_PASSWORD_LABEL despite
+        // being the same string: they are different screens owned by different code, and collapsing
+        // them would make a rename of either look safe when it is not.
+        const val RESTORE_PASSWORD_LABEL = "Password"
+
+        const val RESTORE_DATA_BUTTON = "Restore data"
+        const val RESTORE_PROMPT = "Please enter the password that was used to make the backup file."
+        const val CONFIRM_BUTTON = "Confirm"
+        const val RESTORE_SUCCESS_MESSAGE = "Data has been successfully restored."
+        const val OK_BUTTON = "OK"
+        const val RECORDS_TAB = "Records"
+
+        const val FIXTURE_ARGUMENT = "fixtureFile"
+
+        // Titles of every record in v2_pre_totp.bak: 2 logins, 2 bank accounts, 2 cards, 1 note.
+        // Source of truth is the fixture README, which was produced by decrypting the file rather
+        // than by reading it off a screen.
+        val FIXTURE_RECORD_TITLES = listOf(
+            "login 1",
+            "login 2",
+            "BA 1",
+            "ba 2",
+            "card 1",
+            "card 2",
+            "note",
+        )
+
         const val LAUNCH_TIMEOUT_MS = 30_000L
-        const val FIND_TIMEOUT_MS = 15_000L
         const val SIGN_UP_TIMEOUT_MS = 15_000L
+        const val RESTORE_TIMEOUT_MS = 60_000L
 
         // Two extra tries are enough for the one recoverable cause seen so far (a system prompt
         // stealing the window, plus the back press that dismisses it landing on the launcher).

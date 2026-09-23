@@ -23,6 +23,14 @@ TEST_PACKAGE="com.andryoga.safebox.upgradetest"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 TEST_CLASS="com.andryoga.safebox.upgradetest.UpgradeSmokeTest"
 
+# The golden backup Phase A restores. It has to be one the *baseline* can read, which is why it is
+# the BACKUP_VERSION 2 fixture and not a newer one - see docs/testing/upgrade-testing.md section 4.
+# The name is passed to the instrumentation rather than repeated in Kotlin: the host is what puts
+# the file on the device, so the host owns its name.
+FIXTURE_FILE="v2_pre_totp.bak"
+FIXTURE_SOURCE="upgrade-test/src/main/assets/fixtures/$FIXTURE_FILE"
+DEVICE_DOWNLOADS="/sdcard/Download"
+
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
     exit 2
@@ -42,6 +50,13 @@ for apk in "$baseline_apk" "$new_apk" "$test_apk"; do
         exit 1
     fi
 done
+
+# Checked here rather than at the push, which happens after two installs: a typo in the fixture
+# name should cost nothing, not a wiped device and a minute of setup.
+if [ ! -s "$FIXTURE_SOURCE" ]; then
+    echo "error: $FIXTURE_SOURCE is missing or empty - run this from the repo root." >&2
+    exit 1
+fi
 
 mkdir -p "$out_dir"
 
@@ -184,6 +199,15 @@ echo "firstInstallTime=$first_install_before"
 echo "== Install harness =="
 adb install "$test_apk"
 
+# Phase A seeds the vault by restoring this through the real document picker, so the file has to be
+# somewhere the picker can see - app-private storage is not. MediaProvider is asked to rescan
+# because DocumentsUI lists the Downloads root from the media database, not from the filesystem: a
+# pushed file that nobody announced is on disk but not offered.
+echo "== Push fixtures =="
+adb push "$FIXTURE_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
+adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
+echo "$FIXTURE_FILE -> $DEVICE_DOWNLOADS/"
+
 # Each phase runs exactly one test method. A comma-separated filter silently runs only the first
 # class, and any filter that matches nothing exits 0 - which is what the guard below exists for.
 run_phase() {
@@ -194,12 +218,14 @@ run_phase() {
     # The exit status of am instrument is deliberately ignored: it is 0 for a failed test, 0 for a
     # filter that matched nothing, and 0 for a run that never started. The output is the only
     # trustworthy signal, so it is parsed instead.
-    adb shell am instrument -w -r -e class "$TEST_CLASS#$method" \
+    adb shell am instrument -w -r \
+        -e class "$TEST_CLASS#$method" \
+        -e fixtureFile "$FIXTURE_FILE" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
     assert_instrumentation_ran "$output" "$min_tests"
 }
 
-run_phase seed signUpOnBaselineBuild 1
+run_phase seed seedVaultOnBaselineBuild 1
 
 echo "== Upgrade in place =="
 # force-stop, never `pm clear` and never `uninstall`: wiping /data would turn this into a
