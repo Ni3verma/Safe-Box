@@ -112,14 +112,26 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # API 34 only to start (decision 6). aosp-atd is sufficient because ML Kit is the bundled
-      # barcode-scanning artifact, so no Google Play services are needed.
+      # API 34 only to start (decision 6).
+      #
+      # NOT aosp_atd, however much faster it boots. ATD images strip the system apps a test is
+      # assumed not to need, and DocumentsUI is one of them: run 35863723921 sent
+      # ACTION_OPEN_DOCUMENT and got `com.android.fakesystemapp`, the ATD placeholder, in the
+      # foreground. Phase A restores its fixture through the real SAF picker, so on ATD it cannot
+      # work at all. `default` is plain AOSP, which ships DocumentsUI, and no Google APIs are
+      # needed here because ML Kit is the bundled barcode-scanning artifact.
+      #
+      # The profile is pinned for the same reason it is pinned nowhere else: with no hardware
+      # profile the emulator boots `androidboot.qemu.skin=320x640`, and every scroll and
+      # geometry assumption in the harness was written against a 1080x2400 handset. pixel_6
+      # matches that resolution.
       - name: Run the upgrade test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: aosp_atd
+          target: default
           arch: x86_64
+          profile: pixel_6
           script: ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
 
       - name: Upload harness output

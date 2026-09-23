@@ -44,7 +44,7 @@ All checked on 2026-09-20/21 against the real artifacts, not assumed.
 | `versionCode` is monotonic | yes | 23 → 28 → 9999999 (local) |
 | Black-box automation works on the minified APK | yes | `uiautomator dump` returned `Welcome !`, `Password*`, `Sign Up`, `content-desc="Toggle sensitive data visibility"` |
 | No app change needed for selectors | yes | production has zero `testTag`; the existing suite already uses text and content description exclusively |
-| Runs without Google Play services | yes | ML Kit is the **bundled** `com.google.mlkit:barcode-scanning`, so `aosp-atd` images suffice |
+| Runs without Google Play services | yes | ML Kit is the **bundled** `com.google.mlkit:barcode-scanning`, so a plain AOSP `default` image suffices. Not `aosp-atd`, though: ATD strips DocumentsUI, and Phase A restores through the real SAF picker — see run [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921) |
 
 ### Hard constraints
 
@@ -165,6 +165,19 @@ each, binary, and never edited after creation, so plain git is fine — no LFS n
 All use one fixed backup password committed in the harness. Synthetic data only — never a real
 vault.
 
+Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage that first asserts
+on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR4, `corrupt` in MR5 — rather than up
+front; see [MR2](#mr2--seeding) for why.
+
+> [!NOTE]
+> `v1_legacy.bak` survives the baseline floor being raised to `v2.0.4.0`, and the distinction is
+> worth keeping straight: the floor says *we no longer test upgrading from a v1 install*, not *we no
+> longer accept v1 backup files*. A `.bak` outlives the install that produced it — a user who
+> exported one in 2021 and has upgraded several times since can still restore it today — so the
+> file format stays in scope even though the install path does not. Capturing it needs the
+> `v1.3.3.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
+> the pre-Compose UI rules out.
+
 > [!CAUTION]
 > `v2_pre_totp.bak` is the only irreversible item in this whole design, and it now **exists**:
 > `BACKUP_VERSION = 2`, 2 login / 2 bank account / 2 bank card / 1 secure note, no authenticator
@@ -185,8 +198,8 @@ vault.
 | A3 | restore a golden `.bak` through the real SAF picker | seeds every record type in one interaction instead of ~50 taps |
 | A4 | create one extra record **of each type through the UI** | restore writes via the worker, the UI writes via the repository — two different encryption call sites |
 | A5 | set the backup directory and move 2–3 settings off their defaults | a prefs/DataStore migration bug is invisible if every value is still the default |
-| A6 | copy a password to the clipboard | enqueues `ClipboardClearWorker`, so WorkManager's DB is non-empty across the upgrade |
-| A7 | capture the oracle: per-type counts, every field of one known record per type, current TOTP code | |
+| ~~A6~~ | ~~copy a password to the clipboard~~ | **Dropped 2026-09-23.** `ClipboardClearWorker` does not exist in the `v2.0.4.0` baseline, so Phase A cannot enqueue it. WorkManager's DB is non-empty anyway: A3's restore runs through `RestoreDataWorker`. |
+| A7 | capture the oracle: per-type counts and every field of one record per type, read back through the UI | nothing time-varying may enter it, so no timestamps and no TOTP code — those are read where they can be checked, after the upgrade |
 | A8 | `adb shell am force-stop` | **never** `pm clear`, **never** `uninstall` |
 
 ### Phase B — the upgrade
@@ -231,7 +244,7 @@ check is what stops this decaying into a fresh-install test a year from now.
 13. For an authenticator restored from the fixture, assert the six displayed digits equal an
     RFC 6238 value computed **inside the test** with a local Base32 + HMAC-SHA1 helper. Never call
     app code for the expected value.
-14. Determinism: `adb root` works on `aosp-atd` (userdebug), so `settings put global auto_time 0`
+14. Determinism: `adb root` works on the `default` image (userdebug), so `settings put global auto_time 0`
     then set a fixed instant. Without root, assert against the current **and** previous 30-second
     window.
 15. This is the only assertion that proves the **seed itself decrypted correctly**, rather than
@@ -311,10 +324,10 @@ version**. That makes almost everything derivable from the release list alone. A
 | Rule | Meaning | Resolves to today |
 |---|---|---|
 | `previous` | newest stable release before the tag being built, that has a `SafeBox-qa.apk` | `v2.0.4.0` |
-| `schema-boundary` | for each distinct `DBVERSION` older than the current one, the newest stable release carrying it | `v1.3.3.1` (db 3) |
-| `oldest` | the oldest release that still has an archived `SafeBox-qa.apk` | `v1.3.3.0` |
+| `schema-boundary` | for each distinct `DBVERSION` older than the current one, the newest stable release carrying it | `v2.0.4.0` (db 4; this branch is on db 5) |
+| `oldest` | the oldest release that still has an archived `SafeBox-qa.apk`, at or above the floor | `v2.0.4.0` |
 
-After de-duplication that is **two to three jobs**, and it self-adjusts as you ship — no workflow
+After de-duplication that is **one to three jobs**, and it self-adjusts as you ship — no workflow
 edits, ever.
 
 Defaults and why:
@@ -324,12 +337,31 @@ Defaults and why:
   thing carrying a schema.
 - **Not every historical pair.** That is `O(n²)` and buys nothing; a v1.5 → v2.2 upgrade exercises
   the same migration chain as v1.4 → v2.2.
-- **One optional human-maintained value:** a floor in `upgrade-test/oldest-supported.txt`, if you
-  ever decide you no longer care about installs older than some date. "How far back do we support"
-  is a product decision and is the only thing a script cannot infer. Default: no floor.
+- **One human-maintained value:** the floor in
+  [`upgrade-test/oldest-supported.txt`](../../upgrade-test/oldest-supported.txt). "How far back do
+  we support" is a product decision and is the only thing a script cannot infer.
 
 Of the 18 releases, 15 carry a QA APK — the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`)
-predate the upload step, so `oldest` bottoms out at `v1.3.3.0` automatically.
+predate the upload step.
+
+### The floor is `v2.0.4.0` — decided 2026-09-23
+
+Two independent reasons, which happen to agree:
+
+1. **Nobody meaningful is still on 1.x**, so upgrades from there are not a path worth protecting.
+2. **The harness could not drive them anyway.** Phase A seeds the vault through the UI, and the
+   Compose rewrite landed in `331ee64` *"Compose UI - v2.x (#135)"*. Every `v1.x` tag ships eight
+   XML layouts and zero `*Screen.kt`; every selector in the harness is a Compose one. Verified with
+   `git ls-tree -r --name-only <tag> -- app/src/main/res/layout`.
+
+Supporting a lower floor is therefore not a configuration change but a second Phase A implementation
+against a UI that no longer exists in the tree. If that is ever wanted, it needs its own decision.
+
+This currently leaves **one** candidate, so all three rules resolve to it and the matrix is a single
+job. That is expected, and self-correcting: when v2.1 ships, `previous` moves to it and `v2.0.4.0`
+becomes `oldest` and the schema-4 boundary again. A floor naming a tag that carries no QA APK is
+rejected outright rather than ignored, because a silently-ignored floor would resume testing exactly
+the upgrades it was written to stop.
 
 ---
 
@@ -362,8 +394,9 @@ predate the upload step, so `oldest` bottoms out at `v1.3.3.0` automatically.
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: aosp_atd
+          target: default
           arch: x86_64
+          profile: pixel_6
           script: ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk new-apk/SafeBox-qa.apk
 
       - uses: actions/upload-artifact@v7
@@ -469,7 +502,8 @@ on the baseline, upgrade, assert the unlock screen appears.
   Getting there took a fourth run: the first stability attempt was 2 green of 3, and the failure was
   a real device-specific flake in the launch recovery, not noise —
   [Launching the app](upgrade-harness-operations.md#launching-the-app) records it.
-- **Green on CI's API 34 `aosp_atd` image**, run
+- **Green on CI's API 34 `aosp_atd` image** — the target at the time; MR2 had to move off it
+  because ATD ships no DocumentsUI — run
   [35818905257](https://github.com/Ni3verma/Safe-Box/actions/runs/35818905257) against the final
   commit: `Baseline: v2.0.4.0` resolved by the script rather than typed in, baseline `versionCode`
   23 upgraded to 9999999, `firstInstallTime` `04:38:49` identical before and after, both phases
@@ -494,11 +528,110 @@ logcat crash sentinel (MR3, Group 9). MR1 also leaves two things behind that a l
 remove rather than merely add to — both are rows in [Carried-forward debt](#carried-forward-debt),
 which is the list to check when planning any later MR.
 
-### MR2 — fixtures and seeding
+### MR2 — seeding
 
-Remaining fixtures, the SAF picker helper, and full Phase A automation.
+The SAF picker helper and full Phase A automation, plus the oracle that makes Phase A's result
+checkable. Seeding infrastructure only.
 
-- Acceptance: Phase A reliably produces an identical vault ten runs in a row.
+**Fixture capture is deliberately not here**, despite the stage's original name. Phase A restores
+exactly one fixture and it has to be one the *baseline* can read, which means `v2_pre_totp.bak`
+(`BACKUP_VERSION = 2`) — already captured in MR0. Every other fixture in section 4 moves to the
+stage whose assertions consume it, because capturing a fixture before the test that reads it is
+written means guessing at its contents and re-capturing later:
+
+| Fixture | Moved to | Why it cannot be done usefully now |
+|---|---|---|
+| `v1_legacy.bak` | MR4 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR4 asserts on. |
+| `v3_current.bak` | MR4 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR4's TOTP and round-trip assertions. |
+| `v3_adversarial.bak` | MR4 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
+| `corrupt.bak` | MR5 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR5 needs it. |
+
+- Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
+  is not directly observable through a black-box UI, so Phase A ends by writing an oracle file on
+  the device — per-type record counts, every field of one known record per type, the backup
+  location and the settings moved off their defaults — which the host pulls and diffs across runs.
+  Not the password hint: reading it needs the app locked, which Phase A never does, so it is a
+  debt row against MR3 rather than part of this oracle. Values
+  that legitimately vary (the current TOTP code, timestamps) are excluded by construction rather
+  than filtered afterwards, so a diff is always a real defect.
+- Also in scope, found while starting the stage: the orchestrator resolves its target device once
+  and refuses a non-emulator unless `UPGRADE_TEST_ALLOW_PHYSICAL=1`. Phase A is far more
+  destructive than MR1's sign-up, and a developer with a handset attached is the normal case.
+
+**Delivered so far** — A1–A5 and A7 are green end to end on the Pixel 8 API 35 emulator: sign up,
+restore `v2_pre_totp.bak` through the real picker, create one record of each type through the forms,
+assert all eleven rows are listed, grant a backup directory through the tree picker, turn two
+settings off their defaults, then read the whole vault back and write the oracle. Five things were
+settled by doing it:
+
+| Settled | Consequence |
+|---|---|
+| Restore **replaces** the vault, it does not merge | The seed order is forced: restore first, then create records. Creating first would have them deleted. |
+| UI Automator's `wait`/`Until` read a cached tree that survives app navigations | Every lookup in the harness flushes the accessibility cache per poll. This is not a preference; it is the difference between Phase A passing and hanging for 60 s on a screen that is not there. See [upgrade-harness-operations.md](upgrade-harness-operations.md#the-accessibility-cache-goes-stale-and-it-costs-a-day). |
+| Android will not grant a document tree over shared storage's root or over `Download` | The backup location is a dedicated `/sdcard/SafeBoxUpgradeTest`, created and reset by the host each run. The refusal is silent from the test's side, so this is not discoverable from a failure message. |
+| The baseline **silently discards** a card expiry longer than four characters | Phase A seeded `12/30` into a field with `maxLength = 4` and the whole value was rejected, so A4's "every field is filled" was false for a week and nothing said so. The oracle caught it because it reads fields back by name. Seeds now carry `1230`. |
+| Reading the UI is geometry, and geometry needs a guard | The records list has no node per row, so titles are paired to type chips by position — a method that cannot tell a wrong answer from a right one. The pairing is therefore checked against what Phase A seeded, in both directions. See [upgrade-harness-operations.md](upgrade-harness-operations.md#reading-the-records-list). |
+
+Both guards were proved by making them fail. The missing-directory case was proved by deleting the
+host's `mkdir`: Phase A failed in 64 s naming the directory it could not find, rather than granting
+something arbitrary. The oracle's "missing record" guard was proved by adding a title Phase A never
+creates, which failed with `Missing: [NEGATIVE PROOF]`. Its "unexpected record" guard needed no
+contrivance — it caught the list's type-filter row being read as a twelfth record, which is the
+defect it exists to catch.
+
+**A6 was removed from this stage, 2026-09-23.** It asked Phase A to copy a field to the clipboard so
+`ClipboardClearWorker` would leave rows in WorkManager's database for the upgrade to carry across.
+That worker does not exist in the baseline: `git ls-tree v2.0.4.0 -- app/src/main/java/com/andryoga/safebox/worker/`
+lists only `BackupDataWorker`, `RestoreDataWorker` and `SafeBoxWorkerFactory`, and
+`ClipboardClearWorker.kt` arrives with commit `1540952` (TOTP support, #241), well after the floor.
+Phase A drives the baseline, so there was nothing to trigger. The property it was reaching for is
+still covered: the restore Phase A already performs runs through `RestoreDataWorker`, so WorkManager's
+database is populated before the upgrade either way. Clipboard-worker behaviour moves to a
+post-upgrade stage, where the worker exists.
+
+**Acceptance met locally, 2026-09-23.** Ten consecutive runs on the Pixel 8 API 35 emulator produced
+a 43-line oracle with a single MD5 across all ten, `b20702ff15ea5e1dd8c44bcdc99c7717`, via
+`scripts/check-oracle-determinism.sh`. A run takes about two minutes, of which 112 s is Phase A, so
+the ten-run check is something to run when the seeding or the oracle changes — not something to add
+to CI.
+
+**Local green was not enough, and the first CI run proved it.** Phase A had never run on the CI
+image until PR #261 was labelled, and run
+[35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921) failed at the first
+SAF call: `aosp_atd` ships no DocumentsUI, so `ACTION_OPEN_DOCUMENT` landed on
+`com.android.fakesystemapp`. The same run also exposed a second latent problem — with no `profile`
+pinned the emulator boots a `320x640` screen, against which every geometry assumption in the
+harness was untested. Both are fixed in the workflow, and **a green labelled run is part of MR2's
+acceptance**; the lesson is that "green locally" and "green on CI" are different claims for a
+harness whose whole job is to drive system UI.
+
+The second labelled run, [35875270225](https://github.com/Ni3verma/Safe-Box/actions/runs/35875270225),
+got as far as the last of the four UI-created records and found a third defect of the same family:
+`typeInto` set a field and returned, but the value only reaches the ViewModel one Compose
+`onValueChange` later, and the form saves `_uiState.value` when Save is pressed. 168 ms was enough
+locally and not enough on CI, so the Note record was written **empty** — the form closed like a
+success and the run failed 20 s later looking for a row that never existed. `typeInto` now waits
+for the field to read back non-empty. Ten local runs had passed over this every time, which is the
+argument for running the job on CI before merging rather than after.
+
+**Acceptance met on CI, 2026-09-23**, run
+[35883960498](https://github.com/Ni3verma/Safe-Box/actions/runs/35883960498): both phases reported
+`OK (1 test)` through the guard, and the oracle it pulled is **byte-identical to the local one** —
+MD5 `b20702ff15ea5e1dd8c44bcdc99c7717`, 43 lines, `diff` clean. That is a stronger result than the
+job passing. The same vault description now comes back from two different system images (AOSP
+`default` vs the Google-APIs local emulator), two API levels (34 vs 35) and two device profiles
+(`pixel_6` vs Pixel 8, 411 dpi vs 420 dpi), which is the evidence that the oracle describes the
+*data* rather than the device it was read on — exactly the property MR3 needs before it can treat
+a pre/post diff as a defect. **MR2 is complete.**
+
+The review on PR #261 found seven real defects, all latent rather than currently failing, and the
+acceptance was re-run afterwards: the same MD5, which is what establishes that the fixes changed
+robustness and not behaviour. Two are worth carrying forward:
+
+| Found | Why it matters beyond MR2 |
+|---|---|
+| The picker pinned `com.google.android.documentsui` | The package differs by image, so anything selecting on a system app's package or resource ids must match both spellings — and the symptom, "the picker never came to the foreground", does not point at a package name. The review's stated reason was wrong in a more interesting way: CI's `aosp_atd` image ships **no** DocumentsUI at all, only the `com.android.fakesystemapp` placeholder, which no pattern can match. The regex was right; the image was the bug. |
+| `scrollToText` spent its whole 15 s patience *before* scrolling | Every lookup below the fold cost the full timeout: 181 s of a 269 s Phase A, measured from UiAutomator's poll log. Fixing it made Phase A faster than it was before the review round (125 s → 112 s). Later stages add more list reading, so the pattern matters more, not less. |
 
 ### MR3 — data integrity assertions
 
@@ -507,9 +640,33 @@ Keystore continuity check.
 
 - Acceptance: passes against `v2.0.4.0`; fails loudly if the alias is deliberately wiped.
 
+**First task, before any assertion is written: re-key the oracle onto resource names**, per
+[ADR-0003](../decisions/0003-ui-labels-from-resource-names.md). MR3 is the stage that starts
+comparing an oracle captured from the old app against one captured from the new one, which is
+precisely where keying on displayed text stops working: a renamed label or a changed separator in
+any future release becomes indistinguishable from data loss, and the cheap way out is to loosen the
+comparison. The ordering is not negotiable — retrofitting the key after twenty assertions exist is
+the kind of rework that does not get done, and every assertion written in the meantime is written
+against the wrong key.
+
+Concretely, `field.ui login.User Id=ui-user` becomes `field.ui login.user_id=ui-user`, with the
+label resolved from the installed APK at runtime. This changes the oracle's bytes, so MR2's ten-run
+determinism acceptance must be re-established on the new format as part of this stage — a new MD5,
+recorded the same way.
+
 ### MR4 — migration, TOTP, backup round trip
 
 Groups 4–6, including the independent RFC 6238 computation and clock freezing.
+
+- **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
+  This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`
+  retired v1 *installs*; it did not retire v1 *files*, because a `.bak` outlives the install that
+  wrote it and a user who exported one years ago can still restore it today. The fixture is
+  captured by hand from the `v1.3.3.0` QA APK — only *automated* seeding is ruled out by that
+  release's XML UI, and a one-off manual capture is not automated seeding.
+- Acceptance: restoring `v1_legacy.bak` into the build under test yields the record counts and
+  field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and
+  a backup carrying no authenticator key at all.
 
 ### MR5 — backward-compat and graceful failure
 
@@ -535,6 +692,9 @@ discovering the debt from a code comment.
 |---|---|---|---|---|
 | MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
 | MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
+| MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR5 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
+| MR2 | The oracle is keyed on **displayed labels** (`field.ui login.User Id=…`) rather than resource names | The moment a pre-upgrade oracle is diffed against a post-upgrade one, any renamed label or changed separator reads as data loss, and the cheap fix is to weaken the comparison. [ADR-0003](../decisions/0003-ui-labels-from-resource-names.md) settles the key; MR2 predates it. | MR3, before its first assertion | the oracle contains `field.ui login.user_id=…`, labels are resolved through `getResourcesForApplication`, and the ten-run acceptance is re-established on the new format |
+| MR2 | The oracle records nothing about the **password hint**, though Phase A sets one (`upgrade fixture`) | The hint is user data: the unlock screen's `Show Hint` is the only way back into a vault whose password has been forgotten. Nothing in the harness reads it, so an upgrade that drops or garbles it passes every phase silently. Phase A cannot read it without locking the app, which it currently never does. | MR3, which already has to drive the unlock screen on the post-upgrade side | the oracle carries the hint on both sides of the upgrade, captured by locking the app and tapping `Show Hint`, and the ten-run acceptance still holds |
 
 ---
 

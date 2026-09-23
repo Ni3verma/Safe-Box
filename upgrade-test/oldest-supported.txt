@@ -1,0 +1,20 @@
+# The oldest release this harness will upgrade *from*, inclusive.
+#
+# scripts/resolve-baselines.sh discards every candidate older than this before applying the
+# previous / schema-boundary / oldest rules. It is the one input the script cannot derive: "we no
+# longer care about upgrades from before X" is a judgement, not a fact about the release list.
+#
+# Why v2.0.4.0, decided 2026-09-23:
+#
+#   1. Nobody meaningful is still on 1.x, so an upgrade from there is not a path worth protecting.
+#   2. It is also the oldest release the harness *can* drive. Phase A seeds the vault through the
+#      UI, and the Compose rewrite landed in 331ee64 "Compose UI - v2.x (#135)" - every v1.x tag
+#      ships XML layouts (8 of them, zero *Screen.kt files) and every selector in the harness is a
+#      Compose one. Lowering this line without rewriting Phase A produces failures that look like
+#      upgrade bugs and are not.
+#
+# Today this leaves exactly one candidate, so all three rules resolve to it. That is expected and
+# self-correcting: the moment a v2.1 ships, `previous` moves to it and this becomes `oldest` again.
+#
+# Raise this line when a release stops mattering. Lowering it means teaching Phase A a second UI.
+v2.0.4.0

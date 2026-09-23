@@ -110,7 +110,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   (449 × `onNodeWithText`) and content description (101 × `onNodeWithContentDescription`).
   Verified 2026-09-20.
 - ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
-  required and `aosp-atd` images are sufficient.
+  required. `aosp-atd` suffices for `:app`'s own UI tests but **not** `:upgrade-test` (no DocumentsUI).
 - **`:upgrade-test`** is a self-instrumenting `com.android.test` module for black-box upgrade
   testing. `:upgrade-test:assembleDebug` runs **zero `:app` tasks** (verified 2026-09-22), so R8
   cannot break it. Gradle only assembles it — `scripts/run-upgrade-test.sh` installs and drives it.

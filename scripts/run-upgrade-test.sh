@@ -23,6 +23,25 @@ TEST_PACKAGE="com.andryoga.safebox.upgradetest"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 TEST_CLASS="com.andryoga.safebox.upgradetest.UpgradeSmokeTest"
 
+# The golden backup Phase A restores. It has to be one the *baseline* can read, which is why it is
+# the BACKUP_VERSION 2 fixture and not a newer one - see docs/testing/upgrade-testing.md section 4.
+# The name is passed to the instrumentation rather than repeated in Kotlin: the host is what puts
+# the file on the device, so the host owns its name.
+FIXTURE_FILE="v2_pre_totp.bak"
+FIXTURE_SOURCE="upgrade-test/src/main/assets/fixtures/$FIXTURE_FILE"
+DEVICE_DOWNLOADS="/sdcard/Download"
+
+# The directory Phase A grants the app as its backup location. A dedicated directory is not a
+# tidiness preference: Android refuses to grant a tree over the root of shared storage or over
+# Download, and the picker's refusal looks like a tap that missed. Created by the host so the test
+# never has to drive the picker's "create folder" flow.
+BACKUP_DIR="SafeBoxUpgradeTest"
+DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
+
+# What Phase A writes into the harness's own app-private storage, and what the ten-run determinism
+# acceptance diffs. Named by VaultOracle.ORACLE_FILE_NAME; the two have to agree.
+ORACLE_FILE="phase-a-oracle.txt"
+
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
     exit 2
@@ -42,6 +61,13 @@ for apk in "$baseline_apk" "$new_apk" "$test_apk"; do
         exit 1
     fi
 done
+
+# Checked here rather than at the push, which happens after two installs: a typo in the fixture
+# name should cost nothing, not a wiped device and a minute of setup.
+if [ ! -s "$FIXTURE_SOURCE" ]; then
+    echo "error: $FIXTURE_SOURCE is missing or empty - run this from the repo root." >&2
+    exit 1
+fi
 
 mkdir -p "$out_dir"
 
@@ -75,8 +101,50 @@ installed_field() {
         sed -n "s/^[[:space:]]*$1=\(.*\)$/\1/p" | head -n 1
 }
 
+# Every adb call in this script is bare `adb`, which honours ANDROID_SERIAL. The target is
+# therefore resolved once and exported, rather than left to adb's "is there exactly one device
+# right now" rule: a second device appearing mid-run (a phone plugged in to charge is enough)
+# would otherwise break the run at whichever step happened to come next.
+resolve_device() {
+    if [ -n "${ANDROID_SERIAL:-}" ]; then
+        printf '%s\n' "$ANDROID_SERIAL"
+        return
+    fi
+    local attached count
+    attached=$(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+    count=$(printf '%s' "$attached" | grep -c . || true)
+    if [ "$count" -ne 1 ]; then
+        echo "error: expected exactly one connected device, found $count." >&2
+        echo "       Set ANDROID_SERIAL to choose one. Attached:" >&2
+        adb devices -l | sed -n '2,$p' >&2
+        exit 1
+    fi
+    printf '%s\n' "$attached"
+}
+ANDROID_SERIAL=$(resolve_device)
+export ANDROID_SERIAL
+
 adb wait-for-device
-echo "Device: $(adb shell getprop ro.build.version.release | tr -d '\r') (API $(adb shell getprop ro.build.version.sdk | tr -d '\r'))"
+
+# This run is destructive by design: it uninstalls the QA build, then drives a scripted sign-up
+# against whatever is left. That is fine on a throwaway emulator and is not fine on a handset
+# somebody carries, where the QA build may hold real data - and a green result from a personal
+# phone is misleading anyway, because it says nothing about the image CI actually uses.
+device_characteristics=$(adb shell getprop ro.build.characteristics | tr -d '\r')
+case "$device_characteristics" in
+    *emulator*) ;;
+    *)
+        if [ "${UPGRADE_TEST_ALLOW_PHYSICAL:-0}" != "1" ]; then
+            echo "error: $ANDROID_SERIAL ($(adb shell getprop ro.product.model | tr -d '\r')) is not an emulator." >&2
+            echo "       This run uninstalls $APP_PACKAGE and signs up from scratch on it." >&2
+            echo "       Re-run with UPGRADE_TEST_ALLOW_PHYSICAL=1 if that is genuinely intended." >&2
+            exit 1
+        fi
+        echo "warning: running against physical device $ANDROID_SERIAL by explicit request." >&2
+        ;;
+esac
+
+echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r') - $(adb shell getprop ro.build.version.release | tr -d '\r') (API $(adb shell getprop ro.build.version.sdk | tr -d '\r'))"
 
 # Logcat is collected whatever happens - a failure on a CI emulator nobody can attach to is only
 # actionable if the log comes back with it.
@@ -142,6 +210,23 @@ echo "firstInstallTime=$first_install_before"
 echo "== Install harness =="
 adb install "$test_apk"
 
+# Phase A seeds the vault by restoring this through the real document picker, so the file has to be
+# somewhere the picker can see - app-private storage is not. MediaProvider is asked to rescan
+# because DocumentsUI lists the Downloads root from the media database, not from the filesystem: a
+# pushed file that nobody announced is on disk but not offered.
+echo "== Push fixtures =="
+adb push "$FIXTURE_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
+adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
+echo "$FIXTURE_FILE -> $DEVICE_DOWNLOADS/"
+
+# Removed and recreated rather than just created: a backup file left behind by an earlier run would
+# still be there when the next one grants the same directory, and Phase A has to produce the same
+# state every time it runs. No rescan is needed here - unlike the Downloads root, the tree picker
+# lists directories from the filesystem, so this one is visible the moment it exists.
+adb shell rm -rf "$DEVICE_BACKUP_DIR"
+adb shell mkdir -p "$DEVICE_BACKUP_DIR"
+echo "backup location -> $DEVICE_BACKUP_DIR/"
+
 # Each phase runs exactly one test method. A comma-separated filter silently runs only the first
 # class, and any filter that matches nothing exits 0 - which is what the guard below exists for.
 run_phase() {
@@ -152,12 +237,27 @@ run_phase() {
     # The exit status of am instrument is deliberately ignored: it is 0 for a failed test, 0 for a
     # filter that matched nothing, and 0 for a run that never started. The output is the only
     # trustworthy signal, so it is parsed instead.
-    adb shell am instrument -w -r -e class "$TEST_CLASS#$method" \
+    adb shell am instrument -w -r \
+        -e class "$TEST_CLASS#$method" \
+        -e fixtureFile "$FIXTURE_FILE" \
+        -e backupDir "$BACKUP_DIR" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
     assert_instrumentation_ran "$output" "$min_tests"
 }
 
-run_phase seed signUpOnBaselineBuild 1
+run_phase seed seedVaultOnBaselineBuild 1
+
+# Read back with run-as rather than adb pull: the instrumentation writes to its own app-private
+# storage, which needs no permissions on the device and cannot be confused with anything the app
+# under test wrote. The harness APK is debug-signed, so run-as is allowed.
+echo "== Capture oracle =="
+adb exec-out run-as "$TEST_PACKAGE" cat "files/$ORACLE_FILE" > "$out_dir/$ORACLE_FILE" || true
+if [ ! -s "$out_dir/$ORACLE_FILE" ]; then
+    echo "error: Phase A produced no oracle at $out_dir/$ORACLE_FILE." >&2
+    echo "       The phase passed, so the capture wrote nothing or run-as was refused." >&2
+    exit 1
+fi
+echo "$ORACLE_FILE: $(wc -l < "$out_dir/$ORACLE_FILE" | tr -d ' ') lines"
 
 echo "== Upgrade in place =="
 # force-stop, never `pm clear` and never `uninstall`: wiping /data would turn this into a
