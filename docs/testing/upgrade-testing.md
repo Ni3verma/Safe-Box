@@ -607,6 +607,20 @@ Keystore continuity check.
 
 - Acceptance: passes against `v2.0.4.0`; fails loudly if the alias is deliberately wiped.
 
+**First task, before any assertion is written: re-key the oracle onto resource names**, per
+[ADR-0003](../decisions/0003-ui-labels-from-resource-names.md). MR3 is the stage that starts
+comparing an oracle captured from the old app against one captured from the new one, which is
+precisely where keying on displayed text stops working: a renamed label or a changed separator in
+any future release becomes indistinguishable from data loss, and the cheap way out is to loosen the
+comparison. The ordering is not negotiable — retrofitting the key after twenty assertions exist is
+the kind of rework that does not get done, and every assertion written in the meantime is written
+against the wrong key.
+
+Concretely, `field.ui login.User Id=ui-user` becomes `field.ui login.user_id=ui-user`, with the
+label resolved from the installed APK at runtime. This changes the oracle's bytes, so MR2's ten-run
+determinism acceptance must be re-established on the new format as part of this stage — a new MD5,
+recorded the same way.
+
 ### MR4 — migration, TOTP, backup round trip
 
 Groups 4–6, including the independent RFC 6238 computation and clock freezing.
@@ -646,6 +660,7 @@ discovering the debt from a code comment.
 | MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
 | MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
 | MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR5 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
+| MR2 | The oracle is keyed on **displayed labels** (`field.ui login.User Id=…`) rather than resource names | The moment a pre-upgrade oracle is diffed against a post-upgrade one, any renamed label or changed separator reads as data loss, and the cheap fix is to weaken the comparison. [ADR-0003](../decisions/0003-ui-labels-from-resource-names.md) settles the key; MR2 predates it. | MR3, before its first assertion | the oracle contains `field.ui login.user_id=…`, labels are resolved through `getResourcesForApplication`, and the ten-run acceptance is re-established on the new format |
 
 ---
 

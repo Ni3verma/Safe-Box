@@ -9,6 +9,7 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 |---|---|---|
 | [0001](0001-instrumentation-tests-run-on-debug-only.md) | Instrumentation tests run on the `debug` build only | Accepted |
 | [0002](0002-upgrade-testing-via-black-box-uiautomator.md) | Upgrade and release-build testing via a black-box UI Automator module | Accepted (design) |
+| [0003](0003-ui-labels-from-resource-names.md) | UI labels are resolved from the app's own resource names | Accepted |
 
 ## Format
 
