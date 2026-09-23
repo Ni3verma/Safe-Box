@@ -11,3 +11,5 @@
 app/releaseKeyStore.jks
 *.apk
 /.idea/
+# Where scripts/run-upgrade-test.sh drops logcat, instrumentation output and pulled oracles.
+/upgrade-test-out/
