@@ -103,16 +103,43 @@ internal class UiSupport(val device: UiDevice) {
     }
 
     /**
-     * Types into the field belonging to a label, re-finding it if it goes stale.
+     * Types into the field belonging to a label, re-finding it if it goes stale, and does not
+     * return until the app has taken the value.
      *
      * Same hazard as [clickObject]: setting text is a second round trip, and forms that are still
      * animating in invalidate the handle that was just found.
+     *
+     * The read-back is the important part, and it is not defensive programming. `ACTION_SET_TEXT`
+     * returns as soon as the *node* accepts the text; the app's state is updated later, when
+     * Compose routes it through `onValueChange`. The forms save whatever the ViewModel holds at
+     * the moment Save is pressed, so a harness that types and immediately taps Save is racing that
+     * hop — and losing the race saves an **empty** record rather than failing. CI run
+     * 35875270225 lost it: the Note form's two fields were set 168 ms before Save, the record was
+     * written with no title, and the run died much later looking for a row that was never going to
+     * exist. The same code had passed ten consecutive local runs, because a faster device wins the
+     * race every time.
+     *
+     * Emptiness is the condition, not equality: sensitive fields report their masked rendering
+     * rather than the text that was typed, so requiring the value back would fail on exactly the
+     * fields whose contents matter most.
      *
      * @param label the field's visible label
      * @param value the text to set
      */
     fun typeInto(label: String, value: String) {
         retryingOnStale { textField(label).text = value }
+        if (value.isEmpty()) return
+        val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
+        while (true) {
+            flushAccessibilityCache()
+            val shown = retryingOnStale { textField(label).text }
+            if (!shown.isNullOrEmpty()) return
+            check(SystemClock.uptimeMillis() < deadline) {
+                "the '$label' field is still empty after being set to '$value', so the app never " +
+                    "took the value and saving now would write an empty record${describeScreen()}"
+            }
+            SystemClock.sleep(POLL_INTERVAL_MS)
+        }
     }
 
     /**

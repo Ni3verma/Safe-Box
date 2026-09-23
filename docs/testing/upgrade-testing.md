@@ -604,6 +604,15 @@ harness was untested. Both are fixed in the workflow, and **a green labelled run
 acceptance**; the lesson is that "green locally" and "green on CI" are different claims for a
 harness whose whole job is to drive system UI.
 
+The second labelled run, [35875270225](https://github.com/Ni3verma/Safe-Box/actions/runs/35875270225),
+got as far as the last of the four UI-created records and found a third defect of the same family:
+`typeInto` set a field and returned, but the value only reaches the ViewModel one Compose
+`onValueChange` later, and the form saves `_uiState.value` when Save is pressed. 168 ms was enough
+locally and not enough on CI, so the Note record was written **empty** — the form closed like a
+success and the run failed 20 s later looking for a row that never existed. `typeInto` now waits
+for the field to read back non-empty. Ten local runs had passed over this every time, which is the
+argument for running the job on CI before merging rather than after.
+
 The review on PR #261 found seven real defects, all latent rather than currently failing, and the
 acceptance was re-run afterwards: the same MD5, which is what establishes that the fixes changed
 robustness and not behaviour. Two are worth carrying forward:

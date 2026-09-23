@@ -174,6 +174,18 @@ is the device's own name (`sdk_gphone64_arm64` locally, something else everywher
 > `com.android.fakesystemapp`, on a `320x640` screen, means the image, not the selector. Evidence:
 > run [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921).
 
+> [!CAUTION]
+> **Setting a field's text is not the same as the app having the text.** `ACTION_SET_TEXT` returns
+> once the node accepts it; the value reaches the ViewModel one Compose `onValueChange` later, and
+> the forms save `_uiState.value` at the instant Save is pressed. Type-then-immediately-save
+> therefore races that hop, and losing it writes an **empty record** instead of failing — the form
+> closes exactly as it would on success. The symptom surfaces far away: a later lookup cannot find
+> the row, because the record that was written has a blank title and sorts to the top of the list,
+> off the screen the failure dumps. `UiSupport.typeInto` blocks until the field reads back
+> non-empty for this reason; do not "simplify" it back to a bare `text = value`. Evidence: run
+> [35875270225](https://github.com/Ni3verma/Safe-Box/actions/runs/35875270225), where the Note
+> form's fields were set 168 ms before Save on a CI emulator, after ten consecutive local passes.
+
 After the restore, Phase A creates one record of each type through the app's own forms
 ([RecordCreator](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/RecordCreator.kt)),
 because a restore and a user's own input are two different encryption call sites and a defect in
