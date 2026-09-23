@@ -470,9 +470,13 @@ on the baseline, upgrade, assert the unlock screen appears.
   a real device-specific flake in the launch recovery, not noise —
   [Launching the app](upgrade-harness-operations.md#launching-the-app) records it.
 - **Green on CI's API 34 `aosp_atd` image**, run
-  [35727125638](https://github.com/Ni3verma/Safe-Box/actions/runs/35727125638): baseline
-  `versionCode` 23 upgraded to 9999999, `firstInstallTime` `12:32:26` identical before and after,
-  both phases reporting `OK (1 test)` through the guard. It took three CI runs to get there and
+  [35818905257](https://github.com/Ni3verma/Safe-Box/actions/runs/35818905257) against the final
+  commit: `Baseline: v2.0.4.0` resolved by the script rather than typed in, baseline `versionCode`
+  23 upgraded to 9999999, `firstInstallTime` `04:38:49` identical before and after, both phases
+  reporting `OK (1 test)` through the guard. The earlier green run
+  [35727125638](https://github.com/Ni3verma/Safe-Box/actions/runs/35727125638) is superseded: it
+  predates the review fixes to `resolve-baselines.sh`, which the job calls on its critical path, so
+  it no longer evidences the code that merged. Getting the first green took three CI runs and
   neither failure was in the harness: both were the build under test carrying a `versionCode`
   *below* the released baseline, because `GITHUB_RUN_NUMBER` counts runs of one workflow and
   `env:` cannot override it. Recorded in the release-and-ci skill.
