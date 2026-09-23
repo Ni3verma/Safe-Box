@@ -237,6 +237,13 @@ internal class UiSupport(val device: UiDevice) {
      * Code` and `IFSC Code` sit on the same line, and "nearest below" alone would read the wrong
      * one.
      *
+     * Do not tighten this to "strictly below the label's bottom edge", however tempting it reads:
+     * measured on 2026-09-23, a field's value node *vertically overlaps* its own label's node on
+     * these screens, so excluding same-line text drops the value and the nearest-below race is
+     * then won by the *next* label. That fails silently - every field still yields a plausible
+     * string - and it moved 11 of the 23 captured fields, turning `User Id` into `Password` and
+     * `CVV` into the `Created on` timestamp. The oracle hash is what caught it.
+     *
      * The label is scrolled to first, because the bank account screen is taller than a phone.
      *
      * @param label the field's visible label, as the detail screen spells it
