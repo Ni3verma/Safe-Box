@@ -169,6 +169,15 @@ Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage
 on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR4, `corrupt` in MR5 — rather than up
 front; see [MR2](#mr2--seeding) for why.
 
+> [!NOTE]
+> `v1_legacy.bak` survives the baseline floor being raised to `v2.0.4.0`, and the distinction is
+> worth keeping straight: the floor says *we no longer test upgrading from a v1 install*, not *we no
+> longer accept v1 backup files*. A `.bak` outlives the install that produced it — a user who
+> exported one in 2021 and has upgraded several times since can still restore it today — so the
+> file format stays in scope even though the install path does not. Capturing it needs the
+> `v1.3.3.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
+> the pre-Compose UI rules out.
+
 > [!CAUTION]
 > `v2_pre_totp.bak` is the only irreversible item in this whole design, and it now **exists**:
 > `BACKUP_VERSION = 2`, 2 login / 2 bank account / 2 bank card / 1 secure note, no authenticator
@@ -315,10 +324,10 @@ version**. That makes almost everything derivable from the release list alone. A
 | Rule | Meaning | Resolves to today |
 |---|---|---|
 | `previous` | newest stable release before the tag being built, that has a `SafeBox-qa.apk` | `v2.0.4.0` |
-| `schema-boundary` | for each distinct `DBVERSION` older than the current one, the newest stable release carrying it | `v1.3.3.1` (db 3) |
-| `oldest` | the oldest release that still has an archived `SafeBox-qa.apk` | `v1.3.3.0` |
+| `schema-boundary` | for each distinct `DBVERSION` older than the current one, the newest stable release carrying it | `v2.0.4.0` (db 4; this branch is on db 5) |
+| `oldest` | the oldest release that still has an archived `SafeBox-qa.apk`, at or above the floor | `v2.0.4.0` |
 
-After de-duplication that is **two to three jobs**, and it self-adjusts as you ship — no workflow
+After de-duplication that is **one to three jobs**, and it self-adjusts as you ship — no workflow
 edits, ever.
 
 Defaults and why:
@@ -328,12 +337,31 @@ Defaults and why:
   thing carrying a schema.
 - **Not every historical pair.** That is `O(n²)` and buys nothing; a v1.5 → v2.2 upgrade exercises
   the same migration chain as v1.4 → v2.2.
-- **One optional human-maintained value:** a floor in `upgrade-test/oldest-supported.txt`, if you
-  ever decide you no longer care about installs older than some date. "How far back do we support"
-  is a product decision and is the only thing a script cannot infer. Default: no floor.
+- **One human-maintained value:** the floor in
+  [`upgrade-test/oldest-supported.txt`](../../upgrade-test/oldest-supported.txt). "How far back do
+  we support" is a product decision and is the only thing a script cannot infer.
 
 Of the 18 releases, 15 carry a QA APK — the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`)
-predate the upload step, so `oldest` bottoms out at `v1.3.3.0` automatically.
+predate the upload step.
+
+### The floor is `v2.0.4.0` — decided 2026-09-23
+
+Two independent reasons, which happen to agree:
+
+1. **Nobody meaningful is still on 1.x**, so upgrades from there are not a path worth protecting.
+2. **The harness could not drive them anyway.** Phase A seeds the vault through the UI, and the
+   Compose rewrite landed in `331ee64` *"Compose UI - v2.x (#135)"*. Every `v1.x` tag ships eight
+   XML layouts and zero `*Screen.kt`; every selector in the harness is a Compose one. Verified with
+   `git ls-tree -r --name-only <tag> -- app/src/main/res/layout`.
+
+Supporting a lower floor is therefore not a configuration change but a second Phase A implementation
+against a UI that no longer exists in the tree. If that is ever wanted, it needs its own decision.
+
+This currently leaves **one** candidate, so all three rules resolve to it and the matrix is a single
+job. That is expected, and self-correcting: when v2.1 ships, `previous` moves to it and `v2.0.4.0`
+becomes `oldest` and the schema-4 boundary again. A floor naming a tag that carries no QA APK is
+rejected outright rather than ignored, because a silently-ignored floor would resume testing exactly
+the upgrades it was written to stop.
 
 ---
 

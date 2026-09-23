@@ -66,12 +66,25 @@ fi
 # An optional product decision: how far back installs are still supported. Absent by default,
 # because "we no longer care about upgrades from before X" is the one thing a script cannot infer.
 if [ -f "$FLOOR_FILE" ]; then
-    floor=$(grep -v '^[[:space:]]*#' "$FLOOR_FILE" | tr -d '[:space:]' | head -n 1)
+    # Comments are stripped per line and only the first remaining value is taken. Deleting the
+    # whole file's whitespace instead would concatenate a two-line file into one nonsense tag,
+    # which then matches nothing - and, before the check below existed, was ignored in silence.
+    floor=$(sed -e 's/#.*//' "$FLOOR_FILE" | tr -d '[:blank:]' | grep -v '^$' | head -n 1)
     if [ -n "$floor" ]; then
+        # A floor that names no real candidate is always a mistake - a typo, or a tag whose release
+        # carries no SafeBox-qa.apk. Left to the awk below it would simply not match, every
+        # candidate would survive, and the harness would quietly test upgrades the floor was
+        # written to stop.
+        if ! printf '%s\n' "$candidates" | grep -qxF "$floor"; then
+            echo "error: floor '$floor' from $FLOOR_FILE is not one of the releases carrying a" >&2
+            echo "       SafeBox-qa.apk. Candidates, newest first:" >&2
+            printf '%s\n' "$candidates" | sed 's/^/         /' >&2
+            exit 1
+        fi
         candidates=$(printf '%s\n' "$candidates" | awk -v floor="$floor" '
             { lines[NR] = $0 }
             $0 == floor { found = NR }
-            END { for (i = 1; i <= (found ? found : NR); i++) print lines[i] }
+            END { for (i = 1; i <= found; i++) print lines[i] }
         ')
     fi
 fi
