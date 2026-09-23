@@ -565,6 +565,16 @@ Keystore continuity check.
 
 Groups 4–6, including the independent RFC 6238 computation and clock freezing.
 
+- **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
+  This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`
+  retired v1 *installs*; it did not retire v1 *files*, because a `.bak` outlives the install that
+  wrote it and a user who exported one years ago can still restore it today. The fixture is
+  captured by hand from the `v1.3.3.0` QA APK — only *automated* seeding is ruled out by that
+  release's XML UI, and a one-off manual capture is not automated seeding.
+- Acceptance: restoring `v1_legacy.bak` into the build under test yields the record counts and
+  field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and
+  a backup carrying no authenticator key at all.
+
 ### MR5 — backward-compat and graceful failure
 
 Groups 7–8 as a separate CI job, plus the Group 10 downgrade guard.
