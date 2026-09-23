@@ -6,9 +6,9 @@ task so you do not re-derive things that are already known.
 **Rules for this file**
 
 - Every entry must be **verifiable** — state how it was checked, and when.
-- Keep it under ~150 lines. It is read on every task; length costs tokens on every request.
-- Facts only. Behavioural rules go in [AGENTS.md](AGENTS.md). Procedures go in `skills/`.
-  Long-form reasoning goes in `docs/`.
+- Keep it under ~150 lines — it is read on every task, so adding a fact means evicting one; the
+  eviction order is in [AGENTS.md](AGENTS.md#curate-do-not-accumulate). Facts only: behavioural
+  rules go in AGENTS.md, procedures in `skills/`, long-form reasoning in `docs/`.
 - If a fact turns out to be wrong, **fix it in place** rather than adding a contradicting entry.
 - **Facts here describe `master` unless a branch is named.** Run `git branch --show-current` before
   trusting anything version-specific, and record both values for any fact that differs across
@@ -85,13 +85,12 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   no TOTP records as a pre-TOTP v2 file.
 - Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
   still read. Decoding it as UTF-8 prints control characters and looks like corruption.
-- PBE parameters (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
-  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, 256-byte salt, 16-byte IV.
-- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`. Verified 2026-09-21.
-- `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — do not widen it. A
-  `resolveClass` allowlist and an `ObjectInputFilter` allowlist see **different** class sets and
-  cannot be copied between each other; if you need the filter form, take it from
-  [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md) rather than the app.
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java` — it also carries the
+  PBE parameters (`PBKDF2WithHmacSHA1`, 1324 iterations, `AES/CBC/PKCS5Padding`) in executable form,
+  so read them there rather than copying them around. Verified 2026-09-21.
+- `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — **do not widen it**, and
+  do not translate it into an `ObjectInputFilter`; the two allowlists see different class sets. Both
+  forms: [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md).
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
   table inside `runInTransaction`. Post-restore counts equal the file's counts exactly **for every
   type except authenticator**. `filterDecodableAuthenticatorData` partitions authenticator records
@@ -112,6 +111,10 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Verified 2026-09-20.
 - ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
   required and `aosp-atd` images are sufficient.
+- **`:upgrade-test`** is a self-instrumenting `com.android.test` module for black-box upgrade
+  testing. `:upgrade-test:assembleDebug` runs **zero `:app` tasks** (verified 2026-09-22), so R8
+  cannot break it. Gradle only assembles it — `scripts/run-upgrade-test.sh` installs and drives it.
+  Running and extending it: [docs/testing/upgrade-harness-operations.md](../docs/testing/upgrade-harness-operations.md)
 
 Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md)
 
@@ -134,19 +137,14 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 - An authenticator record whose Base32 seed is invalid **cannot be repaired in the UI** — the seed
   field is `visibleIn = setOf(ViewMode.NEW)`, so it is not rendered in EDIT. Delete and re-add is
   the only recourse.
-- Restore silently drops authenticator records that cannot produce a code
-  (`filterDecodableAuthenticatorData`). That is intentional — one bad 2FA seed must not cost the
-  user every login, card and note in the backup.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
-- **`CICD/cicd.gradle` is orphaned** — no build script applies it, since `331ee64` ("Compose UI -
-  v2.x"). Two consequences, both verified 2026-09-21: the `copyGitHooks` / `installGitHooks` tasks
-  **do not exist**, and **`./gradlew detekt` fails with "Task 'detekt' not found"**. Detekt is
-  declared `apply false` in the root `build.gradle` and never applied to `:app`, so no detekt task
-  is registered anywhere and `CICD/detekt.yml` is not in effect.
-- **Git hooks must be installed by hand** as a result:
-  `cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit`.
-  The installed copy silently drifts; check with
-  `diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh`. It was ~8 months stale when found.
-- The pre-commit hook runs **`git add -u`** during detekt auto-correction. Running
-  `git hook run pre-commit` while you have unstaged work will therefore stage it.
+- **`CICD/cicd.gradle` is orphaned** since `331ee64` — nothing applies it. So `./gradlew detekt`
+  fails with "Task 'detekt' not found" (detekt is `apply false` at the root and never applied to
+  `:app`, leaving `CICD/detekt.yml` not in effect), and the `copyGitHooks` / `installGitHooks` tasks
+  do not exist, so git hooks must be installed by hand and drift silently. Install and drift check:
+  [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md#git-hooks). Verified 2026-09-21.
+- Adding any new Android module: a subproject can only `alias(libs.plugins.android.*)` if the
+  **root `build.gradle` also declares it `apply false`**. Otherwise Gradle fails with "the plugin is
+  already on the classpath with an unknown version", because AGP arrives a second time via the root
+  `buildscript` classpath. (Verified 2026-09-22.)

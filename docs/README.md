@@ -15,6 +15,8 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 
 - [Testing strategy](testing/testing-strategy.md) — what is tested where, and the deliberate gaps.
 - [Upgrade testing](testing/upgrade-testing.md) — the APK-over-APK design.
+- [Upgrade harness operations](testing/upgrade-harness-operations.md) — running the harness, adding
+  a phase, selector traps, harness-level triage.
 
 ## Decisions
 

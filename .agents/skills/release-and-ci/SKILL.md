@@ -41,6 +41,28 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
 - Tag format is **`vMAJOR.MINOR.DBVERSION.FIX`**. The third component tracks the **Room schema
   version**, so bumping the DB requires bumping it in the next tag.
 
+> [!WARNING]
+> `GITHUB_RUN_NUMBER` counts runs of **one workflow**, not of the repository. A workflow added by a
+> pull request starts at 1, so its builds get `versionCode` 16 while released builds are in the
+> twenties. Anything that installs a freshly built APK over a released one has to override it.
+>
+> **`env:` cannot do it.** It is a default variable, and the docs say "if you attempt to override
+> the value of one of these default variables, the assignment is ignored" — silently. Observed
+> twice on 2026-09-22: run 1 of `upgrade-test.yml` failed with `the build under test (16) does not
+> supersede the baseline (23)`, and after adding `env: GITHUB_RUN_NUMBER: 9999984` run 2 failed the
+> same way with 17, the value simply tracking the run number. Assign it on the command instead,
+> where it is an ordinary child-process variable:
+>
+> ```yaml
+> run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa
+> ```
+>
+> When checking such an override locally, pick a value that is **not** the fallback. `9999984`
+> produces `versionCode` 9999999 — which is exactly what setting nothing produces, so a green
+> result proves nothing about whether the variable arrived. Use a distinguishable one:
+> `GITHUB_RUN_NUMBER=5000 ./gradlew :app:help -q` printing `Building SafeBox: LOCAL-build (5015)`
+> does prove it, including that the value survives the Gradle daemon. Verified 2026-09-22.
+
 ## Signing
 
 | Build type | Properties file | In CI as |
@@ -91,6 +113,37 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+### A new `workflow_dispatch` workflow cannot be run before it merges
+
+GitHub resolves workflows from the **default branch**. A workflow file that exists only on a feature
+branch has no "Run workflow" button, is absent from `gh workflow list`, and `gh workflow run --ref
+<branch>` cannot find it — the docs say the dispatch trigger requires the workflow to be on the
+default branch, and dispatching against another ref only works *after* it has run at least once.
+Verified 2026-09-22: `.github/workflows/upgrade-test.yml` existed on `upgrade-test/mr1-harness-skeleton`
+and `gh workflow list --all` did not list it.
+
+This is a chicken-and-egg problem for any PR whose entire point is a new job: it cannot be proved
+until it is merged unproved. The way out is a trigger that resolves from the PR rather than from
+the default branch: `pull_request` runs the workflow file taken from the PR's **merge commit**
+(`GITHUB_REF` is `refs/pull/N/merge`), which for a same-repo PR is the branch's version of the file
+merged into the base. Two consequences follow: what runs is the merged result rather than the head
+branch alone, and **a PR with a merge conflict fires no `pull_request` run at all** — the conflict
+has to be resolved before the job can be triggered. Gate it on a label so ordinary pushes cost
+nothing:
+
+```yaml
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [ labeled ]
+jobs:
+  job:
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'run-upgrade-test'
+```
+
+Remove and re-add the label to run it again. Note that `inputs.*` is empty on the label path, so
+give every input a fallback (`${{ inputs.x || 'default' }}`).
+
 ### Current authentication state
 
 Verified 2026-09-21. `gh` **is** authenticated on this machine with a fine-grained token scoped to
@@ -106,7 +159,14 @@ checks consistently, and a `403` can come from repository rules rather than the 
 |---|---|---|
 | Reads (PRs, releases, runs, checks) | read | every read command works |
 | `Contents` | read | `PUT` via the contents API returned `403` |
-| `Issues` | **read + write**, granted deliberately so the agent can file issues | none — creating an issue is the only conclusive test and must not be run just to check a permission |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | writing to an *issue* is untested — creating one just to check is not worth it — but **labels on a pull request are refused**, see below |
+
+> [!IMPORTANT]
+> **Labels cannot be changed from here.** `DELETE /repos/Ni3verma/Safe-Box/issues/259/labels/run-upgrade-test`
+> returns `403 Resource not accessible by personal access token` (2026-09-22). This is a conclusive
+> negative: the label existed and was applied, so it is a permission result, not a 404 in disguise.
+> Anything driven by a label — including re-running the upgrade test, which needs the label removed
+> and re-added — has to be done by a human in the UI. Ask; do not retry.
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from

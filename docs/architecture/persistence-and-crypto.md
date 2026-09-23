@@ -78,6 +78,10 @@ Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 - **File name:** `yyyyMMddHHmmssSSS.bak`, mime `application/octet-stream`.
 - **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
   directory.
+- **Parameters** (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
+  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, a **256-byte salt** and a **16-byte IV**. The
+  same constants are implemented in `scripts/InspectBackup.java`; change one and the other stops
+  reading real backups.
 
 #### How damage to the shared inputs presents
 

@@ -107,8 +107,8 @@ which is exactly what makes it unable to run against a minified build
 So: a new `com.android.test` module, **self-instrumenting**, with no compile dependency on `:app`.
 
 ```groovy
-// upgrade-test/build.gradle
-plugins { id 'com.android.test'; id 'org.jetbrains.kotlin.android' }
+// upgrade-test/build.gradle — as shipped
+plugins { alias(libs.plugins.android.test) }
 
 android {
     namespace 'com.andryoga.safebox.upgradetest'
@@ -117,13 +117,19 @@ android {
     defaultConfig {
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
+    kotlin { jvmToolchain(17) }
 }
 
 dependencies {
     implementation libs.androidx.test.uiautomator
     implementation libs.androidx.test.ext.junit
+    implementation libs.androidx.test.runner
 }
 ```
+
+No Kotlin plugin is applied: AGP 9 has built-in Kotlin support and `:app` applies none either.
+Note also that `alias(...)` only resolves if the root `build.gradle` declares the same plugin
+`apply false` — otherwise Gradle reports "already on the classpath with an unknown version".
 
 `self-instrumenting` — the same mechanism Macrobenchmark uses — makes the test process target
 *itself* rather than the app. Three consequences:
@@ -386,6 +392,42 @@ nothing new is being introduced infrastructurally.
 Expect roughly 8–10 minutes per baseline, running in parallel, so about 10 minutes added to an RC
 tag build.
 
+### Running the harness
+
+Commands, how to add a phase, selector rules and harness-level triage are in
+[upgrade-harness-operations.md](upgrade-harness-operations.md). The short version:
+`.github/workflows/upgrade-test.yml` never runs on its own — it is dispatched with a rule or an
+explicit tag, or triggered by the `run-upgrade-test` label on a pull request, which is the only
+entry point available before the file reaches `master`. Gradle only ever *assembles* the harness —
+the upgrade happens between the two on-device phases, so no single Gradle task can straddle it.
+
+### The zero-test guard
+
+`am instrument` exits 0 when the class filter matches nothing. Verified on a real device
+2026-09-22, a method name with a typo produces exactly this and nothing else:
+
+```
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.001
+
+OK (0 tests)
+
+INSTRUMENTATION_CODE: -1
+```
+
+An empty run is therefore indistinguishable from a passing one to anything that reads the exit
+code, which is what made the previous attempt at this harness worthless. Every phase's output is
+parsed by `assert_instrumentation_ran` in `scripts/lib/instrumentation-guard.sh`, which fails
+unless a minimum number of tests actually executed and passed. That function has its own
+device-free test suite, `scripts/tests/instrumentation-guard-test.sh`, run on every PR by `ci.yml`
+— the guard rotting silently would restore the exact problem it was written to prevent.
+
+The same reasoning applies to every other check in the harness. A comparison between two values
+that were both read as empty strings passes and proves nothing, so `firstInstallTime` is asserted
+non-empty before it is compared. Treat "this check cannot fail" as a bug of the same severity as
+"this check is wrong".
+
 ---
 
 ## 9. Failure triage
@@ -415,16 +457,38 @@ Install `v2.1.4.0-rc3`, create a representative vault, export a backup, commit i
 - Review size: a binary fixture plus ~40 lines of markdown.
 - Acceptance: the `.bak` restores cleanly on `v2.1.4.0-rc3` and the runbook lists every record.
 
-### MR1 — harness skeleton, end to end, no assertions
+### MR1 — harness skeleton, end to end, no assertions — **delivered**
 
 `upgrade-test` module, `scripts/resolve-baselines.sh`, `scripts/fetch-baseline-apk.sh`,
-`scripts/run-upgrade-test.sh`, plus a `workflow_dispatch`-only CI job. One smoke test: launch and
-assert the unlock screen appears.
+`scripts/run-upgrade-test.sh`, plus a CI job that only ever runs manually. One smoke test: sign up
+on the baseline, upgrade, assert the unlock screen appears.
 
-- Proves the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
-- Acceptance: a green manual run that genuinely upgrades in place, **and fails loudly if zero tests
-  executed**. That guard is mandatory; a silent `tests=0` is what made the previous attempt
-  worthless.
+- Proved the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
+- Acceptance met locally against `v2.0.4.0` on API 35: three consecutive green runs, each with
+  `firstInstallTime` unchanged across the upgrade, and a run fails loudly if zero tests executed.
+  Getting there took a fourth run: the first stability attempt was 2 green of 3, and the failure was
+  a real device-specific flake in the launch recovery, not noise —
+  [Launching the app](upgrade-harness-operations.md#launching-the-app) records it.
+- **Green on CI's API 34 `aosp_atd` image**, run
+  [35727125638](https://github.com/Ni3verma/Safe-Box/actions/runs/35727125638): baseline
+  `versionCode` 23 upgraded to 9999999, `firstInstallTime` `12:32:26` identical before and after,
+  both phases reporting `OK (1 test)` through the guard. It took three CI runs to get there and
+  neither failure was in the harness: both were the build under test carrying a `versionCode`
+  *below* the released baseline, because `GITHUB_RUN_NUMBER` counts runs of one workflow and
+  `env:` cannot override it. Recorded in the release-and-ci skill.
+
+Three things settled during implementation that later MRs inherit rather than re-decide:
+
+| Decision | Why |
+|---|---|
+| The smoke test **signs up on the baseline** | A fresh install lands on signup, so "assert the unlock screen appears" is vacuous without it — and signup is what generates the `symmetricDataKey` alias in the first place. |
+| Failures carry a **window hierarchy dump**, not a screenshot | Step 8 of section 3 says screenshots. A hierarchy is greppable, diffable, and names the nodes a selector failed to match; a PNG from a headless CI emulator is not. Screenshots can be added later if a visual bug ever escapes. |
+| Launch waits on the **expected screen**, never on the app owning the foreground window, and re-issues the launch intent on each retry | A system biometric sheet takes the foreground on any device with a fingerprint enrolled, and the back press that dismisses it can also send the task home. See [upgrade-harness-operations.md](upgrade-harness-operations.md#launching-the-app). |
+
+Deliberately **not** in MR1, despite being cheap: fixture pushing and the SAF picker (MR2) and the
+logcat crash sentinel (MR3, Group 9). MR1 also leaves two things behind that a later stage has to
+remove rather than merely add to — both are rows in [Carried-forward debt](#carried-forward-debt),
+which is the list to check when planning any later MR.
 
 ### MR2 — fixtures and seeding
 
@@ -453,6 +517,20 @@ Wire into `release.yml` behind the RC condition, enable the derived matrix, uplo
 document triage ownership.
 
 - Acceptance: a real RC tag runs it and the result is visible on the PR.
+- **Blocking**: every row of the debt register below is cleared. MR6 is the last stage, so anything
+  still open here ships.
+
+### Carried-forward debt
+
+Workarounds that were correct for the stage that introduced them and become wrong if they survive.
+Each row names the stage that must remove it and the check that proves it is gone. **The feature
+branch does not merge to master with an open row**, and each MR re-checks the register rather than
+discovering the debt from a code comment.
+
+| Introduced | What | Why it must not survive | Cleared by | Proof |
+|---|---|---|---|---|
+| MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
+| MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
 
 ---
 

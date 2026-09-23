@@ -56,6 +56,13 @@ jobs:
             exit 1
           fi
 
+      # The upgrade test itself is manual, but the check that decides whether it really ran is the
+      # only thing standing between a green badge and a run that executed zero tests. It needs no
+      # emulator and finishes in under a second, so it runs on every PR rather than only when
+      # someone remembers to dispatch the upgrade job.
+      - name: Verify the zero-test guard
+        run: ./scripts/tests/instrumentation-guard-test.sh
+
       - name: set up JDK 17
         uses: actions/setup-java@v6
         with:
