@@ -125,7 +125,7 @@ must change with it or the launch fails with a null intent.
 > intent; bringing a backgrounded task forward is harmless, and the prompt is not re-armed because
 > the app offers biometric unlock only once per process.
 >
-> CI's `aosp-atd` image has no biometric enrolled, so both of these are flakes that reproduce
+> CI's emulator has no biometric enrolled, so both of these are flakes that reproduce
 > **only locally**. Do not "fix" them by deleting the recovery path because CI is green.
 
 ## Seeding the vault
@@ -158,12 +158,21 @@ is the device's own name (`sdk_gphone64_arm64` locally, something else everywher
 
 > [!WARNING]
 > **DocumentsUI has two package names and the harness must match both.** The local emulator has
-> Google APIs and ships `com.google.android.documentsui`; CI runs an `aosp_atd` image, which ships
-> the AOSP `com.android.documentsui`. Every selector here — the package itself and the breadcrumb
-> resource ids — is a `Pattern` accepting either. Pinning one name makes the picker invisible on
-> the other half of the fleet, and the symptom is not obviously a package problem: `awaitPicker`
-> simply burns its 20 s and reports that the picker never opened, on a device where it opened
-> perfectly.
+> Google APIs and ships `com.google.android.documentsui`; a plain AOSP image, which is what CI
+> runs, ships `com.android.documentsui`. Every selector here — the package itself and the
+> breadcrumb resource ids — is a `Pattern` accepting either. Pinning one name makes the picker
+> invisible on the other half of the fleet, and the symptom is not obviously a package problem:
+> `awaitPicker` simply burns its 20 s and reports that the picker never opened, on a device where
+> it opened perfectly.
+
+> [!CAUTION]
+> **Never run this harness on an `*_atd` image.** ATD ("Automated Test Device") images strip the
+> system apps a test is assumed not to need, and DocumentsUI is one of them. `ACTION_OPEN_DOCUMENT`
+> then resolves to `com.android.fakesystemapp`, a placeholder with an empty action bar, and the
+> failure reads identically to the package-name problem above — which is how it costs an hour.
+> Tell them apart from the hierarchy in the failure message: a package of
+> `com.android.fakesystemapp`, on a `320x640` screen, means the image, not the selector. Evidence:
+> run [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921).
 
 After the restore, Phase A creates one record of each type through the app's own forms
 ([RecordCreator](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/RecordCreator.kt)),

@@ -116,10 +116,15 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
 
     private companion object {
         // Two images, two package names. The local emulator has Google APIs and ships
-        // com.google.android.documentsui; CI runs an aosp_atd image, which ships the AOSP
+        // com.google.android.documentsui; a plain AOSP image, which is what CI runs, ships
         // com.android.documentsui. Pinning either one makes the picker invisible on the other
         // half of the fleet - awaitPicker would burn its 20 s and report that the picker never
         // opened, on a device where it opened perfectly.
+        //
+        // A third case is not a package name at all: ATD images ship no DocumentsUI, so the
+        // intent lands on com.android.fakesystemapp and no pattern can match. That is a CI
+        // configuration error rather than something to widen this regex for - see the target
+        // comment in .github/workflows/upgrade-test.yml.
         val DOCUMENTS_UI_PACKAGE: Pattern = Pattern.compile("com\\.(google\\.)?android\\.documentsui")
 
         // Content description of the toolbar's drawer button, and the label of the root that the

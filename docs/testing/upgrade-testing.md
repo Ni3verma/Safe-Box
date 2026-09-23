@@ -44,7 +44,7 @@ All checked on 2026-09-20/21 against the real artifacts, not assumed.
 | `versionCode` is monotonic | yes | 23 → 28 → 9999999 (local) |
 | Black-box automation works on the minified APK | yes | `uiautomator dump` returned `Welcome !`, `Password*`, `Sign Up`, `content-desc="Toggle sensitive data visibility"` |
 | No app change needed for selectors | yes | production has zero `testTag`; the existing suite already uses text and content description exclusively |
-| Runs without Google Play services | yes | ML Kit is the **bundled** `com.google.mlkit:barcode-scanning`, so `aosp-atd` images suffice |
+| Runs without Google Play services | yes | ML Kit is the **bundled** `com.google.mlkit:barcode-scanning`, so a plain AOSP `default` image suffices. Not `aosp-atd`, though: ATD strips DocumentsUI, and Phase A restores through the real SAF picker — see run [35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921) |
 
 ### Hard constraints
 
@@ -244,7 +244,7 @@ check is what stops this decaying into a fresh-install test a year from now.
 13. For an authenticator restored from the fixture, assert the six displayed digits equal an
     RFC 6238 value computed **inside the test** with a local Base32 + HMAC-SHA1 helper. Never call
     app code for the expected value.
-14. Determinism: `adb root` works on `aosp-atd` (userdebug), so `settings put global auto_time 0`
+14. Determinism: `adb root` works on the `default` image (userdebug), so `settings put global auto_time 0`
     then set a fixed instant. Without root, assert against the current **and** previous 30-second
     window.
 15. This is the only assertion that proves the **seed itself decrypted correctly**, rather than
@@ -394,8 +394,9 @@ the upgrades it was written to stop.
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: aosp_atd
+          target: default
           arch: x86_64
+          profile: pixel_6
           script: ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk new-apk/SafeBox-qa.apk
 
       - uses: actions/upload-artifact@v7
@@ -585,11 +586,21 @@ still covered: the restore Phase A already performs runs through `RestoreDataWor
 database is populated before the upgrade either way. Clipboard-worker behaviour moves to a
 post-upgrade stage, where the worker exists.
 
-**Acceptance met, 2026-09-23.** Ten consecutive runs on the Pixel 8 API 35 emulator produced a
-43-line oracle with a single MD5 across all ten, `b20702ff15ea5e1dd8c44bcdc99c7717`, via
+**Acceptance met locally, 2026-09-23.** Ten consecutive runs on the Pixel 8 API 35 emulator produced
+a 43-line oracle with a single MD5 across all ten, `b20702ff15ea5e1dd8c44bcdc99c7717`, via
 `scripts/check-oracle-determinism.sh`. A run takes about two minutes, of which 112 s is Phase A, so
 the ten-run check is something to run when the seeding or the oracle changes — not something to add
-to CI. **MR2 is complete.**
+to CI.
+
+**Local green was not enough, and the first CI run proved it.** Phase A had never run on the CI
+image until PR #261 was labelled, and run
+[35863723921](https://github.com/Ni3verma/Safe-Box/actions/runs/35863723921) failed at the first
+SAF call: `aosp_atd` ships no DocumentsUI, so `ACTION_OPEN_DOCUMENT` landed on
+`com.android.fakesystemapp`. The same run also exposed a second latent problem — with no `profile`
+pinned the emulator boots a `320x640` screen, against which every geometry assumption in the
+harness was untested. Both are fixed in the workflow, and **a green labelled run is part of MR2's
+acceptance**; the lesson is that "green locally" and "green on CI" are different claims for a
+harness whose whole job is to drive system UI.
 
 The review on PR #261 found seven real defects, all latent rather than currently failing, and the
 acceptance was re-run afterwards: the same MD5, which is what establishes that the fixes changed
@@ -597,7 +608,7 @@ robustness and not behaviour. Two are worth carrying forward:
 
 | Found | Why it matters beyond MR2 |
 |---|---|
-| The picker pinned `com.google.android.documentsui` | CI runs an `aosp_atd` image, which ships the AOSP `com.android.documentsui`. Phase A would have failed on CI while passing locally, and the symptom — "the picker never came to the foreground" — does not point at a package name. Anything selecting on a system app's package or resource ids must match both. |
+| The picker pinned `com.google.android.documentsui` | The package differs by image, so anything selecting on a system app's package or resource ids must match both spellings — and the symptom, "the picker never came to the foreground", does not point at a package name. The review's stated reason was wrong in a more interesting way: CI's `aosp_atd` image ships **no** DocumentsUI at all, only the `com.android.fakesystemapp` placeholder, which no pattern can match. The regex was right; the image was the bug. |
 | `scrollToText` spent its whole 15 s patience *before* scrolling | Every lookup below the fold cost the full timeout: 181 s of a 269 s Phase A, measured from UiAutomator's poll log. Fixing it made Phase A faster than it was before the review round (125 s → 112 s). Later stages add more list reading, so the pattern matters more, not less. |
 
 ### MR3 — data integrity assertions
