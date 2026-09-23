@@ -28,11 +28,22 @@ exactly what ADR-0001 says breaks against minified builds.
 ```bash
 ./scripts/fetch-baseline-apk.sh v2.0.4.0 old-apk/          # needs gh, network
 ./gradlew assembleQa :upgrade-test:assembleDebug
-./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
+ANDROID_SERIAL=emulator-5554 \
+  ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
 ```
 
 Output lands in `upgrade-test-out/` (override with a third argument): one
 `instrumentation-<phase>.txt` per phase, plus `logcat.txt`, collected even on failure.
+
+> [!CAUTION]
+> The run **uninstalls `com.andryoga.safebox.qa`** and then signs up from scratch, so it must not
+> be pointed at a handset. Two protections exist. The target is resolved once and exported as
+> `ANDROID_SERIAL`, so a device appearing mid-run cannot redirect a later step; and a target whose
+> `ro.build.characteristics` does not contain `emulator` is refused outright unless
+> `UPGRADE_TEST_ALLOW_PHYSICAL=1` is set. With a phone attached alongside the emulator, an
+> unpinned run stops with `expected exactly one connected device, found 2` and lists them.
+> Developer handsets routinely carry the qa, debug *and* release variants at once — they have
+> distinct applicationIds, so only the qa vault is at stake, but it is still someone's data.
 
 In CI there are two ways in, and neither runs on its own:
 

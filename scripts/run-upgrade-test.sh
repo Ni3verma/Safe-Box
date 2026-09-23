@@ -75,8 +75,50 @@ installed_field() {
         sed -n "s/^[[:space:]]*$1=\(.*\)$/\1/p" | head -n 1
 }
 
+# Every adb call in this script is bare `adb`, which honours ANDROID_SERIAL. The target is
+# therefore resolved once and exported, rather than left to adb's "is there exactly one device
+# right now" rule: a second device appearing mid-run (a phone plugged in to charge is enough)
+# would otherwise break the run at whichever step happened to come next.
+resolve_device() {
+    if [ -n "${ANDROID_SERIAL:-}" ]; then
+        printf '%s\n' "$ANDROID_SERIAL"
+        return
+    fi
+    local attached count
+    attached=$(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+    count=$(printf '%s' "$attached" | grep -c . || true)
+    if [ "$count" -ne 1 ]; then
+        echo "error: expected exactly one connected device, found $count." >&2
+        echo "       Set ANDROID_SERIAL to choose one. Attached:" >&2
+        adb devices -l | sed -n '2,$p' >&2
+        exit 1
+    fi
+    printf '%s\n' "$attached"
+}
+ANDROID_SERIAL=$(resolve_device)
+export ANDROID_SERIAL
+
 adb wait-for-device
-echo "Device: $(adb shell getprop ro.build.version.release | tr -d '\r') (API $(adb shell getprop ro.build.version.sdk | tr -d '\r'))"
+
+# This run is destructive by design: it uninstalls the QA build, then drives a scripted sign-up
+# against whatever is left. That is fine on a throwaway emulator and is not fine on a handset
+# somebody carries, where the QA build may hold real data - and a green result from a personal
+# phone is misleading anyway, because it says nothing about the image CI actually uses.
+device_characteristics=$(adb shell getprop ro.build.characteristics | tr -d '\r')
+case "$device_characteristics" in
+    *emulator*) ;;
+    *)
+        if [ "${UPGRADE_TEST_ALLOW_PHYSICAL:-0}" != "1" ]; then
+            echo "error: $ANDROID_SERIAL ($(adb shell getprop ro.product.model | tr -d '\r')) is not an emulator." >&2
+            echo "       This run uninstalls $APP_PACKAGE and signs up from scratch on it." >&2
+            echo "       Re-run with UPGRADE_TEST_ALLOW_PHYSICAL=1 if that is genuinely intended." >&2
+            exit 1
+        fi
+        echo "warning: running against physical device $ANDROID_SERIAL by explicit request." >&2
+        ;;
+esac
+
+echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r') - $(adb shell getprop ro.build.version.release | tr -d '\r') (API $(adb shell getprop ro.build.version.sdk | tr -d '\r'))"
 
 # Logcat is collected whatever happens - a failure on a CI emulator nobody can attach to is only
 # actionable if the log comes back with it.

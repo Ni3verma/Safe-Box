@@ -165,6 +165,10 @@ each, binary, and never edited after creation, so plain git is fine — no LFS n
 All use one fixed backup password committed in the harness. Synthetic data only — never a real
 vault.
 
+Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage that first asserts
+on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR4, `corrupt` in MR5 — rather than up
+front; see [MR2](#mr2--seeding) for why.
+
 > [!CAUTION]
 > `v2_pre_totp.bak` is the only irreversible item in this whole design, and it now **exists**:
 > `BACKUP_VERSION = 2`, 2 login / 2 bank account / 2 bank card / 1 secure note, no authenticator
@@ -494,11 +498,33 @@ logcat crash sentinel (MR3, Group 9). MR1 also leaves two things behind that a l
 remove rather than merely add to — both are rows in [Carried-forward debt](#carried-forward-debt),
 which is the list to check when planning any later MR.
 
-### MR2 — fixtures and seeding
+### MR2 — seeding
 
-Remaining fixtures, the SAF picker helper, and full Phase A automation.
+The SAF picker helper and full Phase A automation, plus the oracle that makes Phase A's result
+checkable. Seeding infrastructure only.
 
-- Acceptance: Phase A reliably produces an identical vault ten runs in a row.
+**Fixture capture is deliberately not here**, despite the stage's original name. Phase A restores
+exactly one fixture and it has to be one the *baseline* can read, which means `v2_pre_totp.bak`
+(`BACKUP_VERSION = 2`) — already captured in MR0. Every other fixture in section 4 moves to the
+stage whose assertions consume it, because capturing a fixture before the test that reads it is
+written means guessing at its contents and re-capturing later:
+
+| Fixture | Moved to | Why it cannot be done usefully now |
+|---|---|---|
+| `v1_legacy.bak` | MR4 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR4 asserts on. |
+| `v3_current.bak` | MR4 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR4's TOTP and round-trip assertions. |
+| `v3_adversarial.bak` | MR4 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
+| `corrupt.bak` | MR5 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR5 needs it. |
+
+- Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
+  is not directly observable through a black-box UI, so Phase A ends by writing an oracle file on
+  the device — per-type record counts, every field of one known record per type, the password hint
+  and the settings moved off their defaults — which the host pulls and diffs across runs. Values
+  that legitimately vary (the current TOTP code, timestamps) are excluded by construction rather
+  than filtered afterwards, so a diff is always a real defect.
+- Also in scope, found while starting the stage: the orchestrator resolves its target device once
+  and refuses a non-emulator unless `UPGRADE_TEST_ALLOW_PHYSICAL=1`. Phase A is far more
+  destructive than MR1's sign-up, and a developer with a handset attached is the normal case.
 
 ### MR3 — data integrity assertions
 
