@@ -31,6 +31,13 @@ FIXTURE_FILE="v2_pre_totp.bak"
 FIXTURE_SOURCE="upgrade-test/src/main/assets/fixtures/$FIXTURE_FILE"
 DEVICE_DOWNLOADS="/sdcard/Download"
 
+# The directory Phase A grants the app as its backup location. A dedicated directory is not a
+# tidiness preference: Android refuses to grant a tree over the root of shared storage or over
+# Download, and the picker's refusal looks like a tap that missed. Created by the host so the test
+# never has to drive the picker's "create folder" flow.
+BACKUP_DIR="SafeBoxUpgradeTest"
+DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
+
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
     exit 2
@@ -208,6 +215,14 @@ adb push "$FIXTURE_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
 adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
 echo "$FIXTURE_FILE -> $DEVICE_DOWNLOADS/"
 
+# Removed and recreated rather than just created: a backup file left behind by an earlier run would
+# still be there when the next one grants the same directory, and Phase A has to produce the same
+# state every time it runs. No rescan is needed here - unlike the Downloads root, the tree picker
+# lists directories from the filesystem, so this one is visible the moment it exists.
+adb shell rm -rf "$DEVICE_BACKUP_DIR"
+adb shell mkdir -p "$DEVICE_BACKUP_DIR"
+echo "backup location -> $DEVICE_BACKUP_DIR/"
+
 # Each phase runs exactly one test method. A comma-separated filter silently runs only the first
 # class, and any filter that matches nothing exits 0 - which is what the guard below exists for.
 run_phase() {
@@ -221,6 +236,7 @@ run_phase() {
     adb shell am instrument -w -r \
         -e class "$TEST_CLASS#$method" \
         -e fixtureFile "$FIXTURE_FILE" \
+        -e backupDir "$BACKUP_DIR" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
     assert_instrumentation_ran "$output" "$min_tests"
 }

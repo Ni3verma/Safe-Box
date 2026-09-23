@@ -4,6 +4,7 @@ import android.os.SystemClock
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Direction
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import java.io.ByteArrayOutputStream
@@ -74,6 +75,65 @@ internal class UiSupport(val device: UiDevice) {
         }
     }
 
+    /** Waits for a node with exactly this visible text, then taps it. */
+    fun clickText(text: String, timeoutMs: Long = FIND_TIMEOUT_MS) =
+        clickObject(By.text(text), timeoutMs)
+
+    /**
+     * Waits for a node, then taps it, re-finding it if it goes stale in between.
+     *
+     * Finding and tapping are two separate round trips to the app, and anything that re-lays out
+     * between them — a drawer still sliding open, a list settling — invalidates the handle. UI
+     * Automator reports that as [StaleObjectException] out of `click()`, which reads as a harness
+     * crash rather than as the retryable timing problem it is. Observed on 2026-09-23 tapping
+     * `Downloads` in the document picker's roots drawer, one tap after opening it.
+     *
+     * Re-finding is correct rather than merely convenient here: the node is identified by a
+     * selector, so a fresh lookup asks for the same thing the caller asked for.
+     *
+     * @param selector what to tap
+     * @param timeoutMs budget covering both finding it and getting a tap to land
+     */
+    fun clickObject(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS) {
+        retryingOnStale(timeoutMs) { awaitObject(selector, timeoutMs).click() }
+    }
+
+    /**
+     * Types into the field belonging to a label, re-finding it if it goes stale.
+     *
+     * Same hazard as [clickObject]: setting text is a second round trip, and forms that are still
+     * animating in invalidate the handle that was just found.
+     *
+     * @param label the field's visible label
+     * @param value the text to set
+     */
+    fun typeInto(label: String, value: String) {
+        retryingOnStale { textField(label).text = value }
+    }
+
+    /**
+     * Runs an action until it completes without hitting a stale node handle.
+     *
+     * Exposed rather than kept private because not every interaction is a tap: reading a switch's
+     * state and then toggling it is two round trips against one handle, and either can be the one
+     * that goes stale.
+     *
+     * @param timeoutMs how long to keep retrying before letting the exception out
+     * @param action what to attempt; it must re-find whatever it touches
+     * @return whatever the action returned
+     */
+    fun <T> retryingOnStale(timeoutMs: Long = FIND_TIMEOUT_MS, action: () -> T): T {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
+        while (true) {
+            try {
+                return action()
+            } catch (stale: StaleObjectException) {
+                if (SystemClock.uptimeMillis() >= deadline) throw stale
+                SystemClock.sleep(POLL_INTERVAL_MS)
+            }
+        }
+    }
+
     /**
      * Discards the accessibility node cache this process holds for the app under test.
      *
@@ -102,6 +162,35 @@ internal class UiSupport(val device: UiDevice) {
         val labelNode = awaitText(label)
         return labelNode.parent?.findObject(By.clazz("android.widget.EditText"))
             ?: error("no editable field beside the '$label' label${describeScreen()}")
+    }
+
+    /**
+     * Resolves the switch belonging to a settings row.
+     *
+     * Geometry is used because nothing else connects the two. The baseline's settings screen is a
+     * flat column: the label and the switch are siblings at the same depth with no row container
+     * between them, and the switch carries neither text nor content description. The one thing that
+     * does hold is that a switch sits on the same line as its label, so the switch whose vertical
+     * extent overlaps the label's is the right one.
+     *
+     * @param label the row's visible title
+     * @return the checkable node on that row
+     */
+    fun switchBeside(label: String): UiObject2 {
+        val labelBounds = awaitText(label).visibleBounds
+        val switches = findAll(By.checkable(true))
+        return switches.firstOrNull {
+            it.visibleBounds.top < labelBounds.bottom && it.visibleBounds.bottom > labelBounds.top
+        } ?: error(
+            "no switch on the same line as '$label' among ${switches.size} switches on " +
+                "screen${describeScreen()}",
+        )
+    }
+
+    /** Every node matching the selector, read from a freshly emptied cache. */
+    fun findAll(selector: BySelector): List<UiObject2> {
+        flushAccessibilityCache()
+        return device.findObjects(selector)
     }
 
     /**

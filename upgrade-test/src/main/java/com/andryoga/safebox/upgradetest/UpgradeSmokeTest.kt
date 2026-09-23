@@ -63,6 +63,8 @@ class UpgradeSmokeTest {
         restoreGoldenBackup()
         RecordCreator(ui).createAll()
         assertSeededRecordsPresent()
+        setBackupLocation()
+        SettingsChanger(ui).applyNonDefaults()
     }
 
     /**
@@ -85,9 +87,9 @@ class UpgradeSmokeTest {
     }
 
     private fun signUp() {
-        ui.textField(SIGNUP_PASSWORD_LABEL).text = MASTER_PASSWORD
-        ui.textField(SIGNUP_HINT_LABEL).text = PASSWORD_HINT
-        ui.awaitObject(By.text(SIGNUP_BUTTON).enabled(true)).click()
+        ui.typeInto(SIGNUP_PASSWORD_LABEL, MASTER_PASSWORD)
+        ui.typeInto(SIGNUP_HINT_LABEL, PASSWORD_HINT)
+        ui.clickObject(By.text(SIGNUP_BUTTON).enabled(true))
 
         // Leaving the signup heading behind is the only "signed up" signal available without
         // asserting on home-screen content, which belongs to MR2.
@@ -110,17 +112,17 @@ class UpgradeSmokeTest {
     private fun restoreGoldenBackup() {
         val fixtureFile = requiredArgument(FIXTURE_ARGUMENT)
 
-        ui.awaitText(RESTORE_DATA_BUTTON).click()
+        ui.clickText(RESTORE_DATA_BUTTON)
         SafDocumentPicker(ui).selectFromDownloads(fixtureFile)
 
         ui.awaitText(RESTORE_PROMPT)
-        ui.textField(RESTORE_PASSWORD_LABEL).text = BACKUP_PASSWORD
-        ui.awaitText(CONFIRM_BUTTON).click()
+        ui.typeInto(RESTORE_PASSWORD_LABEL, BACKUP_PASSWORD)
+        ui.clickText(CONFIRM_BUTTON)
 
         // The restore runs through a WorkManager worker that decrypts and re-encrypts every record,
         // so it is allowed far longer than an ordinary UI transition.
         ui.awaitText(RESTORE_SUCCESS_MESSAGE, RESTORE_TIMEOUT_MS)
-        ui.awaitText(OK_BUTTON).click()
+        ui.clickText(OK_BUTTON)
     }
 
     /**
@@ -137,7 +139,7 @@ class UpgradeSmokeTest {
      * UI-created records are.
      */
     private fun assertSeededRecordsPresent() {
-        ui.awaitText(RECORDS_TAB).click()
+        ui.clickText(RECORDS_TAB)
 
         val expected = FIXTURE_RECORD_TITLES.map { "restored:$it" } +
             SeedRecord.ALL.map { "ui:${it.title}" }
@@ -145,6 +147,36 @@ class UpgradeSmokeTest {
         check(missing.isEmpty()) {
             "${missing.size} of ${expected.size} seeded records are not listed: " +
                 "$missing${ui.describeScreen()}"
+        }
+    }
+
+    /**
+     * Points the app at a backup directory, through the system tree picker.
+     *
+     * This is the only piece of Phase A state that lives outside the app's own storage: what gets
+     * saved is a SAF tree URI plus a *persisted permission grant* held by the platform on the app's
+     * behalf. An in-place upgrade is supposed to keep both, and the two can fail independently —
+     * the app can remember a URI it is no longer allowed to write to. Phase A therefore sets it so
+     * that later stages have something real to re-check.
+     *
+     * The directory name arrives as an instrumentation argument for the same reason the fixture's
+     * name does: the host creates the directory, so the host owns its name.
+     *
+     * The path is asserted against `primary:<dir>` rather than against the directory name alone.
+     * The app renders the whole tree URI, and a grant over some *other* folder that merely ends in
+     * the same word would otherwise read as a pass.
+     */
+    private fun setBackupLocation() {
+        val backupDir = requiredArgument(BACKUP_DIR_ARGUMENT)
+
+        ui.clickText(BACKUP_TAB)
+        ui.clickText(SET_LOCATION_BUTTON)
+        SafDocumentPicker(ui).selectFolder(backupDir)
+
+        ui.awaitText(BACKUP_LOCATION_SET_MESSAGE)
+        checkNotNull(ui.findOrNull(By.textContains("$GRANTED_TREE_PREFIX$backupDir"))) {
+            "the backup screen says the location is set, but not to '$backupDir'" +
+                ui.describeScreen()
         }
     }
 
@@ -245,8 +277,20 @@ class UpgradeSmokeTest {
         const val RESTORE_SUCCESS_MESSAGE = "Data has been successfully restored."
         const val OK_BUTTON = "OK"
         const val RECORDS_TAB = "Records"
+        const val BACKUP_TAB = "Backup & Restore"
+
+        // The backup screen before and after a directory is granted. "Backup & Restore" is also the
+        // app bar's title once that tab is open, so it is only safe to tap while another tab is
+        // showing - which is the only place setBackupLocation() taps it.
+        const val SET_LOCATION_BUTTON = "Set Location"
+        const val BACKUP_LOCATION_SET_MESSAGE = "Backup location is set"
+
+        // How a tree over a directory at the root of the device's own shared storage is spelled in
+        // the URI the app displays, e.g. "/tree/primary:SafeBoxUpgradeTest".
+        const val GRANTED_TREE_PREFIX = "primary:"
 
         const val FIXTURE_ARGUMENT = "fixtureFile"
+        const val BACKUP_DIR_ARGUMENT = "backupDir"
 
         // Titles of every record in v2_pre_totp.bak: 2 logins, 2 bank accounts, 2 cards, 1 note.
         // Source of truth is the fixture README, which was produced by decrypting the file rather

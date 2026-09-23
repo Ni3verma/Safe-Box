@@ -34,8 +34,8 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
         awaitPicker()
 
         repeat(NAVIGATION_ATTEMPTS) { attempt ->
-            ui.device.findObject(By.text(fileName))?.let {
-                it.click()
+            if (ui.isPresent(By.text(fileName))) {
+                ui.clickObject(By.text(fileName))
                 return
             }
             if (attempt == 0) {
@@ -65,9 +65,46 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
         }
     }
 
+    /**
+     * Grants the app a tree over [folderName], a directory the host created at the root of shared
+     * storage, and confirms the permission dialog that follows.
+     *
+     * This is the *tree* picker (`ACTION_OPEN_DOCUMENT_TREE`), which behaves nothing like the file
+     * picker above and has two rules of its own.
+     *
+     * It opens on the storage root rather than on Recent, and it remembers where it was last left,
+     * so the first thing this does is walk back to the root by tapping the leading breadcrumb. Not
+     * doing that makes the interaction depend on whatever a previous run happened to browse to.
+     *
+     * More importantly, **most obvious directories cannot be granted at all**. Android refuses the
+     * root of shared storage and `Download` alike — the picker greys out its own button and shows
+     * "Can't use this folder / To protect your privacy, choose another folder", which from the
+     * outside looks exactly like a tap that did not land. Hence a dedicated directory, created by
+     * the host so the test never has to drive the picker's "create folder" flow.
+     *
+     * @param folderName display name of the directory at the root of shared storage
+     */
+    fun selectFolder(folderName: String) {
+        awaitPicker()
+
+        if (ui.isPresent(By.res(BREADCRUMB_ARROW_ID))) {
+            ui.clickObject(By.res(BREADCRUMB_TEXT_ID))
+        }
+
+        checkNotNull(ui.scrollToText(folderName)) {
+            "'$folderName' is not listed at the root of shared storage in the document picker. " +
+                "scripts/run-upgrade-test.sh creates it; if it is genuinely on disk, the picker " +
+                "is probably still inside a subdirectory${ui.describeScreen()}"
+        }
+        ui.clickText(folderName)
+
+        ui.clickText(USE_FOLDER_BUTTON)
+        ui.clickText(ALLOW_BUTTON)
+    }
+
     private fun openDownloadsRoot() {
-        ui.awaitObject(By.desc(SHOW_ROOTS_DESC)).click()
-        ui.awaitObject(By.text(DOWNLOADS_ROOT)).click()
+        ui.clickObject(By.desc(SHOW_ROOTS_DESC))
+        ui.clickObject(By.text(DOWNLOADS_ROOT))
     }
 
     private companion object {
@@ -77,6 +114,14 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
         // host pushes fixtures into.
         const val SHOW_ROOTS_DESC = "Show roots"
         const val DOWNLOADS_ROOT = "Downloads"
+
+        // The tree picker's breadcrumb has no stable text - it is named after the device - so it is
+        // matched by resource id. The arrow only exists while the picker is below the root, which
+        // is exactly the condition for needing to go back up.
+        const val BREADCRUMB_ARROW_ID = "$DOCUMENTS_UI_PACKAGE:id/breadcrumb_arrow"
+        const val BREADCRUMB_TEXT_ID = "$DOCUMENTS_UI_PACKAGE:id/breadcrumb_text"
+        const val USE_FOLDER_BUTTON = "USE THIS FOLDER"
+        const val ALLOW_BUTTON = "ALLOW"
 
         const val PICKER_TIMEOUT_MS = 20_000L
         const val FILE_TIMEOUT_MS = 10_000L

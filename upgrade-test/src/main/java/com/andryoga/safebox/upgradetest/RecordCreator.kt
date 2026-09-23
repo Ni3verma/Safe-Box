@@ -105,7 +105,7 @@ internal class RecordCreator(private val ui: UiSupport) {
      */
     private fun openRecordsList() {
         if (ui.isPresent(By.desc(ADD_RECORD_FAB))) return
-        ui.awaitText(RECORDS_TAB).click()
+        ui.clickText(RECORDS_TAB)
         ui.awaitObject(By.desc(ADD_RECORD_FAB))
     }
 
@@ -120,9 +120,9 @@ internal class RecordCreator(private val ui: UiSupport) {
      */
     fun create(record: SeedRecord) {
         openRecordsList()
-        ui.awaitObject(By.desc(ADD_RECORD_FAB)).click()
+        ui.clickObject(By.desc(ADD_RECORD_FAB))
         ui.awaitText(ADD_RECORD_SHEET_TITLE)
-        ui.awaitText(record.type).click()
+        ui.clickText(record.type)
 
         record.fields.forEach { (label, value) ->
             checkNotNull(ui.scrollToText(label)) {
@@ -130,10 +130,10 @@ internal class RecordCreator(private val ui: UiSupport) {
                     "release, so this list has to match what that build shipped, not this " +
                     "branch${ui.describeScreen()}"
             }
-            ui.textField(label).text = value
+            ui.typeInto(label, value)
         }
 
-        ui.awaitText(SAVE_BUTTON).click()
+        ui.clickText(SAVE_BUTTON)
 
         // The record's own row appearing in the list is the signal that the save was accepted: a
         // rejected form stays put with a validation error, and the next record's tap would then

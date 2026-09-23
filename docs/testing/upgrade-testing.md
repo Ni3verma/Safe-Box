@@ -554,18 +554,22 @@ written means guessing at its contents and re-capturing later:
   and refuses a non-emulator unless `UPGRADE_TEST_ALLOW_PHYSICAL=1`. Phase A is far more
   destructive than MR1's sign-up, and a developer with a handset attached is the normal case.
 
-**Delivered so far** — A1–A4 are green end to end on the Pixel 8 API 35 emulator: sign up, restore
-`v2_pre_totp.bak` through the real picker, create one record of each type through the forms, and
-assert all eleven rows are listed. Two things were settled by doing it:
+**Delivered so far** — A1–A5 are green end to end on the Pixel 8 API 35 emulator: sign up, restore
+`v2_pre_totp.bak` through the real picker, create one record of each type through the forms, assert
+all eleven rows are listed, grant a backup directory through the tree picker and turn two settings
+off their defaults. Three things were settled by doing it:
 
 | Settled | Consequence |
 |---|---|
 | Restore **replaces** the vault, it does not merge | The seed order is forced: restore first, then create records. Creating first would have them deleted. |
 | UI Automator's `wait`/`Until` read a cached tree that survives app navigations | Every lookup in the harness flushes the accessibility cache per poll. This is not a preference; it is the difference between Phase A passing and hanging for 60 s on a screen that is not there. See [upgrade-harness-operations.md](upgrade-harness-operations.md#the-accessibility-cache-goes-stale-and-it-costs-a-day). |
+| Android will not grant a document tree over shared storage's root or over `Download` | The backup location is a dedicated `/sdcard/SafeBoxUpgradeTest`, created and reset by the host each run. The refusal is silent from the test's side, so this is not discoverable from a failure message. |
 
-Still open in this stage: A5 (backup location + settings off their defaults), A6 (clipboard copy, so
-`ClipboardClearWorker` leaves rows in WorkManager's database), A7 (write and pull the oracle), and
-the ten-run acceptance above.
+The missing-directory case was proved by deleting the host's `mkdir` and re-running: Phase A failed
+in 64 s naming the directory it could not find, rather than granting something arbitrary.
+
+Still open in this stage: A6 (clipboard copy, so `ClipboardClearWorker` leaves rows in WorkManager's
+database), A7 (write and pull the oracle), and the ten-run acceptance above.
 
 ### MR3 — data integrity assertions
 

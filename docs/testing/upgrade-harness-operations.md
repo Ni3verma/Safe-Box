@@ -164,6 +164,42 @@ either is invisible if only the other is exercised.
 will be permanently lost." Creating the records first and restoring afterwards would silently delete
 them, and Phase A would then assert against records the restore had just destroyed.
 
+### Granting a backup directory
+
+Phase A then points the app at a backup directory and turns two settings off, so that the upgrade
+has state to lose that is not just records:
+[SettingsChanger](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/SettingsChanger.kt)
+flips `Privacy mode` and `Auto-backup on login`, both of which ship **on**. A preference left at its
+default survives even a migration that drops the store and rebuilds it, so asserting on defaults
+proves nothing.
+
+The backup location goes through `ACTION_OPEN_DOCUMENT_TREE`, which behaves nothing like the file
+picker above:
+
+| | File picker | Tree picker |
+|---|---|---|
+| Opens on | *Recent* (`No items` on a fresh emulator) | the storage root, or wherever it was last left |
+| Roots drawer | `Show roots` button in the toolbar | none |
+| Confirming | tapping the file | `USE THIS FOLDER`, then `ALLOW` in a system dialog |
+
+> [!WARNING]
+> **Android refuses to grant a tree over the root of shared storage, or over `Download`.** The
+> picker shows "Can't use this folder / To protect your privacy, choose another folder" and
+> `USE THIS FOLDER` does nothing — which from the outside is indistinguishable from a tap that
+> missed. Phase A therefore grants a dedicated directory, `/sdcard/SafeBoxUpgradeTest`, created by
+> the host and passed in with `-e backupDir`.
+
+Two smaller facts, both load-bearing. The host removes and recreates that directory every run, so a
+backup file written by an earlier run cannot change what Phase A produces. And unlike the Downloads
+root, it needs **no** MediaProvider rescan to become visible — the tree picker lists directories
+from the filesystem, so a host-created directory is offered immediately.
+
+The settings screen is a flat column: each switch is a sibling of its label at the same depth, with
+no row container, no text and no content description. Nothing but geometry connects the two, which
+is what `UiSupport.switchBeside` exploits — the switch whose vertical extent overlaps the label's.
+Sliders on the same screen are deliberately left alone: a drag cannot be made byte-deterministic
+across devices, and Phase A has to reproduce itself exactly.
+
 ### The accessibility cache goes stale, and it costs a day
 
 > [!CAUTION]
@@ -188,6 +224,16 @@ The flush is `UiDevice.setCompressedLayoutHeirarchy(false)`, used for its side e
 hierarchy itself is unchanged. Flushing per poll rather than per wait is worth ~15 s of wall clock
 per Phase A run, because a lookup that flushes only once can still cache a pre-navigation snapshot
 and then sit out its whole timeout against it.
+
+The same cache has a second, opposite failure mode: a handle obtained from one lookup can be
+**invalid by the time it is used**, because finding a node and acting on it are separate round
+trips and anything that re-lays out in between — a drawer sliding open, a form animating in —
+invalidates it. UI Automator raises `StaleObjectException` from `click()`, which reads as a harness
+crash rather than as the timing blip it is; it aborted a run on 2026-09-23 tapping `Downloads` one
+tap after opening the picker's roots drawer. So no call site holds a handle across two operations:
+tapping goes through `UiSupport.clickText`/`clickObject` and typing through `UiSupport.typeInto`,
+which re-find from the selector and retry. Where a handle genuinely must be reused — reading a
+switch's state and then toggling it — wrap the pair in `UiSupport.retryingOnStale`.
 
 Two obvious ways to check what the screen "really" shows are unavailable here, so do not waste time
 on them:
