@@ -6,7 +6,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.Until
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -62,7 +61,8 @@ class UpgradeSmokeTest {
         launchAppUnderTest(SIGNUP_HEADING)
         signUp()
         restoreGoldenBackup()
-        assertFixtureRecordsPresent()
+        RecordCreator(ui).createAll()
+        assertSeededRecordsPresent()
     }
 
     /**
@@ -80,7 +80,7 @@ class UpgradeSmokeTest {
         // would report "no password field" for a screen that was merely a frame behind.
         assertNotNull(
             "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${ui.describeScreen()}",
-            device.wait(Until.findObject(By.text(UNLOCK_PASSWORD_LABEL)), UiSupport.FIND_TIMEOUT_MS),
+            ui.findOrNull(By.text(UNLOCK_PASSWORD_LABEL)),
         )
     }
 
@@ -91,7 +91,7 @@ class UpgradeSmokeTest {
 
         // Leaving the signup heading behind is the only "signed up" signal available without
         // asserting on home-screen content, which belongs to MR2.
-        check(device.wait(Until.gone(By.text(SIGNUP_HEADING)), SIGN_UP_TIMEOUT_MS)) {
+        check(ui.awaitGone(By.text(SIGNUP_HEADING), SIGN_UP_TIMEOUT_MS)) {
             "still on the signup screen after tapping '$SIGNUP_BUTTON'${ui.describeScreen()}"
         }
     }
@@ -124,7 +124,7 @@ class UpgradeSmokeTest {
     }
 
     /**
-     * Asserts every record the fixture contains is listed.
+     * Asserts every record Phase A seeded is listed, by either route.
      *
      * "Data has been successfully restored." is the app's own claim, and a claim is not evidence: a
      * restore that decrypted the file but wrote nothing would still show it. Checking the titles
@@ -132,15 +132,19 @@ class UpgradeSmokeTest {
      * fail confusingly against an empty vault.
      *
      * All the titles are collected before failing so the message names everything missing, not just
-     * the first one.
+     * the first one, and each is labelled with how it was supposed to get there — a failure where
+     * only the restored records are absent means something very different from one where only the
+     * UI-created records are.
      */
-    private fun assertFixtureRecordsPresent() {
+    private fun assertSeededRecordsPresent() {
         ui.awaitText(RECORDS_TAB).click()
 
-        val missing = FIXTURE_RECORD_TITLES.filter { ui.scrollToText(it) == null }
+        val expected = FIXTURE_RECORD_TITLES.map { "restored:$it" } +
+            SeedRecord.ALL.map { "ui:${it.title}" }
+        val missing = expected.filter { ui.scrollToText(it.substringAfter(':')) == null }
         check(missing.isEmpty()) {
-            "the restore reported success, but ${missing.size} of ${FIXTURE_RECORD_TITLES.size} " +
-                "fixture records are not listed: $missing${ui.describeScreen()}"
+            "${missing.size} of ${expected.size} seeded records are not listed: " +
+                "$missing${ui.describeScreen()}"
         }
     }
 
@@ -196,7 +200,7 @@ class UpgradeSmokeTest {
         repeat(LAUNCH_ATTEMPTS) { attempt ->
             context.startActivity(intent)
             val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else UiSupport.FIND_TIMEOUT_MS
-            device.wait(Until.findObject(By.text(expectedHeading)), timeout)
+            ui.findOrNull(By.text(expectedHeading), timeout)
                 ?.let { return it }
             device.pressBack()
         }

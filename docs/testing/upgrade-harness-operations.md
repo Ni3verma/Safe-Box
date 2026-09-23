@@ -154,6 +154,52 @@ is the device's own name (`sdk_gphone64_arm64` locally, something else everywher
 > screen exposes **no** `scrollable` node at all, so "scroll to find it" silently does nothing —
 > which is why the helper waits first and treats a missing scroll container as normal.
 
+After the restore, Phase A creates one record of each type through the app's own forms
+([RecordCreator](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/RecordCreator.kt)),
+because a restore and a user's own input are two different encryption call sites and a defect in
+either is invisible if only the other is exercised.
+
+**That order is forced, not chosen.** Restoring *replaces* the vault — the baseline's own wording is
+"Restoring replaces everything currently saved in the app… Any record that is not in the backup file
+will be permanently lost." Creating the records first and restoring afterwards would silently delete
+them, and Phase A would then assert against records the restore had just destroyed.
+
+### The accessibility cache goes stale, and it costs a day
+
+> [!CAUTION]
+> **Never use `UiDevice.wait`/`Until` in this harness.** Those APIs match against the accessibility
+> node tree cached in the *test* process, and that cache is not reliably invalidated when the app
+> navigates. Every lookup must go through `UiSupport.findOrNull`/`awaitObject`/`awaitGone`, which
+> empty the cache before each poll.
+
+What this looks like when it bites, all observed on 2026-09-23 driving `v2.0.4.0` on the Pixel 8
+API 35 emulator:
+
+- After dismissing the restore dialog and tapping the `Records` tab, the tree showed the records
+  list **underneath the Backup & Restore screen's app bar**, with that tab still marked selected.
+- After saving a record, the tree showed the records list **underneath the add-record form's app
+  bar** — `Back button`, title `Login`, `Save` — so the add button did not exist as far as the test
+  was concerned.
+- The stale state survived a **60 s** wait, then read correctly within seconds of the
+  instrumentation process exiting. The app was never wrong; only this process's copy was.
+
+The flush is `UiDevice.setCompressedLayoutHeirarchy(false)`, used for its side effect: it calls
+`UiAutomation.setServiceInfo`, which empties the cache. Passing the UiAutomator default means the
+hierarchy itself is unchanged. Flushing per poll rather than per wait is worth ~15 s of wall clock
+per Phase A run, because a lookup that flushes only once can still cache a pre-navigation snapshot
+and then sit out its whole timeout against it.
+
+Two obvious ways to check what the screen "really" shows are unavailable here, so do not waste time
+on them:
+
+| Tool | Why it fails |
+|---|---|
+| `adb exec-out screencap` | The app sets `FLAG_SECURE`, so every screenshot is solid black. |
+| `adb shell uiautomator dump` | Refuses while instrumentation holds the accessibility connection; it only works before or after a run, which is exactly when the bug is not visible. |
+
+`adb shell dumpsys window windows` does work and is how "nothing is covering the app" was
+established.
+
 ## What the orchestrator already guarantees
 
 Do not re-implement these in a test:

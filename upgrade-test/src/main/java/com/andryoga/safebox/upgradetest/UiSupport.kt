@@ -1,11 +1,11 @@
 package com.andryoga.safebox.upgradetest
 
+import android.os.SystemClock
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
-import androidx.test.uiautomator.Until
 import java.io.ByteArrayOutputStream
 
 /**
@@ -18,6 +18,9 @@ import java.io.ByteArrayOutputStream
  *
  * Every lookup here waits. A one-shot `findObject` is a race against the next frame, and on a cold
  * CI emulator that race is lost often enough to look like a real defect.
+ *
+ * Every lookup also re-reads the screen from the app rather than from this process's accessibility
+ * cache — see [flushAccessibilityCache] for what goes wrong otherwise.
  */
 internal class UiSupport(val device: UiDevice) {
 
@@ -26,11 +29,68 @@ internal class UiSupport(val device: UiDevice) {
         awaitObject(By.text(text), timeoutMs)
 
     fun awaitObject(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS): UiObject2 =
-        device.wait(Until.findObject(selector), timeoutMs)
+        findOrNull(selector, timeoutMs)
             ?: error("could not find $selector within ${timeoutMs}ms${describeScreen()}")
 
     /** True if the selector is already present, without waiting for it to appear. */
-    fun isPresent(selector: BySelector): Boolean = device.findObject(selector) != null
+    fun isPresent(selector: BySelector): Boolean = findOrNull(selector, 0) != null
+
+    /**
+     * Polls for a node until it appears or the budget runs out.
+     *
+     * `UiDevice.wait` is deliberately not used: it would take one snapshot of the tree and keep
+     * matching against it, which is precisely the failure mode [flushAccessibilityCache] exists to
+     * avoid. Polling by hand costs one binder call per interval and makes every attempt see the
+     * screen as it is now.
+     *
+     * @param selector what to look for
+     * @param timeoutMs how long to keep trying; 0 means a single attempt
+     * @return the node, or null if the budget ran out
+     */
+    fun findOrNull(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS): UiObject2? {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
+        while (true) {
+            flushAccessibilityCache()
+            device.findObject(selector)?.let { return it }
+            if (SystemClock.uptimeMillis() >= deadline) return null
+            SystemClock.sleep(POLL_INTERVAL_MS)
+        }
+    }
+
+    /**
+     * Waits for a node to disappear.
+     *
+     * @param selector what should go away
+     * @param timeoutMs how long to allow
+     * @return true if it is gone, false if it was still there when the budget ran out
+     */
+    fun awaitGone(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS): Boolean {
+        val deadline = SystemClock.uptimeMillis() + timeoutMs
+        while (true) {
+            flushAccessibilityCache()
+            if (device.findObject(selector) == null) return true
+            if (SystemClock.uptimeMillis() >= deadline) return false
+            SystemClock.sleep(POLL_INTERVAL_MS)
+        }
+    }
+
+    /**
+     * Discards the accessibility node cache this process holds for the app under test.
+     *
+     * Without this the harness reads a tree that is a navigation behind reality. Observed on
+     * 2026-09-23 driving `v2.0.4.0` on a Pixel 8 API 35 emulator: after returning from the
+     * add-record form, the records list was reported underneath *the form's* app bar, so the add
+     * button did not exist as far as the test was concerned — for a full 60s wait, and then
+     * correctly the moment the instrumentation process (and its cache) died. The app itself was
+     * fine throughout; only this process's view of it was stale.
+     *
+     * `setCompressedLayoutHeirarchy` is used for its side effect rather than its meaning: it calls
+     * through to `UiAutomation.setServiceInfo`, which empties the cache. The value passed is the
+     * UiAutomator default, so the hierarchy that comes back is unchanged.
+     */
+    private fun flushAccessibilityCache() {
+        device.setCompressedLayoutHeirarchy(false)
+    }
 
     /**
      * Resolves the editable field belonging to a Compose `OutlinedTextField`.
@@ -69,12 +129,12 @@ internal class UiSupport(val device: UiDevice) {
         timeoutMs: Long = FIND_TIMEOUT_MS,
         maxSwipes: Int = MAX_SWIPES,
     ): UiObject2? {
-        device.wait(Until.findObject(By.text(text)), timeoutMs)?.let { return it }
+        findOrNull(By.text(text), timeoutMs)?.let { return it }
         val scrollable = device.findObject(By.scrollable(true)) ?: return null
         repeat(maxSwipes) {
             scrollable.scroll(Direction.DOWN, SCROLL_FRACTION)
             device.waitForIdle()
-            device.findObject(By.text(text))?.let { return it }
+            findOrNull(By.text(text), 0)?.let { return it }
         }
         return null
     }
@@ -96,6 +156,7 @@ internal class UiSupport(val device: UiDevice) {
 
     companion object {
         const val FIND_TIMEOUT_MS = 15_000L
+        private const val POLL_INTERVAL_MS = 250L
         private const val MAX_SWIPES = 8
         private const val SCROLL_FRACTION = 0.7f
     }

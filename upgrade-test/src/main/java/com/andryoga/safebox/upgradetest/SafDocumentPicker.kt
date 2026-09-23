@@ -1,7 +1,6 @@
 package com.andryoga.safebox.upgradetest
 
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.Until
 
 /**
  * Drives the system document picker (DocumentsUI) to select a file the host pushed to Downloads.
@@ -47,7 +46,7 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
                 ui.device.pressBack()
                 openDownloadsRoot()
             }
-            ui.device.wait(Until.findObject(By.text(fileName)), FILE_TIMEOUT_MS)
+            ui.findOrNull(By.text(fileName), FILE_TIMEOUT_MS)
         }
 
         error(
@@ -59,7 +58,7 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
     }
 
     private fun awaitPicker() {
-        val appeared = ui.device.wait(Until.hasObject(By.pkg(DOCUMENTS_UI_PACKAGE)), PICKER_TIMEOUT_MS)
+        val appeared = ui.findOrNull(By.pkg(DOCUMENTS_UI_PACKAGE), PICKER_TIMEOUT_MS) != null
         check(appeared) {
             "the document picker ($DOCUMENTS_UI_PACKAGE) never came to the foreground" +
                 ui.describeScreen()
