@@ -1,6 +1,7 @@
 package com.andryoga.safebox.upgradetest
 
 import androidx.test.uiautomator.By
+import java.util.regex.Pattern
 
 /**
  * Drives the system document picker (DocumentsUI) to select a file the host pushed to Downloads.
@@ -46,7 +47,13 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
                 ui.device.pressBack()
                 openDownloadsRoot()
             }
-            ui.findOrNull(By.text(fileName), FILE_TIMEOUT_MS)
+            // The wait's own result decides the outcome. Discarding it and re-testing at the top
+            // of the next pass means a file that did appear can be missed by a transient hiccup,
+            // and the next pass opens with a back press aimed at a drawer that is not there.
+            if (ui.findOrNull(By.text(fileName), FILE_TIMEOUT_MS) != null) {
+                ui.clickObject(By.text(fileName))
+                return
+            }
         }
 
         error(
@@ -108,7 +115,12 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
     }
 
     private companion object {
-        const val DOCUMENTS_UI_PACKAGE = "com.google.android.documentsui"
+        // Two images, two package names. The local emulator has Google APIs and ships
+        // com.google.android.documentsui; CI runs an aosp_atd image, which ships the AOSP
+        // com.android.documentsui. Pinning either one makes the picker invisible on the other
+        // half of the fleet - awaitPicker would burn its 20 s and report that the picker never
+        // opened, on a device where it opened perfectly.
+        val DOCUMENTS_UI_PACKAGE: Pattern = Pattern.compile("com\\.(google\\.)?android\\.documentsui")
 
         // Content description of the toolbar's drawer button, and the label of the root that the
         // host pushes fixtures into.
@@ -117,14 +129,23 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
 
         // The tree picker's breadcrumb has no stable text - it is named after the device - so it is
         // matched by resource id. The arrow only exists while the picker is below the root, which
-        // is exactly the condition for needing to go back up.
-        const val BREADCRUMB_ARROW_ID = "$DOCUMENTS_UI_PACKAGE:id/breadcrumb_arrow"
-        const val BREADCRUMB_TEXT_ID = "$DOCUMENTS_UI_PACKAGE:id/breadcrumb_text"
+        // is exactly the condition for needing to go back up. Same two package names as above.
+        val BREADCRUMB_ARROW_ID: Pattern = breadcrumbId("breadcrumb_arrow")
+        val BREADCRUMB_TEXT_ID: Pattern = breadcrumbId("breadcrumb_text")
         const val USE_FOLDER_BUTTON = "USE THIS FOLDER"
         const val ALLOW_BUTTON = "ALLOW"
 
         const val PICKER_TIMEOUT_MS = 20_000L
         const val FILE_TIMEOUT_MS = 10_000L
         const val NAVIGATION_ATTEMPTS = 3
+
+        /**
+         * Builds a resource-id matcher that accepts either DocumentsUI package.
+         *
+         * @param name the id's local name, as it appears after the colon
+         * @return a pattern matching that id under either package
+         */
+        private fun breadcrumbId(name: String): Pattern =
+            Pattern.compile("com\\.(google\\.)?android\\.documentsui:id/$name")
     }
 }

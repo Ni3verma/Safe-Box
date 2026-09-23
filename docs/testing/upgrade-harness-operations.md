@@ -151,9 +151,19 @@ is the device's own name (`sdk_gphone64_arm64` locally, something else everywher
 > **"Data has been successfully restored." is not a completion signal.** The dialog appears while
 > the records list is still catching up: asserting immediately after it reproducibly found five of
 > the seven restored records, and the two missing ones were simply not in the view hierarchy yet.
-> Anything reading restored data must wait for it. Note also that a list short enough to fit on
-> screen exposes **no** `scrollable` node at all, so "scroll to find it" silently does nothing —
-> which is why the helper waits first and treats a missing scroll container as normal.
+> Anything reading restored data must wait for it — `scrollToText`'s second, patient pass is where
+> that waiting lives. Note also that a list short enough to fit on screen exposes **no**
+> `scrollable` node at all, so "scroll to find it" silently does nothing, which is why a missing
+> scroll container is treated as normal rather than as an error.
+
+> [!WARNING]
+> **DocumentsUI has two package names and the harness must match both.** The local emulator has
+> Google APIs and ships `com.google.android.documentsui`; CI runs an `aosp_atd` image, which ships
+> the AOSP `com.android.documentsui`. Every selector here — the package itself and the breadcrumb
+> resource ids — is a `Pattern` accepting either. Pinning one name makes the picker invisible on
+> the other half of the fleet, and the symptom is not obviously a package problem: `awaitPicker`
+> simply burns its 20 s and reports that the picker never opened, on a device where it opened
+> perfectly.
 
 After the restore, Phase A creates one record of each type through the app's own forms
 ([RecordCreator](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/RecordCreator.kt)),
@@ -236,6 +246,16 @@ tapping goes through `UiSupport.clickText`/`clickObject` and typing through `UiS
 which re-find from the selector and retry. Where a handle genuinely must be reused — reading a
 switch's state and then toggling it — wrap the pair in `UiSupport.retryingOnStale`.
 
+> [!TIP]
+> **Waiting and scrolling are different problems, and patience belongs to the second pass.**
+> `scrollToText` glances for 2 s, walks the list, and only then rewinds and repeats the walk with
+> the full 15 s patience. Spending the patience first charges the whole timeout to every lookup
+> whose only crime is sorting below the fold: measured from UiAutomator's own poll logging, twelve
+> such lookups cost **181 s of a 269 s Phase A**, each for a record that was on screen one swipe
+> later. The same measurement is the cheapest way to find the next one —
+> `scratch/poll_timeline.py` style grouping of `Retrieving node with selector` lines shows exactly
+> which selector burned the clock.
+
 Two obvious ways to check what the screen "really" shows are unavailable here, so do not waste time
 on them:
 
@@ -269,8 +289,8 @@ ANDROID_SERIAL=emulator-5554 \
   app/build/outputs/apk/qa/SafeBox-qa.apk 10
 ```
 
-Ten full runs at roughly three and a half minutes each, stopping at the first run whose oracle
-differs from run-01 and printing the diff.
+Ten full runs at roughly two minutes each, stopping at the first run whose oracle differs from
+run-01 and printing the diff.
 
 ### Reading the records list
 

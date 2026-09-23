@@ -153,13 +153,18 @@ internal class RecordCreator(private val ui: UiSupport) {
 
         ui.clickText(SAVE_BUTTON)
 
-        // The record's own row appearing in the list is the signal that the save was accepted: a
-        // rejected form stays put with a validation error, and the next record's tap would then
-        // land on the form still being displayed. The row is checked rather than the add button
-        // because the row is what the save is supposed to produce.
+        // The form has to be gone before the row is looked for, and that is not a formality: the
+        // form's own Title field still holds `record.title`, so searching for the title while the
+        // form is up matches the text that was just typed into it. The check would then pass on a
+        // form that had refused to save, and the failure would surface one record later as a
+        // baffling "could not find Records" timeout. The Save button exists only on the form.
+        check(ui.awaitGone(By.text(SAVE_BUTTON))) {
+            "saving the ${record.type} record '${record.title}' left the form open - it is " +
+                "probably showing a validation error${ui.describeScreen()}"
+        }
         checkNotNull(ui.scrollToText(record.title)) {
-            "saving the ${record.type} record '${record.title}' did not return to the records " +
-                "list - the form is probably showing a validation error${ui.describeScreen()}"
+            "saving the ${record.type} record '${record.title}' returned to the records list, " +
+                "but no row with that title is listed${ui.describeScreen()}"
         }
     }
 

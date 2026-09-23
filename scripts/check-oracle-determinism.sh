@@ -31,6 +31,22 @@ new_apk="$2"
 runs="${3:-$DEFAULT_RUNS}"
 out_dir="${4:-upgrade-test-out/determinism}"
 
+# A determinism check that compares nothing must not report success. With runs=0 `seq` emits
+# nothing and the loop never executes; with a non-numeric value `seq` fails inside the for-list,
+# which `set -e` does not catch; with runs=1 there is a reference and nothing to compare it to.
+# All three used to print "produced a byte-identical oracle" and exit 0, which is precisely the
+# silent pass that scripts/lib/instrumentation-guard.sh exists to prevent elsewhere.
+case "$runs" in
+    ''|*[!0-9]*)
+        echo "error: runs must be a whole number of 2 or more, got '$runs'." >&2
+        exit 2
+        ;;
+esac
+if [ "$runs" -lt 2 ]; then
+    echo "error: runs must be 2 or more to compare anything, got '$runs'." >&2
+    exit 2
+fi
+
 mkdir -p "$out_dir/oracles"
 reference=""
 

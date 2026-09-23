@@ -142,13 +142,22 @@ class UpgradeSmokeTest {
      * the first one, and each is labelled with how it was supposed to get there — a failure where
      * only the restored records are absent means something very different from one where only the
      * UI-created records are.
+     *
+     * Each lookup rewinds first. `scrollToText` only travels downwards and leaves the list wherever
+     * it stopped, while these titles are checked in seeding order, which is not the list's sort
+     * order — so without a rewind a title that sits *above* the previous one is reported missing
+     * from a vault that contains it. Eleven records happen to fit within one scroll of each other
+     * today, which is the only reason this has been passing.
      */
     private fun assertSeededRecordsPresent() {
         ui.clickText(RECORDS_TAB)
 
         val expected = FIXTURE_RECORD_TITLES.map { "restored:$it" } +
             SeedRecord.ALL.map { "ui:${it.title}" }
-        val missing = expected.filter { ui.scrollToText(it.substringAfter(':')) == null }
+        val missing = expected.filter {
+            ui.scrollToTop()
+            ui.scrollToText(it.substringAfter(':')) == null
+        }
         check(missing.isEmpty()) {
             "${missing.size} of ${expected.size} seeded records are not listed: " +
                 "$missing${ui.describeScreen()}"

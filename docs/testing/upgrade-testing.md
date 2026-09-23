@@ -587,9 +587,18 @@ post-upgrade stage, where the worker exists.
 
 **Acceptance met, 2026-09-23.** Ten consecutive runs on the Pixel 8 API 35 emulator produced a
 43-line oracle with a single MD5 across all ten, `b20702ff15ea5e1dd8c44bcdc99c7717`, via
-`scripts/check-oracle-determinism.sh`. A run takes about three and a half minutes, of which roughly
-two are Phase A, so the ten-run check is something to run when the seeding or the oracle changes —
-not something to add to CI. **MR2 is complete.**
+`scripts/check-oracle-determinism.sh`. A run takes about two minutes, of which 112 s is Phase A, so
+the ten-run check is something to run when the seeding or the oracle changes — not something to add
+to CI. **MR2 is complete.**
+
+The review on PR #261 found seven real defects, all latent rather than currently failing, and the
+acceptance was re-run afterwards: the same MD5, which is what establishes that the fixes changed
+robustness and not behaviour. Two are worth carrying forward:
+
+| Found | Why it matters beyond MR2 |
+|---|---|
+| The picker pinned `com.google.android.documentsui` | CI runs an `aosp_atd` image, which ships the AOSP `com.android.documentsui`. Phase A would have failed on CI while passing locally, and the symptom — "the picker never came to the foreground" — does not point at a package name. Anything selecting on a system app's package or resource ids must match both. |
+| `scrollToText` spent its whole 15 s patience *before* scrolling | Every lookup below the fold cost the full timeout: 181 s of a 269 s Phase A, measured from UiAutomator's poll log. Fixing it made Phase A faster than it was before the review round (125 s → 112 s). Later stages add more list reading, so the pattern matters more, not less. |
 
 ### MR3 — data integrity assertions
 

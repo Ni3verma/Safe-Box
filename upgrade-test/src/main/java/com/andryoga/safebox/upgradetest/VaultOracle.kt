@@ -82,8 +82,13 @@ internal class VaultOracle(
      *
      * A map keyed by title rather than a running count, because the list has to be walked in
      * screenfuls and the screenfuls overlap: re-reading a row that was already seen must not
-     * inflate the total. It also means the file names anything unexpected — a record created twice
-     * by a retried tap shows up as an extra line, not just a count that is one too high.
+     * inflate the total.
+     *
+     * That key is also a blind spot, and it is covered elsewhere rather than here. Two rows with
+     * the same title collapse into one entry, so a record accidentally created twice would leave
+     * `record.count` looking correct and would survive the ten-run acceptance, since it reproduces
+     * perfectly. Duplicates are therefore rejected by [visibleRows], which sees the rows of a
+     * single screenful before anything is deduplicated.
      *
      * The screenful is read *after* every scroll, including the scroll that reports it has reached
      * the end. Reading only while the container says it can scroll further loses the last
@@ -142,6 +147,12 @@ internal class VaultOracle(
      * produced it, and prints that screenful's text with its positions. Catching it at the end of
      * the walk instead reports it against whatever the list happens to show when the walk stops,
      * which is a different frame and says nothing about what went wrong.
+     *
+     * The same screenful is also where a *duplicated* record is still visible. The walk's result is
+     * keyed by title, which it has to be because screenfuls overlap, and that key destroys the
+     * evidence: two rows called `ui login` become one entry and a count that looks right. Here the
+     * rows are still a list, so the same title on two different lines can be rejected. The list is
+     * sorted by title, so a duplicate pair is adjacent and lands on one screenful.
      */
     private fun visibleRows(): Map<String, String> {
         val typeColumnLeft = ui.device.displayWidth / 2
@@ -155,17 +166,23 @@ internal class VaultOracle(
             .mapNotNull { chip ->
                 screen.filter { it.bounds.left < typeColumnLeft && chip.sharesLineWith(it) }
                     .minByOrNull { it.bounds.top }
-                    ?.let { it.text to chip.text }
+                    ?.let { title -> title.text to chip.text }
             }
-            .toMap()
 
-        val unexpected = rows.keys - expectedTitles
+        val duplicated = rows.groupingBy { it.first }.eachCount().filterValues { it > 1 }.keys
+        check(duplicated.isEmpty()) {
+            "one screenful of the records list shows $duplicated more than once, so the vault " +
+                "holds a record that was created twice. That screenful read as:\n" +
+                screen.joinToString("\n") { "${it.text} @ ${it.bounds.toShortString()}" }
+        }
+
+        val unexpected = rows.map { it.first }.toSet() - expectedTitles
         check(unexpected.isEmpty()) {
             "a screenful of the records list paired $unexpected with a type chip, and Phase A " +
                 "never seeded a record with that title. That screenful read as:\n" +
                 screen.joinToString("\n") { "${it.text} @ ${it.bounds.toShortString()}" }
         }
-        return rows
+        return rows.toMap()
     }
 
     /**

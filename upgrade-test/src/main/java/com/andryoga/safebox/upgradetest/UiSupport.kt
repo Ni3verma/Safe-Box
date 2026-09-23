@@ -334,20 +334,31 @@ internal class UiSupport(val device: UiDevice) {
     /**
      * Finds text that may not be on screen yet, or may be below the fold.
      *
-     * Both halves are needed, for different reasons.
+     * Two passes, because the two reasons text is not visible want opposite treatment.
      *
-     * It waits first because list content arrives asynchronously: after a restore, the app shows
-     * "Data has been successfully restored." while the records list is still catching up, and a
-     * one-shot query reproducibly saw five of seven records. The app's success message is not a
-     * completion signal for the data being queryable, so the harness must not treat it as one.
+     * The first pass is impatient: glance at the screen, then scroll, looking after each swipe.
+     * Text that is merely below the fold is found in the time it takes to get there.
      *
-     * It scrolls second because the list is only as long as the fixture makes it, and the CI
-     * emulator is not the same size as the developer one — "it was visible when I wrote the test"
-     * is not a property that survives. Note that a list short enough to fit reports no scrollable
-     * container at all, which is why a missing container is not itself an error.
+     * The second pass is patient, and only happens when the first found nothing. It rewinds and
+     * repeats the walk, this time waiting [timeoutMs] for the text to appear before scrolling.
+     * That is the case the wait was added for: list content arrives asynchronously, and after a
+     * restore the app shows "Data has been successfully restored." while the records list is still
+     * catching up — a one-shot query reproducibly saw five of seven records. The app's success
+     * message is not a completion signal for the data being queryable.
+     *
+     * Spending the patience *before* the scrolling, which is what this used to do, charges the full
+     * timeout to every lookup whose only crime is sorting below the fold. Measured from
+     * UiAutomator's own poll logging: twelve such lookups, 181 s of a 269 s Phase A, every one of
+     * them for a record that was on screen one swipe later.
+     *
+     * The scrolling goes through [scrollList] rather than holding one container handle for the
+     * whole walk. This function used to keep a handle across up to eight swipes, which is the
+     * pattern the rest of the harness exists to avoid: the handle re-resolves on every use, and a
+     * list that re-lays out mid-walk invalidates it. It also bypassed the accessibility-cache
+     * flush that every other lookup performs.
      *
      * @param text the exact visible text to look for
-     * @param timeoutMs how long to wait for it to appear before scrolling for it
+     * @param timeoutMs how long the patient pass waits for the text to appear
      * @param maxSwipes how many screens to travel before giving up
      * @return the node, or null if it never appeared
      */
@@ -356,12 +367,29 @@ internal class UiSupport(val device: UiDevice) {
         timeoutMs: Long = FIND_TIMEOUT_MS,
         maxSwipes: Int = MAX_SWIPES,
     ): UiObject2? {
-        findOrNull(By.text(text), timeoutMs)?.let { return it }
-        val scrollable = device.findObject(By.scrollable(true)) ?: return null
+        walkForText(text, QUICK_LOOK_MS, maxSwipes)?.let { return it }
+        scrollToTop(maxSwipes)
+        return walkForText(text, timeoutMs, maxSwipes)
+    }
+
+    /**
+     * One downward walk looking for [text], from wherever the screen currently is.
+     *
+     * The text is looked for *after* the swipe that reports there is nothing left to scroll,
+     * because that swipe still reveals a screenful. Stopping on the report rather than after it is
+     * how the oracle came to miss the last four records in the list.
+     *
+     * @param text the exact visible text to look for
+     * @param initialTimeoutMs how long to wait before starting to scroll
+     * @param maxSwipes how many screens to travel before giving up
+     * @return the node, or null if it was not found in this walk
+     */
+    private fun walkForText(text: String, initialTimeoutMs: Long, maxSwipes: Int): UiObject2? {
+        findOrNull(By.text(text), initialTimeoutMs)?.let { return it }
         repeat(maxSwipes) {
-            scrollable.scroll(Direction.DOWN, SCROLL_FRACTION)
-            device.waitForIdle()
+            val more = scrollList(Direction.DOWN)
             findOrNull(By.text(text), 0)?.let { return it }
+            if (!more) return null
         }
         return null
     }
@@ -391,6 +419,10 @@ internal class UiSupport(val device: UiDevice) {
         private val BOUNDS_PATTERN = Regex("""\[(-?\d+),(-?\d+)]\[(-?\d+),(-?\d+)]""")
 
         private const val POLL_INTERVAL_MS = 250L
+
+        // What a lookup spends before it starts scrolling. Long enough for a few polls of a screen
+        // that is already showing the text, short enough that looking in the wrong place is cheap.
+        private const val QUICK_LOOK_MS = 2_000L
         private const val MAX_SWIPES = 8
         private const val SCROLL_FRACTION = 0.7f
     }
