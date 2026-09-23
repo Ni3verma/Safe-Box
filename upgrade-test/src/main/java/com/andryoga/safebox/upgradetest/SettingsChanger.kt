@@ -56,8 +56,12 @@ internal class SettingsChanger(private val ui: UiSupport) {
         }
     }
 
-    private companion object {
-        const val SETTINGS_TAB = "Settings"
+    /**
+     * Not private because [VaultOracle] reads the same two rows back out. One list, so the state
+     * Phase A changes and the state the oracle records cannot drift apart.
+     */
+    companion object {
+        private const val SETTINGS_TAB = "Settings"
 
         /**
          * Both ship enabled, and both are read back by the oracle.

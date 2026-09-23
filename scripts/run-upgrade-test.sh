@@ -38,6 +38,10 @@ DEVICE_DOWNLOADS="/sdcard/Download"
 BACKUP_DIR="SafeBoxUpgradeTest"
 DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
 
+# What Phase A writes into the harness's own app-private storage, and what the ten-run determinism
+# acceptance diffs. Named by VaultOracle.ORACLE_FILE_NAME; the two have to agree.
+ORACLE_FILE="phase-a-oracle.txt"
+
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
     exit 2
@@ -242,6 +246,18 @@ run_phase() {
 }
 
 run_phase seed seedVaultOnBaselineBuild 1
+
+# Read back with run-as rather than adb pull: the instrumentation writes to its own app-private
+# storage, which needs no permissions on the device and cannot be confused with anything the app
+# under test wrote. The harness APK is debug-signed, so run-as is allowed.
+echo "== Capture oracle =="
+adb exec-out run-as "$TEST_PACKAGE" cat "files/$ORACLE_FILE" > "$out_dir/$ORACLE_FILE" || true
+if [ ! -s "$out_dir/$ORACLE_FILE" ]; then
+    echo "error: Phase A produced no oracle at $out_dir/$ORACLE_FILE." >&2
+    echo "       The phase passed, so the capture wrote nothing or run-as was refused." >&2
+    exit 1
+fi
+echo "$ORACLE_FILE: $(wc -l < "$out_dir/$ORACLE_FILE" | tr -d ' ') lines"
 
 echo "== Upgrade in place =="
 # force-stop, never `pm clear` and never `uninstall`: wiping /data would turn this into a

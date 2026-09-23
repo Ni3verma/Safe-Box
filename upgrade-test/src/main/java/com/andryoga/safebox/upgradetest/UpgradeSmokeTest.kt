@@ -55,6 +55,10 @@ class UpgradeSmokeTest {
      * It is done through the real picker and the real restore worker rather than by pushing a
      * database file, because a restore is the only supported way to get records into the vault
      * without ~50 taps, and it exercises the production write path while doing so.
+     *
+     * The phase ends by reading all of it back out into an oracle file ([VaultOracle]). Reading is
+     * not a formality: it is the only evidence that what the seeding *did* is what the app *has*,
+     * and it is what the ten-run determinism acceptance compares.
      */
     @Test
     fun seedVaultOnBaselineBuild() {
@@ -65,6 +69,7 @@ class UpgradeSmokeTest {
         assertSeededRecordsPresent()
         setBackupLocation()
         SettingsChanger(ui).applyNonDefaults()
+        VaultOracle(ui, seededTitles()).capture()
     }
 
     /**
@@ -149,6 +154,15 @@ class UpgradeSmokeTest {
                 "$missing${ui.describeScreen()}"
         }
     }
+
+    /**
+     * Every record title Phase A is responsible for, whichever route put it there.
+     *
+     * One definition, used both by the assertion above and by the oracle's own cross-check, so the
+     * two can never disagree about what a correctly seeded vault contains.
+     */
+    private fun seededTitles(): Set<String> =
+        (FIXTURE_RECORD_TITLES + SeedRecord.ALL.map { it.title }).toSet()
 
     /**
      * Points the app at a backup directory, through the system tree picker.

@@ -13,6 +13,7 @@ How to run, extend and debug the APK-over-APK harness. The *why* lives in
 | On-device driver | `upgrade-test/src/main/java/.../UpgradeSmokeTest.kt` | UI Automator, one `@Test` per phase |
 | Fixtures | `upgrade-test/src/main/assets/fixtures/` | golden `.bak` files, packaged into the harness APK |
 | Host orchestrator | `scripts/run-upgrade-test.sh` | install, seed, upgrade, re-run, collect |
+| Determinism check | `scripts/check-oracle-determinism.sh` | runs the orchestrator N times and diffs the oracle |
 | Zero-test guard | `scripts/lib/instrumentation-guard.sh` | decides whether a run actually happened |
 | Guard's own tests | `scripts/tests/instrumentation-guard-test.sh` | device-free, run by `ci.yml` on every PR |
 | Baseline resolution | `scripts/resolve-baselines.sh` | derives tags from the release list |
@@ -245,6 +246,55 @@ on them:
 
 `adb shell dumpsys window windows` does work and is how "nothing is covering the app" was
 established.
+
+## Capturing the oracle
+
+Phase A ends by reading the whole vault back through the UI and writing
+`phase-a-oracle.txt` into the *harness's* app-private storage. The host pulls it with
+`adb exec-out run-as com.andryoga.safebox.upgradetest cat files/phase-a-oracle.txt` — which works
+because the harness APK is debuggable — and fails the run if it comes back empty. It is written to
+a file rather than printed because the acceptance is a byte comparison and logcat adds timestamps
+and truncates long lines.
+
+What goes in it is constrained by one rule: **nothing time-varying**. `Created on`, `Updated on`
+and the backup screen's "last taken on" all move every run, so the oracle reads *named fields
+only* and never dumps a screen. A filter would have worked until the first value somebody forgot,
+at which point the ten-run acceptance becomes noise that everyone learns to ignore.
+
+Check it with:
+
+```bash
+ANDROID_SERIAL=emulator-5554 \
+  ./scripts/check-oracle-determinism.sh old-apk/SafeBox-qa.apk \
+  app/build/outputs/apk/qa/SafeBox-qa.apk 10
+```
+
+Ten full runs at roughly three and a half minutes each, stopping at the first run whose oracle
+differs from run-01 and printing the diff.
+
+### Reading the records list
+
+There is no node per row. A row's title, its subtitle and its type chip are three unrelated text
+nodes that happen to share a line, so rows are reconstructed from geometry: a chip is right of
+centre, its title is the topmost text left of centre on the same line, and the subtitle is ignored
+because it sits lower. Detail screens work the same way — `UiSupport.valueBelow` takes the nearest
+text below a label whose horizontal extent overlaps it, which is load-bearing on the bank account
+screen where `MICR Code` and `IFSC Code` share a line.
+
+Geometry cannot tell a wrong answer from a right one, so the result is checked against the titles
+Phase A seeded, in both directions, and both directions have fired for real:
+
+| Trap | What it looked like | What it actually was |
+|---|---|---|
+| The list's **type-filter row** | A twelfth record, `Login`, of type `Note` | `Login`, `Card`, `Bank Account` and `Note` are also filter chips on one line at the top of the list, and `Note` sits right of centre, so it was read as a row's chip and paired with the leftmost thing on its line. A record row names exactly one type, so a type name sharing a line with another type name is a filter and is dropped. |
+| Reading **only while the list can still scroll** | A perfectly reproducible oracle missing the last four records | The final screenful arrives *after* the scroll that reports there is nothing left. Read after every scroll, then break. |
+
+> [!IMPORTANT]
+> The records screen's app bar **collapses**: while the list is scrolled down, `Add new record
+> button` does not exist in the hierarchy at all, and waiting for it burns a full 15 s timeout
+> against a screen that is behaving correctly. Call `UiSupport.scrollToTop()` before looking for
+> anything in that app bar. `scrollToText` only travels downwards, so rewinding is also what makes
+> one lookup independent of where the previous one finished.
 
 ## What the orchestrator already guarantees
 

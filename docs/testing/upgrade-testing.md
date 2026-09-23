@@ -198,8 +198,8 @@ front; see [MR2](#mr2--seeding) for why.
 | A3 | restore a golden `.bak` through the real SAF picker | seeds every record type in one interaction instead of ~50 taps |
 | A4 | create one extra record **of each type through the UI** | restore writes via the worker, the UI writes via the repository — two different encryption call sites |
 | A5 | set the backup directory and move 2–3 settings off their defaults | a prefs/DataStore migration bug is invisible if every value is still the default |
-| A6 | copy a password to the clipboard | enqueues `ClipboardClearWorker`, so WorkManager's DB is non-empty across the upgrade |
-| A7 | capture the oracle: per-type counts, every field of one known record per type, current TOTP code | |
+| ~~A6~~ | ~~copy a password to the clipboard~~ | **Dropped 2026-09-23.** `ClipboardClearWorker` does not exist in the `v2.0.4.0` baseline, so Phase A cannot enqueue it. WorkManager's DB is non-empty anyway: A3's restore runs through `RestoreDataWorker`. |
+| A7 | capture the oracle: per-type counts and every field of one record per type, read back through the UI | nothing time-varying may enter it, so no timestamps and no TOTP code — those are read where they can be checked, after the upgrade |
 | A8 | `adb shell am force-stop` | **never** `pm clear`, **never** `uninstall` |
 
 ### Phase B — the upgrade
@@ -554,22 +554,42 @@ written means guessing at its contents and re-capturing later:
   and refuses a non-emulator unless `UPGRADE_TEST_ALLOW_PHYSICAL=1`. Phase A is far more
   destructive than MR1's sign-up, and a developer with a handset attached is the normal case.
 
-**Delivered so far** — A1–A5 are green end to end on the Pixel 8 API 35 emulator: sign up, restore
-`v2_pre_totp.bak` through the real picker, create one record of each type through the forms, assert
-all eleven rows are listed, grant a backup directory through the tree picker and turn two settings
-off their defaults. Three things were settled by doing it:
+**Delivered so far** — A1–A5 and A7 are green end to end on the Pixel 8 API 35 emulator: sign up,
+restore `v2_pre_totp.bak` through the real picker, create one record of each type through the forms,
+assert all eleven rows are listed, grant a backup directory through the tree picker, turn two
+settings off their defaults, then read the whole vault back and write the oracle. Five things were
+settled by doing it:
 
 | Settled | Consequence |
 |---|---|
 | Restore **replaces** the vault, it does not merge | The seed order is forced: restore first, then create records. Creating first would have them deleted. |
 | UI Automator's `wait`/`Until` read a cached tree that survives app navigations | Every lookup in the harness flushes the accessibility cache per poll. This is not a preference; it is the difference between Phase A passing and hanging for 60 s on a screen that is not there. See [upgrade-harness-operations.md](upgrade-harness-operations.md#the-accessibility-cache-goes-stale-and-it-costs-a-day). |
 | Android will not grant a document tree over shared storage's root or over `Download` | The backup location is a dedicated `/sdcard/SafeBoxUpgradeTest`, created and reset by the host each run. The refusal is silent from the test's side, so this is not discoverable from a failure message. |
+| The baseline **silently discards** a card expiry longer than four characters | Phase A seeded `12/30` into a field with `maxLength = 4` and the whole value was rejected, so A4's "every field is filled" was false for a week and nothing said so. The oracle caught it because it reads fields back by name. Seeds now carry `1230`. |
+| Reading the UI is geometry, and geometry needs a guard | The records list has no node per row, so titles are paired to type chips by position — a method that cannot tell a wrong answer from a right one. The pairing is therefore checked against what Phase A seeded, in both directions. See [upgrade-harness-operations.md](upgrade-harness-operations.md#reading-the-records-list). |
 
-The missing-directory case was proved by deleting the host's `mkdir` and re-running: Phase A failed
-in 64 s naming the directory it could not find, rather than granting something arbitrary.
+Both guards were proved by making them fail. The missing-directory case was proved by deleting the
+host's `mkdir`: Phase A failed in 64 s naming the directory it could not find, rather than granting
+something arbitrary. The oracle's "missing record" guard was proved by adding a title Phase A never
+creates, which failed with `Missing: [NEGATIVE PROOF]`. Its "unexpected record" guard needed no
+contrivance — it caught the list's type-filter row being read as a twelfth record, which is the
+defect it exists to catch.
 
-Still open in this stage: A6 (clipboard copy, so `ClipboardClearWorker` leaves rows in WorkManager's
-database), A7 (write and pull the oracle), and the ten-run acceptance above.
+**A6 was removed from this stage, 2026-09-23.** It asked Phase A to copy a field to the clipboard so
+`ClipboardClearWorker` would leave rows in WorkManager's database for the upgrade to carry across.
+That worker does not exist in the baseline: `git ls-tree v2.0.4.0 -- app/src/main/java/com/andryoga/safebox/worker/`
+lists only `BackupDataWorker`, `RestoreDataWorker` and `SafeBoxWorkerFactory`, and
+`ClipboardClearWorker.kt` arrives with commit `1540952` (TOTP support, #241), well after the floor.
+Phase A drives the baseline, so there was nothing to trigger. The property it was reaching for is
+still covered: the restore Phase A already performs runs through `RestoreDataWorker`, so WorkManager's
+database is populated before the upgrade either way. Clipboard-worker behaviour moves to a
+post-upgrade stage, where the worker exists.
+
+**Acceptance met, 2026-09-23.** Ten consecutive runs on the Pixel 8 API 35 emulator produced a
+43-line oracle with a single MD5 across all ten, `b20702ff15ea5e1dd8c44bcdc99c7717`, via
+`scripts/check-oracle-determinism.sh`. A run takes about three and a half minutes, of which roughly
+two are Phase A, so the ten-run check is something to run when the seeding or the oracle changes —
+not something to add to CI. **MR2 is complete.**
 
 ### MR3 — data integrity assertions
 
@@ -616,6 +636,7 @@ discovering the debt from a code comment.
 |---|---|---|---|---|
 | MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
 | MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
+| MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR5 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
 
 ---
 

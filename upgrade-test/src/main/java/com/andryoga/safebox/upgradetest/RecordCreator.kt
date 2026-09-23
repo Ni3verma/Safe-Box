@@ -28,8 +28,19 @@ internal data class SeedRecord(
     val title: String
         get() = fields.first { it.first == TITLE_LABEL }.second
 
+    /**
+     * The same fields as the detail screen labels them.
+     *
+     * The read-only screen drops the mandatory marker the forms add, and nothing else differs, so
+     * this is derived rather than declared: a second hand-written list would be one rename away
+     * from disagreeing with the one above, and the disagreement would look like a missing field.
+     */
+    val detailLabels: List<String>
+        get() = fields.map { it.first.removeSuffix(MANDATORY_MARKER) }
+
     companion object {
-        const val TITLE_LABEL = "Title*"
+        const val MANDATORY_MARKER = "*"
+        const val TITLE_LABEL = "Title$MANDATORY_MARKER"
         private const val UI_NOTES = "created through the UI"
 
         /**
@@ -55,7 +66,12 @@ internal data class SeedRecord(
                     "Number*" to "4111111111111111",
                     "PIN" to "1234",
                     "CVV" to "321",
-                    "Expiry Date" to "12/30",
+                    // Four digits, no slash. The field caps input at four characters and the
+                    // slash is added by a visual transformation, so "12/30" is not merely
+                    // reformatted - RowField drops the whole value and the card saves with no
+                    // expiry date, silently. Verified against v2.0.4.0 on 2026-09-23: the detail
+                    // screen showed no Expiry Date row at all.
+                    "Expiry Date" to "1230",
                     "Notes" to UI_NOTES,
                 ),
             ),
@@ -96,16 +112,18 @@ internal class RecordCreator(private val ui: UiSupport) {
     fun createAll() = SeedRecord.ALL.forEach(::create)
 
     /**
-     * Brings the records list to the front.
+     * Brings the records list to the front, at the top.
      *
-     * Dismissing the restore dialog leaves the app on the Backup & Restore tab, not on the records
-     * list, so the add button this flow starts from is not on screen at all. The tab is only tapped
-     * when that button is missing, so callers do not have to know where the preceding step left the
-     * app.
+     * Two different things can hide the add button, and both look identical from here. Dismissing
+     * the restore dialog leaves the app on the Backup & Restore tab, where the button does not
+     * exist; and the records list sits under a collapsing app bar, so once the list is scrolled —
+     * which the previous record's save check leaves it — the button is gone from the hierarchy
+     * even though the right screen is showing. Hence tab first, then rewind, then look.
      */
     private fun openRecordsList() {
         if (ui.isPresent(By.desc(ADD_RECORD_FAB))) return
         ui.clickText(RECORDS_TAB)
+        ui.scrollToTop()
         ui.awaitObject(By.desc(ADD_RECORD_FAB))
     }
 

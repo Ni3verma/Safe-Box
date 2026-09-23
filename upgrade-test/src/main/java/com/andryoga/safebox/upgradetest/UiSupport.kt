@@ -1,13 +1,17 @@
 package com.andryoga.safebox.upgradetest
 
+import android.graphics.Rect
 import android.os.SystemClock
+import android.util.Xml
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
+import org.xmlpull.v1.XmlPullParser
 import java.io.ByteArrayOutputStream
+import java.io.StringReader
 
 /**
  * Shared UI Automator plumbing for the upgrade harness.
@@ -194,6 +198,140 @@ internal class UiSupport(val device: UiDevice) {
     }
 
     /**
+     * Every piece of text on screen, with where it was, read as one consistent snapshot.
+     *
+     * Not `findObjects` + `getText()`: those are separate binder calls per node, and a `UiObject2`
+     * re-resolves its underlying node each time it is touched, so while a list is scrolling the
+     * text and the position a caller reads back can come from two different frames. Anything that
+     * pairs nodes by where they are - which is the only way to read this app's rows and detail
+     * screens - is wrong the moment that happens, and wrong in a way that looks like a layout fact
+     * rather than a race.
+     *
+     * Dumping the window hierarchy is one call that returns one frame, so text and position cannot
+     * disagree. It also un-escapes XML entities, which matters for the one label in this app
+     * containing an ampersand.
+     *
+     * @return the visible text nodes; empty text is dropped as it carries no information
+     */
+    fun textSnapshot(): List<ScreenText> {
+        flushAccessibilityCache()
+        val parser = Xml.newPullParser()
+        parser.setInput(StringReader(device.windowHierarchy()))
+        val texts = mutableListOf<ScreenText>()
+        while (parser.next() != XmlPullParser.END_DOCUMENT) {
+            if (parser.eventType != XmlPullParser.START_TAG || parser.name != NODE_TAG) continue
+            val text = parser.getAttributeValue(null, TEXT_ATTRIBUTE).orEmpty()
+            if (text.isEmpty()) continue
+            parseBounds(parser.getAttributeValue(null, BOUNDS_ATTRIBUTE))
+                ?.let { texts += ScreenText(text, it) }
+        }
+        return texts
+    }
+
+    /**
+     * Reads the value a read-only detail screen renders under a label.
+     *
+     * The detail screens are label/value pairs with no container tying the two together and no
+     * content description on either, so the value is the nearest text *below* the label whose
+     * horizontal extent overlaps it. Two-column rows make the horizontal test load-bearing: `MICR
+     * Code` and `IFSC Code` sit on the same line, and "nearest below" alone would read the wrong
+     * one.
+     *
+     * The label is scrolled to first, because the bank account screen is taller than a phone.
+     *
+     * @param label the field's visible label, as the detail screen spells it
+     * @return the rendered value, which is the *displayed* string - card numbers arrive grouped
+     * into fours and expiry dates carry the slash the input field refuses
+     */
+    fun valueBelow(label: String): String {
+        checkNotNull(scrollToText(label)) {
+            "the detail screen has no '$label' label${describeScreen()}"
+        }
+        val screen = textSnapshot()
+        val labelBounds = screen.firstOrNull { it.text == label }?.bounds
+            ?: error("'$label' disappeared between being scrolled to and being read")
+        return screen
+            .filter {
+                it.bounds.top > labelBounds.top &&
+                    it.bounds.left < labelBounds.right &&
+                    it.bounds.right > labelBounds.left
+            }
+            .minByOrNull { it.bounds.top }
+            ?.text
+            ?: error("nothing is rendered under the '$label' label${describeScreen()}")
+    }
+
+    /**
+     * Where a piece of text was when the screen was read.
+     *
+     * @param text the visible text
+     * @param bounds its position, in device pixels
+     */
+    data class ScreenText(val text: String, val bounds: Rect) {
+
+        /**
+         * Whether this text and [other] are rendered on the same line.
+         *
+         * Vertical overlap rather than equal tops, because text on one line of a list row is not
+         * the same height: a title, its type chip and a filter chip all sit on lines of their own
+         * but none of them start at the same pixel. Note that a text always shares a line with
+         * itself, which is what lets callers count how many things are on a line.
+         *
+         * @param other the text to compare against
+         * @return true when the two vertical extents overlap at all
+         */
+        fun sharesLineWith(other: ScreenText): Boolean =
+            bounds.top < other.bounds.bottom && bounds.bottom > other.bounds.top
+    }
+
+    /**
+     * Turns the hierarchy dump's `[left,top][right,bottom]` into a rectangle.
+     *
+     * @param raw the attribute value, or null when the node had none
+     * @return the rectangle, or null if the attribute was missing or malformed
+     */
+    private fun parseBounds(raw: String?): Rect? {
+        val match = raw?.let { BOUNDS_PATTERN.matchEntire(it) } ?: return null
+        val (left, top, right, bottom) = match.destructured
+        return Rect(left.toInt(), top.toInt(), right.toInt(), bottom.toInt())
+    }
+
+    /**
+     * Scrolls the screen's scrollable container one step.
+     *
+     * A screen with nothing to scroll is not an error - a list short enough to fit exposes no
+     * scrollable node at all - so that case reports "no further" rather than failing.
+     *
+     * @param direction which way to go
+     * @param fraction how much of the container to travel
+     * @return true while the container can still scroll further that way, so callers can walk a
+     * list to its end without guessing how long it is
+     */
+    fun scrollList(direction: Direction, fraction: Float = SCROLL_FRACTION): Boolean =
+        retryingOnStale {
+            val container = findOrNull(By.scrollable(true), 0) ?: return@retryingOnStale false
+            container.scroll(direction, fraction)
+        }
+
+    /**
+     * Rewinds a scrollable screen to the top.
+     *
+     * Needed more often than it looks. The records list is under a *collapsing* app bar, so the
+     * add-record button does not exist in the hierarchy at all while the list is scrolled down —
+     * and every `scrollToText` leaves it scrolled down. Searching for that button without
+     * rewinding first waits out its whole timeout against a screen that is behaving perfectly.
+     * `scrollToText` itself only travels downwards, so this is also how a lookup is made
+     * independent of where the previous one finished.
+     *
+     * @param maxSwipes how many screens to travel before giving up
+     */
+    fun scrollToTop(maxSwipes: Int = MAX_SWIPES) {
+        repeat(maxSwipes) {
+            if (!scrollList(Direction.UP)) return
+        }
+    }
+
+    /**
      * Finds text that may not be on screen yet, or may be below the fold.
      *
      * Both halves are needed, for different reasons.
@@ -245,6 +383,13 @@ internal class UiSupport(val device: UiDevice) {
 
     companion object {
         const val FIND_TIMEOUT_MS = 15_000L
+
+        // Shape of one element of UiDevice.dumpWindowHierarchy's output.
+        private const val NODE_TAG = "node"
+        private const val TEXT_ATTRIBUTE = "text"
+        private const val BOUNDS_ATTRIBUTE = "bounds"
+        private val BOUNDS_PATTERN = Regex("""\[(-?\d+),(-?\d+)]\[(-?\d+),(-?\d+)]""")
+
         private const val POLL_INTERVAL_MS = 250L
         private const val MAX_SWIPES = 8
         private const val SCROLL_FRACTION = 0.7f
