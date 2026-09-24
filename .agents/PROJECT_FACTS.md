@@ -106,9 +106,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   (see [ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
 - Runner is `com.andryoga.safebox.CustomHiltTestRunner`; test Application is `BaseTestApplication`.
 - Gradle Managed Device: `pixel8Api34` (Pixel 8, API 34, `aosp-atd`).
-- **Production code contains zero `Modifier.testTag`.** The suite selects purely by text
-  (449 × `onNodeWithText`) and content description (101 × `onNodeWithContentDescription`).
-  Verified 2026-09-20.
+- **`Modifier.testTag` only on text-less controls** (settings switches/sliders, `ui/core/TestTags.kt`),
+  exposed as resource ids in `debug`/`qa` only. Everything else is selected by text
+  (449 × `onNodeWithText`) and content description (101 × `onNodeWithContentDescription`). 2026-09-24.
 - ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
   required. `aosp-atd` suffices for `:app`'s own UI tests but **not** `:upgrade-test` (no DocumentsUI).
 - **`:upgrade-test`** is a self-instrumenting `com.android.test` module for black-box upgrade

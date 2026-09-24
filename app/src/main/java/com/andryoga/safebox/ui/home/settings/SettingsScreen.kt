@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -33,6 +34,7 @@ import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.TestTags
 import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
@@ -101,6 +103,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             checked = uiState.isPrivacyEnabled,
             onCheckedChange = { onScreenAction(SettingsScreenAction.UpdatePrivacy(it)) },
             body = stringResource(R.string.settings_privacy_enabled_body),
+            controlModifier = Modifier.testTag(TestTags.SETTINGS_PRIVACY_SWITCH),
         )
 
         SwitchPreference(
@@ -108,6 +111,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             checked = uiState.autoBackupAfterPasswordLogin,
             onCheckedChange = { onScreenAction(SettingsScreenAction.UpdateAutoBackupAfterLogin(it)) },
             body = stringResource(R.string.settings_auto_backup_body),
+            controlModifier = Modifier.testTag(TestTags.SETTINGS_AUTO_BACKUP_SWITCH),
         )
 
         SliderPreference(
@@ -116,6 +120,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             valueRange = 5f..15f,
             onValueChanged = { onScreenAction(SettingsScreenAction.UpdatePasswordAfterXBiometric(it)) },
             body = stringResource(R.string.settings_ask_for_pswrd_after_biometric_body),
+            controlModifier = Modifier.testTag(TestTags.SETTINGS_PASSWORD_AFTER_BIOMETRIC_SLIDER),
         )
 
         SliderPreference(
@@ -124,6 +129,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
             valueRange = 5f..20f,
             onValueChanged = { onScreenAction(SettingsScreenAction.UpdateAwayTimeout(it)) },
             body = stringResource(R.string.settings_away_timeout_body),
+            controlModifier = Modifier.testTag(TestTags.SETTINGS_AWAY_TIMEOUT_SLIDER),
         )
 
         TextPreference(

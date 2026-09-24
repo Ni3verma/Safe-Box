@@ -67,7 +67,10 @@ Verified 2026-09-20, all of which make this cheaper than expected:
   `uiautomator dump` returned `Welcome !`, `Password*`, `Sign Up`, and
   `content-desc="Toggle sensitive data visibility"`.
 - Production has no `testTag`, so `testTagsAsResourceId` is unnecessary; text and content
-  description selectors are sufficient and already used by the existing suite.
+  description selectors are sufficient and already used by the existing suite. *Amended
+  2026-09-24:* the text-less settings switches and sliders now carry tags, exposed as resource ids
+  in `debug`/`qa` only (`ui/core/TestTags.kt`). The harness can use them only once the oldest
+  supported baseline is a release that contains them; until then it keeps matching by geometry.
 
 ## Consequences
 

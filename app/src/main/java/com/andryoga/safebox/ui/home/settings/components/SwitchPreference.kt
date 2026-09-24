@@ -22,12 +22,20 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
+/**
+ * A settings row: a title and optional body on the left, and a [Switch] on the right.
+ *
+ * @param controlModifier applied to the [Switch] alone, not the row. The switch has no text of
+ * its own, so this is where a `Modifier.testTag` belongs if a test needs to find it (see
+ * `TestTags`).
+ */
 @Composable
 fun SwitchPreference(
     title: String,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     body: String? = null,
+    controlModifier: Modifier = Modifier,
 ) {
     Row(
         modifier = Modifier
@@ -55,6 +63,7 @@ fun SwitchPreference(
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            modifier = controlModifier,
             thumbContent = if (checked) {
                 {
                     Icon(
