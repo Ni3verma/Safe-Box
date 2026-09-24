@@ -38,8 +38,24 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
   `GITHUB_RUN_NUMBER` stays below 9999985**. That is the entire practical range, but it is a
   consequence of the sentinel rather than a guarantee — do not rely on it in a test assertion.
 - `versionName` is derived from `GITHUB_REF_NAME`: `v2.0.4.0` → `2.0.4.0`; a branch → `<branch>-build.<code>`; nothing → `LOCAL-build`.
-- Tag format is **`vMAJOR.MINOR.DBVERSION.FIX`**. The third component tracks the **Room schema
-  version**, so bumping the DB requires bumping it in the next tag.
+- Tag format is **`vMAJOR.MINOR.DBVERSION.FIX`** (optionally `-rcN`). The third component tracks the
+  **Room schema version**, so bumping the DB requires bumping it in the next tag. Nothing in the
+  build reads it (`versionName` is just the tag without its `v`), which is why it is gated:
+  - `release.yml` job **`tag_db_version`** runs `scripts/lib/tag-db-version.sh "$GITHUB_REF_NAME"`
+    before anything else, and `quality` (hence every other job) needs it. It requires the tag's
+    DBVERSION to equal the literal `version = N` in `SafeBoxDatabase.kt`'s `@Database`, and
+    `app/schemas/…/N.json` to exist and declare `"version": N`. Other `v*` shapes (`v1.1.0`,
+    `-beta`) are rejected.
+  - On failure nothing has been built or published. Fix by re-tagging; the error prints the
+    corrected tag:
+    `git push --delete origin <tag> && git tag -d <tag> && git tag <fixed> && git push origin <fixed>`.
+  - It reads the annotation, **not** the highest schema file. A `5.json` was committed in `331ee64`
+    (January 2026) while the database stayed at 4, and was only regenerated for the real v5 by #241
+    (different `identityHash`). `v2.0.4.0` therefore ships a `5.json` but DB 4, and "newest
+    schema" is wrong for it. Verified 2026-09-24: `v1.7.4.2`, `v2.0.4.0` and `v2.1.4.0-rc3` all
+    pass; HEAD is on 5, so the next release must be `v2.x.5.y`.
+  - `ci.yml` runs `scripts/tests/tag-db-version-test.sh` on every PR, including a case that parses
+    the real source, so replacing the literal with a constant fails in that PR, not at release.
 
 ## Signing
 
