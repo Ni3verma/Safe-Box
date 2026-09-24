@@ -186,8 +186,10 @@ It is also sourceable (`assert_instrumentation_ran <file> <min-tests>`) and has 
 test suite at `scripts/tests/instrumentation-guard-test.sh`, which `ci.yml` runs on every PR. The
 guard cannot see a crash in the *app under test*, because that is a different process. That is
 what `scripts/lib/crash-sentinel.sh` is for (`assert_no_app_crash <logcat-dump> <pkg> <phase>`),
-tested by `scripts/tests/crash-sentinel-test.sh`. After changing either library, run both suites:
-`for t in scripts/tests/*.sh; do bash "$t"; done`.
+tested by `scripts/tests/crash-sentinel-test.sh`. After changing either library, run every suite:
+`rc=0; for t in scripts/tests/*.sh; do bash "$t" || rc=1; done; [ "$rc" = 0 ]`. A bare loop exits
+with the *last* suite's status, so a failing sentinel suite followed by a passing guard suite reads
+as green.
 
 ### The emulator runs out of disk and it looks like an app bug
 

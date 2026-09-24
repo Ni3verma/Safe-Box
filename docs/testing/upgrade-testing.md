@@ -711,6 +711,7 @@ Settled by running it against the build under test, 2026-09-24:
 |---|---|
 | The upgraded build's records screen raises a notification-permission rationale on every cold start while a backup location is set. Back cannot dismiss it. | The host grants `POST_NOTIFICATIONS` after installing the baseline. See [operations](upgrade-harness-operations.md#verifying-after-the-upgrade). |
 | Five type chips overflow into a nested `HorizontalScrollView`, which `By.scrollable(true)` returned | `scrollList` takes the largest scrollable. Phase A could not have found this, because the baseline's four chips fit. |
+| `UiObject2.scroll()` returns false on **every** swipe of this app, locally and on CI, because no `TYPE_VIEW_SCROLLED` event reaches the harness | Every walk stopped after one swipe in every log checked (MR3's passing CI run, three local MR4 runs). The first labelled CI run of MR4 failed Phase A with `Missing: [note]`. `scrollList` now judges movement by diffing the app's text before and after the swipe. See [operations](upgrade-harness-operations.md#reading-the-records-list). |
 | `adb exec-out` puts remote stderr on stdout | A missing Phase C oracle was pulled as a non-empty error line. Both pulls now check `test -f` first. |
 | The hint is encrypted with `symmetricDataKey`, not held in `EncryptedSharedPreferences` | Corrected in section 5 and in [persistence-and-crypto.md](../architecture/persistence-and-crypto.md). It makes the hint the earliest Keystore check. |
 
@@ -732,11 +733,26 @@ the hint read is. The tamper row is what proves the comparison works on its own.
   all twenty oracles (ten Phase A, ten Phase C) share one MD5,
   `4cd0a7c6ae44f37d513aa9764fd98dcc`. The first attempt failed at run 3 on a harness defect, fixed
   before the re-run: the status-bar clock leaked into `readHint`'s before/after diff.
+- The first labelled CI run (35970915467, `pixel_6` API 34 x86_64) then failed Phase A with
+  `Missing: [note]`: the `UiObject2.scroll()` defect in the Settled table above. After the fix the
+  ten-run check was repeated on `emulator-5554`: all passed, all twenty oracles still
+  `4cd0a7c6ae44f37d513aa9764fd98dcc`, and each run now makes 41–42 swipes instead of 28, which is
+  the walks reaching the end instead of stopping after one swipe. **Still open: a green CI run**
+  on the fixed head.
 
 ### MR5 — migration, TOTP, backup round trip
 
 Groups 4–6, including the independent RFC 6238 computation and clock freezing, plus Group 3 step 8
 (the long unicode field and the empty optional field), asserted against `v3_adversarial.bak`.
+
+- **Follow-up, raised 2026-09-24: `scripts/resolve-baselines.sh` must take the current schema
+  version from the `@Database(version = …)` annotation**, via `db_version_of_source` in
+  `scripts/lib/tag-db-version.sh`, not from the highest file under `app/schemas/`. An exported
+  schema can exist ahead of the version the build actually declares (or lag it), and the release
+  tag check already treats the annotation as the truth; two sources for one number will disagree.
+  The library arrives with `ci/enforce-tag-db-version` via master, so this waits for the next
+  master merge into the feature branch (expect a `ci.yml` conflict there: both sides insert steps
+  immediately before `set up JDK 17`; keep all three verification steps).
 
 - **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`

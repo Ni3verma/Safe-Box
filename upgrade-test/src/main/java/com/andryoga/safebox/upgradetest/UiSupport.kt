@@ -381,19 +381,37 @@ internal class UiSupport(val device: UiDevice) {
      * stopped after the first screenful - seen on 2026-09-24 as four records "missing" from an
      * upgraded vault that held all of them.
      *
+     * Whether the swipe moved anything is decided by comparing what the app shows before and after
+     * it, **not** by `UiObject2.scroll`'s return value. That value is derived from
+     * `TYPE_VIEW_SCROLLED` accessibility events, and this app's records list never delivers one to
+     * the harness: every swipe in every logcat on record logs "No scroll event received after
+     * scroll" and returns false (18 of 18 in CI run 35970915467, 22 of 22 in the passing MR3 run
+     * 35957354466, 28 of 28 in a local emulator-5554 run). Trusting it meant every walk stopped
+     * after one swipe and every rewind after one swipe up. Locally one swipe happened to reach the
+     * last record; on CI it fell two rows short, and `note` was reported missing from a vault that
+     * held it (2026-09-24). The comparison is limited to the app's own nodes for the same reason
+     * [textSnapshot] offers the filter: the status-bar clock would otherwise make an unmoved list
+     * look moved whenever the minute turns.
+     *
+     * The cost is one extra swipe at each end of a walk, to observe that nothing changed.
+     *
      * @param direction which way to go
      * @param fraction how much of the container to travel
-     * @return true while the container can still scroll further that way, so callers can walk a
-     * list to its end without guessing how long it is
+     * @return true if the swipe changed what the app shows, so callers can walk a list to its end
+     * without guessing how long it is; false at the end, or when there is nothing to scroll
      */
-    fun scrollList(direction: Direction, fraction: Float = SCROLL_FRACTION): Boolean =
+    fun scrollList(direction: Direction, fraction: Float = SCROLL_FRACTION): Boolean {
+        val appPackage = device.currentPackageName
+        val before = textSnapshot(appPackage)
         retryingOnStale {
             flushAccessibilityCache()
             val container = device.findObjects(By.scrollable(true))
                 .maxByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
-                ?: return@retryingOnStale false
+                ?: return@retryingOnStale null
             container.scroll(direction, fraction)
-        }
+        } ?: return false
+        return textSnapshot(appPackage) != before
+    }
 
     /**
      * Rewinds a scrollable screen to the top.
