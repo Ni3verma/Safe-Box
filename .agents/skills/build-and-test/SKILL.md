@@ -211,6 +211,31 @@ emulator -avd <name> -wipe-data -partition-size 8192
 
 A fresh wipe sits at ~641 MB used.
 
+### Two adb binaries kill each other's server mid-run
+
+On this machine `adb` on `PATH` is `/usr/local/bin/adb` (37.0.0), while Android Studio uses
+`$ANDROID_HOME/platform-tools/adb` (37.0.1). When the two versions differ, whichever client connects
+next kills the running server and starts its own. `am instrument` runs inside an adb shell, so
+the instrumentation dies with it. That is what killed run 7 of the MR3 ten-run check (2026-09-24):
+
+- `$TMPDIR/adb.<uid>.log` showed `adb server killed by remote request`, and then a 37.0.1
+  server starting;
+- the device logcat showed `adbd: host-14: connection terminated`, then
+  `UiAutomation service owner died`, then `DeadObjectException` in `UiAutomation.disconnect`;
+- the harness's own output was cut off after `INSTRUMENTATION_STATUS_CODE: 1`, and `logcat.txt`
+  was 0 bytes.
+
+The instrumentation guard caught it correctly. **Before any long local run while Studio is open,**
+compare `adb version` with `$ANDROID_HOME/platform-tools/adb version`. If they differ, put the SDK
+copy first on `PATH`:
+
+```bash
+PATH="$HOME/Library/Android/sdk/platform-tools:$PATH" ./scripts/check-oracle-determinism.sh ...
+```
+
+The permanent fix is to delete the stale copy or re-link it to the SDK. It is root-owned, so the
+user has to do that.
+
 ### Instrumentation tests only run on `debug`
 
 Do not attempt to run the existing suite against the `qa` (minified) build. It fails with a silent

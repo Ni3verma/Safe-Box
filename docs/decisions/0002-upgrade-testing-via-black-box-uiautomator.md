@@ -1,6 +1,6 @@
 # ADR-0002 — Upgrade and release-build testing via a black-box UI Automator module
 
-- **Status:** Accepted. **Skeleton implemented** 2026-09-22 (MR1); assertions land in MR2–MR5
+- **Status:** Accepted. **Skeleton implemented** 2026-09-22 (MR1); assertions land in MR2–MR6
 - **Date:** 2026-09-20, implementation status updated 2026-09-22
 - **Supersedes:** nothing. **Depends on:** [ADR-0001](0001-instrumentation-tests-run-on-debug-only.md)
 
@@ -72,7 +72,11 @@ Verified 2026-09-20, all of which make this cheaper than expected:
 ## Consequences
 
 - A new Gradle module and a host script to maintain.
-- Tests are selector-based, so user-visible copy changes can break them.
+- Tests are selector-based, so user-visible copy changes can break them. *Amended by
+  [ADR-0003](0003-ui-labels-from-resource-names.md) (MR3):* the app's own labels are now resolved
+  from each installed build's string resources, so a copy edit no longer breaks them — a resource
+  **rename** does, and fails naming the missing resource. System UI (DocumentsUI's `Show roots`,
+  the permission dialog's `ALLOW`) is not the app's and is still matched by literal text.
 - Runs at RC-tag / nightly cadence, not per PR (~10 min wall clock for three version pairs).
 - Golden `.bak` fixtures must be produced and committed, including one from the **currently shipped
   app before the TOTP feature merges** — that format becomes unreproducible afterwards.

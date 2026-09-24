@@ -166,7 +166,7 @@ All use one fixed backup password committed in the harness. Synthetic data only 
 vault.
 
 Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage that first asserts
-on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR4, `corrupt` in MR5 — rather than up
+on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR5, `corrupt` in MR6 — rather than up
 front; see [MR2](#mr2--seeding) for why.
 
 > [!NOTE]
@@ -231,6 +231,8 @@ check is what stops this decaying into a fresh-install test a year from now.
 7. Open one known record **of every type** and compare **every field** character-for-character
    against the Phase A oracle. A regenerated key shows up here as mojibake or a decrypt throw.
 8. Include one long unicode field and one empty optional field — GCM tag and padding edges.
+   *Asserted in MR5 against `v3_adversarial.bak`, not against the Phase A seed, which is
+   deliberately ASCII and fully populated so that it stays byte-reproducible.*
 9. Search a known title and assert the record is found — a different query path from the detail
    screen.
 
@@ -524,7 +526,7 @@ Three things settled during implementation that later MRs inherit rather than re
 | Launch waits on the **expected screen**, never on the app owning the foreground window, and re-issues the launch intent on each retry | A system biometric sheet takes the foreground on any device with a fingerprint enrolled, and the back press that dismisses it can also send the task home. See [upgrade-harness-operations.md](upgrade-harness-operations.md#launching-the-app). |
 
 Deliberately **not** in MR1, despite being cheap: fixture pushing and the SAF picker (MR2) and the
-logcat crash sentinel (MR3, Group 9). MR1 also leaves two things behind that a later stage has to
+logcat crash sentinel (MR4, Group 9). MR1 also leaves two things behind that a later stage has to
 remove rather than merely add to — both are rows in [Carried-forward debt](#carried-forward-debt),
 which is the list to check when planning any later MR.
 
@@ -541,17 +543,17 @@ written means guessing at its contents and re-capturing later:
 
 | Fixture | Moved to | Why it cannot be done usefully now |
 |---|---|---|
-| `v1_legacy.bak` | MR4 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR4 asserts on. |
-| `v3_current.bak` | MR4 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR4's TOTP and round-trip assertions. |
-| `v3_adversarial.bak` | MR4 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
-| `corrupt.bak` | MR5 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR5 needs it. |
+| `v1_legacy.bak` | MR5 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR5 asserts on. |
+| `v3_current.bak` | MR5 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
+| `v3_adversarial.bak` | MR5 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
+| `corrupt.bak` | MR6 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR6 needs it. |
 
 - Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
   is not directly observable through a black-box UI, so Phase A ends by writing an oracle file on
   the device — per-type record counts, every field of one known record per type, the backup
   location and the settings moved off their defaults — which the host pulls and diffs across runs.
   Not the password hint: reading it needs the app locked, which Phase A never does, so it is a
-  debt row against MR3 rather than part of this oracle. Values
+  debt row against MR4 rather than part of this oracle. Values
   that legitimately vary (the current TOTP code, timestamps) are excluded by construction rather
   than filtered afterwards, so a diff is always a real defect.
 - Also in scope, found while starting the stage: the orchestrator resolves its target device once
@@ -621,7 +623,7 @@ MD5 `b20702ff15ea5e1dd8c44bcdc99c7717`, 43 lines, `diff` clean. That is a strong
 job passing. The same vault description now comes back from two different system images (AOSP
 `default` vs the Google-APIs local emulator), two API levels (34 vs 35) and two device profiles
 (`pixel_6` vs Pixel 8, 411 dpi vs 420 dpi), which is the evidence that the oracle describes the
-*data* rather than the device it was read on — exactly the property MR3 needs before it can treat
+*data* rather than the device it was read on — exactly the property MR4 needs before it can treat
 a pre/post diff as a defect. **MR2 is complete.**
 
 The review on PR #261 found seven real defects, all latent rather than currently failing, and the
@@ -633,30 +635,64 @@ robustness and not behaviour. Two are worth carrying forward:
 | The picker pinned `com.google.android.documentsui` | The package differs by image, so anything selecting on a system app's package or resource ids must match both spellings — and the symptom, "the picker never came to the foreground", does not point at a package name. The review's stated reason was wrong in a more interesting way: CI's `aosp_atd` image ships **no** DocumentsUI at all, only the `com.android.fakesystemapp` placeholder, which no pattern can match. The regex was right; the image was the bug. |
 | `scrollToText` spent its whole 15 s patience *before* scrolling | Every lookup below the fold cost the full timeout: 181 s of a 269 s Phase A, measured from UiAutomator's poll log. Fixing it made Phase A faster than it was before the review round (125 s → 112 s). Later stages add more list reading, so the pattern matters more, not less. |
 
-### MR3 — data integrity assertions
+### MR3 — oracle keyed on resource names
+
+**Re-scoped 2026-09-24**: the original MR3 was split. This stage is the re-key and nothing else;
+the assertions it was meant to precede are MR4, and every later stage moved up by one. The reason
+is mechanical rather than a matter of taste: the re-key and the hint capture both change the
+oracle's bytes, so the ten-run acceptance (about twenty minutes) has to be the *last* thing done in
+any MR that touches either. Shipping the re-key on its own pins a stable format before any assertion
+is written against it, which is the ordering
+[ADR-0003](../decisions/0003-ui-labels-from-resource-names.md) requires.
+
+Delivered:
+
+| What | Settled |
+|---|---|
+| Every label the harness matches on is an app resource name, resolved at runtime by `AppStrings` through `getResourcesForApplication` | `field.ui login.User Id=…` became `field.0 ui login.user_id=…`, and likewise `record.type.*` and `setting.*`. The re-key was verified *pure* before anything else changed: 43 lines, identical order, identical values — only keys moved. |
+| Mandatory form labels are rebuilt as `label + "*"` by `AppStrings.formLabel` | `MandatoryLabelText` appends the asterisk in Compose, inside the same text node, and no resource carries it. Trimming is what makes the concatenation work: `user_id` is `"User Id "` in `strings.xml`. |
+| Record types resolve through the `type_display_*` family specifically | The baseline also ships a plain `login` string reading "Login"; the oracle checks that no two type resources render the same text rather than assuming it. |
+| UI-created titles carry a `0 ` prefix so they sort above the restored records | They used to sort last, below the fold, and each of twelve lookups paid `scrollToText`'s two-second look at the wrong screen before scrolling. Phase A went from 115.5 s to 80.3 s on the Pixel 8 API 35 emulator. |
+| Two review findings left open on PR #261, both confirmed | See below. |
+
+The two #261 findings were verified rather than accepted on argument:
+
+- **`resolve-baselines.sh` did not strip `\r` from the floor.** `[:blank:]` is space and tab only.
+  The floor file is committed *data*, and there is no `.gitattributes`, so a Windows edit commits
+  CRLF while every `.sh` stays LF and runs fine. A CRLF floor parsed as `v2.0.4.0\r`, failed the
+  candidate check, and reported a floor that looked exactly right. Fixed with `tr -d '[:blank:]\r'`.
+- **`SafDocumentPicker` pressed back before every retry.** Proved by forcing attempt 0 to reach the
+  Downloads root and then decline to look. With the back press Phase A failed with
+  `could not find BySelector [DESC='Show roots']` over a hierarchy whose root was the *app* — the
+  picker had been dismissed and the message blamed the drawer. Without it, the same forced retry
+  recovered. The first version of that experiment was invalid and is worth remembering: the file
+  was already listed in *Recent*, so the loop returned before the code under test ran, and the run
+  "passed" without testing anything. A forced failure is only evidence once the log shows the
+  forced path executed.
+
+- Acceptance: ten consecutive Phase A runs produce a byte-identical oracle in the new format.
+  **Met on 2026-09-24** on `emulator-5554`: 10 of 10 runs identical, 43 lines, MD5
+  `bfe7a0963ff5c652cecb59f15a4049e3`. An earlier attempt stopped at run 7 because two adb server
+  versions on the host killed each other, not because of the harness. That trap is recorded in
+  the build-and-test skill.
+
+### MR4 — data integrity assertions
 
 Groups 1–3 and the Group 9 crash sentinel. **This is the MR that delivers the actual value** — the
 Keystore continuity check.
 
 - Acceptance: passes against `v2.0.4.0`; fails loudly if the alias is deliberately wiped.
+- Every assertion compares against the MR3 oracle's resource-name keys; none may reintroduce a
+  displayed label as a key.
+- **Group 3 step 8 is not here.** It asks for a long unicode field and an empty optional field, which
+  contradicts the Phase A seed's fixed-ASCII, every-field-filled design — the seed is the
+  determinism fixture, and those properties are exactly what it trades away. They belong to
+  `v3_adversarial.bak`, so step 8 moves to MR5 with it (decided 2026-09-24).
 
-**First task, before any assertion is written: re-key the oracle onto resource names**, per
-[ADR-0003](../decisions/0003-ui-labels-from-resource-names.md). MR3 is the stage that starts
-comparing an oracle captured from the old app against one captured from the new one, which is
-precisely where keying on displayed text stops working: a renamed label or a changed separator in
-any future release becomes indistinguishable from data loss, and the cheap way out is to loosen the
-comparison. The ordering is not negotiable — retrofitting the key after twenty assertions exist is
-the kind of rework that does not get done, and every assertion written in the meantime is written
-against the wrong key.
+### MR5 — migration, TOTP, backup round trip
 
-Concretely, `field.ui login.User Id=ui-user` becomes `field.ui login.user_id=ui-user`, with the
-label resolved from the installed APK at runtime. This changes the oracle's bytes, so MR2's ten-run
-determinism acceptance must be re-established on the new format as part of this stage — a new MD5,
-recorded the same way.
-
-### MR4 — migration, TOTP, backup round trip
-
-Groups 4–6, including the independent RFC 6238 computation and clock freezing.
+Groups 4–6, including the independent RFC 6238 computation and clock freezing, plus Group 3 step 8
+(the long unicode field and the empty optional field), asserted against `v3_adversarial.bak`.
 
 - **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`
@@ -668,17 +704,17 @@ Groups 4–6, including the independent RFC 6238 computation and clock freezing.
   field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and
   a backup carrying no authenticator key at all.
 
-### MR5 — backward-compat and graceful failure
+### MR6 — backward-compat and graceful failure
 
 Groups 7–8 as a separate CI job, plus the Group 10 downgrade guard.
 
-### MR6 — enable in the release pipeline
+### MR7 — enable in the release pipeline
 
 Wire into `release.yml` behind the RC condition, enable the derived matrix, upload artifacts, and
 document triage ownership.
 
 - Acceptance: a real RC tag runs it and the result is visible on the PR.
-- **Blocking**: every row of the debt register below is cleared. MR6 is the last stage, so anything
+- **Blocking**: every row of the debt register below is cleared. MR7 is the last stage, so anything
   still open here ships.
 
 ### Carried-forward debt
@@ -690,11 +726,10 @@ discovering the debt from a code comment.
 
 | Introduced | What | Why it must not survive | Cleared by | Proof |
 |---|---|---|---|---|
-| MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR6 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
-| MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR6 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
-| MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR5 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
-| MR2 | The oracle is keyed on **displayed labels** (`field.ui login.User Id=…`) rather than resource names | The moment a pre-upgrade oracle is diffed against a post-upgrade one, any renamed label or changed separator reads as data loss, and the cheap fix is to weaken the comparison. [ADR-0003](../decisions/0003-ui-labels-from-resource-names.md) settles the key; MR2 predates it. | MR3, before its first assertion | the oracle contains `field.ui login.user_id=…`, labels are resolved through `getResourcesForApplication`, and the ten-run acceptance is re-established on the new format |
-| MR2 | The oracle records nothing about the **password hint**, though Phase A sets one (`upgrade fixture`) | The hint is user data: the unlock screen's `Show Hint` is the only way back into a vault whose password has been forgotten. Nothing in the harness reads it, so an upgrade that drops or garbles it passes every phase silently. Phase A cannot read it without locking the app, which it currently never does. | MR3, which already has to drive the unlock screen on the post-upgrade side | the oracle carries the hint on both sides of the upgrade, captured by locking the app and tapping `Show Hint`, and the ten-run acceptance still holds |
+| MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR7 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
+| MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR7 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
+| MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR6 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
+| MR2 | The oracle records nothing about the **password hint**, though Phase A sets one (`upgrade fixture`) | The hint is user data: the unlock screen's `Show Hint` is the only way back into a vault whose password has been forgotten. Nothing in the harness reads it, so an upgrade that drops or garbles it passes every phase silently. Phase A cannot read it without locking the app, which it currently never does. | MR4, which already has to drive the unlock screen on the post-upgrade side | the oracle carries the hint on both sides of the upgrade, captured by locking the app and tapping `Show Hint`, and the ten-run acceptance still holds |
 
 ---
 
@@ -749,11 +784,11 @@ Answered 2026-09-21. **MR1 is unblocked.**
    in-process alternative — the test must survive the app process being replaced.
 5. **Module name is `upgrade-test`.** `e2e-blackbox` was considered and rejected as premature; the
    module can be renamed if release-build smoke tests are ever added to it.
-6. **API 34 only to start.** API 24 is deferred to MR5, and only if the runtime budget allows. Note
+6. **API 34 only to start.** API 24 is deferred to MR6, and only if the runtime budget allows. Note
    the emulator available locally is a Pixel 8 on **API 35**, so the CI API level and the local one
    differ deliberately — do not assume a local pass implies a CI pass.
 
-### Blocks MR6
+### Blocks MR7
 
 7. **RC tags only, or production tags too?** *Recommendation: both. Production is the last gate
    before real users, and it costs ten minutes.*
@@ -772,3 +807,13 @@ Answered 2026-09-21. **MR1 is unblocked.**
 12. **Fixture location** — `upgrade-test/src/main/assets/fixtures/` as proposed, or GitHub Release
     assets. *Recommendation: in-repo. They are small, and a test fixture that can disappear from
     under CI is not a fixture.*
+13. **When to stop matching the settings controls by geometry.** Since `feature/expose-test-tags`
+    (2026-09-24), the settings switches and sliders have `testTag`s that `debug` and `qa` builds
+    expose as resource ids. The names are in `ui/core/TestTags.kt`, for example
+    `settings_privacy_switch`. The harness cannot use them yet: Phase A runs on the oldest
+    supported baseline, and `v2.0.4.0` predates them. Using tags in Phase B only would mean two
+    ways of finding one control in a single run, for no gain. *Recommendation: switch
+    `UiSupport.switchBeside` to `By.res(tag)` in the same change that raises the oldest supported
+    version to a release that contains the tags. Update ADR-0003's "no text" consequence at the
+    same time.* This is deliberately **not** a debt row: it cannot be cleared before this branch
+    merges, and a debt row blocks the merge.

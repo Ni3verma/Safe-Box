@@ -18,7 +18,7 @@ How to run, extend and debug the APK-over-APK harness. The *why* lives in
 | Guard's own tests | `scripts/tests/instrumentation-guard-test.sh` | device-free, run by `ci.yml` on every PR |
 | Baseline resolution | `scripts/resolve-baselines.sh` | derives tags from the release list |
 | Baseline download | `scripts/fetch-baseline-apk.sh` | pulls `SafeBox-qa.apk` off a GitHub Release |
-| CI job | `.github/workflows/upgrade-test.yml` | manual only until MR6: dispatch, or the `run-upgrade-test` PR label |
+| CI job | `.github/workflows/upgrade-test.yml` | manual only until MR7: dispatch, or the `run-upgrade-test` PR label |
 
 The module is a self-instrumenting `com.android.test` module with **no compile dependency on
 `:app`** — `:upgrade-test:assembleDebug` runs zero `:app` tasks. Do not add one; that coupling is
@@ -86,15 +86,21 @@ used to be accepted, and `0` made the guard pass the very run it exists to catch
 ## Writing selectors
 
 Production code contains **no `Modifier.testTag`** and the APK under test is minified, so
-everything is found by visible text or content description.
+everything is found by visible text or content description. The harness does not hold that text,
+though: since MR3 every app label is an Android **resource name**, resolved against whichever build
+is installed by
+[AppStrings](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/AppStrings.kt), per
+[ADR-0003](../decisions/0003-ui-labels-from-resource-names.md).
 
 | Trap | Detail |
 |---|---|
-| Mandatory field labels carry an asterisk | `MandatoryLabelText` appends `*` **inside the same text node**, so the signup password label is `Password*`, not `Password`. The unlock screen uses a plain `Text`, so there it really is `Password`. |
+| Add a label as a resource name, never as text | `app.label("user_id")`, not `"User Id"`. Find the name in the **baseline's** `strings.xml` (`git show v2.0.4.0:app/src/main/res/values/strings.xml`), since Phase A drives the baseline. A name that does not exist there cannot be resolved on the baseline at all. |
+| Mandatory field labels carry an asterisk | `MandatoryLabelText` appends `*` **inside the same text node**, and no resource carries it, so the signup password label is `Password*`. Use `app.formLabel(name, isMandatory = true)`. The unlock screen and the read-only detail screens use a plain `Text`, so there it really is `app.label(name)`. |
+| Resource text is not rendered text | `user_id` is `"User Id "` with a trailing space. `AppStrings` trims; do not bypass it with a raw `getString`. |
 | Label and input are different nodes | Find the label, then search its parent for `By.clazz("android.widget.EditText")`. |
 | Masked fields render as bullets | Tap `content-desc="Toggle sensitive data visibility"` first — it exists in the shipped APK. |
 | `By.text(String)` is an exact match | It quotes the argument, so `Password*` is safe to pass literally. |
-| Copy changes break tests | The cost of black-box selectors. Keep every string in the `companion object`, never inline. |
+| Copy edits no longer break tests; resource *renames* do | Deliberately: a rename fails with the missing name spelled out, and the fix is one mapping entry in the same change as the rename. System UI (DocumentsUI's `Show roots`, `ALLOW`) is not the app's and is still matched by literal text. |
 
 Every lookup must fail with the window hierarchy attached. `describeScreen()` does this; use it in
 all new failure messages. A CI failure reading `NullPointerException at line 47`, on an emulator
@@ -141,11 +147,22 @@ the media database rather than from the filesystem — a pushed file nobody anno
 not offered. The file *name* is passed on to the instrumentation with `-e fixtureFile`, so the host
 is its single owner.
 
-**The picker does not open where the file is.** It opens on *Recent*, which on a fresh emulator
-shows `No items`, so waiting for the filename on the first screen always times out.
+**The picker does not reliably open where the file is.** It opens on *Recent*, which sometimes lists
+the fixture that was just pushed and sometimes shows `No items` — both seen on the same emulator
+within minutes on 2026-09-23.
 [SafDocumentPicker](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/SafDocumentPicker.kt)
-opens the roots drawer and chooses `Downloads` explicitly. Do not select the root below it — that
-is the device's own name (`sdk_gphone64_arm64` locally, something else everywhere else).
+takes the file wherever it is and otherwise opens the roots drawer and chooses `Downloads`
+explicitly. Do not select the root below it — that is the device's own name (`sdk_gphone64_arm64`
+locally, something else everywhere else).
+
+> [!WARNING]
+> **A passing run says little about the picker's fallback paths.** When *Recent* lists the file,
+> the drawer is never opened; the retry after a failed wait never runs at all. The retry used to
+> press back first, which **dismisses the picker** when it is already showing Downloads — measured
+> in MR3 by forcing it, where it failed with `could not find ... DESC='Show roots'` over the app's
+> own hierarchy. To test any change there, force the path and **confirm from logcat that the forced
+> branch executed**: the first such experiment passed because the file was already on *Recent* and
+> the code under test never ran.
 
 > [!IMPORTANT]
 > **"Data has been successfully restored." is not a completion signal.** The dialog appears while
@@ -213,7 +230,7 @@ picker above:
 
 | | File picker | Tree picker |
 |---|---|---|
-| Opens on | *Recent* (`No items` on a fresh emulator) | the storage root, or wherever it was last left |
+| Opens on | *Recent* (may or may not list the fixture) | the storage root, or wherever it was last left |
 | Roots drawer | `Show roots` button in the toolbar | none |
 | Confirming | tapping the file | `USE THIS FOLDER`, then `ALLOW` in a system dialog |
 

@@ -89,13 +89,18 @@ the resolved string fails.
 
 - **Phase A's oracle must be re-keyed.** MR2 shipped it keyed on visible labels
   (`field.ui login.User Id=ui-user`); it becomes `field.ui login.user_id=ui-user`. This changes the
-  oracle's bytes, so MR2's ten-run acceptance has to be re-established. Tracked as a carried-forward
-  debt row against MR3 in [upgrade-testing.md](../testing/upgrade-testing.md#carried-forward-debt).
+  oracle's bytes, so MR2's ten-run acceptance has to be re-established. **Done in MR3** — see
+  [upgrade-testing.md](../testing/upgrade-testing.md#mr3--oracle-keyed-on-resource-names). The
+  UI-created titles also gained a `0 ` prefix in the same stage, so the live key is
+  `field.0 ui login.user_id`.
 - **This does not apply to controls with no text.** The settings switches have no label, no content
   description and no id, and are still matched by geometry — the switch whose vertical extent
   overlaps its label. Resource names cannot help there; a `testTag` exposed through
   `testTagsAsResourceId` would, and is deliberately left out of this decision because it changes
-  production code.
+  production code. *Update 2026-09-24:* that production change has since been made separately:
+  `ui/core/TestTags.kt`, exposed in `debug`/`qa` only. The harness keeps using geometry until the
+  oldest supported baseline contains the tags — see open decision 13 in
+  [upgrade-testing.md](../testing/upgrade-testing.md#not-blocking-but-worth-deciding).
 - **The baseline can never be re-keyed to anything newer.** Resource names work for the baseline
   only because `user_id` already existed in `v2.0.4.0`. A name introduced after the floor cannot be
   resolved against it, and the harness must fall back to a literal for such fields.

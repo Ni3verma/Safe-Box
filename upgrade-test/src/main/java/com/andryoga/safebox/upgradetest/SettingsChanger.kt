@@ -14,8 +14,9 @@ package com.andryoga.safebox.upgradetest
  * accessibility action rather than a swipe.
  *
  * @param ui shared waiting and failure-description plumbing
+ * @param app the installed build's own labels, resolved by resource name
  */
-internal class SettingsChanger(private val ui: UiSupport) {
+internal class SettingsChanger(private val ui: UiSupport, private val app: AppStrings) {
 
     /**
      * Flips every toggle in [OFF_BY_DEFAULT_AFTER_THIS] and leaves the app on the settings tab.
@@ -23,8 +24,8 @@ internal class SettingsChanger(private val ui: UiSupport) {
      * The app must already be signed in and showing the bottom navigation.
      */
     fun applyNonDefaults() {
-        ui.clickText(SETTINGS_TAB)
-        OFF_BY_DEFAULT_AFTER_THIS.forEach(::turnOff)
+        ui.clickText(app.label(SETTINGS_TAB))
+        OFF_BY_DEFAULT_AFTER_THIS.forEach { turnOff(it, app.label(it)) }
     }
 
     /**
@@ -38,15 +39,17 @@ internal class SettingsChanger(private val ui: UiSupport) {
      * retried as a unit — a switch that animates as the screen settles invalidates the handle in
      * between, which would otherwise surface as a crash rather than as the timing blip it is.
      *
-     * @param label the settings row's visible title
+     * @param resourceName the row's string resource, named in the failure so a rename is
+     * distinguishable from a genuinely missing row
+     * @param label the settings row's visible title, as this build renders it
      */
-    private fun turnOff(label: String) {
+    private fun turnOff(resourceName: String, label: String) {
         ui.retryingOnStale {
             val switch = ui.switchBeside(label)
             check(switch.isChecked) {
-                "'$label' was already off before Phase A touched it, so toggling it no longer " +
-                    "moves the app off its defaults. The baseline's shipped default has changed" +
-                    ui.describeScreen()
+                "'$label' ($resourceName) was already off before Phase A touched it, so toggling " +
+                    "it no longer moves the app off its defaults. The baseline's shipped default " +
+                    "has changed" + ui.describeScreen()
             }
             switch.click()
         }
@@ -61,18 +64,21 @@ internal class SettingsChanger(private val ui: UiSupport) {
      * Phase A changes and the state the oracle records cannot drift apart.
      */
     companion object {
-        private const val SETTINGS_TAB = "Settings"
+        private const val SETTINGS_TAB = "bottom_nav_settings"
 
         /**
-         * Both ship enabled, and both are read back by the oracle.
+         * Both ship enabled, and both are read back by the oracle. Held as resource names, like
+         * every other label the harness matches on, so the oracle's `setting.*` keys survive a
+         * copy edit to either row — see
+         * [ADR-0003](../../../../../../../../docs/decisions/0003-ui-labels-from-resource-names.md).
          *
          * Turning auto-backup off is doubly useful: every password login writes a backup file while
          * it is on, which would put a "last taken on <timestamp>" line — a value that changes every
          * run — into the state Phase A is supposed to reproduce exactly.
          */
         val OFF_BY_DEFAULT_AFTER_THIS = listOf(
-            "Privacy mode",
-            "Auto-backup on login",
+            "settings_privacy_enabled_title",
+            "settings_auto_backup_title",
         )
     }
 }

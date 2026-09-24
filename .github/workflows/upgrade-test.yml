@@ -2,7 +2,7 @@ name: Upgrade Test (manual)
 
 # Never runs automatically. This is the MR1 skeleton: it proves the harness can install a shipped
 # QA APK, seed it, upgrade in place and re-run against the same /data. Wiring it into the release
-# pipeline behind the RC condition, with the derived baseline matrix, is MR6 - see
+# pipeline behind the RC condition, with the derived baseline matrix, is MR7 - see
 # docs/testing/upgrade-testing.md section 10.
 #
 # Two triggers, because workflow_dispatch alone cannot reach this branch: GitHub only offers the
@@ -101,7 +101,7 @@ jobs:
         # 35725851102, where the build still came out as versionCode 17. A shell assignment is an
         # ordinary child-process variable and Actions has no say in it.
         #
-        # MR6 must drop this. Once the upgrade test runs inside the release pipeline it has to
+        # MR7 must drop this. Once the upgrade test runs inside the release pipeline it has to
         # install the actual RC artifact, not a rebuild with an invented version. Tracked as a
         # blocking row in docs/testing/upgrade-testing.md, "Carried-forward debt".
         run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa :upgrade-test:assembleDebug

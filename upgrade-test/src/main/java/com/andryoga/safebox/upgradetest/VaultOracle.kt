@@ -14,7 +14,15 @@ import java.io.File
  * same way a user would see it. Phase A's own acceptance is that ten consecutive runs produce the
  * same file byte for byte; later stages capture it again after the upgrade and diff the two.
  *
- * Three properties matter more than completeness, and shape everything below.
+ * Four properties matter more than completeness, and shape everything below.
+ *
+ * **Every key is a resource name, never a visible label.** `field.0 ui login.user_id=ui-user`, not
+ * `field.0 ui login.User Id=ui-user`. This file is captured from the *old* build and diffed against
+ * one captured from the *new* one, so a key made of displayed text would turn every future copy
+ * edit into what looks exactly like data loss — and the cheap way out of that is to loosen the
+ * comparison, which is how the previous attempt at upgrade testing became worthless. The reasoning
+ * is [ADR-0003](../../../../../../../../docs/decisions/0003-ui-labels-from-resource-names.md); the
+ * labels themselves are resolved from whichever APK is installed, by [AppStrings].
  *
  * **Nothing time-varying may appear.** The detail screens carry `Created on` and `Updated on`
  * stamps and the backup screen carries "last taken on", all of which move every run. They are
@@ -34,13 +42,35 @@ import java.io.File
  * storage.
  *
  * @param ui shared waiting and failure-description plumbing
+ * @param app the installed build's own labels, resolved by resource name
  * @param expectedTitles the titles Phase A seeded, used to reject a records list that is not the
  * one this file claims to describe
  */
 internal class VaultOracle(
     private val ui: UiSupport,
+    private val app: AppStrings,
     private val expectedTitles: Set<String>,
 ) {
+
+    /**
+     * Each record type's displayed chip text, mapped back to the resource that produced it.
+     *
+     * Built once and in this direction because the screen only ever hands back text: a chip has to
+     * be recognised as a type and then written to the oracle under a stable key, and that is a
+     * lookup from label to name.
+     *
+     * Two type resources rendering the same text would collapse this map silently and drop a type
+     * from the oracle, so the size is checked rather than assumed. It is not far-fetched: the
+     * baseline already ships a separate `login` string whose text is also "Login", which is
+     * precisely why this list names the `type_display_*` family explicitly.
+     */
+    private val typeResourceByLabel: Map<String, String> =
+        TYPE_RESOURCE_NAMES.associateBy { app.label(it) }.also { byLabel ->
+            check(byLabel.size == TYPE_RESOURCE_NAMES.size) {
+                "two of $TYPE_RESOURCE_NAMES render the same text in the installed build, so the " +
+                    "oracle cannot tell them apart: $byLabel"
+            }
+        }
 
     /**
      * Walks the whole app and writes the oracle to the test app's own storage.
@@ -64,7 +94,7 @@ internal class VaultOracle(
     }
 
     private fun describeVault(): String = buildString {
-        ui.clickText(RECORDS_TAB)
+        ui.clickText(app.label(RECORDS_TAB))
         val rows = collectRows()
         appendLine("$RECORD_COUNT_KEY=${rows.size}")
         rows.values.groupingBy { it }.eachCount().toSortedMap().forEach { (type, count) ->
@@ -78,7 +108,7 @@ internal class VaultOracle(
     }
 
     /**
-     * Every record in the list, as title to type.
+     * Every record in the list, as title to type resource name.
      *
      * A map keyed by title rather than a running count, because the list has to be walked in
      * screenfuls and the screenfuls overlap: re-reading a row that was already seen must not
@@ -92,8 +122,11 @@ internal class VaultOracle(
      *
      * The screenful is read *after* every scroll, including the scroll that reports it has reached
      * the end. Reading only while the container says it can scroll further loses the last
-     * screenful, which is where the records seeded through the UI happen to sort — Phase A wrote a
-     * perfectly reproducible oracle that was missing four of eleven records before this was fixed.
+     * screenful, which is where the records seeded through the UI sorted at the time — Phase A
+     * wrote a perfectly reproducible oracle that was missing four of eleven records before this was
+     * fixed. They have since been prefixed to sort first, so today the last screenful holds
+     * restored records; the rule matters exactly as much, and the missing-record check below is
+     * still what catches a violation.
      */
     private fun collectRows(): Map<String, String> {
         val rows = sortedMapOf<String, String>()
@@ -118,7 +151,7 @@ internal class VaultOracle(
      * a record simply has not been reached yet until the walk is over; an *extra* one is caught
      * where it happens, by [visibleRows].
      *
-     * @param rows what the walk found, as title to type
+     * @param rows what the walk found, as title to type resource name
      */
     private fun checkRowsAreExactlyWhatWasSeeded(rows: Map<String, String>) {
         val missing = expectedTitles - rows.keys
@@ -150,14 +183,19 @@ internal class VaultOracle(
      *
      * The same screenful is also where a *duplicated* record is still visible. The walk's result is
      * keyed by title, which it has to be because screenfuls overlap, and that key destroys the
-     * evidence: two rows called `ui login` become one entry and a count that looks right. Here the
+     * evidence: two rows called `0 ui login` become one entry and a count that looks right. Here the
      * rows are still a list, so the same title on two different lines can be rejected. The list is
      * sorted by title, so a duplicate pair is adjacent and lands on one screenful.
+     *
+     * @return the screenful's rows, as title to type *resource name* - the chip's text is resolved
+     * back to the resource that produced it as early as possible, so no displayed label reaches
+     * the oracle
      */
     private fun visibleRows(): Map<String, String> {
         val typeColumnLeft = ui.device.displayWidth / 2
-        val screen = ui.textSnapshot().filterNot { it.text in TAB_LABELS }
-        val typeNames = screen.filter { it.text in RECORD_TYPES }
+        val tabLabels = TAB_RESOURCE_NAMES.map { app.label(it) }
+        val screen = ui.textSnapshot().filterNot { it.text in tabLabels }
+        val typeNames = screen.filter { it.text in typeResourceByLabel }
 
         val rows = typeNames
             .filter { chip ->
@@ -166,7 +204,7 @@ internal class VaultOracle(
             .mapNotNull { chip ->
                 screen.filter { it.bounds.left < typeColumnLeft && chip.sharesLineWith(it) }
                     .minByOrNull { it.bounds.top }
-                    ?.let { title -> title.text to chip.text }
+                    ?.let { title -> title.text to typeResourceByLabel.getValue(chip.text) }
             }
 
         val duplicated = rows.groupingBy { it.first }.eachCount().filterValues { it > 1 }.keys
@@ -194,6 +232,12 @@ internal class VaultOracle(
      * which, after walking it to the bottom to count rows, it never is. The record's type is no
      * good either: every row in the list already displays it.
      *
+     * The label looked for on screen and the key written to the file come from the same resource
+     * name, resolved once. A second, hand-written list of detail-screen labels would be one rename
+     * away from disagreeing with the seed data, and the disagreement would read as a missing field.
+     * The read-only screen renders no mandatory marker, so [AppStrings.label] is right here and
+     * [AppStrings.formLabel] is right in [RecordCreator].
+     *
      * @param record the record to read back
      */
     private fun StringBuilder.appendDetailOf(record: SeedRecord) {
@@ -202,29 +246,31 @@ internal class VaultOracle(
             "'${record.title}' is not in the records list${ui.describeScreen()}"
         }
         ui.clickText(record.title)
-        ui.awaitObject(By.desc(EDIT_RECORD_BUTTON))
+        ui.awaitObject(By.desc(app.label(EDIT_RECORD_BUTTON)))
 
-        record.detailLabels.forEach { label ->
-            appendLine("field.${record.title}.$label=${ui.valueBelow(label)}")
+        record.fields.forEach { field ->
+            val value = ui.valueBelow(app.label(field.resourceName))
+            appendLine("field.${record.title}.${field.resourceName}=$value")
         }
 
         ui.device.pressBack()
-        check(ui.awaitGone(By.desc(EDIT_RECORD_BUTTON))) {
+        check(ui.awaitGone(By.desc(app.label(EDIT_RECORD_BUTTON)))) {
             "still on the '${record.title}' detail screen after pressing back${ui.describeScreen()}"
         }
     }
 
     private fun StringBuilder.appendBackupLocation() {
-        ui.clickText(BACKUP_TAB)
+        ui.clickText(app.label(BACKUP_TAB))
         val path = ui.awaitObject(By.textContains(GRANTED_TREE_PREFIX)).text.orEmpty()
         appendLine("backup.path=$path")
     }
 
     private fun StringBuilder.appendSettings() {
-        ui.clickText(SETTINGS_TAB)
-        SettingsChanger.OFF_BY_DEFAULT_AFTER_THIS.forEach { label ->
+        ui.clickText(app.label(SETTINGS_TAB))
+        SettingsChanger.OFF_BY_DEFAULT_AFTER_THIS.forEach { resourceName ->
+            val label = app.label(resourceName)
             val state = if (ui.retryingOnStale { ui.switchBeside(label).isChecked }) "on" else "off"
-            appendLine("setting.$label=$state")
+            appendLine("setting.$resourceName=$state")
         }
     }
 
@@ -234,18 +280,30 @@ internal class VaultOracle(
         private const val LOG_TAG = "VaultOracle"
 
         private const val RECORD_COUNT_KEY = "record.count"
-        private const val RECORDS_TAB = "Records"
-        private const val BACKUP_TAB = "Backup & Restore"
-        private const val SETTINGS_TAB = "Settings"
-        private const val EDIT_RECORD_BUTTON = "Edit record"
+
+        // Resource names, resolved against the installed build. See ADR-0003.
+        private const val RECORDS_TAB = "bottom_nav_records"
+        private const val BACKUP_TAB = "bottom_nav_backup_and_restore"
+        private const val SETTINGS_TAB = "bottom_nav_settings"
+        private const val EDIT_RECORD_BUTTON = "cd_action_edit"
+
+        // How a tree over a directory at the root of shared storage is spelled in the URI the app
+        // displays. Platform syntax rather than an app label, so there is no resource to resolve.
         private const val GRANTED_TREE_PREFIX = "primary:"
 
-        // The four type chips the records list renders on the right of every row.
-        private val RECORD_TYPES = setOf("Login", "Card", "Bank Account", "Note")
+        // The four type chips the records list renders on the right of every row. Deliberately the
+        // `type_display_*` family: the baseline also ships a plain `login` string reading "Login",
+        // and pairing a chip with that one would key the oracle on a resource the list never uses.
+        private val TYPE_RESOURCE_NAMES = listOf(
+            "type_display_login",
+            "type_display_card",
+            "type_display_account",
+            "type_display_note",
+        )
 
         // The bottom navigation is made of text nodes too, and sits below the list rather than
         // inside it, so it is excluded before any row pairing is attempted.
-        private val TAB_LABELS = setOf(RECORDS_TAB, BACKUP_TAB, SETTINGS_TAB)
+        private val TAB_RESOURCE_NAMES = listOf(RECORDS_TAB, BACKUP_TAB, SETTINGS_TAB)
 
         // Generous: the list is eleven rows today and the loop stops as soon as the container says
         // it cannot scroll further, so this only bounds a pathological case.
