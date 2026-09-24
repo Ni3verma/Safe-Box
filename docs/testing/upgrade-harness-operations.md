@@ -16,6 +16,8 @@ How to run, extend and debug the APK-over-APK harness. The *why* lives in
 | Determinism check | `scripts/check-oracle-determinism.sh` | runs the orchestrator N times and diffs the oracle |
 | Zero-test guard | `scripts/lib/instrumentation-guard.sh` | decides whether a run actually happened |
 | Guard's own tests | `scripts/tests/instrumentation-guard-test.sh` | device-free, run by `ci.yml` on every PR |
+| Crash sentinel | `scripts/lib/crash-sentinel.sh` | fails a phase if the app under test crashed or ANR'd during it (Group 9) |
+| Sentinel's own tests | `scripts/tests/crash-sentinel-test.sh` | device-free, run by `ci.yml` and `upgrade-test.yml`; fixtures are a real `am crash` and a real *harness* crash that must not match |
 | Baseline resolution | `scripts/resolve-baselines.sh` | derives tags from the release list |
 | Baseline download | `scripts/fetch-baseline-apk.sh` | pulls `SafeBox-qa.apk` off a GitHub Release |
 | CI job | `.github/workflows/upgrade-test.yml` | manual only until MR7: dispatch, or the `run-upgrade-test` PR label |
@@ -34,7 +36,9 @@ ANDROID_SERIAL=emulator-5554 \
 ```
 
 Output lands in `upgrade-test-out/` (override with a third argument): one
-`instrumentation-<phase>.txt` per phase, plus `logcat.txt`, collected even on failure.
+`instrumentation-<phase>.txt` and one `crash-scan-<phase>.txt` per phase, `phase-a-oracle.txt`,
+`phase-c-oracle.txt` when Phase C got as far as writing one, and `logcat.txt` — all collected even
+on failure.
 
 > [!CAUTION]
 > The run **uninstalls `com.andryoga.safebox.qa`** and then signs up from scratch, so it must not
@@ -101,6 +105,7 @@ is installed by
 | Masked fields render as bullets | Tap `content-desc="Toggle sensitive data visibility"` first — it exists in the shipped APK. |
 | `By.text(String)` is an exact match | It quotes the argument, so `Password*` is safe to pass literally. |
 | Copy edits no longer break tests; resource *renames* do | Deliberately: a rename fails with the missing name spelled out, and the fix is one mapping entry in the same change as the rename. System UI (DocumentsUI's `Show roots`, `ALLOW`) is not the app's and is still matched by literal text. |
+| Diffing two snapshots picks up SystemUI | The window hierarchy includes the status bar, and its clock changes text on the minute. `readHint`'s before/after diff once returned `[upgrade fixture, 12:16]`. Scope any diff with `textSnapshot(app.packageName)`. |
 
 Every lookup must fail with the window hierarchy attached. `describeScreen()` does this; use it in
 all new failure messages. A CI failure reading `NullPointerException at line 47`, on an emulator
@@ -310,12 +315,21 @@ established.
 
 ## Capturing the oracle
 
-Phase A ends by reading the whole vault back through the UI and writing
-`phase-a-oracle.txt` into the *harness's* app-private storage. The host pulls it with
-`adb exec-out run-as com.andryoga.safebox.upgradetest cat files/phase-a-oracle.txt` — which works
-because the harness APK is debuggable — and fails the run if it comes back empty. It is written to
-a file rather than printed because the acceptance is a byte comparison and logcat adds timestamps
-and truncates long lines.
+Phase A ends by reading the whole vault back through the UI, then force-stopping and relaunching the
+app to read the password hint off the unlock screen, and writing both to `phase-a-oracle.txt` in
+the *harness's* app-private storage. Phase C writes the same description of the upgraded build to
+`phase-c-oracle.txt` and fails unless the two are byte-identical, listing the `- lost` / `+ gained`
+lines ([OracleFiles](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/OracleFiles.kt)).
+The host pulls both with `run-as`, which works because the harness APK is debuggable, and fails the
+run if Phase A's is missing or empty. It is written to a file rather than printed because the
+acceptance is a byte comparison and logcat adds timestamps and truncates long lines.
+
+> [!WARNING]
+> **`adb exec-out` delivers the remote command's stderr on stdout.** A `run-as … cat` of a missing
+> file therefore produces a non-empty local file containing `cat: …: No such file or directory`,
+> which passes any `[ -s ]` test. Seen on 2026-09-24 as a one-line "Phase C oracle" from a phase
+> that had failed before writing one. `pull_harness_file` checks with `run-as … test -f` first;
+> `adb shell` does propagate the remote exit status.
 
 What goes in it is constrained by one rule: **nothing time-varying**. `Created on`, `Updated on`
 and the backup screen's "last taken on" all move every run, so the oracle reads *named fields
@@ -349,6 +363,7 @@ Phase A seeded, in both directions, and both directions have fired for real:
 |---|---|---|
 | The list's **type-filter row** | A twelfth record, `Login`, of type `Note` | `Login`, `Card`, `Bank Account` and `Note` are also filter chips on one line at the top of the list, and `Note` sits right of centre, so it was read as a row's chip and paired with the leftmost thing on its line. A record row names exactly one type, so a type name sharing a line with another type name is a filter and is dropped. |
 | Reading **only while the list can still scroll** | A perfectly reproducible oracle missing the last four records | The final screenful arrives *after* the scroll that reports there is nothing left. Read after every scroll, then break. |
+| A **nested scrollable** | On the upgraded build only: `Missing: [login 1, login 2, card 2, note]`, with the dump still showing the top of the list | Five type chips (Authenticator is new) overflow into a `HorizontalScrollView` *inside* the list, and `By.scrollable(true)` returned it. A vertical scroll of a horizontal row moves nothing and reports "no further". `UiSupport.scrollList` now takes the scrollable with the largest visible area. |
 
 > [!IMPORTANT]
 > The records screen's app bar **collapses**: while the list is scrolled down, `Add new record
@@ -356,6 +371,30 @@ Phase A seeded, in both directions, and both directions have fired for real:
 > against a screen that is behaving correctly. Call `UiSupport.scrollToTop()` before looking for
 > anything in that app bar. `scrollToText` only travels downwards, so rewinding is also what makes
 > one lookup independent of where the previous one finished.
+
+## Verifying after the upgrade
+
+Phase C (`verifyVaultAfterUpgrade`) is a different app from the one Phase A drove, and it shows.
+Three things were established by running it on 2026-09-24:
+
+- **A notification-permission rationale blocks the records screen.** With a backup location set and
+  `POST_NOTIFICATIONS` not granted, the records screen raises it on every cold start. Back does not
+  dismiss it, and it appears after the list does. Phase A never met it, because it never cold-starts
+  into records after granting the directory. The host runs `pm grant` right after installing the
+  baseline (API 33+). Runtime grants survive `install -r`. Do not replace this with a "dismiss it
+  if shown" step: that is a race by construction.
+- **The unlock screen is driven through
+  [UnlockScreen](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/UnlockScreen.kt).**
+  - The hint is a bare `Text` with no label, so `readHint` diffs the screen's text before and after
+    tapping `Show Hint`.
+  - The password field is masked, so `UiSupport.retypeMasked` waits for the bullet count to equal
+    the new value's length. That is why `WRONG_PASSWORD` and `MASTER_PASSWORD` must differ in
+    length.
+- **Search is proved by what disappears.** The target is `card 2`, and `0 ui card` must leave the
+  list. A search box that ignored its input would still show the target.
+
+Each of these guards was proved by making it fail. Evidence is in
+[upgrade-testing.md, MR4](upgrade-testing.md#mr4--data-integrity-assertions--delivered).
 
 ## What the orchestrator already guarantees
 
@@ -368,7 +407,10 @@ Do not re-implement these in a test:
   `uninstall`;
 - `firstInstallTime` is non-empty before the upgrade and unchanged after it, and `versionCode`
   changed — together, proof that `/data` survived rather than the app being reinstalled;
-- every phase executed at least its minimum number of tests, and none failed.
+- every phase executed at least its minimum number of tests, and none failed;
+- the app under test did not crash or ANR during any phase. The crash and system buffers are dumped
+  and scanned after each phase, even a failed one, since a crash is the usual *reason* a phase
+  fails. An empty dump fails closed.
 
 ## Triage
 
@@ -387,6 +429,9 @@ are harness-level ones:
 | `<tag> has no SafeBox-qa.apk asset` | releases before the upload step existed — `v1.0.0`, `v1.1.0`, `v1.2.2.0` — carry none |
 | Test times out in `launchAppUnderTest` after four or five runs | the emulator `/data` partition is full; see the build-and-test skill |
 | An assertion fails and the attached hierarchy is `nexuslauncher`, not the app | the app was sent home rather than merely backgrounded — see [Launching the app](#launching-the-app) |
+| `FATAL: com.andryoga.safebox.qa crashed or stopped responding during phase …` | read the stack in `crash-scan-<phase>.txt`; an `AEADBadTagException` there means the record key was lost — see upgrade-testing.md section 9 |
+| Phase C times out waiting for `Records` after unlocking, and the hierarchy shows `Need Notification permission` | the host's `pm grant` did not run or did not take — see [Verifying after the upgrade](#verifying-after-the-upgrade) |
+| `the upgraded build does not show what the baseline showed` | a real diff; the message lists `- lost` / `+ gained` lines, and both oracles are in the artifacts |
 
 ## Baseline resolution
 

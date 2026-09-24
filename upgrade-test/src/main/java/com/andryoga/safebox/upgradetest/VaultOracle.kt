@@ -1,10 +1,9 @@
 package com.andryoga.safebox.upgradetest
 
-import android.util.Log
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Direction
-import java.io.File
+import java.util.regex.Pattern
+import java.util.regex.Pattern.quote
 
 /**
  * Reads the seeded vault back through the UI and writes down what it found.
@@ -73,27 +72,15 @@ internal class VaultOracle(
         }
 
     /**
-     * Walks the whole app and writes the oracle to the test app's own storage.
+     * Walks the whole app and returns what it found, one `key=value` line per fact.
      *
-     * Written by the instrumentation rather than printed, because the host needs the exact bytes:
-     * logcat adds timestamps and truncates long lines, and the acceptance is a byte comparison.
-     * The test app is debuggable, so `adb run-as` can read the file back out without granting
-     * anything on the device.
+     * Returned rather than written, because the vault is not the only thing a phase records: the
+     * password hint lives on the unlock screen, which can only be reached by locking the app after
+     * this walk. The caller assembles the full oracle and hands it to [OracleFiles].
      *
-     * @return the file written, so failures can name it
+     * @return the vault's description, newline-terminated
      */
-    fun capture(): File {
-        val text = describeVault()
-        val file = File(
-            InstrumentationRegistry.getInstrumentation().context.filesDir,
-            ORACLE_FILE_NAME,
-        )
-        file.writeText(text)
-        Log.i(LOG_TAG, "wrote ${text.length} bytes of oracle to $file")
-        return file
-    }
-
-    private fun describeVault(): String = buildString {
+    fun describe(): String = buildString {
         ui.clickText(app.label(RECORDS_TAB))
         val rows = collectRows()
         appendLine("$RECORD_COUNT_KEY=${rows.size}")
@@ -259,10 +246,24 @@ internal class VaultOracle(
         }
     }
 
+    /**
+     * Records whether the backup screen says a location is set.
+     *
+     * Only the *state* is recorded, not the path: the path arrives inside an app sentence
+     * ("Backup path is …"), so recording it would put the app's wording into a value and turn a
+     * future copy edit into what reads as lost data. The state is identified by which resource is
+     * showing, so it survives any rewording. Phase A has already checked the exact directory at
+     * the moment it granted it; after the upgrade the question is only whether the app still
+     * remembers that one is set. Whether the platform grant behind it survived is a different
+     * question, and only an actual backup can answer it.
+     */
     private fun StringBuilder.appendBackupLocation() {
         ui.clickText(app.label(BACKUP_TAB))
-        val path = ui.awaitObject(By.textContains(GRANTED_TREE_PREFIX)).text.orEmpty()
-        appendLine("backup.path=$path")
+        val isSet = app.label(BACKUP_LOCATION_SET_MESSAGE)
+        val notSet = app.label(SET_LOCATION_BUTTON)
+        val shown = ui.awaitObject(By.text(Pattern.compile("${quote(isSet)}|${quote(notSet)}")))
+        val state = if (shown.text == isSet) "set" else "not_set"
+        appendLine("backup.location=$state")
     }
 
     private fun StringBuilder.appendSettings() {
@@ -275,10 +276,6 @@ internal class VaultOracle(
     }
 
     companion object {
-        const val ORACLE_FILE_NAME = "phase-a-oracle.txt"
-
-        private const val LOG_TAG = "VaultOracle"
-
         private const val RECORD_COUNT_KEY = "record.count"
 
         // Resource names, resolved against the installed build. See ADR-0003.
@@ -287,9 +284,10 @@ internal class VaultOracle(
         private const val SETTINGS_TAB = "bottom_nav_settings"
         private const val EDIT_RECORD_BUTTON = "cd_action_edit"
 
-        // How a tree over a directory at the root of shared storage is spelled in the URI the app
-        // displays. Platform syntax rather than an app label, so there is no resource to resolve.
-        private const val GRANTED_TREE_PREFIX = "primary:"
+        // The backup screen's two states: a set location shows this message, an unset one offers
+        // this button. Exactly one of them is on screen once the tab has loaded.
+        private const val BACKUP_LOCATION_SET_MESSAGE = "backup_set_message"
+        private const val SET_LOCATION_BUTTON = "backup_set_location"
 
         // The four type chips the records list renders on the right of every row. Deliberately the
         // `type_display_*` family: the baseline also ships a plain `login` string reading "Login",

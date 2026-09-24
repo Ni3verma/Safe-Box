@@ -6,27 +6,26 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * End-to-end proof that the harness can drive the shipped QA APK across an in-place upgrade.
+ * End-to-end proof that the vault survives the shipped QA APK being upgraded in place.
  *
  * Phase A establishes state on the baseline build — an account, and a vault seeded from a golden
- * backup through the real system document picker. Phase B asserts only that the upgraded build
- * still knows an account exists; assertions about the vault's *contents* surviving the upgrade
- * arrive in MR4.
+ * backup through the real system document picker — and records it. Phase B is the host replacing
+ * the APK. Phase C, on the upgraded build, asserts that the account, the hint and every recorded
+ * fact about the vault are still exactly as they were.
  *
  * The two tests are **ordered and stateful across processes**, which is unusual and deliberate:
- * [seedVaultOnBaselineBuild] runs against the baseline APK and [unlockScreenAppearsAfterUpgrade]
- * runs against the build under test, after the host has replaced the app underneath. They are
+ * [seedVaultOnBaselineBuild] runs against the baseline APK and [verifyVaultAfterUpgrade] runs
+ * against the build under test, after the host has replaced the app underneath. They are
  * therefore never run in the same invocation — scripts/run-upgrade-test.sh selects one at a time by
  * method filter, which is also why a filter typo has to be fatal rather than a silent zero-test
  * pass.
  *
- * Everything is selected by what the app renders, because production code contains no
+ * Everything is selected by what the app renders, because the baseline release has no
  * `Modifier.testTag` and the APK under test is minified. The harness nonetheless holds no rendered
  * text of its own: every label below is an app *resource name*, resolved against whichever build is
  * installed, per
@@ -57,18 +56,20 @@ class UpgradeSmokeTest {
      * Phase A. Creates an account on the baseline build and seeds it from a golden backup.
      *
      * Signing up is the cheapest action that makes the upgrade worth testing at all: it writes the
-     * password hash to `EncryptedSharedPreferences` and generates the `symmetricDataKey`
-     * AndroidKeyStore alias. Without it the upgraded app would land on signup and the phase B
-     * assertion would be vacuous.
+     * password hash and the hint to Room's `user_details` table - the hint encrypted under the
+     * `symmetricDataKey` AndroidKeyStore alias, which signing up generates. Without it the upgraded
+     * app would land on signup and the phase C assertions would be vacuous.
      *
      * Restoring a fixture on top of that is what gives later stages something to assert *about*.
      * It is done through the real picker and the real restore worker rather than by pushing a
      * database file, because a restore is the only supported way to get records into the vault
      * without ~50 taps, and it exercises the production write path while doing so.
      *
-     * The phase ends by reading all of it back out into an oracle file ([VaultOracle]). Reading is
+     * The phase ends by reading all of it back out into an oracle file ([VaultOracle]), and then
+     * locking the app to read the password hint, which only the unlock screen shows. Reading is
      * not a formality: it is the only evidence that what the seeding *did* is what the app *has*,
-     * and it is what the ten-run determinism acceptance compares.
+     * it is what the ten-run determinism acceptance compares, and it is what Phase C is judged
+     * against.
      */
     @Test
     fun seedVaultOnBaselineBuild() {
@@ -79,27 +80,93 @@ class UpgradeSmokeTest {
         assertSeededRecordsPresent()
         setBackupLocation()
         SettingsChanger(ui, app).applyNonDefaults()
-        VaultOracle(ui, app, seededTitles()).capture()
+        val vault = VaultOracle(ui, app, seededTitles()).describe()
+        OracleFiles.write(OracleFiles.BASELINE, vault + hintLine(lockAndReadHint()))
     }
 
     /**
-     * Phase B. Asserts the upgraded build still knows an account exists.
+     * Phase C. Asserts the upgraded build still holds everything Phase A left in it.
      *
-     * Landing on unlock rather than signup is the cheapest possible proof that `/data` survived the
-     * in-place install. If preferences were wiped, this is where it shows.
+     * In the plan's order: it lands on unlock rather than signup, which proves preferences
+     * survived (Group 1); it shows the same hint; it refuses a wrong password and accepts the
+     * right one (Group 2); and it then describes the vault exactly as the baseline did (Group 3).
+     * That last comparison is the broad Keystore check. Every field of one record per type is read
+     * back through the detail screen, which has to decrypt it, so a lost or regenerated
+     * `symmetricDataKey` shows up there as a value that differs or a screen that fails. The app
+     * regenerates a missing key without complaint, so launching proves nothing about it. In
+     * practice the hint trips first, because it is encrypted under the same key: with the alias
+     * deliberately wiped, Show Hint crashed the app with `AEADBadTagException` before the oracle
+     * was reached (2026-09-24). The oracle is kept regardless, since it is what covers the records.
+     *
+     * The oracle is captured *before* the search step so that search cannot leave the list
+     * filtered for the walk that counts rows.
+     *
+     * Crashes and ANRs are the host's job (Group 9), because a crash in the app under test does not
+     * fail this process; scripts/run-upgrade-test.sh scans logcat after every phase.
      */
     @Test
-    fun unlockScreenAppearsAfterUpgrade() {
+    fun verifyVaultAfterUpgrade() {
         launchAppUnderTest(app.label(UNLOCK_HEADING))
-        val passwordLabel = app.label(UNLOCK_PASSWORD_LABEL)
+        val unlockScreen = UnlockScreen(ui, app)
+        val hint = unlockScreen.readHint()
+        unlockScreen.assertRejects(WRONG_PASSWORD)
+        unlockScreen.unlock(MASTER_PASSWORD)
 
-        // Waits rather than querying once: the heading and the field are separate semantics nodes,
-        // and a slow device can publish them in different frames. A one-shot `findObject` here
-        // would report "no password field" for a screen that was merely a frame behind.
-        assertNotNull(
-            "unlock screen has no '$passwordLabel' field${ui.describeScreen()}",
-            ui.findOrNull(By.text(passwordLabel)),
-        )
+        val oracle = VaultOracle(ui, app, seededTitles()).describe() + hintLine(hint)
+        OracleFiles.write(OracleFiles.UPGRADED, oracle)
+        OracleFiles.assertMatchesBaseline(oracle)
+
+        assertSearchFinds(SEARCH_TARGET, SEARCH_EXCLUDED)
+    }
+
+    /**
+     * Locks the app and reads the hint off the unlock screen.
+     *
+     * Force-stopping is how the app gets locked: it asks for the password on every cold start, and
+     * nothing in its UI locks it on demand. It is the same thing the host does before the upgrade,
+     * so it cannot disturb any state that the upgrade is meant to carry.
+     */
+    private fun lockAndReadHint(): String {
+        device.executeShellCommand("am force-stop $APP_PACKAGE")
+        launchAppUnderTest(app.label(UNLOCK_HEADING))
+        return UnlockScreen(ui, app).readHint()
+    }
+
+    private fun hintLine(hint: String) = "$HINT_KEY=$hint\n"
+
+    /**
+     * Searches the records list and asserts that it filters to the expected title.
+     *
+     * This is a different query path from the detail screen that the oracle reads: search goes
+     * through the list's own query rather than one record's. Finding the target is only half of
+     * the check. A search box that silently ignored its input would also show the target, so a
+     * second title must disappear, which proves a query actually ran.
+     *
+     * The target is matched as a list row, never as the search field, which holds the same text
+     * as soon as it has been typed. The excluded title must be on screen *before* the search, or
+     * its absence afterwards would prove nothing. That is why it is chosen from the top of the
+     * list.
+     *
+     * @param target a seeded title the search must find
+     * @param excluded a seeded title, visible at the top of the unfiltered list, that the search
+     * must filter out
+     */
+    private fun assertSearchFinds(target: String, excluded: String) {
+        ui.clickText(app.label(RECORDS_TAB))
+        ui.scrollToTop()
+        checkNotNull(ui.findOrNull(By.text(excluded))) {
+            "'$excluded' is not at the top of the unfiltered list, so filtering it out would " +
+                "prove nothing${ui.describeScreen()}"
+        }
+        ui.retryingOnStale { ui.awaitObject(By.clazz(EDIT_TEXT_CLASS)).text = target }
+
+        check(ui.awaitGone(By.text(excluded))) {
+            "searching for '$target' still lists '$excluded', so the search did not filter" +
+                ui.describeScreen()
+        }
+        check(ui.findAll(By.text(target)).any { it.className != EDIT_TEXT_CLASS }) {
+            "searching for '$target' does not list it${ui.describeScreen()}"
+        }
     }
 
     private fun signUp() {
@@ -286,6 +353,22 @@ class UpgradeSmokeTest {
         const val MASTER_PASSWORD = "Upgrade@Test12"
         const val PASSWORD_HINT = "upgrade fixture"
 
+        // Any password but the master one. Its length differs from MASTER_PASSWORD's on purpose:
+        // the masked field only reveals its length, and UiSupport.retypeMasked waits on that
+        // length to know that the right password has replaced this one.
+        const val WRONG_PASSWORD = "Wrong@Pass1"
+
+        // The oracle key for the hint. It sits beside the vault's keys, but it is read from the
+        // unlock screen rather than from the vault.
+        const val HINT_KEY = "unlock.hint"
+
+        // A restored record to search for, and a UI-created one that must drop out of the results.
+        // The excluded title shares the word "card", so only a real title match separates them,
+        // and its "0 " prefix keeps it in the first screenful of the unfiltered list.
+        const val SEARCH_TARGET = "card 2"
+        const val SEARCH_EXCLUDED = "0 ui card"
+        const val EDIT_TEXT_CLASS = "android.widget.EditText"
+
         // Independent of the master password: a .bak is encrypted under a password chosen at export
         // time. This one is recorded in upgrade-test/src/main/assets/fixtures/README.md.
         const val BACKUP_PASSWORD = "Fixture@Backup1"
@@ -300,12 +383,12 @@ class UpgradeSmokeTest {
         // Mandatory signup fields are labelled by MandatoryLabelText, which appends a red asterisk
         // inside the same text node, so the accessibility text is "Password*" and not "Password" -
         // hence AppStrings.formLabel at the call site. The unlock screen uses a plain Text for the
-        // same resource, and usefully that difference also tells the two screens apart.
+        // same resource (see UnlockScreen), and usefully that difference also tells the two
+        // screens apart.
         const val SIGNUP_PASSWORD_LABEL = "password"
         const val SIGNUP_HINT_LABEL = "hint"
-        const val UNLOCK_PASSWORD_LABEL = "password"
 
-        // The restore dialog's own field. Spelled separately from UNLOCK_PASSWORD_LABEL despite
+        // The restore dialog's own field. Spelled separately from UnlockScreen's label despite
         // resolving the same resource: they are different screens owned by different code, and
         // collapsing them would make a change to either look safe when it is not.
         const val RESTORE_PASSWORD_LABEL = "password"
