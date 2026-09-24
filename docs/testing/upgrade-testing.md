@@ -17,8 +17,9 @@ if (!keyStore.containsAlias(alias)) {
 ```
 
 If that alias is ever lost across an upgrade, the app **silently generates a fresh key**. Nothing
-throws. Every record becomes permanently undecryptable, and the user sees a vault full of garbage
-with no explanation.
+throws at that point. Every record becomes permanently undecryptable, and the first decrypt crashes
+the app with `AEADBadTagException` — which, because the hint shares the key, is the unlock screen's
+Show Hint (observed by MR4's wipe proof, 2026-09-24).
 
 The key does not live in `/data/data`, so it is invisible to every test you currently have.
 
@@ -219,7 +220,10 @@ check is what stops this decaying into a fresh-install test a year from now.
 **Group 1 — the app is usable at all**
 1. Cold launch does not crash; zero `FATAL EXCEPTION` in logcat since install.
 2. Lands on the **unlock** screen, not signup. Catches wiped preferences.
-3. The password hint shown matches what was set pre-upgrade. Catches `EncryptedSharedPreferences` loss.
+3. The password hint shown matches what was set pre-upgrade. The hint is stored in Room's
+   `user_details`, encrypted with `symmetricDataKey`, so this is also the *earliest* Keystore
+   check: a lost key crashes the unlock screen's Show Hint with `AEADBadTagException` (observed by
+   MR4's wipe proof). It was once thought to live in `EncryptedSharedPreferences`; it does not.
 
 **Group 2 — authentication continuity**
 4. The original master password unlocks.
@@ -472,6 +476,7 @@ non-empty before it is compared. Treat "this check cannot fail" as a bug of the 
 | Lands on **signup** instead of unlock | preferences not preserved — check nothing uninstalled |
 | Correct password rejected | password hash storage or hashing changed |
 | Records present but fields are mojibake, or decrypt throws | **`symmetricDataKey` regenerated — stop the release** |
+| Phase C fails reading the hint (`Hide Hint` never appears) *and* `crash-scan-verify.txt` shows `AEADBadTagException` | **the same — this is exactly what MR4's wipe proof produced** |
 | Counts are 0 but the app works | destructive Room migration |
 | Authenticator missing from the add sheet | `MIGRATION_4_5` did not run |
 | TOTP digits wrong, everything else right | check the clock was frozen before suspecting the seed |
@@ -552,8 +557,8 @@ written means guessing at its contents and re-capturing later:
   is not directly observable through a black-box UI, so Phase A ends by writing an oracle file on
   the device — per-type record counts, every field of one known record per type, the backup
   location and the settings moved off their defaults — which the host pulls and diffs across runs.
-  Not the password hint: reading it needs the app locked, which Phase A never does, so it is a
-  debt row against MR4 rather than part of this oracle. Values
+  Not the password hint: reading it needs the app locked, which Phase A never did, so it was a
+  debt row against MR4, which cleared it. Values
   that legitimately vary (the current TOTP code, timestamps) are excluded by construction rather
   than filtered afterwards, so a diff is always a real defect.
 - Also in scope, found while starting the stage: the orchestrator resolves its target device once
@@ -676,7 +681,7 @@ The two #261 findings were verified rather than accepted on argument:
   versions on the host killed each other, not because of the harness. That trap is recorded in
   the build-and-test skill.
 
-### MR4 — data integrity assertions
+### MR4 — data integrity assertions — **delivered**
 
 Groups 1–3 and the Group 9 crash sentinel. **This is the MR that delivers the actual value** — the
 Keystore continuity check.
@@ -688,6 +693,45 @@ Keystore continuity check.
   contradicts the Phase A seed's fixed-ASCII, every-field-filled design — the seed is the
   determinism fixture, and those properties are exactly what it trades away. They belong to
   `v3_adversarial.bak`, so step 8 moves to MR5 with it (decided 2026-09-24).
+
+Delivered. `unlockScreenAppearsAfterUpgrade` became `verifyVaultAfterUpgrade`:
+
+| Step | How |
+|---|---|
+| Group 1, steps 1–2 | Launch lands on `welcome_back`, not `welcome`. Crashes are the host's job: `scripts/lib/crash-sentinel.sh` scans the crash and system buffers after *every* phase. |
+| Group 1, step 3 (clears the hint debt row) | Phase A now ends by force-stopping and relaunching to read the hint, so the oracle carries `unlock.hint=…` on both sides. |
+| Group 2 | `Wrong@Pass1` must produce `incorrect_pswrd_message` and stay on unlock; then `Upgrade@Test12` must reach `bottom_nav_records`. |
+| Group 3, steps 6–7 | Phase C writes `phase-c-oracle.txt` with the same `VaultOracle.describe()` and requires byte equality with Phase A's. |
+| Group 3, step 9 | Search `card 2`; `0 ui card` must disappear, and the target must remain as a list row. |
+| Backup location | Recorded as `backup.location=set\|not_set`, which is which of `backup_set_message` / `backup_set_location` renders. The path itself was dropped: it is a SAF URI, and the user-facing property is that the screen still says a location is set. |
+
+Settled by running it against the build under test, 2026-09-24:
+
+| Settled | Consequence |
+|---|---|
+| The upgraded build's records screen raises a notification-permission rationale on every cold start while a backup location is set. Back cannot dismiss it. | The host grants `POST_NOTIFICATIONS` after installing the baseline. See [operations](upgrade-harness-operations.md#verifying-after-the-upgrade). |
+| Five type chips overflow into a nested `HorizontalScrollView`, which `By.scrollable(true)` returned | `scrollList` takes the largest scrollable. Phase A could not have found this, because the baseline's four chips fit. |
+| `adb exec-out` puts remote stderr on stdout | A missing Phase C oracle was pulled as a non-empty error line. Both pulls now check `test -f` first. |
+| The hint is encrypted with `symmetricDataKey`, not held in `EncryptedSharedPreferences` | Corrected in section 5 and in [persistence-and-crypto.md](../architecture/persistence-and-crypto.md). It makes the hint the earliest Keystore check. |
+
+**Every guard was made to fail on purpose:**
+
+| Sabotage | Result |
+|---|---|
+| `keyStore.deleteEntry("symmetricDataKey")` added to `SecurityModule.getSymmetricKey()`, QA APK built, patch reverted (`git grep deleteEntry -- app` empty) | FAIL twice over. Phase C could not read the hint, and the sentinel reported `javax.crypto.AEADBadTagException` at `AndroidKeyStoreCipherSpiBase.engineDoFinal` as `FATAL: com.andryoga.safebox.qa crashed … during phase verify`. |
+| One Phase A oracle value edited on the device, then Phase C re-run | FAIL: `- field.0 ui login.user_id=TAMPERED` / `+ …=ui-user` |
+| `WRONG_PASSWORD = MASTER_PASSWORD` | FAIL: `incorrect_pswrd_message` never appeared |
+| `SEARCH_TARGET = "card"` (also matches the excluded title) | FAIL: `searching for 'card' still lists '0 ui card'` |
+| The sentinel's `Process:` regex broken | 2 of 10 `crash-sentinel-test.sh` cases fail |
+
+The wipe proof shows the oracle comparison is not the first line of defence against a lost key:
+the hint read is. The tamper row is what proves the comparison works on its own.
+
+- Acceptance met on `emulator-5554` (2026-09-24). Phase C passes against a HEAD QA build, with
+  both oracles byte-identical at 44 lines. Ten consecutive full runs all passed both phases, and
+  all twenty oracles (ten Phase A, ten Phase C) share one MD5,
+  `4cd0a7c6ae44f37d513aa9764fd98dcc`. The first attempt failed at run 3 on a harness defect, fixed
+  before the re-run: the status-bar clock leaked into `readHint`'s before/after diff.
 
 ### MR5 — migration, TOTP, backup round trip
 
@@ -729,7 +773,6 @@ discovering the debt from a code comment.
 | MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR7 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
 | MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR7 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
 | MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR6 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
-| MR2 | The oracle records nothing about the **password hint**, though Phase A sets one (`upgrade fixture`) | The hint is user data: the unlock screen's `Show Hint` is the only way back into a vault whose password has been forgotten. Nothing in the harness reads it, so an upgrade that drops or garbles it passes every phase silently. Phase A cannot read it without locking the app, which it currently never does. | MR4, which already has to drive the unlock screen on the post-upgrade side | the oracle carries the hint on both sides of the upgrade, captured by locking the app and tapping `Show Hint`, and the ten-run acceptance still holds |
 
 ---
 

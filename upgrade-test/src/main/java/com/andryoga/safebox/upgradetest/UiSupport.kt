@@ -143,6 +143,35 @@ internal class UiSupport(val device: UiDevice) {
     }
 
     /**
+     * Replaces the text in a masked field that already holds something, and does not return until
+     * the app has taken the new value.
+     *
+     * [typeInto]'s "no longer empty" read-back is useless once a field already holds text: it is
+     * true before the new value has reached the app. A masked field renders one bullet per
+     * character, so its *length* is observable even though its content is not, and that is what is
+     * waited on here. The caller therefore has to make sure the old and new values differ in
+     * length. For the only caller, a wrong password followed by the right one, that is a choice of
+     * test data.
+     *
+     * @param label the field's visible label
+     * @param value the text to set; must differ in length from what the field holds
+     */
+    fun retypeMasked(label: String, value: String) {
+        retryingOnStale { textField(label).text = value }
+        val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
+        while (true) {
+            flushAccessibilityCache()
+            val shownLength = retryingOnStale { textField(label).text }?.length ?: 0
+            if (shownLength == value.length) return
+            check(SystemClock.uptimeMillis() < deadline) {
+                "the '$label' field shows $shownLength characters after being set to a " +
+                    "${value.length}-character value, so the app never took it${describeScreen()}"
+            }
+            SystemClock.sleep(POLL_INTERVAL_MS)
+        }
+    }
+
+    /**
      * Runs an action until it completes without hitting a stale node handle.
      *
      * Exposed rather than kept private because not every interaction is a tap: reading a switch's
@@ -238,9 +267,12 @@ internal class UiSupport(val device: UiDevice) {
      * disagree. It also un-escapes XML entities, which matters for the one label in this app
      * containing an ampersand.
      *
+     * @param packageName when set, only nodes owned by this package are returned. Diffing two
+     * snapshots needs it: the hierarchy includes SystemUI, and its status-bar clock changes text
+     * whenever the minute turns - which once made the clock look like the revealed password hint
      * @return the visible text nodes; empty text is dropped as it carries no information
      */
-    fun textSnapshot(): List<ScreenText> {
+    fun textSnapshot(packageName: String? = null): List<ScreenText> {
         flushAccessibilityCache()
         val parser = Xml.newPullParser()
         parser.setInput(StringReader(device.windowHierarchy()))
@@ -249,6 +281,11 @@ internal class UiSupport(val device: UiDevice) {
             if (parser.eventType != XmlPullParser.START_TAG || parser.name != NODE_TAG) continue
             val text = parser.getAttributeValue(null, TEXT_ATTRIBUTE).orEmpty()
             if (text.isEmpty()) continue
+            if (packageName != null &&
+                parser.getAttributeValue(null, PACKAGE_ATTRIBUTE) != packageName
+            ) {
+                continue
+            }
             parseBounds(parser.getAttributeValue(null, BOUNDS_ATTRIBUTE))
                 ?.let { texts += ScreenText(text, it) }
         }
@@ -336,6 +373,14 @@ internal class UiSupport(val device: UiDevice) {
      * A screen with nothing to scroll is not an error - a list short enough to fit exposes no
      * scrollable node at all - so that case reports "no further" rather than failing.
      *
+     * "The" container is the scrollable node with the largest visible area, not the first one
+     * found. A screen can nest a small scrollable inside the big one: from the release that added
+     * the Authenticator type, the records list's filter chips no longer fit on one line and become
+     * a `HorizontalScrollView` inside the list. `By.scrollable(true)` returned that row, a vertical
+     * scroll of a horizontal row moves nothing and reports "no further", and the walk silently
+     * stopped after the first screenful - seen on 2026-09-24 as four records "missing" from an
+     * upgraded vault that held all of them.
+     *
      * @param direction which way to go
      * @param fraction how much of the container to travel
      * @return true while the container can still scroll further that way, so callers can walk a
@@ -343,7 +388,10 @@ internal class UiSupport(val device: UiDevice) {
      */
     fun scrollList(direction: Direction, fraction: Float = SCROLL_FRACTION): Boolean =
         retryingOnStale {
-            val container = findOrNull(By.scrollable(true), 0) ?: return@retryingOnStale false
+            flushAccessibilityCache()
+            val container = device.findObjects(By.scrollable(true))
+                .maxByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
+                ?: return@retryingOnStale false
             container.scroll(direction, fraction)
         }
 
@@ -450,6 +498,7 @@ internal class UiSupport(val device: UiDevice) {
         private const val NODE_TAG = "node"
         private const val TEXT_ATTRIBUTE = "text"
         private const val BOUNDS_ATTRIBUTE = "bounds"
+        private const val PACKAGE_ATTRIBUTE = "package"
         private val BOUNDS_PATTERN = Regex("""\[(-?\d+),(-?\d+)]\[(-?\d+),(-?\d+)]""")
 
         private const val POLL_INTERVAL_MS = 250L

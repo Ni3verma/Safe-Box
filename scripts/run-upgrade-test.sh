@@ -17,6 +17,8 @@ set -euo pipefail
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=lib/instrumentation-guard.sh
 source "$script_dir/lib/instrumentation-guard.sh"
+# shellcheck source=lib/crash-sentinel.sh
+source "$script_dir/lib/crash-sentinel.sh"
 
 APP_PACKAGE="com.andryoga.safebox.qa"
 TEST_PACKAGE="com.andryoga.safebox.upgradetest"
@@ -38,9 +40,13 @@ DEVICE_DOWNLOADS="/sdcard/Download"
 BACKUP_DIR="SafeBoxUpgradeTest"
 DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
 
-# What Phase A writes into the harness's own app-private storage, and what the ten-run determinism
-# acceptance diffs. Named by VaultOracle.ORACLE_FILE_NAME; the two have to agree.
+# What each phase writes into the harness's own app-private storage. Phase A's is what the ten-run
+# determinism acceptance diffs; Phase C's is what the upgraded build showed, and the instrumentation
+# itself fails unless the two match. Both are pulled into the artifacts, so a mismatch on CI can be
+# read without the device. Named by OracleFiles.BASELINE and OracleFiles.UPGRADED; they have to
+# agree.
 ORACLE_FILE="phase-a-oracle.txt"
+UPGRADED_ORACLE_FILE="phase-c-oracle.txt"
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
@@ -147,12 +153,42 @@ esac
 echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r') - $(adb shell getprop ro.build.version.release | tr -d '\r') (API $(adb shell getprop ro.build.version.sdk | tr -d '\r'))"
 
 # Logcat is collected whatever happens - a failure on a CI emulator nobody can attach to is only
-# actionable if the log comes back with it.
+# actionable if the log comes back with it. Phase C's oracle is pulled here too rather than after
+# the phase, because the phase fails exactly when that file matters: it is the other half of the
+# diff the failure message summarises.
 collect_logcat() {
     adb logcat -d > "$out_dir/logcat.txt" 2>/dev/null || true
+    pull_harness_file "$UPGRADED_ORACLE_FILE" || true
     echo "Artifacts in $out_dir/"
 }
+
+# Copies a file the instrumentation wrote to its own app-private storage into the artifacts, and
+# fails if there is none. Read back with run-as rather than adb pull: that storage needs no
+# permissions on the device and cannot be confused with anything the app under test wrote. The
+# harness APK is debug-signed, so run-as is allowed.
+#
+# Existence is checked separately, first. `adb exec-out` carries the remote command's stderr on
+# the same stream as its stdout, so a missing file used to arrive as a one-line "No such file or
+# directory" artifact - non-empty, and therefore indistinguishable from an oracle by a size test.
+pull_harness_file() {
+    local name="$1"
+    rm -f "$out_dir/$name"
+    adb shell run-as "$TEST_PACKAGE" test -f "files/$name" || return 1
+    adb exec-out run-as "$TEST_PACKAGE" cat "files/$name" > "$out_dir/$name"
+    [ -s "$out_dir/$name" ]
+}
 trap collect_logcat EXIT
+
+# Group 9. Dumps the two buffers crashes and ANRs are written to, and fails the run if the app under
+# test appears in either. Run after every phase rather than once at the end, so that a crash is
+# blamed on the build it happened in. The baseline crashing during seeding is a broken fixture, not
+# an upgrade regression, and the message should say which.
+scan_for_crashes() {
+    local phase="$1"
+    local dump="$out_dir/crash-scan-$phase.txt"
+    adb logcat -d -b crash -b system > "$dump" 2>/dev/null || true
+    assert_no_app_crash "$dump" "$APP_PACKAGE" "phase $phase"
+}
 
 # Handing this script a debug or release APK by mistake is the easiest way to make the whole
 # exercise meaningless, and it does not fail obviously: the wrong package installs fine, and the
@@ -193,6 +229,11 @@ fi
 echo "== Clean slate =="
 adb uninstall "$APP_PACKAGE" > /dev/null 2>&1 || true
 adb uninstall "$TEST_PACKAGE" > /dev/null 2>&1 || true
+# The crash scans read the system buffer, which ActivityManager fills quickly on an emulator. With
+# the default size, a crash early in Phase A could roll out before it is read, and the scan would
+# then pass on a log that no longer contains it. Best effort: some images refuse a resize, and the
+# scan still works on whatever buffer is there.
+adb logcat -G 16M > /dev/null 2>&1 || true
 adb logcat -c || true
 
 echo "== Install baseline =="
@@ -206,6 +247,16 @@ if [ -z "$first_install_before" ]; then
     exit 1
 fi
 echo "firstInstallTime=$first_install_before"
+
+# With a backup location set, the records screen raises a notification-permission rationale on
+# every cold start until the permission is granted. It cannot be dismissed with back, and it arrives
+# asynchronously after the list, so driving it would put a race into every phase that lands on
+# records. Granting up front removes it deterministically; runtime grants survive `install -r`, so
+# the build under test inherits it the way a user's device would. API 33 introduced the
+# permission, so older images have nothing to grant.
+if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
+    adb shell pm grant "$APP_PACKAGE" android.permission.POST_NOTIFICATIONS
+fi
 
 echo "== Install harness =="
 adb install "$test_apk"
@@ -242,17 +293,19 @@ run_phase() {
         -e fixtureFile "$FIXTURE_FILE" \
         -e backupDir "$BACKUP_DIR" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
-    assert_instrumentation_ran "$output" "$min_tests"
+
+    # The crash scan runs even when the phase failed. An app crash is a common *reason* for a
+    # phase failing, and the phase's own message only describes the screen the crash left behind.
+    local status=0
+    assert_instrumentation_ran "$output" "$min_tests" || status=1
+    scan_for_crashes "$label" || status=1
+    return "$status"
 }
 
 run_phase seed seedVaultOnBaselineBuild 1
 
-# Read back with run-as rather than adb pull: the instrumentation writes to its own app-private
-# storage, which needs no permissions on the device and cannot be confused with anything the app
-# under test wrote. The harness APK is debug-signed, so run-as is allowed.
 echo "== Capture oracle =="
-adb exec-out run-as "$TEST_PACKAGE" cat "files/$ORACLE_FILE" > "$out_dir/$ORACLE_FILE" || true
-if [ ! -s "$out_dir/$ORACLE_FILE" ]; then
+if ! pull_harness_file "$ORACLE_FILE"; then
     echo "error: Phase A produced no oracle at $out_dir/$ORACLE_FILE." >&2
     echo "       The phase passed, so the capture wrote nothing or run-as was refused." >&2
     exit 1
@@ -281,6 +334,6 @@ if [ "$installed_code" != "$new_code" ]; then
     exit 1
 fi
 
-run_phase verify unlockScreenAppearsAfterUpgrade 1
+run_phase verify verifyVaultAfterUpgrade 1
 
 echo "== Upgrade test passed =="

@@ -26,7 +26,7 @@ import android.content.res.Resources
  * @param context any context belonging to the *harness*, used only to reach the package manager
  * @param packageName the app under test
  */
-internal class AppStrings(context: Context, private val packageName: String) {
+internal class AppStrings(context: Context, val packageName: String) {
 
     private val appResources: Resources = runCatching {
         context.packageManager.getResourcesForApplication(packageName)
