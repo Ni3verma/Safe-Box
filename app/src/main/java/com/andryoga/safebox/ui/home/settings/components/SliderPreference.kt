@@ -18,6 +18,13 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
+/**
+ * A settings row: a title that shows the current value, an optional body, and a [Slider] below.
+ *
+ * @param controlModifier applied to the [Slider] alone, not the row. The slider has no text of
+ * its own, so this is where a `Modifier.testTag` belongs if a test needs to find it (see
+ * `TestTags`).
+ */
 @Composable
 fun SliderPreference(
     value: Int,
@@ -25,6 +32,7 @@ fun SliderPreference(
     valueRange: ClosedFloatingPointRange<Float>,
     onValueChanged: (newValue: Int) -> Unit,
     body: String? = null,
+    controlModifier: Modifier = Modifier,
 ) {
     var localValue by remember { mutableFloatStateOf(value.toFloat()) }
     LaunchedEffect(value) {
@@ -47,6 +55,7 @@ fun SliderPreference(
         Slider(
             value = localValue,
             onValueChange = { localValue = it },
+            modifier = controlModifier,
             valueRange = valueRange,
             steps = valueRange.endInclusive.toInt() - valueRange.start.toInt() - 1,
             onValueChangeFinished = {

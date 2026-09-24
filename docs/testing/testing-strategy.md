@@ -17,10 +17,16 @@ What is tested where, and why the boundaries are drawn as they are.
 **Instrumentation tests run on `debug` only.** Not a preference — a structural constraint. See
 [ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md).
 
-**Selectors are text and content description.** Production code has no `Modifier.testTag`. The
-upside is that the same selectors work from UI Automator, so black-box tests can drive even the
-minified QA APK. The downside is that changing user-visible copy breaks tests — accept that,
-because the alternative is polluting production with test hooks.
+**Selectors are text and content description.** The upside is that the same selectors work from UI
+Automator, so black-box tests can drive even the minified QA APK. The downside is that changing
+user-visible copy breaks tests — accept that, because the alternative is polluting production with
+test hooks.
+
+The one exception is a control with **no text or content description of its own** — the settings
+switches and sliders, which sit beside their label. Those carry a `Modifier.testTag` from
+`ui/core/TestTags.kt`, published to UI Automator as a resource id through `testTagsAsResourceId`
+in `debug` and `qa` builds only (never `release`; `TestTagsTest` pins that). Do not tag anything a
+test can already find by text or content description.
 
 **Randomized data over fixed fixtures, where round-trip fidelity is the property under test.** The
 backup/restore tests generate fresh random records every run so corner cases surface over time.
