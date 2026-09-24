@@ -177,9 +177,11 @@ it means a unit test can pass while doing nothing. Prefer asserting on observabl
 
 ## Selector strategy for UI tests
 
-Production code contains **no `Modifier.testTag`**. Everything is found by text or content
-description, which is why the existing suite is 449 × `onNodeWithText` and
-101 × `onNodeWithContentDescription`.
+Everything is found by text or content description, which is why the existing suite is
+449 × `onNodeWithText` and 101 × `onNodeWithContentDescription`. The only `Modifier.testTag`s are
+on controls with no text of their own (the settings switches and sliders, `ui/core/TestTags.kt`).
+In `debug` and `qa` they are also visible to UI Automator as resource ids (`By.res(tag)`); in
+`release` they are not.
 
 Useful side effect: those same selectors work from **UI Automator**, so black-box tests can drive
 even the minified QA APK. Verified with:
