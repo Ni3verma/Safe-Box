@@ -97,7 +97,10 @@ the resolved string fails.
   description and no id, and are still matched by geometry — the switch whose vertical extent
   overlaps its label. Resource names cannot help there; a `testTag` exposed through
   `testTagsAsResourceId` would, and is deliberately left out of this decision because it changes
-  production code.
+  production code. *Update 2026-09-24:* that production change has since been made separately:
+  `ui/core/TestTags.kt`, exposed in `debug`/`qa` only. The harness keeps using geometry until the
+  oldest supported baseline contains the tags — see open decision 13 in
+  [upgrade-testing.md](../testing/upgrade-testing.md#not-blocking-but-worth-deciding).
 - **The baseline can never be re-keyed to anything newer.** Resource names work for the baseline
   only because `user_id` already existed in `v2.0.4.0`. A name introduced after the floor cannot be
   resolved against it, and the harness must fall back to a literal for such fields.

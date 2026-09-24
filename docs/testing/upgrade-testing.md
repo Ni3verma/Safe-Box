@@ -807,3 +807,13 @@ Answered 2026-09-21. **MR1 is unblocked.**
 12. **Fixture location** — `upgrade-test/src/main/assets/fixtures/` as proposed, or GitHub Release
     assets. *Recommendation: in-repo. They are small, and a test fixture that can disappear from
     under CI is not a fixture.*
+13. **When to stop matching the settings controls by geometry.** Since `feature/expose-test-tags`
+    (2026-09-24), the settings switches and sliders have `testTag`s that `debug` and `qa` builds
+    expose as resource ids. The names are in `ui/core/TestTags.kt`, for example
+    `settings_privacy_switch`. The harness cannot use them yet: Phase A runs on the oldest
+    supported baseline, and `v2.0.4.0` predates them. Using tags in Phase B only would mean two
+    ways of finding one control in a single run, for no gain. *Recommendation: switch
+    `UiSupport.switchBeside` to `By.res(tag)` in the same change that raises the oldest supported
+    version to a release that contains the tags. Update ADR-0003's "no text" consequence at the
+    same time.* This is deliberately **not** a debt row: it cannot be cleared before this branch
+    merges, and a debt row blocks the merge.
