@@ -1,6 +1,6 @@
 # ADR-0002 — Upgrade and release-build testing via a black-box UI Automator module
 
-- **Status:** Accepted. **Skeleton implemented** 2026-09-22 (MR1); assertions land in MR2–MR5
+- **Status:** Accepted. **Skeleton implemented** 2026-09-22 (MR1); assertions land in MR2–MR6
 - **Date:** 2026-09-20, implementation status updated 2026-09-22
 - **Supersedes:** nothing. **Depends on:** [ADR-0001](0001-instrumentation-tests-run-on-debug-only.md)
 

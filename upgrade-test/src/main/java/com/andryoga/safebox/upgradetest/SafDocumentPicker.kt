@@ -14,10 +14,14 @@ import java.util.regex.Pattern
  *
  * Two behaviours are worth knowing before changing anything here:
  *
- * - **The picker does not open where the file is.** It opens on the *Recent* root, which on a
- *   freshly booted emulator lists nothing at all (`No items`), even though the file is present in
- *   Downloads and passes the caller's MIME filter. Waiting for the filename on the first screen
- *   therefore always times out. The roots drawer must be opened and `Downloads` chosen explicitly.
+ * - **The picker does not reliably open where the file is.** It opens on the *Recent* root, which
+ *   may list the fixture the host has just pushed, or may list nothing at all (`No items`) even
+ *   though the file is present in Downloads and passes the caller's MIME filter. Both were
+ *   observed within minutes of each other on the same emulator on 2026-09-23, so neither may be
+ *   assumed: the helper takes the file wherever it finds it and otherwise opens the roots drawer
+ *   and chooses `Downloads` explicitly. The practical consequence is that the drawer path is
+ *   *skipped entirely* in many passing runs, so it gets far less coverage than the pass rate
+ *   suggests.
  * - **Never select a root by the device's own name.** The drawer also lists the device
  *   (`sdk_gphone64_arm64` on the local emulator, something else everywhere else). `Downloads` is
  *   the only label that is stable across devices.
@@ -34,22 +38,14 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
     fun selectFromDownloads(fileName: String) {
         awaitPicker()
 
-        repeat(NAVIGATION_ATTEMPTS) { attempt ->
+        repeat(NAVIGATION_ATTEMPTS) {
             if (ui.isPresent(By.text(fileName))) {
                 ui.clickObject(By.text(fileName))
                 return
             }
-            if (attempt == 0) {
-                openDownloadsRoot()
-            } else {
-                // The drawer can swallow the first tap while it is still animating open, so later
-                // attempts re-open it from scratch rather than assuming where the UI got to.
-                ui.device.pressBack()
-                openDownloadsRoot()
-            }
+            openDownloadsRoot()
             // The wait's own result decides the outcome. Discarding it and re-testing at the top
-            // of the next pass means a file that did appear can be missed by a transient hiccup,
-            // and the next pass opens with a back press aimed at a drawer that is not there.
+            // of the next pass means a file that did appear can be missed by a transient hiccup.
             if (ui.findOrNull(By.text(fileName), FILE_TIMEOUT_MS) != null) {
                 ui.clickObject(By.text(fileName))
                 return
@@ -109,8 +105,31 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
         ui.clickText(ALLOW_BUTTON)
     }
 
+    /**
+     * Navigates to the Downloads root from wherever the picker currently is.
+     *
+     * Safe to call repeatedly, which is the whole point: it is how every retry attempt re-orients
+     * itself. The drawer button is tapped only if it is there, because after a successful attempt
+     * the picker is *already* browsing Downloads with the drawer closed, and the toolbar is the
+     * only thing that distinguishes that from the drawer being open.
+     *
+     * The retry used to press back first, on the theory that the drawer might have swallowed the
+     * tap while animating. That is the wrong reset for the state the retry is actually in: attempt
+     * 0 normally reaches Downloads and merely fails to *see* the file yet, and back from a root
+     * with no drawer open dismisses the picker outright.
+     *
+     * Measured rather than argued, on 2026-09-23, by forcing attempt 0 to navigate and then
+     * decline to look for the file. With the back press, Phase A failed with
+     * `could not find BySelector [DESC='Show roots'] within 15000ms` and a hierarchy dump whose
+     * root package was `com.andryoga.safebox.qa` — the picker was gone and the message blamed the
+     * drawer. Without it, the same forced retry recovered and produced the usual oracle. Note that
+     * the retry never runs in a passing run, so neither the defect nor this fix is covered by the
+     * suite; re-run that experiment if this function changes again.
+     */
     private fun openDownloadsRoot() {
-        ui.clickObject(By.desc(SHOW_ROOTS_DESC))
+        if (ui.isPresent(By.desc(SHOW_ROOTS_DESC))) {
+            ui.clickObject(By.desc(SHOW_ROOTS_DESC))
+        }
         ui.clickObject(By.text(DOWNLOADS_ROOT))
     }
 

@@ -69,7 +69,13 @@ if [ -f "$FLOOR_FILE" ]; then
     # Comments are stripped per line and only the first remaining value is taken. Deleting the
     # whole file's whitespace instead would concatenate a two-line file into one nonsense tag,
     # which then matches nothing - and, before the check below existed, was ignored in silence.
-    floor=$(sed -e 's/#.*//' "$FLOOR_FILE" | tr -d '[:blank:]' | grep -v '^$' | head -n 1)
+    #
+    # The carriage return is deleted along with the blanks because `[:blank:]` is space and tab
+    # only. This file is the harness's one piece of committed *data*, as opposed to code: there is
+    # no .gitattributes in this repo, so an edit made on Windows commits CRLF verbatim, and unlike
+    # a `.sh` it has no shebang line to fail first and point at the cause. The symptom would
+    # instead be the error below naming a floor that looks exactly right.
+    floor=$(sed -e 's/#.*//' "$FLOOR_FILE" | tr -d '[:blank:]\r' | grep -v '^$' | head -n 1)
     if [ -n "$floor" ]; then
         # A floor that names no real candidate is always a mistake - a typo, or a tag whose release
         # carries no SafeBox-qa.apk. Left to the awk below it would simply not match, every

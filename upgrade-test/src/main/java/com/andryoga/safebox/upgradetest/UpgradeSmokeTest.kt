@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
  * Phase A establishes state on the baseline build — an account, and a vault seeded from a golden
  * backup through the real system document picker. Phase B asserts only that the upgraded build
  * still knows an account exists; assertions about the vault's *contents* surviving the upgrade
- * arrive in MR3.
+ * arrive in MR4.
  *
  * The two tests are **ordered and stateful across processes**, which is unusual and deliberate:
  * [seedVaultOnBaselineBuild] runs against the baseline APK and [unlockScreenAppearsAfterUpgrade]
@@ -26,21 +26,31 @@ import org.junit.runner.RunWith
  * method filter, which is also why a filter typo has to be fatal rather than a silent zero-test
  * pass.
  *
- * Everything is selected by visible text, because production code contains no `Modifier.testTag`
- * and the APK under test is minified. Note that the text Phase A drives belongs to the **baseline
- * release**, not to this branch: reading current sources to write these selectors is the wrong
- * reference, and they were instead read off the installed baseline.
+ * Everything is selected by what the app renders, because production code contains no
+ * `Modifier.testTag` and the APK under test is minified. The harness nonetheless holds no rendered
+ * text of its own: every label below is an app *resource name*, resolved against whichever build is
+ * installed, per
+ * [ADR-0003](../../../../../../../../docs/decisions/0003-ui-labels-from-resource-names.md). Phase A
+ * therefore drives the **baseline release**'s wording without that wording appearing anywhere in
+ * this file, and the same names resolve to the build under test in the later phases.
  */
 @RunWith(AndroidJUnit4::class)
 class UpgradeSmokeTest {
 
     private lateinit var device: UiDevice
     private lateinit var ui: UiSupport
+    private lateinit var app: AppStrings
 
+    /**
+     * [AppStrings] is built per test method rather than once per class on purpose: it is bound to
+     * the APK that was installed when it was created, and the two phases run against two different
+     * builds. Rebuilding it here makes that safe by construction instead of by discipline.
+     */
     @Before
     fun setUp() {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         ui = UiSupport(device)
+        app = AppStrings(InstrumentationRegistry.getInstrumentation().context, APP_PACKAGE)
     }
 
     /**
@@ -62,14 +72,14 @@ class UpgradeSmokeTest {
      */
     @Test
     fun seedVaultOnBaselineBuild() {
-        launchAppUnderTest(SIGNUP_HEADING)
+        launchAppUnderTest(app.label(SIGNUP_HEADING))
         signUp()
         restoreGoldenBackup()
-        RecordCreator(ui).createAll()
+        RecordCreator(ui, app).createAll()
         assertSeededRecordsPresent()
         setBackupLocation()
-        SettingsChanger(ui).applyNonDefaults()
-        VaultOracle(ui, seededTitles()).capture()
+        SettingsChanger(ui, app).applyNonDefaults()
+        VaultOracle(ui, app, seededTitles()).capture()
     }
 
     /**
@@ -80,26 +90,29 @@ class UpgradeSmokeTest {
      */
     @Test
     fun unlockScreenAppearsAfterUpgrade() {
-        launchAppUnderTest(UNLOCK_HEADING)
+        launchAppUnderTest(app.label(UNLOCK_HEADING))
+        val passwordLabel = app.label(UNLOCK_PASSWORD_LABEL)
 
         // Waits rather than querying once: the heading and the field are separate semantics nodes,
         // and a slow device can publish them in different frames. A one-shot `findObject` here
         // would report "no password field" for a screen that was merely a frame behind.
         assertNotNull(
-            "unlock screen has no '$UNLOCK_PASSWORD_LABEL' field${ui.describeScreen()}",
-            ui.findOrNull(By.text(UNLOCK_PASSWORD_LABEL)),
+            "unlock screen has no '$passwordLabel' field${ui.describeScreen()}",
+            ui.findOrNull(By.text(passwordLabel)),
         )
     }
 
     private fun signUp() {
-        ui.typeInto(SIGNUP_PASSWORD_LABEL, MASTER_PASSWORD)
-        ui.typeInto(SIGNUP_HINT_LABEL, PASSWORD_HINT)
-        ui.clickObject(By.text(SIGNUP_BUTTON).enabled(true))
+        val signUpButton = app.label(SIGNUP_BUTTON)
+        val heading = app.label(SIGNUP_HEADING)
+        ui.typeInto(app.formLabel(SIGNUP_PASSWORD_LABEL, isMandatory = true), MASTER_PASSWORD)
+        ui.typeInto(app.formLabel(SIGNUP_HINT_LABEL, isMandatory = true), PASSWORD_HINT)
+        ui.clickObject(By.text(signUpButton).enabled(true))
 
         // Leaving the signup heading behind is the only "signed up" signal available without
         // asserting on home-screen content, which belongs to MR2.
-        check(ui.awaitGone(By.text(SIGNUP_HEADING), SIGN_UP_TIMEOUT_MS)) {
-            "still on the signup screen after tapping '$SIGNUP_BUTTON'${ui.describeScreen()}"
+        check(ui.awaitGone(By.text(heading), SIGN_UP_TIMEOUT_MS)) {
+            "still on the signup screen after tapping '$signUpButton'${ui.describeScreen()}"
         }
     }
 
@@ -117,17 +130,17 @@ class UpgradeSmokeTest {
     private fun restoreGoldenBackup() {
         val fixtureFile = requiredArgument(FIXTURE_ARGUMENT)
 
-        ui.clickText(RESTORE_DATA_BUTTON)
+        ui.clickText(app.label(RESTORE_DATA_BUTTON))
         SafDocumentPicker(ui).selectFromDownloads(fixtureFile)
 
-        ui.awaitText(RESTORE_PROMPT)
-        ui.typeInto(RESTORE_PASSWORD_LABEL, BACKUP_PASSWORD)
-        ui.clickText(CONFIRM_BUTTON)
+        ui.awaitText(app.label(RESTORE_PROMPT))
+        ui.typeInto(app.label(RESTORE_PASSWORD_LABEL), BACKUP_PASSWORD)
+        ui.clickText(app.label(CONFIRM_BUTTON))
 
         // The restore runs through a WorkManager worker that decrypts and re-encrypts every record,
         // so it is allowed far longer than an ordinary UI transition.
-        ui.awaitText(RESTORE_SUCCESS_MESSAGE, RESTORE_TIMEOUT_MS)
-        ui.clickText(OK_BUTTON)
+        ui.awaitText(app.label(RESTORE_SUCCESS_MESSAGE), RESTORE_TIMEOUT_MS)
+        ui.clickText(app.label(OK_BUTTON))
     }
 
     /**
@@ -150,7 +163,7 @@ class UpgradeSmokeTest {
      * today, which is the only reason this has been passing.
      */
     private fun assertSeededRecordsPresent() {
-        ui.clickText(RECORDS_TAB)
+        ui.clickText(app.label(RECORDS_TAB))
 
         val expected = FIXTURE_RECORD_TITLES.map { "restored:$it" } +
             SeedRecord.ALL.map { "ui:${it.title}" }
@@ -192,11 +205,11 @@ class UpgradeSmokeTest {
     private fun setBackupLocation() {
         val backupDir = requiredArgument(BACKUP_DIR_ARGUMENT)
 
-        ui.clickText(BACKUP_TAB)
-        ui.clickText(SET_LOCATION_BUTTON)
+        ui.clickText(app.label(BACKUP_TAB))
+        ui.clickText(app.label(SET_LOCATION_BUTTON))
         SafDocumentPicker(ui).selectFolder(backupDir)
 
-        ui.awaitText(BACKUP_LOCATION_SET_MESSAGE)
+        ui.awaitText(app.label(BACKUP_LOCATION_SET_MESSAGE))
         checkNotNull(ui.findOrNull(By.textContains("$GRANTED_TREE_PREFIX$backupDir"))) {
             "the backup screen says the location is set, but not to '$backupDir'" +
                 ui.describeScreen()
@@ -277,39 +290,43 @@ class UpgradeSmokeTest {
         // time. This one is recorded in upgrade-test/src/main/assets/fixtures/README.md.
         const val BACKUP_PASSWORD = "Fixture@Backup1"
 
-        const val SIGNUP_HEADING = "Welcome !"
-        const val UNLOCK_HEADING = "Welcome Back !"
-        const val SIGNUP_BUTTON = "Sign Up"
+        // Everything below that names a screen element is an app *resource name*, resolved against
+        // whichever build is installed by AppStrings. Per ADR-0003 the harness never holds the
+        // displayed text, so a copy edit in any future release changes nothing here.
+        const val SIGNUP_HEADING = "welcome"
+        const val UNLOCK_HEADING = "welcome_back"
+        const val SIGNUP_BUTTON = "signup"
 
         // Mandatory signup fields are labelled by MandatoryLabelText, which appends a red asterisk
-        // inside the same text node, so the accessibility text is "Password*" and not "Password".
-        // The unlock screen uses a plain Text for its label, hence two different constants - and
-        // usefully, they also tell the two screens apart.
-        const val SIGNUP_PASSWORD_LABEL = "Password*"
-        const val SIGNUP_HINT_LABEL = "Hint*"
-        const val UNLOCK_PASSWORD_LABEL = "Password"
+        // inside the same text node, so the accessibility text is "Password*" and not "Password" -
+        // hence AppStrings.formLabel at the call site. The unlock screen uses a plain Text for the
+        // same resource, and usefully that difference also tells the two screens apart.
+        const val SIGNUP_PASSWORD_LABEL = "password"
+        const val SIGNUP_HINT_LABEL = "hint"
+        const val UNLOCK_PASSWORD_LABEL = "password"
 
         // The restore dialog's own field. Spelled separately from UNLOCK_PASSWORD_LABEL despite
-        // being the same string: they are different screens owned by different code, and collapsing
-        // them would make a rename of either look safe when it is not.
-        const val RESTORE_PASSWORD_LABEL = "Password"
+        // resolving the same resource: they are different screens owned by different code, and
+        // collapsing them would make a change to either look safe when it is not.
+        const val RESTORE_PASSWORD_LABEL = "password"
 
-        const val RESTORE_DATA_BUTTON = "Restore data"
-        const val RESTORE_PROMPT = "Please enter the password that was used to make the backup file."
-        const val CONFIRM_BUTTON = "Confirm"
-        const val RESTORE_SUCCESS_MESSAGE = "Data has been successfully restored."
-        const val OK_BUTTON = "OK"
-        const val RECORDS_TAB = "Records"
-        const val BACKUP_TAB = "Backup & Restore"
+        const val RESTORE_DATA_BUTTON = "restore_records_button"
+        const val RESTORE_PROMPT = "new_restore_dialog_body_text"
+        const val CONFIRM_BUTTON = "confirm"
+        const val RESTORE_SUCCESS_MESSAGE = "restore_complete_message"
+        const val OK_BUTTON = "common_ok"
+        const val RECORDS_TAB = "bottom_nav_records"
+        const val BACKUP_TAB = "bottom_nav_backup_and_restore"
 
         // The backup screen before and after a directory is granted. "Backup & Restore" is also the
         // app bar's title once that tab is open, so it is only safe to tap while another tab is
         // showing - which is the only place setBackupLocation() taps it.
-        const val SET_LOCATION_BUTTON = "Set Location"
-        const val BACKUP_LOCATION_SET_MESSAGE = "Backup location is set"
+        const val SET_LOCATION_BUTTON = "backup_set_location"
+        const val BACKUP_LOCATION_SET_MESSAGE = "backup_set_message"
 
         // How a tree over a directory at the root of the device's own shared storage is spelled in
-        // the URI the app displays, e.g. "/tree/primary:SafeBoxUpgradeTest".
+        // the URI the app displays, e.g. "/tree/primary:SafeBoxUpgradeTest". Platform syntax rather
+        // than an app label, so there is no resource to resolve it from.
         const val GRANTED_TREE_PREFIX = "primary:"
 
         const val FIXTURE_ARGUMENT = "fixtureFile"
