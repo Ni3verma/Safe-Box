@@ -90,8 +90,7 @@ check_tag_db_version() {
     source_db=$(db_version_of_source "$source_file") || return 1
 
     if [ "$tag_db" != "$source_db" ]; then
-        echo "error: tag $tag says DBVERSION $tag_db, but $source_file declares version = $source_db." >&2
-        echo "       Delete the tag and re-tag this commit with DBVERSION $source_db, e.g." >&2
+        echo "error: $tag tag is incorrect. Delete the tag and re-tag this commit with DBVERSION $source_db, e.g." >&2
         echo "       $(printf '%s' "$tag" | sed -E "s/^(v[0-9]+\.[0-9]+\.)[0-9]+/\1$source_db/")" >&2
         return 1
     fi

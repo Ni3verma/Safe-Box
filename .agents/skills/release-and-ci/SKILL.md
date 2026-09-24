@@ -46,9 +46,9 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
     DBVERSION to equal the literal `version = N` in `SafeBoxDatabase.kt`'s `@Database`, and
     `app/schemas/…/N.json` to exist and declare `"version": N`. Other `v*` shapes (`v1.1.0`,
     `-beta`) are rejected.
-  - On failure nothing has been built or published. Fix by re-tagging; the error prints the
-    corrected tag:
-    `git push --delete origin <tag> && git tag -d <tag> && git tag <fixed> && git push origin <fixed>`.
+  - On failure nothing has been built or published. The error names the corrected tag; re-tag
+    **the same commit** with it: `git tag <fixed> '<tag>^{commit}'`, not a bare `git tag <fixed>`
+    (which tags local HEAD, possibly moved since `<tag>` was cut), then push it and delete `<tag>`.
   - It reads the annotation, **not** the highest schema file. A `5.json` was committed in `331ee64`
     (January 2026) while the database stayed at 4, and was only regenerated for the real v5 by #241
     (different `identityHash`). `v2.0.4.0` therefore ships a `5.json` but DB 4, and "newest
