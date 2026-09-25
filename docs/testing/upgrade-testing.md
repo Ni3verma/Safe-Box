@@ -157,7 +157,7 @@ each, binary, and never edited after creation, so plain git is fine — no LFS n
 
 | Fixture | Produced by | Guards |
 |---|---|---|
-| `v1_legacy.bak` | `v1.3.3.0` QA APK (oldest with an archived APK) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
+| `v1_legacy.bak` | `v1.4.4.0` QA APK (first release with backup, #111; `v1.3.3.0` has none) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
 | `v2_pre_totp.bak` | **`v2.1.4.0-rc3` — captured 2026-09-21** | the format the entire current user base has on disk |
 | `v3_current.bak` | this branch | the new format including authenticators |
 | `v3_adversarial.bak` | this branch, hand-seeded | emoji + RTL + 4000-char fields, all-optionals-empty record, max-length card number, a `SHA512`/8-digit/60s authenticator, an authenticator with an **invalid Base32 seed**, duplicate titles |
@@ -167,7 +167,7 @@ All use one fixed backup password committed in the harness. Synthetic data only 
 vault.
 
 Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage that first asserts
-on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR5, `corrupt` in MR6 — rather than up
+on it — `v1_legacy` in MR5; `v3_current`, `v3_adversarial` and `corrupt` in MR6 — rather than up
 front; see [MR2](#mr2--seeding) for why.
 
 > [!NOTE]
@@ -176,7 +176,7 @@ front; see [MR2](#mr2--seeding) for why.
 > longer accept v1 backup files*. A `.bak` outlives the install that produced it — a user who
 > exported one in 2021 and has upgraded several times since can still restore it today — so the
 > file format stays in scope even though the install path does not. Capturing it needs the
-> `v1.3.3.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
+> `v1.4.4.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
 > the pre-Compose UI rules out.
 
 > [!CAUTION]
@@ -235,8 +235,10 @@ check is what stops this decaying into a fresh-install test a year from now.
 7. Open one known record **of every type** and compare **every field** character-for-character
    against the Phase A oracle. A regenerated key shows up here as mojibake or a decrypt throw.
 8. Include one long unicode field and one empty optional field — GCM tag and padding edges.
-   *Asserted in MR5 against `v3_adversarial.bak`, not against the Phase A seed, which is
-   deliberately ASCII and fully populated so that it stays byte-reproducible.*
+   *As delivered in MR5: Phase A creates `0 ui unicode` on the baseline through the UI — notes of
+   emoji, a ZWJ sequence, Hebrew, Arabic and decomposed combining marks (449 code points, 479
+   UTF-16 units, 809 UTF-8 bytes) and a blank `url`. It is part of the oracle, so Phase C compares
+   it byte for byte. `v3_adversarial.bak` moved to MR6.*
 9. Search a known title and assert the record is found — a different query path from the detail
    screen.
 
@@ -244,23 +246,30 @@ check is what stops this decaying into a fresh-install test a year from now.
 10. The add-record sheet offers **Authenticator**, proving `MIGRATION_4_5` created the table and
     Room did not fall back destructively.
 11. Add a new authenticator post-upgrade and save it — writes into the freshly migrated table.
-12. Re-assert Group 3 counts afterwards.
+12. Re-assert Group 3 counts afterwards. *As delivered: the full oracle is re-captured and must
+    equal the Phase A oracle with exactly that one record added (`VaultOracle.recordLinesAfterAdding`).*
 
 **Group 5 — TOTP across the boundary**
-13. For an authenticator restored from the fixture, assert the six displayed digits equal an
-    RFC 6238 value computed **inside the test** with a local Base32 + HMAC-SHA1 helper. Never call
-    app code for the expected value.
-14. Determinism: `adb root` works on the `default` image (userdebug), so `settings put global auto_time 0`
-    then set a fixed instant. Without root, assert against the current **and** previous 30-second
-    window.
+13. Assert the six displayed digits equal an RFC 6238 value computed **inside the test** with a
+    local Base32 + HMAC-SHA1 helper. Never call app code for the expected value. *As delivered
+    (decision A1): the authenticator is the one step 11 adds, not one restored from a fixture,
+    because no stable release with DB 5 exists to seed it before the upgrade. A true
+    cross-upgrade TOTP check becomes possible once one ships; see MR5's future-work note.*
+14. Determinism: *as delivered (decision A2), no root and no clock change.* The device clock is read
+    immediately before and after the screen is read, and any window in that span (widened 2 s at
+    the start for the app's once-a-second ticker) is accepted.
 15. This is the only assertion that proves the **seed itself decrypted correctly**, rather than
     that a row exists.
 
 **Group 6 — the escape hatch still works**
 16. Take a fresh backup on the upgraded app; assert a `.bak` appears with a plausible size.
+    *As delivered: the host also requires exactly one file, decodes it with `InspectBackup.java`,
+    and requires the authenticator in it, before anything is cleared.*
 17. `pm clear`, sign up again, restore that new `.bak`.
 18. Assert the same counts and field values as step 7. Catches "the upgrade worked but the export
     it now produces is broken", which would quietly destroy the user's only recovery path.
+    *As delivered: every `record.*` and `field.*` line must equal the post-step-11 oracle, and
+    step 13 is repeated on the restored authenticator.*
 
 **Group 7 — backward-compat matrix** (same fixtures, separate job)
 19. On a **fresh** install of the new app, restore each fixture and assert counts and spot-checked
@@ -548,9 +557,9 @@ written means guessing at its contents and re-capturing later:
 
 | Fixture | Moved to | Why it cannot be done usefully now |
 |---|---|---|
-| `v1_legacy.bak` | MR5 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR5 asserts on. |
-| `v3_current.bak` | MR5 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
-| `v3_adversarial.bak` | MR5 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
+| `v1_legacy.bak` | MR5 — **captured 2026-09-25**, see the [fixture README](../../upgrade-test/src/main/assets/fixtures/README.md) | Needs the `v1.4.4.0` QA APK (first with backup; `v1.3.3.0` has none) installed and seeded; it exists to exercise the migration path MR5 asserts on. |
+| `v3_current.bak` | MR6 (moved from MR5, 2026-09-25) | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
+| `v3_adversarial.bak` | MR6 (moved from MR5, 2026-09-25) | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
 | `corrupt.bak` | MR6 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR6 needs it. |
 
 - Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
@@ -744,30 +753,100 @@ the hint read is. The tamper row is what proves the comparison works on its own.
 
 ### MR5 — migration, TOTP, backup round trip
 
-Groups 4–6, including the independent RFC 6238 computation and clock freezing, plus Group 3 step 8
-(the long unicode field and the empty optional field), asserted against `v3_adversarial.bak`.
+Groups 4–6 and Group 3 step 8. **Scope re-decided 2026-09-25**, because two facts found while
+planning contradict the original text:
 
-- **Follow-up, raised 2026-09-24: `scripts/resolve-baselines.sh` must take the current schema
-  version from the `@Database(version = …)` annotation**, via `db_version_of_source` in
-  `scripts/lib/tag-db-version.sh`, not from the highest file under `app/schemas/`. An exported
-  schema can exist ahead of the version the build actually declares (or lag it), and the release
-  tag check already treats the annotation as the truth; two sources for one number will disagree.
-  The library reached the feature branch with #267 (merged into it at `44ffe3d`, 2026-09-25), so
-  nothing blocks this any more.
+| Found | Evidence | Consequence |
+|---|---|---|
+| **No stable release ships authenticators.** The newest stable tag is `v2.0.4.0` (DB 4); every DB-5 build is unreleased. | `git tag -l 'v*.*.5.*'` is empty; the floor pins Phase A to `v2.0.4.0` | An authenticator cannot exist before the upgrade, so "TOTP across the boundary" has no baseline to run from. |
+| **`v1.3.3.0` has no backup feature.** Backup/restore arrived in #111 (`c92484a`) and first shipped in **`v1.4.4.0`**, which writes `BACKUP_VERSION` 1 with the 1-byte `creationDate` (`ByteArray(1) { currentTimeMillis().toByte() }`) and carries a `SafeBox-qa.apk`. | `git grep -il backup v1.3.3.0 -- app/src/main/java` finds nothing | `v1_legacy.bak` is captured from `v1.4.4.0`. |
+
+Decided (all recommended defaults accepted):
+
+| Item | Decision |
+|---|---|
+| Group 5 | After the upgrade, add an authenticator through the UI with a fixed seed; its code on the records list must equal an RFC 6238 value computed **inside the harness** (`javax.crypto` HMAC-SHA1 + local Base32, never app code). Group 6 repeats the check after the round trip, proving the seed survives export. True cross-upgrade TOTP is future work, triggered by the first stable DB-5 release. |
+| Step 14, time | No root and no clock change. Read the device clock before and after reading the code, and accept only the codes for the 30 s windows in that span. |
+| Group 3 step 8 | Phase A creates one more record through the UI **on the baseline**: emoji + RTL + combining marks, ~500 characters, plus an empty optional field. Phase C reads it back after the upgrade, which does cross the boundary. The oracle hash changes once. `v3_adversarial.bak` moves to MR6 (Group 7), where restoring it into a fresh install is the actual test. |
+| Fixtures | The user captures `v1_legacy.bak` by hand from `v1.4.4.0`. `v3_current.bak` moves to MR6, the first stage that asserts on it (Group 7, and `corrupt.bak` is cut from it). |
+| Group 6 | A new Phase D, after Phase C: back up on the upgraded app, host `pm clear`, sign up again, restore that backup, then compare every record/field line with Phase C's post-authenticator oracle. Settings and backup-location lines are excluded, because `pm clear` resets them by design. |
+| `v1_legacy.bak` | Restored at the end of Phase D into the build under test; counts and fields must match its README. |
+
+- **Delivered first, 2026-09-25: `scripts/resolve-baselines.sh` reads the current schema from the
+  `@Database` annotation** (`db_version_of_source`), no longer from the highest `app/schemas/`
+  file. The two agree today, and the four rules print the same output as before. At `v2.0.4.0`
+  they would not: the annotation says 4 and the highest file is `5.json`.
 
 - **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`
   retired v1 *installs*; it did not retire v1 *files*, because a `.bak` outlives the install that
   wrote it and a user who exported one years ago can still restore it today. The fixture is
-  captured by hand from the `v1.3.3.0` QA APK — only *automated* seeding is ruled out by that
+  captured by hand from the `v1.4.4.0` QA APK — only *automated* seeding is ruled out by that
   release's XML UI, and a one-off manual capture is not automated seeding.
 - Acceptance: restoring `v1_legacy.bak` into the build under test yields the record counts and
   field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and
   a backup carrying no authenticator key at all.
 
+**Delivered, 2026-09-25.** `v1_legacy.bak` landed last, after the hand capture, so the ten-run
+and CI evidence below predates it; its own evidence follows the sabotage table.
+
+| Step | How |
+|---|---|
+| Group 3, step 8 | `SeedRecord.UNICODE_LOGIN` (`0 ui unicode`) is created on the baseline in Phase A; the oracle reads its notes back through the hierarchy dump and records the blank `url` after checking its label is absent. |
+| Groups 4 and 5 | Phase C empties the search box, adds `0 ui totp` through the QR scanner's manual entry (seed = RFC 6238's ASCII `12345678901234567890`), checks the list code with `TotpDisplayCheck`, re-captures `phase-c-authenticator-oracle.txt` and requires it to equal the Phase A oracle plus that one row. |
+| Group 6 | New Phase D: `backUpUpgradedVault` → host checks and decodes the one backup → `pm clear` → `restoreBackupIntoClearedApp` signs up, restores it, writes `phase-d-oracle.txt`, compares every `record.*` / `field.*` line with the post-authenticator oracle, and repeats the TOTP check. |
+| `v1_legacy.bak` | A fifth phase, `restoreLegacyBackup`, unlocks the round-tripped vault and restores the v1 file over it from the Backup & Restore tab. It writes `phase-d-legacy-oracle.txt` and requires its record lines to equal `LegacyFixture.RECORDS` (the README's values in displayed form), which also proves the restore cleared `0 ui totp`. |
+| `scrollList` | Judges movement by the position of text present before *and* after the swipe, because the countdown ring changes text by itself. See [operations](upgrade-harness-operations.md#reading-the-records-list). |
+
+- Ten consecutive full runs on `emulator-5554` all passed all four phases. Every oracle kind is
+  byte-identical across the ten:
+
+  | Oracle | Lines | MD5 |
+  |---|---|---|
+  | `phase-a-oracle.txt`, `phase-c-oracle.txt` | 50 | `124f2d283117af85b58955a8305b20b4` (was 44 lines, `4cd0a7c6…`, before step 8) |
+  | `phase-c-authenticator-oracle.txt` | 51 | `6bae22de3c998410bd343d8e2c52b54e` |
+  | `phase-d-oracle.txt` | 51 | `9914f947adfd81d95d5bd8ff283702ab` |
+
+  Every backup was 3931 bytes, and `InspectBackup` reported `BACKUP_VERSION 3` with one
+  authenticator. Phase durations were about seed 121 s, verify 72–74 s, backup 52 s and restore
+  43 s, with 73–75 swipes per run.
+- CI passed on the first labelled run (run 36109440937, `c53fef3`, `pixel_6` API 34 x86_64,
+  2026-09-25). All four phases passed, with no crash or ANR. All four oracles have **the same MD5s
+  as on `emulator-5554`**, and the backup was again 3931 bytes, so every new oracle is stable across
+  devices. Seed took 166 s there, against 121 s locally.
+- **Every new guard was made to fail on purpose:**
+
+  | Sabotage | Result |
+  |---|---|
+  | `TotpDisplayCheck` decodes a different seed (`JBSWY3DPEHPK3PXP`); harness rebuilt, source restored | FAIL in Phase C: `'0 ui totp' shows code 489242, but its seed gives [688819] for the time steps 59677195..59677195` |
+  | The host copies the Phase A fixture into Downloads as `upgraded_roundtrip.bak`, instead of the upgraded build's backup | FAIL in Phase D: the records list does not hold `0 ui login`, `0 ui card`, `0 ui bank`, `0 ui note`, `0 ui unicode` or `0 ui totp` |
+  | One line of the on-device `phase-c-authenticator-oracle.txt` edited, then Phase D re-run on its own from the state a full run left ([how](upgrade-harness-operations.md#re-running-one-phase)) | FAIL: `the vault restored from the upgraded build's backup is not the vault it backed up.` with `- field.0 ui login.user_id=TAMPERED` / `+ …=ui-user` |
+
+- **`v1_legacy.bak` (added last).** The capture decodes as `BACKUP_VERSION 1`, single-byte
+  `creationDate`, 2/2/2/1 records and no key `"8"`. SHA-256 and contents are in the
+  [fixture README](../../upgrade-test/src/main/assets/fixtures/README.md). Its expectation
+  (`LegacyFixture`) was written from the decode and the app's display transformations *before*
+  the first run, and that run matched it field for field. Then three consecutive full runs passed
+  all five phases on `emulator-5554`. The four earlier oracles kept the MD5s above, so escaping
+  newlines changed none of them, and `phase-d-legacy-oracle.txt` was identical in all three
+  (`e00e0c0289810e23e0cc09a4a2128559`). The legacy phase takes about 100 s. Two **app** defects
+  were planted, each built into the QA APK and then reverted:
+
+  | Sabotage | Result |
+  |---|---|
+  | `BankCardDataDaoSecure.decrypt` no longer strips a stored `/` from the expiry | FAIL: `v1_legacy.bak did not restore into the build under test as its README records.` with `- field.v1 card full.expiryDate=12/30` / `+ …=12//3` |
+  | `RestoreDataWorker` no longer clears the authenticator table | FAIL in `restoreLegacyBackup`: `a screenful of the records list paired [0 ui totp] with a type chip, and this phase expects no record with that title` |
+
+- **Future work, not debt:** true cross-upgrade TOTP (an authenticator seeded *before* the upgrade)
+  needs a stable release with DB 5 to use as the baseline. The trigger is that release, not a stage
+  of this plan.
+
 ### MR6 — backward-compat and graceful failure
 
 Groups 7–8 as a separate CI job, plus the Group 10 downgrade guard.
+
+- Inherits from MR5 (decided 2026-09-25): capturing `v3_adversarial.bak` (Group 7 step 20) and
+  `v3_current.bak` (Group 7, and the source `corrupt.bak` is cut from).
 
 ### MR7 — enable in the release pipeline
 

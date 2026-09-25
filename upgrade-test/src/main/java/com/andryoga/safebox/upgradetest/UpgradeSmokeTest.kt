@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import org.junit.Before
@@ -16,14 +17,16 @@ import org.junit.runner.RunWith
  * Phase A establishes state on the baseline build — an account, and a vault seeded from a golden
  * backup through the real system document picker — and records it. Phase B is the host replacing
  * the APK. Phase C, on the upgraded build, asserts that the account, the hint and every recorded
- * fact about the vault are still exactly as they were.
+ * fact about the vault are still exactly as they were, then adds an authenticator and checks its
+ * code. Phase D backs the upgraded vault up, has the host clear the app's data, restores that
+ * backup into the empty app, and finally restores a hand-captured v1 backup over it.
  *
- * The two tests are **ordered and stateful across processes**, which is unusual and deliberate:
- * [seedVaultOnBaselineBuild] runs against the baseline APK and [verifyVaultAfterUpgrade] runs
- * against the build under test, after the host has replaced the app underneath. They are
- * therefore never run in the same invocation — scripts/run-upgrade-test.sh selects one at a time by
- * method filter, which is also why a filter typo has to be fatal rather than a silent zero-test
- * pass.
+ * The tests are **ordered and stateful across processes**, which is unusual and deliberate:
+ * [seedVaultOnBaselineBuild] runs against the baseline APK and the rest against the build under
+ * test, after the host has replaced the app underneath, and the two halves of Phase D run either
+ * side of the host's `pm clear`. They are therefore never run in the same invocation —
+ * scripts/run-upgrade-test.sh selects one at a time by method filter, which is also why a filter
+ * typo has to be fatal rather than a silent zero-test pass.
  *
  * Everything is selected by what the app renders, because the baseline release has no
  * `Modifier.testTag` and the APK under test is minified. The harness nonetheless holds no rendered
@@ -75,7 +78,7 @@ class UpgradeSmokeTest {
     fun seedVaultOnBaselineBuild() {
         launchAppUnderTest(app.label(SIGNUP_HEADING))
         signUp()
-        restoreGoldenBackup()
+        restoreBackup(requiredArgument(FIXTURE_ARGUMENT))
         RecordCreator(ui, app).createAll()
         assertSeededRecordsPresent()
         setBackupLocation()
@@ -101,6 +104,12 @@ class UpgradeSmokeTest {
      * The oracle is captured *before* the search step so that search cannot leave the list
      * filtered for the walk that counts rows.
      *
+     * Then Groups 4 and 5, which only the build under test can do. An authenticator is added
+     * through the UI, which writes into the table `MIGRATION_4_5` created. The code its row shows
+     * must be the RFC 6238 value for its seed, computed by the harness. The vault is then described
+     * again and must differ from the baseline by exactly that one record (step 12). That second
+     * oracle is what Phase D's restored vault is held to.
+     *
      * Crashes and ANRs are the host's job (Group 9), because a crash in the app under test does not
      * fail this process; scripts/run-upgrade-test.sh scans logcat after every phase.
      */
@@ -117,7 +126,115 @@ class UpgradeSmokeTest {
         OracleFiles.assertMatchesBaseline(oracle)
 
         assertSearchFinds(SEARCH_TARGET, SEARCH_EXCLUDED)
+        clearSearch()
+
+        val authenticator = SeedRecord.AUTHENTICATOR
+        RecordCreator(ui, app).create(authenticator)
+        TotpDisplayCheck(ui, app).assertListShowsCodeFor(authenticator)
+        val withAuthenticator = describeUpgradedVault()
+        OracleFiles.write(OracleFiles.WITH_AUTHENTICATOR, withAuthenticator)
+        OracleFiles.assertSameLines(
+            "adding '${authenticator.title}' changed more than that one record.",
+            VaultOracle.recordLinesAfterAdding(
+                OracleFiles.read(OracleFiles.BASELINE),
+                authenticator.title,
+                authenticator.typeResourceName,
+            ),
+            VaultOracle.recordLines(withAuthenticator),
+            "${OracleFiles.BASELINE} and ${OracleFiles.WITH_AUTHENTICATOR}",
+        )
     }
+
+    /**
+     * Phase D, first half. Takes a backup on the upgraded build (plan step 16).
+     *
+     * A method of its own rather than the tail of Phase C, so that a failure is reported against
+     * the phase that failed and the crash scan after it is blamed correctly. The host then pulls
+     * the file, decodes it independently and clears the app's data before the second half runs.
+     *
+     * Unlocking again is not waste: it proves the vault still opens after Phase C wrote a record
+     * into the migrated schema.
+     */
+    @Test
+    fun backUpUpgradedVault() {
+        launchAppUnderTest(app.label(UNLOCK_HEADING))
+        UnlockScreen(ui, app).unlock(MASTER_PASSWORD)
+        BackupMaker(ui, app).backUp(BACKUP_PASSWORD)
+    }
+
+    /**
+     * Phase D, second half. Restores the upgraded build's own backup into a cleared app (steps
+     * 17–18) and holds the result to Phase C's post-authenticator oracle.
+     *
+     * This is what catches "the upgrade worked, but the export it now produces is broken", which
+     * would quietly destroy the user's only recovery path. The host ran `pm clear`, so this starts
+     * from signup with a regenerated Keystore key, and only the backup file carries anything over.
+     *
+     * Only record lines are compared: the clear resets settings and the backup location by design.
+     * The TOTP code is checked again because it is the only proof the *seed* survived the export,
+     * rather than just a row with the right title.
+     */
+    @Test
+    fun restoreBackupIntoClearedApp() {
+        launchAppUnderTest(app.label(SIGNUP_HEADING))
+        signUp()
+        restoreBackup(requiredArgument(ROUND_TRIP_ARGUMENT))
+
+        val restored = describeUpgradedVault()
+        OracleFiles.write(OracleFiles.ROUND_TRIP, restored)
+        OracleFiles.assertSameLines(
+            "the vault restored from the upgraded build's backup is not the vault it backed up.",
+            VaultOracle.recordLines(OracleFiles.read(OracleFiles.WITH_AUTHENTICATOR)),
+            VaultOracle.recordLines(restored),
+            "${OracleFiles.WITH_AUTHENTICATOR} and ${OracleFiles.ROUND_TRIP}",
+        )
+        TotpDisplayCheck(ui, app).assertListShowsCodeFor(SeedRecord.AUTHENTICATOR)
+    }
+
+    /**
+     * Phase D, third part. Restores the hand-captured `v1_legacy.bak` into the build under test and
+     * holds the result to [LegacyFixture], which mirrors the fixture's README.
+     *
+     * A `.bak` outlives the install that wrote it, so a user can bring a v1 export to today's
+     * build. The file is `BACKUP_VERSION` 1 with a one-byte `creationDate`, and a v1 card expiry
+     * stored with its slash, which today's build must strip on read.
+     *
+     * It is restored *over* the vault [restoreBackupIntoClearedApp] left, through the Backup &
+     * Restore tab, because the app promises that a restore replaces everything. A v1 file has no
+     * authenticator key at all, so `0 ui totp` must be gone afterwards: [VaultOracle] rejects any
+     * listed title the fixture does not hold, and the expected lines name no authenticator type.
+     * A separate phase rather than a continuation, so its instrumentation output and crash scan
+     * are its own.
+     */
+    @Test
+    fun restoreLegacyBackup() {
+        launchAppUnderTest(app.label(UNLOCK_HEADING))
+        UnlockScreen(ui, app).unlock(MASTER_PASSWORD)
+        restoreOverExistingVault(requiredArgument(LEGACY_ARGUMENT), LegacyFixture.PASSWORD)
+
+        val legacy = VaultOracle(
+            ui,
+            app,
+            LegacyFixture.TITLES,
+            VaultOracle.ALL_TYPE_RESOURCE_NAMES,
+            LegacyFixture.RECORDS,
+        ).describe()
+        OracleFiles.write(OracleFiles.LEGACY, legacy)
+        OracleFiles.assertSameLines(
+            "v1_legacy.bak did not restore into the build under test as its README records.",
+            VaultOracle.expectedRecordLines(LegacyFixture.RECORDS),
+            VaultOracle.recordLines(legacy),
+            "${OracleFiles.LEGACY}; the expectation is LegacyFixture.RECORDS",
+        )
+    }
+
+    /** Describes a vault that holds the post-upgrade authenticator as well as Phase A's records. */
+    private fun describeUpgradedVault(): String = VaultOracle(
+        ui,
+        app,
+        seededTitles() + SeedRecord.AUTHENTICATOR.title,
+        VaultOracle.ALL_TYPE_RESOURCE_NAMES,
+    ).describe()
 
     /**
      * Locks the app and reads the hint off the unlock screen.
@@ -169,6 +286,17 @@ class UpgradeSmokeTest {
         }
     }
 
+    /**
+     * Empties the search box and waits for the full list to return.
+     *
+     * The query outlives a trip to the add-record form, so a record created while the list is
+     * filtered is saved correctly and then cannot be found on the list it returns to.
+     */
+    private fun clearSearch() {
+        ui.retryingOnStale { ui.awaitObject(By.clazz(EDIT_TEXT_CLASS)).text = "" }
+        ui.awaitText(SEARCH_EXCLUDED)
+    }
+
     private fun signUp() {
         val signUpButton = app.label(SIGNUP_BUTTON)
         val heading = app.label(SIGNUP_HEADING)
@@ -184,24 +312,62 @@ class UpgradeSmokeTest {
     }
 
     /**
-     * Restores the golden backup the host pushed to Downloads.
+     * Restores a backup the host put in Downloads.
      *
      * Entry is through the empty vault's own "Restore data" shortcut rather than the Backup &
      * Restore tab: it is one tap instead of two, and it only exists while the vault is empty, so it
      * doubles as a check that sign-up really did leave an empty vault.
      *
-     * The fixture's file name arrives as an instrumentation argument instead of being duplicated
-     * here, because the host is what puts the file on the device — two copies of that name would
-     * eventually disagree, and the failure would look like a picker bug.
+     * The file's name arrives as an instrumentation argument instead of being duplicated here,
+     * because the host is what puts the file on the device — two copies of that name would
+     * eventually disagree, and the failure would look like a picker bug. Phase A restores the
+     * golden fixture this way and Phase D the upgraded build's own backup, both under
+     * [BACKUP_PASSWORD].
+     *
+     * @param fileName the backup's name in Downloads
      */
-    private fun restoreGoldenBackup() {
-        val fixtureFile = requiredArgument(FIXTURE_ARGUMENT)
-
+    private fun restoreBackup(fileName: String) {
         ui.clickText(app.label(RESTORE_DATA_BUTTON))
-        SafDocumentPicker(ui).selectFromDownloads(fixtureFile)
+        completeRestore(fileName, BACKUP_PASSWORD)
+    }
+
+    /**
+     * Restores a backup over a vault that already holds records, through the Backup & Restore tab.
+     *
+     * The empty vault's shortcut does not exist here. The tab's Restore button has the same text
+     * as its section heading, and the section is the last thing on the screen, so the screen is
+     * walked to its end and the lowest `Restore` is the button. If the heading were picked by
+     * mistake, nothing would open and [SafDocumentPicker] would fail by name.
+     *
+     * @param fileName the backup's name in Downloads
+     * @param password the password the backup was made under
+     */
+    private fun restoreOverExistingVault(fileName: String, password: String) {
+        ui.clickText(app.label(BACKUP_TAB))
+        var swipes = 0
+        while (swipes++ < RESTORE_SECTION_MAX_SWIPES && ui.scrollList(Direction.DOWN)) {
+            // Walks to the end of the screen, where the Restore section sits.
+        }
+        val restore = app.label(RESTORE_BUTTON)
+        val button = ui.textSnapshot(APP_PACKAGE).filter { it.text == restore }
+            .maxByOrNull { it.bounds.top }
+            ?: error("the Backup & Restore tab shows no '$restore' button${ui.describeScreen()}")
+        device.click(button.bounds.centerX(), button.bounds.centerY())
+        completeRestore(fileName, password)
+    }
+
+    /**
+     * Picks [fileName] in the document picker, enters [password] and waits for the app to report
+     * success.
+     *
+     * @param fileName the backup's name in Downloads
+     * @param password the password the backup was made under
+     */
+    private fun completeRestore(fileName: String, password: String) {
+        SafDocumentPicker(ui).selectFromDownloads(fileName)
 
         ui.awaitText(app.label(RESTORE_PROMPT))
-        ui.typeInto(app.label(RESTORE_PASSWORD_LABEL), BACKUP_PASSWORD)
+        ui.typeInto(app.label(RESTORE_PASSWORD_LABEL), password)
         ui.clickText(app.label(CONFIRM_BUTTON))
 
         // The restore runs through a WorkManager worker that decrypts and re-encrypts every record,
@@ -414,6 +580,14 @@ class UpgradeSmokeTest {
 
         const val FIXTURE_ARGUMENT = "fixtureFile"
         const val BACKUP_DIR_ARGUMENT = "backupDir"
+        const val ROUND_TRIP_ARGUMENT = "roundTripFile"
+        const val LEGACY_ARGUMENT = "legacyFile"
+
+        // The Backup & Restore tab's Restore button, whose text is also its section's heading.
+        const val RESTORE_BUTTON = "restore"
+
+        // The Backup & Restore screen is a handful of cards, so a few swipes reach its end.
+        const val RESTORE_SECTION_MAX_SWIPES = 5
 
         // Titles of every record in v2_pre_totp.bak: 2 logins, 2 bank accounts, 2 cards, 1 note.
         // Source of truth is the fixture README, which was produced by decrypting the file rather

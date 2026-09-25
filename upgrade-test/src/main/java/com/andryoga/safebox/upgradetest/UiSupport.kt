@@ -395,14 +395,22 @@ internal class UiSupport(val device: UiDevice) {
      *
      * The cost is one extra swipe at each end of a walk, to observe that nothing changed.
      *
+     * "Changed" means that text present in *both* snapshots moved, not that the snapshots differ.
+     * From the release that added authenticators, a row can hold text that changes on its own: the
+     * countdown ring's seconds label every second and the code every 30 s. With a plain comparison
+     * an unmoved list showing such a row looks moved on every swipe, so every walk runs to its
+     * swipe limit. Text that appears or disappears is ignored, and a real scroll still keeps part
+     * of the previous screenful on screen, whose titles are unique and therefore change position.
+     * If no text survives the swipe at all, that counts as moved.
+     *
      * @param direction which way to go
      * @param fraction how much of the container to travel
-     * @return true if the swipe changed what the app shows, so callers can walk a list to its end
+     * @return true if the swipe moved what the app shows, so callers can walk a list to its end
      * without guessing how long it is; false at the end, or when there is nothing to scroll
      */
     fun scrollList(direction: Direction, fraction: Float = SCROLL_FRACTION): Boolean {
         val appPackage = device.currentPackageName
-        val before = textSnapshot(appPackage)
+        val before = textSnapshot(appPackage).topsByText()
         retryingOnStale {
             flushAccessibilityCache()
             val container = device.findObjects(By.scrollable(true))
@@ -410,8 +418,20 @@ internal class UiSupport(val device: UiDevice) {
                 ?: return@retryingOnStale null
             container.scroll(direction, fraction)
         } ?: return false
-        return textSnapshot(appPackage) != before
+        val after = textSnapshot(appPackage).topsByText()
+        val shared = before.keys intersect after.keys
+        if (shared.isEmpty()) return before != after
+        return shared.any { before[it] != after[it] }
     }
+
+    /**
+     * Where each distinct text sits vertically, for [scrollList]'s movement test.
+     *
+     * A list of tops rather than one, because the same text can appear on several rows — every
+     * login row carries a "Login" chip.
+     */
+    private fun List<ScreenText>.topsByText(): Map<String, List<Int>> =
+        groupBy({ it.text }, { it.bounds.top }).mapValues { (_, tops) -> tops.sorted() }
 
     /**
      * Rewinds a scrollable screen to the top.

@@ -31,14 +31,22 @@ exactly what ADR-0001 says breaks against minified builds.
 ```bash
 ./scripts/fetch-baseline-apk.sh v2.0.4.0 old-apk/          # needs gh, network
 ./gradlew assembleQa :upgrade-test:assembleDebug
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" \
 ANDROID_SERIAL=emulator-5554 \
   ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk app/build/outputs/apk/qa/SafeBox-qa.apk
 ```
 
+`JAVA_HOME` (or a real `java` on `PATH`) is needed because the host decodes Phase D's backup with
+`scripts/InspectBackup.java`; macOS's `/usr/bin/java` is only a stub. CI's `setup-java` step
+provides it.
+
 Output lands in `upgrade-test-out/` (override with a third argument): one
-`instrumentation-<phase>.txt` and one `crash-scan-<phase>.txt` per phase, `phase-a-oracle.txt`,
-`phase-c-oracle.txt` when Phase C got as far as writing one, and `logcat.txt` — all collected even
-on failure.
+`instrumentation-<phase>.txt` and one `crash-scan-<phase>.txt` per phase (`seed`, `verify`,
+`backup`, `restore`, `legacy`), `phase-a-oracle.txt`, and — each only once its phase got far
+enough to write it — `phase-c-oracle.txt`, `phase-c-authenticator-oracle.txt`,
+`phase-d-oracle.txt` and `phase-d-legacy-oracle.txt`. Phase D adds `upgraded_roundtrip.bak` (the
+upgraded build's own backup) and `round-trip-backup-inspect.txt` (its independent decode).
+`logcat.txt` too — all collected even on failure.
 
 > [!CAUTION]
 > The run **uninstalls `com.andryoga.safebox.qa`** and then signs up from scratch, so it must not
@@ -67,6 +75,28 @@ In CI there are two ways in, and neither runs on its own:
 > [!NOTE]
 > The CI emulator is **API 34**; the emulator available locally is a Pixel 8 on **API 35**. The
 > difference is deliberate (decision 6) — a local pass does not imply a CI pass.
+
+### Re-running one phase
+
+A full run takes about five minutes. After a run that failed in a late phase, the device is usually
+still in the state that phase starts from. The harness's `files/` survive `pm clear`, because that
+clears the app, not the harness. So the phase can be repeated on its own, with the same arguments
+`run_phase` passes:
+
+```bash
+adb shell am instrument -w -r \
+  -e class com.andryoga.safebox.upgradetest.UpgradeSmokeTest#restoreBackupIntoClearedApp \
+  -e fixtureFile v2_pre_totp.bak -e backupDir SafeBoxUpgradeTest \
+  -e roundTripFile upgraded_roundtrip.bak \
+  com.andryoga.safebox.upgradetest/androidx.test.runner.AndroidJUnitRunner
+```
+
+This bypasses the zero-test guard and the crash sentinel, so it is only for iterating; evidence
+comes from a full run. To edit a harness file on the device, use
+`adb shell run-as com.andryoga.safebox.upgradetest sed -i 's/=old$/=new/' files/<oracle>`.
+Keep the pattern free of spaces: the quotes do not survive the trip through `adb shell` and
+`run-as`, so the device's `sed` receives `'s/…` as a literal. On a zsh host, a bare `=word`
+argument also needs quoting, because zsh expands it as a command path.
 
 ## Adding a phase
 
@@ -368,6 +398,7 @@ Phase A seeded, in both directions, and both directions have fired for real:
 | Reading **only while the list can still scroll** | A perfectly reproducible oracle missing the last four records | The screenful after the scroll that reports "no further" was never read. Read after every scroll, then break. That report was in fact false on *every* swipe (last row), which is why the very first swipe ended the walk. |
 | A **nested scrollable** | On the upgraded build only: `Missing: [login 1, login 2, card 2, note]`, with the dump still showing the top of the list | Five type chips (Authenticator is new) overflow into a `HorizontalScrollView` *inside* the list, and `By.scrollable(true)` returned it. A vertical scroll of a horizontal row moves nothing and reports "no further". `UiSupport.scrollList` now takes the scrollable with the largest visible area. |
 | Trusting **`UiObject2.scroll()`'s return value** | CI only, Phase A on `v2.0.4.0`: `Missing: [note]`, dump showing the top of the list (run 35970915467, 2026-09-24) | The boolean is derived from `TYPE_VIEW_SCROLLED` events, which this app never delivers to the harness: every swipe in every logcat logs `No scroll event received after scroll`, locally and on CI. So every walk and every rewind stopped after one swipe. Locally one swipe happened to reach `note`; on the CI emulator it fell two rows short. `scrollList` now compares the app's own text before and after the swipe. Check with `grep -c 'No scroll event received' logcat.txt` against `grep -c 'UiObject2: Scrolling'`. |
+| **Text that changes by itself** | (designed out before it bit, 2026-09-25) every walk over a list showing an authenticator would run to its swipe limit | An authenticator row carries a countdown label that changes every second and a code that changes every 30 s, so "the text changed" is true of an unmoved list. `scrollList` now asks whether text present *both* before and after the swipe changed position; appearing and vanishing text is ignored. |
 
 > [!IMPORTANT]
 > The records screen's app bar **collapses**: while the list is scrolled down, `Add new record
@@ -400,6 +431,48 @@ Three things were established by running it on 2026-09-24:
 Each of these guards was proved by making it fail. Evidence is in
 [upgrade-testing.md, MR4](upgrade-testing.md#mr4--data-integrity-assertions--delivered).
 
+## Authenticator, TOTP and the round trip
+
+Added by MR5 (plan Groups 4–6). Established on emulator-5554 on 2026-09-25:
+
+- **Authenticator creation goes through the QR scanner.** The add sheet's Authenticator row opens
+  the scanner, which requests `CAMERA` on first open; the form is behind its `enter_key_manually`
+  button. The host grants `CAMERA` *after* the upgrade (the baseline does not declare it) and fails
+  by name if the grant is refused. `RecordCreator.create` takes the manual-entry hop for that type.
+- **Search survives the add form.** Phase C's search leaves the query in the box, and a record
+  saved while it is filtered cannot be found afterwards, so Phase C empties it first.
+- **The code is read off the records list,** as the `123 456` text nearest below the title, and
+  judged by `Rfc6238`/`Base32` in the harness, never by app code. `Rfc6238.checkKnownAnswers()`
+  replays RFC 6238 Appendix B before every comparison, so a failure afterwards is the app's. Time is
+  the device clock read before and after the screen, widened by 2 s at the start for the app's
+  once-a-second ticker.
+- **The Backup button has the same text as the section heading.** `BackupMaker` picks the `Backup`
+  that shares a line with `Edit Path`.
+- **The host decodes the backup before clearing anything.** Exactly one `SafeBoxBackup*.bak` must be
+  in the backup directory, `InspectBackup.java` must decode it with the backup password, and it must
+  hold `AUTHENTICATOR : 1 record(s)`. It is then copied into Downloads as `upgraded_roundtrip.bak` so
+  Phase D restores it through the same picker path as Phase A.
+- **`pm clear` resets runtime permissions,** so the host grants `POST_NOTIFICATIONS` again. It also
+  resets settings and the backup location, which is why Phase D compares only `record.*` and
+  `field.*` lines (`VaultOracle.recordLines`).
+- **Unicode survives the hierarchy dump.** Step 8's notes — emoji, a ZWJ sequence, Hebrew, Arabic
+  and *decomposed* combining marks, 479 UTF-16 units — came back through `textSnapshot` equal to
+  what was typed, byte for byte, on both builds.
+- **A blank optional field is not rendered** in view mode by either build, so the oracle records
+  it as `field.<title>.url=` after checking that its label is absent.
+- **The host script must stay bash 3.2-compatible** (macOS's `/bin/bash`): no `mapfile`, no
+  associative arrays.
+- **`v1_legacy.bak` is restored over the round-tripped vault,** in its own phase (`legacy`). A
+  restore replaces every table, including authenticators when the file has no key `"8"`, so the
+  expected result is exactly [LegacyFixture](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/LegacyFixture.kt)'s
+  seven records and no `0 ui totp`. The empty vault's "Restore data" shortcut does not exist over a
+  populated vault, so this restore starts from the Backup & Restore tab. Its button has the same
+  text as the section heading, and the harness takes the lowest one on the screen after walking to
+  the end.
+- **Oracle values are escaped onto one line.** Multi-line notes are written with `\n` (and `\\`) by
+  `VaultOracle.fieldLine`. No value in Phase A's seed contains either, so the existing oracles'
+  bytes did not change.
+
 ## What the orchestrator already guarantees
 
 Do not re-implement these in a test:
@@ -408,7 +481,12 @@ Do not re-implement these in a test:
   install, because three build types mean three applicationIds and none can upgrade into another;
 - the build under test has a strictly higher `versionCode` than the baseline;
 - the upgrade is `adb install -r` with **no `-d`**, after `am force-stop` — never `pm clear`, never
-  `uninstall`;
+  `uninstall`. The one `pm clear` in the script comes after Phase C has judged the upgrade, and
+  only to give Phase D an empty app to restore into;
+- `CAMERA` is granted to the build under test before Phase C, so the QR scanner never raises a
+  permission dialog;
+- Phase D's backup is exactly one file, decodes on the host with the backup password, and holds the
+  authenticator, before the app is cleared;
 - `firstInstallTime` is non-empty before the upgrade and unchanged after it, and `versionCode`
   changed — together, proof that `/data` survived rather than the app being reinstalled;
 - every phase executed at least its minimum number of tests, and none failed;
@@ -436,20 +514,32 @@ are harness-level ones:
 | `FATAL: com.andryoga.safebox.qa crashed or stopped responding during phase …` | read the stack in `crash-scan-<phase>.txt`; an `AEADBadTagException` there means the record key was lost — see upgrade-testing.md section 9 |
 | Phase C times out waiting for `Records` after unlocking, and the hierarchy shows `Need Notification permission` | the host's `pm grant` did not run or did not take — see [Verifying after the upgrade](#verifying-after-the-upgrade) |
 | `the upgraded build does not show what the baseline showed` | a real diff; the message lists `- lost` / `+ gained` lines, and both oracles are in the artifacts |
+| `could not grant CAMERA to the build under test` | the build under test no longer declares `CAMERA`, or the device refuses runtime grants over adb |
+| `'…' shows code X, but its seed gives [...]` | the stored seed changed, or the app computes TOTP differently (algorithm, digits, period). The message gives the device-clock span and the time steps tried. The RFC known-answer check already passed, so the harness's arithmetic is not at fault |
+| `'…' shows the invalid-secret message instead of a code` | the seed came back, but not as valid Base32 |
+| `adding '0 ui totp' changed more than that one record` | saving the authenticator disturbed other records; compare `phase-a-oracle.txt` with `phase-c-authenticator-oracle.txt` |
+| `expected one backup in /sdcard/SafeBoxUpgradeTest …, found N` | 0: the backup phase wrote nothing, or the SAF grant did not survive the upgrade. 2 or more: auto-backup is on, or the directory was not wiped at clean slate |
+| `the upgraded build's backup does not decode with its own password` | a backup format change `InspectBackup.java` does not know, or real corruption; see `round-trip-backup-inspect.txt` |
+| `the vault restored from the upgraded build's backup is not the vault it backed up` | the restore lost or changed records; compare `phase-c-authenticator-oracle.txt` with `phase-d-oracle.txt` |
+| `v1_legacy.bak did not restore into the build under test as its README records` | a v1 export no longer restores faithfully; the `-`/`+` lines name the field. `LegacyFixture.kt` is the expectation and the fixture README the stored values. A `0 ui totp` rejected as unexpected means the restore no longer clears authenticators |
 
 ## Baseline resolution
 
 `resolve-baselines.sh` reads the release list and applies three rules, filtering to stable releases
-that actually carry a `SafeBox-qa.apk`. As of 2026-09-22 it emits:
+that actually carry a `SafeBox-qa.apk`. As of 2026-09-25 it emits:
 
 ```json
-{"from_tag":["v2.0.4.0","v1.3.3.1","v1.3.3.0"]}
+{"from_tag":["v2.0.4.0"]}
 ```
 
 `--rule previous|schema-boundary|oldest` prints a single tag instead, which is what the manual
-workflow uses. The current Room schema is read from `app/schemas/`, not from a tag, because the tag
-for the build under test does not exist yet when the script runs.
+workflow uses. The current Room schema is read from the `@Database` annotation through
+`db_version_of_source` in `scripts/lib/tag-db-version.sh`, the same parse the release tag gate
+uses. Not from a tag, because the tag for the build under test does not exist yet; and not from the
+highest file in `app/schemas/`, which is what the script did until MR5: at `v2.0.4.0` that file is
+`5.json` while the annotation says 4.
 
-An optional floor lives in `upgrade-test/oldest-supported.txt`, one tag on a line. It does not
-exist by default and should stay that way until "how far back do we support" is an actual product
-decision.
+The floor lives in `upgrade-test/oldest-supported.txt`, one tag on a line, and is **`v2.0.4.0`**
+since MR2. The file carries its own rationale: nobody meaningful is still on 1.x, and every 1.x
+release ships the XML UI, which the harness cannot drive. Until a newer stable release ships, all
+three rules therefore resolve to that one tag.

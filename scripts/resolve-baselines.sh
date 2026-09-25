@@ -21,8 +21,11 @@
 # automatically, which is what makes v1.0.0, v1.1.0 and v1.2.2.0 drop out on their own.
 set -euo pipefail
 
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/tag-db-version.sh
+source "$script_dir/lib/tag-db-version.sh"
+
 REPO="${UPGRADE_TEST_REPO:-Ni3verma/Safe-Box}"
-SCHEMA_DIR="app/schemas/com.andryoga.safebox.data.db.SafeBoxDatabase"
 FLOOR_FILE="upgrade-test/oldest-supported.txt"
 
 rule="all"
@@ -95,30 +98,20 @@ if [ -f "$FLOOR_FILE" ]; then
     fi
 fi
 
-# The schema version the build under test is on, taken from the exported Room schemas rather than
+# The schema version the build under test is on, taken from the @Database annotation rather than
 # from a tag: the tag for the build under test does not exist yet when this runs.
 #
-# `find` runs only if the directory is there. `pipefail` is on, so a missing directory would
-# otherwise abort the assignment with find's raw "No such file or directory" and never reach the
-# message below that says what to do about it.
-current_schema=""
-if [ -d "$SCHEMA_DIR" ]; then
-    current_schema=$(
-        find "$SCHEMA_DIR" -name '*.json' -exec basename {} .json \; | sort -n | tail -n 1
-    )
-fi
-if [ -z "$current_schema" ]; then
-    echo "error: no exported Room schemas under $SCHEMA_DIR - run this from the repo root." >&2
+# Not from the highest file in app/schemas/ either, which is what this used to do. A 5.json was
+# committed in 331ee64 while the database stayed at 4, so that scan named the wrong version for
+# every build between then and #241. The release tag gate reads the same annotation through the
+# same function, so the two can never disagree about which schema a build is on.
+# db_version_of_source guarantees a single all-digit value or fails with its own message, so the
+# `-ge` comparison below never sees a non-number - which, inside an `if`, would silently read as
+# false and select every release as a baseline.
+current_schema=$(db_version_of_source "$DEFAULT_DATABASE_SOURCE") || {
+    echo "error: could not read the current schema version - run this from the repo root." >&2
     exit 1
-fi
-# A non-numeric version would not crash the `-ge` comparison further down, it would make the test
-# itself fail, and a failing test inside an `if` condition simply reads as false - every release
-# would then look older than the current schema and every one of them would be added as a
-# baseline. Silent over-selection is worse than stopping here.
-if ! printf '%s' "$current_schema" | grep -qE '^[0-9]+$'; then
-    echo "error: schema version '$current_schema' under $SCHEMA_DIR is not a number." >&2
-    exit 1
-fi
+}
 
 # vMAJOR.MINOR.DBVERSION.FIX -> DBVERSION
 schema_of() {
