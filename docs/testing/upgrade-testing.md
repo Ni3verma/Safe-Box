@@ -809,6 +809,10 @@ is an open row in the debt register below:
   Every backup was 3931 bytes, and `InspectBackup` reported `BACKUP_VERSION 3` with one
   authenticator. Phase durations were about seed 121 s, verify 72–74 s, backup 52 s and restore
   43 s, with 73–75 swipes per run.
+- CI passed on the first labelled run (run 36109440937, `c53fef3`, `pixel_6` API 34 x86_64,
+  2026-09-25). All four phases passed, with no crash or ANR. All four oracles have **the same MD5s
+  as on `emulator-5554`**, and the backup was again 3931 bytes, so every new oracle is stable across
+  devices. Seed took 166 s there, against 121 s locally.
 - **Every new guard was made to fail on purpose:**
 
   | Sabotage | Result |
