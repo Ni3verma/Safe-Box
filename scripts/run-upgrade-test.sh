@@ -47,6 +47,19 @@ DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
 # agree.
 ORACLE_FILE="phase-a-oracle.txt"
 UPGRADED_ORACLE_FILE="phase-c-oracle.txt"
+# Phase C's second capture, after it adds an authenticator, and Phase D's capture of the vault
+# restored from the upgraded build's own backup. Named by OracleFiles.WITH_AUTHENTICATOR and
+# OracleFiles.ROUND_TRIP.
+AUTHENTICATOR_ORACLE_FILE="phase-c-authenticator-oracle.txt"
+ROUND_TRIP_ORACLE_FILE="phase-d-oracle.txt"
+
+# Phase D restores the backup the upgraded build wrote. The app writes it into the backup
+# directory under a timestamped name; the host copies it into Downloads under this fixed one, so
+# the restore goes through the same picker path as Phase A's and the name is owned by one side.
+ROUND_TRIP_FILE="upgraded_roundtrip.bak"
+# The password Phase D's backup is taken under. The instrumentation holds the same value as
+# UpgradeSmokeTest.BACKUP_PASSWORD; the host needs it only to decode the file independently.
+BACKUP_PASSWORD="Fixture@Backup1"
 
 if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "usage: $0 <baseline.apk> <new.apk> [output-dir]" >&2
@@ -158,7 +171,9 @@ echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r')
 # diff the failure message summarises.
 collect_logcat() {
     adb logcat -d > "$out_dir/logcat.txt" 2>/dev/null || true
-    pull_harness_file "$UPGRADED_ORACLE_FILE" || true
+    for name in "$UPGRADED_ORACLE_FILE" "$AUTHENTICATOR_ORACLE_FILE" "$ROUND_TRIP_ORACLE_FILE"; do
+        pull_harness_file "$name" || true
+    done
     echo "Artifacts in $out_dir/"
 }
 
@@ -254,9 +269,12 @@ echo "firstInstallTime=$first_install_before"
 # records. Granting up front removes it deterministically; runtime grants survive `install -r`, so
 # the build under test inherits it the way a user's device would. API 33 introduced the
 # permission, so older images have nothing to grant.
-if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
-    adb shell pm grant "$APP_PACKAGE" android.permission.POST_NOTIFICATIONS
-fi
+grant_notifications() {
+    if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
+        adb shell pm grant "$APP_PACKAGE" android.permission.POST_NOTIFICATIONS
+    fi
+}
+grant_notifications
 
 echo "== Install harness =="
 adb install "$test_apk"
@@ -266,6 +284,9 @@ adb install "$test_apk"
 # because DocumentsUI lists the Downloads root from the media database, not from the filesystem: a
 # pushed file that nobody announced is on disk but not offered.
 echo "== Push fixtures =="
+# A round-trip backup left by an earlier run would let Phase D restore last run's export if this
+# run's copy step were ever skipped, so it goes before anything is announced to MediaProvider.
+adb shell rm -f "$DEVICE_DOWNLOADS/$ROUND_TRIP_FILE"
 adb push "$FIXTURE_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
 adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
 echo "$FIXTURE_FILE -> $DEVICE_DOWNLOADS/"
@@ -292,6 +313,7 @@ run_phase() {
         -e class "$TEST_CLASS#$method" \
         -e fixtureFile "$FIXTURE_FILE" \
         -e backupDir "$BACKUP_DIR" \
+        -e roundTripFile "$ROUND_TRIP_FILE" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
 
     # The crash scan runs even when the phase failed. An app crash is a common *reason* for a
@@ -334,6 +356,65 @@ if [ "$installed_code" != "$new_code" ]; then
     exit 1
 fi
 
+# Phase C adds an authenticator, and the only way into that form is through the QR scanner, which
+# asks for the camera on first open. The system dialog would cover the scanner's manual-entry
+# button, so it is granted here, after the upgrade: the baseline does not declare the permission,
+# so there is nothing to grant before it. A failure is fatal and named, because the alternative is
+# a Phase C timeout staring at a permission dialog.
+if ! adb shell pm grant "$APP_PACKAGE" android.permission.CAMERA; then
+    echo "error: could not grant CAMERA to the build under test." >&2
+    echo "       It no longer declares it, or the grant was refused; Phase C cannot reach the" >&2
+    echo "       authenticator form behind the QR scanner without it." >&2
+    exit 1
+fi
+
 run_phase verify verifyVaultAfterUpgrade 1
+
+# Phase D, plan Group 6. The first half backs the upgraded vault up through the app.
+run_phase backup backUpUpgradedVault 1
+
+# The file is decoded here, independently of the app, before `pm clear` puts the vault beyond
+# recovery: if the export is broken, this says so by name instead of leaving the restore to fail
+# with the app's generic message. The directory was emptied before Phase A and auto-backup is off,
+# so exactly one file is expected; more means something else is writing backups.
+echo "== Collect round-trip backup =="
+# No mapfile: macOS still ships bash 3.2, and this script is run locally as often as on CI.
+backups=$(adb shell ls "$DEVICE_BACKUP_DIR" | tr -d '\r' | grep -E '^SafeBoxBackup.*\.bak$' || true)
+backup_count=$(printf '%s' "$backups" | grep -c . || true)
+if [ "$backup_count" -ne 1 ]; then
+    echo "error: expected one backup in $DEVICE_BACKUP_DIR after Phase D's backup, found $backup_count: ${backups:-none}." >&2
+    exit 1
+fi
+adb exec-out cat "$DEVICE_BACKUP_DIR/$backups" > "$out_dir/$ROUND_TRIP_FILE"
+if [ ! -s "$out_dir/$ROUND_TRIP_FILE" ]; then
+    echo "error: $backups is empty." >&2
+    exit 1
+fi
+echo "$backups: $(wc -c < "$out_dir/$ROUND_TRIP_FILE" | tr -d ' ') bytes"
+java_bin="${JAVA_HOME:+$JAVA_HOME/bin/}java"
+if ! "$java_bin" "$script_dir/InspectBackup.java" "$out_dir/$ROUND_TRIP_FILE" "$BACKUP_PASSWORD" \
+    > "$out_dir/round-trip-backup-inspect.txt" 2>&1; then
+    echo "error: the upgraded build's backup does not decode with its own password." >&2
+    echo "       See $out_dir/round-trip-backup-inspect.txt." >&2
+    exit 1
+fi
+if ! grep -qE '^AUTHENTICATOR +: 1 record\(s\)$' "$out_dir/round-trip-backup-inspect.txt"; then
+    echo "error: the upgraded build's backup does not carry the authenticator Phase C added." >&2
+    echo "       See $out_dir/round-trip-backup-inspect.txt." >&2
+    exit 1
+fi
+adb shell cp "$DEVICE_BACKUP_DIR/$backups" "$DEVICE_DOWNLOADS/$ROUND_TRIP_FILE"
+adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
+echo "$ROUND_TRIP_FILE -> $DEVICE_DOWNLOADS/"
+
+# The one place this script clears the app, and only after the upgrade has been fully judged:
+# from here on the question is whether the export restores, not whether /data survived. Clearing
+# also resets runtime permissions, so the notification grant is made again for the same reason it
+# was made the first time.
+echo "== Clear app data =="
+adb shell pm clear "$APP_PACKAGE"
+grant_notifications
+
+run_phase restore restoreBackupIntoClearedApp 1
 
 echo "== Upgrade test passed =="
