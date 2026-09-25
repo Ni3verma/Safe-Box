@@ -750,9 +750,8 @@ Groups 4–6, including the independent RFC 6238 computation and clock freezing,
   `scripts/lib/tag-db-version.sh`, not from the highest file under `app/schemas/`. An exported
   schema can exist ahead of the version the build actually declares (or lag it), and the release
   tag check already treats the annotation as the truth; two sources for one number will disagree.
-  The library arrives with `ci/enforce-tag-db-version` via master, so this waits for the next
-  master merge into the feature branch (expect a `ci.yml` conflict there: both sides insert steps
-  immediately before `set up JDK 17`; keep all three verification steps).
+  The library reached the feature branch with #267 (merged into it at `44ffe3d`, 2026-09-25), so
+  nothing blocks this any more.
 
 - **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`

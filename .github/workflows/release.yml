@@ -2,10 +2,30 @@ name: Production & RC Release
 
 on:
   push:
-    tags: [ 'v*' ] # Triggers for v1.2.0, v1.2.0-rc1, etc. tag push
+    tags: [ 'v*' ] # Triggers for v2.2.5.0, v2.2.5.0-rc1, etc. tag push (vMAJOR.MINOR.DBVERSION.FIX)
 
 jobs:
+  # The tag's DBVERSION must equal the Room schema version being shipped. Nothing in the build reads
+  # that component, so without this a forgotten bump releases silently, and the upgrade test's
+  # schema-boundary rule later picks baselines by a number that is wrong. It needs no toolchain and
+  # runs in seconds; every other job waits on it through `quality`, so a wrong tag fails before
+  # lint, tests, signing or publishing. Fix by deleting the tag and re-tagging - nothing will have
+  # been released.
+  tag_db_version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Verify the tag's DBVERSION matches the Room schema version
+        run: ./scripts/lib/tag-db-version.sh "$GITHUB_REF_NAME"
+
   quality:
+    needs:
+      - tag_db_version
     runs-on: ubuntu-latest
     permissions:
       contents: write

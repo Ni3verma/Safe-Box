@@ -41,8 +41,7 @@ upgrade test must be `qa → qa`.
 - `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15`. Local builds therefore get `9999999`.
 - `versionName` comes from `GITHUB_REF_NAME`; local builds are `LOCAL-build`.
 - Tag convention is **`vMAJOR.MINOR.DBVERSION.FIX`** — the third component is the **Room schema
-  version**. `v2.0.4.0` shipped DB v4; the schema is now **5**, so the next release must be
-  `v2.x.5.0`, not `v2.1.4.x`. (Verified 2026-09-20.)
+  version**. Enforced on tag push by `release.yml`'s `tag_db_version` job; see the release-and-ci skill.
 
 ## Persistence & crypto
 
