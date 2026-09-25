@@ -737,8 +737,10 @@ the hint read is. The tamper row is what proves the comparison works on its own.
   `Missing: [note]`: the `UiObject2.scroll()` defect in the Settled table above. After the fix the
   ten-run check was repeated on `emulator-5554`: all passed, all twenty oracles still
   `4cd0a7c6ae44f37d513aa9764fd98dcc`, and each run now makes 41–42 swipes instead of 28, which is
-  the walks reaching the end instead of stopping after one swipe. **Still open: a green CI run**
-  on the fixed head.
+  the walks reaching the end instead of stopping after one swipe. CI then passed on the fixed head
+  (run 36094060575, `1be8fb7`, 2026-09-25): both phases, no crash or ANR, 43 swipes, and both
+  oracles `4cd0a7c6ae44f37d513aa9764fd98dcc` — the same bytes as on `emulator-5554`, so the oracle
+  is stable across devices, not only across runs.
 
 ### MR5 — migration, TOTP, backup round trip
 
