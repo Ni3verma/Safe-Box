@@ -157,7 +157,7 @@ each, binary, and never edited after creation, so plain git is fine — no LFS n
 
 | Fixture | Produced by | Guards |
 |---|---|---|
-| `v1_legacy.bak` | `v1.3.3.0` QA APK (oldest with an archived APK) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
+| `v1_legacy.bak` | `v1.4.4.0` QA APK (first release with backup, #111; `v1.3.3.0` has none) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
 | `v2_pre_totp.bak` | **`v2.1.4.0-rc3` — captured 2026-09-21** | the format the entire current user base has on disk |
 | `v3_current.bak` | this branch | the new format including authenticators |
 | `v3_adversarial.bak` | this branch, hand-seeded | emoji + RTL + 4000-char fields, all-optionals-empty record, max-length card number, a `SHA512`/8-digit/60s authenticator, an authenticator with an **invalid Base32 seed**, duplicate titles |
@@ -167,7 +167,7 @@ All use one fixed backup password committed in the harness. Synthetic data only 
 vault.
 
 Only `v2_pre_totp.bak` exists today. Each of the others is captured by the stage that first asserts
-on it — `v1_legacy`, `v3_current` and `v3_adversarial` in MR5, `corrupt` in MR6 — rather than up
+on it — `v1_legacy` in MR5; `v3_current`, `v3_adversarial` and `corrupt` in MR6 — rather than up
 front; see [MR2](#mr2--seeding) for why.
 
 > [!NOTE]
@@ -176,7 +176,7 @@ front; see [MR2](#mr2--seeding) for why.
 > longer accept v1 backup files*. A `.bak` outlives the install that produced it — a user who
 > exported one in 2021 and has upgraded several times since can still restore it today — so the
 > file format stays in scope even though the install path does not. Capturing it needs the
-> `v1.3.3.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
+> `v1.4.4.0` APK driven by hand, which is fine for a one-off; it is only *automated* seeding that
 > the pre-Compose UI rules out.
 
 > [!CAUTION]
@@ -548,9 +548,9 @@ written means guessing at its contents and re-capturing later:
 
 | Fixture | Moved to | Why it cannot be done usefully now |
 |---|---|---|
-| `v1_legacy.bak` | MR5 | Needs the `v1.3.3.0` QA APK installed and seeded; it exists to exercise the migration path MR5 asserts on. |
-| `v3_current.bak` | MR5 | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
-| `v3_adversarial.bak` | MR5 | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
+| `v1_legacy.bak` | MR5 | Needs the `v1.4.4.0` QA APK (first with backup; `v1.3.3.0` has none) installed and seeded; it exists to exercise the migration path MR5 asserts on. |
+| `v3_current.bak` | MR6 (moved from MR5, 2026-09-25) | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
+| `v3_adversarial.bak` | MR6 (moved from MR5, 2026-09-25) | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
 | `corrupt.bak` | MR6 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR6 needs it. |
 
 - Acceptance: **ten consecutive Phase A runs produce a byte-identical oracle.** "Identical vault"
@@ -744,8 +744,24 @@ the hint read is. The tamper row is what proves the comparison works on its own.
 
 ### MR5 — migration, TOTP, backup round trip
 
-Groups 4–6, including the independent RFC 6238 computation and clock freezing, plus Group 3 step 8
-(the long unicode field and the empty optional field), asserted against `v3_adversarial.bak`.
+Groups 4–6 and Group 3 step 8. **Scope re-decided 2026-09-25**, because two facts found while
+planning contradict the original text:
+
+| Found | Evidence | Consequence |
+|---|---|---|
+| **No stable release ships authenticators.** The newest stable tag is `v2.0.4.0` (DB 4); every DB-5 build is unreleased. | `git tag -l 'v*.*.5.*'` is empty; the floor pins Phase A to `v2.0.4.0` | An authenticator cannot exist before the upgrade, so "TOTP across the boundary" has no baseline to run from. |
+| **`v1.3.3.0` has no backup feature.** Backup/restore arrived in #111 (`c92484a`) and first shipped in **`v1.4.4.0`**, which writes `BACKUP_VERSION` 1 with the 1-byte `creationDate` (`ByteArray(1) { currentTimeMillis().toByte() }`) and carries a `SafeBox-qa.apk`. | `git grep -il backup v1.3.3.0 -- app/src/main/java` finds nothing | `v1_legacy.bak` is captured from `v1.4.4.0`. |
+
+Decided (all recommended defaults accepted):
+
+| Item | Decision |
+|---|---|
+| Group 5 | After the upgrade, add an authenticator through the UI with a fixed seed; its code on the records list must equal an RFC 6238 value computed **inside the harness** (`javax.crypto` HMAC-SHA1 + local Base32, never app code). Group 6 repeats the check after the round trip, proving the seed survives export. True cross-upgrade TOTP is future work, triggered by the first stable DB-5 release. |
+| Step 14, time | No root and no clock change. Read the device clock before and after reading the code, and accept only the codes for the 30 s windows in that span. |
+| Group 3 step 8 | Phase A creates one more record through the UI **on the baseline**: emoji + RTL + combining marks, ~500 characters, plus an empty optional field. Phase C reads it back after the upgrade, which does cross the boundary. The oracle hash changes once. `v3_adversarial.bak` moves to MR6 (Group 7), where restoring it into a fresh install is the actual test. |
+| Fixtures | The user captures `v1_legacy.bak` by hand from `v1.4.4.0`. `v3_current.bak` moves to MR6, the first stage that asserts on it (Group 7, and `corrupt.bak` is cut from it). |
+| Group 6 | A new Phase D, after Phase C: back up on the upgraded app, host `pm clear`, sign up again, restore that backup, then compare every record/field line with Phase C's post-authenticator oracle. Settings and backup-location lines are excluded, because `pm clear` resets them by design. |
+| `v1_legacy.bak` | Restored at the end of Phase D into the build under test; counts and fields must match its README. |
 
 - **Delivered first, 2026-09-25: `scripts/resolve-baselines.sh` reads the current schema from the
   `@Database` annotation** (`db_version_of_source`), no longer from the highest `app/schemas/`
@@ -756,7 +772,7 @@ Groups 4–6, including the independent RFC 6238 computation and clock freezing,
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`
   retired v1 *installs*; it did not retire v1 *files*, because a `.bak` outlives the install that
   wrote it and a user who exported one years ago can still restore it today. The fixture is
-  captured by hand from the `v1.3.3.0` QA APK — only *automated* seeding is ruled out by that
+  captured by hand from the `v1.4.4.0` QA APK — only *automated* seeding is ruled out by that
   release's XML UI, and a one-off manual capture is not automated seeding.
 - Acceptance: restoring `v1_legacy.bak` into the build under test yields the record counts and
   field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and

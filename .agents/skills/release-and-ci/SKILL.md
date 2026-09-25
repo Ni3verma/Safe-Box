@@ -111,8 +111,12 @@ existed** carries:
 
 This is a **permanent, addressable archive of every shipped QA build** from `v1.3.3.0` onwards. Of
 18 releases, 15 carry a QA APK; the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`) predate the
-upload step, so the oldest usable baseline is `v1.3.3.0`. Resolve a baseline against that floor
-rather than assuming any tag will do.
+upload step, so the oldest *archived* APK is `v1.3.3.0`. Two other floors are easy to confuse with it:
+
+- the upgrade harness will not upgrade from anything older than **`v2.0.4.0`**
+  (`upgrade-test/oldest-supported.txt`, which explains why);
+- the oldest release that can **write a backup** is **`v1.4.4.0`**; backup/restore arrived in #111,
+  and `v1.3.3.0` has no such feature (verified 2026-09-25 with `git grep -il backup v1.3.3.0`).
 
 ## GitHub tooling
 
