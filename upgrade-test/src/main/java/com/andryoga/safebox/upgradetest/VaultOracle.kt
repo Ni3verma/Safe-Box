@@ -48,12 +48,15 @@ import java.util.regex.Pattern.quote
  * @param typeResourceNames the record types to recognise on the list. Defaults to the four every
  * build has; a list holding an authenticator must add [AUTHENTICATOR_TYPE], which the baseline
  * cannot resolve at all
+ * @param detailRecords the records whose every field is read back. Defaults to the ones Phase A
+ * creates through the UI; Phase D's legacy restore passes [LegacyFixture.RECORDS]
  */
 internal class VaultOracle(
     private val ui: UiSupport,
     private val app: AppStrings,
     private val expectedTitles: Set<String>,
     private val typeResourceNames: List<String> = BASELINE_TYPE_RESOURCE_NAMES,
+    private val detailRecords: List<SeedRecord> = SeedRecord.ALL,
 ) {
 
     /**
@@ -94,7 +97,7 @@ internal class VaultOracle(
         }
         rows.forEach { (title, type) -> appendLine("record.title.$title=$type") }
 
-        SeedRecord.ALL.forEach { record -> appendDetailOf(record) }
+        detailRecords.forEach { record -> appendDetailOf(record) }
         appendBackupLocation()
         appendSettings()
     }
@@ -208,8 +211,8 @@ internal class VaultOracle(
 
         val unexpected = rows.map { it.first }.toSet() - expectedTitles
         check(unexpected.isEmpty()) {
-            "a screenful of the records list paired $unexpected with a type chip, and Phase A " +
-                "never seeded a record with that title. That screenful read as:\n" +
+            "a screenful of the records list paired $unexpected with a type chip, and this phase " +
+                "expects no record with that title. That screenful read as:\n" +
                 screen.joinToString("\n") { "${it.text} @ ${it.bounds.toShortString()}" }
         }
         return rows.toMap()
@@ -258,7 +261,7 @@ internal class VaultOracle(
         }
         record.fields.forEach { field ->
             val value = values[field.resourceName].orEmpty()
-            appendLine("field.${record.title}.${field.resourceName}=$value")
+            appendLine(fieldLine(record.title, field.resourceName, value))
         }
 
         ui.device.pressBack()
@@ -335,6 +338,44 @@ internal class VaultOracle(
         // Generous: the list is eleven rows today and the loop stops as soon as the container says
         // it cannot scroll further, so this only bounds a pathological case.
         private const val MAX_SCROLLS = 20
+
+        /**
+         * One `field.<title>.<resource>=<value>` line, with the value escaped onto one line.
+         *
+         * Notes can span lines, and a raw newline would split one field across two oracle lines,
+         * which [recordLines] would then misread. Backslashes are escaped first so the encoding
+         * stays reversible. No value in Phase A's seed contains either character, so its oracle
+         * bytes are unaffected.
+         *
+         * @param title the record's title
+         * @param resourceName the field's label resource
+         * @param value the value as displayed
+         * @return the oracle line, without a trailing newline
+         */
+        fun fieldLine(title: String, resourceName: String, value: String): String {
+            val escaped = value.replace("\\", "\\\\").replace("\n", "\\n")
+            return "$FIELD_PREFIX$title.$resourceName=$escaped"
+        }
+
+        /**
+         * The [recordLines] a vault holding exactly [records] must produce.
+         *
+         * For a vault defined entirely in code rather than captured from an earlier phase, like
+         * the v1 fixture. Built in the order [describe] writes: the total, types sorted by
+         * resource name, titles sorted by title, then every field in declaration order.
+         *
+         * @param records every record the vault must hold, each with its displayed values
+         * @return the record lines [describe] must produce for that vault
+         */
+        fun expectedRecordLines(records: List<SeedRecord>): List<String> =
+            listOf("$RECORD_COUNT_KEY=${records.size}") +
+                records.groupingBy { it.typeResourceName }.eachCount().toSortedMap()
+                    .map { (type, count) -> "$RECORD_TYPE_PREFIX$type=$count" } +
+                records.sortedBy { it.title }
+                    .map { "$RECORD_TITLE_PREFIX${it.title}=${it.typeResourceName}" } +
+                records.flatMap { record ->
+                    record.fields.map { fieldLine(record.title, it.resourceName, it.value) }
+                }
 
         /**
          * The lines of an oracle that describe records: counts, titles and fields.

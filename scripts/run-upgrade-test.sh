@@ -31,6 +31,10 @@ TEST_CLASS="com.andryoga.safebox.upgradetest.UpgradeSmokeTest"
 # the file on the device, so the host owns its name.
 FIXTURE_FILE="v2_pre_totp.bak"
 FIXTURE_SOURCE="upgrade-test/src/main/assets/fixtures/$FIXTURE_FILE"
+# The hand-captured v1.4.4.0 export that the last part of Phase D restores into the build under
+# test. Owned by the host for the same reason as the fixture above.
+LEGACY_FILE="v1_legacy.bak"
+LEGACY_SOURCE="upgrade-test/src/main/assets/fixtures/$LEGACY_FILE"
 DEVICE_DOWNLOADS="/sdcard/Download"
 
 # The directory Phase A grants the app as its backup location. A dedicated directory is not a
@@ -47,11 +51,12 @@ DEVICE_BACKUP_DIR="/sdcard/$BACKUP_DIR"
 # agree.
 ORACLE_FILE="phase-a-oracle.txt"
 UPGRADED_ORACLE_FILE="phase-c-oracle.txt"
-# Phase C's second capture, after it adds an authenticator, and Phase D's capture of the vault
-# restored from the upgraded build's own backup. Named by OracleFiles.WITH_AUTHENTICATOR and
-# OracleFiles.ROUND_TRIP.
+# Phase C's second capture, after it adds an authenticator, and Phase D's captures of the vault
+# restored from the upgraded build's own backup and then from the v1 fixture. Named by
+# OracleFiles.WITH_AUTHENTICATOR, OracleFiles.ROUND_TRIP and OracleFiles.LEGACY.
 AUTHENTICATOR_ORACLE_FILE="phase-c-authenticator-oracle.txt"
 ROUND_TRIP_ORACLE_FILE="phase-d-oracle.txt"
+LEGACY_ORACLE_FILE="phase-d-legacy-oracle.txt"
 
 # Phase D restores the backup the upgraded build wrote. The app writes it into the backup
 # directory under a timestamped name; the host copies it into Downloads under this fixed one, so
@@ -83,10 +88,12 @@ done
 
 # Checked here rather than at the push, which happens after two installs: a typo in the fixture
 # name should cost nothing, not a wiped device and a minute of setup.
-if [ ! -s "$FIXTURE_SOURCE" ]; then
-    echo "error: $FIXTURE_SOURCE is missing or empty - run this from the repo root." >&2
-    exit 1
-fi
+for source in "$FIXTURE_SOURCE" "$LEGACY_SOURCE"; do
+    if [ ! -s "$source" ]; then
+        echo "error: $source is missing or empty - run this from the repo root." >&2
+        exit 1
+    fi
+done
 
 mkdir -p "$out_dir"
 
@@ -171,7 +178,8 @@ echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r')
 # diff the failure message summarises.
 collect_logcat() {
     adb logcat -d > "$out_dir/logcat.txt" 2>/dev/null || true
-    for name in "$UPGRADED_ORACLE_FILE" "$AUTHENTICATOR_ORACLE_FILE" "$ROUND_TRIP_ORACLE_FILE"; do
+    for name in "$UPGRADED_ORACLE_FILE" "$AUTHENTICATOR_ORACLE_FILE" "$ROUND_TRIP_ORACLE_FILE" \
+        "$LEGACY_ORACLE_FILE"; do
         pull_harness_file "$name" || true
     done
     echo "Artifacts in $out_dir/"
@@ -288,8 +296,9 @@ echo "== Push fixtures =="
 # run's copy step were ever skipped, so it goes before anything is announced to MediaProvider.
 adb shell rm -f "$DEVICE_DOWNLOADS/$ROUND_TRIP_FILE"
 adb push "$FIXTURE_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
+adb push "$LEGACY_SOURCE" "$DEVICE_DOWNLOADS/" > /dev/null
 adb shell content call --uri content://media/external/file --method scan_volume --arg external > /dev/null
-echo "$FIXTURE_FILE -> $DEVICE_DOWNLOADS/"
+echo "$FIXTURE_FILE, $LEGACY_FILE -> $DEVICE_DOWNLOADS/"
 
 # Removed and recreated rather than just created: a backup file left behind by an earlier run would
 # still be there when the next one grants the same directory, and Phase A has to produce the same
@@ -314,6 +323,7 @@ run_phase() {
         -e fixtureFile "$FIXTURE_FILE" \
         -e backupDir "$BACKUP_DIR" \
         -e roundTripFile "$ROUND_TRIP_FILE" \
+        -e legacyFile "$LEGACY_FILE" \
         "$TEST_PACKAGE/$TEST_RUNNER" 2>&1 | tee "$output" || true
 
     # The crash scan runs even when the phase failed. An app crash is a common *reason* for a
@@ -416,5 +426,9 @@ adb shell pm clear "$APP_PACKAGE"
 grant_notifications
 
 run_phase restore restoreBackupIntoClearedApp 1
+
+# The v1.4.4.0 export, restored over the round-tripped vault. No clear first: a restore replaces
+# everything, and the round-tripped authenticator vanishing is part of what this phase checks.
+run_phase legacy restoreLegacyBackup 1
 
 echo "== Upgrade test passed =="

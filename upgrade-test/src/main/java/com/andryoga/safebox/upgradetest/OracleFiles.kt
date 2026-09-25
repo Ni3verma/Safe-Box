@@ -33,6 +33,12 @@ internal object OracleFiles {
     /** What Phase D records after the round trip. scripts/run-upgrade-test.sh reads it by this name. */
     const val ROUND_TRIP = "phase-d-oracle.txt"
 
+    /**
+     * What Phase D records after restoring `v1_legacy.bak` over the round-tripped vault.
+     * scripts/run-upgrade-test.sh reads it by this name.
+     */
+    const val LEGACY = "phase-d-legacy-oracle.txt"
+
     private const val LOG_TAG = "OracleFiles"
 
     /**

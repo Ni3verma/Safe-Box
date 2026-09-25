@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import org.junit.Before
@@ -17,8 +18,8 @@ import org.junit.runner.RunWith
  * backup through the real system document picker — and records it. Phase B is the host replacing
  * the APK. Phase C, on the upgraded build, asserts that the account, the hint and every recorded
  * fact about the vault are still exactly as they were, then adds an authenticator and checks its
- * code. Phase D backs the upgraded vault up, has the host clear the app's data, and restores that
- * backup into the empty app.
+ * code. Phase D backs the upgraded vault up, has the host clear the app's data, restores that
+ * backup into the empty app, and finally restores a hand-captured v1 backup over it.
  *
  * The tests are **ordered and stateful across processes**, which is unusual and deliberate:
  * [seedVaultOnBaselineBuild] runs against the baseline APK and the rest against the build under
@@ -190,6 +191,43 @@ class UpgradeSmokeTest {
         TotpDisplayCheck(ui, app).assertListShowsCodeFor(SeedRecord.AUTHENTICATOR)
     }
 
+    /**
+     * Phase D, third part. Restores the hand-captured `v1_legacy.bak` into the build under test and
+     * holds the result to [LegacyFixture], which mirrors the fixture's README.
+     *
+     * A `.bak` outlives the install that wrote it, so a user can bring a v1 export to today's
+     * build. The file is `BACKUP_VERSION` 1 with a one-byte `creationDate`, and a v1 card expiry
+     * stored with its slash, which today's build must strip on read.
+     *
+     * It is restored *over* the vault [restoreBackupIntoClearedApp] left, through the Backup &
+     * Restore tab, because the app promises that a restore replaces everything. A v1 file has no
+     * authenticator key at all, so `0 ui totp` must be gone afterwards: [VaultOracle] rejects any
+     * listed title the fixture does not hold, and the expected lines name no authenticator type.
+     * A separate phase rather than a continuation, so its instrumentation output and crash scan
+     * are its own.
+     */
+    @Test
+    fun restoreLegacyBackup() {
+        launchAppUnderTest(app.label(UNLOCK_HEADING))
+        UnlockScreen(ui, app).unlock(MASTER_PASSWORD)
+        restoreOverExistingVault(requiredArgument(LEGACY_ARGUMENT), LegacyFixture.PASSWORD)
+
+        val legacy = VaultOracle(
+            ui,
+            app,
+            LegacyFixture.TITLES,
+            VaultOracle.ALL_TYPE_RESOURCE_NAMES,
+            LegacyFixture.RECORDS,
+        ).describe()
+        OracleFiles.write(OracleFiles.LEGACY, legacy)
+        OracleFiles.assertSameLines(
+            "v1_legacy.bak did not restore into the build under test as its README records.",
+            VaultOracle.expectedRecordLines(LegacyFixture.RECORDS),
+            VaultOracle.recordLines(legacy),
+            "${OracleFiles.LEGACY}; the expectation is LegacyFixture.RECORDS",
+        )
+    }
+
     /** Describes a vault that holds the post-upgrade authenticator as well as Phase A's records. */
     private fun describeUpgradedVault(): String = VaultOracle(
         ui,
@@ -290,10 +328,46 @@ class UpgradeSmokeTest {
      */
     private fun restoreBackup(fileName: String) {
         ui.clickText(app.label(RESTORE_DATA_BUTTON))
+        completeRestore(fileName, BACKUP_PASSWORD)
+    }
+
+    /**
+     * Restores a backup over a vault that already holds records, through the Backup & Restore tab.
+     *
+     * The empty vault's shortcut does not exist here. The tab's Restore button has the same text
+     * as its section heading, and the section is the last thing on the screen, so the screen is
+     * walked to its end and the lowest `Restore` is the button. If the heading were picked by
+     * mistake, nothing would open and [SafDocumentPicker] would fail by name.
+     *
+     * @param fileName the backup's name in Downloads
+     * @param password the password the backup was made under
+     */
+    private fun restoreOverExistingVault(fileName: String, password: String) {
+        ui.clickText(app.label(BACKUP_TAB))
+        var swipes = 0
+        while (swipes++ < RESTORE_SECTION_MAX_SWIPES && ui.scrollList(Direction.DOWN)) {
+            // Walks to the end of the screen, where the Restore section sits.
+        }
+        val restore = app.label(RESTORE_BUTTON)
+        val button = ui.textSnapshot(APP_PACKAGE).filter { it.text == restore }
+            .maxByOrNull { it.bounds.top }
+            ?: error("the Backup & Restore tab shows no '$restore' button${ui.describeScreen()}")
+        device.click(button.bounds.centerX(), button.bounds.centerY())
+        completeRestore(fileName, password)
+    }
+
+    /**
+     * Picks [fileName] in the document picker, enters [password] and waits for the app to report
+     * success.
+     *
+     * @param fileName the backup's name in Downloads
+     * @param password the password the backup was made under
+     */
+    private fun completeRestore(fileName: String, password: String) {
         SafDocumentPicker(ui).selectFromDownloads(fileName)
 
         ui.awaitText(app.label(RESTORE_PROMPT))
-        ui.typeInto(app.label(RESTORE_PASSWORD_LABEL), BACKUP_PASSWORD)
+        ui.typeInto(app.label(RESTORE_PASSWORD_LABEL), password)
         ui.clickText(app.label(CONFIRM_BUTTON))
 
         // The restore runs through a WorkManager worker that decrypts and re-encrypts every record,
@@ -507,6 +581,13 @@ class UpgradeSmokeTest {
         const val FIXTURE_ARGUMENT = "fixtureFile"
         const val BACKUP_DIR_ARGUMENT = "backupDir"
         const val ROUND_TRIP_ARGUMENT = "roundTripFile"
+        const val LEGACY_ARGUMENT = "legacyFile"
+
+        // The Backup & Restore tab's Restore button, whose text is also its section's heading.
+        const val RESTORE_BUTTON = "restore"
+
+        // The Backup & Restore screen is a handful of cards, so a few swipes reach its end.
+        const val RESTORE_SECTION_MAX_SWIPES = 5
 
         // Titles of every record in v2_pre_totp.bak: 2 logins, 2 bank accounts, 2 cards, 1 note.
         // Source of truth is the fixture README, which was produced by decrypting the file rather

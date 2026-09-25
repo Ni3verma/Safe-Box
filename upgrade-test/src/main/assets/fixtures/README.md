@@ -55,3 +55,44 @@ deserialize round trip. Do not tidy them.
 The vault master password. A `.bak` carries record data only, so restoring this fixture into a
 vault leaves that vault's own master password in force. The credentials used when establishing the
 baseline vault are listed in the upgrade-testing design, not here.
+
+## `v1_legacy.bak`
+
+The protection for users who still hold a v1 export: a `.bak` outlives the install that wrote it.
+Phase D restores it into the build under test and compares every field with
+`LegacyFixture.kt`, which holds the displayed form of the values below.
+
+| | |
+|---|---|
+| Captured from | `v1.4.4.0` QA APK (`versionCode` 6), the first release with backup; by hand, on emulator-5554 |
+| Captured on | 2026-09-25 |
+| `BACKUP_VERSION` | **1** |
+| `creationDate` | the v1 **single-byte** form (value `61`), not an 8-byte timestamp |
+| Backup file password | `Upgrade@@Test123`, the same as the v1 vault's master password. v1's stricter password rules refused `Upgrade@Test12`, and the capture reused the replacement for the backup |
+| SHA-256 | `da24e2120363cdf29b6b383591cfbee862b3d06fce99e6906e1e96e7a95572ff` |
+| Size | 1958 bytes |
+
+### Contents
+
+Decoded with `scripts/InspectBackup.java`. `null` means the field was left empty.
+
+| Type | Title | Stored values |
+|---|---|---|
+| `LOGIN` | `v1 login min` | user id `v1-user-min`; url, password, notes `null` |
+| `LOGIN` | `v1 login full` | url `https://v1.example.com`, user id `v1-user`, password `V1Login@1`, notes `line one\nline two ^&*(` |
+| `BANK_ACCOUNT` | `v1 bank min` | account `111122223333`; everything else `null` |
+| `BANK_ACCOUNT` | `v1 bank full` | account `444455556666`, customer `V1 Customer` / `C-1001`, branch `BR01` / `V1 Branch` / `1 Legacy Road`, IFSC `IFSC0001234`, MICR `400002001`, notes `bank\nnotes %$#` |
+| `BANK_CARD` | `v1 card min` | number `4111111111111111`; everything else `null` |
+| `BANK_CARD` | `v1 card full` | name `V1 HOLDER`, number `5500005555555559`, pin `4321`, cvv `123`, expiry **`12/30`**, notes `card\nnotes @!` |
+| `SECURE_NOTE` | `v1 note` | notes `legacy note\nsecond line &^%` |
+| `AUTHENTICATOR` | — | key `"8"` **absent**; the type did not exist |
+
+Two stored values differ from what was typed, and both are v1 behaviour worth keeping:
+
+- **`V1 HOLDER`**: v1's form capitalised the name while it was typed.
+- **`12/30`**: v1 stored the expiry *with* its slash. v2 onwards stores `1230` and adds the slash
+  on screen, and strips a stored slash when reading (`BankCardDataDaoSecure.decrypt`). This row is
+  the only thing that exercises that legacy path.
+
+The v1 vault itself used master password `Upgrade@@Test123` and hint `fixture 1.4.4.0`. Neither
+is in the file.

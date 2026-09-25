@@ -86,7 +86,9 @@ internal data class SeedRecord(
          * one "technologist" glyph, and U+0301 / U+0303 / U+0308 are combining marks written
          * *decomposed*, so a normalising layer anywhere in the save or read path shows up as a
          * changed value. Hebrew and Arabic put two right-to-left runs inside a left-to-right field.
-         * There is no newline, because the oracle is one `key=value` per line.
+         * There is no newline: `VaultOracle.fieldLine` would escape one, but multi-line notes are
+         * already read field by field from the v1 fixture in Phase D, and adding one here would
+         * change the oracle.
          */
         private const val UNICODE_SEGMENT =
             "Grüße 😀 👩\u200D💻 שלום עולם مرحبا بالعالم e\u0301 n\u0303 a\u0308 "
