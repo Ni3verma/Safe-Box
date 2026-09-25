@@ -747,13 +747,10 @@ the hint read is. The tamper row is what proves the comparison works on its own.
 Groups 4–6, including the independent RFC 6238 computation and clock freezing, plus Group 3 step 8
 (the long unicode field and the empty optional field), asserted against `v3_adversarial.bak`.
 
-- **Follow-up, raised 2026-09-24: `scripts/resolve-baselines.sh` must take the current schema
-  version from the `@Database(version = …)` annotation**, via `db_version_of_source` in
-  `scripts/lib/tag-db-version.sh`, not from the highest file under `app/schemas/`. An exported
-  schema can exist ahead of the version the build actually declares (or lag it), and the release
-  tag check already treats the annotation as the truth; two sources for one number will disagree.
-  The library reached the feature branch with #267 (merged into it at `44ffe3d`, 2026-09-25), so
-  nothing blocks this any more.
+- **Delivered first, 2026-09-25: `scripts/resolve-baselines.sh` reads the current schema from the
+  `@Database` annotation** (`db_version_of_source`), no longer from the highest `app/schemas/`
+  file. The two agree today, and the four rules print the same output as before. At `v2.0.4.0`
+  they would not: the annotation says 4 and the highest file is `5.json`.
 
 - **Required, confirmed 2026-09-23: a `v1_legacy.bak` must restore cleanly into the current build.**
   This is the one v1 concern that survives the baseline floor. Raising the floor to `v2.0.4.0`

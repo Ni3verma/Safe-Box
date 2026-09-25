@@ -440,16 +440,20 @@ are harness-level ones:
 ## Baseline resolution
 
 `resolve-baselines.sh` reads the release list and applies three rules, filtering to stable releases
-that actually carry a `SafeBox-qa.apk`. As of 2026-09-22 it emits:
+that actually carry a `SafeBox-qa.apk`. As of 2026-09-25 it emits:
 
 ```json
-{"from_tag":["v2.0.4.0","v1.3.3.1","v1.3.3.0"]}
+{"from_tag":["v2.0.4.0"]}
 ```
 
 `--rule previous|schema-boundary|oldest` prints a single tag instead, which is what the manual
-workflow uses. The current Room schema is read from `app/schemas/`, not from a tag, because the tag
-for the build under test does not exist yet when the script runs.
+workflow uses. The current Room schema is read from the `@Database` annotation through
+`db_version_of_source` in `scripts/lib/tag-db-version.sh`, the same parse the release tag gate
+uses. Not from a tag, because the tag for the build under test does not exist yet; and not from the
+highest file in `app/schemas/`, which is what the script did until MR5: at `v2.0.4.0` that file is
+`5.json` while the annotation says 4.
 
-An optional floor lives in `upgrade-test/oldest-supported.txt`, one tag on a line. It does not
-exist by default and should stay that way until "how far back do we support" is an actual product
-decision.
+The floor lives in `upgrade-test/oldest-supported.txt`, one tag on a line, and is **`v2.0.4.0`**
+since MR2. The file carries its own rationale: nobody meaningful is still on 1.x, and every 1.x
+release ships the XML UI, which the harness cannot drive. Until a newer stable release ships, all
+three rules therefore resolve to that one tag.
