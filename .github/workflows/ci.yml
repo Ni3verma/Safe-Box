@@ -63,6 +63,11 @@ jobs:
       - name: Verify the zero-test guard
         run: ./scripts/tests/instrumentation-guard-test.sh
 
+      # Same reasoning for the crash sentinel: a sentinel that stopped matching would read as a
+      # build that never crashes.
+      - name: Verify the crash sentinel
+        run: ./scripts/tests/crash-sentinel-test.sh
+
       # The release gate in release.yml only runs on a tag push, far too rarely to notice it has
       # broken. Its tests include parsing the real SafeBoxDatabase.kt, so a change to how the Room
       # version is declared fails here, in the PR that made it, instead of blocking a release.
