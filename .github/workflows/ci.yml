@@ -56,6 +56,12 @@ jobs:
             exit 1
           fi
 
+      # The release gate in release.yml only runs on a tag push, far too rarely to notice it has
+      # broken. Its tests include parsing the real SafeBoxDatabase.kt, so a change to how the Room
+      # version is declared fails here, in the PR that made it, instead of blocking a release.
+      - name: Verify the release tag gate
+        run: ./scripts/tests/tag-db-version-test.sh
+
       - name: set up JDK 17
         uses: actions/setup-java@v6
         with:
