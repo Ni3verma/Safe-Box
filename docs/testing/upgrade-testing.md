@@ -557,7 +557,7 @@ written means guessing at its contents and re-capturing later:
 
 | Fixture | Moved to | Why it cannot be done usefully now |
 |---|---|---|
-| `v1_legacy.bak` | MR5 | Needs the `v1.4.4.0` QA APK (first with backup; `v1.3.3.0` has none) installed and seeded; it exists to exercise the migration path MR5 asserts on. |
+| `v1_legacy.bak` | MR5 — **captured 2026-09-25**, see the [fixture README](../../upgrade-test/src/main/assets/fixtures/README.md) | Needs the `v1.4.4.0` QA APK (first with backup; `v1.3.3.0` has none) installed and seeded; it exists to exercise the migration path MR5 asserts on. |
 | `v3_current.bak` | MR6 (moved from MR5, 2026-09-25) | `BACKUP_VERSION 3`, so the baseline cannot restore it at all. Its required contents are defined by MR5's TOTP and round-trip assertions. |
 | `v3_adversarial.bak` | MR6 (moved from MR5, 2026-09-25) | Hand-seeded through the UI (emoji, RTL, 4000-char fields, an invalid Base32 seed). Hours of manual work for assertions that do not exist yet. |
 | `corrupt.bak` | MR6 | Literally `head -c 2048 v3_current.bak` — it cannot precede `v3_current`, and it is one command when MR6 needs it. |
@@ -787,14 +787,15 @@ Decided (all recommended defaults accepted):
   field values recorded in the fixture README, including the 1-byte `creationDate` legacy path and
   a backup carrying no authenticator key at all.
 
-**Delivered, 2026-09-25 — everything except `v1_legacy.bak`**, which waits on the hand capture and
-is an open row in the debt register below:
+**Delivered, 2026-09-25.** `v1_legacy.bak` landed last, after the hand capture, so the ten-run
+and CI evidence below predates it; its own evidence follows the sabotage table.
 
 | Step | How |
 |---|---|
 | Group 3, step 8 | `SeedRecord.UNICODE_LOGIN` (`0 ui unicode`) is created on the baseline in Phase A; the oracle reads its notes back through the hierarchy dump and records the blank `url` after checking its label is absent. |
 | Groups 4 and 5 | Phase C empties the search box, adds `0 ui totp` through the QR scanner's manual entry (seed = RFC 6238's ASCII `12345678901234567890`), checks the list code with `TotpDisplayCheck`, re-captures `phase-c-authenticator-oracle.txt` and requires it to equal the Phase A oracle plus that one row. |
 | Group 6 | New Phase D: `backUpUpgradedVault` → host checks and decodes the one backup → `pm clear` → `restoreBackupIntoClearedApp` signs up, restores it, writes `phase-d-oracle.txt`, compares every `record.*` / `field.*` line with the post-authenticator oracle, and repeats the TOTP check. |
+| `v1_legacy.bak` | A fifth phase, `restoreLegacyBackup`, unlocks the round-tripped vault and restores the v1 file over it from the Backup & Restore tab. It writes `phase-d-legacy-oracle.txt` and requires its record lines to equal `LegacyFixture.RECORDS` (the README's values in displayed form), which also proves the restore cleared `0 ui totp`. |
 | `scrollList` | Judges movement by the position of text present before *and* after the swipe, because the countdown ring changes text by itself. See [operations](upgrade-harness-operations.md#reading-the-records-list). |
 
 - Ten consecutive full runs on `emulator-5554` all passed all four phases. Every oracle kind is
@@ -820,6 +821,21 @@ is an open row in the debt register below:
   | `TotpDisplayCheck` decodes a different seed (`JBSWY3DPEHPK3PXP`); harness rebuilt, source restored | FAIL in Phase C: `'0 ui totp' shows code 489242, but its seed gives [688819] for the time steps 59677195..59677195` |
   | The host copies the Phase A fixture into Downloads as `upgraded_roundtrip.bak`, instead of the upgraded build's backup | FAIL in Phase D: the records list does not hold `0 ui login`, `0 ui card`, `0 ui bank`, `0 ui note`, `0 ui unicode` or `0 ui totp` |
   | One line of the on-device `phase-c-authenticator-oracle.txt` edited, then Phase D re-run on its own from the state a full run left ([how](upgrade-harness-operations.md#re-running-one-phase)) | FAIL: `the vault restored from the upgraded build's backup is not the vault it backed up.` with `- field.0 ui login.user_id=TAMPERED` / `+ …=ui-user` |
+
+- **`v1_legacy.bak` (added last).** The capture decodes as `BACKUP_VERSION 1`, single-byte
+  `creationDate`, 2/2/2/1 records and no key `"8"`. SHA-256 and contents are in the
+  [fixture README](../../upgrade-test/src/main/assets/fixtures/README.md). Its expectation
+  (`LegacyFixture`) was written from the decode and the app's display transformations *before*
+  the first run, and that run matched it field for field. Then three consecutive full runs passed
+  all five phases on `emulator-5554`. The four earlier oracles kept the MD5s above, so escaping
+  newlines changed none of them, and `phase-d-legacy-oracle.txt` was identical in all three
+  (`e00e0c0289810e23e0cc09a4a2128559`). The legacy phase takes about 100 s. Two **app** defects
+  were planted, each built into the QA APK and then reverted:
+
+  | Sabotage | Result |
+  |---|---|
+  | `BankCardDataDaoSecure.decrypt` no longer strips a stored `/` from the expiry | FAIL: `v1_legacy.bak did not restore into the build under test as its README records.` with `- field.v1 card full.expiryDate=12/30` / `+ …=12//3` |
+  | `RestoreDataWorker` no longer clears the authenticator table | FAIL in `restoreLegacyBackup`: `a screenful of the records list paired [0 ui totp] with a type chip, and this phase expects no record with that title` |
 
 - **Future work, not debt:** true cross-upgrade TOTP (an authenticator seeded *before* the upgrade)
   needs a stable release with DB 5 to use as the baseline. The trigger is that release, not a stage
@@ -853,7 +869,6 @@ discovering the debt from a code comment.
 | MR1 | `upgrade-test.yml` runs its build as `GITHUB_RUN_NUMBER=9999984 ./gradlew ...`, so the build under test gets `versionCode` 9999999 | It invents a version for an APK the job builds itself. In the release pipeline the thing under test must be **the RC artifact that will ship**, not a rebuild wearing a fake version — otherwise the pipeline tests something no user will ever install. | MR7 | `grep -n GITHUB_RUN_NUMBER .github/workflows/upgrade-test.yml` returns nothing, and the job installs the RC's own `SafeBox-qa.apk` |
 | MR1 | The downloaded baseline's signing certificate is never verified | A certificate mismatch surfaces as `INSTALL_FAILED_UPDATE_INCOMPATIBLE` partway through a run, which reads like a harness bug rather than "these two APKs were signed by different keys". PROJECT_FACTS records the expected QA SHA-256. | MR7 at the latest; sooner if anyone is already editing `fetch-baseline-apk.sh` | a deliberately re-signed APK is rejected by name before any install |
 | MR2 | Nothing exercises `ClipboardClearWorker`, because dropping A6 removed the only step that did | The worker clears a password out of the clipboard on a delay. If the upgrade breaks its scheduling, a password stays on the clipboard indefinitely and no test notices — a security regression, not a cosmetic one. It could not be covered from Phase A because the class postdates the baseline. | MR6 | a post-upgrade step copies a password and asserts `ClipboardClearWorker` is enqueued, and that the clipboard is empty once it has run |
-| MR5 | Phase D restores only the upgraded build's own backup; `v1_legacy.bak` is not yet captured, committed or restored | It is MR5's one acceptance criterion that protects users who still hold a v1 export. Without it the 1-byte `creationDate` path and a backup with no authenticator key at all go untested. Blocked on the hand capture from `v1.4.4.0`. | MR5, before it merges | `upgrade-test/src/main/assets/fixtures/v1_legacy.bak` exists with a README entry and SHA-256, and a Phase D run restores it and asserts the README's counts and fields |
 
 ---
 

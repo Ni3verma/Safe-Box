@@ -42,11 +42,11 @@ provides it.
 
 Output lands in `upgrade-test-out/` (override with a third argument): one
 `instrumentation-<phase>.txt` and one `crash-scan-<phase>.txt` per phase (`seed`, `verify`,
-`backup`, `restore`), `phase-a-oracle.txt`, and — each only once its phase got far enough to write
-it — `phase-c-oracle.txt`, `phase-c-authenticator-oracle.txt` and `phase-d-oracle.txt`. Phase D
-adds `upgraded_roundtrip.bak` (the upgraded build's own backup) and
-`round-trip-backup-inspect.txt` (its independent decode). `logcat.txt` too — all collected even on
-failure.
+`backup`, `restore`, `legacy`), `phase-a-oracle.txt`, and — each only once its phase got far
+enough to write it — `phase-c-oracle.txt`, `phase-c-authenticator-oracle.txt`,
+`phase-d-oracle.txt` and `phase-d-legacy-oracle.txt`. Phase D adds `upgraded_roundtrip.bak` (the
+upgraded build's own backup) and `round-trip-backup-inspect.txt` (its independent decode).
+`logcat.txt` too — all collected even on failure.
 
 > [!CAUTION]
 > The run **uninstalls `com.andryoga.safebox.qa`** and then signs up from scratch, so it must not
@@ -462,6 +462,16 @@ Added by MR5 (plan Groups 4–6). Established on emulator-5554 on 2026-09-25:
   it as `field.<title>.url=` after checking that its label is absent.
 - **The host script must stay bash 3.2-compatible** (macOS's `/bin/bash`): no `mapfile`, no
   associative arrays.
+- **`v1_legacy.bak` is restored over the round-tripped vault,** in its own phase (`legacy`). A
+  restore replaces every table, including authenticators when the file has no key `"8"`, so the
+  expected result is exactly [LegacyFixture](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/LegacyFixture.kt)'s
+  seven records and no `0 ui totp`. The empty vault's "Restore data" shortcut does not exist over a
+  populated vault, so this restore starts from the Backup & Restore tab. Its button has the same
+  text as the section heading, and the harness takes the lowest one on the screen after walking to
+  the end.
+- **Oracle values are escaped onto one line.** Multi-line notes are written with `\n` (and `\\`) by
+  `VaultOracle.fieldLine`. No value in Phase A's seed contains either, so the existing oracles'
+  bytes did not change.
 
 ## What the orchestrator already guarantees
 
@@ -511,6 +521,7 @@ are harness-level ones:
 | `expected one backup in /sdcard/SafeBoxUpgradeTest …, found N` | 0: the backup phase wrote nothing, or the SAF grant did not survive the upgrade. 2 or more: auto-backup is on, or the directory was not wiped at clean slate |
 | `the upgraded build's backup does not decode with its own password` | a backup format change `InspectBackup.java` does not know, or real corruption; see `round-trip-backup-inspect.txt` |
 | `the vault restored from the upgraded build's backup is not the vault it backed up` | the restore lost or changed records; compare `phase-c-authenticator-oracle.txt` with `phase-d-oracle.txt` |
+| `v1_legacy.bak did not restore into the build under test as its README records` | a v1 export no longer restores faithfully; the `-`/`+` lines name the field. `LegacyFixture.kt` is the expectation and the fixture README the stored values. A `0 ui totp` rejected as unexpected means the restore no longer clears authenticators |
 
 ## Baseline resolution
 
