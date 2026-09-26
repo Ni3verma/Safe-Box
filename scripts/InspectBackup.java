@@ -6,7 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -22,7 +25,14 @@ import javax.crypto.spec.SecretKeySpec;
  * Mirrors the parameters in PasswordBasedEncryptionImpl exactly:
  * PBKDF2WithHmacSHA1, 1324 iterations, 256-bit key, AES/CBC/PKCS5Padding.
  *
- * Usage: java InspectBackup <file.bak> <backupPassword>
+ * It deliberately does not reuse the app's own decryption: the upgrade and restore tests compare
+ * two decoded backups, and a bug shared by both sides of that comparison would cancel out.
+ *
+ * Usage:
+ *   java InspectBackup <file.bak> <backupPassword>              human-readable dump
+ *   java InspectBackup --canonical <file.bak> <backupPassword>  sorted canonical lines
+ *   java InspectBackup --rows <file.bak> <backupPassword>       sorted TYPE<tab>title lines
+ *   java InspectBackup --header <file.bak>                      the file's BACKUP_VERSION
  */
 public class InspectBackup {
 
@@ -30,6 +40,15 @@ public class InspectBackup {
     private static final int KEY_LENGTH = 256;
     private static final String KEY_FACTORY_ALGO = "PBKDF2WithHmacSHA1";
     private static final String CIPHER_TRANSFORMATION = "AES/CBC/PKCS5Padding";
+
+    /**
+     * Container keys that are not record data: version, salt, IV and creation date, as defined in
+     * CommonConstants. Any key outside these and DATA_KEYS fails the decode, so a new record type
+     * cannot be skipped silently.
+     */
+    private static final Set<String> HEADER_KEYS = Set.of("0", "1", "2", "3");
+
+    private static final String NULL_TOKEN = "null";
 
     /**
      * Classes permitted while reading the backup container.
@@ -76,25 +95,30 @@ public class InspectBackup {
         DATA_KEYS.put("8", "AUTHENTICATOR");
     }
 
-    @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
-        if (args.length < 2) {
+        if (args.length == 2 && args[0].equals("--header")) {
+            runMachineMode(() -> printHeaderVersion(readContainer(args[1])));
+            return;
+        }
+        if (args.length == 3 && args[0].equals("--canonical")) {
+            runMachineMode(() -> printCanonical(readContainer(args[1]), args[2].toCharArray()));
+            return;
+        }
+        if (args.length == 3 && args[0].equals("--rows")) {
+            runMachineMode(() -> printRows(readContainer(args[1]), args[2].toCharArray()));
+            return;
+        }
+        if (args.length != 2 || args[0].startsWith("--")) {
             System.err.println("Usage: java InspectBackup <file.bak> <backupPassword>");
+            System.err.println("       java InspectBackup --canonical <file.bak> <backupPassword>");
+            System.err.println("       java InspectBackup --rows <file.bak> <backupPassword>");
+            System.err.println("       java InspectBackup --header <file.bak>");
             System.exit(1);
         }
         String path = args[0];
         char[] password = args[1].toCharArray();
 
-        HashMap<String, byte[]> map;
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
-            // readObject() instantiates whatever the stream names, before the cast below ever runs.
-            // The allowlist is one line and turns "pointed at the wrong file" into a named failure
-            // instead of arbitrary construction; the app's RestoreDataWorker overrides resolveClass
-            // for the same reason. There is no size or DoS guard here on purpose - the .bak files
-            // this reads are ones we make ourselves and are a few kilobytes.
-            in.setObjectInputFilter(InspectBackup::filterBackupClasses);
-            map = (HashMap<String, byte[]>) in.readObject();
-        }
+        Map<String, byte[]> map = readContainer(path);
 
         System.out.println("map keys present: " + new TreeMap<>(map).keySet());
 
@@ -191,6 +215,401 @@ public class InspectBackup {
             }
             System.exit(1);
         }
+    }
+
+    /**
+     * Reads the backup container: a serialised map from key to byte array.
+     *
+     * readObject() instantiates whatever the stream names, before the cast below ever runs. The
+     * allowlist turns "pointed at the wrong file" into a named failure instead of arbitrary
+     * construction; the app's RestoreDataWorker overrides resolveClass for the same reason.
+     *
+     * @param path the .bak file
+     * @return the container, keyed as in CommonConstants
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, byte[]> readContainer(String path) throws Exception {
+        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
+            in.setObjectInputFilter(InspectBackup::filterBackupClasses);
+            return (HashMap<String, byte[]>) in.readObject();
+        }
+    }
+
+    /** An action of a machine-readable mode; may throw anything reading or decrypting can. */
+    private interface MachineAction {
+        void run() throws Exception;
+    }
+
+    /**
+     * Runs a machine-readable mode so that every failure, expected or not, ends as one "Error:"
+     * line on stderr and exit status 1. Callers (the harness scripts and PR checks) rely on the
+     * exit status alone, and a stack trace from a wrong password is noise in a CI log.
+     *
+     * @param action the mode's work
+     */
+    private static void runMachineMode(MachineAction action) {
+        try {
+            action.run();
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getClass().getSimpleName()
+                + (e.getMessage() == null ? "" : ": " + e.getMessage()));
+            System.exit(1);
+        }
+    }
+
+    /**
+     * Prints the file's BACKUP_VERSION byte, which is stored unencrypted, so no password is
+     * needed. Used by the PR checks to compare the committed seed and fixtures with the code.
+     *
+     * @param map the backup container
+     */
+    private static void printHeaderVersion(Map<String, byte[]> map) {
+        byte[] versionBytes = map.get("0");
+        if (versionBytes == null || versionBytes.length == 0) {
+            fail("the backup has no BACKUP_VERSION byte");
+        }
+        System.out.println(versionBytes[0]);
+    }
+
+    /**
+     * Prints every record field as one sorted line, so two backups can be compared with diff.
+     *
+     * Line shape: {@code TYPE|"title"|creationDate|field=value}, where title and value are JSON
+     * literals (strings quoted and escaped, numbers bare). One line per field keeps a diff
+     * pointing at exactly the field that changed, and the type, title and creationDate prefix
+     * identify the record even when two records share a title.
+     *
+     * Normalisation, both deliberate and both covered by scripts/tests/inspect-backup-test.sh:
+     * - A type key that is absent (an older format predating the type), present but null (no
+     *   records), or an empty array all print nothing, so they compare equal.
+     * - A field that is null or absent prints nothing, so a field a newer format added compares
+     *   equal to an older file lacking it, as long as the newer build left it null. An empty
+     *   string is not null and does print: the difference is real data.
+     *
+     * The header (version, salt, IV, creation time) is not printed; it differs between any two
+     * backups of the same data. Any decryption or parsing failure exits non-zero.
+     *
+     * @param map the backup container
+     * @param password the backup password
+     */
+    private static void printCanonical(Map<String, byte[]> map, char[] password) throws Exception {
+        List<String> lines = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> record : decodeRecords(map, password)) {
+            lines.addAll(canonicalLines(record.getKey(), record.getValue()));
+        }
+        Collections.sort(lines);
+        for (String line : lines) {
+            System.out.println(line);
+        }
+    }
+
+    /**
+     * Prints one {@code TYPE<tab>title} line per record, sorted, with the title decoded to the
+     * text the app displays. The harness passes these to the instrumentation as the rows the
+     * records list must show, so no script has to parse JSON.
+     *
+     * @param map the backup container
+     * @param password the backup password
+     */
+    private static void printRows(Map<String, byte[]> map, char[] password) throws Exception {
+        List<String> lines = new ArrayList<>();
+        for (Map.Entry<String, Map<String, String>> record : decodeRecords(map, password)) {
+            lines.add(rowLine(record.getKey(), record.getValue()));
+        }
+        Collections.sort(lines);
+        for (String line : lines) {
+            System.out.println(line);
+        }
+    }
+
+    /**
+     * Turns one decoded record into its records-list row.
+     *
+     * @param type the record type, e.g. LOGIN
+     * @param record field name to JSON literal, as parsed
+     * @return {@code TYPE<tab>title}, the title decoded from its JSON literal
+     */
+    static String rowLine(String type, Map<String, String> record) {
+        String literal = record.get("title");
+        if (literal == null || !literal.startsWith("\"")) {
+            fail(type + " record without a string title: " + record);
+        }
+        String title = new JsonCursor(literal).readString();
+        if (title.contains("\t") || title.contains("\n")) {
+            fail(type + " title " + literal + " holds a tab or newline, which the row list cannot carry");
+        }
+        return type + "\t" + title;
+    }
+
+    /**
+     * Decrypts and parses every record in a backup, after checking the header can be read.
+     *
+     * @param map the backup container
+     * @param password the backup password
+     * @return (type, record) pairs; the record maps field name to JSON literal
+     */
+    static List<Map.Entry<String, Map<String, String>>> decodeRecords(
+        Map<String, byte[]> map,
+        char[] password
+    ) throws Exception {
+        byte[] versionBytes = map.get("0");
+        if (versionBytes == null || versionBytes.length == 0) {
+            fail("the backup has no BACKUP_VERSION byte");
+        }
+        for (String key : map.keySet()) {
+            if (!HEADER_KEYS.contains(key) && !DATA_KEYS.containsKey(key)) {
+                fail("unknown backup key '" + key + "': the format grew a record type;"
+                    + " add it to DATA_KEYS in InspectBackup.java");
+            }
+        }
+        byte[] salt = map.get("1");
+        byte[] iv = map.get("2");
+        if (salt == null || iv == null) {
+            fail("the backup is missing its salt or IV");
+        }
+        List<Map.Entry<String, Map<String, String>>> records = new ArrayList<>();
+        for (Map.Entry<String, String> entry : DATA_KEYS.entrySet()) {
+            byte[] blob = map.get(entry.getKey());
+            if (blob == null) {
+                continue;
+            }
+            String json = new String(decrypt(password, blob, salt, iv), StandardCharsets.UTF_8);
+            if (!looksLikeRecordArray(json)) {
+                fail(entry.getValue() + " decrypted to something that is not a record array");
+            }
+            for (Map<String, String> record : parseFlatObjectArray(json)) {
+                records.add(Map.entry(entry.getValue(), record));
+            }
+        }
+        return records;
+    }
+
+    /**
+     * Turns one decoded record into its canonical lines.
+     *
+     * @param type the record type, e.g. LOGIN
+     * @param record field name to JSON literal, as parsed
+     * @return one line per non-null field
+     */
+    static List<String> canonicalLines(String type, Map<String, String> record) {
+        String title = record.get("title");
+        String creationDate = record.get("creationDate");
+        if (title == null || NULL_TOKEN.equals(title) || creationDate == null) {
+            fail(type + " record without a title or creationDate: " + record);
+        }
+        String prefix = type + "|" + title + "|" + creationDate + "|";
+        List<String> lines = new ArrayList<>();
+        for (Map.Entry<String, String> field : new TreeMap<>(record).entrySet()) {
+            if (!NULL_TOKEN.equals(field.getValue())) {
+                lines.add(prefix + field.getKey() + "=" + field.getValue());
+            }
+        }
+        return lines;
+    }
+
+    /**
+     * Parses a JSON array of flat objects, keeping every value as its JSON literal.
+     *
+     * Hand-written because this is a single-file tool with no dependencies. It accepts exactly
+     * what BackupDataWorker writes (kotlinx.serialization of the Export* data classes): an array
+     * of objects whose values are strings, numbers, booleans or null. A nested object or array
+     * is rejected by name, because it would mean the format grew a shape this comparison has
+     * never been checked against.
+     *
+     * String literals are re-emitted in a normalised escaping, so two encoders that escape the
+     * same character differently still compare equal.
+     *
+     * @param json the decrypted payload of one record type
+     * @return one map per record, field name to JSON literal
+     */
+    static List<Map<String, String>> parseFlatObjectArray(String json) {
+        JsonCursor cursor = new JsonCursor(json);
+        List<Map<String, String>> records = new ArrayList<>();
+        cursor.expect('[');
+        if (cursor.peekSkippingSpace() == ']') {
+            cursor.expect(']');
+            cursor.expectEnd();
+            return records;
+        }
+        while (true) {
+            records.add(cursor.readFlatObject());
+            char next = cursor.nextSkippingSpace();
+            if (next == ']') {
+                break;
+            }
+            if (next != ',') {
+                fail("expected ',' or ']' in record array at offset " + (cursor.position - 1));
+            }
+        }
+        cursor.expectEnd();
+        return records;
+    }
+
+    /** Minimal cursor over a JSON string, sufficient for {@link #parseFlatObjectArray}. */
+    private static final class JsonCursor {
+        private final String text;
+        private int position;
+
+        JsonCursor(String text) {
+            this.text = text;
+        }
+
+        Map<String, String> readFlatObject() {
+            Map<String, String> fields = new TreeMap<>();
+            expect('{');
+            if (peekSkippingSpace() == '}') {
+                expect('}');
+                return fields;
+            }
+            while (true) {
+                skipSpace();
+                String name = readString();
+                expect(':');
+                skipSpace();
+                fields.put(name, readScalar());
+                char next = nextSkippingSpace();
+                if (next == '}') {
+                    return fields;
+                }
+                if (next != ',') {
+                    fail("expected ',' or '}' in record at offset " + (position - 1));
+                }
+            }
+        }
+
+        /** Reads a string, number, boolean or null and returns it as a normalised literal. */
+        private String readScalar() {
+            char c = peek();
+            if (c == '"') {
+                return quote(readString());
+            }
+            if (c == '{' || c == '[') {
+                fail("nested JSON value at offset " + position + "; the backup format has changed shape");
+            }
+            int start = position;
+            while (position < text.length() && ",}] \t\r\n".indexOf(text.charAt(position)) < 0) {
+                position++;
+            }
+            String literal = text.substring(start, position);
+            if (!literal.matches("-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?|true|false|null")) {
+                fail("unexpected JSON literal '" + literal + "' at offset " + start);
+            }
+            return literal;
+        }
+
+        /** Reads a quoted JSON string and returns its decoded value. */
+        private String readString() {
+            expect('"');
+            StringBuilder value = new StringBuilder();
+            while (true) {
+                if (position >= text.length()) {
+                    fail("unterminated JSON string");
+                }
+                char c = text.charAt(position++);
+                if (c == '"') {
+                    return value.toString();
+                }
+                if (c != '\\') {
+                    value.append(c);
+                    continue;
+                }
+                char escape = text.charAt(position++);
+                switch (escape) {
+                    case '"': value.append('"'); break;
+                    case '\\': value.append('\\'); break;
+                    case '/': value.append('/'); break;
+                    case 'b': value.append('\b'); break;
+                    case 'f': value.append('\f'); break;
+                    case 'n': value.append('\n'); break;
+                    case 'r': value.append('\r'); break;
+                    case 't': value.append('\t'); break;
+                    case 'u':
+                        value.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
+                        position += 4;
+                        break;
+                    default: fail("bad escape \\" + escape + " at offset " + (position - 1));
+                }
+            }
+        }
+
+        char nextSkippingSpace() {
+            skipSpace();
+            if (position >= text.length()) {
+                fail("unexpected end of JSON");
+            }
+            return text.charAt(position++);
+        }
+
+        char peekSkippingSpace() {
+            skipSpace();
+            return peek();
+        }
+
+        void expect(char expected) {
+            char actual = nextSkippingSpace();
+            if (actual != expected) {
+                fail("expected '" + expected + "' but found '" + actual + "' at offset " + (position - 1));
+            }
+        }
+
+        void expectEnd() {
+            skipSpace();
+            if (position != text.length()) {
+                fail("trailing content after the record array at offset " + position);
+            }
+        }
+
+        private char peek() {
+            if (position >= text.length()) {
+                fail("unexpected end of JSON");
+            }
+            return text.charAt(position);
+        }
+
+        private void skipSpace() {
+            while (position < text.length() && Character.isWhitespace(text.charAt(position))) {
+                position++;
+            }
+        }
+    }
+
+    /**
+     * Re-encodes a decoded string as a JSON literal with one fixed escaping: quote, backslash and
+     * control characters escaped, everything else (including non-ASCII) kept as-is so the diff
+     * stays readable.
+     */
+    static String quote(String value) {
+        StringBuilder out = new StringBuilder("\"");
+        for (char c : value.toCharArray()) {
+            switch (c) {
+                case '"': out.append("\\\""); break;
+                case '\\': out.append("\\\\"); break;
+                case '\n': out.append("\\n"); break;
+                case '\r': out.append("\\r"); break;
+                case '\t': out.append("\\t"); break;
+                default:
+                    if (c < 0x20) {
+                        out.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        out.append(c);
+                    }
+            }
+        }
+        return out.append('"').toString();
+    }
+
+    /**
+     * Raised for any input the machine-readable modes refuse. {@link #main} turns it into a
+     * message on stderr and exit status 1; unit tests assert on it directly.
+     */
+    static final class BackupFormatException extends RuntimeException {
+        BackupFormatException(String message) {
+            super(message);
+        }
+    }
+
+    private static void fail(String message) {
+        throw new BackupFormatException(message);
     }
 
     /**

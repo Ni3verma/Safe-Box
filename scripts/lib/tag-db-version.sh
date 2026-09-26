@@ -4,10 +4,9 @@
 #
 # Tags follow vMAJOR.MINOR.DBVERSION.FIX (optionally -rcN), and the third component is meant to be
 # the Room schema version of the code being tagged. Nothing in the build reads it - versionName is
-# the tag with the "v" stripped - so a forgotten bump ships silently. It still matters: the upgrade
-# test's `schema-boundary` rule (scripts/resolve-baselines.sh on the harness branch) picks which old
-# releases to migrate from by trusting this component, and a mislabelled release makes it test the
-# wrong migration path.
+# the tag with the "v" stripped - so a forgotten bump ships silently. It still matters: the tag is
+# how people (and release notes) tell which releases carry a migration, and a mislabelled release
+# points anyone reproducing a migration bug at the wrong schema.
 #
 # The version is read from the @Database annotation, not from the highest file in app/schemas/.
 # A 5.json was committed in 331ee64 (January 2026) while the database stayed at 4, and was only

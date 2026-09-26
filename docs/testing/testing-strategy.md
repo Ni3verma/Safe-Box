@@ -9,8 +9,7 @@ What is tested where, and why the boundaries are drawn as they are.
 | Unit | `app/src/test` | JVM | full suite via `:app:testDebugUnitTest` |
 | Instrumentation / E2E | `app/src/androidTest` | `debug` build, device or GMD | ~199 tests, ~29 classes |
 | Migration | `app/src/androidTest/.../MigrationTest.kt` | device, real SQLite | per-step plus a full v1→current chain |
-| Release-build sanity | *not built yet* | `qa` APK, black box | see below |
-| Upgrade | *not built yet* | `qa` → `qa`, black box | [upgrade-testing.md](upgrade-testing.md) |
+| Upgrade and restore | `upgrade-test/` + `scripts/run-*-test.sh` | `qa` APK, black box, emulator | [upgrade-testing.md](upgrade-testing.md); release gate on every tag |
 
 ## Principles
 
@@ -22,11 +21,13 @@ Automator, so black-box tests can drive even the minified QA APK. The downside i
 user-visible copy breaks tests — accept that, because the alternative is polluting production with
 test hooks.
 
-The one exception is a control with **no text or content description of its own** — the settings
-switches and sliders, which sit beside their label. Those carry a `Modifier.testTag` from
-`ui/core/TestTags.kt`, published to UI Automator as a resource id through `testTagsAsResourceId`
-in `debug` and `qa` builds only (never `release`; `TestTagsTest` pins that). Do not tag anything a
-test can already find by text or content description.
+The exceptions carry a `Modifier.testTag` from `ui/core/TestTags.kt`, published to UI Automator as
+a resource id through `testTagsAsResourceId` in `debug` and `qa` builds only (never `release`;
+`TestTagsTest` pins that): a control with **no text or content description of its own** (the
+settings switches and sliders), a control whose label **equals a heading** (the Backup and Restore
+buttons), and **structure** a black-box test must read as a unit (the records list and its rows).
+Do not tag anything a test can already find by text or content description; see
+[ADR-0004](../decisions/0004-verify-upgrade-and-restore-by-decoded-backup.md).
 
 **Randomized data over fixed fixtures, where round-trip fidelity is the property under test.** The
 backup/restore tests generate fresh random records every run so corner cases surface over time.
@@ -46,9 +47,9 @@ These are deliberate, recorded so nobody re-discovers them as "bugs".
 
 | Gap | Why it is open |
 |---|---|
-| The minified `qa` APK is never exercised by an automated UI test | [ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md); black-box suite is the planned fix |
-| No upgrade test across app versions | [ADR-0002](../decisions/0002-upgrade-testing-via-black-box-uiautomator.md) |
-| Keystore alias continuity is untested | only an upgrade test can cover it — see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md) |
+| The minified `qa` APK is exercised only by the upgrade and restore tests, not by a broad UI suite | [ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md); those tests run on release tags and labelled PRs |
+| Upgrades are tested from N-1 only | [ADR-0004](../decisions/0004-verify-upgrade-and-restore-by-decoded-backup.md); older chains are `MigrationTest`'s job |
+| Keystore alias continuity is covered only by the upgrade test | nothing else survives an in-place install — see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md) |
 | Restore does not reject a *newer* `BACKUP_VERSION` | pre-existing on `master`; the real-world case (new backup opened by an already-shipped old app) is unfixable from the current codebase |
 | CameraX `bindToLifecycle` failure path | considered, not prioritised |
 

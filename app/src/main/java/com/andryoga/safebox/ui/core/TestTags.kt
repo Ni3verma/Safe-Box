@@ -1,13 +1,20 @@
 package com.andryoga.safebox.ui.core
 
 /**
- * Stable identifiers for controls that have no text or content description of their own, and
- * the rule that decides which builds expose them to UI Automator.
+ * Stable identifiers for controls that cannot be selected reliably by their own text, and the rule
+ * that decides which builds expose them to UI Automator.
  *
  * Text and content description remain the default selectors (see
- * `docs/testing/testing-strategy.md`). A tag exists only where there is nothing else to select
- * by — a settings `Switch` or `Slider` sits beside its label rather than carrying it, so
- * black-box tests otherwise have to find it by geometry.
+ * `docs/testing/testing-strategy.md`). A tag exists only where text is not enough:
+ * - a settings `Switch` or `Slider` sits beside its label rather than carrying it, so black-box
+ *   tests otherwise have to find it by geometry;
+ * - a records-list row's title and type chip can only be paired with each other, and told apart
+ *   from the filter chips above the list, by their container;
+ * - the Backup & Restore tab's **Backup** and **Restore** buttons carry the same text as the
+ *   section headings above them.
+ *
+ * A tag is not faster to look up than text: UI Automator walks the same tree either way. Do not
+ * add one where a text selector already works.
  *
  * Compose keeps `Modifier.testTag` inside its own semantics tree. UI Automator, which drives the
  * minified QA APK in the upgrade-test harness, sees a tag only when `testTagsAsResourceId` is
@@ -20,6 +27,12 @@ object TestTags {
     const val SETTINGS_AUTO_BACKUP_SWITCH = "settings_auto_backup_switch"
     const val SETTINGS_PASSWORD_AFTER_BIOMETRIC_SLIDER = "settings_password_after_biometric_slider"
     const val SETTINGS_AWAY_TIMEOUT_SLIDER = "settings_away_timeout_slider"
+    const val RECORDS_LIST = "records_list"
+    const val RECORD_ROW = "record_row"
+    const val RECORD_ROW_TITLE = "record_row_title"
+    const val RECORD_ROW_TYPE = "record_row_type"
+    const val BACKUP_BUTTON = "backup_button"
+    const val RESTORE_BUTTON = "restore_button"
 
     /**
      * Build types whose UI exposes test tags as resource ids.

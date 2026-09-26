@@ -41,6 +41,18 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | Coverage (opt-in, slow) | add `-Pcoverage` |
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
+| Build the upgrade/restore harness (assembles only — never runs it) | `:upgrade-test:assembleDebug` |
+| Run the restore test | `./scripts/run-restore-test.sh <qa.apk>` |
+| Run the upgrade test | `./scripts/run-upgrade-test.sh <N-1 qa.apk> <N-1 seed.bak> <qa.apk>` |
+| Every script test (no device) | `rc=0; for t in scripts/tests/*.sh; do bash "$t" \|\| rc=1; done; [ "$rc" = 0 ]` |
+
+Full procedures for the harness, including fetching N-1: [upgrade-harness-operations.md](../../../docs/testing/upgrade-harness-operations.md).
+
+> [!TIP]
+> **Need a `.bak` file (a seed, a repro)? Build `debug`, not QA.** The backup format does not depend
+> on the build type — the export classes are `@Keep @Serializable` and `BACKUP_VERSION` is a
+> constant — and `assembleDebug` is much faster than the minified `assembleQa`. QA is only needed
+> when the *test* must run against R8 output. User instruction, 2026-09-26.
 
 ### Documentation checks
 
@@ -88,6 +100,31 @@ tar xzf lychee.tar.gz && ./lychee-aarch64-apple-darwin/lychee --version
 > override this and there is no `--fail-on-unsupported`. That single case is why the grep exists
 > alongside lychee rather than being deleted with the rest. (Verified 2026-09-21 against v0.24.2.)
 
+## Git hooks
+
+`CICD/cicd.gradle` is orphaned, so the `copyGitHooks` / `installGitHooks` tasks do not exist and
+nothing installs the hook for you:
+
+```bash
+cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+```
+
+The installed copy is a snapshot and drifts silently — it was roughly eight months stale when this
+was found. Check before trusting a green local commit:
+
+```bash
+diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh
+```
+
+> [!WARNING]
+> The hook runs **`git add -u`** during detekt auto-correction. Running `git hook run pre-commit`
+> to try it out while you have unstaged work will therefore stage that work.
+
+Expect `Detekt task is not available in this build` on every commit. That is the orphaned
+`cicd.gradle` again, and the hook continues past it. When a staged file touches the backup format
+(export classes, `CommonConstants.kt`, the lock, seed, fixtures or `InspectBackup.java`), the hook
+also runs `scripts/tests/backup-format-test.sh`.
+
 ## Traps
 
 ### `BUILD SUCCESSFUL` does not mean your tests ran
@@ -131,6 +168,37 @@ parentheses** (`TEST-Pixel_8_API_35(AVD) - 15.xml`), so quote the path. The root
 
 Never report a test run as passing on the strength of the Gradle exit code alone.
 
+#### `am instrument` behaves the same way, and there is a guard for it
+
+Driving instrumentation directly over adb — which the upgrade harness does, because the upgrade
+happens between two on-device runs — has the identical hazard. A method name with a typo produces
+this and exits **0** (verified on a real device, 2026-09-22):
+
+```
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.001
+
+OK (0 tests)
+
+INSTRUMENTATION_CODE: -1
+```
+
+Note `INSTRUMENTATION_CODE: -1` means *success* here — it is an `Activity.RESULT_OK`, not an error.
+
+Do not hand-roll the check. Capture the output and hand it to the shared guard, which also rejects
+crashes, startup failures and unparseable output:
+
+```bash
+adb shell am instrument -w -r -e class '<fqcn>#<method>' <pkg>/<runner> 2>&1 | tee out.txt
+./scripts/lib/instrumentation-guard.sh out.txt 1   # exit 1 unless >= 1 test ran and passed
+```
+
+The guard cannot see a crash in the *app under test*, because that is a different process. That is
+what `scripts/lib/crash-sentinel.sh` is for. Both have device-free suites in `scripts/tests/`. Run
+every suite with the loop in [Commands](#commands): a bare `for` loop exits with the *last* suite's
+status, so a failing suite followed by a passing one reads as green.
+
 ### The emulator runs out of disk and it looks like an app bug
 
 A full instrumentation run consumes roughly **1.2 GB of `/data`**. A default AVD partition survives
@@ -157,6 +225,38 @@ emulator -avd <name> -wipe-data -partition-size 8192
 
 A fresh wipe sits at ~641 MB used.
 
+### Two adb binaries kill each other's server mid-run
+
+On this machine `adb` on `PATH` is `/usr/local/bin/adb` (37.0.0), while Android Studio uses
+`$ANDROID_HOME/platform-tools/adb` (37.0.1). When the two versions differ, whichever client connects
+next kills the running server and starts its own. `am instrument` runs inside an adb shell, so the
+instrumentation dies with it (2026-09-24):
+
+- `$TMPDIR/adb.<uid>.log` showed `adb server killed by remote request`, then a 37.0.1 server
+  starting;
+- the device logcat showed `adbd: host-14: connection terminated`, then
+  `UiAutomation service owner died`;
+- the harness's own output was cut off after `INSTRUMENTATION_STATUS_CODE: 1`.
+
+The instrumentation guard caught it correctly. **Before any long local run while Studio is open,**
+compare `adb version` with `$ANDROID_HOME/platform-tools/adb version`. If they differ, put the SDK
+copy first on `PATH`:
+
+```bash
+PATH="$HOME/Library/Android/sdk/platform-tools:$PATH" ./scripts/run-restore-test.sh ...
+```
+
+The permanent fix is to delete the stale copy or re-link it to the SDK. It is root-owned, so the
+user has to do that.
+
+### `apksigner --print-certs` output differs by build-tools version
+
+36.x prints `Signer #1 certificate SHA-256 digest: …`; 37.0.0 prints
+`V2 Signer: certificate SHA-256 digest: …`, one line per signature scheme. A parser anchored on
+either prefix reads nothing on the other version, so match on `certificate SHA-256 digest:` only,
+as `assert_qa_apk` in `scripts/lib/harness.sh` does. Verified 2026-09-26 on `old-apk/SafeBox-qa.apk`
+(v2.0.4.0) with both versions.
+
 ### Instrumentation tests only run on `debug`
 
 Do not attempt to run the existing suite against the `qa` (minified) build. It fails with a silent
@@ -178,10 +278,11 @@ it means a unit test can pass while doing nothing. Prefer asserting on observabl
 ## Selector strategy for UI tests
 
 Everything is found by text or content description, which is why the existing suite is
-449 × `onNodeWithText` and 101 × `onNodeWithContentDescription`. The only `Modifier.testTag`s are
-on controls with no text of their own (the settings switches and sliders, `ui/core/TestTags.kt`).
-In `debug` and `qa` they are also visible to UI Automator as resource ids (`By.res(tag)`); in
-`release` they are not.
+449 × `onNodeWithText` and 101 × `onNodeWithContentDescription`. `Modifier.testTag`s
+(`ui/core/TestTags.kt`) exist only where a label cannot identify the element: controls with no
+text of their own (settings switches and sliders), buttons whose label equals a heading (Backup,
+Restore) and structure read as a unit (the records list and rows). In `debug` and `qa` they are
+also visible to UI Automator as resource ids (`By.res(tag)`); in `release` they are not.
 
 Useful side effect: those same selectors work from **UI Automator**, so black-box tests can drive
 even the minified QA APK. Verified with:

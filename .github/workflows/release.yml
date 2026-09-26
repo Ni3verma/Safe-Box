@@ -6,11 +6,10 @@ on:
 
 jobs:
   # The tag's DBVERSION must equal the Room schema version being shipped. Nothing in the build reads
-  # that component, so without this a forgotten bump releases silently, and the upgrade test's
-  # schema-boundary rule later picks baselines by a number that is wrong. It needs no toolchain and
-  # runs in seconds; every other job waits on it through `quality`, so a wrong tag fails before
-  # lint, tests, signing or publishing. Fix by deleting the tag and re-tagging - nothing will have
-  # been released.
+  # that component, so without this a forgotten bump releases silently and the tag misstates which
+  # schema the release carries. It needs no toolchain and runs in seconds; every other job waits on
+  # it through `quality`, so a wrong tag fails before lint, tests, signing or publishing. Fix by
+  # deleting the tag and re-tagging - nothing will have been released.
   tag_db_version:
     runs-on: ubuntu-latest
     permissions:
@@ -195,10 +194,25 @@ jobs:
       - name: upload QA symbols file to crashlytics
         run: ./gradlew uploadCrashlyticsSymbolFileQa
 
+  # Upgrade (N-1 -> this tag) and restore (every backup format) on the QA APK qa_pipeline just
+  # built - the file that is about to be published, not a rebuild. Publishing waits for it, on RC
+  # and stable tags alike. Called rather than triggered: a release created with GITHUB_TOKEN never
+  # starts other workflows. See docs/testing/upgrade-testing.md.
+  upgrade_test:
+    needs:
+      - qa_pipeline
+    permissions:
+      contents: read
+    uses: ./.github/workflows/upgrade-test.yml
+    with:
+      qa_apk_artifact: QA APK
+    secrets: inherit
+
   release_on_github:
     needs:
       - qa_pipeline
       - release_pipeline
+      - upgrade_test
     runs-on: ubuntu-latest
     permissions:
       contents: write

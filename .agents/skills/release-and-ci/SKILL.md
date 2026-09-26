@@ -12,21 +12,29 @@ description: How Safe-Box is versioned, signed, built and released through GitHu
 | `ci.yml` | push / PR | lint, unit tests, build |
 | `nightly.yml` | 02:00 UTC daily + manual | `pixel8Api34DebugAndroidTest` across **3 shards** |
 | `release.yml` | push of a `v*` tag | the full release pipeline (below) |
+| `upgrade-test.yml` | called by `release.yml`; PR label `run-upgrade-test`; manual | upgrade (N-1 → N) and restore tests on two emulators |
 | `run-ui-test.yml` | manual / reusable | on-demand UI test run |
 | `gemini-pr-review.yml` | PR | automated bot review |
 
 ## `release.yml` job graph
 
 ```
-quality ──┬─ debug_pipeline    → SafeBox-debug.apk (artifact, 7d)
-          ├─ release_pipeline  → app-release.aab + Crashlytics symbols
-          └─ qa_pipeline       → SafeBox-qa.apk + mapping.txt
-                    │
-                    └─ release_on_github → GitHub Release with both binaries attached
+tag_db_version → quality ──┬─ debug_pipeline    → SafeBox-debug.apk (artifact, 7d)
+                           ├─ release_pipeline  → app-release.aab + Crashlytics symbols
+                           └─ qa_pipeline       → SafeBox-qa.apk + mapping.txt
+                                     │
+                                     ├─ upgrade_test      → upgrade-test.yml on that exact APK
+                                     │
+                                     └─ release_on_github → needs qa, release and upgrade_test
 ```
 
 `quality` runs lint, unit tests, `pixel8Api34DebugAndroidTest`, and an **NDK gatekeeper** that
 fails the build if the runner lacks the exact `ndkVersion` from `app/build.gradle`.
+
+**A failing `upgrade_test` blocks the release**, RC or stable; one re-run is allowed for a suspected
+flake. It is a `workflow_call` rather than an `on: release` trigger because a release created with
+`GITHUB_TOKEN` never triggers other workflows. N-1 excludes the tag under test (and, for an RC, the
+stable version it previews), so a re-run after publishing picks the same N-1.
 
 ## Versioning
 
@@ -57,6 +65,28 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
   - `ci.yml` runs `scripts/tests/tag-db-version-test.sh` on every PR, including a case that parses
     the real source, so replacing the literal with a constant fails in that PR, not at release.
 
+> [!WARNING]
+> `GITHUB_RUN_NUMBER` counts runs of **one workflow**, not of the repository. A workflow added by a
+> pull request starts at 1, so its builds get `versionCode` 16 while released builds are in the
+> twenties. Anything that installs a freshly built APK over a released one has to override it —
+> which is why `upgrade-test.yml` rebuilds with `GITHUB_RUN_NUMBER=9999984` on PR and manual runs.
+>
+> **`env:` cannot do it.** It is a default variable, and the docs say "if you attempt to override
+> the value of one of these default variables, the assignment is ignored" — silently. Observed
+> twice on 2026-09-22: a build came out as versionCode 16, and after adding
+> `env: GITHUB_RUN_NUMBER: 9999984` as 17, the value simply tracking the run number. Assign it on
+> the command instead, where it is an ordinary child-process variable:
+>
+> ```yaml
+> run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa
+> ```
+>
+> When checking such an override locally, pick a value that is **not** the fallback. `9999984`
+> produces `versionCode` 9999999 — which is exactly what setting nothing produces, so a green
+> result proves nothing about whether the variable arrived. Use a distinguishable one:
+> `GITHUB_RUN_NUMBER=5000 ./gradlew :app:help -q` printing `Building SafeBox: LOCAL-build (5015)`
+> does prove it, including that the value survives the Gradle daemon. Verified 2026-09-22.
+
 ## Signing
 
 | Build type | Properties file | In CI as |
@@ -64,11 +94,16 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
 | `release` | `releaseKeyStore.properties` + `app/releaseKeyStore.jks` | `RELEASE_KEYSTORE_PROPERTIES`, `BASE_64_RELEASE_KEYSTORE` (GPG, `GPG_PASSPHRASE`) |
 | `qa` | `nonProdReleaseKeyStore.properties` | committed config, stable key |
 
-Neither keystore is committed. `google-services.json` is also GPG-encrypted in CI.
+Both keystores and their properties files (`app/releaseKeyStore.jks`, `app/nonProdReleaseKeyStore.jks`,
+`releaseKeyStore.properties`, `nonProdReleaseKeyStore.properties`) are committed **on purpose as
+dummies** so local builds sign; do not flag them as leaked secrets. The real release key reaches CI
+only through the secrets above (owner confirmed 2026-09-26; `git ls-files | grep -i keystore`).
+`google-services.json` is also GPG-encrypted in CI.
 
-The QA certificate has been **stable since at least `v2.0.4.0`**:
+The QA certificate has been **stable since at least `v1.4.4.0`**:
 SHA-256 `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`.
-That stability is what makes APK-over-APK upgrade testing possible.
+That stability is what makes APK-over-APK upgrade testing possible. It is pinned as
+`QA_CERT_SHA256` in `scripts/lib/harness.sh`, and both runners reject an APK signed otherwise.
 
 ## Artifact naming
 
@@ -89,8 +124,13 @@ existed** carries:
 
 This is a **permanent, addressable archive of every shipped QA build** from `v1.3.3.0` onwards. Of
 18 releases, 15 carry a QA APK; the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`) predate the
-upload step, so the oldest usable baseline is `v1.3.3.0`. Resolve a baseline against that floor
-rather than assuming any tag will do.
+upload step, so the oldest *archived* APK is `v1.3.3.0`. Two other facts are easy to confuse with it:
+
+- the upgrade test only ever upgrades from **N-1**, the newest stable release older than the tag
+  under test (`scripts/lib/previous-release.sh`); a release that disappears from the archive
+  silently moves N-1 back, so keep attaching `SafeBox-qa.apk` to every release;
+- the oldest release that can **write a backup** is **`v1.4.4.0`**; backup/restore arrived in #111,
+  and `v1.3.3.0` has no such feature (verified 2026-09-25 with `git grep -il backup v1.3.3.0`).
 
 ## GitHub tooling
 
@@ -107,6 +147,17 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+### A new `workflow_dispatch` workflow cannot be run before it merges
+
+GitHub resolves workflows from the **default branch**. A workflow file that exists only on a feature
+branch has no "Run workflow" button, is absent from `gh workflow list`, and `gh workflow run --ref
+<branch>` cannot find it. Verified 2026-09-22 with `gh workflow list --all`.
+
+The way out is a trigger that resolves from the PR: `pull_request` runs the workflow file from the
+PR's **merge commit** (`refs/pull/N/merge`). So what runs is the merged result, and **a PR with a
+merge conflict fires no `pull_request` run at all**. `upgrade-test.yml` gates it on the
+`run-upgrade-test` label so ordinary pushes cost nothing; remove and re-add the label to run again.
+
 ### Current authentication state
 
 Verified 2026-09-21. `gh` **is** authenticated on this machine with a fine-grained token scoped to
@@ -122,7 +173,13 @@ checks consistently, and a `403` can come from repository rules rather than the 
 |---|---|---|
 | Reads (PRs, releases, runs, checks) | read | every read command works |
 | `Contents` | read | `PUT` via the contents API returned `403` |
-| `Issues` | **read + write**, granted deliberately so the agent can file issues | none — creating an issue is the only conclusive test and must not be run just to check a permission |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | writing to an *issue* is untested — creating one just to check is not worth it — but **labels on a pull request are refused**, see below |
+
+> [!IMPORTANT]
+> **Labels cannot be changed from here.** `DELETE /repos/Ni3verma/Safe-Box/issues/259/labels/run-upgrade-test`
+> returned `403 Resource not accessible by personal access token` (2026-09-22). The label existed
+> and was applied, so it is a permission result, not a 404 in disguise. Re-running the upgrade test
+> on a PR (remove and re-add the label) has to be done by a human in the UI. Ask; do not retry.
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from

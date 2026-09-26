@@ -1,5 +1,6 @@
 *.iml
 .gradle
+.kotlin
 /local.properties
 .DS_Store
 /build
@@ -10,3 +11,8 @@
 app/releaseKeyStore.jks
 *.apk
 /.idea/
+# Where scripts/run-upgrade-test.sh and run-restore-test.sh drop logcat, instrumentation output and
+# pulled backups.
+/upgrade-test-out/
+# N-1's APK and seed, from scripts/resolve-previous-release.sh and fetch-baseline-apk.sh.
+/previous/

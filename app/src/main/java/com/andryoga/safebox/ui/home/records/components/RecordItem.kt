@@ -20,12 +20,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.ui.core.TestTags
 import com.andryoga.safebox.ui.previewHelper.getAuthenticatorRecordItem
 import com.andryoga.safebox.ui.previewHelper.getBankAccountRecordItem
 import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
@@ -50,6 +52,7 @@ fun RecordItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag(TestTags.RECORD_ROW)
             .clickable(
                 onClickLabel = "View details for ${item.title}",
                 onClick = { onRecordClick(item.id, item.recordType) }
@@ -87,6 +90,7 @@ fun RecordItem(
                     color = MaterialTheme.colorScheme.primary,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
+                    modifier = Modifier.testTag(TestTags.RECORD_ROW_TITLE),
                 )
                 // authenticator rows have no static subtitle, so the live code takes that slot.
                 if (item.totpConfig != null) {
@@ -110,6 +114,7 @@ fun RecordItem(
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
+                    .testTag(TestTags.RECORD_ROW_TYPE)
                     .padding(top = 4.dp, start = 30.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primary.copy(0.3f),

@@ -10,10 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
+import com.andryoga.safebox.ui.core.TestTags
 
 
 @Composable
@@ -45,6 +47,7 @@ fun RestoreView(
                     onClick = launchRestoreFilePicker,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
+                        .testTag(TestTags.RESTORE_BUTTON),
                 ) {
                     Text(text = stringResource(R.string.restore))
                 }

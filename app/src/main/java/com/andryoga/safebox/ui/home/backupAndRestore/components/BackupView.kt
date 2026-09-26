@@ -24,11 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
+import com.andryoga.safebox.ui.core.TestTags
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupPathNotSet
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupPathSet
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupState
@@ -183,7 +185,8 @@ private fun BackupPathSet(
                     Text(text = stringResource(R.string.backup_edit_path))
                 }
                 Button(
-                    onClick = { onScreenAction(ScreenAction.NewBackupClick) }
+                    onClick = { onScreenAction(ScreenAction.NewBackupClick) },
+                    modifier = Modifier.testTag(TestTags.BACKUP_BUTTON),
                 ) {
                     Text(text = stringResource(R.string.backup))
                 }

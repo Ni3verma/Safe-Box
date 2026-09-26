@@ -1,0 +1,54 @@
+/**
+ * Black-box upgrade and restore test harness.
+ *
+ * This is a `com.android.test` module rather than an extra source set on `:app` for two reasons,
+ * both explained in docs/decisions/0002-upgrade-testing-via-black-box-uiautomator.md:
+ *
+ * 1. UI Automator only exists on the device, so driving the app requires a real instrumentation
+ *    APK, which only a Gradle module can produce.
+ * 2. `:app`'s androidTest source set is bound to Hilt and is minified alongside the app, which is
+ *    exactly why it cannot run against the `qa` build (ADR-0001). This module has no compile
+ *    dependency on `:app` at all, so R8 can never break it.
+ *
+ * Note this module is never driven by Gradle at run time. Gradle only assembles the APK;
+ * scripts/run-upgrade-test.sh and scripts/run-restore-test.sh install it and invoke one test
+ * method per `am instrument` call, because the upgrade under test happens *between* two
+ * instrumentation runs, and each backup taken on the device is compared on the host.
+ */
+plugins {
+    alias(libs.plugins.android.test)
+}
+
+android {
+    namespace 'com.andryoga.safebox.upgradetest'
+    compileSdk = 37
+
+    /**
+     * Required by the plugin, but deliberately inert: `self-instrumenting` below makes the test
+     * process target itself, so the app APK is neither built nor installed by Gradle. The harness
+     * installs the baseline and the build under test itself, over adb.
+     */
+    targetProjectPath = ':app'
+    experimentalProperties["android.experimental.self-instrumenting"] = true
+
+    defaultConfig {
+        minSdk 24
+        targetSdk 37
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        jvmToolchain(17)
+    }
+}
+
+dependencies {
+    implementation libs.androidx.test.uiautomator
+    implementation libs.androidx.test.ext.junit
+    implementation libs.androidx.test.runner
+}
