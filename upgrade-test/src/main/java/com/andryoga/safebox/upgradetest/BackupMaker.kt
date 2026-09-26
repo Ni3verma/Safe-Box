@@ -28,7 +28,7 @@ internal class BackupMaker(private val ui: UiSupport, private val app: AppString
     fun backUp(password: String) {
         logStep("back up through the Backup & Restore tab")
         ui.clickText(app.label(BACKUP_TAB))
-        ui.scrollTo(By.res(BACKUP_BUTTON_TAG)).click()
+        ui.retryingOnStale { ui.scrollTo(By.res(BACKUP_BUTTON_TAG)).click() }
 
         ui.awaitText(app.label(BACKUP_PROMPT))
         ui.typeInto(app.label(PASSWORD_LABEL), password)

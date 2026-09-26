@@ -60,7 +60,8 @@ if [ "$new_code" -le "$previous_code" ]; then
     echo "error: N ($new_code) does not supersede N-1 ($previous_code); an upgrade needs a higher versionCode." >&2
     exit 1
 fi
-seed_password=$(password_for_format "$(inspect_backup --header "$seed")")
+seed_version=$(inspect_backup --header "$seed")
+seed_password=$(password_for_format "$seed_version")
 if ! rows=$(expected_rows_argument "$seed" "$seed_password"); then
     echo "error: $seed does not decode with its format's password." >&2
     exit 1

@@ -165,7 +165,7 @@ internal class SafeBoxApp {
     private fun openRestoreFromBackupTab(fileName: String, password: String) {
         logStep("restore '$fileName' from the Backup & Restore tab")
         ui.clickText(app.label(BACKUP_TAB))
-        ui.scrollTo(By.res(RESTORE_BUTTON_TAG)).click()
+        ui.retryingOnStale { ui.scrollTo(By.res(RESTORE_BUTTON_TAG)).click() }
         pickAndConfirm(fileName, password)
     }
 

@@ -81,7 +81,7 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
             logStep("tree picker is below the root; tapping the root breadcrumb")
             ui.clickObject(By.res(BREADCRUMB_TEXT_ID))
         }
-        ui.scrollTo(By.text(folderName), ROOT_LISTING_SWIPES).click()
+        ui.retryingOnStale { ui.scrollTo(By.text(folderName), ROOT_LISTING_SWIPES).click() }
 
         ui.clickObject(By.text(USE_FOLDER_BUTTON))
         ui.clickObject(By.text(ALLOW_BUTTON))
