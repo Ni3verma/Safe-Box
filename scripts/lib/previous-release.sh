@@ -65,7 +65,9 @@ previous_seed() {
     fi
     local fixture
     case "$tag" in
-        v2.0.4.0) fixture="upgrade-test/fixtures/format-2.bak" ;;
+        # Both predate the seed and write format 2. v2.1.4.0 is the v2.1.4.0-rc3 commit, which is
+        # where format-2.bak was captured.
+        v2.0.4.0 | v2.1.4.0) fixture="upgrade-test/fixtures/format-2.bak" ;;
         *)
             echo "error: $tag has no $SEED_PATH and no fallback row in scripts/lib/previous-release.sh." >&2
             echo "       Add a row naming the upgrade-test/fixtures/format-<k>.bak that $tag writes." >&2

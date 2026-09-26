@@ -85,6 +85,8 @@ expect_seed() {
 if git rev-parse -q --verify "refs/tags/v2.0.4.0" > /dev/null; then
     expect_seed "v2.0.4.0 predates the seed and falls back to format-2" "v2.0.4.0" \
         "upgrade-test/fixtures/format-2.bak"
+    expect_seed "v2.1.4.0 (the rc3 commit) predates the seed and falls back to format-2" "v2.1.4.0" \
+        "upgrade-test/fixtures/format-2.bak"
     expect_seed "a release with neither a seed nor a row is an error" "v1.7.4.2" "error"
 else
     echo "FAIL  release tags are missing locally; run: git fetch --tags"

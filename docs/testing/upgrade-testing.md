@@ -40,7 +40,7 @@ list shows every record, each type opens, search finds it.
 
 ```mermaid
 flowchart LR
-    PR["Every PR"] --> CHK["Backup-format checks 1-4 (§4)<br/>seconds, no emulator"]
+    PR["Every PR"] --> CHK["Backup-format checks 1-3 (§4)<br/>seconds, no emulator"]
     LBL["PR labelled run-upgrade-test"] --> B["Build N (QA) + harness"]
     MAN["Manual run"] --> B
     REL["release.yml on v* tag<br/>(RC and stable)"] --> QA["qa_pipeline's SafeBox-qa.apk = N"]
@@ -104,8 +104,8 @@ flowchart TD
 `SafeBox-qa.apk` ([`scripts/lib/previous-release.sh`](../../scripts/lib/previous-release.sh)).
 Prereleases are never N-1: Play serves only stable builds. Its **seed** is
 `git show <N-1 tag>:upgrade-test/seed/seed.bak`, so the git tag is the mapping. Releases cut before
-the seed existed have a fallback row naming the fixture in their format (today only
-`v2.0.4.0 → format-2.bak`).
+the seed existed have a fallback row naming the fixture in their format: `v2.0.4.0` and `v2.1.4.0`
+(the `v2.1.4.0-rc3` commit, where `format-2.bak` was captured) both map to `format-2.bak`.
 
 | Tag under test | N-1 | Seed |
 |---|---|---|
@@ -250,6 +250,10 @@ Measured locally on an API 35 arm64 emulator, three consecutive green runs each,
 |---|---|---|
 | `run-restore-test.sh` | 151–152 s | setup 8 s; each restore with screen checks 25–30 s; refusals 13 s |
 | `run-upgrade-test.sh` (v2.0.4.0 → N) | 39–43 s | prepare on N-1 12 s; verify on N 23 s |
+| `run-upgrade-test.sh` (v2.1.4.0-rc3 → N, the code of v2.1.4.0) | 43 s (one run) | prepare on N-1 14 s; verify on N 22 s |
+
+On CI (API 34 x86_64, both jobs green in runs 36256396641 and 36258831395) each restore phase takes
+30–36 s.
 
 ## 9. Risks, limits and follow-ups
 
@@ -267,5 +271,5 @@ this design:
 
 | What | Trigger | Done when |
 |---|---|---|
-| `v2.0.4.0 → format-2.bak` fallback row | A stable release containing `upgrade-test/seed/` becomes N-1 | The fallback `case` is gone; the test covers only `git show` |
+| `v2.0.4.0` / `v2.1.4.0 → format-2.bak` fallback rows | A stable release containing `upgrade-test/seed/` becomes N-1 | The fallback `case` is gone; the test covers only `git show` |
 | Settings matched by geometry (`UiSupport.switchBeside`) | A stable release containing the settings tags becomes N-1 | `SettingsChanger` uses `By.res(tag)`; `switchBeside` deleted; ADR-0003 updated |
