@@ -217,7 +217,10 @@ internal class SafeBoxApp {
             context.startActivity(intent)
             val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else UiSupport.FIND_TIMEOUT_MS
             if (ui.findOrNull(By.text(expectedHeading), timeout) != null) return
-            logStep("'$expectedHeading' not shown after ${timeout}ms; pressing back")
+            logStep(
+                "'$expectedHeading' not shown after ${timeout}ms, foreground " +
+                    "'${device.currentPackageName}'; pressing back",
+            )
             device.pressBack()
         }
         error(

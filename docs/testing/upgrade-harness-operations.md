@@ -182,8 +182,15 @@ change with it.
 > so the app stops being the foreground package while running perfectly. `SafeBoxApp` waits on the
 > expected screen's text and, on timeout, presses back to dismiss the prompt; the app falls back to
 > the password field. Back can also send the task home on gesture navigation, so each of the three
-> attempts re-issues the launch intent. CI has no biometric enrolled: these flakes reproduce **only
-> locally**. Do not delete the recovery path because CI is green.
+> attempts re-issues the launch intent. Do not delete the recovery path because CI is green.
+
+Two causes seen so far. The step log's retry line names the foreground package, which tells them
+apart:
+
+| Foreground | Cause | Where |
+|---|---|---|
+| SystemUI or the launcher | the biometric sheet above (no biometric is enrolled on CI) | local only |
+| `com.andryoga.safebox.qa` | UI Automator cannot read the app's window on the first launch after instrumentation starts (`UiDevice: Active window root not found`, `AccessibilityManagerService: wait for adding window timeout`). Cache flushes do not help; a relaunch does | CI, run 36256396641, v2.0.4.0 prepare phase, 2026-09-26: costs one 30 s attempt |
 
 ## The document pickers
 
