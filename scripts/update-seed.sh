@@ -57,7 +57,7 @@ if [ -s "$SEED_FILE" ]; then
         old_from=$(sed -n 's/^- Captured from: //p' "$SEED_README")
         old_on=$(sed -n 's/^- Captured on: //p' "$SEED_README")
         row="| \`format-$old_version.bak\` | $old_from | $old_on | \`$FIXED_BACKUP_PASSWORD\` |"
-        awk -v row="$row" '/^<!-- provenance rows end -->$/ { print row } { print }' \
+        row="$row" awk '/^<!-- provenance rows end -->$/ { print ENVIRON["row"] } { print }' \
             "$FIXTURES_README" > "$FIXTURES_README.tmp"
         mv "$FIXTURES_README.tmp" "$FIXTURES_README"
         echo "archived the format-$old_version seed as $archive"
