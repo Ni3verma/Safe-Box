@@ -80,7 +80,11 @@ Each phase prints its duration; use those, not guesses, when making a step faste
 
 - **Release:** automatic on every `v*` tag, gating `release_on_github`. One re-run is allowed for a
   suspected flake; a second failure is a real failure.
-- **Pull request:** add the label **`run-upgrade-test`**. Removing and re-adding it runs again.
+- **Pull request:** add the label **`run-upgrade-test`**. Removing and re-adding it runs again; a
+  push does not. **Any other label** also starts a run (GitHub cannot filter `labeled` by name), whose
+  jobs are skipped; the PR page then shows the checks as *skipped* in place of the earlier green run,
+  which still exists in the Actions tab. Skipped does not block a merge. Re-add the label to show a
+  fresh result (PR #269, runs 36262442414 and 36263548445, 2026-09-26).
 - **Manual:** dispatch **Upgrade & Restore Test** (only once the workflow is on `master`: GitHub
   offers dispatch only for workflows on the default branch).
 
