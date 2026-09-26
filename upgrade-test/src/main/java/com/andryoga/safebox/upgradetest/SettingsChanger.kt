@@ -38,6 +38,7 @@ internal class SettingsChanger(private val ui: UiSupport, private val app: AppSt
         val stillOn = OFF_AFTER_SETUP.filter { name ->
             ui.retryingOnStale { ui.switchBeside(app.label(name)).isChecked }
         }
+        logStep("settings still on after the upgrade: $stillOn")
         check(stillOn.isEmpty()) {
             "settings turned off before the upgrade are on again after it, so the preference " +
                 "store was reset or misread: $stillOn${ui.describeScreen()}"
@@ -56,6 +57,7 @@ internal class SettingsChanger(private val ui: UiSupport, private val app: AppSt
      * @param label the settings row's visible title, as this build renders it
      */
     private fun turnOff(resourceName: String, label: String) {
+        logStep("turn off setting '$resourceName'")
         ui.retryingOnStale {
             val switch = ui.switchBeside(label)
             check(switch.isChecked) {

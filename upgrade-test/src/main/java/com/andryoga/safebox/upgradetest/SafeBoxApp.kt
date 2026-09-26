@@ -32,12 +32,15 @@ internal class SafeBoxApp {
      * @param name argument name, passed by the host as `-e <name> <value>`
      * @return the argument's value
      */
-    fun argument(name: String): String =
-        InstrumentationRegistry.getArguments().getString(name)
+    fun argument(name: String): String {
+        val value = InstrumentationRegistry.getArguments().getString(name)
             ?: error(
                 "missing instrumentation argument '$name'. The scripts/run-*-test.sh runners " +
                     "pass it; a hand-run invocation needs -e $name <value>",
             )
+        logStep("argument $name=${value.take(LOGGED_ARGUMENT_CHARS)}")
+        return value
+    }
 
     /**
      * Starts the app and waits for the sign-up screen.
@@ -54,6 +57,7 @@ internal class SafeBoxApp {
 
     /** Signs up with [FIXED_PASSWORD] and [PASSWORD_HINT] and waits for the sign-up screen to go. */
     fun signUp() {
+        logStep("sign up")
         val signUpButton = app.label(SIGNUP_BUTTON)
         ui.typeInto(app.formLabel(SIGNUP_PASSWORD_LABEL, isMandatory = true), FIXED_PASSWORD)
         ui.typeInto(app.formLabel(SIGNUP_HINT_LABEL, isMandatory = true), PASSWORD_HINT)
@@ -79,6 +83,7 @@ internal class SafeBoxApp {
      * @param backupDir the directory's name at the root of shared storage
      */
     fun setBackupLocation(backupDir: String) {
+        logStep("set backup folder '$backupDir'")
         ui.clickText(app.label(BACKUP_TAB))
         ui.clickText(app.label(SET_LOCATION_BUTTON))
         SafDocumentPicker(ui).selectFolder(backupDir)
@@ -108,6 +113,7 @@ internal class SafeBoxApp {
      * @param password the password the backup was made under
      */
     fun restoreIntoEmptyVault(fileName: String, password: String) {
+        logStep("restore '$fileName' into the empty vault")
         ui.clickText(app.label(RECORDS_TAB))
         ui.clickText(app.label(RESTORE_DATA_BUTTON))
         pickAndConfirm(fileName, password)
@@ -157,6 +163,7 @@ internal class SafeBoxApp {
     }
 
     private fun openRestoreFromBackupTab(fileName: String, password: String) {
+        logStep("restore '$fileName' from the Backup & Restore tab")
         ui.clickText(app.label(BACKUP_TAB))
         ui.scrollTo(By.res(RESTORE_BUTTON_TAG)).click()
         pickAndConfirm(fileName, password)
@@ -176,7 +183,9 @@ internal class SafeBoxApp {
      * it is allowed far longer than an ordinary UI transition.
      */
     private fun awaitRestoreResult(messageResource: String, dismissResource: String) {
+        logStep("waiting for restore outcome '$messageResource'")
         ui.awaitText(app.label(messageResource), RESTORE_TIMEOUT_MS)
+        logStep("restore outcome shown: '$messageResource'")
         ui.clickText(app.label(dismissResource))
     }
 
@@ -204,9 +213,11 @@ internal class SafeBoxApp {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         repeat(LAUNCH_ATTEMPTS) { attempt ->
+            logStep("launch $APP_PACKAGE, attempt ${attempt + 1}, expecting '$expectedHeading'")
             context.startActivity(intent)
             val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else UiSupport.FIND_TIMEOUT_MS
             if (ui.findOrNull(By.text(expectedHeading), timeout) != null) return
+            logStep("'$expectedHeading' not shown after ${timeout}ms; pressing back")
             device.pressBack()
         }
         error(
@@ -275,5 +286,8 @@ internal class SafeBoxApp {
         // Enough for the one recoverable cause seen so far (a system prompt stealing the window,
         // plus the back press that dismisses it landing on the launcher).
         private const val LAUNCH_ATTEMPTS = 3
+
+        // expectedRows is kilobytes of base64; the start is enough to tell which file it was.
+        private const val LOGGED_ARGUMENT_CHARS = 60
     }
 }

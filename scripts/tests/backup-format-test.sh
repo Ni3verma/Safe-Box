@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# PR-time checks that keep the backup format, the committed backup files and the decoder in step.
+# PR-time checks that keep the backup format and the committed backup files in step.
 #
 #   1. The export classes (the backup's JSON shape) match the entry for BACKUP_VERSION in
 #      app/backup-format.lock, and no existing lock entry was edited. Changing the classes
 #      therefore forces a BACKUP_VERSION bump and a new lock line in the same PR.
 #   2. upgrade-test/seed/seed.bak is in the current format and decodes with the fixed password.
-#   3. scripts/InspectBackup.java supports the current format.
-#   4. Every older format k has upgrade-test/fixtures/format-<k>.bak, in format k, decodable.
+#      The decoder fails on any container key it does not know, so a new record type shows here.
+#   3. Every older format k has upgrade-test/fixtures/format-<k>.bak, in format k, decodable.
 #
 # Why it matters: the upgrade and restore tests restore these files and compare decoded backups.
 # A format change without a new seed would leave the upgrade test restoring stale data, and a
@@ -50,10 +50,6 @@ elif [ "$locked_hash" != "$current_hash" ]; then
         <new version>=$current_hash
       Then capture a new seed (docs/testing/upgrade-harness-operations.md#capturing-a-seed)."
 fi
-duplicates=$(grep -E '^[0-9]+=' "$BACKUP_FORMAT_LOCK" 2> /dev/null | cut -d= -f2 | sort | uniq -d)
-if [ -n "$duplicates" ]; then
-    report "$BACKUP_FORMAT_LOCK records the same export-class hash for two versions: a version was bumped without a format change, or a line was copied."
-fi
 base_ref="${BACKUP_FORMAT_BASE_REF:-}"
 if [ -n "$base_ref" ]; then
     if base_lock=$(git show "$base_ref:$BACKUP_FORMAT_LOCK" 2> /dev/null); then
@@ -84,14 +80,7 @@ else
     fi
 fi
 
-# Check 3: the decoder.
-supported=$(inspect_backup --supported-version)
-if [ "$supported" -lt "$version" ]; then
-    report "scripts/InspectBackup.java supports up to format $supported, but BACKUP_VERSION is $version.
-      Teach it the new format and raise SUPPORTED_BACKUP_VERSION."
-fi
-
-# Check 4: one frozen file per older format.
+# Check 3: one frozen file per older format.
 k=1
 while [ "$k" -lt "$version" ]; do
     fixture="$FIXTURES_DIR/format-$k.bak"

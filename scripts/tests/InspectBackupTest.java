@@ -4,7 +4,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Unit tests for the canonical dump and the row lines in scripts/InspectBackup.java.
+ * Unit tests for the canonical dump, the row lines and the container-key rule in
+ * scripts/InspectBackup.java.
  *
  * The upgrade and restore tests pass or fail on a diff of two canonical dumps, so the
  * normalisation rules inside it decide what counts as data loss, and the row lines decide which
@@ -28,6 +29,7 @@ public class InspectBackupTest {
         trailingContentIsRejected();
         rowLineDecodesTheTitle();
         rowLineRejectsTabInTitle();
+        unknownContainerKeyIsRejected();
         if (failures > 0) {
             System.err.println(failures + " assertion(s) failed");
             System.exit(1);
@@ -103,6 +105,25 @@ public class InspectBackupTest {
             System.err.println("FAIL tab in title: expected BackupFormatException");
         } catch (InspectBackup.BackupFormatException expected) {
             // The rule held.
+        }
+    }
+
+    /** A record type added to the app but not to DATA_KEYS must fail, not be skipped silently. */
+    private static void unknownContainerKeyIsRejected() {
+        Map<String, byte[]> container = new TreeMap<>();
+        container.put("0", new byte[] {3});
+        container.put("1", new byte[16]);
+        container.put("2", new byte[16]);
+        container.put("9", new byte[16]);
+        try {
+            InspectBackup.decodeRecords(container, "unused".toCharArray());
+            failures++;
+            System.err.println("FAIL unknown key: expected BackupFormatException");
+        } catch (InspectBackup.BackupFormatException expected) {
+            // The rule held.
+        } catch (Exception unexpected) {
+            failures++;
+            System.err.println("FAIL unknown key: " + unexpected);
         }
     }
 

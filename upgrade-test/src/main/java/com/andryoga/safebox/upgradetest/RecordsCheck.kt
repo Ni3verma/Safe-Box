@@ -57,6 +57,7 @@ internal class RecordsCheck(
      * five of seven records).
      */
     private fun assertRowsMatch() {
+        logStep("records check: expecting ${expected.size} rows")
         var seen = emptySet<Row>()
         ui.awaitCondition(
             timeoutMs = ROWS_TIMEOUT_MS,
@@ -66,6 +67,8 @@ internal class RecordsCheck(
             },
         ) {
             seen = walkRows()
+            logStep("walked the list: ${seen.size} rows, ${(expected - seen).size} missing, " +
+                "${(seen - expected).size} unexpected")
             seen == expected
         }
     }
@@ -118,6 +121,7 @@ internal class RecordsCheck(
      * @param row the record to open
      */
     private fun openAndClose(row: Row) {
+        logStep("open '${row.title}' (${row.type}) through search")
         search(row.title)
         ui.awaitCondition(
             timeoutMs = UiSupport.FIND_TIMEOUT_MS,

@@ -79,9 +79,9 @@ flowchart TD
     H -->|no| F1(["FAIL: bump BACKUP_VERSION,<br/>append a lock line"])
     H -->|yes| SV{"2. seed.bak header version<br/>== BACKUP_VERSION?"}
     SV -->|no| F2(["FAIL: capture a new seed"])
-    SV -->|yes| DS{"3. InspectBackup supports<br/>BACKUP_VERSION?"}
-    DS -->|no| F3(["FAIL: teach the decoder"])
-    DS -->|yes| C4{"4. format-k.bak exists and decodes<br/>for every k < BACKUP_VERSION?"}
+    SV -->|yes| DS{"2b. seed.bak decodes with the fixed password,<br/>every container key known?"}
+    DS -->|no| F3(["FAIL: fix the seed or<br/>add the key to InspectBackup"])
+    DS -->|yes| C4{"3. format-k.bak exists and decodes<br/>for every k < BACKUP_VERSION?"}
     C4 -->|no| F4(["FAIL: update-seed.sh archives it"])
     C4 -->|yes| OK([PASS])
 ```
@@ -89,9 +89,9 @@ flowchart TD
 - "Normalised" strips comments, blank lines, imports and whitespace, so rewording a comment never
   forces a bump. The lock is **append-only**; CI compares it with the PR's base.
 - Adding a field to an export class therefore lands, in one PR, with: the `BACKUP_VERSION` bump, a
-  lock line, a new seed captured on that PR's build, the outgoing seed archived as
-  `format-<k>.bak` by [`scripts/update-seed.sh`](../../scripts/update-seed.sh), and a decoder that
-  reads it.
+  lock line, a new seed captured on that PR's build, and the outgoing seed archived as
+  `format-<k>.bak` by [`scripts/update-seed.sh`](../../scripts/update-seed.sh). A new record type
+  also needs its key in `InspectBackup`'s `DATA_KEYS`.
 - **Required status check:** these checks only protect `master` if the `ci.yml` quality job is
   required on it. Otherwise a format change without a seed surfaces at the next RC, where the
   release gate blocks it.
@@ -197,7 +197,8 @@ that may normalise its `""`/`null` mix.
 Two backups of identical data never share bytes: a fresh random **salt and IV** per backup, the
 **creation time** in the header, and a newer N may change the layout legitimately. `InspectBackup`
 mirrors the app's restore (PBKDF2WithHmacSHA1, 1324 iterations, AES/CBC) **on purpose**: using the
-app's own decryption would let a bug cancel out on both sides. Check 3 keeps it in step.
+app's own decryption would let a bug cancel out on both sides. It fails on any container key it does
+not know, so a new record type cannot be skipped silently.
 
 `--canonical` prints one sorted line per field; record identity is type + title + creation date, so
 duplicate titles still line up. Two normalisations are unit-tested: an absent type key equals a

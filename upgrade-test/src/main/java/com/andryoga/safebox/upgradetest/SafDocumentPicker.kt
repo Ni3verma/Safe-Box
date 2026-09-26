@@ -33,13 +33,16 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
      * @param fileName exact display name of the file, as pushed by the host
      */
     fun selectFromDownloads(fileName: String) {
+        logStep("pick '$fileName' in the document picker")
         awaitPicker()
 
-        repeat(NAVIGATION_ATTEMPTS) {
+        repeat(NAVIGATION_ATTEMPTS) { attempt ->
             if (ui.isPresent(By.text(fileName))) {
+                logStep("'$fileName' listed in the current root")
                 ui.clickObject(By.text(fileName))
                 return
             }
+            logStep("'$fileName' not listed; opening the Downloads root, attempt ${attempt + 1}")
             openDownloadsRoot()
             // The wait's own result decides the outcome. Discarding it and re-testing at the top
             // of the next pass means a file that did appear can be missed by a transient hiccup.
@@ -71,9 +74,11 @@ internal class SafDocumentPicker(private val ui: UiSupport) {
      * @param folderName display name of the directory at the root of shared storage
      */
     fun selectFolder(folderName: String) {
+        logStep("grant folder '$folderName' in the tree picker")
         awaitPicker()
 
         if (ui.isPresent(By.res(BREADCRUMB_ARROW_ID))) {
+            logStep("tree picker is below the root; tapping the root breadcrumb")
             ui.clickObject(By.res(BREADCRUMB_TEXT_ID))
         }
         ui.scrollTo(By.text(folderName), ROOT_LISTING_SWIPES).click()

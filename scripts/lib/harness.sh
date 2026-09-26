@@ -15,6 +15,8 @@ APP_PACKAGE="com.andryoga.safebox.qa"
 TEST_PACKAGE="com.andryoga.safebox.upgradetest"
 TEST_RUNNER="androidx.test.runner.AndroidJUnitRunner"
 DEVICE_DOWNLOADS="/sdcard/Download"
+# Logcat tag of the harness's step log (logStep in UiSupport.kt).
+HARNESS_LOG_TAG="SafeBoxHarness"
 
 # SHA-256 of the certificate every QA APK is signed with (the nonProd keystore), read with
 # `apksigner verify --print-certs` from v1.4.4.0's and v2.0.4.0's release assets on 2026-09-26.
@@ -66,7 +68,7 @@ harness_init() {
     esac
     echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r') - API $(adb shell getprop ro.build.version.sdk | tr -d '\r')"
 
-    trap 'adb logcat -d > "$HARNESS_OUT/logcat.txt" 2>/dev/null || true; echo "Artifacts in $HARNESS_OUT/"' EXIT
+    trap 'adb logcat -d > "$HARNESS_OUT/logcat.txt" 2>/dev/null || true; adb logcat -d -s "$HARNESS_LOG_TAG:I" > "$HARNESS_OUT/harness-steps.txt" 2>/dev/null || true; echo "Artifacts in $HARNESS_OUT/"' EXIT
 }
 
 # aapt2 and apksigner are not on PATH on CI or a developer machine, and build-tools holds several
@@ -214,6 +216,8 @@ run_phase() {
     local output="$HARNESS_OUT/instrumentation-$label.txt"
     local started=$SECONDS
     echo "== $label: $test =="
+    # A marker under the harness's own tag, so harness-steps.txt reads as phases.
+    adb shell "log -t $HARNESS_LOG_TAG 'phase $label: $test'"
     adb shell am force-stop "$APP_PACKAGE"
     adb shell am instrument -w -r -e class "$TEST_PACKAGE.$test" "$@" \
         "$TEST_PACKAGE/$TEST_RUNNER" > "$output" 2>&1 || true
@@ -226,6 +230,8 @@ run_phase() {
     echo "   $((SECONDS - started)) s"
     if [ "$status" -ne 0 ]; then
         echo "error: phase '$label' failed; see $output" >&2
+        echo "       last harness steps (all of them: $HARNESS_OUT/harness-steps.txt):" >&2
+        adb logcat -d -s "$HARNESS_LOG_TAG:I" 2>/dev/null | tail -n 25 | sed 's/^/       /' >&2 || true
         exit 1
     fi
 }

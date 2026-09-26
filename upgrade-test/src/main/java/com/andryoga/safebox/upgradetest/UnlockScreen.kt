@@ -38,6 +38,7 @@ internal class UnlockScreen(private val ui: UiSupport, private val app: AppStrin
         ui.awaitText(hideCaption)
 
         val revealed = appTexts() - before - hideCaption
+        logStep("revealed hint texts: $revealed")
         check(revealed.size == 1) {
             "expected tapping '${app.label(SHOW_HINT_BUTTON)}' to reveal exactly one new text, " +
                 "found $revealed${ui.describeScreen()}"

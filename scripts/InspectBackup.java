@@ -33,7 +33,6 @@ import javax.crypto.spec.SecretKeySpec;
  *   java InspectBackup --canonical <file.bak> <backupPassword>  sorted canonical lines
  *   java InspectBackup --rows <file.bak> <backupPassword>       sorted TYPE<tab>title lines
  *   java InspectBackup --header <file.bak>                      the file's BACKUP_VERSION
- *   java InspectBackup --supported-version                      highest version this tool reads
  */
 public class InspectBackup {
 
@@ -43,13 +42,11 @@ public class InspectBackup {
     private static final String CIPHER_TRANSFORMATION = "AES/CBC/PKCS5Padding";
 
     /**
-     * The newest BACKUP_VERSION this tool is known to decode correctly.
-     *
-     * scripts/tests/backup-format-test.sh fails a PR whose BACKUP_VERSION is higher, so a format
-     * change cannot land without someone confirming (and, where needed, teaching) this decoder.
-     * Raise it in the same change that bumps BACKUP_VERSION.
+     * Container keys that are not record data: version, salt, IV and creation date, as defined in
+     * CommonConstants. Any key outside these and DATA_KEYS fails the decode, so a new record type
+     * cannot be skipped silently.
      */
-    static final int SUPPORTED_BACKUP_VERSION = 3;
+    private static final Set<String> HEADER_KEYS = Set.of("0", "1", "2", "3");
 
     private static final String NULL_TOKEN = "null";
 
@@ -99,10 +96,6 @@ public class InspectBackup {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 1 && args[0].equals("--supported-version")) {
-            System.out.println(SUPPORTED_BACKUP_VERSION);
-            return;
-        }
         if (args.length == 2 && args[0].equals("--header")) {
             runMachineMode(() -> printHeaderVersion(readContainer(args[1])));
             return;
@@ -120,7 +113,6 @@ public class InspectBackup {
             System.err.println("       java InspectBackup --canonical <file.bak> <backupPassword>");
             System.err.println("       java InspectBackup --rows <file.bak> <backupPassword>");
             System.err.println("       java InspectBackup --header <file.bak>");
-            System.err.println("       java InspectBackup --supported-version");
             System.exit(1);
         }
         String path = args[0];
@@ -356,7 +348,7 @@ public class InspectBackup {
      * @param password the backup password
      * @return (type, record) pairs; the record maps field name to JSON literal
      */
-    private static List<Map.Entry<String, Map<String, String>>> decodeRecords(
+    static List<Map.Entry<String, Map<String, String>>> decodeRecords(
         Map<String, byte[]> map,
         char[] password
     ) throws Exception {
@@ -364,9 +356,11 @@ public class InspectBackup {
         if (versionBytes == null || versionBytes.length == 0) {
             fail("the backup has no BACKUP_VERSION byte");
         }
-        if (versionBytes[0] > SUPPORTED_BACKUP_VERSION) {
-            fail("BACKUP_VERSION " + versionBytes[0] + " is newer than this tool supports ("
-                + SUPPORTED_BACKUP_VERSION + "); teach it the new format first");
+        for (String key : map.keySet()) {
+            if (!HEADER_KEYS.contains(key) && !DATA_KEYS.containsKey(key)) {
+                fail("unknown backup key '" + key + "': the format grew a record type;"
+                    + " add it to DATA_KEYS in InspectBackup.java");
+            }
         }
         byte[] salt = map.get("1");
         byte[] iv = map.get("2");

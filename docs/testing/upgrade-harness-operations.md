@@ -15,10 +15,10 @@ format changes.
 | App driver | `upgrade-test/.../SafeBoxApp.kt` | launch, sign-up, unlock, backup folder, restores, refusals |
 | Runners | `scripts/run-upgrade-test.sh`, `scripts/run-restore-test.sh` | install, push files, run one method per phase, pull and compare backups |
 | Shared host code | `scripts/lib/harness.sh` | device choice, emulator guard, QA APK and signer check, `run_phase`, comparisons |
-| Decoder | `scripts/InspectBackup.java` | `--canonical`, `--rows`, `--header`, `--supported-version` |
+| Decoder | `scripts/InspectBackup.java` | `--canonical`, `--rows`, `--header`; fails on an unknown container key |
 | N-1 | `scripts/resolve-previous-release.sh`, `scripts/fetch-baseline-apk.sh` | pick N-1 and its seed; download its QA APK |
-| Seed tooling | `scripts/update-seed.sh` | install a new seed, archive the old format, regenerate READMEs |
-| PR-time checks | `scripts/tests/backup-format-test.sh` | format lock, seed, decoder, archived formats |
+| Seed tooling | `scripts/update-seed.sh` | install a new seed, archive the old format, write provenance |
+| PR-time checks | `scripts/tests/backup-format-test.sh` | format lock, seed, archived formats |
 | Zero-test guard, crash sentinel | `scripts/lib/instrumentation-guard.sh`, `crash-sentinel.sh` | decide whether a phase really ran, and whether the app crashed |
 | Workflow | `.github/workflows/upgrade-test.yml` | build, then the two categories on two emulators |
 
@@ -141,11 +141,12 @@ PR that bumps `BACKUP_VERSION`.
 5. `adb pull /sdcard/<folder>/SafeBoxBackup….bak`, then
    `scripts/update-seed.sh <file> "debug build of PR #<n> (<sha>)"`. It refuses a file that does
    not decode with the fixed password or is not in the current format, archives the outgoing seed
-   as `upgrade-test/fixtures/format-<k>.bak`, and regenerates both READMEs.
+   as `upgrade-test/fixtures/format-<k>.bak` (with a provenance row), and rewrites the seed README.
 6. Commit the seed, the fixture, both READMEs, the lock line and the `BACKUP_VERSION` bump together.
 
-If the new format needs decoder changes (a new JSON key, header or crypto change), extend
-`InspectBackup.java` and raise `SUPPORTED_BACKUP_VERSION` in the same PR; check 3 enforces it.
+If the new format needs decoder changes (a new record type, header or crypto change), extend
+`InspectBackup.java` in the same PR. A new container key fails the seed decode (check 2) until
+it is added to `DATA_KEYS`.
 
 ## Writing selectors
 
@@ -268,6 +269,11 @@ Do not re-implement these in a test:
 - each backup phase left exactly one backup file.
 
 ## Triage
+
+Start with `harness-steps.txt` in the output folder (the CI artifact): every tap, typed field
+(label and length only), wait that gave up, picker path and records-walk result, logged under the
+`SafeBoxHarness` tag and split by `phase <label>` markers. A failed phase also prints its last 25
+steps. Then read `instrumentation-<label>.txt` for the stack trace and screen dump.
 
 | Symptom | Cause |
 |---|---|

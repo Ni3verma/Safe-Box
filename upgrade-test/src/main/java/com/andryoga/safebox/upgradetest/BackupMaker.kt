@@ -26,6 +26,7 @@ internal class BackupMaker(private val ui: UiSupport, private val app: AppString
      * @param password the backup password
      */
     fun backUp(password: String) {
+        logStep("back up through the Backup & Restore tab")
         ui.clickText(app.label(BACKUP_TAB))
         ui.scrollTo(By.res(BACKUP_BUTTON_TAG)).click()
 
@@ -36,6 +37,7 @@ internal class BackupMaker(private val ui: UiSupport, private val app: AppString
         // The backup is a WorkManager job that decrypts and re-encrypts every record, so it is
         // allowed far longer than an ordinary UI transition.
         ui.awaitText(app.label(BACKUP_SUCCESS_MESSAGE), BACKUP_TIMEOUT_MS)
+        logStep("backup reported complete")
         ui.clickText(app.label(OK_BUTTON))
     }
 

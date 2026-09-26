@@ -1,6 +1,7 @@
 package com.andryoga.safebox.upgradetest
 
 import android.os.SystemClock
+import android.util.Log
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.Direction
@@ -8,6 +9,19 @@ import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import java.io.ByteArrayOutputStream
+
+/** Logcat tag of every harness step; the runners save these lines as `harness-steps.txt`. */
+private const val HARNESS_LOG_TAG = "SafeBoxHarness"
+
+/**
+ * Logs one harness step, so a failure can be read as the sequence of steps that led to it
+ * rather than only the screen it ended on. Never pass record field values or passwords.
+ *
+ * @param message what the harness is about to do, or what it just observed
+ */
+internal fun logStep(message: String) {
+    Log.i(HARNESS_LOG_TAG, message)
+}
 
 /**
  * Shared UI Automator plumbing for the upgrade and restore harness.
@@ -31,8 +45,10 @@ internal class UiSupport(val device: UiDevice) {
 
     /** Waits for a node matching [selector], failing with the screen attached if it never shows. */
     fun awaitObject(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS): UiObject2 =
-        findOrNull(selector, timeoutMs)
-            ?: error("could not find $selector within ${timeoutMs}ms${describeScreen()}")
+        findOrNull(selector, timeoutMs) ?: run {
+            logStep("gave up waiting ${timeoutMs}ms for $selector")
+            error("could not find $selector within ${timeoutMs}ms${describeScreen()}")
+        }
 
     /** True if the selector is already present, without waiting for it to appear. */
     fun isPresent(selector: BySelector): Boolean = findOrNull(selector, 0) != null
@@ -97,7 +113,11 @@ internal class UiSupport(val device: UiDevice) {
         while (true) {
             flushAccessibilityCache()
             if (retryingOnStale { condition() }) return
-            check(SystemClock.uptimeMillis() < deadline) { describe() + describeScreen() }
+            if (SystemClock.uptimeMillis() >= deadline) {
+                val message = describe()
+                logStep("gave up after ${timeoutMs}ms: $message")
+                error(message + describeScreen())
+            }
             SystemClock.sleep(POLL_INTERVAL_MS)
         }
     }
@@ -119,6 +139,7 @@ internal class UiSupport(val device: UiDevice) {
      * @param timeoutMs budget covering both finding it and getting a tap to land
      */
     fun clickObject(selector: BySelector, timeoutMs: Long = FIND_TIMEOUT_MS) {
+        logStep("tap $selector")
         retryingOnStale(timeoutMs) { awaitObject(selector, timeoutMs).click() }
     }
 
@@ -139,6 +160,7 @@ internal class UiSupport(val device: UiDevice) {
      * @param value the text to set
      */
     fun typeInto(label: String, value: String) {
+        logStep("type ${value.length} chars into '$label'")
         retryingOnStale { textField(label).text = value }
         if (value.isEmpty()) return
         val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
@@ -167,6 +189,7 @@ internal class UiSupport(val device: UiDevice) {
      * @param value the text to set; must differ in length from what the field holds
      */
     fun retypeMasked(label: String, value: String) {
+        logStep("retype ${value.length} chars into masked '$label'")
         retryingOnStale { textField(label).text = value }
         val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
         while (true) {
@@ -250,14 +273,18 @@ internal class UiSupport(val device: UiDevice) {
      */
     fun scrollTo(selector: BySelector, maxSwipes: Int = SHORT_SCREEN_SWIPES): UiObject2 {
         findOrNull(selector, QUICK_LOOK_MS)?.let { return it }
-        repeat(maxSwipes) {
+        repeat(maxSwipes) { swipe ->
             retryingOnStale {
                 findAll(By.scrollable(true))
                     .maxByOrNull { it.visibleBounds.width() * it.visibleBounds.height() }
                     ?.scroll(Direction.DOWN, SCROLL_FRACTION)
             }
-            findOrNull(selector, 0)?.let { return it }
+            findOrNull(selector, 0)?.let {
+                logStep("scrolled to $selector after ${swipe + 1} swipe(s)")
+                return it
+            }
         }
+        logStep("gave up scrolling to $selector after $maxSwipes swipes")
         error("could not find $selector within $maxSwipes swipes${describeScreen()}")
     }
 

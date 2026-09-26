@@ -94,7 +94,11 @@ def version_code = (System.getenv("GITHUB_RUN_NUMBER") ?: "9999984").toInteger()
 | `release` | `releaseKeyStore.properties` + `app/releaseKeyStore.jks` | `RELEASE_KEYSTORE_PROPERTIES`, `BASE_64_RELEASE_KEYSTORE` (GPG, `GPG_PASSPHRASE`) |
 | `qa` | `nonProdReleaseKeyStore.properties` | committed config, stable key |
 
-Neither keystore is committed. `google-services.json` is also GPG-encrypted in CI.
+Both keystores and their properties files (`app/releaseKeyStore.jks`, `app/nonProdReleaseKeyStore.jks`,
+`releaseKeyStore.properties`, `nonProdReleaseKeyStore.properties`) are committed **on purpose as
+dummies** so local builds sign; do not flag them as leaked secrets. The real release key reaches CI
+only through the secrets above (owner confirmed 2026-09-26; `git ls-files | grep -i keystore`).
+`google-services.json` is also GPG-encrypted in CI.
 
 The QA certificate has been **stable since at least `v1.4.4.0`**:
 SHA-256 `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`.
