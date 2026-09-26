@@ -152,6 +152,30 @@ run_docs_policy_check() {
   return 1
 }
 
+# --- Backup Format Check ---
+# Runs scripts/tests/backup-format-test.sh when the staged change touches anything that decides
+# the backup format or the committed backups. Returns 0 when clean or not applicable, 1 otherwise.
+#
+# Scoped to those paths because it starts a JVM several times; a commit that cannot change the
+# format should not pay for it. CI runs it on every PR regardless, so this is the early warning,
+# not the enforcement. It reads the working tree, so an unstaged fix can mask a broken staged file;
+# CI, which sees only the commit, catches that case.
+#
+# BACKUP_FORMAT_BASE_REF=HEAD makes the lock's append-only rule compare against the last commit.
+run_backup_format_check() {
+  # Captured first rather than piped into `grep -q`: under pipefail, grep exiting on the first
+  # match can SIGPIPE git and turn a match into a failure, silently skipping the check.
+  local staged
+  staged=$(git diff --cached --name-only)
+  if ! grep -qE \
+    '^(app/src/main/java/com/andryoga/safebox/data/db/docs/export/|app/src/main/java/com/andryoga/safebox/common/CommonConstants\.kt$|app/backup-format\.lock$|upgrade-test/seed/|upgrade-test/fixtures/|scripts/InspectBackup\.java$)' \
+    <<< "$staged"; then
+    return 0
+  fi
+  log_info "Backup format files staged, running scripts/tests/backup-format-test.sh..."
+  BACKUP_FORMAT_BASE_REF=HEAD ./scripts/tests/backup-format-test.sh
+}
+
 # --- Main Detekt Check Logic ---
 # Runs Detekt workflow with auto-correction and validation.
 # Returns 0 on success, 1 on failure (if unfixable issues remain).
@@ -242,12 +266,19 @@ if ! run_docs_policy_check; then
   exit 1 # Fail the Git commit
 fi
 
-# 3. Proceed with Detekt checks
+# 3. Check the backup format, only when relevant files are staged. Before Detekt for the same
+# reason as the docs check: it needs a JDK but no Gradle build.
+if ! run_backup_format_check; then
+  log_error "Backup format check failed. Aborting commit."
+  exit 1 # Fail the Git commit
+fi
+
+# 4. Proceed with Detekt checks
 if ! run_detekt_workflow; then
   log_error "Detekt pre-commit check failed. Aborting commit."
   exit 1 # Fail the Git commit
 fi
 
-# If both checks pass, allow the commit
+# If all checks pass, allow the commit
 log_info "All pre-commit checks passed successfully. Allowing commit."
 exit 0

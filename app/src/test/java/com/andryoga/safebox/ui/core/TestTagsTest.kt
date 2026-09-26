@@ -41,12 +41,18 @@ class TestTagsTest {
     }
 
     @Test
-    fun settingsTags_shouldBeUnique() {
+    fun allTags_shouldBeUnique() {
         val tags = listOf(
             TestTags.SETTINGS_PRIVACY_SWITCH,
             TestTags.SETTINGS_AUTO_BACKUP_SWITCH,
             TestTags.SETTINGS_PASSWORD_AFTER_BIOMETRIC_SLIDER,
             TestTags.SETTINGS_AWAY_TIMEOUT_SLIDER,
+            TestTags.RECORDS_LIST,
+            TestTags.RECORD_ROW,
+            TestTags.RECORD_ROW_TITLE,
+            TestTags.RECORD_ROW_TYPE,
+            TestTags.BACKUP_BUTTON,
+            TestTags.RESTORE_BUTTON,
         )
 
         assertThat(tags).containsNoDuplicates()

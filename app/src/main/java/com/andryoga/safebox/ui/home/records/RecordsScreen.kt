@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +42,7 @@ import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.InAppReviewSource
 import com.andryoga.safebox.ui.core.ScrollBehaviorType
+import com.andryoga.safebox.ui.core.TestTags
 import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.safebox.ui.home.records.components.NotificationPermissionRationaleDialog
@@ -214,7 +216,8 @@ internal fun RecordsScreen(
         val records = uiState.records
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .testTag(TestTags.RECORDS_LIST),
             contentPadding = PaddingValues(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

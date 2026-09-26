@@ -1,0 +1,194 @@
+name: Upgrade & Restore Test
+
+# Category 1 (upgrade N-1 -> N) and category 2 (restore every backup format into N) against the QA
+# build, each on its own emulator, in parallel. See docs/testing/upgrade-testing.md.
+#
+# Three ways in:
+# - release.yml calls it on every v* tag with the QA APK it is about to publish, and publishing
+#   waits for both jobs. It is called rather than triggered `on: release` because a release
+#   created with GITHUB_TOKEN never triggers other workflows.
+# - A pull request labelled `run-upgrade-test`, which runs from the PR's own head.
+# - A manual run.
+# The last two rebuild the QA APK from the checked-out commit, since no shipped artifact exists.
+on:
+  workflow_call:
+    inputs:
+      qa_apk_artifact:
+        description: Name of an artifact in the calling run holding the SafeBox-qa.apk under test.
+        type: string
+        required: true
+  workflow_dispatch:
+  pull_request:
+    types: [ labeled ]
+
+jobs:
+  build:
+    # An unlabelled push must not start two emulator jobs, so the label is the whole gate.
+    if: github.event_name != 'pull_request' || github.event.label.name == 'run-upgrade-test'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6.3.0
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          cache-read-only: false
+
+      - name: Retrieve the QA APK being released
+        if: inputs.qa_apk_artifact != ''
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.qa_apk_artifact }}
+          path: app/build/outputs/apk/qa/
+
+      # qa, not debug: three build types mean three applicationIds, and Android refuses to upgrade
+      # one into another.
+      #
+      # app/build.gradle computes versionCode as (GITHUB_RUN_NUMBER ?: 9999984) + 15, and
+      # GITHUB_RUN_NUMBER counts runs of *this* workflow only, so a rebuild here could come out
+      # below N-1's versionCode and the run would abort before installing anything. Assigning the
+      # local fallback yields 9999999. It has to be a shell assignment on the command: Actions
+      # silently ignores an `env:` override of a default variable. Tag runs never take this path.
+      - name: Build the QA APK under test
+        if: inputs.qa_apk_artifact == ''
+        run: GITHUB_RUN_NUMBER=9999984 ./gradlew assembleQa
+
+      - name: Build the harness
+        run: ./gradlew :upgrade-test:assembleDebug
+
+      - name: Upload the APKs
+        uses: actions/upload-artifact@v7
+        with:
+          name: upgrade-test-apks
+          path: |
+            app/build/outputs/apk/qa/SafeBox-qa.apk
+            upgrade-test/build/outputs/apk/debug/upgrade-test-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  upgrade:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Full history: N-1's seed is read from N-1's tag with `git show`.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Retrieve the APKs
+        uses: actions/download-artifact@v8
+        with:
+          name: upgrade-test-apks
+
+      # The ref arrives through `env:`, never pasted into the script with `${{ }}`, so a quote in
+      # it cannot become shell syntax. A tag run names the tag; anything else is untagged (HEAD).
+      - name: Resolve the previous release and its seed
+        id: previous
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          under_test=HEAD
+          if [ "$REF_TYPE" = "tag" ]; then
+            under_test="$REF_NAME"
+          fi
+          tag=$(./scripts/resolve-previous-release.sh "$under_test" previous/)
+          echo "Previous release: $tag"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Download the previous release's QA APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIOUS_TAG: ${{ steps.previous.outputs.tag }}
+        run: ./scripts/fetch-baseline-apk.sh "$PREVIOUS_TAG" previous/
+
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # NOT aosp_atd, however much faster it boots: ATD images strip DocumentsUI, and the restore
+      # goes through the real SAF picker (run 35863723921 got `com.android.fakesystemapp`).
+      # `default` is plain AOSP with DocumentsUI. pixel_6 pins 1080x2400, the size the harness is
+      # developed against locally; with no profile the emulator boots at 320x640.
+      - name: Run the upgrade test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: ./scripts/run-upgrade-test.sh previous/SafeBox-qa.apk previous/previous-seed.bak app/build/outputs/apk/qa/SafeBox-qa.apk upgrade-test-out/upgrade
+
+      - name: Upload harness output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: upgrade-test-output-${{ steps.previous.outputs.tag || 'unresolved' }}
+          path: upgrade-test-out/
+
+  restore:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: set up JDK 17
+        uses: actions/setup-java@v6
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Retrieve the APKs
+        uses: actions/download-artifact@v8
+        with:
+          name: upgrade-test-apks
+
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Same image and profile as the upgrade job, for the same reasons.
+      - name: Run the restore test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          script: ./scripts/run-restore-test.sh app/build/outputs/apk/qa/SafeBox-qa.apk upgrade-test-out/restore
+
+      - name: Upload harness output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: restore-test-output
+          path: upgrade-test-out/

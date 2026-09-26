@@ -10,7 +10,7 @@ sufficient coverage.
 
 | Layer | Holds |
 |---|---|
-| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted |
+| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (password hash, and the hint encrypted with the same key as the records — `UserDetailsDaoSecure.getHint`) |
 | `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
@@ -36,8 +36,11 @@ private fun getSymmetricKey(): SecretKey {
 
 > [!CAUTION]
 > **The highest-severity failure mode in the app.** If the alias is ever lost, this silently
-> creates a *new* key. Nothing throws. Every existing record becomes permanently undecryptable and
-> the user sees a vault full of garbage with no explanation.
+> creates a *new* key. Nothing throws *at key creation*. Every existing record becomes permanently
+> undecryptable. Observed with the alias deliberately deleted (2026-09-24, upgrade harness): the
+> app launched normally and then crashed with `javax.crypto.AEADBadTagException` from
+> `AndroidKeyStoreCipherSpiBase.engineDoFinal` at the first decrypt, which was the unlock screen's
+> Show Hint, since the hint is encrypted under the same key.
 >
 > Because the key lives in the Keystore and not in `/data/data`, it is invisible to Room migration
 > tests, to backup/restore tests, and to any `/data` snapshot. The only thing that can catch a
@@ -61,7 +64,7 @@ Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
   > `null` when that record type has no rows, so the key is written **present with a null value**.
   > An *absent* key means the file predates that key; a *null* value means the type is supported and
   > the vault simply had none. Conflating them misreads a v3 backup with no TOTP records as a
-  > pre-TOTP v2 file — exactly the distinction `v2_pre_totp.bak` exists to capture.
+  > pre-TOTP v2 file — exactly the distinction `upgrade-test/fixtures/format-2.bak` exists to capture.
 - **Keys** are terse numeric strings from `CommonConstants`:
 
   | Key | Contents |
@@ -78,6 +81,10 @@ Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 - **File name:** `yyyyMMddHHmmssSSS.bak`, mime `application/octet-stream`.
 - **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
   directory.
+- **Parameters** (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
+  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, a **256-byte salt** and a **16-byte IV**. The
+  same constants are implemented in `scripts/InspectBackup.java`; change one and the other stops
+  reading real backups.
 
 #### How damage to the shared inputs presents
 

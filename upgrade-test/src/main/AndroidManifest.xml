@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        Package visibility (API 30+) hides every other installed app from this one, so
+        PackageManager.getLaunchIntentForPackage would return null and the driver could not start
+        the app under test. Declaring the target explicitly is narrower than QUERY_ALL_PACKAGES and
+        keeps the launch a normal intent rather than a shell command.
+    -->
+    <queries>
+        <package android:name="com.andryoga.safebox.qa" />
+    </queries>
+
+</manifest>

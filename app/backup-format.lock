@@ -1,0 +1,10 @@
+# Backup format lock. APPEND-ONLY: never edit or remove a line.
+#
+# One line per BACKUP_VERSION: <version>=<SHA-256 of the normalised export classes at that version>
+# (app/src/main/java/com/andryoga/safebox/data/db/docs/export/Export*.kt, comments and whitespace
+# stripped; see export_classes_hash in scripts/lib/backup-files.sh).
+#
+# scripts/tests/backup-format-test.sh fails a PR when the export classes no longer match the line
+# for the current BACKUP_VERSION. The fix is always the same: bump BACKUP_VERSION, append a line,
+# and capture a new seed. See docs/testing/upgrade-harness-operations.md#capturing-a-seed.
+3=b0528b29f46bbe5d02924239d9c9e299437358dedb63c8e9bb60d06ee77eaa04

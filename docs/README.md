@@ -14,7 +14,10 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 ## Testing
 
 - [Testing strategy](testing/testing-strategy.md) — what is tested where, and the deliberate gaps.
-- [Upgrade testing](testing/upgrade-testing.md) — the APK-over-APK design.
+- [Upgrade and restore testing](testing/upgrade-testing.md) — what the black-box QA tests prove and
+  how: decoded backup comparison, the seed, the release gate.
+- [Upgrade harness operations](testing/upgrade-harness-operations.md) — running the tests, capturing
+  a seed, selector traps, triage.
 
 ## Decisions
 

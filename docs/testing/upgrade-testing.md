@@ -1,532 +1,270 @@
-# APK-over-APK upgrade testing — design
+# Upgrade and restore testing
 
-Install a previously shipped QA APK, put real data in it, upgrade in place to the build under
-test, and verify nothing was lost or corrupted.
+What the black-box upgrade and restore tests prove, how, and why they are shaped this way. How to
+run, extend and debug them is in [upgrade-harness-operations.md](upgrade-harness-operations.md);
+the decisions and everything ruled out, with evidence, are in
+[ADR-0004](../decisions/0004-verify-upgrade-and-restore-by-decoded-backup.md).
 
----
+## 1. What is tested
 
-## 1. Why this test exists
+Everything runs **black-box on the minified QA APK** (`SafeBox-qa.apk`), driven by UI Automator from
+the separate `:upgrade-test` module ([ADR-0002](../decisions/0002-upgrade-testing-via-black-box-uiautomator.md)),
+because the thing tested must be the build that ships. An app `androidTest` runs unminified, so an
+R8 breakage in restore would pass there ([ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md)).
 
-Field encryption uses an `AndroidKeyStore` AES-GCM key under alias `symmetricDataKey`
-([SecurityModule.kt:50-74](../../app/src/main/java/com/andryoga/safebox/di/SecurityModule.kt#L50-L74)):
+| Category | Proves |
+|---|---|
+| **1. Upgrade** | A user on the previous release (N-1) installs N over it. N reads **everything** N-1 stored, opens on the unlock screen with the same hint, rejects a wrong password, unlocks, and settings and the backup folder survive. |
+| **2. Restore** | Every backup file a user could hold, from **any format ever released**, restores completely into N and replaces what was there. N's own backup restores into N. A damaged file and a wrong password fail with the right message and leave the vault untouched. |
 
-```kotlin
-if (!keyStore.containsAlias(alias)) {
-    keyGenerator.generateKey()
-}
+| Not tested here | Covered by |
+|---|---|
+| Adding and editing records through forms | App UI tests and unit tests |
+| Upgrades that skip releases (N-3 → N) | `MigrationTest`: every step plus the full chain |
+| How a record type looks (2FA code, card formatting) | App UI tests |
+| Restore of odd authenticator data (invalid seed, algorithm) | `RestoreDataWorkerTest` |
+| Round trip, wrong password, corrupt file on debug builds | `BackupAndRestoreWorkersTest` |
+| Downgrades | Android refuses them; the runner's `versionCode` check fails first |
+| Clipboard clearing | `ClipboardClearWorkerTest`, `RecordActionsE2ETest` |
+
+## 2. The idea in one paragraph
+
+The expected data is **a backup file**, and the verdict is **another backup file**. A test restores
+a committed `.bak` into the app, drives the screens a user would, takes a backup on N, and the host
+decodes both files with [`scripts/InspectBackup.java`](../../scripts/InspectBackup.java) and diffs
+them. That compares every field of every record, including values no screen shows, with no
+hand-written expectations to maintain. The screen is used only for what a user experiences: the
+list shows every record, each type opens, search finds it.
+
+## 3. When it runs
+
+```mermaid
+flowchart LR
+    PR["Every PR"] --> CHK["Backup-format checks 1-4 (§4)<br/>seconds, no emulator"]
+    LBL["PR labelled run-upgrade-test"] --> B["Build N (QA) + harness"]
+    MAN["Manual run"] --> B
+    REL["release.yml on v* tag<br/>(RC and stable)"] --> QA["qa_pipeline's SafeBox-qa.apk = N"]
+    QA --> B2["Build harness"]
+    B --> C1["Category 1 job, emulator A"]
+    B --> C2["Category 2 job, emulator B"]
+    B2 --> C1
+    B2 --> C2
+    C1 --> G{"release.yml:<br/>both green?"}
+    C2 --> G
+    G -->|yes| PUB["release_on_github"]
+    G -->|no| STOP["Release blocked"]
 ```
 
-If that alias is ever lost across an upgrade, the app **silently generates a fresh key**. Nothing
-throws. Every record becomes permanently undecryptable, and the user sees a vault full of garbage
-with no explanation.
+- [`upgrade-test.yml`](../../.github/workflows/upgrade-test.yml) is reusable (`workflow_call`,
+  `workflow_dispatch`, `pull_request: labeled`). [`release.yml`](../../.github/workflows/release.yml)
+  calls it from job `upgrade_test` after `qa_pipeline`, and `release_on_github` needs it. A failure
+  in either category **blocks the release**; one re-run is allowed for a suspected flake.
+- It is called, not triggered `on: release`: a release created with `GITHUB_TOKEN` never triggers
+  other workflows.
+- Tag runs test the **artifact being published**. PR and manual runs rebuild N with the local
+  `versionCode` fallback (9999999) so the build always supersedes N-1.
+- Label a PR `run-upgrade-test` when it touches the database, migrations, backup/restore,
+  encryption or the export classes.
 
-The key does not live in `/data/data`, so it is invisible to every test you currently have.
+## 4. PR-time checks
 
-| Layer | Room migration test | Golden `.bak` test | This test |
-|---|---|---|---|
-| Room schema + data | yes | no | yes |
-| `EncryptedSharedPreferences` | no | no | yes |
-| DataStore | no | no | yes |
-| WorkManager internal DB | no | no | yes |
-| **Keystore alias continuity** | **no** | **no** | **yes** |
-
----
-
-## 2. Verified ground truth
-
-All checked on 2026-09-20/21 against the real artifacts, not assumed.
-
-| Constraint | Status | How it was verified |
-|---|---|---|
-| Old QA APKs are archived | **already done** | `release.yml` attaches `SafeBox-qa.apk` to every tag. 15 of 18 releases carry one, back to `v1.3.3.0` |
-| Signing certificate is stable | yes | `v2.0.4.0`, `v2.1.4.0-rc3` and a local build all report SHA-256 `257ab204…7b113d` |
-| Same `applicationId` | yes | `com.andryoga.safebox.qa` on all |
-| `versionCode` is monotonic | yes | 23 → 28 → 9999999 (local) |
-| Black-box automation works on the minified APK | yes | `uiautomator dump` returned `Welcome !`, `Password*`, `Sign Up`, `content-desc="Toggle sensitive data visibility"` |
-| No app change needed for selectors | yes | production has zero `testTag`; the existing suite already uses text and content description exclusively |
-| Runs without Google Play services | yes | ML Kit is the **bundled** `com.google.mlkit:barcode-scanning`, so `aosp-atd` images suffice |
-
-### Hard constraints
-
-Three build types mean three `applicationId`s (`.debug`, `.qa`, none), and Android refuses to
-upgrade one into another. A Play Store install also cannot be upgraded by a local build, because
-Play re-signs with its own key.
-
-**`qa → qa` is the only vehicle available.** That variant is release-like — `initWith(release)`,
-R8 on, resource shrinking on — but it is not byte-identical to the production APK. Close, not same.
-
----
-
-## 3. Architecture
+[`scripts/tests/backup-format-test.sh`](../../scripts/tests/backup-format-test.sh) runs in `ci.yml`
+on every PR, and in the pre-commit hook when a staged file touches the export classes,
+`CommonConstants.kt`, `app/backup-format.lock`, `upgrade-test/seed/`, `upgrade-test/fixtures/` or
+`InspectBackup.java`. It reports every failing check in one run.
 
 ```mermaid
 flowchart TD
-    A["1 · Resolve + download baseline APK"] --> B["2 · Install baseline"]
-    B --> C["3 · Push .bak fixtures to device"]
-    C --> D["4 · Freeze the clock"]
-    D --> E["5 · Seed: sign up, restore, edit settings"]
-    E --> F["6 · Upgrade in place"]
-    F --> G["7 · Assert on the upgraded app"]
-    G --> H["8 · Collect logcat + screenshots"]
-
-    classDef host fill:#1b3a5c,stroke:#7fb3ff,color:#eaf2ff
-    classDef device fill:#3d2b56,stroke:#c49bff,color:#f4ecff
-    class A,B,C,D,F,H host
-    class E,G device
+    S([PR]) --> H{"1. Hash of normalised Export*.kt<br/>== app/backup-format.lock?"}
+    H -->|no| F1(["FAIL: bump BACKUP_VERSION,<br/>append a lock line"])
+    H -->|yes| SV{"2. seed.bak header version<br/>== BACKUP_VERSION?"}
+    SV -->|no| F2(["FAIL: capture a new seed"])
+    SV -->|yes| DS{"3. InspectBackup supports<br/>BACKUP_VERSION?"}
+    DS -->|no| F3(["FAIL: teach the decoder"])
+    DS -->|yes| C4{"4. format-k.bak exists and decodes<br/>for every k < BACKUP_VERSION?"}
+    C4 -->|no| F4(["FAIL: update-seed.sh archives it"])
+    C4 -->|yes| OK([PASS])
 ```
 
-| | Steps | Runs where |
+- "Normalised" strips comments, blank lines, imports and whitespace, so rewording a comment never
+  forces a bump. The lock is **append-only**; CI compares it with the PR's base.
+- Adding a field to an export class therefore lands, in one PR, with: the `BACKUP_VERSION` bump, a
+  lock line, a new seed captured on that PR's build, the outgoing seed archived as
+  `format-<k>.bak` by [`scripts/update-seed.sh`](../../scripts/update-seed.sh), and a decoder that
+  reads it.
+- **Required status check:** these checks only protect `master` if the `ci.yml` quality job is
+  required on it. Otherwise a format change without a seed surfaces at the next RC, where the
+  release gate blocks it.
+
+## 5. Category 1: upgrade
+
+[`scripts/run-upgrade-test.sh`](../../scripts/run-upgrade-test.sh) `<N-1 apk> <N-1 seed> <N apk>`.
+
+**N-1** is the newest **stable** release older than the tag under test that carries a
+`SafeBox-qa.apk` ([`scripts/lib/previous-release.sh`](../../scripts/lib/previous-release.sh)).
+Prereleases are never N-1: Play serves only stable builds. Its **seed** is
+`git show <N-1 tag>:upgrade-test/seed/seed.bak`, so the git tag is the mapping. Releases cut before
+the seed existed have a fallback row naming the fixture in their format (today only
+`v2.0.4.0 → format-2.bak`).
+
+| Tag under test | N-1 | Seed |
 |---|---|---|
-| **Host harness** (bash on the CI runner) | 1, 2, 3, 4, 6, 8 | the runner, over `adb` |
-| **On-device driver** (UI Automator) | 5, 7 | inside an instrumentation process on the device |
+| `v2.2.6.0-rc1`, `-rc2` | `v2.1.6.0` | `seed.bak` as of `v2.1.6.0` |
+| `v2.2.6.0` | `v2.1.6.0` (the tag itself is excluded) | same |
+| untagged (PR, manual) | newest stable release | its seed |
 
-### Why the work has to be split
-
-Step 6 is `adb install -r`, and it happens **between** two on-device runs. A single
-`connectedAndroidTest` invocation cannot upgrade the app underneath itself. So the host owns the
-lifecycle and invokes the device driver twice, with a different `-e phase` argument each time.
-
-This is also why Gradle Managed Devices cannot run this job: GMD owns its emulator lifecycle inside
-one Gradle task, with no way to interleave an `adb install` in the middle.
-
-### Why a separate Gradle module is required
-
-You asked why this needs a module at all. Two reasons, and the first is not negotiable.
-
-**1. UI Automator only runs on the device.** There is no host-side driver — it is an Android
-library (`androidx.test.uiautomator`) that talks to the device's accessibility layer from inside an
-instrumentation process. Running it therefore requires an **instrumentation APK**, and the only way
-to produce one is a Gradle module. A shell script alone can do `adb shell input tap 540 1200`, but
-coordinate-tapping is unmaintainable and cannot read text back to assert on it.
-
-**2. It must not be `:app`'s `androidTest`.** That source set is already bound to
-`CustomHiltTestRunner`, pulls in the Hilt test Application, and gets minified alongside the app —
-which is exactly what makes it unable to run against a minified build
-([ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md)).
-
-So: a new `com.android.test` module, **self-instrumenting**, with no compile dependency on `:app`.
-
-```groovy
-// upgrade-test/build.gradle
-plugins { id 'com.android.test'; id 'org.jetbrains.kotlin.android' }
-
-android {
-    namespace 'com.andryoga.safebox.upgradetest'
-    targetProjectPath = ':app'
-    experimentalProperties["android.experimental.self-instrumenting"] = true
-    defaultConfig {
-        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
-    }
-}
-
-dependencies {
-    implementation libs.androidx.test.uiautomator
-    implementation libs.androidx.test.ext.junit
-}
+```mermaid
+flowchart TD
+    A[Install N-1] --> B["Sign up: fixed password + hint"]
+    B --> C["Restore the seed (SAF picker)"]
+    C --> E[Set backup folder]
+    E --> F[Turn two settings off their default]
+    F --> U["Host: adb install -r N (no -d)"]
+    U --> UC{"firstInstallTime unchanged,<br/>versionCode is N's?"}
+    UC -->|no| FU(["FAIL: not an upgrade"])
+    UC -->|yes| N2["Unlock screen, hint matches"]
+    N2 --> N3["Wrong password rejected, right one unlocks"]
+    N3 --> N4["Records check (§7.3)"]
+    N4 --> N5[Settings and folder unchanged]
+    N5 --> N6[Back up]
+    N6 --> CMP{"Host: canonical(seed) ==<br/>canonical(N's backup)?"}
+    CMP -->|yes| P([PASS])
+    CMP -->|no| FD(["FAIL: diff names record + field"])
 ```
 
-`self-instrumenting` — the same mechanism Macrobenchmark uses — makes the test process target
-*itself* rather than the app. Three consequences:
+N-1 gets data **only by restoring**, never by typing into forms: forms belong to app tests, and
+typing was the slowest and most fragile step. N-1 screens touched: sign-up, restore, backup folder,
+settings.
 
-1. No signature match required between test APK and app APK, so this harness can later be pointed
-   at a **Play-Store-signed** build.
-2. Upgrading the app mid-run does not kill the test process.
-3. Zero compile coupling to `:app`, so R8 can never break it.
+## 6. Category 2: restore
 
-Build-time cost of the extra module is small: it compiles a handful of Kotlin files and links no
-app code.
+[`scripts/run-restore-test.sh`](../../scripts/run-restore-test.sh) `<N apk>`. Runs in parallel with
+category 1; it needs no N-1.
 
----
-
-## 4. Golden backup fixtures
-
-The format, for context: a Java-serialized `HashMap<String, ByteArray>` with numeric keys,
-payloads PBE-encrypted under a **backup password supplied at export time** (independent of the
-vault master password). `BACKUP_VERSION` is currently 3. Full detail in
-[persistence-and-crypto.md](../architecture/persistence-and-crypto.md).
-
-**Where they get committed:** `upgrade-test/src/main/assets/fixtures/`. They are a few hundred KB
-each, binary, and never edited after creation, so plain git is fine — no LFS needed.
-
-| Fixture | Produced by | Guards |
-|---|---|---|
-| `v1_legacy.bak` | `v1.3.3.0` QA APK (oldest with an archived APK) | the 1-byte `creationDate` legacy path; a backup with no authenticator key at all |
-| `v2_pre_totp.bak` | **`v2.1.4.0-rc3` — captured 2026-09-21** | the format the entire current user base has on disk |
-| `v3_current.bak` | this branch | the new format including authenticators |
-| `v3_adversarial.bak` | this branch, hand-seeded | emoji + RTL + 4000-char fields, all-optionals-empty record, max-length card number, a `SHA512`/8-digit/60s authenticator, an authenticator with an **invalid Base32 seed**, duplicate titles |
-| `corrupt.bak` | `head -c 2048 v3_current.bak` | the `CORRUPT_OR_INVALID_FILE` path, and that a failed restore leaves the vault intact |
-
-All use one fixed backup password committed in the harness. Synthetic data only — never a real
-vault.
-
-> [!CAUTION]
-> `v2_pre_totp.bak` is the only irreversible item in this whole design, and it now **exists**:
-> `BACKUP_VERSION = 2`, 2 login / 2 bank account / 2 bank card / 1 secure note, no authenticator
-> key. Once TOTP ships, this format can no longer be produced, so the risk has moved from failing
-> to capture it to losing it. Never regenerate it, never "clean up" its contents, and verify with
-> `scripts/InspectBackup.java` rather than by opening it.
-
----
-
-## 5. Scenarios
-
-### Phase A — establish state on the baseline app
-
-| # | Step | Why |
-|---|---|---|
-| A1 | install baseline APK, launch | |
-| A2 | sign up with master password + hint | creates the password hash **and generates the `symmetricDataKey` alias** |
-| A3 | restore a golden `.bak` through the real SAF picker | seeds every record type in one interaction instead of ~50 taps |
-| A4 | create one extra record **of each type through the UI** | restore writes via the worker, the UI writes via the repository — two different encryption call sites |
-| A5 | set the backup directory and move 2–3 settings off their defaults | a prefs/DataStore migration bug is invisible if every value is still the default |
-| A6 | copy a password to the clipboard | enqueues `ClipboardClearWorker`, so WorkManager's DB is non-empty across the upgrade |
-| A7 | capture the oracle: per-type counts, every field of one known record per type, current TOTP code | |
-| A8 | `adb shell am force-stop` | **never** `pm clear`, **never** `uninstall` |
-
-### Phase B — the upgrade
-
-```bash
-adb install -r new.apk     # correct: preserves /data
-adb uninstall old          # wrong: this is a fresh-install test in disguise
-adb install -r -d new.apk  # wrong: -d permits downgrade and hides a versionCode mistake
+```mermaid
+flowchart TD
+    A["Fresh install of N"] --> B[Sign up, set backup folder]
+    B --> L{{"format-1, format-2, …, seed"}}
+    L --> R["Restore over the previous file"]
+    R --> SR["Records check (§7.3)"]
+    SR --> BK[Back up]
+    BK --> CMP{"canonical(backup) ==<br/>canonical(file)?"}
+    CMP -->|no| F(["FAIL: file, record, field"])
+    CMP -->|yes| L
+    L -->|done| RT["Round trip: restore N's own backup of the seed"]
+    RT --> D1["Damaged seed → restore_corrupt_file_message"]
+    D1 --> D2["Seed, wrong password → incorrect_pswrd_message"]
+    D2 --> D3{"Backup equals the round trip's?"}
+    D3 -->|yes| P([PASS])
+    D3 -->|no| F3(["FAIL: a failed restore changed the vault"])
 ```
 
-The harness asserts `newVersionCode > oldVersionCode` **before** installing, and afterwards checks
-via `dumpsys package` that `firstInstallTime` is unchanged while `versionCode` changed. That single
-check is what stops this decaying into a fresh-install test a year from now.
+- One install, **each file restored over the previous one**: restore must replace everything, so
+  leftovers show up in the comparison.
+- The first restore uses the empty screen's **Restore data**; the rest the **Backup & Restore** tab.
+  Both entry points are covered.
+- The records check runs after **every** file: older formats leave fields empty that newer ones
+  fill, and a screen crashing on such a record would pass the backup comparison.
+- The round trip proves N's writer and reader agree; the seed alone does not (older build).
+- The damaged file is generated at run time (the seed cut to 2 KB), so it is always the current
+  format.
 
-### Phase C — assertions on the upgraded app
+### 6.1 Per-format comparison rules
 
-**Group 1 — the app is usable at all**
-1. Cold launch does not crash; zero `FATAL EXCEPTION` in logcat since install.
-2. Lands on the **unlock** screen, not signup. Catches wiped preferences.
-3. The password hint shown matches what was set pre-upgrade. Catches `EncryptedSharedPreferences` loss.
+None: `format-1.bak`, `format-2.bak` and the seed all round-trip field for field (three green
+runs, 2026-09-26). Anything a later run finds must be narrow (one field, one format), unit-tested in
+[`InspectBackupTest`](../../scripts/tests/InspectBackupTest.java) and listed in the
+[fixtures README](../../upgrade-test/fixtures/README.md). No blanket ignores. The header (format
+version, format 1's creation byte) is never compared, only records.
 
-**Group 2 — authentication continuity**
-4. The original master password unlocks.
-5. A wrong password still fails with the normal error — guards the catastrophic inverse, a hash
-   change that makes every password succeed.
+## 7. Shared components
 
-**Group 3 — data integrity (the Keystore check, highest value here)**
-6. Record count matches exactly, per type, across all five types.
-7. Open one known record **of every type** and compare **every field** character-for-character
-   against the Phase A oracle. A regenerated key shows up here as mojibake or a decrypt throw.
-8. Include one long unicode field and one empty optional field — GCM tag and padding edges.
-9. Search a known title and assert the record is found — a different query path from the detail
-   screen.
+### 7.1 Committed backups
 
-**Group 4 — the migration ran, and ran non-destructively**
-10. The add-record sheet offers **Authenticator**, proving `MIGRATION_4_5` created the table and
-    Room did not fall back destructively.
-11. Add a new authenticator post-upgrade and save it — writes into the freshly migrated table.
-12. Re-assert Group 3 counts afterwards.
-
-**Group 5 — TOTP across the boundary**
-13. For an authenticator restored from the fixture, assert the six displayed digits equal an
-    RFC 6238 value computed **inside the test** with a local Base32 + HMAC-SHA1 helper. Never call
-    app code for the expected value.
-14. Determinism: `adb root` works on `aosp-atd` (userdebug), so `settings put global auto_time 0`
-    then set a fixed instant. Without root, assert against the current **and** previous 30-second
-    window.
-15. This is the only assertion that proves the **seed itself decrypted correctly**, rather than
-    that a row exists.
-
-**Group 6 — the escape hatch still works**
-16. Take a fresh backup on the upgraded app; assert a `.bak` appears with a plausible size.
-17. `pm clear`, sign up again, restore that new `.bak`.
-18. Assert the same counts and field values as step 7. Catches "the upgrade worked but the export
-    it now produces is broken", which would quietly destroy the user's only recovery path.
-
-**Group 7 — backward-compat matrix** (same fixtures, separate job)
-19. On a **fresh** install of the new app, restore each fixture and assert counts and spot-checked
-    fields.
-20. For `v3_adversarial.bak`, assert the invalid-Base32 authenticator is **absent** while every
-    other record is present — the `filterDecodableAuthenticatorData` contract.
-
-**Group 8 — graceful failure**
-21. Restore `corrupt.bak`: expect the `CORRUPT_OR_INVALID_FILE` message, no crash, and the existing
-    vault untouched.
-22. Restore a valid fixture with the wrong password: expect `INCORRECT_PASSWORD`, vault untouched.
-
-**Group 9 — crash sentinel (global gate)**
-23. The job fails if logcat contains any `FATAL EXCEPTION` or `ANR in com.andryoga.safebox.qa`
-    between install and teardown.
-
-**Group 10 — downgrade guard**
-24. `adb install -r old.apk` after the upgrade must fail. Catches an accidentally lowered
-    `versionCode` before Play does.
-
----
-
-## 6. Assertion mechanics
-
-**Reading a field value.** Compose text surfaces to UI Automator as `text` on a leaf node. Scope to
-the field's container and read it:
-
-```kotlin
-private fun UiDevice.fieldValue(label: String): String {
-    val labelNode = wait(Until.findObject(By.text(label)), TIMEOUT)
-        ?: error("field label '$label' not found. Screen:\n${dumpWindowHierarchy()}")
-    return labelNode.parent.findObject(By.clazz("android.widget.EditText")).text
-}
-```
-
-**Masked fields.** Passwords, card numbers and TOTP seeds render as bullets. Tap
-`content-desc="Toggle sensitive data visibility"` first — it already exists in the shipped APK.
-
-**Driving the SAF picker** is the flakiest interaction in the design, so isolate it behind one
-helper with generous retries. Fixtures must be pushed *and* announced to the media store, or
-DocumentsUI may not list them:
-
-```bash
-adb push v3_current.bak /sdcard/Download/
-adb shell content call --uri content://media/external/file --method scan_volume --arg external
-```
-
-The restore picker filters on `application/octet-stream`, `application/x-trash` and
-`application/x-binary`
-([BackupAndRestoreScreen.kt:188-192](../../app/src/main/java/com/andryoga/safebox/ui/home/backupAndRestore/BackupAndRestoreScreen.kt#L188-L192)),
-so a `.bak` in Downloads is selectable.
-
-**Every failure must be self-describing.** Wrap all lookups so a miss dumps the window hierarchy
-and the last 200 logcat lines. A CI failure reading `NullPointerException at line 47`, on an
-emulator you cannot attach to, is worthless.
-
----
-
-## 7. Choosing baseline versions — derived, not hardcoded
-
-You objected to hardcoded tags in the matrix. You were right; here is the replacement.
-
-The tag convention is `vMAJOR.MINOR.DBVERSION.FIX`, where the third component **is the Room schema
-version**. That makes almost everything derivable from the release list alone. A script
-(`scripts/resolve-baselines.sh`) emits the matrix at run time using three rules:
-
-| Rule | Meaning | Resolves to today |
-|---|---|---|
-| `previous` | newest stable release before the tag being built, that has a `SafeBox-qa.apk` | `v2.0.4.0` |
-| `schema-boundary` | for each distinct `DBVERSION` older than the current one, the newest stable release carrying it | `v1.3.3.1` (db 3) |
-| `oldest` | the oldest release that still has an archived `SafeBox-qa.apk` | `v1.3.3.0` |
-
-After de-duplication that is **two to three jobs**, and it self-adjusts as you ship — no workflow
-edits, ever.
-
-Defaults and why:
-
-- **Stable releases only** by default. Users install from Play, which only serves stable builds, so
-  an RC baseline tests a state no real user is in. Override with a flag when an RC is the only
-  thing carrying a schema.
-- **Not every historical pair.** That is `O(n²)` and buys nothing; a v1.5 → v2.2 upgrade exercises
-  the same migration chain as v1.4 → v2.2.
-- **One optional human-maintained value:** a floor in `upgrade-test/oldest-supported.txt`, if you
-  ever decide you no longer care about installs older than some date. "How far back do we support"
-  is a product decision and is the only thing a script cannot infer. Default: no floor.
-
-Of the 18 releases, 15 carry a QA APK — the three that do not (`v1.0.0`, `v1.1.0`, `v1.2.2.0`)
-predate the upload step, so `oldest` bottoms out at `v1.3.3.0` automatically.
-
----
-
-## 8. CI wiring
-
-```yaml
-  upgrade_test:
-    needs: [ qa_pipeline ]
-    if: contains(github.ref_name, 'rc')
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.resolve_baselines.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Download the QA APK built in this run
-        uses: actions/download-artifact@v8
-        with: { name: QA APK, path: new-apk/ }
-
-      - name: Download the baseline QA APK
-        env: { GH_TOKEN: '${{ github.token }}' }
-        run: ./scripts/fetch-baseline-apk.sh '${{ matrix.from_tag }}' old-apk/
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
-
-      - uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 34
-          target: aosp_atd
-          arch: x86_64
-          script: ./scripts/run-upgrade-test.sh old-apk/SafeBox-qa.apk new-apk/SafeBox-qa.apk
-
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: upgrade-test-${{ matrix.from_tag }}
-          path: upgrade-test-out/
-```
-
-`resolve_baselines` is a tiny preceding job that runs the script from section 7 and emits the
-matrix as an output.
-
-### Is `reactivecircus/android-emulator-runner` free?
-
-Yes, twice over:
-
-- The action itself is **Apache-2.0 open source** (1.3k stars, actively maintained). No licence
-  cost, no account.
-- `Ni3verma/Safe-Box` is a **public** repository, and GitHub-hosted standard runners are free with
-  no minute cap for public repos.
-
-The only real cost is wall-clock time. You already depend on the same underlying capability —
-`nightly.yml` and `release.yml` both run emulators and already contain the KVM-enabling step — so
-nothing new is being introduced infrastructurally.
-
-Expect roughly 8–10 minutes per baseline, running in parallel, so about 10 minutes added to an RC
-tag build.
-
----
-
-## 9. Failure triage
-
-| Symptom | Almost certainly |
+| File | What |
 |---|---|
-| Lands on **signup** instead of unlock | preferences not preserved — check nothing uninstalled |
-| Correct password rejected | password hash storage or hashing changed |
-| Records present but fields are mojibake, or decrypt throws | **`symmetricDataKey` regenerated — stop the release** |
-| Counts are 0 but the app works | destructive Room migration |
-| Authenticator missing from the add sheet | `MIGRATION_4_5` did not run |
-| TOTP digits wrong, everything else right | check the clock was frozen before suspecting the seed |
-| Post-upgrade backup cannot be restored | export regression — the user's recovery path is broken |
+| [`upgrade-test/seed/seed.bak`](../../upgrade-test/seed/README.md) | The current format, hand-captured. **Fixed path forever**: older tags are read through it. |
+| [`upgrade-test/fixtures/format-<k>.bak`](../../upgrade-test/fixtures/README.md) | One frozen file per older format. Never regenerated. |
+| [`app/backup-format.lock`](../../app/backup-format.lock) | `<version>=<hash of the export classes>`, append-only |
 
----
+**One password everywhere:** `Upgrade@@Test123`, for every sign-up and every capture; it satisfies
+every release's password rules, including v1's. Exception: `format-2.bak` keeps `Fixture@Backup1`,
+because re-encrypting it would need either script-made bytes or a round trip through an old app
+that may normalise its `""`/`null` mix.
 
-## 10. Delivery plan, MR by MR
+### 7.2 Why decode instead of comparing bytes
 
-Each MR is independently reviewable and leaves the repository in a working state.
+Two backups of identical data never share bytes: a fresh random **salt and IV** per backup, the
+**creation time** in the header, and a newer N may change the layout legitimately. `InspectBackup`
+mirrors the app's restore (PBKDF2WithHmacSHA1, 1324 iterations, AES/CBC) **on purpose**: using the
+app's own decryption would let a bug cancel out on both sides. Check 3 keeps it in step.
 
-### MR0 — capture the irreversible fixture (no code)
+`--canonical` prints one sorted line per field; record identity is type + title + creation date, so
+duplicate titles still line up. Two normalisations are unit-tested: an absent type key equals a
+present empty one, and a field only one side has must be empty there. `--rows` prints the
+`TYPE<tab>title` pairs the records check expects on screen.
 
-Install `v2.1.4.0-rc3`, create a representative vault, export a backup, commit it as
-`v2_pre_totp.bak` along with a short runbook describing exactly what it contains.
+### 7.3 Test tags and the records check (N only)
 
-- **Must land before the TOTP feature merges.**
-- Review size: a binary fixture plus ~40 lines of markdown.
-- Acceptance: the `.bak` restores cleanly on `v2.1.4.0-rc3` and the runbook lists every record.
+Tags go **only where a visible label cannot identify the element**
+([`TestTags.kt`](../../app/src/main/java/com/andryoga/safebox/ui/core/TestTags.kt)); everything with
+its own text or content description is matched by resource-name label
+([ADR-0003](../decisions/0003-ui-labels-from-resource-names.md)). A tag is warranted for:
 
-### MR1 — harness skeleton, end to end, no assertions
+1. **structure** read as a unit (a row's title and type);
+2. **scroll containers**;
+3. **controls whose label is ambiguous or missing** (same text as a heading; no text at all).
 
-`upgrade-test` module, `scripts/resolve-baselines.sh`, `scripts/fetch-baseline-apk.sh`,
-`scripts/run-upgrade-test.sh`, plus a `workflow_dispatch`-only CI job. One smoke test: launch and
-assert the unlock screen appears.
+| Screen | Tags | Rule |
+|---|---|---|
+| Records | `records_list` | 2 |
+| Records | `record_row`, `record_row_title`, `record_row_type` | 1 |
+| Backup & Restore | `backup_button`, `restore_button` (labels equal the section headings) | 3 |
+| Settings | the four switch and slider tags | 3 (used once N-1 has them, §9) |
 
-- Proves the hard part — install, seed, upgrade, re-run — before any assertion logic exists.
-- Acceptance: a green manual run that genuinely upgrades in place, **and fails loudly if zero tests
-  executed**. That guard is mandatory; a silent `tests=0` is what made the previous attempt
-  worthless.
+- Tags buy **robustness, not speed**: `By.res` and `By.text` cost the same tree query.
+- Text fields stay untagged: the label lookup already works for every field typed into, and N-1
+  needs that path anyway.
+- **N-1 cannot use tags** until a release containing them becomes N-1. Each step has exactly one
+  lookup; there are no "tag, else label" fallbacks, so a missing tag fails instead of silently
+  falling back.
+- `testTagsAsResourceId` is enabled for debug and qa only (`MainActivity`).
 
-### MR2 — fixtures and seeding
+[`RecordsCheck`](../../upgrade-test/src/main/java/com/andryoga/safebox/upgradetest/RecordsCheck.kt)
+walks `records_list` reading `(type, title)` from each `record_row` until the visible rows stop
+changing, and requires the set to equal `--rows` of the restored file. It then opens one record per
+type **via search**, never by scrolling, and waits for the detail screen's edit button.
 
-Remaining fixtures, the SAF picker helper, and full Phase A automation.
+## 8. Run time
 
-- Acceptance: Phase A reliably produces an identical vault ten runs in a row.
+The app's own work is negligible (`RestoreDataWorker` 0.2–0.3 s, `BackupDataWorker` 0.4 s, CI run
+36127205711). The time is UI Automator's, which is why the design avoids typing records, scrolling
+to each record and dumping the screen per swipe. There are no fixed sleeps: 250 ms polls, with
+timeouts as caps. Further levers (UI Automator's idle wait, fewer `am instrument` calls) are adopted
+only when the per-phase timings each runner prints show a gain.
 
-### MR3 — data integrity assertions
+Measured locally on an API 35 arm64 emulator, three consecutive green runs each, 2026-09-26:
 
-Groups 1–3 and the Group 9 crash sentinel. **This is the MR that delivers the actual value** — the
-Keystore continuity check.
+| Runner | Total | Per phase |
+|---|---|---|
+| `run-restore-test.sh` | 151–152 s | setup 8 s; each restore with screen checks 25–30 s; refusals 13 s |
+| `run-upgrade-test.sh` (v2.0.4.0 → N) | 39–43 s | prepare on N-1 12 s; verify on N 23 s |
 
-- Acceptance: passes against `v2.0.4.0`; fails loudly if the alias is deliberately wiped.
+## 9. Risks, limits and follow-ups
 
-### MR4 — migration, TOTP, backup round trip
+| Risk | Handling |
+|---|---|
+| N-1's restore changes a value, so the diff fails without an upgrade bug | Unlikely (the seed was captured on N-1-era code). If it happens: also back up on N-1 and compare against that |
+| File assembly changes (`BackupDataWorker`, crypto constants) do not change the export hash | Accepted: rare and obvious in review |
+| A release without `SafeBox-qa.apk` silently moves N-1 back | The release process attaches it to every release |
+| Only restored records exist before the upgrade | Accepted: records typed on N-1 would test forms, not the upgrade |
+| SAF picker automation is flaky | Isolated in `SafDocumentPicker`; failures there are named as picker failures |
+| CI runs API 34, local runs API 35 | Deliberate; a local pass does not imply a CI pass |
 
-Groups 4–6, including the independent RFC 6238 computation and clock freezing.
+Triggered follow-ups, not merge-blocking, each removing code that exists only because N-1 predates
+this design:
 
-### MR5 — backward-compat and graceful failure
-
-Groups 7–8 as a separate CI job, plus the Group 10 downgrade guard.
-
-### MR6 — enable in the release pipeline
-
-Wire into `release.yml` behind the RC condition, enable the derived matrix, upload artifacts, and
-document triage ownership.
-
-- Acceptance: a real RC tag runs it and the result is visible on the PR.
-
----
-
-## 11. Open decisions
-
-Grouped by the MR they block. Each carries a recommended default, so accepting all defaults is a
-valid position. The MR0 group is settled and kept here as the decision record.
-
-### Blocks MR0 — done
-
-1. **`v2_pre_totp.bak` — captured and verified.** Lives at
-   `upgrade-test/src/main/assets/fixtures/v2_pre_totp.bak`, with provenance, contents and a
-   SHA-256 in the [README](../../upgrade-test/src/main/assets/fixtures/README.md) beside it.
-   It was decrypted with `scripts/InspectBackup.java` before being committed, confirming
-   `BACKUP_VERSION = 2`, a 256-byte salt, a 16-byte IV, and **no key `"8"`** — that is, the
-   pre-TOTP format this whole exercise exists to preserve. **MR0 is unblocked.**
-2. **Fixture credentials — settled.**
-
-   | | Value | Constrained by |
-   |---|---|---|
-   | Vault master password | `Upgrade@Test12` | `PasswordValidator` |
-   | Password hint | `upgrade fixture` | must be non-blank |
-   | Backup file password | `Fixture@Backup1` | unconstrained |
-
-   `PasswordValidator.validate()` (`app/src/main/java/com/andryoga/safebox/ui/core/password/PasswordValidator.kt`)
-   requires all five of: non-blank; mixed case; **at least two digits** (`MIN_NUMERIC_COUNT = 2`); at
-   least one non-alphanumeric character; and length ≥ 7 (`MIN_PASSWORD_LENGTH`). A password with a
-   single digit fails `LESS_NUMERIC_COUNT` — which is why the fixture uses two.
-
-   Signup is additionally gated on a non-blank hint (`isSignupButtonEnabled` is
-   `validatorState == PASSWORD_IS_OK && hint.isNotBlank()`), so the fixture needs one. It is typed,
-   never asserted on.
-
-   The backup password is unconstrained — `PasswordValidator` is referenced only by
-   `SignupViewModel` and `UpdatePasswordDialog`, never by the export/import flow.
-3. **Baseline vault richness — captured as two records per type**, one with every optional field
-   populated and one with only the mandatory fields. This is the shape that matters: without a
-   record populating the optional fields, a dropped-column migration bug is invisible, because a
-   null is indistinguishable from a value that was never set.
-
-   > [!IMPORTANT]
-   > `SECURE_NOTE` has **one** record, not two. Its entity is `title` + `notes` and both are
-   > mandatory, so the "mandatory only" and "all fields" shapes are the same record. Assertions
-   > must expect 1 for secure notes and 2 for every other type, or the suite fails on its first run.
-
-### Blocks MR1 — done
-
-Answered 2026-09-21. **MR1 is unblocked.**
-
-4. **A new Gradle module is acceptable.** `:upgrade-test` will appear in `./gradlew tasks` and adds a
-   small configuration cost to every build; that is accepted. Section 3 explains why there is no
-   in-process alternative — the test must survive the app process being replaced.
-5. **Module name is `upgrade-test`.** `e2e-blackbox` was considered and rejected as premature; the
-   module can be renamed if release-build smoke tests are ever added to it.
-6. **API 34 only to start.** API 24 is deferred to MR5, and only if the runtime budget allows. Note
-   the emulator available locally is a Pixel 8 on **API 35**, so the CI API level and the local one
-   differ deliberately — do not assume a local pass implies a CI pass.
-
-### Blocks MR6
-
-7. **RC tags only, or production tags too?** *Recommendation: both. Production is the last gate
-   before real users, and it costs ten minutes.*
-8. **What happens when it fails?** Block the release, or report and let a human decide?
-   *Recommendation: block on Groups 1–3 and 9 (data loss and crashes), report-only on the rest
-   until the flakiness profile is known.*
-9. **Who triages a red run?** An unowned flaky job gets ignored within a month, and then deleted.
-
-### Not blocking, but worth deciding
-
-10. **Should there be a fresh-install control arm?** Running the same assertions on a clean install
-    distinguishes "the upgrade broke it" from "it is broken generally". *Recommendation: yes, it is
-    nearly free once the harness exists.*
-11. **`oldest-supported` floor.** *Recommendation: none for now; revisit if the oldest baseline
-    starts costing more than it catches.*
-12. **Fixture location** — `upgrade-test/src/main/assets/fixtures/` as proposed, or GitHub Release
-    assets. *Recommendation: in-repo. They are small, and a test fixture that can disappear from
-    under CI is not a fixture.*
+| What | Trigger | Done when |
+|---|---|---|
+| `v2.0.4.0 → format-2.bak` fallback row | A stable release containing `upgrade-test/seed/` becomes N-1 | The fallback `case` is gone; the test covers only `git show` |
+| Settings matched by geometry (`UiSupport.switchBeside`) | A stable release containing the settings tags becomes N-1 | `SettingsChanger` uses `By.res(tag)`; `switchBeside` deleted; ADR-0003 updated |

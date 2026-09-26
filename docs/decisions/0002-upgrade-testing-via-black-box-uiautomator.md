@@ -1,7 +1,9 @@
 # ADR-0002 — Upgrade and release-build testing via a black-box UI Automator module
 
-- **Status:** Accepted (design); implementation not started
-- **Date:** 2026-09-20
+- **Status:** Accepted, implemented. Amended by
+  [ADR-0003](0003-ui-labels-from-resource-names.md) and
+  [ADR-0004](0004-verify-upgrade-and-restore-by-decoded-backup.md)
+- **Date:** 2026-09-20, status updated 2026-09-26
 - **Supersedes:** nothing. **Depends on:** [ADR-0001](0001-instrumentation-tests-run-on-debug-only.md)
 
 ## Decision
@@ -10,7 +12,14 @@ Release-build confidence and upgrade confidence come from a **separate `com.andr
 self-instrumenting, driving the app through UI Automator**, with zero compile-time dependency on
 `:app`.
 
-Design detail lives in [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md).
+Design detail lives in [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md); operating
+it is in [upgrade-harness-operations.md](../testing/upgrade-harness-operations.md).
+
+> [!NOTE]
+> The two structural claims below are no longer predictions. Verified 2026-09-22 on the shipped
+> module: `:upgrade-test:assembleDebug` executes **no `:app` task at all**, and the merged manifest
+> sets `targetPackage` to the harness's own package, so the app is genuinely not the instrumentation
+> target. An in-place `adb install -r` between two phases does not disturb the harness.
 
 ## Why this shape
 
@@ -64,11 +73,20 @@ Verified 2026-09-20, all of which make this cheaper than expected:
   2026-09-24:* the text-less settings switches and sliders now carry tags, exposed as resource ids
   in `debug`/`qa` only (`ui/core/TestTags.kt`). The harness can use them only once the oldest
   supported baseline is a release that contains them; until then it keeps matching by geometry.
+  *Amended 2026-09-26 by [ADR-0004](0004-verify-upgrade-and-restore-by-decoded-backup.md):* the
+  records list and the Backup & Restore buttons carry tags too, used on the build under test only.
 
 ## Consequences
 
-- A new Gradle module and a host script to maintain.
-- Tests are selector-based, so user-visible copy changes can break them.
+- A new Gradle module and a host script to maintain. *Now two runners over a shared library.*
+- Tests are selector-based, so user-visible copy changes can break them. *Amended by
+  [ADR-0003](0003-ui-labels-from-resource-names.md):* the app's own labels are resolved from each
+  installed build's string resources, so a copy edit no longer breaks them — a resource **rename**
+  does, and fails naming the missing resource. System UI (DocumentsUI's `Show roots`, the
+  permission dialog's `ALLOW`) is not the app's and is still matched by literal text.
 - Runs at RC-tag / nightly cadence, not per PR (~10 min wall clock for three version pairs).
+  *Amended by ADR-0004:* one version pair (N-1 → N) plus the restore test, as a gate in
+  `release.yml` on every RC and stable tag, and on PRs labelled `run-upgrade-test`.
 - Golden `.bak` fixtures must be produced and committed, including one from the **currently shipped
-  app before the TOTP feature merges** — that format becomes unreproducible afterwards.
+  app before the TOTP feature merges** — that format becomes unreproducible afterwards. *Done:*
+  `upgrade-test/fixtures/format-2.bak`.
