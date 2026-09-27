@@ -16,8 +16,9 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 ```
 
 `adb` and the emulator need **network and device access, so they must run outside the sandbox**
-(`BypassSandbox: true`). Gradle usually works sandboxed once dependencies are cached; if it fails
-on dependency resolution, run it unsandboxed.
+(`BypassSandbox: true`). **Gradle needs it too:** inside the sandbox the client cannot reach the
+daemon it just started and fails with `Could not connect to the Gradle daemon`, even with every
+dependency cached (seen on `:app:testDebugUnitTest`, 2026-09-27). Run Gradle unsandboxed.
 
 **`git commit` inherits both constraints**, because the pre-commit hook shells out to Gradle. Run it
 as `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" git commit ...` and

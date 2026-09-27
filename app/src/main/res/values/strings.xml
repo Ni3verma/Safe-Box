@@ -75,6 +75,7 @@
     <!--     master password dialog-->
     <string name="incorrect_pswrd_message">Password is incorrect !</string>
     <string name="restore_corrupt_file_message">The selected backup file is corrupted or invalid. Please choose a valid backup file.</string>
+    <string name="restore_backup_too_new_message">This backup was created by a newer version of Safe Box. Your backup file is fine, please update the app to restore it.</string>
     <string name="failed_message">An unexpected error occurred while processing your data.</string>
 
     <!--    Notification-->

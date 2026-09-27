@@ -241,6 +241,25 @@ class BackupAndRestoreScreenTest {
     }
 
     @Test
+    fun dialogBodyText_inBackupTooNewState_shouldRenderUpdateAppMessage() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                dialogBodyText(
+                    operation = Operation.Restore(null),
+                    workflowState = WorkflowState.BACKUP_TOO_NEW,
+                    password = "",
+                    onPasswordChange = {},
+                ).invoke()
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.restore_backup_too_new_message))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.restore_corrupt_file_message))
+            .assertDoesNotExist()
+    }
+
+    @Test
     fun backupPathPermissionError_shouldDisplaySnackbarWithMessageAndRetryButton() {
         var retryClicked = false
         val snackbarHostState = androidx.compose.material3.SnackbarHostState()

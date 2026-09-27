@@ -163,6 +163,16 @@ Failure classification is `RestoreFailureReason`:
 | `INCORRECT_PASSWORD` | `BadPaddingException` during decrypt |
 | `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
 | `UNKNOWN_ERROR` | anything else |
+| `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
+
+The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
+can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins
+the order.
+
+`BACKUP_TOO_NEW` is an all-or-nothing rejection, by decision on issue #249: a newer backup is not
+partially restored even when the change was purely additive (a new map key). It only protects
+builds that contain the check — builds released before it still accept newer backups, silently
+dropping unknown keys or failing as "corrupt file".
 
 ### Authenticator records are filtered, not fatal
 

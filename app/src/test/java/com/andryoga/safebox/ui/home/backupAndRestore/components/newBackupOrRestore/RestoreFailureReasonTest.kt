@@ -15,6 +15,20 @@ class RestoreFailureReasonTest {
         }
     }
 
+    /**
+     * The ordinal is persisted in WorkManager output data and can outlive an app upgrade, so the
+     * order is a compatibility contract. New entries must be appended, and this list extended.
+     */
+    @Test
+    fun entries_shouldKeepPersistedOrdinalOrder() {
+        assertThat(RestoreFailureReason.entries).containsExactly(
+            RestoreFailureReason.INCORRECT_PASSWORD,
+            RestoreFailureReason.CORRUPT_OR_INVALID_FILE,
+            RestoreFailureReason.UNKNOWN_ERROR,
+            RestoreFailureReason.BACKUP_TOO_NEW,
+        ).inOrder()
+    }
+
     @Test
     fun fromWorkData_nullData_shouldReturnUnknownError() {
         val result = RestoreFailureReason.fromWorkData(null)

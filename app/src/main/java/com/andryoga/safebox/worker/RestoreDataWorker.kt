@@ -134,6 +134,16 @@ class RestoreDataWorker
 
                 importMap = fileObject as Map<String, ByteArray?>
                 val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+                // A newer build may have changed the payload in ways this build cannot read, which
+                // would otherwise surface as a misleading "corrupt file". Older versions are still
+                // accepted. Non-local return: `use` is inline, so this closes the stream and skips
+                // the catch clauses below, keeping the reason from being remapped or double-logged.
+                if (version > CommonConstants.BACKUP_VERSION) {
+                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW) {
+                        param(AnalyticsParam.VERSION, version.toDouble())
+                    }
+                    return Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData())
+                }
                 val creationDateBytes = importMap[CommonConstants.CREATION_DATE_KEY]!!
                 // Check size for backward compatibility: new backups store an 8-byte Long timestamp,
                 // while legacy backups stored a 1-byte value. Calling ByteBuffer.wrap().long on <8 bytes

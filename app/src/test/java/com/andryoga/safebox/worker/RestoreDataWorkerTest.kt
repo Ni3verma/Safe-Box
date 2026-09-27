@@ -260,6 +260,53 @@ class RestoreDataWorkerTest {
     }
 
     @Test
+    fun doWork_backupVersionNewerThanSupported_failsWithBackupTooNewBeforeAnyDecryptionOrDbWork() =
+        runTest {
+            val newerVersion = CommonConstants.BACKUP_VERSION + 1
+            val backupMap = WorkerTestFixtures.createBackupMap(
+                version = newerVersion.toByte(),
+                loginData = ByteArray(32) { 7 },
+            )
+            val backupFile = File(tempDir, "NewerVersionBackup.bak")
+            WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+            val inputData = Data.Builder()
+                .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+                .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+                .build()
+
+            val result = buildWorker(inputData).doWork()
+
+            assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData()))
+            verify(exactly = 0) { passwordBasedEncryption.encryptDecrypt(any(), any(), any(), any(), any()) }
+            verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+            val tooNewEvent = analyticsHelper.loggedEvents.single {
+                it.key == AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW
+            }
+            assertThat(tooNewEvent.params[AnalyticsParam.VERSION.paramName])
+                .isEqualTo(newerVersion.toDouble())
+            // the non-local return must bypass the catch clauses, so no generic failure is logged.
+            assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
+            assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isFalse()
+        }
+
+    @Test
+    fun doWork_backupVersionEqualToSupported_isNotRejectedAsTooNew() = runTest {
+        val result = restoreEmptyBackupOfVersion(CommonConstants.BACKUP_VERSION.toByte())
+
+        assertThat(result).isEqualTo(Result.success())
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW)).isFalse()
+    }
+
+    @Test
+    fun doWork_backupVersionOlderThanSupported_isNotRejectedAsTooNew() = runTest {
+        val result = restoreEmptyBackupOfVersion(LEGACY_BACKUP_VERSION)
+
+        assertThat(result).isEqualTo(Result.success())
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW)).isFalse()
+    }
+
+    @Test
     fun doWork_whenBackupContainsAuthenticatorData_restoresAuthenticatorRecords() = runTest {
         val authList = listOf(
             TestFixtures.createTestExportAuthenticatorData(
@@ -536,6 +583,30 @@ class RestoreDataWorkerTest {
         every {
             passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
         } returns authJson.toByteArray()
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+            .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+            .build()
+
+        return buildWorker(inputData).doWork()
+    }
+
+    /**
+     * Runs a full restore of a backup that carries only the header, stamped with [version].
+     *
+     * With no record payloads nothing is decrypted, so the result isolates the version gate from
+     * the decryption and parsing paths.
+     *
+     * @param version Value written to the backup's version key.
+     * @return Result of the worker run.
+     */
+    private suspend fun restoreEmptyBackupOfVersion(version: Byte): ListenableWorker.Result {
+        val backupFile = File(tempDir, "EmptyBackupV$version.bak")
+        WorkerTestFixtures.writeBackupMapToFile(
+            backupFile,
+            WorkerTestFixtures.createBackupMap(version = version),
+        )
 
         val inputData = Data.Builder()
             .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
