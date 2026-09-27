@@ -93,12 +93,12 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   forms: [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md).
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
   table inside `runInTransaction`. Post-restore counts equal the file's counts exactly **for every
-  type except authenticator**. `filterDecodableAuthenticatorData` partitions authenticator records
-  on `totpGenerator.isValidConfig(...)` and **silently drops the invalid ones** (logging a count and
-  firing `RESTORE_INVALID_AUTHENTICATOR_SKIPPED`), so a file containing a malformed seed restores
-  fewer authenticator rows than it holds. Assert `<=` for authenticators, `==` for the rest.
+  type except authenticator**: `filterDecodableAuthenticatorData` **silently drops** records failing
+  `totpGenerator.isValidConfig(...)` (firing `RESTORE_INVALID_AUTHENTICATOR_SKIPPED` with a count).
+  Assert `<=` for authenticators, `==` for the rest.
 - `RestoreFailureReason`: `INCORRECT_PASSWORD`, `CORRUPT_OR_INVALID_FILE`, `UNKNOWN_ERROR`,
-  `BACKUP_TOO_NEW` (header version `> BACKUP_VERSION`). Append-only; `RestoreFailureReasonTest` pins it.
+  `BACKUP_TOO_NEW` (version `> BACKUP_VERSION`), `BACKUP_EMPTY` (no record payload; only crafted files,
+  an empty vault writes no backup at all, #272). Append-only; `RestoreFailureReasonTest` pins it.
 
 ## Testing
 

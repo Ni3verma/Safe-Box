@@ -20,6 +20,9 @@ enum class WorkflowState {
     // selected backup file was created by a newer app version. user must update the app.
     BACKUP_TOO_NEW,
 
+    // selected backup file has no records. nothing was restored.
+    BACKUP_EMPTY,
+
     // backup/restore job is in progress
     IN_PROGRESS,
 

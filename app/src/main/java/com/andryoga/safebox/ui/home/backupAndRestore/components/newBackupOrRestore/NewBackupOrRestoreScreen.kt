@@ -133,7 +133,8 @@ private fun dialogIconComposable(
 
             WorkflowState.FAILED,
             WorkflowState.CORRUPT_FILE,
-            WorkflowState.BACKUP_TOO_NEW -> Icon(
+            WorkflowState.BACKUP_TOO_NEW,
+            WorkflowState.BACKUP_EMPTY -> Icon(
                 Icons.Filled.ErrorOutline,
                 contentDescription = null,
                 modifier = modifier,
@@ -153,6 +154,7 @@ private fun cancelButtonComposable(
         WorkflowState.FAILED,
         WorkflowState.CORRUPT_FILE,
         WorkflowState.BACKUP_TOO_NEW,
+        WorkflowState.BACKUP_EMPTY,
         WorkflowState.ASK_FOR_PASSWORD,
         WorkflowState.SUCCESS -> {
             {
@@ -161,6 +163,7 @@ private fun cancelButtonComposable(
                     WorkflowState.FAILED,
                     WorkflowState.CORRUPT_FILE,
                     WorkflowState.BACKUP_TOO_NEW,
+                    WorkflowState.BACKUP_EMPTY,
                     -> R.string.common_ok
                     else -> R.string.common_cancel
                 }
@@ -238,6 +241,15 @@ fun dialogBodyText(
             {
                 Text(
                     text = stringResource(R.string.restore_backup_too_new_message),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+
+        WorkflowState.BACKUP_EMPTY -> {
+            {
+                Text(
+                    text = stringResource(R.string.restore_backup_empty_message),
                     fontWeight = FontWeight.Medium,
                 )
             }

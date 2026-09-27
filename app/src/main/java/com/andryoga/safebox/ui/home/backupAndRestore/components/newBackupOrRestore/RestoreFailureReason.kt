@@ -23,7 +23,10 @@ enum class RestoreFailureReason {
     UNKNOWN_ERROR,
 
     // Backup was written by a newer app build whose backup format this build does not support.
-    BACKUP_TOO_NEW;
+    BACKUP_TOO_NEW,
+
+    // Backup has no record payload, so nothing proves the password. Rejected before any DB work.
+    BACKUP_EMPTY;
 
     fun toWorkData(): Data = workDataOf(KEY_RESTORE_FAILURE_REASON to ordinal)
 

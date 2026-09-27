@@ -316,6 +316,25 @@ class NewBackupOrRestoreVMTest {
         }
 
     @Test
+    fun `when workInfo transitions to FAILED on Restore with BACKUP_EMPTY, workflowState updates to BACKUP_EMPTY`() =
+        runTest {
+            val fileUri: Uri = mockk(relaxed = true)
+            viewModel.initVM(Operation.Restore(fileUri))
+            val mockWorkInfo: WorkInfo = mockk {
+                every { state } returns WorkInfo.State.FAILED
+                every { outputData } returns RestoreFailureReason.BACKUP_EMPTY.toWorkData()
+            }
+            workInfoFlow.value = mockWorkInfo
+
+            viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
+            advanceUntilIdle()
+
+            viewModel.uiState.test {
+                assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.BACKUP_EMPTY)
+            }
+        }
+
+    @Test
     fun `when workInfo transitions to FAILED on Restore with UNKNOWN_ERROR, workflowState updates to FAILED`() =
         runTest {
             val fileUri: Uri = mockk(relaxed = true)

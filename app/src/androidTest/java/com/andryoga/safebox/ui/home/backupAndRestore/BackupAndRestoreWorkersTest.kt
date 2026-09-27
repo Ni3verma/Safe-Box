@@ -41,6 +41,9 @@ import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import timber.log.Timber
 import java.io.File
+import java.io.FileOutputStream
+import java.io.ObjectOutputStream
+import java.nio.ByteBuffer
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -308,6 +311,56 @@ class BackupAndRestoreWorkersTest {
             assertThat(RestoreFailureReason.fromWorkData(result.outputData))
                 .isEqualTo(RestoreFailureReason.INCORRECT_PASSWORD)
             assertThat(loginDataRepository.getAllLoginData().first().isEmpty()).isTrue()
+        }
+
+    @Test
+    fun exportToBackupFile_withEmptyVault_shouldWriteNoBackupFile() =
+        runBlocking {
+            // BACKUP_EMPTY relies on this: no genuine backup is ever payload-less.
+            safeBoxDatabase.clearAllTables()
+            val backupDir = File(context.cacheDir, "backup_empty_vault")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
+
+            assertThat(runBackupWorker()).isEqualTo(Result.success())
+
+            assertThat(backupDir.listFiles().orEmpty().toList()).isEmpty()
+        }
+
+    @Test
+    fun restoreFromBackupFile_withoutRecordPayloads_shouldFailAsBackupEmptyAndKeepExistingRecords() =
+        runBlocking {
+            E2ETestUtils.setupSeededVaultRecords(
+                safeBoxDatabase,
+                loginDataRepository,
+                bankCardDataRepository,
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                authenticatorDataRepository,
+            )
+            val backupDir = File(context.cacheDir, "backup_header_only")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            val headerOnlyFile = File(backupDir, "header_only.bak")
+            ObjectOutputStream(FileOutputStream(headerOnlyFile)).use {
+                it.writeObject(
+                    hashMapOf(
+                        CommonConstants.VERSION_KEY to byteArrayOf(CommonConstants.BACKUP_VERSION.toByte()),
+                        CommonConstants.SALT_KEY to ByteArray(256),
+                        CommonConstants.IV_KEY to ByteArray(16),
+                        CommonConstants.CREATION_DATE_KEY to
+                            ByteBuffer.allocate(Long.SIZE_BYTES).putLong(System.currentTimeMillis()).array(),
+                    ),
+                )
+            }
+
+            val result = runRestoreWorker("WrongPassword999!", Uri.fromFile(headerOnlyFile).toString())
+
+            assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData()))
+            assertThat(loginDataRepository.getAllLoginData().first().any { it.title == "Apple ID Login" })
+                .isTrue()
+            assertThat(authenticatorDataRepository.getAllAuthenticatorData().first()).isNotEmpty()
         }
 
     @Test
