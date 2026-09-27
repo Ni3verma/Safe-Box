@@ -291,6 +291,31 @@ class RestoreDataWorkerTest {
         }
 
     @Test
+    fun doWork_backupVersionByteWithHighBitSet_isReadAsUnsignedAndRejectedAsTooNew() = runTest {
+        // 0x80 is -128 as a signed byte, which would slip under BACKUP_VERSION if sign-extended.
+        val highBitVersion: Byte = 0x80.toByte()
+        val backupFile = File(tempDir, "HighBitVersionBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(
+            backupFile,
+            WorkerTestFixtures.createBackupMap(version = highBitVersion),
+        )
+
+        val inputData = Data.Builder()
+            .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
+            .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
+            .build()
+
+        val result = buildWorker(inputData).doWork()
+
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData()))
+        verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+        val tooNewEvent = analyticsHelper.loggedEvents.single {
+            it.key == AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW
+        }
+        assertThat(tooNewEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(128.0)
+    }
+
+    @Test
     fun doWork_backupVersionEqualToSupported_isNotRejectedAsTooNew() = runTest {
         val result = restoreEmptyBackupOfVersion(CommonConstants.BACKUP_VERSION.toByte())
 

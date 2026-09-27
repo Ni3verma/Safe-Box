@@ -133,7 +133,7 @@ class RestoreDataWorker
                 }
 
                 importMap = fileObject as Map<String, ByteArray?>
-                val version = importMap[CommonConstants.VERSION_KEY]!![0].toInt()
+                val version = importMap[CommonConstants.VERSION_KEY]!![0].toUByte().toInt()
                 // A newer build may have changed the payload in ways this build cannot read, which
                 // would otherwise surface as a misleading "corrupt file". Older versions are still
                 // accepted. Non-local return: `use` is inline, so this closes the stream and skips
