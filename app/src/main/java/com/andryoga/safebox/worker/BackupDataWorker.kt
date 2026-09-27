@@ -36,17 +36,22 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
+import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
+import java.io.IOException
 import java.io.ObjectOutputStream
 import java.nio.ByteBuffer
 import java.util.Date
@@ -78,102 +83,127 @@ class BackupDataWorker
     private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
-        var isSuccess = true
-        try {
-            backupMetadataRepository.getBackupMetadata().take(1).collect { backupMetadata ->
-                if (backupMetadata != null) {
-                    Timber.i("backup metadata found")
-                    val isShowStartNotification =
-                        inputData.getBoolean(
-                            BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
-                            false
-                        )
-                    if (isShowStartNotification) {
-                        sendNotification(
-                            getNotificationOptions(
-                                applicationContext.getString(R.string.notification_backup_in_progress)
-                            )
-                        )
-                    }
-
-                    startTime = System.currentTimeMillis()
-
-                    val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
-                        ?: throw IllegalArgumentException("expected password input was not received")
-
-                    val loginData = loginDataDaoSecure.exportAllData()
-                    val bankAccountData = bankAccountDataDaoSecure.exportAllData()
-                    val bankCardData = bankCardDataDaoSecure.exportAllData()
-                    val secureNoteData = secureNoteDataDaoSecure.exportAllData()
-                    val authenticatorData = authenticatorDataDaoSecure.exportAllData()
-
-                    recordTime("got all data")
-
-                    if (
-                        shouldExport(
-                            loginData,
-                            bankAccountData,
-                            bankCardData,
-                            secureNoteData,
-                            authenticatorData,
-                        )
-                    ) {
-                        Timber.i("$localTag data is present for export")
-                        salt = passwordBasedEncryption.getRandomSalt()
-                        iv = passwordBasedEncryption.getRandomIV()
-                        exportMap.putAll(
-                            mapOf(
-                                CommonConstants.SALT_KEY to salt,
-                                CommonConstants.IV_KEY to iv,
-                                CommonConstants.VERSION_KEY to ByteArray(1) {
-                                    CommonConstants.BACKUP_VERSION.toByte()
-                                },
-                            )
-                        )
-                        recordTime("got salt and iv")
-
-                        populateExportMapWithData(
-                            loginData,
-                            inputPassword,
-                            bankAccountData,
-                            bankCardData,
-                            secureNoteData,
-                            authenticatorData,
-                        )
-
-                        Timber.i("getting picked dir")
-                        try {
-                            val uri = backupMetadata.uriString.toUri()
-                            val pickedDir = if (uri.scheme == "file" && uri.path != null) {
-                                DocumentFile.fromFile(java.io.File(uri.path!!))
-                            } else {
-                                DocumentFile.fromTreeUri(applicationContext, uri)!!
-                            }
-
-                            deleteExtraBackupFiles(pickedDir)
-                            exportToFile(pickedDir)
-                        } catch (exception: Exception) {
-                            onBackupError(exception)
-                            isSuccess = false
-                        }
-                    } else {
-                        Timber.i("$localTag  nothing to export")
-                    }
-                } else {
-                    Timber.i("backup metadata not found")
-                }
+        return try {
+            val backupMetadata = backupMetadataRepository.getBackupMetadata().first()
+            if (backupMetadata == null) {
+                Timber.i("backup metadata not found")
+                Result.success()
+            } else {
+                backup(backupMetadata)
             }
+        } catch (exception: CancellationException) {
+            throw exception
         } catch (exception: Exception) {
-            onBackupError(exception)
-            isSuccess = false
+            onBackupFailure(BackupFailureReason.UNKNOWN, exception)
+        }
+    }
+
+    /**
+     * Runs one backup into the folder described by [backupMetadata].
+     *
+     * Order matters: the empty-vault check runs before the start notification and before the
+     * folder is touched, so an empty vault can never clear the folder setting. The folder
+     * pre-check runs before encryption, so a dead folder costs no crypto work.
+     *
+     * @return [Result.success] only when a backup file was written, otherwise
+     * [Result.failure] carrying a [BackupFailureReason].
+     */
+    private suspend fun backup(backupMetadata: BackupPathData): Result {
+        startTime = System.currentTimeMillis()
+
+        val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
+            ?: throw IllegalArgumentException("expected password input was not received")
+
+        val loginData = loginDataDaoSecure.exportAllData()
+        val bankAccountData = bankAccountDataDaoSecure.exportAllData()
+        val bankCardData = bankCardDataDaoSecure.exportAllData()
+        val secureNoteData = secureNoteDataDaoSecure.exportAllData()
+        val authenticatorData = authenticatorDataDaoSecure.exportAllData()
+
+        recordTime("got all data")
+
+        if (
+            !shouldExport(
+                loginData,
+                bankAccountData,
+                bankCardData,
+                secureNoteData,
+                authenticatorData,
+            )
+        ) {
+            Timber.i("$localTag nothing to export")
+            analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_NOTHING_TO_BACKUP)
+            return Result.failure(BackupFailureReason.NOTHING_TO_BACKUP.toWorkData())
         }
 
-        if (isSuccess) {
-            analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_SUCCESS)
-            return Result.success()
-        } else {
-            return Result.failure()
+        if (inputData.getBoolean(BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)) {
+            sendNotification(
+                getNotificationOptions(
+                    applicationContext.getString(R.string.notification_backup_in_progress)
+                )
+            )
         }
+
+        val pickedDir = resolveWritableDir(backupMetadata.uriString)
+            ?: return onBackupFailure(BackupFailureReason.FOLDER_INACCESSIBLE, null)
+
+        salt = passwordBasedEncryption.getRandomSalt()
+        iv = passwordBasedEncryption.getRandomIV()
+        exportMap.putAll(
+            mapOf(
+                CommonConstants.SALT_KEY to salt,
+                CommonConstants.IV_KEY to iv,
+                CommonConstants.VERSION_KEY to ByteArray(1) {
+                    CommonConstants.BACKUP_VERSION.toByte()
+                },
+            )
+        )
+        recordTime("got salt and iv")
+
+        populateExportMapWithData(
+            loginData,
+            inputPassword,
+            bankAccountData,
+            bankCardData,
+            secureNoteData,
+            authenticatorData,
+        )
+
+        try {
+            deleteExtraBackupFiles(pickedDir)
+            exportToFile(pickedDir)
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            return onBackupFailure(classifyWriteFailure(exception), exception)
+        }
+
+        recordTime("exported to file, updating date in db")
+        backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
+        sendNotification(
+            getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
+        )
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_SUCCESS)
+        return Result.success()
+    }
+
+    /**
+     * Resolves the saved backup folder and checks that a file can be written into it.
+     *
+     * @return the folder, or null when it no longer exists, is not a directory, or its write
+     * access (including a revoked persisted SAF grant) is gone.
+     */
+    private fun resolveWritableDir(uriString: String): DocumentFile? {
+        val dir = runCatching {
+            val uri = uriString.toUri()
+            val path = uri.path
+            if (uri.scheme == "file" && path != null) {
+                DocumentFile.fromFile(File(path))
+            } else {
+                DocumentFile.fromTreeUri(applicationContext, uri)
+            }
+        }.getOrNull()
+        return dir?.takeIf { it.exists() && it.isDirectory && it.canWrite() }
     }
 
     private fun sendNotification(notificationOptions: NotificationOptions) {
@@ -189,19 +219,34 @@ class BackupDataWorker
         }
     }
 
-    private suspend fun onBackupError(exception: Exception) {
-        Timber.e(
-            exception,
-            "$localTag exception occurred : ${exception.localizedMessage}"
-        )
+    /**
+     * Reports a failed backup: logs analytics, clears the folder setting only for
+     * [BackupFailureReason.FOLDER_INACCESSIBLE], and posts the reason's notification.
+     *
+     * @return [Result.failure] carrying [reason] for the manual backup dialog.
+     */
+    private suspend fun onBackupFailure(
+        reason: BackupFailureReason,
+        exception: Exception?,
+    ): Result {
+        Timber.e(exception, "$localTag backup failed, reason = $reason")
         analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_FAILURE) {
-            param(AnalyticsParam.MESSAGE, exception.message.orEmpty())
+            param(AnalyticsParam.REASON, reason.name)
+            param(AnalyticsParam.MESSAGE, exception?.message.orEmpty())
         }
-        Timber.i("removing backup metadata")
-        backupMetadataRepository.deleteBackupMetadata()
-        sendNotification(
-            getNotificationOptions(applicationContext.getString(R.string.notification_backup_failure))
-        )
+        if (reason == BackupFailureReason.FOLDER_INACCESSIBLE) {
+            backupMetadataRepository.deleteBackupMetadata()
+        }
+        val notificationRes = when (reason) {
+            BackupFailureReason.FOLDER_INACCESSIBLE -> R.string.notification_backup_failure
+            BackupFailureReason.WRITE_FAILED -> R.string.backup_write_failed_message
+            BackupFailureReason.UNKNOWN -> R.string.backup_unknown_error_message
+            BackupFailureReason.NOTHING_TO_BACKUP -> null
+        }
+        notificationRes?.let {
+            sendNotification(getNotificationOptions(applicationContext.getString(it)))
+        }
+        return Result.failure(reason.toWorkData())
     }
 
     private fun populateExportMapWithData(
@@ -274,8 +319,9 @@ class BackupDataWorker
         } else {
             Timber.i("$localTag  creating file")
             val file = pickedDir.createFile("application/octet-stream", fileName)
+                ?: throw IOException("Failed to create backup file in the backup folder")
             Timber.i("$localTag opening file descriptor / output stream")
-            val fileUri = file!!.uri
+            val fileUri = file.uri
             applicationContext.contentResolver.openFileDescriptor(
                 fileUri,
                 "w"
@@ -285,13 +331,8 @@ class BackupDataWorker
                     Timber.i("$localTag writing to backup file")
                     it.writeObject(exportMap)
                 }
-            } ?: throw IllegalStateException("Failed to open file descriptor for URI: $fileUri")
+            } ?: throw IOException("Failed to open file descriptor for URI: $fileUri")
         }
-        recordTime("exported to file, updating date in db")
-        backupMetadataRepository.updateLastBackupDate(System.currentTimeMillis())
-        sendNotification(
-            getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
-        )
     }
 
     private fun encryptLoginData(
@@ -449,4 +490,20 @@ class BackupDataWorker
             return backupDataRequest.id
         }
     }
+}
+
+/**
+ * Maps an exception thrown while writing the backup file to a [BackupFailureReason].
+ *
+ * [SecurityException] and [FileNotFoundException] mean the folder or its grant disappeared after
+ * the pre-check, so the folder setting must be cleared. Any other [IOException] (e.g. disk full)
+ * keeps the folder, because retrying into the same folder can succeed once space is freed.
+ *
+ * @param throwable the exception thrown by the write step.
+ * @return the reason reported to analytics, the notification and the manual backup dialog.
+ */
+internal fun classifyWriteFailure(throwable: Throwable): BackupFailureReason = when (throwable) {
+    is SecurityException, is FileNotFoundException -> BackupFailureReason.FOLDER_INACCESSIBLE
+    is IOException -> BackupFailureReason.WRITE_FAILED
+    else -> BackupFailureReason.UNKNOWN
 }

@@ -3,6 +3,7 @@
 package com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore
 
 import android.net.Uri
+import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkInfo
@@ -10,7 +11,9 @@ import androidx.work.WorkManager
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
@@ -26,6 +29,7 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -354,18 +358,94 @@ class NewBackupOrRestoreVMTest {
         }
 
     @Test
-    fun `when workInfo transitions to FAILED on Backup, workflowState updates to FAILED`() =
+    fun backupFailedWithNothingToBackup_shouldShowNothingToBackupStateAndLogDialogShow() =
         runTest {
+            assertBackupFailureMapsTo(
+                BackupFailureReason.NOTHING_TO_BACKUP,
+                WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+            )
+        }
+
+    @Test
+    fun backupFailedWithFolderInaccessible_shouldShowFolderInaccessibleStateAndLogDialogShow() =
+        runTest {
+            assertBackupFailureMapsTo(
+                BackupFailureReason.FOLDER_INACCESSIBLE,
+                WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+            )
+        }
+
+    @Test
+    fun backupFailedWithWriteFailed_shouldShowWriteFailedStateAndLogDialogShow() = runTest {
+        assertBackupFailureMapsTo(
+            BackupFailureReason.WRITE_FAILED,
+            WorkflowState.BACKUP_WRITE_FAILED,
+        )
+    }
+
+    @Test
+    fun backupFailedWithUnknown_shouldShowUnknownErrorStateAndLogDialogShow() = runTest {
+        assertBackupFailureMapsTo(
+            BackupFailureReason.UNKNOWN,
+            WorkflowState.BACKUP_UNKNOWN_ERROR,
+        )
+    }
+
+    @Test
+    fun backupFailedWithoutOutputData_shouldShowUnknownErrorState() = runTest {
         viewModel.initVM(Operation.Backup)
-        val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.FAILED }
-        workInfoFlow.value = mockWorkInfo
+        workInfoFlow.value = mockk {
+            every { state } returns WorkInfo.State.FAILED
+            every { outputData } returns Data.EMPTY
+        }
 
         viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
         advanceUntilIdle()
 
         viewModel.uiState.test {
-            assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.FAILED)
+            assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.BACKUP_UNKNOWN_ERROR)
         }
+    }
+
+    @Test
+    fun restoreFailed_shouldNotLogBackupFailureDialogShow() = runTest {
+        viewModel.initVM(Operation.Restore(mockk(relaxed = true)))
+        workInfoFlow.value = mockk {
+            every { state } returns WorkInfo.State.FAILED
+            every { outputData } returns RestoreFailureReason.UNKNOWN_ERROR.toWorkData()
+        }
+
+        viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
+        advanceUntilIdle()
+
+        verify(exactly = 0) {
+            analyticsHelper.logEvent(eq(AnalyticsKey.BACKUP_FAILURE_DIALOG_SHOW), any())
+        }
+    }
+
+    private suspend fun TestScope.assertBackupFailureMapsTo(
+        reason: BackupFailureReason,
+        expectedState: WorkflowState,
+    ) {
+        viewModel.initVM(Operation.Backup)
+        workInfoFlow.value = mockk {
+            every { state } returns WorkInfo.State.FAILED
+            every { outputData } returns reason.toWorkData()
+        }
+
+        viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
+        advanceUntilIdle()
+
+        viewModel.uiState.test {
+            assertThat(awaitItem().workflowState).isEqualTo(expectedState)
+        }
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
+        verify(exactly = 1) {
+            analyticsHelper.logEvent(eq(AnalyticsKey.BACKUP_FAILURE_DIALOG_SHOW), capture(slot))
+        }
+        val builder = AnalyticsParamsBuilder()
+        slot.captured.invoke(builder)
+        assertThat(builder.params[AnalyticsParam.REASON.paramName]).isEqualTo(reason.name)
     }
 
     @Test

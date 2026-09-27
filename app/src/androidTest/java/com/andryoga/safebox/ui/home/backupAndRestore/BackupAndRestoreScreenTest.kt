@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.home.backupAndRestore
 
+import androidx.annotation.StringRes
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
@@ -276,6 +277,58 @@ class BackupAndRestoreScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.restore_complete_message))
             .assertDoesNotExist()
+    }
+
+    @Test
+    fun dialogBodyText_inBackupNothingToBackupState_shouldRenderEmptyVaultMessage() {
+        assertBackupFailureBody(
+            WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+            R.string.backup_nothing_to_backup_message,
+        )
+    }
+
+    @Test
+    fun dialogBodyText_inBackupFolderInaccessibleState_shouldRenderChooseFolderAgainMessage() {
+        assertBackupFailureBody(
+            WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+            R.string.backup_folder_inaccessible_message,
+        )
+    }
+
+    @Test
+    fun dialogBodyText_inBackupWriteFailedState_shouldRenderCheckFreeSpaceMessage() {
+        assertBackupFailureBody(
+            WorkflowState.BACKUP_WRITE_FAILED,
+            R.string.backup_write_failed_message,
+        )
+    }
+
+    @Test
+    fun dialogBodyText_inBackupUnknownErrorState_shouldRenderSendFeedbackMessage() {
+        assertBackupFailureBody(
+            WorkflowState.BACKUP_UNKNOWN_ERROR,
+            R.string.backup_unknown_error_message,
+        )
+    }
+
+    /**
+     * Renders the backup dialog body for [workflowState] and checks that it shows only the
+     * reason's message: no password field, because retrying would fail the same way.
+     */
+    private fun assertBackupFailureBody(workflowState: WorkflowState, @StringRes messageRes: Int) {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                dialogBodyText(
+                    operation = Operation.Backup,
+                    workflowState = workflowState,
+                    password = "",
+                    onPasswordChange = {},
+                ).invoke()
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(messageRes)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.password)).assertDoesNotExist()
     }
 
     @Test

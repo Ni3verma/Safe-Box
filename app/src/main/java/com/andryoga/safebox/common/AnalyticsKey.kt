@@ -12,7 +12,12 @@ enum class AnalyticsKey(val eventName: String) {
     BACKUP_STARTED("backup_started"),
     BACKUP_SELECT_DIR_RESULT("backup_select_dir_result"),
     BACKUP_DATA_SUCCESS("backup_data_success"),
+    // logged with AnalyticsParam.REASON (a BackupFailureReason name) and AnalyticsParam.MESSAGE
     BACKUP_DATA_FAILURE("backup_data_failure"),
+    // backup ran with an empty vault, so no file was written. Kept out of BACKUP_DATA_FAILURE.
+    BACKUP_DATA_NOTHING_TO_BACKUP("backup_data_nothing_to_backup"),
+    // manual backup dialog showed a failure outcome; logged with AnalyticsParam.REASON
+    BACKUP_FAILURE_DIALOG_SHOW("backup_failure_dialog_show"),
     RESTORE_DATA_SUCCESS("restore_data_success"),
     RESTORE_DATA_FAILURE("restore_data_failure"),
     RESTORE_DATA_WRONG_PASSWORD("restore_data_wrong_password"),

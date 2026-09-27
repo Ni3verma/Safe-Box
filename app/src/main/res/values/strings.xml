@@ -64,6 +64,10 @@
     <string name="new_backup_dialog_body_text">Please enter a password to create a new backup file.</string>
     <string name="backup_in_progress_message">It may take a while to back up data. Sit back and relax !</string>
     <string name="backup_complete_message">Your backup is complete! Remember the password.</string>
+    <string name="backup_nothing_to_backup_message">Your vault is empty. There is nothing to back up.</string>
+    <string name="backup_folder_inaccessible_message">Backup folder is no longer accessible. Please choose it again.</string>
+    <string name="backup_write_failed_message">Backup failed. Could not write the backup file, check free space in the backup folder.</string>
+    <string name="backup_unknown_error_message">Backup failed due to an unexpected error. Please report it from Settings &gt; Send feedback.</string>
 
     <!--     restore-->
     <string name="restore">Restore</string>
