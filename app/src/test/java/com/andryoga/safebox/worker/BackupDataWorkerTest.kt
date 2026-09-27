@@ -191,12 +191,14 @@ class BackupDataWorkerTest {
 
     /**
      * The backup header stores the version as one byte written with `toByte()`, which truncates
-     * silently, and the restore side reads it back as unsigned. Only 1..255 survives that round
-     * trip, so a value outside it would be written as a different, wrong version.
+     * silently, and the restore side reads it back as unsigned. `0xFF` is reserved as the marker
+     * for a future multi-byte version: builds that read one unsigned byte see 255 and reject such
+     * a backup as too new. So a single-byte version must stay in 1..254; see
+     * persistence-and-crypto.md before raising it further.
      */
     @Test
-    fun backupVersion_shouldFitInOneUnsignedHeaderByte() {
-        assertThat(CommonConstants.BACKUP_VERSION).isIn(1..255)
+    fun backupVersion_shouldFitInOneHeaderByteBelowReservedMarker() {
+        assertThat(CommonConstants.BACKUP_VERSION).isIn(1..254)
     }
 
     @Test

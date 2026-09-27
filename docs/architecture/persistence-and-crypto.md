@@ -112,6 +112,16 @@ exited `0`, i.e. a corrupt backup looked like an empty one. (Verified 2026-09-21
 | 2 | `creationDate` widened to an **8-byte** `Long` |
 | 3 | adds `AUTHENTICATOR_DATA_KEY` (TOTP records) |
 
+**Encoding of key `"0"`.** One byte, written with `BACKUP_VERSION.toByte()` and read as
+**unsigned** (`RestoreDataWorker.readBackupVersion`). **`0xFF` is reserved**: single-byte versions
+are capped at 254, enforced by `BackupDataWorkerTest.backupVersion_shouldFitInOneHeaderByteBelowReservedMarker`.
+When a version ≥ 255 is needed, write `[0xFF, <4-byte big-endian int>]`. Every build from #249 on
+reads one unsigned byte, sees 255 and rejects the file as too new (`BACKUP_TOO_NEW`). A plain wide int
+would not: `[0x00, 0x00, 0x01, 0x00]` reads as version 0 on such a build and would be restored.
+(Builds before #249 never check the version, so no encoding protects them.)
+The reader then branches on length (1 byte → legacy, 5 bytes with `0xFF` → wide).
+`scripts/InspectBackup.java` still prints the byte **signed** and would need the same treatment.
+
 Both `creationDate` widths are still handled on read:
 
 ```kotlin

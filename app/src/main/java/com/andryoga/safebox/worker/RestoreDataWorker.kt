@@ -133,7 +133,7 @@ class RestoreDataWorker
                 }
 
                 importMap = fileObject as Map<String, ByteArray?>
-                val version = importMap[CommonConstants.VERSION_KEY]!![0].toUByte().toInt()
+                val version = readBackupVersion(importMap)
                 // A newer build may have changed the payload in ways this build cannot read, which
                 // would otherwise surface as a misleading "corrupt file". Older versions are still
                 // accepted. Non-local return: `use` is inline, so this closes the stream and skips
@@ -165,8 +165,7 @@ class RestoreDataWorker
         } catch (badPaddingException: BadPaddingException) {
             Timber.e(badPaddingException, "wrong password entered for restore")
             val version = runCatching {
-                if (::importMap.isInitialized) importMap[CommonConstants.VERSION_KEY]!![0].toInt()
-                    .toDouble() else 0.0
+                if (::importMap.isInitialized) readBackupVersion(importMap).toDouble() else 0.0
             }.getOrNull() ?: 0.0
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD) {
                 param(AnalyticsParam.VERSION, version)
@@ -200,12 +199,28 @@ class RestoreDataWorker
             "$localTag exception occurred : ${exception.localizedMessage}"
         )
         val version = runCatching {
-            if (::importMap.isInitialized) importMap[CommonConstants.VERSION_KEY]!![0].toInt()
-                .toDouble() else 0.0
+            if (::importMap.isInitialized) readBackupVersion(importMap).toDouble() else 0.0
         }.getOrNull() ?: 0.0
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
             param(AnalyticsParam.VERSION, version)
         }
+    }
+
+    /**
+     * Reads the backup format version from the header.
+     *
+     * The version is a single byte written with `toByte()`, so it is read back as **unsigned**:
+     * a signed read would turn `0x80`..`0xFF` negative and let those versions pass the
+     * newer-version check. `0xFF` is reserved as the marker for a future multi-byte version,
+     * see persistence-and-crypto.md.
+     *
+     * @param map Deserialized backup header and payload map.
+     * @return Version in `0..255`.
+     * @throws NullPointerException if the version key is missing.
+     * @throws IndexOutOfBoundsException if the version entry is empty.
+     */
+    private fun readBackupVersion(map: Map<String, ByteArray?>): Int {
+        return map[CommonConstants.VERSION_KEY]!![0].toUByte().toInt()
     }
 
     private fun startRestore() {
