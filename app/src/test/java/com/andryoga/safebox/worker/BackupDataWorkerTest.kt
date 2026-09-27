@@ -189,6 +189,16 @@ class BackupDataWorkerTest {
             .build()
     }
 
+    /**
+     * The backup header stores the version as one byte written with `toByte()`, which truncates
+     * silently, and the restore side reads it back as unsigned. Only 1..255 survives that round
+     * trip, so a value outside it would be written as a different, wrong version.
+     */
+    @Test
+    fun backupVersion_shouldFitInOneUnsignedHeaderByte() {
+        assertThat(CommonConstants.BACKUP_VERSION).isIn(1..255)
+    }
+
     @Test
     fun doWork_whenNoBackupMetadata_completesSuccessWithoutWriting() = runTest {
         fakeBackupMetadataRepo.metadata = null
