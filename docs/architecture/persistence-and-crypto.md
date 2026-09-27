@@ -156,6 +156,12 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > Restore is a **destructive replace, not a merge**. After a restore the record count equals the
 > file's count exactly. Any test asserting additive behaviour is wrong.
 
+> [!WARNING]
+> The password is only verified by decrypting a record payload. A backup with **no payloads** (a
+> crafted header-only file, or a real backup of an empty vault) restores with **any** password and
+> wipes the vault. Open as [#272](https://github.com/Ni3verma/Safe-Box/issues/272); rejecting
+> payload-less files is not the fix, because empty-vault backups are legitimately payload-less.
+
 Failure classification is `RestoreFailureReason`:
 
 | Value | Trigger |

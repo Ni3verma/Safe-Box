@@ -27,6 +27,11 @@ outside the sandbox. Neither failure names the hook as the cause: without `JAVA_
 `Could not connect to the Gradle daemon` followed by twenty lines of daemon log. (Verified
 2026-09-21.)
 
+**`git push` cannot be done from the agent.** Plain `git push` prompts for a username (no credential
+helper is configured), and routing it through `gh auth git-credential` fails with `403 Permission
+denied`: the `gh` token is a fine-grained PAT without *Contents: write*. That same token **can**
+create issues (`gh issue create`). Commit locally and let the user push. (Verified 2026-09-27.)
+
 Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — `aapt2`, `apksigner`,
 `dexdump` are all there. `apksigner` is a Java program, so it needs the same `JAVA_HOME`.
 
