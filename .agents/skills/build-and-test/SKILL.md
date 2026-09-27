@@ -16,8 +16,9 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 ```
 
 `adb` and the emulator need **network and device access, so they must run outside the sandbox**
-(`BypassSandbox: true`). Gradle usually works sandboxed once dependencies are cached; if it fails
-on dependency resolution, run it unsandboxed.
+(`BypassSandbox: true`). **Gradle needs it too:** inside the sandbox the client cannot reach the
+daemon it just started and fails with `Could not connect to the Gradle daemon`, even with every
+dependency cached (seen on `:app:testDebugUnitTest`, 2026-09-27). Run Gradle unsandboxed.
 
 **`git commit` inherits both constraints**, because the pre-commit hook shells out to Gradle. Run it
 as `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" git commit ...` and
@@ -25,6 +26,11 @@ outside the sandbox. Neither failure names the hook as the cause: without `JAVA_
 `Unable to locate a Java Runtime`, and inside the sandbox it reports
 `Could not connect to the Gradle daemon` followed by twenty lines of daemon log. (Verified
 2026-09-21.)
+
+**`git push` cannot be done from the agent.** Plain `git push` prompts for a username (no credential
+helper is configured), and routing it through `gh auth git-credential` fails with `403 Permission
+denied`: the `gh` token is a fine-grained PAT without *Contents: write*. That same token **can**
+create issues (`gh issue create`). Commit locally and let the user push. (Verified 2026-09-27.)
 
 Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — `aapt2`, `apksigner`,
 `dexdump` are all there. `apksigner` is a Java program, so it needs the same `JAVA_HOME`.

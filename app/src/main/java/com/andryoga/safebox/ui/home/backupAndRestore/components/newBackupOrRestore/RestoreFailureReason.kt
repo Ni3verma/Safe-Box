@@ -6,6 +6,11 @@ import androidx.work.workDataOf
 /**
  * Type-safe failure reasons emitted by [com.andryoga.safebox.worker.RestoreDataWorker]
  * in output data to communicate failure causes to the UI layer.
+ *
+ * **Append new entries at the end only.** [toWorkData] serializes the [ordinal], and that value
+ * crosses the WorkManager `Data` boundary, where it can outlive an app upgrade while the work is
+ * still enqueued. Reordering or inserting would silently remap an in-flight failure reason.
+ * `RestoreFailureReasonTest` pins every ordinal to enforce this.
  */
 enum class RestoreFailureReason {
     // Decryption failed due to an incorrect master password.
@@ -15,7 +20,10 @@ enum class RestoreFailureReason {
     CORRUPT_OR_INVALID_FILE,
 
     // An unclassified or unexpected error occurred during the restore operation.
-    UNKNOWN_ERROR;
+    UNKNOWN_ERROR,
+
+    // Backup was written by a newer app build whose backup format this build does not support.
+    BACKUP_TOO_NEW;
 
     fun toWorkData(): Data = workDataOf(KEY_RESTORE_FAILURE_REASON to ordinal)
 

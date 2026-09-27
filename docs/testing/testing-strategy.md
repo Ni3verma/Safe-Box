@@ -50,7 +50,7 @@ These are deliberate, recorded so nobody re-discovers them as "bugs".
 | The minified `qa` APK is exercised only by the upgrade and restore tests, not by a broad UI suite | [ADR-0001](../decisions/0001-instrumentation-tests-run-on-debug-only.md); those tests run on release tags and labelled PRs |
 | Upgrades are tested from N-1 only | [ADR-0004](../decisions/0004-verify-upgrade-and-restore-by-decoded-backup.md); older chains are `MigrationTest`'s job |
 | Keystore alias continuity is covered only by the upgrade test | nothing else survives an in-place install — see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md) |
-| Restore does not reject a *newer* `BACKUP_VERSION` | pre-existing on `master`; the real-world case (new backup opened by an already-shipped old app) is unfixable from the current codebase |
+| Builds released before #249 do not reject a *newer* `BACKUP_VERSION` | unfixable retroactively; builds from #249 on reject it with `BACKUP_TOO_NEW` (see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md#restore-semantics)) |
 | CameraX `bindToLifecycle` failure path | considered, not prioritised |
 
 ## The failure that looks like a bug but isn't

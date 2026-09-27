@@ -17,6 +17,9 @@ enum class WorkflowState {
     // selected backup file is corrupted or has an invalid structure.
     CORRUPT_FILE,
 
+    // selected backup file was created by a newer app version. user must update the app.
+    BACKUP_TOO_NEW,
+
     // backup/restore job is in progress
     IN_PROGRESS,
 

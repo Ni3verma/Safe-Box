@@ -130,7 +130,7 @@ public class InspectBackup {
         // Length-checked like formatCreationDate below: a damaged length field can decode to a
         // zero-byte array, and this tool's job is to diagnose such a file, not die on it.
         System.out.println("BACKUP_VERSION  : " + (versionBytes == null ? "MISSING"
-            : versionBytes.length == 0 ? "EMPTY" : versionBytes[0]));
+            : versionBytes.length == 0 ? "EMPTY" : (versionBytes[0] & 0xFF)));
         System.out.println("salt length     : " + (salt == null ? "MISSING" : salt.length));
         System.out.println("iv length       : " + (iv == null ? "MISSING" : iv.length));
         System.out.println("creationDate    : " + formatCreationDate(creationDate));
@@ -260,6 +260,8 @@ public class InspectBackup {
     /**
      * Prints the file's BACKUP_VERSION byte, which is stored unencrypted, so no password is
      * needed. Used by the PR checks to compare the committed seed and fixtures with the code.
+     * Printed unsigned, matching RestoreDataWorker.readBackupVersion, so versions 128..254 compare
+     * equal to the decimal BACKUP_VERSION those checks read from source.
      *
      * @param map the backup container
      */
@@ -268,7 +270,7 @@ public class InspectBackup {
         if (versionBytes == null || versionBytes.length == 0) {
             fail("the backup has no BACKUP_VERSION byte");
         }
-        System.out.println(versionBytes[0]);
+        System.out.println(versionBytes[0] & 0xFF);
     }
 
     /**

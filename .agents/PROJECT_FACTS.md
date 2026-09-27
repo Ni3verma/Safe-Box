@@ -97,7 +97,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   on `totpGenerator.isValidConfig(...)` and **silently drops the invalid ones** (logging a count and
   firing `RESTORE_INVALID_AUTHENTICATOR_SKIPPED`), so a file containing a malformed seed restores
   fewer authenticator rows than it holds. Assert `<=` for authenticators, `==` for the rest.
-- `RestoreFailureReason`: `INCORRECT_PASSWORD`, `CORRUPT_OR_INVALID_FILE`, `UNKNOWN_ERROR`.
+- `RestoreFailureReason`: `INCORRECT_PASSWORD`, `CORRUPT_OR_INVALID_FILE`, `UNKNOWN_ERROR`,
+  `BACKUP_TOO_NEW` (header version `> BACKUP_VERSION`). Append-only; `RestoreFailureReasonTest` pins it.
 
 ## Testing
 
@@ -141,10 +142,7 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
-- **`CICD/cicd.gradle` is orphaned** since `331ee64` — nothing applies it. So `./gradlew detekt`
-  fails with "Task 'detekt' not found" (detekt is `apply false` at the root and never applied to
-  `:app`, leaving `CICD/detekt.yml` not in effect), and the `copyGitHooks` / `installGitHooks` tasks
-  do not exist, so git hooks must be installed by hand and drift silently. Install and drift check:
+- **`CICD/cicd.gradle` is orphaned** (`331ee64`): no `detekt` task, no hook-install tasks. Detail:
   [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md#git-hooks). Verified 2026-09-21.
 - Adding any new Android module: a subproject can only `alias(libs.plugins.android.*)` if the
   **root `build.gradle` also declares it `apply false`**. Otherwise Gradle fails with "the plugin is

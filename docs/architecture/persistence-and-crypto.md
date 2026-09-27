@@ -112,6 +112,17 @@ exited `0`, i.e. a corrupt backup looked like an empty one. (Verified 2026-09-21
 | 2 | `creationDate` widened to an **8-byte** `Long` |
 | 3 | adds `AUTHENTICATOR_DATA_KEY` (TOTP records) |
 
+**Encoding of key `"0"`.** One byte, written with `BACKUP_VERSION.toByte()` and read as
+**unsigned** (`RestoreDataWorker.readBackupVersion`). **`0xFF` is reserved**: single-byte versions
+are capped at 254, enforced by `BackupDataWorkerTest.backupVersion_shouldFitInOneHeaderByteBelowReservedMarker`.
+When a version ≥ 255 is needed, write `[0xFF, <4-byte big-endian int>]`. Every build from #249 on
+reads one unsigned byte, sees 255 and rejects the file as too new (`BACKUP_TOO_NEW`). A plain wide int
+would not: `[0x00, 0x00, 0x01, 0x00]` reads as version 0 on such a build and would be restored.
+(Builds before #249 never check the version, so no encoding protects them.)
+The reader then branches on length (1 byte → legacy, 5 bytes with `0xFF` → wide).
+`scripts/InspectBackup.java` prints the byte unsigned too; its `--header` output feeds the
+seed/fixture version checks, so it must follow the same encoding change.
+
 Both `creationDate` widths are still handled on read:
 
 ```kotlin
@@ -156,6 +167,12 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > Restore is a **destructive replace, not a merge**. After a restore the record count equals the
 > file's count exactly. Any test asserting additive behaviour is wrong.
 
+> [!WARNING]
+> The password is only verified by decrypting a record payload. A backup with **no payloads** (a
+> crafted header-only file, or a real backup of an empty vault) restores with **any** password and
+> wipes the vault. Open as [#272](https://github.com/Ni3verma/Safe-Box/issues/272); rejecting
+> payload-less files is not the fix, because empty-vault backups are legitimately payload-less.
+
 Failure classification is `RestoreFailureReason`:
 
 | Value | Trigger |
@@ -163,6 +180,16 @@ Failure classification is `RestoreFailureReason`:
 | `INCORRECT_PASSWORD` | `BadPaddingException` during decrypt |
 | `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
 | `UNKNOWN_ERROR` | anything else |
+| `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
+
+The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
+can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins
+the order.
+
+`BACKUP_TOO_NEW` is an all-or-nothing rejection, by decision on issue #249: a newer backup is not
+partially restored even when the change was purely additive (a new map key). It only protects
+builds that contain the check — builds released before it still accept newer backups, silently
+dropping unknown keys or failing as "corrupt file".
 
 ### Authenticator records are filtered, not fatal
 

@@ -132,7 +132,8 @@ private fun dialogIconComposable(
             )
 
             WorkflowState.FAILED,
-            WorkflowState.CORRUPT_FILE -> Icon(
+            WorkflowState.CORRUPT_FILE,
+            WorkflowState.BACKUP_TOO_NEW -> Icon(
                 Icons.Filled.ErrorOutline,
                 contentDescription = null,
                 modifier = modifier,
@@ -151,11 +152,16 @@ private fun cancelButtonComposable(
         WorkflowState.WRONG_PASSWORD,
         WorkflowState.FAILED,
         WorkflowState.CORRUPT_FILE,
+        WorkflowState.BACKUP_TOO_NEW,
         WorkflowState.ASK_FOR_PASSWORD,
         WorkflowState.SUCCESS -> {
             {
                 val textResId = when (workflowState) {
-                    WorkflowState.SUCCESS, WorkflowState.FAILED, WorkflowState.CORRUPT_FILE -> R.string.common_ok
+                    WorkflowState.SUCCESS,
+                    WorkflowState.FAILED,
+                    WorkflowState.CORRUPT_FILE,
+                    WorkflowState.BACKUP_TOO_NEW,
+                    -> R.string.common_ok
                     else -> R.string.common_cancel
                 }
 
@@ -224,6 +230,15 @@ fun dialogBodyText(
                 Text(
                     text = stringResource(R.string.restore_corrupt_file_message),
                     fontWeight = FontWeight.Medium
+                )
+            }
+        }
+
+        WorkflowState.BACKUP_TOO_NEW -> {
+            {
+                Text(
+                    text = stringResource(R.string.restore_backup_too_new_message),
+                    fontWeight = FontWeight.Medium,
                 )
             }
         }

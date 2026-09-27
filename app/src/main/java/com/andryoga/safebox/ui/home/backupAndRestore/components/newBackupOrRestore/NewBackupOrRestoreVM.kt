@@ -105,6 +105,7 @@ class NewBackupOrRestoreVM @Inject constructor(
                                     RestoreFailureReason.INCORRECT_PASSWORD -> WorkflowState.WRONG_PASSWORD
                                     RestoreFailureReason.CORRUPT_OR_INVALID_FILE -> WorkflowState.CORRUPT_FILE
                                     RestoreFailureReason.UNKNOWN_ERROR -> WorkflowState.FAILED
+                                    RestoreFailureReason.BACKUP_TOO_NEW -> WorkflowState.BACKUP_TOO_NEW
                                 }
                             } else {
                                 WorkflowState.FAILED
