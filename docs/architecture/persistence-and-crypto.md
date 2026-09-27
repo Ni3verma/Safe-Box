@@ -120,7 +120,8 @@ reads one unsigned byte, sees 255 and rejects the file as too new (`BACKUP_TOO_N
 would not: `[0x00, 0x00, 0x01, 0x00]` reads as version 0 on such a build and would be restored.
 (Builds before #249 never check the version, so no encoding protects them.)
 The reader then branches on length (1 byte → legacy, 5 bytes with `0xFF` → wide).
-`scripts/InspectBackup.java` still prints the byte **signed** and would need the same treatment.
+`scripts/InspectBackup.java` prints the byte unsigned too; its `--header` output feeds the
+seed/fixture version checks, so it must follow the same encoding change.
 
 Both `creationDate` widths are still handled on read:
 
