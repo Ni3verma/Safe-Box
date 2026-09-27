@@ -158,16 +158,14 @@ class RestoreDataWorker
                             "created on : ${Utils.getFormattedDate(Date(creationDate))}"
                 )
                 recordTime("file read to map object")
-                // A file with no record payload has nothing encrypted, so any password would
-                // "decrypt" it and the destructive replace would wipe the vault. Reject it before
-                // any DB work, same non-local return as the version check above.
-                if (!hasRecordPayload(importMap)) {
+                // Same non-local return as the version check above: skips the catch clauses so
+                // the reason is not remapped or double-logged.
+                if (!startRestore()) {
                     analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY) {
                         param(AnalyticsParam.VERSION, version.toDouble())
                     }
                     return Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData())
                 }
-                startRestore()
             }
 
             Result.success()
@@ -233,22 +231,18 @@ class RestoreDataWorker
     }
 
     /**
-     * Whether the backup carries at least one record payload to decrypt.
+     * Decrypts every record payload and replaces the vault with them.
      *
-     * Only an encrypted payload can prove the password: each `decrypt*Data` skips decryption for
-     * an absent or null entry. No genuine backup is payload-less, because `BackupDataWorker` writes
-     * no file at all for an empty vault, so a file failing this check is crafted or damaged
-     * (issue #272). A payload that decrypts to an empty list still counts, because decrypting it
-     * verified the password.
+     * Only an encrypted payload can prove the password: each `decrypt*Data` returns null without
+     * decrypting when its entry is absent or null. So when every result is null nothing verified
+     * the password, and the destructive replace would wipe the vault for any password (#272). No
+     * genuine backup looks like that, because `BackupDataWorker` writes no file for an empty vault.
+     * A payload that decrypts to an empty list still counts, since decrypting it verified the
+     * password.
      *
-     * @param map Deserialized backup header and payload map.
-     * @return `true` if any record-type entry is present and non-null.
+     * @return `false`, without touching the DB, when the backup has no record payload.
      */
-    private fun hasRecordPayload(map: Map<String, ByteArray?>): Boolean {
-        return RECORD_PAYLOAD_KEYS.any { map[it] != null }
-    }
-
-    private fun startRestore() {
+    private fun startRestore(): Boolean {
         salt = importMap[CommonConstants.SALT_KEY]!!
         iv = importMap[CommonConstants.IV_KEY]!!
         recordTime("read salt and iv")
@@ -259,6 +253,16 @@ class RestoreDataWorker
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
         val decodedAuthenticators =
             decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
+        // A new record type must be added here too, otherwise a backup holding only that type is
+        // rejected as empty.
+        val decryptedPayloads = listOf(
+            loginData,
+            bankAccountData,
+            bankCardData,
+            secureNoteData,
+            decodedAuthenticators,
+        )
+        if (decryptedPayloads.all { it == null }) return false
         val authenticatorData = filterDecodableAuthenticatorData(
             decodedAuthenticators?.records,
             decodedAuthenticators?.deserializationFailedCount ?: 0,
@@ -273,6 +277,7 @@ class RestoreDataWorker
             authenticatorData,
         )
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
+        return true
     }
 
     /**
@@ -548,17 +553,5 @@ class RestoreDataWorker
         val sec = CommonConstants.TIME_1_SECOND
         Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
-    }
-
-    private companion object {
-        // Every record-type entry decrypted by startRestore. Add a new record type here too,
-        // otherwise a backup holding only that type is rejected as empty.
-        val RECORD_PAYLOAD_KEYS = listOf(
-            CommonConstants.LOGIN_DATA_KEY,
-            CommonConstants.BANK_ACCOUNT_DATA_KEY,
-            CommonConstants.BANK_CARD_DATA_KEY,
-            CommonConstants.SECURE_NOTE_DATA_KEY,
-            CommonConstants.AUTHENTICATOR_DATA_KEY,
-        )
     }
 }

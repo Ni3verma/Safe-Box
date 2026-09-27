@@ -184,7 +184,7 @@ Failure classification is `RestoreFailureReason`:
 | `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
 | `UNKNOWN_ERROR` | anything else |
 | `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
-| `BACKUP_EMPTY` | every record-type key (`RECORD_PAYLOAD_KEYS` in `RestoreDataWorker`) absent or null; checked after the version gate, before decryption or any DB work |
+| `BACKUP_EMPTY` | every `decrypt*Data` result in `startRestore` is null (no record payload, so nothing is decrypted); checked after the version gate, before any DB work |
 
 The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
 can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins
