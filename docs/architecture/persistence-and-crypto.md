@@ -168,10 +168,13 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > file's count exactly. Any test asserting additive behaviour is wrong.
 
 > [!WARNING]
-> The password is only verified by decrypting a record payload. A backup with **no payloads** (a
-> crafted header-only file, or a real backup of an empty vault) restores with **any** password and
-> wipes the vault. Open as [#272](https://github.com/Ni3verma/Safe-Box/issues/272); rejecting
-> payload-less files is not the fix, because empty-vault backups are legitimately payload-less.
+> The password is only verified by decrypting a record payload. A backup with **no payloads** has
+> nothing to verify, so any password would pass and the replace would wipe the vault. Since #272
+> such a file is rejected as `BACKUP_EMPTY` **before** decryption or any DB work. No genuine backup
+> is affected: `BackupDataWorker.shouldExport` has skipped writing a file for an empty vault since
+> backups were introduced (#111), pinned by
+> `BackupAndRestoreWorkersTest.exportToBackupFile_withEmptyVault_shouldWriteNoBackupFile`. A payload
+> that decrypts to `[]` still restores, because decrypting it verified the password.
 
 Failure classification is `RestoreFailureReason`:
 
@@ -181,6 +184,7 @@ Failure classification is `RestoreFailureReason`:
 | `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
 | `UNKNOWN_ERROR` | anything else |
 | `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
+| `BACKUP_EMPTY` | every `decrypt*Data` result in `startRestore` is null (no record payload, so nothing is decrypted); checked after the version gate, before any DB work |
 
 The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
 can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins

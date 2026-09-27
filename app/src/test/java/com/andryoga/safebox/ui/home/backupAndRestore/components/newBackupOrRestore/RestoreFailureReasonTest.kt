@@ -26,6 +26,7 @@ class RestoreFailureReasonTest {
             RestoreFailureReason.CORRUPT_OR_INVALID_FILE,
             RestoreFailureReason.UNKNOWN_ERROR,
             RestoreFailureReason.BACKUP_TOO_NEW,
+            RestoreFailureReason.BACKUP_EMPTY,
         ).inOrder()
     }
 

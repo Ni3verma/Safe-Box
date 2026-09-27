@@ -158,7 +158,14 @@ class RestoreDataWorker
                             "created on : ${Utils.getFormattedDate(Date(creationDate))}"
                 )
                 recordTime("file read to map object")
-                startRestore()
+                // Same non-local return as the version check above: skips the catch clauses so
+                // the reason is not remapped or double-logged.
+                if (!startRestore()) {
+                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY) {
+                        param(AnalyticsParam.VERSION, version.toDouble())
+                    }
+                    return Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData())
+                }
             }
 
             Result.success()
@@ -223,7 +230,19 @@ class RestoreDataWorker
         return map[CommonConstants.VERSION_KEY]!![0].toUByte().toInt()
     }
 
-    private fun startRestore() {
+    /**
+     * Decrypts every record payload and replaces the vault with them.
+     *
+     * Only an encrypted payload can prove the password: each `decrypt*Data` returns null without
+     * decrypting when its entry is absent or null. So when every result is null nothing verified
+     * the password, and the destructive replace would wipe the vault for any password (#272). No
+     * genuine backup looks like that, because `BackupDataWorker` writes no file for an empty vault.
+     * A payload that decrypts to an empty list still counts, since decrypting it verified the
+     * password.
+     *
+     * @return `false`, without touching the DB, when the backup has no record payload.
+     */
+    private fun startRestore(): Boolean {
         salt = importMap[CommonConstants.SALT_KEY]!!
         iv = importMap[CommonConstants.IV_KEY]!!
         recordTime("read salt and iv")
@@ -234,6 +253,16 @@ class RestoreDataWorker
         val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
         val decodedAuthenticators =
             decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
+        // A new record type must be added here too, otherwise a backup holding only that type is
+        // rejected as empty.
+        val decryptedPayloads = listOf(
+            loginData,
+            bankAccountData,
+            bankCardData,
+            secureNoteData,
+            decodedAuthenticators,
+        )
+        if (decryptedPayloads.all { it == null }) return false
         val authenticatorData = filterDecodableAuthenticatorData(
             decodedAuthenticators?.records,
             decodedAuthenticators?.deserializationFailedCount ?: 0,
@@ -248,6 +277,7 @@ class RestoreDataWorker
             authenticatorData,
         )
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
+        return true
     }
 
     /**

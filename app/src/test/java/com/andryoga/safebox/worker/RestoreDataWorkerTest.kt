@@ -313,11 +313,13 @@ class RestoreDataWorkerTest {
             it.key == AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW
         }
         assertThat(tooNewEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(128.0)
+        // the file is also payload-less, the version gate must win over the empty check.
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY)).isFalse()
     }
 
     @Test
     fun doWork_backupVersionEqualToSupported_isNotRejectedAsTooNew() = runTest {
-        val result = restoreEmptyBackupOfVersion(CommonConstants.BACKUP_VERSION.toByte())
+        val result = restoreBackupOfVersion(CommonConstants.BACKUP_VERSION.toByte())
 
         assertThat(result).isEqualTo(Result.success())
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW)).isFalse()
@@ -325,10 +327,74 @@ class RestoreDataWorkerTest {
 
     @Test
     fun doWork_backupVersionOlderThanSupported_isNotRejectedAsTooNew() = runTest {
-        val result = restoreEmptyBackupOfVersion(LEGACY_BACKUP_VERSION)
+        val result = restoreBackupOfVersion(LEGACY_BACKUP_VERSION)
 
         assertThat(result).isEqualTo(Result.success())
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW)).isFalse()
+    }
+
+    @Test
+    fun doWork_backupWithoutRecordPayloadKeys_failsWithBackupEmptyBeforeAnyDecryptionOrDbWork() =
+        runTest {
+            val backupFile = File(tempDir, "HeaderOnlyBackup.bak")
+            WorkerTestFixtures.writeBackupMapToFile(backupFile, WorkerTestFixtures.createBackupMap())
+
+            val result = restoreFile(backupFile)
+
+            assertBackupEmptyWithoutDbWork(result, CommonConstants.BACKUP_VERSION.toDouble())
+        }
+
+    @Test
+    fun doWork_backupWithAllRecordPayloadsNull_failsWithBackupEmpty() = runTest {
+        // keys present with null values, the other payload-less shape besides absent keys.
+        val backupMap = WorkerTestFixtures.createBackupMap().toMutableMap().apply {
+            put(CommonConstants.LOGIN_DATA_KEY, null)
+            put(CommonConstants.BANK_ACCOUNT_DATA_KEY, null)
+            put(CommonConstants.BANK_CARD_DATA_KEY, null)
+            put(CommonConstants.SECURE_NOTE_DATA_KEY, null)
+            put(CommonConstants.AUTHENTICATOR_DATA_KEY, null)
+        }
+        val backupFile = File(tempDir, "NullPayloadsBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
+
+        val result = restoreFile(backupFile)
+
+        assertBackupEmptyWithoutDbWork(result, CommonConstants.BACKUP_VERSION.toDouble())
+    }
+
+    @Test
+    fun doWork_legacyBackupWithoutRecordPayloads_failsWithBackupEmpty() = runTest {
+        val backupFile = File(tempDir, "LegacyEmptyBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(
+            backupFile,
+            WorkerTestFixtures.createBackupMap(version = LEGACY_BACKUP_VERSION),
+        )
+
+        val result = restoreFile(backupFile)
+
+        assertBackupEmptyWithoutDbWork(result, LEGACY_BACKUP_VERSION.toDouble())
+    }
+
+    @Test
+    fun doWork_backupWithRecordPayloadDecryptingToEmptyList_isNotRejectedAsEmpty() = runTest {
+        // decrypting the payload verified the password, so an empty list is a legitimate replace.
+        val dummyCipherBytes = ByteArray(32) { 3 }
+        val backupFile = File(tempDir, "EmptyListPayloadBackup.bak")
+        WorkerTestFixtures.writeBackupMapToFile(
+            backupFile,
+            WorkerTestFixtures.createBackupMap(secureNoteData = dummyCipherBytes),
+        )
+        every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+        every {
+            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+        } returns "[]".toByteArray()
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 1) { secureNoteDataDaoSecure.deleteAllData() }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY)).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
     }
 
     @Test
@@ -618,26 +684,68 @@ class RestoreDataWorkerTest {
     }
 
     /**
-     * Runs a full restore of a backup that carries only the header, stamped with [version].
+     * Runs a full restore of a backup stamped with [version] that carries one login payload.
      *
-     * With no record payloads nothing is decrypted, so the result isolates the version gate from
-     * the decryption and parsing paths.
+     * The payload decrypts to an empty list, so the result isolates the version gate from record
+     * parsing while still passing the empty-backup check.
      *
      * @param version Value written to the backup's version key.
      * @return Result of the worker run.
      */
-    private suspend fun restoreEmptyBackupOfVersion(version: Byte): ListenableWorker.Result {
-        val backupFile = File(tempDir, "EmptyBackupV$version.bak")
+    private suspend fun restoreBackupOfVersion(version: Byte): ListenableWorker.Result {
+        val dummyCipherBytes = ByteArray(32) { 4 }
+        val backupFile = File(tempDir, "BackupV$version.bak")
         WorkerTestFixtures.writeBackupMapToFile(
             backupFile,
-            WorkerTestFixtures.createBackupMap(version = version),
+            WorkerTestFixtures.createBackupMap(version = version, loginData = dummyCipherBytes),
         )
+        every { symmetricKeyUtils.decrypt("enc_password") } returns "raw_password"
+        every {
+            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+        } returns "[]".toByteArray()
 
+        return restoreFile(backupFile)
+    }
+
+    /**
+     * Runs a full restore of [backupFile] with a fixed encrypted password.
+     *
+     * @param backupFile Serialized backup map on disk.
+     * @return Result of the worker run.
+     */
+    private suspend fun restoreFile(backupFile: File): ListenableWorker.Result {
         val inputData = Data.Builder()
             .putString(CommonConstants.RESTORE_PARAM_PASSWORD, "enc_password")
             .putString(CommonConstants.RESTORE_PARAM_FILE_URI, "file://${backupFile.absolutePath}")
             .build()
 
         return buildWorker(inputData).doWork()
+    }
+
+    /**
+     * Asserts a restore was rejected as [RestoreFailureReason.BACKUP_EMPTY] without touching the
+     * password or the vault, and that only the empty-backup event was logged.
+     *
+     * @param result Result of the worker run.
+     * @param expectedVersion Backup version expected on the analytics event.
+     */
+    private fun assertBackupEmptyWithoutDbWork(
+        result: ListenableWorker.Result,
+        expectedVersion: Double,
+    ) {
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData()))
+        verify(exactly = 0) { symmetricKeyUtils.decrypt(any()) }
+        verify(exactly = 0) { passwordBasedEncryption.encryptDecrypt(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+        verify(exactly = 0) { loginDataDaoSecure.deleteAllData() }
+        verify(exactly = 0) { authenticatorDataDaoSecure.deleteAllData() }
+        val emptyEvent = analyticsHelper.loggedEvents.single {
+            it.key == AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY
+        }
+        assertThat(emptyEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(expectedVersion)
+        // the non-local return must bypass the catch clauses, so no other outcome is logged.
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD)).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isFalse()
     }
 }
