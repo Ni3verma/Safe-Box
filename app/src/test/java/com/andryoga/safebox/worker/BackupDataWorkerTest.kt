@@ -45,6 +45,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -605,13 +606,18 @@ class BackupDataWorkerTest {
         fakeBackupMetadataRepo.metadata = backupPathInTempDir()
         stubVaultRecords()
         tempDir.setWritable(false)
+        try {
+            // Root (common on CI containers) ignores permission bits, so the scenario can't be set up.
+            assumeFalse(tempDir.canWrite())
 
-        val result = buildWorker(passwordInput()).doWork()
-        tempDir.setWritable(true)
+            val result = buildWorker(passwordInput()).doWork()
 
-        assertThat(result)
-            .isEqualTo(Result.failure(BackupFailureReason.FOLDER_INACCESSIBLE.toWorkData()))
-        assertThat(fakeBackupMetadataRepo.deleted).isTrue()
+            assertThat(result)
+                .isEqualTo(Result.failure(BackupFailureReason.FOLDER_INACCESSIBLE.toWorkData()))
+            assertThat(fakeBackupMetadataRepo.deleted).isTrue()
+        } finally {
+            tempDir.setWritable(true)
+        }
     }
 
     @Test
