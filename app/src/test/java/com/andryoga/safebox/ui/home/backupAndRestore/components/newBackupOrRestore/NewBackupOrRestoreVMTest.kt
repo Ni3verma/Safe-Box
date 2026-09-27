@@ -477,6 +477,18 @@ class NewBackupOrRestoreVMTest {
     }
 
     @Test
+    fun restoreCancelled_shouldShowGenericFailedState() = runTest {
+        viewModel.initVM(Operation.Restore(mockk(relaxed = true)))
+        val mockWorkInfo: WorkInfo = mockk { every { state } returns WorkInfo.State.CANCELLED }
+        workInfoFlow.value = mockWorkInfo
+        viewModel.onScreenAction(ScreenAction.PasswordConfirmed("password"))
+        advanceUntilIdle()
+        viewModel.uiState.test {
+            assertThat(awaitItem().workflowState).isEqualTo(WorkflowState.FAILED)
+        }
+    }
+
+    @Test
     fun `when workInfo is null, workflowState updates to FAILED`() = runTest {
         viewModel.initVM(Operation.Backup)
         workInfoFlow.value = null

@@ -164,7 +164,7 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 
 | Value | Trigger | Clears the folder setting? | Notification |
 |---|---|---|---|
-| `NOTHING_TO_BACKUP` | vault is empty (`shouldExport` false) | no | none |
+| `NOTHING_TO_BACKUP` | vault is empty (`hasAnyRecord` false) | no | none |
 | `FOLDER_INACCESSIBLE` | pre-check fails (`exists() && isDirectory && canWrite()`), or `SecurityException` / `FileNotFoundException` while writing | **yes** | "Backup Failed! Please set backup path" |
 | `WRITE_FAILED` | any other `IOException` while writing, incl. a null `createFile` / file descriptor | no | check free space |
 | `UNKNOWN` | everything else: DAO, crypto, missing input | no | report via Settings > Send feedback |
@@ -196,8 +196,8 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > The password is only verified by decrypting a record payload. A backup with **no payloads** has
 > nothing to verify, so any password would pass and the replace would wipe the vault. Since #272
 > such a file is rejected as `BACKUP_EMPTY` **before** decryption or any DB work. No genuine backup
-> is affected: `BackupDataWorker.shouldExport` has skipped writing a file for an empty vault since
-> backups were introduced (#111), pinned by
+> is affected: `BackupDataWorker.hasAnyRecord` (formerly `shouldExport`) has skipped writing a file
+> for an empty vault since backups were introduced (#111), pinned by
 > `BackupAndRestoreWorkersTest.exportToBackupFile_withEmptyVault_shouldFailAsNothingToBackupAndWriteNoFile`.
 > A payload that decrypts to `[]` still restores, because decrypting it verified the password.
 

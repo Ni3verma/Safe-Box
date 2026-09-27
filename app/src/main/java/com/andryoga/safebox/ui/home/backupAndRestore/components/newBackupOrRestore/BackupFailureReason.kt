@@ -8,16 +8,13 @@ import com.andryoga.safebox.worker.BackupDataWorker
  * Type-safe outcomes emitted by [BackupDataWorker] in its failure output data, so the manual
  * backup dialog can show a reason-specific message.
  *
- * Only [FOLDER_INACCESSIBLE] clears the saved backup folder. Every other reason keeps it, so an
- * unrelated failure never silently stops auto-backup.
- *
  * **Append new entries at the end only.** [toWorkData] serializes the [ordinal], and that value
  * crosses the WorkManager `Data` boundary, where it can outlive an app upgrade while the work is
  * still enqueued. Reordering or inserting would silently remap an in-flight failure reason.
  * `BackupFailureReasonTest` pins every ordinal to enforce this.
  */
 enum class BackupFailureReason {
-    // Vault is empty, so no file was written. Not a real failure: no notification, own analytics.
+    // Vault is empty, so no file was written.
     NOTHING_TO_BACKUP,
 
     // Backup folder is gone or its access was revoked. The folder setting is cleared.

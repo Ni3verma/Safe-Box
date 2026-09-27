@@ -38,6 +38,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -641,6 +642,24 @@ class BackupDataWorkerTest {
         val createdFiles =
             tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
         assertThat(createdFiles).isEmpty()
+    }
+
+    /**
+     * WorkManager stops a worker by cancelling its coroutine and reschedules the work when the
+     * cancellation propagates. Swallowing it as UNKNOWN would notify the user about a backup that
+     * never actually failed.
+     */
+    @Test
+    fun doWork_whenCancelled_rethrowsWithoutReportingFailure() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws CancellationException("work stopped")
+
+        val thrown = runCatching { buildWorker(passwordInput()).doWork() }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(CancellationException::class.java)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
     }
 
     @Test

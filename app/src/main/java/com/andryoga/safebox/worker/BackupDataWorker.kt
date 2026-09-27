@@ -92,6 +92,8 @@ class BackupDataWorker
                 backup(backupMetadata)
             }
         } catch (exception: CancellationException) {
+            // The work was stopped (constraints, cancel, system limit), not failed. WorkManager
+            // catches this and reschedules the work; reporting it as UNKNOWN would notify the user.
             throw exception
         } catch (exception: Exception) {
             onBackupFailure(BackupFailureReason.UNKNOWN, exception)
@@ -123,7 +125,7 @@ class BackupDataWorker
         recordTime("got all data")
 
         if (
-            !shouldExport(
+            !hasAnyRecord(
                 loginData,
                 bankAccountData,
                 bankCardData,
@@ -133,6 +135,8 @@ class BackupDataWorker
         ) {
             Timber.i("$localTag nothing to export")
             analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_NOTHING_TO_BACKUP)
+            // Special case, bypasses onBackupFailure: no notification, since auto-backup runs on
+            // every password login, and no folder deletion, since the folder was never touched.
             return Result.failure(BackupFailureReason.NOTHING_TO_BACKUP.toWorkData())
         }
 
@@ -435,7 +439,7 @@ class BackupDataWorker
         startTime = System.currentTimeMillis()
     }
 
-    private fun shouldExport(vararg list: List<Any>): Boolean {
+    private fun hasAnyRecord(vararg list: List<Any>): Boolean {
         list.forEach {
             if (it.isNotEmpty()) {
                 return true
