@@ -59,4 +59,20 @@ enum class AnalyticsKey(val eventName: String) {
 
     // the clipboard moved on to a clip this app did not write, so it was left untouched.
     CLIPBOARD_AUTO_CLEAR_SKIPPED("clipboard_auto_clear_skipped"),
+
+    // In-app updates. The update check re-emits on every launch, so each event is bounded by a
+    // persisted version, a state transition or a per-process guard. See
+    // docs/architecture/in-app-updates.md before adding one.
+    IN_APP_UPDATE_FLOW_SHOW("in_app_update_flow_show"),
+    IN_APP_UPDATE_FLOW_ACCEPT("in_app_update_flow_accept"),
+    IN_APP_UPDATE_FLOW_CANCEL("in_app_update_flow_cancel"),
+    IN_APP_UPDATE_FLOW_FAILED("in_app_update_flow_failed"),
+    IN_APP_UPDATE_DOWNLOADED("in_app_update_downloaded"),
+    IN_APP_UPDATE_RESTART_SNACKBAR_SHOW("in_app_update_restart_snackbar_show"),
+    IN_APP_UPDATE_RESTART_SNACKBAR_CLICK("in_app_update_restart_snackbar_click"),
+
+    // ✕ tap or a programmatic dismiss, e.g. ClipboardActions on API < 33. Not a CANCEL_CLICK
+    // because it does not always mean the user acted.
+    IN_APP_UPDATE_RESTART_SNACKBAR_DISMISSED("in_app_update_restart_snackbar_dismissed"),
+    IN_APP_UPDATE_AUTO_COMPLETE("in_app_update_auto_complete"),
 }

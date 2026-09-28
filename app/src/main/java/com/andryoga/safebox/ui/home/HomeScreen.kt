@@ -30,6 +30,7 @@ import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.core.ScrollBehaviorType
 import com.andryoga.safebox.ui.core.TopBarState
+import com.andryoga.safebox.ui.core.appupdate.InAppUpdateRestartPrompt
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
 import com.andryoga.safebox.ui.home.components.UserAwayDialog
@@ -98,6 +99,7 @@ fun HomeScreen(
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
+        InAppUpdateRestartPrompt(snackbarHostState = globalSnackbarHostState)
         Scaffold(
             topBar = {
                 if (currentConfig != null) {

@@ -1,13 +1,18 @@
 package com.andryoga.safebox.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.andryoga.safebox.ui.LoadingRoute
+import com.andryoga.safebox.ui.core.appupdate.InAppUpdateHost
 import com.andryoga.safebox.ui.home.HomeRoute
 import com.andryoga.safebox.ui.home.HomeScreen
 import com.andryoga.safebox.ui.loading.LoadingScreenRoot
@@ -23,6 +28,7 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
 
+    RootInAppUpdateHost(navController = navController)
     NavHost(
         navController = navController,
         startDestination = LoginGraph
@@ -30,6 +36,20 @@ fun AppNavigation(
         loginGraph(navController = navController)
         homeGraph(navController = navController)
     }
+}
+
+/**
+ * Tells [InAppUpdateHost] whether the root navigation is inside the Home graph.
+ *
+ * The back stack is read here rather than in [AppNavigation], so a navigation only recomposes
+ * this host and never the root `NavHost`.
+ */
+@Composable
+private fun RootInAppUpdateHost(navController: NavHostController) {
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    InAppUpdateHost(
+        isInHomeGraph = backStackEntry?.destination?.hierarchy?.any { it.hasRoute<HomeGraph>() },
+    )
 }
 
 private fun navigateRoot(navController: NavHostController, route: Any) {

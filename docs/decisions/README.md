@@ -11,6 +11,7 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 | [0002](0002-upgrade-testing-via-black-box-uiautomator.md) | Upgrade and release-build testing via a black-box UI Automator module | Accepted, amended by 0003, 0004 |
 | [0003](0003-ui-labels-from-resource-names.md) | UI labels are resolved from the app's own resource names | Accepted, amended by 0004 |
 | [0004](0004-verify-upgrade-and-restore-by-decoded-backup.md) | Verify upgrade and restore by decoded backup comparison | Accepted |
+| [0005](0005-in-app-updates-flexible-only.md) | In-app updates use the FLEXIBLE flow only, with a lock-aware restart | Accepted |
 
 ## Format
 

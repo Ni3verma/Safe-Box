@@ -42,6 +42,10 @@ android {
         println "Building SafeBox: ${versionName} (${versionCode})"
 
         testInstrumentationRunner "com.andryoga.safebox.CustomHiltTestRunner"
+
+        // Play in-app updates can only succeed for the applicationId installed from Play, so every
+        // build type is off unless it opts in. Only release does. See docs/architecture/in-app-updates.md
+        buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
     }
 
     signingConfigs {
@@ -105,11 +109,15 @@ android {
             ndk {
                 debugSymbolLevel = "FULL"
             }
+            buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "true"
         }
         qa {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
+            // initWith copies release's buildConfigFields, so qa has to opt back out explicitly.
+            // The .qa applicationId is not on Play, so an update check could never succeed.
+            buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
             firebaseCrashlytics {
                 /**
                  * I don't want this to be enabled on local machine or CI because it is an indirect
@@ -181,6 +189,7 @@ dependencies {
     implementation libs.kotlinx.serialization.json
     implementation libs.biometric
     implementation libs.bundles.play.review
+    implementation libs.bundles.play.app.update
     implementation libs.data.store.pref
     implementation libs.bundles.camera
 
