@@ -21,10 +21,13 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -51,12 +54,49 @@ class BackupMetadataRepositoryImplTest {
     fun setUp() {
         MockKAnnotations.init(this)
         every { context.contentResolver } returns contentResolver
+        every { backupMetadataDao.getBackupMetadata() } returns flowOf(null)
+        every { contentResolver.takePersistableUriPermission(any(), any()) } returns Unit
+        every { contentResolver.releasePersistableUriPermission(any(), any()) } returns Unit
+        mockkStatic(Uri::class)
         analyticsHelper = FakeAnalyticsHelper()
         repository = BackupMetadataRepositoryImpl(
             context = context,
             backupMetadataDao = backupMetadataDao,
             analyticsHelper = analyticsHelper
         )
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Uri::class)
+    }
+
+    /**
+     * Stores a folder in the fake DAO and makes [Uri.parse] return a mock for it.
+     *
+     * @param uriString the stored folder URI.
+     * @return the mock Uri the repository will parse the stored string into.
+     */
+    private fun stubStoredFolder(uriString: String): Uri {
+        every { backupMetadataDao.getBackupMetadata() } returns flowOf(
+            BackupMetadataEntity(
+                key = 1,
+                uriString = uriString,
+                displayPath = "/tree/stored",
+                lastBackupDate = null,
+                createdOn = Date(),
+            ),
+        )
+        val uri = contentUri(uriString)
+        every { Uri.parse(uriString) } returns uri
+        return uri
+    }
+
+    private fun contentUri(uriString: String): Uri = mockk {
+        every { scheme } returns uriString.substringBefore("://")
+        every { path } returns uriString.substringAfter("://").substringAfter("/", "")
+        every { authority } returns "com.android.providers.downloads"
+        every { this@mockk.toString() } returns uriString
     }
 
     @Test
@@ -143,10 +183,67 @@ class BackupMetadataRepositoryImplTest {
         }
 
     @Test
-    fun deleteBackupMetadata_shouldDelegateToDao() = runTest {
+    fun deleteBackupMetadata_whenNoFolderIsStored_shouldDelegateToDao() = runTest {
+        every { backupMetadataDao.getBackupMetadata() } returns flowOf(null)
+
         repository.deleteBackupMetadata()
 
         coVerify(exactly = 1) { backupMetadataDao.deleteBackupMetadata() }
+        verify(exactly = 0) { contentResolver.releasePersistableUriPermission(any(), any()) }
+    }
+
+    @Test
+    fun deleteBackupMetadata_whenContentFolderIsStored_shouldReleaseItsGrantAndDelete() = runTest {
+        val storedUri = stubStoredFolder(STORED_CONTENT_URI)
+
+        repository.deleteBackupMetadata()
+
+        verify(exactly = 1) { contentResolver.releasePersistableUriPermission(storedUri, any()) }
+        coVerify(exactly = 1) { backupMetadataDao.deleteBackupMetadata() }
+    }
+
+    @Test
+    fun deleteBackupMetadata_whenReleaseThrows_shouldStillDelete() = runTest {
+        val storedUri = stubStoredFolder(STORED_CONTENT_URI)
+        every {
+            contentResolver.releasePersistableUriPermission(storedUri, any())
+        } throws SecurityException("No persisted permission")
+
+        repository.deleteBackupMetadata()
+
+        coVerify(exactly = 1) { backupMetadataDao.deleteBackupMetadata() }
+    }
+
+    @Test
+    fun deleteBackupMetadata_whenFileFolderIsStored_shouldNotReleaseAnyGrant() = runTest {
+        stubStoredFolder("file:///sdcard/SafeBoxBackup")
+
+        repository.deleteBackupMetadata()
+
+        verify(exactly = 0) { contentResolver.releasePersistableUriPermission(any(), any()) }
+        coVerify(exactly = 1) { backupMetadataDao.deleteBackupMetadata() }
+    }
+
+    @Test
+    fun insertBackupMetadata_whenDifferentFolderReplacesStoredOne_shouldReleaseOldGrant() = runTest {
+        val storedUri = stubStoredFolder(STORED_CONTENT_URI)
+        val newUri = contentUri("content://com.android.providers.downloads/tree/new")
+
+        repository.insertBackupMetadata(newUri)
+
+        verify(exactly = 1) { contentResolver.takePersistableUriPermission(newUri, any()) }
+        verify(exactly = 1) { contentResolver.releasePersistableUriPermission(storedUri, any()) }
+        verify(exactly = 0) { contentResolver.releasePersistableUriPermission(newUri, any()) }
+    }
+
+    @Test
+    fun insertBackupMetadata_whenSameFolderIsPickedAgain_shouldNotReleaseItsGrant() = runTest {
+        stubStoredFolder(STORED_CONTENT_URI)
+        val sameUri = contentUri(STORED_CONTENT_URI)
+
+        repository.insertBackupMetadata(sameUri)
+
+        verify(exactly = 0) { contentResolver.releasePersistableUriPermission(any(), any()) }
     }
 
     @Test
@@ -223,4 +320,8 @@ class BackupMetadataRepositoryImplTest {
                 awaitComplete()
             }
         }
+
+    private companion object {
+        const val STORED_CONTENT_URI = "content://com.android.providers.downloads/tree/stored"
+    }
 }

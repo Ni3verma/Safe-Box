@@ -24,6 +24,7 @@ import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.RestoreDataWorker
@@ -314,7 +315,7 @@ class BackupAndRestoreWorkersTest {
         }
 
     @Test
-    fun exportToBackupFile_withEmptyVault_shouldWriteNoBackupFile() =
+    fun exportToBackupFile_withEmptyVault_shouldFailAsNothingToBackupAndWriteNoFile() =
         runBlocking {
             // BACKUP_EMPTY relies on this: no genuine backup is ever payload-less.
             safeBoxDatabase.clearAllTables()
@@ -323,8 +324,60 @@ class BackupAndRestoreWorkersTest {
             backupDir.mkdirs()
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            assertThat(runBackupWorker()).isEqualTo(Result.success())
+            assertThat(runBackupWorker())
+                .isEqualTo(Result.failure(BackupFailureReason.NOTHING_TO_BACKUP.toWorkData()))
 
+            assertThat(backupDir.listFiles().orEmpty().toList()).isEmpty()
+            assertThat(backupMetadataRepository.isBackupPathSet()).isTrue()
+        }
+
+    @Test
+    fun exportToBackupFile_whenBackupFolderIsDeleted_shouldFailAsFolderInaccessibleAndClearFolder() =
+        runBlocking {
+            E2ETestUtils.setupSeededVaultRecords(
+                safeBoxDatabase,
+                loginDataRepository,
+                bankCardDataRepository,
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                authenticatorDataRepository,
+            )
+            val backupDir = File(context.cacheDir, "backup_deleted_folder")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
+            backupDir.deleteRecursively()
+
+            assertThat(runBackupWorker())
+                .isEqualTo(Result.failure(BackupFailureReason.FOLDER_INACCESSIBLE.toWorkData()))
+
+            assertThat(backupMetadataRepository.isBackupPathSet()).isFalse()
+        }
+
+    @Test
+    fun exportToBackupFile_whenFailureIsUnrelatedToFolder_shouldFailAsUnknownAndKeepFolder() =
+        runBlocking {
+            E2ETestUtils.setupSeededVaultRecords(
+                safeBoxDatabase,
+                loginDataRepository,
+                bankCardDataRepository,
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                authenticatorDataRepository,
+            )
+            val backupDir = File(context.cacheDir, "backup_unrelated_failure")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
+
+            // A worker without its password input fails before touching the folder.
+            val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
+                .setWorkerFactory(workerFactory)
+                .build()
+
+            assertThat(worker.doWork())
+                .isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+            assertThat(backupMetadataRepository.isBackupPathSet()).isTrue()
             assertThat(backupDir.listFiles().orEmpty().toList()).isEmpty()
         }
 

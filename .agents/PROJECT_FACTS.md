@@ -96,9 +96,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   type except authenticator**: `filterDecodableAuthenticatorData` **silently drops** records failing
   `totpGenerator.isValidConfig(...)` (firing `RESTORE_INVALID_AUTHENTICATOR_SKIPPED` with a count).
   Assert `<=` for authenticators, `==` for the rest.
-- `RestoreFailureReason`: `INCORRECT_PASSWORD`, `CORRUPT_OR_INVALID_FILE`, `UNKNOWN_ERROR`,
-  `BACKUP_TOO_NEW` (version `> BACKUP_VERSION`), `BACKUP_EMPTY` (no record payload; only crafted files,
-  an empty vault writes no backup at all, #272). Append-only; `RestoreFailureReasonTest` pins it.
+- Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
+  `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
+  `FOLDER_INACCESSIBLE` clears the saved folder. Both: [doc](../docs/architecture/persistence-and-crypto.md).
 
 ## Testing
 

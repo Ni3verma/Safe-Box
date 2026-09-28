@@ -9,6 +9,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
@@ -99,18 +100,27 @@ class NewBackupOrRestoreVM @Inject constructor(
                     }
 
                     WorkInfo.State.FAILED, WorkInfo.State.BLOCKED, WorkInfo.State.CANCELLED, null -> {
-                        val targetState =
-                            if (operation is Operation.Restore && workInfo?.state == WorkInfo.State.FAILED) {
-                                when (RestoreFailureReason.fromWorkData(workInfo.outputData)) {
+                        val isFailed = workInfo?.state == WorkInfo.State.FAILED
+                        val targetState = when {
+                            operation is Operation.Restore && isFailed ->
+                                when (RestoreFailureReason.fromWorkData(workInfo?.outputData)) {
                                     RestoreFailureReason.INCORRECT_PASSWORD -> WorkflowState.WRONG_PASSWORD
                                     RestoreFailureReason.CORRUPT_OR_INVALID_FILE -> WorkflowState.CORRUPT_FILE
                                     RestoreFailureReason.UNKNOWN_ERROR -> WorkflowState.FAILED
                                     RestoreFailureReason.BACKUP_TOO_NEW -> WorkflowState.BACKUP_TOO_NEW
                                     RestoreFailureReason.BACKUP_EMPTY -> WorkflowState.BACKUP_EMPTY
                                 }
-                            } else {
-                                WorkflowState.FAILED
+
+                            operation is Operation.Backup && isFailed -> {
+                                val reason = BackupFailureReason.fromWorkData(workInfo?.outputData)
+                                analyticsHelper.logEvent(AnalyticsKey.BACKUP_FAILURE_DIALOG_SHOW) {
+                                    param(AnalyticsParam.REASON, reason.name)
+                                }
+                                reason.toWorkflowState()
                             }
+
+                            else -> WorkflowState.FAILED
+                        }
                         updateWorkflowState(targetState)
                     }
 
@@ -165,5 +175,12 @@ class NewBackupOrRestoreVM @Inject constructor(
                 workflowState = workflowState
             )
         }
+    }
+
+    private fun BackupFailureReason.toWorkflowState(): WorkflowState = when (this) {
+        BackupFailureReason.NOTHING_TO_BACKUP -> WorkflowState.BACKUP_NOTHING_TO_BACKUP
+        BackupFailureReason.FOLDER_INACCESSIBLE -> WorkflowState.BACKUP_FOLDER_INACCESSIBLE
+        BackupFailureReason.WRITE_FAILED -> WorkflowState.BACKUP_WRITE_FAILED
+        BackupFailureReason.UNKNOWN -> WorkflowState.BACKUP_UNKNOWN_ERROR
     }
 }

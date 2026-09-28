@@ -134,7 +134,12 @@ private fun dialogIconComposable(
             WorkflowState.FAILED,
             WorkflowState.CORRUPT_FILE,
             WorkflowState.BACKUP_TOO_NEW,
-            WorkflowState.BACKUP_EMPTY -> Icon(
+            WorkflowState.BACKUP_EMPTY,
+            WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+            WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+            WorkflowState.BACKUP_WRITE_FAILED,
+            WorkflowState.BACKUP_UNKNOWN_ERROR,
+            -> Icon(
                 Icons.Filled.ErrorOutline,
                 contentDescription = null,
                 modifier = modifier,
@@ -155,6 +160,10 @@ private fun cancelButtonComposable(
         WorkflowState.CORRUPT_FILE,
         WorkflowState.BACKUP_TOO_NEW,
         WorkflowState.BACKUP_EMPTY,
+        WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+        WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+        WorkflowState.BACKUP_WRITE_FAILED,
+        WorkflowState.BACKUP_UNKNOWN_ERROR,
         WorkflowState.ASK_FOR_PASSWORD,
         WorkflowState.SUCCESS -> {
             {
@@ -164,6 +173,10 @@ private fun cancelButtonComposable(
                     WorkflowState.CORRUPT_FILE,
                     WorkflowState.BACKUP_TOO_NEW,
                     WorkflowState.BACKUP_EMPTY,
+                    WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+                    WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+                    WorkflowState.BACKUP_WRITE_FAILED,
+                    WorkflowState.BACKUP_UNKNOWN_ERROR,
                     -> R.string.common_ok
                     else -> R.string.common_cancel
                 }
@@ -250,6 +263,25 @@ fun dialogBodyText(
             {
                 Text(
                     text = stringResource(R.string.restore_backup_empty_message),
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+
+        WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+        WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+        WorkflowState.BACKUP_WRITE_FAILED,
+        WorkflowState.BACKUP_UNKNOWN_ERROR,
+        -> {
+            val textResId = when (workflowState) {
+                WorkflowState.BACKUP_NOTHING_TO_BACKUP -> R.string.backup_nothing_to_backup_message
+                WorkflowState.BACKUP_FOLDER_INACCESSIBLE -> R.string.backup_folder_inaccessible_message
+                WorkflowState.BACKUP_WRITE_FAILED -> R.string.backup_write_failed_message
+                else -> R.string.backup_unknown_error_message
+            }
+            {
+                Text(
+                    text = stringResource(textResId),
                     fontWeight = FontWeight.Medium,
                 )
             }

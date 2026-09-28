@@ -30,7 +30,19 @@ enum class WorkflowState {
     SUCCESS,
 
     // backup/restore job failed.
-    FAILED
+    FAILED,
+
+    // backup found an empty vault, so no file was written.
+    BACKUP_NOTHING_TO_BACKUP,
+
+    // backup folder is gone or its access was revoked. The folder setting was cleared.
+    BACKUP_FOLDER_INACCESSIBLE,
+
+    // backup file could not be written into a reachable folder, e.g. the disk is full.
+    BACKUP_WRITE_FAILED,
+
+    // backup failed for an unexpected reason. Retrying fails the same way, so no password field.
+    BACKUP_UNKNOWN_ERROR,
 }
 
 // the operation with which this workflow is started. Based on the operation we need to show different UI and run different business logic.

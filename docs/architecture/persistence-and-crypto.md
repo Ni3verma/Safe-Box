@@ -158,6 +158,31 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > 2026-09-21 by instrumenting the committed fixture after a copied allowlist rejected every valid
 > file.
 
+## Backup outcomes
+
+`BackupDataWorker` reports every non-success as `Result.failure(BackupFailureReason)` (#274):
+
+| Value | Trigger | Clears the folder setting? | Notification |
+|---|---|---|---|
+| `NOTHING_TO_BACKUP` | vault is empty (`hasAnyRecord` false) | no | none |
+| `FOLDER_INACCESSIBLE` | pre-check fails (`exists() && isDirectory && canWrite()`), or `SecurityException` / `FileNotFoundException` while writing | **yes** | "Backup Failed! Please set backup path" |
+| `WRITE_FAILED` | any other `IOException` while writing, incl. a null `createFile` / file descriptor | no | check free space |
+| `UNKNOWN` | everything else: DAO, crypto, missing input | no | report via Settings > Send feedback |
+
+- **Order:** empty check, then the start notification, then the folder pre-check, then encryption.
+  An empty vault never touches the folder, and a dead folder costs no crypto work.
+- **Before #274 every failure cleared the folder setting,** so any unrelated error silently stopped
+  auto-backup after login. Only a folder that is really gone is cleared now.
+- `NOTHING_TO_BACKUP` logs `BACKUP_DATA_NOTHING_TO_BACKUP`, never `BACKUP_DATA_FAILURE`, and posts no
+  notification: auto-backup runs on every password login and would nag every empty vault.
+- `BACKUP_DATA_SUCCESS` is logged only when a file was written. No folder set is a silent success.
+- The manual backup dialog maps each reason to its own `WorkflowState` with an OK button. `UNKNOWN`
+  does not reuse `FAILED`, whose password field invites a retry that fails the same way.
+- `BackupMetadataRepositoryImpl` releases the persisted SAF grant when the folder is cleared or
+  replaced by a different one. At the per-app cap (512 in current AOSP) the system silently prunes
+  the oldest grants, so this is hygiene, not a fix for a visible failure.
+- The enum is append-only; `BackupFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins it.
+
 ## Restore semantics
 
 `restoreDataToDb` runs inside `safeBoxDatabase.runInTransaction { }` and, per table, does
@@ -171,10 +196,10 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > The password is only verified by decrypting a record payload. A backup with **no payloads** has
 > nothing to verify, so any password would pass and the replace would wipe the vault. Since #272
 > such a file is rejected as `BACKUP_EMPTY` **before** decryption or any DB work. No genuine backup
-> is affected: `BackupDataWorker.shouldExport` has skipped writing a file for an empty vault since
-> backups were introduced (#111), pinned by
-> `BackupAndRestoreWorkersTest.exportToBackupFile_withEmptyVault_shouldWriteNoBackupFile`. A payload
-> that decrypts to `[]` still restores, because decrypting it verified the password.
+> is affected: `BackupDataWorker.hasAnyRecord` (formerly `shouldExport`) has skipped writing a file
+> for an empty vault since backups were introduced (#111), pinned by
+> `BackupAndRestoreWorkersTest.exportToBackupFile_withEmptyVault_shouldFailAsNothingToBackupAndWriteNoFile`.
+> A payload that decrypts to `[]` still restores, because decrypting it verified the password.
 
 Failure classification is `RestoreFailureReason`:
 

@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
@@ -25,7 +26,9 @@ import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
+import com.andryoga.safebox.test.fakes.LoggedAnalyticsEvent
 import com.andryoga.safebox.test.fixtures.TestFixtures
+import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -35,17 +38,21 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 import org.junit.After
+import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.util.Locale
@@ -82,6 +89,7 @@ class BackupDataWorkerTest {
 
     private class FakePasswordBasedEncryption : PasswordBasedEncryption {
         val encryptionCallModes = mutableListOf<Boolean>()
+        var failure: Exception? = null
 
         override fun encryptDecrypt(
             password: CharArray,
@@ -90,6 +98,7 @@ class BackupDataWorkerTest {
             iv: ByteArray,
             encrypt: Boolean,
         ): ByteArray {
+            failure?.let { throw it }
             encryptionCallModes.add(encrypt)
             val delta = if (encrypt) 1 else -1
             return ByteArray(data.size) { i -> (data[i] + delta).toByte() }
@@ -210,7 +219,8 @@ class BackupDataWorkerTest {
 
         assertThat(result).isEqualTo(Result.success())
         assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
 
         val createdFiles =
@@ -535,61 +545,179 @@ class BackupDataWorkerTest {
         }
 
     @Test
-    fun doWork_whenMissingPasswordInput_failsAndDeletesBackupMetadata() = runTest {
-        fakeBackupMetadataRepo.metadata = BackupPathData(
-            uriString = "file://${tempDir.absolutePath}",
-            path = tempDir.absolutePath,
-            lastBackupTime = "Just now"
-        )
+    fun doWork_whenVaultIsEmpty_failsAsNothingToBackupWithoutTouchingTheFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords(logins = emptyList())
+        // An inaccessible folder proves the empty check runs first and never clears the setting.
+        tempDir.deleteRecursively()
 
-        val worker = buildWorker(Data.EMPTY)
-        val result = worker.doWork()
+        val result = buildWorker(passwordInput()).doWork()
 
-        assertThat(result).isEqualTo(Result.failure())
-        assertThat(fakeBackupMetadataRepo.deleted).isTrue()
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isTrue()
+        assertThat(result)
+            .isEqualTo(Result.failure(BackupFailureReason.NOTHING_TO_BACKUP.toWorkData()))
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_NOTHING_TO_BACKUP)).isTrue()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+    }
+
+    @Test
+    fun doWork_whenMissingPasswordInput_failsAsUnknownAndKeepsBackupFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+
+        val result = buildWorker(Data.EMPTY).doWork()
+
+        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+        assertFailureLoggedWithReason(BackupFailureReason.UNKNOWN)
     }
 
     /**
-     * The write to the chosen backup directory can fail for reasons entirely outside the app's
-     * control: the SD card is pulled, the tree permission is revoked, or the folder is deleted
-     * between the user picking it and the worker running.
+     * The chosen backup directory can disappear for reasons entirely outside the app's control:
+     * the SD card is pulled, the tree permission is revoked, or the folder is deleted between the
+     * user picking it and the worker running.
      *
-     * The worker must surface that as a failure. Reporting success here would tell the user their
-     * vault is backed up when no file was written at all, which is the quietest possible way to
-     * lose everything.
+     * The worker must surface that as a failure and clear the folder, so the user is asked to pick
+     * it again. Reporting success here would tell the user their vault is backed up when no file
+     * was written at all, which is the quietest possible way to lose everything.
      */
     @Test
-    fun doWork_whenWritingTheBackupFileFails_reportsFailureInsteadOfClaimingSuccess() = runTest {
-        fakeBackupMetadataRepo.metadata = BackupPathData(
-            uriString = "file://${tempDir.absolutePath}",
-            path = tempDir.absolutePath,
-            lastBackupTime = "Just now"
-        )
+    fun doWork_whenBackupFolderIsDeleted_failsAsFolderInaccessibleAndClearsFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        tempDir.deleteRecursively()
 
-        coEvery { loginDataDaoSecure.exportAllData() } returns listOf(
-            ExportLoginData("GitHub", "https://github.com", "secret", "notes", "user", 1000L, 1000L)
-        )
+        val result = buildWorker(passwordInput()).doWork()
+
+        assertThat(result)
+            .isEqualTo(Result.failure(BackupFailureReason.FOLDER_INACCESSIBLE.toWorkData()))
+        assertThat(fakeBackupMetadataRepo.deleted).isTrue()
+        assertFailureLoggedWithReason(BackupFailureReason.FOLDER_INACCESSIBLE)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
+        // The pre-check fails before any crypto work is done.
+        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        // A run that never wrote a file must not move the "last backed up" timestamp forward.
+        assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+    }
+
+    @Test
+    fun doWork_whenBackupFolderIsReadOnly_failsAsFolderInaccessibleAndClearsFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        tempDir.setWritable(false)
+        try {
+            // Root (common on CI containers) ignores permission bits, so the scenario can't be set up.
+            assumeFalse(tempDir.canWrite())
+
+            val result = buildWorker(passwordInput()).doWork()
+
+            assertThat(result)
+                .isEqualTo(Result.failure(BackupFailureReason.FOLDER_INACCESSIBLE.toWorkData()))
+            assertThat(fakeBackupMetadataRepo.deleted).isTrue()
+        } finally {
+            tempDir.setWritable(true)
+        }
+    }
+
+    @Test
+    fun doWork_whenReadingTheVaultThrows_failsAsUnknownAndKeepsBackupFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws IllegalStateException("db closed")
+
+        val result = buildWorker(passwordInput()).doWork()
+
+        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+        val event = assertFailureLoggedWithReason(BackupFailureReason.UNKNOWN)
+        assertThat(event.params[AnalyticsParam.MESSAGE.paramName]).isEqualTo("db closed")
+    }
+
+    @Test
+    fun doWork_whenEncryptionThrows_failsAsUnknownAndKeepsBackupFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        fakePasswordBasedEncryption.failure = IllegalStateException("cipher failure")
+
+        val result = buildWorker(passwordInput()).doWork()
+
+        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+        assertFailureLoggedWithReason(BackupFailureReason.UNKNOWN)
+        val createdFiles =
+            tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
+        assertThat(createdFiles).isEmpty()
+    }
+
+    /**
+     * WorkManager stops a worker by cancelling its coroutine and reschedules the work when the
+     * cancellation propagates. Swallowing it as UNKNOWN would notify the user about a backup that
+     * never actually failed.
+     */
+    @Test
+    fun doWork_whenCancelled_rethrowsWithoutReportingFailure() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws CancellationException("work stopped")
+
+        val thrown = runCatching { buildWorker(passwordInput()).doWork() }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(CancellationException::class.java)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+    }
+
+    @Test
+    fun classifyWriteFailure_whenSecurityException_shouldReturnFolderInaccessible() {
+        assertThat(classifyWriteFailure(SecurityException("revoked")))
+            .isEqualTo(BackupFailureReason.FOLDER_INACCESSIBLE)
+    }
+
+    @Test
+    fun classifyWriteFailure_whenFileNotFoundException_shouldReturnFolderInaccessible() {
+        assertThat(classifyWriteFailure(FileNotFoundException("gone")))
+            .isEqualTo(BackupFailureReason.FOLDER_INACCESSIBLE)
+    }
+
+    @Test
+    fun classifyWriteFailure_whenOtherIOException_shouldReturnWriteFailed() {
+        assertThat(classifyWriteFailure(IOException("No space left on device")))
+            .isEqualTo(BackupFailureReason.WRITE_FAILED)
+    }
+
+    @Test
+    fun classifyWriteFailure_whenNonIOException_shouldReturnUnknown() {
+        assertThat(classifyWriteFailure(IllegalStateException("boom")))
+            .isEqualTo(BackupFailureReason.UNKNOWN)
+    }
+
+    private fun backupPathInTempDir() = BackupPathData(
+        uriString = "file://${tempDir.absolutePath}",
+        path = tempDir.absolutePath,
+        lastBackupTime = "Just now",
+    )
+
+    private fun passwordInput(): Data = Data.Builder()
+        .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
+        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
+        .build()
+
+    private fun stubVaultRecords(
+        logins: List<ExportLoginData> = listOf(
+            ExportLoginData("GitHub", "https://github.com", "secret", "notes", "user", 1000L, 1000L),
+        ),
+    ) {
+        coEvery { loginDataDaoSecure.exportAllData() } returns logins
         coEvery { bankAccountDataDaoSecure.exportAllData() } returns emptyList()
         coEvery { bankCardDataDaoSecure.exportAllData() } returns emptyList()
         coEvery { secureNoteDataDaoSecure.exportAllData() } returns emptyList()
         coEvery { authenticatorDataDaoSecure.exportAllData() } returns emptyList()
+    }
 
-        // Removing the directory after the path was recorded mirrors a folder that disappeared
-        // between the user picking it and the worker running. FileOutputStream then throws.
-        tempDir.deleteRecursively()
-
-        val inputData = Data.Builder()
-            .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
-            .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-            .build()
-
-        val result = buildWorker(inputData).doWork()
-
-        assertThat(result).isEqualTo(Result.failure())
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isTrue()
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
-        // A run that never wrote a file must not move the "last backed up" timestamp forward.
-        assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+    private fun assertFailureLoggedWithReason(reason: BackupFailureReason): LoggedAnalyticsEvent {
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.BACKUP_DATA_FAILURE }
+        assertThat(event.params[AnalyticsParam.REASON.paramName]).isEqualTo(reason.name)
+        return event
     }
 }

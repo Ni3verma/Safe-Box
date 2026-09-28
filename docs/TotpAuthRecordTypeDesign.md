@@ -165,7 +165,7 @@ It also overrides `checkMandatoryFields` to additionally require a decodable Bas
 ### 5.1 Backup ([BackupDataWorker.kt](../app/src/main/java/com/andryoga/safebox/worker/BackupDataWorker.kt))
 
 * `ExportAuthenticatorData` is serialised via `kotlinx.serialization`.
-* `authenticatorDataDaoSecure.exportAllData()` participates in the `shouldExport()` check.
+* `authenticatorDataDaoSecure.exportAllData()` participates in the `hasAnyRecord()` check (named `shouldExport()` before #274).
 * The payload is encrypted with the user's backup password and stored in `exportMap` under
   `CommonConstants.AUTHENTICATOR_DATA_KEY`, the numeric string `"8"`. This continues the sequence
   already used by the other record types (`"4"` login, `"5"` bank account, `"6"` bank card,
