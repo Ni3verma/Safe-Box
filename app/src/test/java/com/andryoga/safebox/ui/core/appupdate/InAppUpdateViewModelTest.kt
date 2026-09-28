@@ -1,6 +1,5 @@
 package com.andryoga.safebox.ui.core.appupdate
 
-import android.app.Activity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import com.andryoga.safebox.MainDispatcherRule
@@ -9,7 +8,6 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.google.android.play.core.install.model.ActivityResult
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import io.mockk.every
@@ -153,23 +151,19 @@ class InAppUpdateViewModelTest {
 
     @Test
     fun promptedSameVersion_shouldNotRepromptWhateverResult() = runTest {
-        listOf(
-            Activity.RESULT_OK,
-            Activity.RESULT_CANCELED,
-            ActivityResult.RESULT_IN_APP_UPDATE_FAILED,
-        ).forEach { resultCode ->
+        UpdateFlowResult.entries.forEach { result ->
             preferenceProvider.clearAll()
             sessionGuard = InAppUpdateSessionGuard()
             appUpdateController.updateStates.emit(AppUpdateState.Available(42))
             val firstProcess = subscribedViewModel()
             firstProcess.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
-            firstProcess.onAction(InAppUpdateAction.OnUpdateFlowResult(resultCode))
+            firstProcess.onAction(InAppUpdateAction.OnUpdateFlowResult(result))
             runCurrent()
 
             sessionGuard = InAppUpdateSessionGuard()
             val nextProcess = subscribedViewModel()
 
-            assertWithMessage("result code $resultCode")
+            assertWithMessage("result $result")
                 .that(nextProcess.uiState.value.promptVersionCode)
                 .isNull()
         }
@@ -215,31 +209,22 @@ class InAppUpdateViewModelTest {
     }
 
     @Test
-    fun flowResultOk_shouldLogFlowAccept() {
-        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(Activity.RESULT_OK))
+    fun flowResultAccepted_shouldLogFlowAccept() {
+        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.ACCEPTED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_ACCEPT)).isTrue()
     }
 
     @Test
     fun flowResultCanceled_shouldLogFlowCancel() {
-        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(Activity.RESULT_CANCELED))
+        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.CANCELED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_CANCEL)).isTrue()
     }
 
     @Test
-    fun flowResultInAppUpdateFailed_shouldLogFlowFailed() {
-        createViewModel().onAction(
-            InAppUpdateAction.OnUpdateFlowResult(ActivityResult.RESULT_IN_APP_UPDATE_FAILED),
-        )
-
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_FAILED)).isTrue()
-    }
-
-    @Test
-    fun flowResultUnknownCode_shouldLogFlowFailed() {
-        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UNKNOWN_RESULT_CODE))
+    fun flowResultFailed_shouldLogFlowFailed() {
+        createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.FAILED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_FAILED)).isTrue()
     }
@@ -478,7 +463,6 @@ class InAppUpdateViewModelTest {
 
     private companion object {
         const val NOT_STORED = -1
-        const val UNKNOWN_RESULT_CODE = 99
         const val STOP_TIMEOUT_MILLIS = 5_000L
     }
 }

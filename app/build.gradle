@@ -115,8 +115,6 @@ android {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
-            // initWith copies release's buildConfigFields, so qa has to opt back out explicitly.
-            // The .qa applicationId is not on Play, so an update check could never succeed.
             buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
             firebaseCrashlytics {
                 /**

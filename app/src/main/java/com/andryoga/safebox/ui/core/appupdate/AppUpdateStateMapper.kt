@@ -37,8 +37,11 @@ object AppUpdateStateMapper {
      * while an accepted update is still downloading, for example on a cold start mid-download.
      * So the install status is checked before the result is treated as a fresh offer.
      *
-     * An offer only counts if the FLEXIBLE type is allowed, because that is the only flow the
-     * app starts.
+     * An offer only counts if the FLEXIBLE type is allowed. That is true only when Play attached
+     * the flexible flow's `PendingIntent`, which is what the consent sheet is launched from. Play
+     * leaves it out when the type is not allowed; `getFailedUpdatePreconditions` lists reasons such
+     * as `INSUFFICIENT_STORAGE`. A launch then cannot succeed and would only use up the one
+     * attempt allowed per process.
      */
     private fun mapAvailable(info: AppUpdateInfo): AppUpdateState {
         val installState = mapInstallStatus(info.installStatus())

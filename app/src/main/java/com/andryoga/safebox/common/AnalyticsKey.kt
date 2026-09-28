@@ -74,5 +74,8 @@ enum class AnalyticsKey(val eventName: String) {
     // ✕ tap or a programmatic dismiss, e.g. ClipboardActions on API < 33. Not a CANCEL_CLICK
     // because it does not always mean the user acted.
     IN_APP_UPDATE_RESTART_SNACKBAR_DISMISSED("in_app_update_restart_snackbar_dismissed"),
+
+    // the install of a downloaded update was started without asking, because the vault was
+    // locked: login screen, cold start or away timeout. Once per process.
     IN_APP_UPDATE_AUTO_COMPLETE("in_app_update_auto_complete"),
 }

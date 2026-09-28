@@ -21,24 +21,32 @@ import com.andryoga.safebox.R
  * reuses Home's host instead of adding a second one. Analytics are logged by the ViewModel on the
  * state transition, never here, because this effect runs again after every configuration change.
  *
- * The snackbar is [SnackbarDuration.Indefinite], and `showSnackbar` queues behind it. Any future
- * snackbar caller should dismiss the current snackbar first, as `ClipboardActions` does. That
- * programmatic dismiss is reported as [InAppUpdateAction.OnRestartPromptDismissed], and the update
- * still installs at the next lock.
- *
  * @param snackbarHostState Home's global snackbar host.
- * @param viewModel The activity-scoped instance shared with [InAppUpdateHost].
  */
 @Composable
-fun InAppUpdateRestartPrompt(
-    snackbarHostState: SnackbarHostState,
-    viewModel: InAppUpdateViewModel = hiltViewModel(viewModelStoreOwner = activityViewModelStoreOwner()),
-) {
+fun InAppUpdateRestartPromptRoot(snackbarHostState: SnackbarHostState) {
+    // shared with InAppUpdateHostRoot, see activityViewModelStoreOwner
+    val viewModel = hiltViewModel<InAppUpdateViewModel>(
+        viewModelStoreOwner = activityViewModelStoreOwner(),
+    )
     val uiState by viewModel.uiState.collectAsState()
+
+    InAppUpdateRestartPrompt(
+        showRestartPrompt = uiState.showRestartPrompt,
+        snackbarHostState = snackbarHostState,
+        screenAction = viewModel::onAction,
+    )
+}
+
+@Composable
+private fun InAppUpdateRestartPrompt(
+    showRestartPrompt: Boolean,
+    snackbarHostState: SnackbarHostState,
+    screenAction: (InAppUpdateAction) -> Unit,
+) {
     val message = stringResource(R.string.in_app_update_downloaded)
     val actionLabel = stringResource(R.string.in_app_update_restart)
 
-    val showRestartPrompt = uiState.showRestartPrompt
     LaunchedEffect(showRestartPrompt) {
         if (!showRestartPrompt) return@LaunchedEffect
         // Leaving composition, for example when the vault locks, cancels this call and removes
@@ -49,7 +57,9 @@ fun InAppUpdateRestartPrompt(
             withDismissAction = true,
             duration = SnackbarDuration.Indefinite,
         )
-        viewModel.onAction(
+        // showSnackbar suspends until the snackbar is gone. It returns ActionPerformed only when
+        // the action button, which is Restart here, was tapped, and Dismissed for ✕ or dismiss().
+        screenAction(
             if (result == SnackbarResult.ActionPerformed) {
                 InAppUpdateAction.OnRestartClick
             } else {
@@ -62,10 +72,10 @@ fun InAppUpdateRestartPrompt(
 /**
  * The hosting activity as the [ViewModelStoreOwner]. Inside a nav destination the default owner is
  * the back stack entry, which would create a second [InAppUpdateViewModel] instead of sharing the
- * one owned by [InAppUpdateHost].
+ * one owned by [InAppUpdateHostRoot].
  */
 @Composable
 private fun activityViewModelStoreOwner(): ViewModelStoreOwner =
     checkNotNull(LocalActivity.current as? ComponentActivity) {
-        "InAppUpdateRestartPrompt must be hosted in a ComponentActivity"
+        "InAppUpdateRestartPromptRoot must be hosted in a ComponentActivity"
     }

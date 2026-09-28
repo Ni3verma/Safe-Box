@@ -17,8 +17,9 @@ All in `ui/core/appupdate/` unless noted.
 | `di/AppUpdateModule` | Chooses Play or NoOp by the flag. Separate so androidTest can replace it. |
 | `InAppUpdateViewModel` | The policy. Activity-scoped. |
 | `InAppUpdateSessionGuard` | Per-process flags that must outlive the ViewModel |
-| `InAppUpdateHost` | Invisible composable beside the root `NavHost` in `AppNavigation`. Owns the result launcher and reports the root destination. |
-| `InAppUpdateRestartPrompt` | Shows the restart snackbar on Home's existing `SnackbarHostState` |
+| `InAppUpdateHostRoot` | Invisible composable beside the root `NavHost` in `AppNavigation`. Owns the result launcher and reports the root destination. |
+| `InAppUpdateRestartPromptRoot` | Shows the restart snackbar on Home's existing `SnackbarHostState` |
+| `UpdateFlowResult` | Consent outcome. The host translates the activity result code, so the ViewModel has no Android result codes. Unknown codes count as failed. |
 
 `AppUpdateState` is `NotAvailable`, `Available(versionCode)`, `Downloading` (pending, downloading or
 installing) or `Downloaded`. Every failure, including a device without Play, is `NotAvailable`.
@@ -92,6 +93,7 @@ dismiss first will wait behind the restart prompt.
 | Layer | Where | What |
 |---|---|---|
 | Unit | `AppUpdateStateMapperTest` | every Play result and install status |
+| Unit | `UpdateFlowResultTest` | consent result codes, including unknown codes counting as failed |
 | Unit | `InAppUpdateViewModelTest` | gating, once-per-version and once-per-process bounds, lock and away-timeout handling, every analytics key |
 | Instrumentation | `InAppUpdateE2ETest` | the consent appears after login and not on the login screen; accept and download show the snackbar; Restart completes the update; ✕ hides it |
 

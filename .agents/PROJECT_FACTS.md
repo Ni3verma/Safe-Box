@@ -103,7 +103,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 ## Testing
 
 - Unit tests: `app/src/test` — run with `:app:testDebugUnitTest`.
-- Instrumentation: `app/src/androidTest`, ~218 tests across ~31 classes, **debug build only**
+- Instrumentation: `app/src/androidTest`, **debug build only**
   (see [ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
 - Runner is `com.andryoga.safebox.CustomHiltTestRunner`; test Application is `BaseTestApplication`.
 - Gradle Managed Device: `pixel8Api34` (Pixel 8, API 34, `aosp-atd`).

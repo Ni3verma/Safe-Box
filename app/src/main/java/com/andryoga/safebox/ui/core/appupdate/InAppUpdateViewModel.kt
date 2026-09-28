@@ -1,6 +1,5 @@
 package com.andryoga.safebox.ui.core.appupdate
 
-import android.app.Activity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
@@ -115,7 +114,7 @@ class InAppUpdateViewModel @Inject constructor(
             }
 
             is InAppUpdateAction.OnUpdateFlowResult -> {
-                analyticsHelper.logEvent(toFlowResultKey(action.resultCode))
+                analyticsHelper.logEvent(toFlowResultKey(action.result))
             }
 
             InAppUpdateAction.OnRestartClick -> {
@@ -186,16 +185,12 @@ class InAppUpdateViewModel @Inject constructor(
     }
 
     /**
-     * Any code other than OK or cancelled is reported as a failure. Play documents
-     * `RESULT_IN_APP_UPDATE_FAILED`, and that keeps the funnel summing up:
-     * show = accept + cancel + failed.
-     *
-     * @param resultCode Result code returned by Play's consent sheet.
+     * @param result Outcome of Play's consent sheet.
      * @return The analytics key for that outcome.
      */
-    private fun toFlowResultKey(resultCode: Int): AnalyticsKey = when (resultCode) {
-        Activity.RESULT_OK -> AnalyticsKey.IN_APP_UPDATE_FLOW_ACCEPT
-        Activity.RESULT_CANCELED -> AnalyticsKey.IN_APP_UPDATE_FLOW_CANCEL
-        else -> AnalyticsKey.IN_APP_UPDATE_FLOW_FAILED
+    private fun toFlowResultKey(result: UpdateFlowResult): AnalyticsKey = when (result) {
+        UpdateFlowResult.ACCEPTED -> AnalyticsKey.IN_APP_UPDATE_FLOW_ACCEPT
+        UpdateFlowResult.CANCELED -> AnalyticsKey.IN_APP_UPDATE_FLOW_CANCEL
+        UpdateFlowResult.FAILED -> AnalyticsKey.IN_APP_UPDATE_FLOW_FAILED
     }
 }
