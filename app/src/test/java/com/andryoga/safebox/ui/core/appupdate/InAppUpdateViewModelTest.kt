@@ -2,6 +2,7 @@ package com.andryoga.safebox.ui.core.appupdate
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
+import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
@@ -17,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
@@ -99,6 +101,20 @@ class InAppUpdateViewModelTest {
         val viewModel = subscribedViewModel()
 
         viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        runCurrent()
+
+        assertThat(storedPromptedVersionCode()).isEqualTo(42)
+    }
+
+    @Test
+    fun viewModelClearedBeforeWriteRuns_shouldStillStorePromptedVersionCode() = runTest {
+        appUpdateController.updateStates.emit(AppUpdateState.Available(42))
+        val viewModel = subscribedViewModel()
+
+        // Main is a StandardTestDispatcher, so the write is queued, not run, at this point.
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        // Finishing the activity while Play's sheet is open clears the ViewModel.
+        viewModel.viewModelScope.cancel()
         runCurrent()
 
         assertThat(storedPromptedVersionCode()).isEqualTo(42)
@@ -250,21 +266,21 @@ class InAppUpdateViewModelTest {
     }
 
     @Test
-    fun flowResultAccepted_shouldLogFlowAccept() {
+    fun flowResultAccepted_shouldLogFlowAccept() = runTest {
         createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.ACCEPTED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_ACCEPT)).isTrue()
     }
 
     @Test
-    fun flowResultCanceled_shouldLogFlowCancel() {
+    fun flowResultCanceled_shouldLogFlowCancel() = runTest {
         createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.CANCELED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_CANCEL)).isTrue()
     }
 
     @Test
-    fun flowResultFailed_shouldLogFlowFailed() {
+    fun flowResultFailed_shouldLogFlowFailed() = runTest {
         createViewModel().onAction(InAppUpdateAction.OnUpdateFlowResult(UpdateFlowResult.FAILED))
 
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_FAILED)).isTrue()
@@ -474,12 +490,17 @@ class InAppUpdateViewModelTest {
         assertThat(viewModel.uiState.value.promptVersionCode).isEqualTo(42)
     }
 
-    private fun createViewModel() = InAppUpdateViewModel(
+    /**
+     * [backgroundScope] stands in for the application scope: it shares the test scheduler and,
+     * unlike `viewModelScope`, is not cancelled when a ViewModel is cleared.
+     */
+    private fun TestScope.createViewModel() = InAppUpdateViewModel(
         appUpdateController = appUpdateController,
         sessionGuard = sessionGuard,
         activeSessionManager = activeSessionManager,
         preferenceProvider = preferenceProvider,
         analyticsHelper = analyticsHelper,
+        applicationScope = backgroundScope,
     )
 
     /**

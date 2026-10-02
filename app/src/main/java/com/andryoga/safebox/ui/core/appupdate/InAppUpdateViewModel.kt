@@ -7,11 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.di.ApplicationScope
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -53,6 +55,9 @@ private const val NO_PROMPTED_VERSION_CODE = 0
  * @param activeSessionManager Source of the away-timeout event that locks the vault.
  * @param preferenceProvider Stores the last prompted version code across processes.
  * @param analyticsHelper Analytics logger.
+ * @param applicationScope Process-wide scope for the prompted-version write, which must outlive
+ * this ViewModel: finishing the activity while Play's sheet is open would otherwise cancel the
+ * only once-per-version marker before it reaches disk.
  */
 @HiltViewModel
 class InAppUpdateViewModel @Inject constructor(
@@ -61,6 +66,7 @@ class InAppUpdateViewModel @Inject constructor(
     activeSessionManager: ActiveSessionManager,
     private val preferenceProvider: PreferenceProvider,
     private val analyticsHelper: AnalyticsHelper,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     // Driving state reported by the root nav host. Null until the first report, so no decision is
@@ -147,7 +153,9 @@ class InAppUpdateViewModel @Inject constructor(
             return
         }
         analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_FLOW_SHOW)
-        viewModelScope.launch {
+        // Not viewModelScope: the sheet is a Play Store activity, so the user can finish this
+        // activity while it is open, and the write must still land to keep "once per version".
+        applicationScope.launch {
             preferenceProvider.upsertIntPref(
                 CommonConstants.IN_APP_UPDATE_PROMPTED_VERSION_CODE,
                 versionCode,

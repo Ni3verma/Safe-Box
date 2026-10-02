@@ -61,6 +61,12 @@ restarts, which in practice means a new activity.
 The consent launch waits for `Lifecycle.State.RESUMED`. The OS can block activity starts from the
 background, and a launch that Play accepts still uses up that version's only prompt.
 
+The prompted version is written on the `@ApplicationScope` scope, not `viewModelScope`. Play's
+sheet is a separate activity, so the user can finish ours while it is open; a `viewModelScope`
+write queued behind the IO dispatch would be cancelled with the ViewModel and the same version would
+be offered again in the next process. `launch(NonCancellable)` on `viewModelScope` was rejected: it
+makes the coroutine outlive the scope it is launched in, which is what the application scope is for.
+
 ## Analytics bounds
 
 `state` re-emits on every check, so no event is logged per emission. Each event is bounded by one of
