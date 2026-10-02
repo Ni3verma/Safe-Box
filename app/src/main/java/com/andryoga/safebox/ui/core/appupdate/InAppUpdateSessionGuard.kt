@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.core.appupdate
 
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton

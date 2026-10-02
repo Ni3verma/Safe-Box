@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.withResumed
 
@@ -14,7 +13,6 @@ import androidx.lifecycle.withResumed
  * App-level, invisible host for the in-app update flow. It must sit outside the root `NavHost`,
  * so that:
  *
- * - its [InAppUpdateViewModel] is activity-scoped and shared with [InAppUpdateRestartPromptRoot];
  * - the result launcher outlives screen changes, so the consent result still arrives if the vault
  *   locks while Play's sheet is open;
  * - the silent install for a locked vault also runs on the login screen.
@@ -23,12 +21,22 @@ import androidx.lifecycle.withResumed
  * purpose. If the away timeout locks the vault while the app is in the background, a downloaded
  * update is installed right then. Play installs silently when the app is not in the foreground.
  *
- * @param isInHomeGraph Whether the root navigation is inside the Home graph, or `null` before the
- * first destination is known.
+ * No preview: this composable draws nothing, and Play's consent sheet is a Play Store activity,
+ * not Compose UI.
+ *
+ * @param viewModel The activity-scoped ViewModel, obtained once in `AppNavigation` and shared
+ * with [InAppUpdateRestartPromptRoot].
+ * @param isInHomeGraph Whether the root navigation is inside the Home graph. `null` while the
+ * destination is not known yet: `currentBackStackEntryAsState()` starts as `null` on the first
+ * composition and again on activity recreation. Reporting `false` there would read as a lock, and
+ * with a downloaded update that would start the silent install mid-session, so `null` is skipped
+ * and the ViewModel keeps its previous value.
  */
 @Composable
-fun InAppUpdateHostRoot(isInHomeGraph: Boolean?) {
-    val viewModel = hiltViewModel<InAppUpdateViewModel>()
+fun InAppUpdateHostRoot(
+    viewModel: InAppUpdateViewModel,
+    isInHomeGraph: Boolean?,
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     InAppUpdateHost(
@@ -40,7 +48,8 @@ fun InAppUpdateHostRoot(isInHomeGraph: Boolean?) {
 
 /**
  * Renders nothing. Registers the launcher that Play starts its consent sheet with, reports the
- * root destination, and asks for the sheet once [InAppUpdateUiState.promptVersionCode] is set.
+ * root destination, and tells the ViewModel when it is resumed and
+ * [InAppUpdateUiState.promptVersionCode] is set.
  */
 @Composable
 private fun InAppUpdateHost(
@@ -69,7 +78,7 @@ private fun InAppUpdateHost(
         // The OS can block activity launches from the background. A launch that Play accepts is
         // persisted as this version's only prompt, so wait until the user can actually see it.
         lifecycleOwner.withResumed {
-            screenAction(InAppUpdateAction.OnLaunchUpdateFlow(promptVersionCode, launcher))
+            screenAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         }
     }
 }

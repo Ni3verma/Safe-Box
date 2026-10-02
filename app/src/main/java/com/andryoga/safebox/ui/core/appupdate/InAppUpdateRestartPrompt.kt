@@ -1,18 +1,19 @@
 package com.andryoga.safebox.ui.core.appupdate
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.ViewModelStoreOwner
 import com.andryoga.safebox.R
+import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
+import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 /**
  * Shows the "update downloaded" snackbar with a Restart action on the Home screen's snackbar host.
@@ -21,14 +22,16 @@ import com.andryoga.safebox.R
  * reuses Home's host instead of adding a second one. Analytics are logged by the ViewModel on the
  * state transition, never here, because this effect runs again after every configuration change.
  *
+ * @param viewModel The activity-scoped ViewModel shared with [InAppUpdateHostRoot]. It is passed
+ * down from `AppNavigation` because inside a nav destination `hiltViewModel()` would scope a
+ * second instance to the back stack entry.
  * @param snackbarHostState Home's global snackbar host.
  */
 @Composable
-fun InAppUpdateRestartPromptRoot(snackbarHostState: SnackbarHostState) {
-    // shared with InAppUpdateHostRoot, see activityViewModelStoreOwner
-    val viewModel = hiltViewModel<InAppUpdateViewModel>(
-        viewModelStoreOwner = activityViewModelStoreOwner(),
-    )
+fun InAppUpdateRestartPromptRoot(
+    viewModel: InAppUpdateViewModel,
+    snackbarHostState: SnackbarHostState,
+) {
     val uiState by viewModel.uiState.collectAsState()
 
     InAppUpdateRestartPrompt(
@@ -70,12 +73,31 @@ private fun InAppUpdateRestartPrompt(
 }
 
 /**
- * The hosting activity as the [ViewModelStoreOwner]. Inside a nav destination the default owner is
- * the back stack entry, which would create a second [InAppUpdateViewModel] instead of sharing the
- * one owned by [InAppUpdateHostRoot].
+ * The snackbar as Home's default `SnackbarHost` renders it. The real one is driven through
+ * `showSnackbar`, which needs a running host and cannot be previewed, so the same visuals are fed
+ * to Material's `Snackbar` directly.
  */
+@LightDarkModePreview
 @Composable
-private fun activityViewModelStoreOwner(): ViewModelStoreOwner =
-    checkNotNull(LocalActivity.current as? ComponentActivity) {
-        "InAppUpdateRestartPromptRoot must be hosted in a ComponentActivity"
+private fun InAppUpdateRestartSnackbarPreview() {
+    val visuals = PreviewSnackbarVisuals(
+        message = stringResource(R.string.in_app_update_downloaded),
+        actionLabel = stringResource(R.string.in_app_update_restart),
+    )
+    SafeBoxTheme {
+        Snackbar(snackbarData = PreviewSnackbarData(visuals))
     }
+}
+
+private class PreviewSnackbarVisuals(
+    override val message: String,
+    override val actionLabel: String,
+) : SnackbarVisuals {
+    override val withDismissAction: Boolean = true
+    override val duration: SnackbarDuration = SnackbarDuration.Indefinite
+}
+
+private class PreviewSnackbarData(override val visuals: SnackbarVisuals) : SnackbarData {
+    override fun performAction() = Unit
+    override fun dismiss() = Unit
+}

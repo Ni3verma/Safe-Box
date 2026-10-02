@@ -9,6 +9,8 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,8 +111,8 @@ class InAppUpdateViewModel @Inject constructor(
                 isInHomeGraph.value = action.isInHomeGraph
             }
 
-            is InAppUpdateAction.OnLaunchUpdateFlow -> {
-                launchUpdateFlow(action.versionCode, action.launcher)
+            is InAppUpdateAction.OnReadyToLaunchUpdateFlow -> {
+                launchUpdateFlow(action.launcher)
             }
 
             is InAppUpdateAction.OnUpdateFlowResult -> {
@@ -120,7 +122,7 @@ class InAppUpdateViewModel @Inject constructor(
             InAppUpdateAction.OnRestartClick -> {
                 sessionGuard.isRestartPromptResolved.value = true
                 analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_RESTART_SNACKBAR_CLICK)
-                viewModelScope.launch { appUpdateController.completeUpdate() }
+                completeUpdate()
             }
 
             InAppUpdateAction.OnRestartPromptDismissed -> {
@@ -132,16 +134,18 @@ class InAppUpdateViewModel @Inject constructor(
 
     /**
      * Attempts the consent sheet at most once per process. The version is only persisted when
-     * Play actually launched the sheet. A refused launch is retried on the next cold start instead
-     * of silently using up this version's only prompt.
+     * Play actually launched the sheet. A refused launch is logged and retried on the next cold
+     * start instead of silently using up this version's only prompt.
      */
-    private fun launchUpdateFlow(
-        versionCode: Int,
-        launcher: ActivityResultLauncher<IntentSenderRequest>,
-    ) {
+    private fun launchUpdateFlow(launcher: ActivityResultLauncher<IntentSenderRequest>) {
         if (sessionGuard.isFlowLaunched.value) return
+        // Read before the guard flips: the flip recomputes uiState with promptVersionCode = null.
+        val versionCode = uiState.value.promptVersionCode ?: return
         sessionGuard.isFlowLaunched.value = true
-        if (!appUpdateController.startFlexibleUpdate(launcher)) return
+        if (!appUpdateController.startFlexibleUpdate(launcher)) {
+            analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_FLOW_LAUNCH_FAILED)
+            return
+        }
         analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_FLOW_SHOW)
         viewModelScope.launch {
             preferenceProvider.upsertIntPref(
@@ -181,7 +185,19 @@ class InAppUpdateViewModel @Inject constructor(
         if (sessionGuard.isAutoCompleteRequested) return
         sessionGuard.isAutoCompleteRequested = true
         analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_AUTO_COMPLETE)
-        viewModelScope.launch { appUpdateController.completeUpdate() }
+        completeUpdate()
+    }
+
+    /**
+     * Asks Play to install the downloaded update. On success the process restarts, so only the
+     * failure is observable and logged.
+     */
+    private fun completeUpdate() {
+        viewModelScope.launch {
+            if (!appUpdateController.completeUpdate()) {
+                analyticsHelper.logEvent(AnalyticsKey.IN_APP_UPDATE_COMPLETE_FAILED)
+            }
+        }
     }
 
     /**

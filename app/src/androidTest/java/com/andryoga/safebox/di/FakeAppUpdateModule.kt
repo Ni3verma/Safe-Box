@@ -1,8 +1,8 @@
 package com.andryoga.safebox.di
 
 import android.content.Context
-import com.andryoga.safebox.ui.core.appupdate.AppUpdateController
-import com.andryoga.safebox.ui.core.appupdate.PlayAppUpdateController
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
+import com.andryoga.safebox.ui.core.appupdate.controller.PlayAppUpdateController
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.testing.FakeAppUpdateManager
 import dagger.Module

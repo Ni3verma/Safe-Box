@@ -70,7 +70,8 @@ Safe-Box is a password vault, so two properties set it apart from a typical app:
 ## Evidence
 
 Behaviour of `app-update-ktx` 2.1.0 `requestUpdateFlow()`, read from the bytecode with
-`javap -c` on 2026-09-28. The mapper in `AppUpdateStateMapper` depends on it.
+`javap -c` on 2026-09-28. `AppUpdateResult.toAppUpdateState()` in
+`controller/AppUpdateResultMapping.kt` depends on it.
 
 | `updateAvailability` | `installStatus` | Emits |
 |---|---|---|

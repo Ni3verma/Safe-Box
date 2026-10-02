@@ -6,23 +6,29 @@ to test it.
 
 ## Components
 
-All in `ui/core/appupdate/` unless noted.
+All in `ui/core/appupdate/`. The Play boundary sits in its `controller/` sub-package; the policy
+and the UI stay at the root.
 
 | Piece | Role |
 |---|---|
-| `AppUpdateController` | Play-agnostic boundary: `state`, `startFlexibleUpdate(launcher)`, `completeUpdate()` |
-| `PlayAppUpdateController` | Over ktx `requestUpdateFlow()`. Caches the `AppUpdateInfo` needed to start the flow. Swallows every Play failure. |
-| `NoOpAppUpdateController` | Used when `BuildConfig.IN_APP_UPDATE_ENABLED` is off (`debug`, `qa`) |
-| `AppUpdateStateMapper` | `AppUpdateResult` to `AppUpdateState`, a pure function |
+| `controller/AppUpdateController` | Play-agnostic boundary: `state`, `startFlexibleUpdate(launcher): Boolean`, `completeUpdate(): Boolean` |
+| `controller/PlayAppUpdateController` | Over ktx `requestUpdateFlow()`. Caches the `AppUpdateInfo` needed to start the flow. Swallows every Play failure and reports it as `NotAvailable` or `false`. |
+| `controller/NoOpAppUpdateController` | Used when `BuildConfig.IN_APP_UPDATE_ENABLED` is off (`debug`, `qa`) |
+| `controller/AppUpdateResultMapping.kt` | `AppUpdateResult.toAppUpdateState()`, a pure function. Kept out of the controller because the controller cannot run on the JVM (see Testing). |
 | `di/AppUpdateModule` | Chooses Play or NoOp by the flag. Separate so androidTest can replace it. |
-| `InAppUpdateViewModel` | The policy. Activity-scoped. |
+| `InAppUpdateViewModel` | The policy. Obtained once in `AppNavigation`, outside any `NavHost`, so it is activity-scoped, and passed as a parameter to both composables below. |
 | `InAppUpdateSessionGuard` | Per-process flags that must outlive the ViewModel |
-| `InAppUpdateHostRoot` | Invisible composable beside the root `NavHost` in `AppNavigation`. Owns the result launcher and reports the root destination. |
+| `InAppUpdateHostRoot` | Invisible composable beside the root `NavHost` in `AppNavigation`. Owns the result launcher, reports the root destination, and signals when it is resumed and a prompt is due. |
 | `InAppUpdateRestartPromptRoot` | Shows the restart snackbar on Home's existing `SnackbarHostState` |
 | `UpdateFlowResult` | Consent outcome. The host translates the activity result code, so the ViewModel has no Android result codes. Unknown codes count as failed. |
 
 `AppUpdateState` is `NotAvailable`, `Available(versionCode)`, `Downloading` (pending, downloading or
 installing) or `Downloaded`. Every failure, including a device without Play, is `NotAvailable`.
+
+The only UI → ViewModel action that carries more than a fact is `OnReadyToLaunchUpdateFlow(launcher)`.
+Every `startUpdateFlowForResult` overload needs an Activity-bound launcher, and the ViewModel must
+not retain one, so the host hands it over at launch time. The ViewModel still decides which version
+is offered, from its own state, and whether an attempt is allowed.
 
 ## Flow
 
@@ -68,12 +74,14 @@ three mechanisms:
 | Key | When | Mechanism | Bound |
 |---|---|---|---|
 | `IN_APP_UPDATE_FLOW_SHOW` | Play accepted the consent launch | P + G | once per Play version |
+| `IN_APP_UPDATE_FLOW_LAUNCH_FAILED` | Play refused the consent launch, so nothing was shown and the version is not persisted | G | once per process |
 | `IN_APP_UPDATE_FLOW_ACCEPT` / `_CANCEL` / `_FAILED` | consent result. Unknown codes count as failed, so show = accept + cancel + failed | 1:1 with a launch | once per version |
 | `IN_APP_UPDATE_DOWNLOADED` | `Downloading → Downloaded` | T + G | once per process |
 | `IN_APP_UPDATE_RESTART_SNACKBAR_SHOW` | first `showRestartPrompt = true` | G | once per process |
 | `IN_APP_UPDATE_RESTART_SNACKBAR_CLICK` | Restart action | result of the snackbar | at most once per process |
 | `IN_APP_UPDATE_RESTART_SNACKBAR_DISMISSED` | ✕, or a programmatic dismiss (`ClipboardActions` on API < 33) | result of the snackbar | at most once per process |
 | `IN_APP_UPDATE_AUTO_COMPLETE` | `Downloaded` while locked | G | once per process. It repeats across cold starts only if Play's install keeps failing, which is worth seeing. |
+| `IN_APP_UPDATE_COMPLETE_FAILED` | `completeUpdate()` returned `false`, after Restart or the silent attempt | follows the two triggers above | at most twice per process |
 
 The snackbar cannot come back in a new process. After a dismiss the update stays downloaded, and the
 next lock or cold start (which begins locked) installs it.
@@ -92,10 +100,17 @@ dismiss first will wait behind the restart prompt.
 
 | Layer | Where | What |
 |---|---|---|
-| Unit | `AppUpdateStateMapperTest` | every Play result and install status |
+| Unit | `controller/AppUpdateResultMappingTest` | every Play result and install status |
 | Unit | `UpdateFlowResultTest` | consent result codes, including unknown codes counting as failed |
 | Unit | `InAppUpdateViewModelTest` | gating, once-per-version and once-per-process bounds, lock and away-timeout handling, every analytics key |
-| Instrumentation | `InAppUpdateE2ETest` | the consent appears after login and not on the login screen; accept and download show the snackbar; Restart completes the update; ✕ hides it |
+| Instrumentation | `controller/PlayAppUpdateControllerTest` | the real controller over `FakeAppUpdateManager`, no Hilt or activity: emissions for no update, an offer and an accepted download; one flow per check; both `completeUpdate()` outcomes |
+| Instrumentation | `InAppUpdateE2ETest` | the consent appears after login and not on the login screen; accept and download show the snackbar; Restart completes the update; ✕ hides it; the away timeout after a download installs silently |
+
+`PlayAppUpdateController` **cannot be unit tested on the JVM** (checked 2026-10-02 against
+`app-update-ktx` 2.1.0): `requestUpdateFlow()` and `requestCompleteUpdate()` await GMS `Task`s whose
+listeners are posted to `TaskExecutors.MAIN_THREAD`. With `unitTests.returnDefaultValues = true`
+there is no main looper, the post is dropped and the coroutine never resumes. There is no Robolectric
+in the project. That is why the result mapping is a separate pure function.
 
 `androidTest/di/FakeAppUpdateModule` replaces `AppUpdateModule` in **every** instrumentation test. It
 wires Play's `FakeAppUpdateManager` into the real `PlayAppUpdateController` and bypasses the flag. The

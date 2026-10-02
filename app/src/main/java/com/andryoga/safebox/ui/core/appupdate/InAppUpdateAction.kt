@@ -12,12 +12,15 @@ sealed interface InAppUpdateAction {
     class OnHomeGraphStateChanged(val isInHomeGraph: Boolean) : InAppUpdateAction
 
     /**
-     * The host is resumed and ready to show Play's consent sheet for [versionCode]. Play's API
-     * needs the [launcher] to start its sheet, and the ViewModel needs to know whether Play
-     * accepted the launch, so it is handed straight to the controller and is not retained.
+     * The host is resumed and can show Play's consent sheet. Fired only while
+     * [InAppUpdateUiState.promptVersionCode] is set; the ViewModel decides from its own state which
+     * version is offered, and whether an attempt is still allowed.
+     *
+     * Play's `startUpdateFlowForResult` has no overload that works without an Activity-bound
+     * launcher, so the UI hands [launcher] over at launch time. The ViewModel passes it straight
+     * to the controller and does not retain it.
      */
-    class OnLaunchUpdateFlow(
-        val versionCode: Int,
+    class OnReadyToLaunchUpdateFlow(
         val launcher: ActivityResultLauncher<IntentSenderRequest>,
     ) : InAppUpdateAction
 

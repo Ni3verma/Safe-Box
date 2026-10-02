@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.appupdate
+package com.andryoga.safebox.ui.core.appupdate.controller
 
 import com.google.android.play.core.appupdate.AppUpdateInfo
 import com.google.android.play.core.appupdate.AppUpdateManager
@@ -14,17 +14,17 @@ import io.mockk.mockk
 import org.junit.Test
 
 /**
- * Covers every Play result and install status that [AppUpdateStateMapper] can receive, including
- * the cold start mid-download case where Play reports an in-progress update as
+ * Covers every Play result and install status that `AppUpdateResult.toAppUpdateState()` can
+ * receive, including the cold start mid-download case where Play reports an in-progress update as
  * [AppUpdateResult.Available].
  */
-class AppUpdateStateMapperTest {
+class AppUpdateResultMappingTest {
 
     private val appUpdateManager: AppUpdateManager = mockk()
 
     @Test
     fun notAvailableResult_shouldMapToNotAvailable() {
-        assertThat(AppUpdateStateMapper.map(AppUpdateResult.NotAvailable))
+        assertThat(AppUpdateResult.NotAvailable.toAppUpdateState())
             .isEqualTo(AppUpdateState.NotAvailable)
     }
 
@@ -32,14 +32,14 @@ class AppUpdateStateMapperTest {
     fun availableFlexibleUpdate_shouldMapToAvailableWithVersionCode() {
         val result = availableResult(updateInfo(versionCode = 42))
 
-        assertThat(AppUpdateStateMapper.map(result)).isEqualTo(AppUpdateState.Available(42))
+        assertThat(result.toAppUpdateState()).isEqualTo(AppUpdateState.Available(42))
     }
 
     @Test
     fun availableButFlexibleNotAllowed_shouldMapToNotAvailable() {
         val result = availableResult(updateInfo(isFlexibleAllowed = false))
 
-        assertThat(AppUpdateStateMapper.map(result)).isEqualTo(AppUpdateState.NotAvailable)
+        assertThat(result.toAppUpdateState()).isEqualTo(AppUpdateState.NotAvailable)
     }
 
     @Test
@@ -48,7 +48,7 @@ class AppUpdateStateMapperTest {
             updateInfo(availability = UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS),
         )
 
-        assertThat(AppUpdateStateMapper.map(result)).isEqualTo(AppUpdateState.NotAvailable)
+        assertThat(result.toAppUpdateState()).isEqualTo(AppUpdateState.NotAvailable)
     }
 
     @Test
@@ -63,7 +63,7 @@ class AppUpdateStateMapperTest {
             )
 
             assertWithMessage("install status $status")
-                .that(AppUpdateStateMapper.map(result))
+                .that(result.toAppUpdateState())
                 .isEqualTo(AppUpdateState.Downloading)
         }
     }
@@ -72,21 +72,21 @@ class AppUpdateStateMapperTest {
     fun availableWithDownloadedStatus_shouldMapToDownloaded() {
         val result = availableResult(updateInfo(status = InstallStatus.DOWNLOADED))
 
-        assertThat(AppUpdateStateMapper.map(result)).isEqualTo(AppUpdateState.Downloaded)
+        assertThat(result.toAppUpdateState()).isEqualTo(AppUpdateState.Downloaded)
     }
 
     @Test
     fun availableAfterCanceledDownload_shouldMapToAvailable() {
         val result = availableResult(updateInfo(status = InstallStatus.CANCELED, versionCode = 7))
 
-        assertThat(AppUpdateStateMapper.map(result)).isEqualTo(AppUpdateState.Available(7))
+        assertThat(result.toAppUpdateState()).isEqualTo(AppUpdateState.Available(7))
     }
 
     @Test
     fun inProgressActiveStatus_shouldMapToDownloading() {
         IN_PROGRESS_STATUSES.forEach { status ->
             assertWithMessage("install status $status")
-                .that(AppUpdateStateMapper.map(inProgressResult(status)))
+                .that(inProgressResult(status).toAppUpdateState())
                 .isEqualTo(AppUpdateState.Downloading)
         }
     }
@@ -101,20 +101,20 @@ class AppUpdateStateMapperTest {
             InstallStatus.REQUIRES_UI_INTENT,
         ).forEach { status ->
             assertWithMessage("install status $status")
-                .that(AppUpdateStateMapper.map(inProgressResult(status)))
+                .that(inProgressResult(status).toAppUpdateState())
                 .isEqualTo(AppUpdateState.NotAvailable)
         }
     }
 
     @Test
     fun inProgressDownloadedStatus_shouldMapToDownloaded() {
-        assertThat(AppUpdateStateMapper.map(inProgressResult(InstallStatus.DOWNLOADED)))
+        assertThat(inProgressResult(InstallStatus.DOWNLOADED).toAppUpdateState())
             .isEqualTo(AppUpdateState.Downloaded)
     }
 
     @Test
     fun downloadedResult_shouldMapToDownloaded() {
-        assertThat(AppUpdateStateMapper.map(AppUpdateResult.Downloaded(appUpdateManager)))
+        assertThat(AppUpdateResult.Downloaded(appUpdateManager).toAppUpdateState())
             .isEqualTo(AppUpdateState.Downloaded)
     }
 

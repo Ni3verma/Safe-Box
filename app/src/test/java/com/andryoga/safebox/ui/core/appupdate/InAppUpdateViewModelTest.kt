@@ -8,6 +8,8 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
+import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import io.mockk.every
@@ -84,8 +86,8 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         assertThat(appUpdateController.startFlexibleUpdateCount).isEqualTo(1)
@@ -96,7 +98,7 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         assertThat(storedPromptedVersionCode()).isEqualTo(42)
@@ -107,7 +109,7 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         assertThat(analyticsHelper.count(AnalyticsKey.IN_APP_UPDATE_FLOW_SHOW)).isEqualTo(1)
@@ -118,7 +120,7 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         assertThat(viewModel.uiState.value.promptVersionCode).isNull()
@@ -129,7 +131,7 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         verify(exactly = 0) { activeSessionManager.setPaused(any()) }
@@ -141,12 +143,51 @@ class InAppUpdateViewModelTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
 
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         assertThat(storedPromptedVersionCode()).isEqualTo(NOT_STORED)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_SHOW)).isFalse()
         assertThat(viewModel.uiState.value.promptVersionCode).isNull()
+    }
+
+    @Test
+    fun launchRefusedByPlay_shouldLogFlowLaunchFailed() = runTest {
+        appUpdateController.startFlexibleUpdateResult = false
+        appUpdateController.updateStates.emit(AppUpdateState.Available(42))
+        val viewModel = subscribedViewModel()
+
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        runCurrent()
+
+        assertThat(analyticsHelper.count(AnalyticsKey.IN_APP_UPDATE_FLOW_LAUNCH_FAILED))
+            .isEqualTo(1)
+    }
+
+    @Test
+    fun launchAccepted_shouldNotLogFlowLaunchFailed() = runTest {
+        appUpdateController.updateStates.emit(AppUpdateState.Available(42))
+        val viewModel = subscribedViewModel()
+
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        runCurrent()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_FLOW_LAUNCH_FAILED))
+            .isFalse()
+    }
+
+    @Test
+    fun readyToLaunchWithoutPrompt_shouldNotStartFlowOrUseUpProcessAttempt() = runTest {
+        appUpdateController.updateStates.emit(AppUpdateState.Available(42))
+        val viewModel = subscribedViewModel(isInHomeGraph = false)
+
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
+        runCurrent()
+        viewModel.onAction(InAppUpdateAction.OnHomeGraphStateChanged(true))
+        runCurrent()
+
+        assertThat(appUpdateController.startFlexibleUpdateCount).isEqualTo(0)
+        assertThat(viewModel.uiState.value.promptVersionCode).isEqualTo(42)
     }
 
     @Test
@@ -156,7 +197,7 @@ class InAppUpdateViewModelTest {
             sessionGuard = InAppUpdateSessionGuard()
             appUpdateController.updateStates.emit(AppUpdateState.Available(42))
             val firstProcess = subscribedViewModel()
-            firstProcess.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+            firstProcess.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
             firstProcess.onAction(InAppUpdateAction.OnUpdateFlowResult(result))
             runCurrent()
 
@@ -183,7 +224,7 @@ class InAppUpdateViewModelTest {
     fun repeatedUnlock_shouldNotRelaunchFlowInSameProcess() = runTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel()
-        viewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         viewModel.onAction(InAppUpdateAction.OnHomeGraphStateChanged(false))
@@ -200,7 +241,7 @@ class InAppUpdateViewModelTest {
         appUpdateController.startFlexibleUpdateResult = false
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val firstViewModel = subscribedViewModel()
-        firstViewModel.onAction(InAppUpdateAction.OnLaunchUpdateFlow(42, launcher))
+        firstViewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
         runCurrent()
 
         val reopenedViewModel = subscribedViewModel()
@@ -337,6 +378,39 @@ class InAppUpdateViewModelTest {
     }
 
     @Test
+    fun restartClickRefusedByPlay_shouldLogCompleteFailed() = runTest {
+        appUpdateController.completeUpdateResult = false
+        appUpdateController.updateStates.emit(AppUpdateState.Downloaded)
+        val viewModel = subscribedViewModel()
+
+        viewModel.onAction(InAppUpdateAction.OnRestartClick)
+        runCurrent()
+
+        assertThat(analyticsHelper.count(AnalyticsKey.IN_APP_UPDATE_COMPLETE_FAILED)).isEqualTo(1)
+    }
+
+    @Test
+    fun silentCompleteRefusedByPlay_shouldLogCompleteFailed() = runTest {
+        appUpdateController.completeUpdateResult = false
+        appUpdateController.updateStates.emit(AppUpdateState.Downloaded)
+
+        subscribedViewModel(isInHomeGraph = false)
+
+        assertThat(analyticsHelper.count(AnalyticsKey.IN_APP_UPDATE_COMPLETE_FAILED)).isEqualTo(1)
+    }
+
+    @Test
+    fun completeAcceptedByPlay_shouldNotLogCompleteFailed() = runTest {
+        appUpdateController.updateStates.emit(AppUpdateState.Downloaded)
+        val viewModel = subscribedViewModel()
+
+        viewModel.onAction(InAppUpdateAction.OnRestartClick)
+        runCurrent()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.IN_APP_UPDATE_COMPLETE_FAILED)).isFalse()
+    }
+
+    @Test
     fun restartPromptDismissed_shouldHidePromptWithoutCompleting() = runTest {
         appUpdateController.updateStates.emit(AppUpdateState.Downloaded)
         val viewModel = subscribedViewModel()
@@ -445,6 +519,7 @@ class InAppUpdateViewModelTest {
         val updateStates = MutableSharedFlow<AppUpdateState>(replay = 1)
         var startFlexibleUpdateResult = true
         var startFlexibleUpdateCount = 0
+        var completeUpdateResult = true
         var completeUpdateCount = 0
 
         override val state: Flow<AppUpdateState> = updateStates
@@ -456,8 +531,9 @@ class InAppUpdateViewModelTest {
             return startFlexibleUpdateResult
         }
 
-        override suspend fun completeUpdate() {
+        override suspend fun completeUpdate(): Boolean {
             completeUpdateCount++
+            return completeUpdateResult
         }
     }
 

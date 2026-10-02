@@ -167,6 +167,19 @@ class InAppUpdateE2ETest {
         }
     }
 
+    @Test
+    fun downloadedThenAwayTimeout_shouldCompleteUpdateSilently() {
+        runBlocking { settingsDataStore.updateAwayTimeout(0) }
+        ActivityScenario.launch(MainActivity::class.java).use {
+            acceptAndDownloadUpdate()
+
+            // a zero timeout fires the logout event as soon as the app stops
+            activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
+
+            waitUntilFake { isInstallSplashScreenVisible }
+        }
+    }
+
     /**
      * Logs in, answers Play's consent sheet with "Update" and completes the download, then waits
      * for the restart snackbar.

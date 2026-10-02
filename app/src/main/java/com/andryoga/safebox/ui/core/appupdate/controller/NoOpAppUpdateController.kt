@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.appupdate
+package com.andryoga.safebox.ui.core.appupdate.controller
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -20,5 +20,6 @@ class NoOpAppUpdateController : AppUpdateController {
         launcher: ActivityResultLauncher<IntentSenderRequest>,
     ): Boolean = false
 
-    override suspend fun completeUpdate() = Unit
+    // Never reached: the state above never becomes Downloaded, so nothing asks for an install.
+    override suspend fun completeUpdate(): Boolean = false
 }

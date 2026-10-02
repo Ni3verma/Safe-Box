@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.appupdate
+package com.andryoga.safebox.ui.core.appupdate.controller
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -34,6 +34,9 @@ interface AppUpdateController {
     /**
      * Installs a downloaded update. Play restarts the app into the new version, so in the success
      * case this call does not return to a live process.
+     *
+     * @return `false` if Play refused to install, for example because nothing is downloaded. The
+     * update then stays downloaded and the next cold start, which begins locked, tries again.
      */
-    suspend fun completeUpdate()
+    suspend fun completeUpdate(): Boolean
 }

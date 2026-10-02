@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.appupdate
+package com.andryoga.safebox.ui.core.appupdate.controller
 
 /**
  * Play-agnostic view of the in-app update lifecycle, as seen by the rest of the app.

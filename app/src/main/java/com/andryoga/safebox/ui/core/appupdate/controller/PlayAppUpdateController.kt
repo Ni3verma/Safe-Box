@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.appupdate
+package com.andryoga.safebox.ui.core.appupdate.controller
 
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
@@ -24,6 +24,9 @@ import javax.inject.Singleton
  * [AppUpdateState.NotAvailable], and the app does not log it, so a release build on a device
  * without Play produces no noise.
  *
+ * Not unit testable: the ktx calls complete their tasks on the main looper, which the JVM tests
+ * do not have. `PlayAppUpdateControllerTest` in androidTest covers it over `FakeAppUpdateManager`.
+ *
  * @param appUpdateManager Play's manager. In androidTest this is `FakeAppUpdateManager`.
  */
 @Singleton
@@ -38,7 +41,7 @@ class PlayAppUpdateController @Inject constructor(
 
     override val state: Flow<AppUpdateState> = appUpdateManager.requestUpdateFlow()
         .map { result ->
-            val state = AppUpdateStateMapper.map(result)
+            val state = result.toAppUpdateState()
             pendingUpdateInfo = if (state is AppUpdateState.Available) {
                 (result as AppUpdateResult.Available).updateInfo
             } else {
@@ -62,14 +65,15 @@ class PlayAppUpdateController @Inject constructor(
         }.getOrDefault(false)
     }
 
-    override suspend fun completeUpdate() {
-        try {
-            appUpdateManager.requestCompleteUpdate()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Play could not install. The update stays downloaded, so the next cold start, which
-            // begins locked, tries again. Nothing is shown because the user cannot act on it.
-        }
+    override suspend fun completeUpdate(): Boolean = try {
+        appUpdateManager.requestCompleteUpdate()
+        true
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        // Play could not install. The update stays downloaded, so the next cold start, which
+        // begins locked, tries again. Nothing is shown because the user cannot act on it; the
+        // ViewModel logs it instead.
+        false
     }
 }
