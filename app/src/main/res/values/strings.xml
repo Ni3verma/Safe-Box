@@ -200,4 +200,7 @@
     <string name="secret_key">Secret key</string>
     <string name="cd_copy_totp_code">Copy one-time code</string>
     <string name="totp_invalid_secret_key">Invalid secret key, cannot generate code</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Update downloaded. Restart Safe Box to install it.</string>
+    <string name="in_app_update_restart">Restart</string>
 </resources>

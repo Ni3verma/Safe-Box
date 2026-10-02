@@ -30,6 +30,8 @@ import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.core.ScrollBehaviorType
 import com.andryoga.safebox.ui.core.TopBarState
+import com.andryoga.safebox.ui.core.appupdate.InAppUpdateRestartPromptRoot
+import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
 import com.andryoga.safebox.ui.home.components.UserAwayDialog
@@ -46,12 +48,15 @@ import timber.log.Timber
 
 /**
  * This is home Nav graph container with Records screen as the start destination.
+ * @param inAppUpdateViewModel: activity-scoped ViewModel shared with the app-level update host,
+ * so the restart snackbar reflects the same update state
  * @param onExitHomeNavGraph: this lambda is called when home nav graph will be exited. Clients need
  * to handle this callback and navigate to appropriate screen
  * */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    inAppUpdateViewModel: InAppUpdateViewModel,
     onExitHomeNavGraph: () -> Unit,
 ) {
     val nestedNavController = rememberNavController()
@@ -98,6 +103,10 @@ fun HomeScreen(
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
+        InAppUpdateRestartPromptRoot(
+            viewModel = inAppUpdateViewModel,
+            snackbarHostState = globalSnackbarHostState,
+        )
         Scaffold(
             topBar = {
                 if (currentConfig != null) {

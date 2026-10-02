@@ -59,4 +59,32 @@ enum class AnalyticsKey(val eventName: String) {
 
     // the clipboard moved on to a clip this app did not write, so it was left untouched.
     CLIPBOARD_AUTO_CLEAR_SKIPPED("clipboard_auto_clear_skipped"),
+
+    // In-app updates. The update check re-emits on every launch, so each event is bounded by a
+    // persisted version, a state transition or a per-process guard. See
+    // docs/architecture/in-app-updates.md before adding one.
+    IN_APP_UPDATE_FLOW_SHOW("in_app_update_flow_show"),
+
+    // Play refused to launch the consent sheet, so nothing was shown and the version is not used
+    // up. Not a FLOW_FAILED, which is the sheet's own result, so show = accept + cancel + failed
+    // still holds. Once per process.
+    IN_APP_UPDATE_FLOW_LAUNCH_FAILED("in_app_update_flow_launch_failed"),
+    IN_APP_UPDATE_FLOW_ACCEPT("in_app_update_flow_accept"),
+    IN_APP_UPDATE_FLOW_CANCEL("in_app_update_flow_cancel"),
+    IN_APP_UPDATE_FLOW_FAILED("in_app_update_flow_failed"),
+    IN_APP_UPDATE_DOWNLOADED("in_app_update_downloaded"),
+    IN_APP_UPDATE_RESTART_SNACKBAR_SHOW("in_app_update_restart_snackbar_show"),
+    IN_APP_UPDATE_RESTART_SNACKBAR_CLICK("in_app_update_restart_snackbar_click"),
+
+    // ✕ tap or a programmatic dismiss, e.g. ClipboardActions on API < 33. Not a CANCEL_CLICK
+    // because it does not always mean the user acted.
+    IN_APP_UPDATE_RESTART_SNACKBAR_DISMISSED("in_app_update_restart_snackbar_dismissed"),
+
+    // the install of a downloaded update was started without asking, because the vault was
+    // locked: login screen, cold start or away timeout. Once per process.
+    IN_APP_UPDATE_AUTO_COMPLETE("in_app_update_auto_complete"),
+
+    // Play refused to install a downloaded update, after the Restart tap or the silent attempt.
+    // At most once per trigger, so at most twice per process.
+    IN_APP_UPDATE_COMPLETE_FAILED("in_app_update_complete_failed"),
 }

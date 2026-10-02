@@ -10,6 +10,8 @@ Long-form knowledge about the project. Short, always-relevant facts live in
   the `symmetricDataKey` Keystore failure mode, the backup file format and its version history,
   restore semantics.
 - [TOTP auth record type design](TotpAuthRecordTypeDesign.md)
+- [In-app updates](architecture/in-app-updates.md): Play flexible updates, the lock-aware restart,
+  analytics bounds, and how to test with real Play.
 
 ## Testing
 

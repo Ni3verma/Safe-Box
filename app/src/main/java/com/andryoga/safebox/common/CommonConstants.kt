@@ -10,6 +10,10 @@ object CommonConstants {
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
     const val IS_CAMERA_PERMISSION_ASKED_BEFORE = "is_camera_permission_asked_before"
 
+    // Play version code the user was last asked to update to. The user is asked again only for a
+    // higher one. See InAppUpdateViewModel.
+    const val IN_APP_UPDATE_PROMPTED_VERSION_CODE = "in_app_update_prompted_version_code"
+
     //        SHOULD ONLY be user for encrypted shared preference
     const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
 
