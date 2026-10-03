@@ -109,9 +109,10 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - Gradle Managed Device: `pixel8Api34` (Pixel 8, API 34, `aosp-atd`).
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
-- ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
-  required. `aosp-atd` suffices for `:app`'s own UI tests but **not** `:upgrade-test`: it has no
-  DocumentsUI (API 34 `aosp_atd`, CI run 35863723921, 2026-09-23; see the operations doc).
+- QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
+  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). `aosp-atd` suffices for
+  `:app`'s own UI tests but **not** `:upgrade-test`: it has no DocumentsUI (API 34 `aosp_atd`, CI
+  run 35863723921, 2026-09-23; see the operations doc).
 - **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and
   restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
   `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See

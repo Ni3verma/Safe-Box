@@ -87,7 +87,6 @@ import com.andryoga.safebox.ui.utils.OnResume
 import com.andryoga.safebox.ui.utils.OnStart
 import com.andryoga.safebox.ui.utils.findActivity
 import com.andryoga.safebox.ui.utils.openAppSettings
-import com.google.mlkit.vision.barcode.BarcodeScanner
 import timber.log.Timber
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -118,7 +117,7 @@ fun QrScannerScreenRoot(
 
     QrScannerScreen(
         uiState = uiState,
-        barcodeScanner = viewModel.barcodeScanner,
+        qrCodeDecoder = viewModel.qrCodeDecoder,
         onAction = viewModel::onAction,
         onQrCodeScanned = { totpData ->
             viewModel.onAction(QrScannerScreenAction.OnQrCodeScanned(totpData))
@@ -142,7 +141,7 @@ fun QrScannerScreenRoot(
 @Composable
 fun QrScannerScreen(
     uiState: QrScannerUiState,
-    barcodeScanner: BarcodeScanner,
+    qrCodeDecoder: QrCodeDecoder,
     onAction: (QrScannerScreenAction) -> Unit,
     onQrCodeScanned: (ParsedTotpData) -> Unit,
     onEnterKeyManually: () -> Unit,
@@ -247,7 +246,7 @@ fun QrScannerScreen(
         cameraPreview = {
             if (hasCameraPermission) {
                 QrCameraPreview(
-                    barcodeScanner = barcodeScanner,
+                    qrCodeDecoder = qrCodeDecoder,
                     isTorchEnabled = uiState.isTorchEnabled,
                     isScanPaused = uiState.unsupportedQrError != null,
                     onCameraBound = { hasFlashUnit ->
@@ -281,7 +280,7 @@ fun QrScannerScreen(
  */
 @Composable
 private fun QrCameraPreview(
-    barcodeScanner: BarcodeScanner,
+    qrCodeDecoder: QrCodeDecoder,
     isTorchEnabled: Boolean,
     isScanPaused: Boolean,
     onCameraBound: (hasFlashUnit: Boolean) -> Unit,
@@ -300,11 +299,20 @@ private fun QrCameraPreview(
     val isDisposed = remember { AtomicBoolean(false) }
     var camera by remember { mutableStateOf<Camera?>(null) }
 
-    val qrCodeAnalyzer = remember(barcodeScanner) {
+    val qrCodeAnalyzer = remember(qrCodeDecoder) {
+        // The analyzer calls back on the camera executor's thread. The success callback navigates,
+        // so both are posted to main; the ML Kit Task listeners this replaced did the same
+        // implicitly. isScanningActive is already cleared by the time the post is made, so no
+        // second frame can slip through while the hop is pending.
+        val mainExecutor = ContextCompat.getMainExecutor(context)
         QrCodeAnalyzer(
-            scanner = barcodeScanner,
-            onQrCodeScanned = { currentOnQrCodeScanned(it) },
-            onUnsupportedQrCode = { currentOnUnsupportedQrCode(it) },
+            decoder = qrCodeDecoder,
+            onQrCodeScanned = { data ->
+                mainExecutor.execute { currentOnQrCodeScanned(data) }
+            },
+            onUnsupportedQrCode = { reason ->
+                mainExecutor.execute { currentOnUnsupportedQrCode(reason) }
+            },
         )
     }
 
