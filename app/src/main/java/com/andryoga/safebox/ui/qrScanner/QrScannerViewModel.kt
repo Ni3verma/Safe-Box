@@ -8,7 +8,6 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpUriError
-import com.google.mlkit.vision.barcode.BarcodeScanner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,14 +22,16 @@ import javax.inject.Inject
  * ViewModel managing the QR scanner viewfinder UI state, camera controls (torch toggle),
  * and logging user-facing analytics events for camera permissions and scanner interactions.
  *
- * @param barcodeScanner Injected ML Kit [BarcodeScanner] instance for QR code scanning.
+ * @param qrCodeDecoder Injected [QrCodeDecoder] handed to the camera analyzer. Routed through the
+ * ViewModel rather than built in the composable so a test module can substitute a fake decoder and
+ * drive the scan flow without a camera.
  * @param analyticsHelper Injected analytics logger for tracking user actions.
  * @param preferenceProvider Injected preference store to track permission request history.
  * @param scannedTotpHolder Hand-off used to carry a successful scan to the create-record screen.
  */
 @HiltViewModel
 class QrScannerViewModel @Inject constructor(
-    val barcodeScanner: BarcodeScanner,
+    val qrCodeDecoder: QrCodeDecoder,
     private val analyticsHelper: AnalyticsHelper,
     private val preferenceProvider: PreferenceProvider,
     private val scannedTotpHolder: ScannedTotpHolder,
@@ -81,11 +82,6 @@ class QrScannerViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = QrScannerUiState(),
     )
-
-    override fun onCleared() {
-        super.onCleared()
-        barcodeScanner.close()
-    }
 
     fun onAction(action: QrScannerScreenAction) {
         when (action) {

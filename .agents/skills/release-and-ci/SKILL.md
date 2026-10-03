@@ -132,6 +132,36 @@ upload step, so the oldest *archived* APK is `v1.3.3.0`. Two other facts are eas
 - the oldest release that can **write a backup** is **`v1.4.4.0`**; backup/restore arrived in #111,
   and `v1.3.3.0` has no such feature (verified 2026-09-25 with `git grep -il backup v1.3.3.0`).
 
+## Bundle size
+
+The `.aab` file size is **not** what users download, and it overstates growth badly:
+
+- `BUNDLE-METADATA/` is 4.7–5.5 MB compressed (a 60–75 MB R8 `proguard.map`) and never ships.
+- `base/lib/` carries all four ABIs; a device receives exactly one.
+
+Estimate the per-device download from compressed entry sizes (`unzip -lv app-release.aab`): base
+`dex` + `res` + `assets` + `root` + `resources.pb`, plus the single `lib/<abi>/` directory. There
+is no `bundletool` CLI on this machine — the jar under `~/.gradle/caches/.../bundletool/1.18.3/` is
+the thin library jar and cannot run `get-size total`. Verified 2026-10-03.
+
+| | `v2.1.4.0` | `v2.2.5.0-rc1` | `feature/zxing-qr-decoder` (`bundleQa`) |
+|---|---|---|---|
+| `.aab` file | 7.9 MB | 18.8 MB | 8.8 MB |
+| est. download, arm64-v8a device | 3.09 MB | 6.29 MB | 3.39 MB |
+
+The rc1 jump was the **QR scanner, not TOTP** — `TotpGeneratorImpl` is `javax.crypto.Mac` with no
+dependency. The bundled ML Kit model (`com.google.mlkit:barcode-scanning`) added `libbarhopper_v3.so`
+(3.2–6.1 MB per ABI on disk, ~2.1 MB compressed on arm64), three `.tflite` models in
+`assets/mlkit_barcode_models/` (0.9 MB, 0.6 MB compressed) and ~1,000 classes under
+`com.google.android.gms.internal.mlkit_*`. Play Console's "significantly increases the size"
+warning compares **download** size, so it was reacting to the real ~2× per-device jump, not to
+the `.aab` number. [ADR-0005](../../../docs/decisions/0005-qr-decoding-with-zxing-core.md) replaced
+it with ZXing `core`: R8 keeps 41 ZXing classes (`qrcode.*`, `common`, root types — nothing from
+`oned`/`pdf417`/`aztec`), the GMS class count returns to the v2.1.4.0 baseline (869 vs 871), and
+the only native code left is CameraX's (< 50 KB per ABI). Measured 2026-10-03 on `bundleQa`, which
+shares release's R8 config; a `qa` bundle is the right local proxy because `bundleRelease` would
+upload a mapping file to Crashlytics.
+
 ## GitHub tooling
 
 `gh` **is installed** — `/usr/local/bin/gh`, version 2.100.0. Prefer it over hand-rolled REST
