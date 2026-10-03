@@ -134,33 +134,14 @@ upload step, so the oldest *archived* APK is `v1.3.3.0`. Two other facts are eas
 
 ## Bundle size
 
-The `.aab` file size is **not** what users download, and it overstates growth badly:
-
-- `BUNDLE-METADATA/` is 4.7–5.5 MB compressed (a 60–75 MB R8 `proguard.map`) and never ships.
-- `base/lib/` carries all four ABIs; a device receives exactly one.
-
-Estimate the per-device download from compressed entry sizes (`unzip -lv app-release.aab`): base
-`dex` + `res` + `assets` + `root` + `resources.pb`, plus the single `lib/<abi>/` directory. There
-is no `bundletool` CLI on this machine — the jar under `~/.gradle/caches/.../bundletool/1.18.3/` is
-the thin library jar and cannot run `get-size total`. Verified 2026-10-03.
-
-| | `v2.1.4.0` | `v2.2.5.0-rc1` | `feature/zxing-qr-decoder` (`bundleQa`) |
-|---|---|---|---|
-| `.aab` file | 7.9 MB | 18.8 MB | 8.8 MB |
-| est. download, arm64-v8a device | 3.09 MB | 6.29 MB | 3.39 MB |
-
-The rc1 jump was the **QR scanner, not TOTP** — `TotpGeneratorImpl` is `javax.crypto.Mac` with no
-dependency. The bundled ML Kit model (`com.google.mlkit:barcode-scanning`) added `libbarhopper_v3.so`
-(3.2–6.1 MB per ABI on disk, ~2.1 MB compressed on arm64), three `.tflite` models in
-`assets/mlkit_barcode_models/` (0.9 MB, 0.6 MB compressed) and ~1,000 classes under
-`com.google.android.gms.internal.mlkit_*`. Play Console's "significantly increases the size"
-warning compares **download** size, so it was reacting to the real ~2× per-device jump, not to
-the `.aab` number. [ADR-0005](../../../docs/decisions/0005-qr-decoding-with-zxing-core.md) replaced
-it with ZXing `core`: R8 keeps 41 ZXing classes (`qrcode.*`, `common`, root types — nothing from
-`oned`/`pdf417`/`aztec`), the GMS class count returns to the v2.1.4.0 baseline (869 vs 871), and
-the only native code left is CameraX's (< 50 KB per ABI). Measured 2026-10-03 on `bundleQa`, which
-shares release's R8 config; a `qa` bundle is the right local proxy because `bundleRelease` would
-upload a mapping file to Crashlytics.
+Compare the **per-device download**, not the `.aab` file size: the bundle carries all four ABIs and
+a non-shipping `BUNDLE-METADATA/` (the R8 map), so it overstates growth badly. There is no
+`bundletool` CLI on this machine; estimate from `unzip -lv` compressed entry sizes — base `dex` +
+`res` + `assets` + `root` + `resources.pb` + one `lib/<abi>/`. Measure on `bundleQa`, which shares
+release's R8 config; `bundleRelease` would upload a mapping file to Crashlytics. Data point (arm64,
+2026-10-03): bundled ML Kit barcode scanning raised the download from 3.09 MB to 6.29 MB; ZXing
+`core` brought it back to 3.39 MB
+([ADR-0005](../../../docs/decisions/0005-qr-decoding-with-zxing-core.md)).
 
 ## GitHub tooling
 
@@ -203,7 +184,7 @@ checks consistently, and a `403` can come from repository rules rather than the 
 |---|---|---|
 | Reads (PRs, releases, runs, checks) | read | every read command works |
 | `Contents` | read | `PUT` via the contents API returned `403` |
-| `Issues` | **read + write**, granted deliberately so the agent can file issues | writing to an *issue* is untested — creating one just to check is not worth it — but **labels on a pull request are refused**, see below |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | `gh issue create` (#282) and `gh pr edit --body-file` (#281) both succeeded 2026-10-03, but **labels on a pull request are refused**, see below |
 
 > [!IMPORTANT]
 > **Labels cannot be changed from here.** `DELETE /repos/Ni3verma/Safe-Box/issues/259/labels/run-upgrade-test`
@@ -213,9 +194,9 @@ checks consistently, and a `403` can come from repository rules rather than the 
 
 > [!IMPORTANT]
 > Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from
-> here**. A `PATCH` probe against a non-existent PR returned `404` rather than `403`, so PR-write is
-> formally unproven — GitHub does not order existence and permission checks consistently. Treat the
-> permission list in the GitHub UI as authoritative, not a probe's status code.
+> here**. Editing a PR's title/body **does** work — `gh pr edit 281 --body-file …` succeeded on
+> 2026-10-03 — while labels on the same PR are refused (see above). Treat the permission list in
+> the GitHub UI as authoritative, not a probe's status code.
 
 > [!IMPORTANT]
 > **`git push` does not work from the agent and is not covered by the token.** It uses a completely
