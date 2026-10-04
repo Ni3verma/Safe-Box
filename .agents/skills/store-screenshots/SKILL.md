@@ -81,6 +81,42 @@ scripts/take-store-screenshots.sh --scenes backup --theme light
 Any `--out` other than `screenshots` is a **trial**: its images and review page land under that
 directory and the README is left alone. `--no-render` stops after the captures (probe runs).
 
+## Use your own screenshots
+
+The compositor does not know or care whether a capture came from the tour. A PNG you took yourself
+is a first-class input, and the usual reason to want one is a scene the tour cannot reach, or a
+scene whose tour step broke after a UI change while the others still work.
+
+1. The file must be **exactly 1080×2400**, the Pixel 8 frame's display. Pixel 8 / 7a / 6a
+   screenshots are. Anything else is refused (`… is 1080x2340; the pixel_8 frame takes 1080x2400
+   captures`); do not resize, add a frame for that device instead (Android Studio device art into
+   `scripts/store-screenshots/frames/<name>/`, then `"frame"` in `theme.json`).
+2. For the same status bar as the tour's captures, put the phone in SystemUI demo mode first:
+   ```bash
+   adb shell settings put global sysui_demo_allowed 1
+   adb shell am broadcast -a com.android.systemui.demo -e command enter
+   adb shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000
+   adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false
+   adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 -e mobile show -e level 4 -e datatype none
+   adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
+   # take the screenshot, then:
+   adb shell am broadcast -a com.android.systemui.demo -e command exit
+   ```
+3. Drop it in as `screenshots/raw/<name>.png` (`[A-Za-z0-9_-]+`; the `-light` / `-dark` suffix is a
+   convention, not a rule) and name it in a scene's `captures` in `scenes.json`.
+4. `scripts/take-store-screenshots.sh --render-only`.
+
+Mixing is fine: `--scenes` recaptures the scenes the tour still handles, hand-made files fill the
+rest, one render composites all eight.
+
+Two limits. `screenshots/raw/` is **gitignored**, so a hand-made capture lives on your machine only;
+a fresh clone renders `scene x needs x.png, which does not exist` until the file is put back. And
+the biometric sheet cannot be screenshotted on a phone at all (`FLAG_SECURE` gives a black image);
+only the emulator-console path in the script sees it. For a one-off image outside the listing, the
+2–8 scene rule still applies to any scenes file: add the scene to the committed file and render it
+alone with `python3 scripts/store-screenshots/render.py --only <id>`, which holds the README and
+preview back until every scene exists.
+
 ## Change what the images say or look like
 
 | Want | Edit |

@@ -21,6 +21,15 @@ the captures on disk; a UI change recaptures, and the compositor does not care w
 captures came from. A raw capture is never modified: every store image is rasterised afresh from a
 page, so deleting the output and re-running reproduces it byte-for-byte on the same Chrome.
 
+`screenshots/raw/` is the contract between the layers, and only the tour is UI-dependent. Device
+pinning (demo status bar, night mode, palette seeds, the emulator-console capture of the
+`FLAG_SECURE` biometric sheet) and the compositor are not, and a PNG placed in `raw/` by hand is
+indistinguishable from a tour capture. So when a UI change breaks a tour step, the fallback is per
+scene — recapture the rest with `--scenes`, shoot that one by hand, render — rather than all or
+nothing; and if the tour ever costs more repair than it saves, the cut is the tour alone, with the
+pinning and the compositor kept (settled 2026-10-04). The tour earns its keep because a refresh needs
+28 captures with identical demo data, clock and status bar, in both appearances and four palettes.
+
 ## The scenes
 
 `scenes.json` is the listing, in store order. One scene is one store image; its `captures` fill its
