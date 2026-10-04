@@ -1,0 +1,66 @@
+{
+  "readme": { "columns": 3, "width": 200 },
+  "scenes": [
+    {
+      "id": "records",
+      "layout": "duo",
+      "captures": ["records-light", "search-light"],
+      "headline": "Everything in\none place",
+      "subhead": "Logins, cards, bank accounts, notes, 2FA.\nSearch finds any of them in two keystrokes"
+    },
+    {
+      "id": "authenticators",
+      "layout": "single",
+      "captures": ["authenticators-light"],
+      "headline": "2FA codes,\nbuilt in",
+      "subhead": "Live one-time codes, kept beside\nthe logins they protect"
+    },
+    {
+      "id": "unlock",
+      "layout": "duo",
+      "captures": ["unlock_password-light", "unlock_biometric-light"],
+      "headline": "Master password\nor fingerprint",
+      "subhead": "Auto-locks when you leave.\nNothing ever leaves your device"
+    },
+    {
+      "id": "add",
+      "layout": "duo",
+      "captures": ["add_sheet-light", "add_form-light"],
+      "headline": "Add a record\nin seconds",
+      "subhead": "Pick a type, fill in what you know"
+    },
+    {
+      "id": "login_detail",
+      "layout": "single",
+      "captures": ["login_detail-light"],
+      "headline": "Reveal, copy,\nshare. Your call.",
+      "subhead": "Share the non-secret fields with one tap"
+    },
+    {
+      "id": "backup",
+      "layout": "single",
+      "captures": ["backup-light"],
+      "headline": "Encrypted backups,\nin your folder",
+      "subhead": "One password-protected file,\nrestorable on any device"
+    },
+    {
+      "id": "appearance",
+      "layout": "split",
+      "captures": ["records-light", "records-dark"],
+      "headline": "Light or dark,\nlike your phone",
+      "subhead": "Follows your system theme automatically"
+    },
+    {
+      "id": "palette",
+      "layout": "quad",
+      "captures": [
+        "unlock_password-light-1565C0",
+        "unlock_password-light-6750A4",
+        "unlock_password-light-B3261E",
+        "unlock_password-light-2E7D32"
+      ],
+      "headline": "Matches your\nwallpaper",
+      "subhead": "Material You dynamic colour\nfrom your wallpaper"
+    }
+  ]
+}

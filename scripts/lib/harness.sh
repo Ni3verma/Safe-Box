@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 #
-# Device plumbing shared by scripts/run-upgrade-test.sh and scripts/run-restore-test.sh.
+# Device plumbing shared by scripts/run-upgrade-test.sh, scripts/run-restore-test.sh and
+# scripts/take-store-screenshots.sh.
 #
-# Both runners install the QA build, drive the on-device harness (:upgrade-test) one test method
-# per `am instrument` call, pull the backup each phase takes, and compare it with the file that
-# was restored. Everything they share lives here so the two cannot drift. Source it after
+# The two test runners install the QA build, drive the on-device harness (:upgrade-test) one test
+# method per `am instrument` call, pull the backup each phase takes, and compare it with the file
+# that was restored. The screenshot runner installs a QA or release build and drives the same
+# harness to photograph it; it reassigns APP_PACKAGE and the backup directory after sourcing.
+# Everything they share lives here so the runners cannot drift. Source it after
 # scripts/lib/backup-files.sh, crash-sentinel.sh and instrumentation-guard.sh; it defines
 # variables and functions only, until harness_init is called.
 #
@@ -68,7 +71,16 @@ harness_init() {
     esac
     echo "Device: $ANDROID_SERIAL $(adb shell getprop ro.product.model | tr -d '\r') - API $(adb shell getprop ro.build.version.sdk | tr -d '\r')"
 
-    trap 'adb logcat -d > "$HARNESS_OUT/logcat.txt" 2>/dev/null || true; adb logcat -d -s "$HARNESS_LOG_TAG:I" > "$HARNESS_OUT/harness-steps.txt" 2>/dev/null || true; echo "Artifacts in $HARNESS_OUT/"' EXIT
+    trap harness_collect_logs EXIT
+}
+
+# Saves the full logcat and the harness's step log into HARNESS_OUT. Installed as the EXIT trap by
+# harness_init; a runner that needs exit work of its own (scripts/take-store-screenshots.sh
+# restores device settings) calls this from its own trap, so the logs are never lost to it.
+harness_collect_logs() {
+    adb logcat -d > "$HARNESS_OUT/logcat.txt" 2>/dev/null || true
+    adb logcat -d -s "$HARNESS_LOG_TAG:I" > "$HARNESS_OUT/harness-steps.txt" 2>/dev/null || true
+    echo "Artifacts in $HARNESS_OUT/"
 }
 
 # aapt2 and apksigner are not on PATH on CI or a developer machine, and build-tools holds several
@@ -109,6 +121,21 @@ apk_version_code() {
     "$AAPT2" dump badging "$1" | sed -n "s/^package:.*versionCode='\([0-9]\{1,\}\)'.*/\1/p" | head -n 1
 }
 
+# The applicationId an APK declares; empty if aapt2 cannot read the file.
+#
+# $1 - the APK
+apk_package() {
+    "$AAPT2" dump badging "$1" 2>/dev/null | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1 || true
+}
+
+# The user-visible label an APK declares (the launcher name, also what the biometric sheet
+# prints); empty if aapt2 cannot read the file.
+#
+# $1 - the APK
+apk_label() {
+    "$AAPT2" dump badging "$1" 2>/dev/null | sed -n "s/^application-label:'\([^']*\)'.*/\1/p" | head -n 1 || true
+}
+
 # Handing a runner a debug or release APK by mistake installs fine and then fails far from the
 # cause, with no launch intent for the QA package. Three build types mean three applicationIds.
 # The signer is checked too: a QA APK built with a different keystore (a fork, a rotated key)
@@ -117,7 +144,7 @@ apk_version_code() {
 # $1 - the APK
 assert_qa_apk() {
     local pkg
-    pkg=$("$AAPT2" dump badging "$1" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n 1) || true
+    pkg=$(apk_package "$1")
     if [ "$pkg" != "$APP_PACKAGE" ]; then
         echo "error: $1 declares applicationId '$pkg', expected '$APP_PACKAGE' (a QA APK)." >&2
         exit 1
@@ -168,8 +195,22 @@ grant_notifications() {
     fi
 }
 
+# Installs one APK, showing adb's output only when the install fails. With the output discarded,
+# as it used to be, a failed install under `set -e` ends the script with nothing but the exit
+# trap's lines, and the reason (storage, signer, a device that is not ready) is lost.
+#
+# $@ - arguments for `adb install`, ending with the APK
+install_apk() {
+    local output
+    if ! output=$(adb install "$@" 2>&1); then
+        echo "error: adb install $* failed:" >&2
+        printf '%s\n' "$output" | sed 's/^/   /' >&2
+        return 1
+    fi
+}
+
 install_harness() {
-    adb install "$TEST_APK" > /dev/null
+    install_apk "$TEST_APK"
 }
 
 # Puts a file where the document picker can see it, at the top of the list. DocumentsUI lists

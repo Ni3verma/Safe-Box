@@ -25,8 +25,8 @@ internal class SettingsChanger(private val ui: UiSupport, private val app: AppSt
      * The app must already be signed in and showing the bottom navigation.
      */
     fun applyNonDefaults() {
-        ui.clickText(app.label(SETTINGS_TAB))
-        OFF_AFTER_SETUP.forEach { turnOff(it, app.label(it)) }
+        openSettingsTab()
+        OFF_AFTER_SETUP.forEach { turnOff(it) }
     }
 
     /**
@@ -34,7 +34,7 @@ internal class SettingsChanger(private val ui: UiSupport, private val app: AppSt
      * tab. Used after the upgrade.
      */
     fun assertNonDefaults() {
-        ui.clickText(app.label(SETTINGS_TAB))
+        openSettingsTab()
         val stillOn = OFF_AFTER_SETUP.filter { name ->
             ui.retryingOnStale { ui.switchBeside(app.label(name)).isChecked }
         }
@@ -45,18 +45,28 @@ internal class SettingsChanger(private val ui: UiSupport, private val app: AppSt
         }
     }
 
+    /** Opens the settings tab from anywhere that shows the bottom navigation. */
+    fun openSettingsTab() {
+        ui.clickText(app.label(SETTINGS_TAB))
+    }
+
     /**
-     * Turns one switch off, and proves that it went off.
+     * Turns one switch off, and proves that it went off. The settings tab must be showing.
      *
      * A tap that lands between rows, or on a disabled switch, leaves the screen looking exactly as
      * it did and would otherwise surface much later as an unexplained settings mismatch. Reading
      * the state and tapping are retried as a unit, since a switch animating as the screen settles
      * invalidates the handle between the two.
      *
-     * @param resourceName the row's string resource, named in the failure
-     * @param label the settings row's visible title, as this build renders it
+     * Callable on its own because the screenshot tour needs exactly one of these rows off:
+     * Privacy mode sets `FLAG_SECURE`, which turns every screen capture black, while auto-backup
+     * is left on so the settings screen photographs with its shipped defaults otherwise intact.
+     *
+     * @param resourceName the row's string resource; the visible title is resolved from the
+     * installed build (ADR-0003)
      */
-    private fun turnOff(resourceName: String, label: String) {
+    fun turnOff(resourceName: String) {
+        val label = app.label(resourceName)
         logStep("turn off setting '$resourceName'")
         ui.retryingOnStale {
             val switch = ui.switchBeside(label)
