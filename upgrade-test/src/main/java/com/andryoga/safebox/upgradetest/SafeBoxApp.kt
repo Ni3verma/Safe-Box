@@ -6,8 +6,8 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 
 /**
- * App-level steps shared by [UpgradeTest] and [RestoreTest]: launching, signing up, pointing the
- * app at a backup folder, and restoring a backup.
+ * App-level steps shared by [UpgradeTest], [RestoreTest] and the store screenshot tour: launching,
+ * signing up, pointing the app at a backup folder, and restoring a backup.
  *
  * Everything the previous release (N-1) has to do goes through here with **label** lookups only,
  * because N-1 predates the test tags; the one tag used here ([RESTORE_BUTTON_TAG]) is only reached
@@ -15,12 +15,17 @@ import androidx.test.uiautomator.UiDevice
  * installed ([AppStrings], ADR-0003), so this file holds no displayed text of its own.
  *
  * Build one per test method: [AppStrings] is bound to the APK installed when it was created.
+ *
+ * @param packageName the applicationId of the build to drive. The upgrade and restore tests always
+ * drive the QA build; the screenshot tour drives whichever APK the host installed, so it passes
+ * the package through. Any value here must also be declared under `<queries>` in this module's
+ * manifest, or package visibility hides the app.
  */
-internal class SafeBoxApp {
+internal class SafeBoxApp(val packageName: String = APP_PACKAGE) {
 
     val device: UiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
     val ui = UiSupport(device)
-    val app = AppStrings(InstrumentationRegistry.getInstrumentation().context, APP_PACKAGE)
+    val app = AppStrings(InstrumentationRegistry.getInstrumentation().context, packageName)
 
     /**
      * Reads an instrumentation argument, failing loudly when it is absent.
@@ -32,15 +37,7 @@ internal class SafeBoxApp {
      * @param name argument name, passed by the host as `-e <name> <value>`
      * @return the argument's value
      */
-    fun argument(name: String): String {
-        val value = InstrumentationRegistry.getArguments().getString(name)
-            ?: error(
-                "missing instrumentation argument '$name'. The scripts/run-*-test.sh runners " +
-                    "pass it; a hand-run invocation needs -e $name <value>",
-            )
-        logStep("argument $name=${value.take(LOGGED_ARGUMENT_CHARS)}")
-        return value
-    }
+    fun argument(name: String): String = requiredArgument(name)
 
     /**
      * Starts the app and waits for the sign-up screen.
@@ -190,6 +187,23 @@ internal class SafeBoxApp {
     }
 
     /**
+     * The intent that starts the app under test, for callers that need the raw launch rather than
+     * [launch]'s wait-and-dismiss loop — the screenshot tour starts the app this way so it can
+     * photograph the biometric sheet that [launch] exists to get past.
+     *
+     * @return the package's launch intent, flagged to start a new task
+     */
+    fun launchIntent(): Intent {
+        val context = InstrumentationRegistry.getInstrumentation().context
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            ?: error(
+                "no launch intent for $packageName - it is not installed, or the <queries> entry " +
+                    "in this module's manifest no longer matches its applicationId",
+            )
+        return intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    /**
      * Starts the app under test and waits for the screen the caller expects, re-launching it if
      * the screen does not appear.
      *
@@ -205,15 +219,10 @@ internal class SafeBoxApp {
      */
     private fun launch(expectedHeading: String) {
         val context = InstrumentationRegistry.getInstrumentation().context
-        val intent = context.packageManager.getLaunchIntentForPackage(APP_PACKAGE)
-            ?: error(
-                "no launch intent for $APP_PACKAGE - it is not installed, or the <queries> entry " +
-                    "in this module's manifest no longer matches its applicationId",
-            )
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val intent = launchIntent()
 
         repeat(LAUNCH_ATTEMPTS) { attempt ->
-            logStep("launch $APP_PACKAGE, attempt ${attempt + 1}, expecting '$expectedHeading'")
+            logStep("launch $packageName, attempt ${attempt + 1}, expecting '$expectedHeading'")
             context.startActivity(intent)
             val timeout = if (attempt == 0) LAUNCH_TIMEOUT_MS else UiSupport.FIND_TIMEOUT_MS
             if (ui.findOrNull(By.text(expectedHeading), timeout) != null) return
@@ -225,7 +234,7 @@ internal class SafeBoxApp {
         }
         error(
             "'$expectedHeading' never appeared in $LAUNCH_ATTEMPTS attempts at launching " +
-                "$APP_PACKAGE, even after dismissing a possible system prompt${ui.describeScreen()}",
+                "$packageName, even after dismissing a possible system prompt${ui.describeScreen()}",
         )
     }
 
@@ -292,5 +301,22 @@ internal class SafeBoxApp {
 
         // expectedRows is kilobytes of base64; the start is enough to tell which file it was.
         private const val LOGGED_ARGUMENT_CHARS = 60
+
+        /**
+         * [argument] for callers that have no [SafeBoxApp] yet — the screenshot tour reads the app
+         * package this way before it can construct one.
+         *
+         * @param name argument name, passed by the host as `-e <name> <value>`
+         * @return the argument's value
+         */
+        fun requiredArgument(name: String): String {
+            val value = InstrumentationRegistry.getArguments().getString(name)
+                ?: error(
+                    "missing instrumentation argument '$name'. The scripts/*.sh runners pass " +
+                        "it; a hand-run invocation needs -e $name <value>",
+                )
+            logStep("argument $name=${value.take(LOGGED_ARGUMENT_CHARS)}")
+            return value
+        }
     }
 }

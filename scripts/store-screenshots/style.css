@@ -1,0 +1,79 @@
+/*
+ * Layout rules for a store image. Positions and sizes of the phones arrive inline from
+ * render.py (they are per-layout data in theme.json); everything else reads a CSS variable that
+ * theme.json sets. No colour, font or size is written here directly.
+ */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  position: relative;
+  width: var(--canvas-width);
+  height: var(--canvas-height);
+  overflow: hidden;
+  background: var(--background);
+  font-family: var(--font-family), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+/* Soft decorative discs behind everything; each one's position, size and fill is theme data. */
+.shape {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.copy {
+  position: absolute;
+  top: var(--copy-top);
+  left: var(--copy-inset);
+  right: var(--copy-inset);
+  text-align: var(--copy-align);
+}
+
+.headline {
+  margin: 0;
+  font-size: var(--headline-size);
+  font-weight: var(--headline-weight);
+  line-height: var(--headline-line-height);
+  letter-spacing: var(--headline-letter-spacing);
+  color: var(--headline-color);
+}
+
+.subhead {
+  margin: var(--subhead-gap) 0 0;
+  font-size: var(--subhead-size);
+  font-weight: var(--subhead-weight);
+  line-height: var(--subhead-line-height);
+  letter-spacing: var(--subhead-letter-spacing);
+  color: var(--subhead-color);
+}
+
+/*
+ * A phone is a scaled footprint that may be rotated about its centre; the device-art inside is
+ * laid out at native size and scaled from the top-left corner. The drop shadow follows the
+ * frame's silhouette because back.webp is transparent outside the device.
+ */
+.phone {
+  position: absolute;
+  transform-origin: 50% 50%;
+  filter: var(--phone-shadow);
+}
+
+.device {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+.device img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}

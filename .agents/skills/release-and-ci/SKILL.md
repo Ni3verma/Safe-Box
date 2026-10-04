@@ -234,3 +234,10 @@ Note that `gh` and `curl` both need network access, so they must run **outside t
 `mappingFileUploadEnabled` is deliberately **false** for `qa`, because it is an indirect input to
 the minify task and would defeat incremental builds. If a qa stack trace needs deobfuscating,
 upload `app/build/outputs/mapping/qa/mapping.txt` manually.
+
+## Store listing
+
+Play Console uploads (AAB and listing) are manual; nothing in `release.yml` talks to Play. The
+listing screenshots and the README grid are generated, not drawn — refresh them with the
+[store-screenshots skill](../store-screenshots/SKILL.md) after a UI change, then upload
+`screenshots/readme/01-…08-….png` in order.

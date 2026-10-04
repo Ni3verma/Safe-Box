@@ -6,9 +6,14 @@
         PackageManager.getLaunchIntentForPackage would return null and the driver could not start
         the app under test. Declaring the target explicitly is narrower than QUERY_ALL_PACKAGES and
         keeps the launch a normal intent rather than a shell command.
+
+        The upgrade and restore tests only ever drive the QA build. The store screenshot tour
+        (store/StoreScreenshotTour.kt) drives whichever APK the host installed, which may be a
+        release build, hence the second entry.
     -->
     <queries>
         <package android:name="com.andryoga.safebox.qa" />
+        <package android:name="com.andryoga.safebox" />
     </queries>
 
 </manifest>

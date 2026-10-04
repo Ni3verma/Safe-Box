@@ -19,6 +19,12 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 - [Upgrade harness operations](testing/upgrade-harness-operations.md) — running the tests, capturing
   a seed, selector traps, triage.
 
+## Store listing
+
+- [Store listing images](store-listing.md) — how the Play screenshots and the README grid are
+  generated from the app, the scene set and why, the `scenes.json` / `theme.json` formats, and the
+  presentation issues the images exposed.
+
 ## Decisions
 
 - [Architecture Decision Records](decisions/README.md)

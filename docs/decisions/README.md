@@ -12,6 +12,7 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 | [0003](0003-ui-labels-from-resource-names.md) | UI labels are resolved from the app's own resource names | Accepted, amended by 0004 |
 | [0004](0004-verify-upgrade-and-restore-by-decoded-backup.md) | Verify upgrade and restore by decoded backup comparison | Accepted |
 | [0005](0005-qr-decoding-with-zxing-core.md) | QR codes are decoded with ZXing `core`, not ML Kit | Accepted |
+| [0006](0006-store-screenshots-from-emulator-captures.md) | Store screenshots are composited from emulator captures of the real app | Accepted |
 
 ## Format
 
