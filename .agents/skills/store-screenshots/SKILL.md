@@ -50,8 +50,11 @@ scripts/take-store-screenshots.sh
   a development emulator running alongside is never touched.
 - Then: sign-up and demo vault ≈ 1 min, two capture passes (light, dark) with the four palette
   variants ≈ 3 min, compositing ≈ 10 s. The emulator is stopped at exit unless `--keep-emulator`.
-- Sanity check at the end: `git status` shows only the `NN-*.png` that changed, and
-  `screenshots/preview.html` opens to the eight images.
+- Afterwards `screenshots/preview.html` opens to the eight images, and `git status` shows **six** of
+  them modified even when nothing was meant to change: records, authenticators, add, login detail,
+  backup and appearance carry live content (TOTP codes, created/updated times, the last-backup
+  time). Unlock and palette come out byte-identical. Commit a re-render only when it contains a
+  change you intended; otherwise `git checkout -- screenshots/readme`.
 
 Timings and the AVD details were measured on 2026-10-04 on an M-series Mac.
 
