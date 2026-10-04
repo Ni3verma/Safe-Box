@@ -1,0 +1,27 @@
+<!doctype html>
+<!--
+  Page grammar for one store image. Everything between {{ }} is filled in by render.py; every
+  colour, size and position comes from theme.json through the CSS variables, so a restyle is a
+  theme edit, not a template edit. The page is exactly the canvas size and is rasterised as-is.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{title}}</title>
+<style>
+{{font_faces}}
+:root {
+{{css_variables}}
+}
+{{style}}
+</style>
+</head>
+<body>
+{{shapes}}
+<div class="copy">
+  <h1 class="headline">{{headline}}</h1>
+  {{subhead}}
+</div>
+{{phones}}
+</body>
+</html>

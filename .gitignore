@@ -16,3 +16,7 @@ app/releaseKeyStore.jks
 /upgrade-test-out/
 # N-1's APK and seed, from scripts/resolve-previous-release.sh and fetch-baseline-apk.sh.
 /previous/
+# Raw emulator captures and the review page from scripts/take-store-screenshots.sh; only the
+# composited store images under screenshots/readme/ are committed.
+/screenshots/raw/
+/screenshots/preview.html

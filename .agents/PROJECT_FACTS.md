@@ -106,12 +106,12 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - Instrumentation: `app/src/androidTest`, **debug build only**
   (see [ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
 - Runner is `com.andryoga.safebox.CustomHiltTestRunner`; test Application is `BaseTestApplication`.
-- Gradle Managed Device: `pixel8Api34` (Pixel 8, API 34, `aosp-atd`).
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
-- ML Kit is `com.google.mlkit:barcode-scanning` (**bundled** model), so no Google Play services are
-  required. `aosp-atd` suffices for `:app`'s own UI tests but **not** `:upgrade-test`: it has no
-  DocumentsUI (API 34 `aosp_atd`, CI run 35863723921, 2026-09-23; see the operations doc).
+- QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
+  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). `aosp-atd` suffices for
+  `:app`'s own UI tests but **not** `:upgrade-test`: it has no DocumentsUI (API 34 `aosp_atd`, CI
+  run 35863723921, 2026-09-23; see the operations doc).
 - **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and
   restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
   `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See
@@ -123,17 +123,17 @@ Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/S
 
 ## CI & releases
 
-- Workflows: `ci.yml`, `nightly.yml` (02:00 UTC, 3 shards), `release.yml` (on `v*` tags),
-  `upgrade-test.yml` (reusable; called by `release.yml`, or a `run-upgrade-test` PR label),
-  `run-ui-test.yml`, `gemini-pr-review.yml`.
 - `release.yml` publishes **`SafeBox-qa.apk` and `app-release.aab` as GitHub Release assets** on
   every tag. Old QA APKs are therefore already archived back to at least `v2.0.4.0` — no extra
   archiving step is needed.
 - The QA signing certificate has been **stable** from `v1.4.4.0` to local builds: SHA-256
   `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`, pinned as `QA_CERT_SHA256`
   in `scripts/lib/harness.sh` and checked on every upgrade/restore run. Verified 2026-09-26.
-- APK output names are set in `androidComponents` as `SafeBox-<variant>.apk`. **Changing that
-  breaks the workflow file paths.**
+- APK output names: `SafeBox-<variant>.apk` (`androidComponents` in `app/build.gradle`); four workflow paths hard-code them. Verified 2026-10-04.
+- **Store listing images are generated, never edited**: `screenshots/readme/NN-*.png` and the README
+  grid between the `store-screenshots` markers are written by `scripts/take-store-screenshots.sh`
+  (captures → `scripts/store-screenshots/render.py`). Edit `scenes.json`/`theme.json`, re-render.
+  The qa label is the `-PappLabel` build property. [Runbook](skills/store-screenshots/SKILL.md). (2026-10-04)
 
 Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 

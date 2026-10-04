@@ -1,36 +1,30 @@
 package com.andryoga.safebox.di
 
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
+import com.andryoga.safebox.ui.qrScanner.QrCodeDecoder
+import com.andryoga.safebox.ui.qrScanner.ZxingQrCodeDecoder
+import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
-import dagger.hilt.android.scopes.ViewModelScoped
 
 /**
- * Dagger Hilt module providing CameraX and ML Kit barcode scanning dependencies.
+ * Dagger Hilt module providing the QR code decoding dependency used by the camera scanner.
  */
 @Module
 @InstallIn(ViewModelComponent::class)
-object CameraModule {
+abstract class CameraModule {
 
     /**
-     * Provides the ML Kit [BarcodeScanner] configured for QR codes, scoped to the scanner
-     * ViewModel so it can be closed in `onCleared` and its native detector released.
+     * Binds [ZxingQrCodeDecoder] to the [QrCodeDecoder] interface.
      *
-     * A `@Singleton` scope would leak the detector for the lifetime of the process and make
-     * closing it unsafe, because the next visit to the scanner would be handed a closed instance.
+     * Unscoped on purpose: the decoder is stateless and cheap, so there is nothing to share or to
+     * release when the scanner ViewModel is cleared.
+     *
+     * @param zxingQrCodeDecoder Concrete ZXing-backed decoder.
+     * @return [QrCodeDecoder] interface for injection into the scanner ViewModel.
      */
-    @Provides
-    @ViewModelScoped
-    fun provideBarcodeScanner(): BarcodeScanner {
-        return BarcodeScanning.getClient(
-            BarcodeScannerOptions.Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build(),
-        )
-    }
+    @Binds
+    abstract fun bindQrCodeDecoder(
+        zxingQrCodeDecoder: ZxingQrCodeDecoder,
+    ): QrCodeDecoder
 }

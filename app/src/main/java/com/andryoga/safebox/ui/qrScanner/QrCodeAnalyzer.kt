@@ -1,28 +1,27 @@
 package com.andryoga.safebox.ui.qrScanner
 
-import androidx.annotation.OptIn
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.andryoga.safebox.totp.engine.TotpUriParser
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.andryoga.safebox.totp.models.TotpUriParseResult
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import com.google.mlkit.vision.common.InputImage
 import timber.log.Timber
 
 /**
- * CameraX [ImageAnalysis.Analyzer] implementation using Google ML Kit Barcode Scanning
- * to detect and parse `otpauth://totp/...` QR codes from live camera frames.
+ * CameraX [ImageAnalysis.Analyzer] that runs every frame through a [QrCodeDecoder] and parses any
+ * `otpauth://totp/...` payload it finds.
  *
- * @param scanner Injected [BarcodeScanner] instance configured for QR code detection.
+ * Decoding is synchronous, so both callbacks fire on the analysis executor's thread. Callers that
+ * need the main thread, such as anything that navigates, must post to it themselves.
+ *
+ * @param decoder Extracts the QR code text from a frame.
  * @param onQrCodeScanned Callback invoked when a valid TOTP QR code is detected and parsed.
  * @param onUnsupportedQrCode Callback invoked when an `otpauth://` QR code is detected but cannot
  * be used, so the screen can stop and explain why.
  */
 class QrCodeAnalyzer(
-    private val scanner: BarcodeScanner,
+    private val decoder: QrCodeDecoder,
     private val onQrCodeScanned: (ParsedTotpData) -> Unit,
     private val onUnsupportedQrCode: (TotpUriError) -> Unit,
 ) : ImageAnalysis.Analyzer {
@@ -30,60 +29,52 @@ class QrCodeAnalyzer(
     @Volatile
     private var isScanningActive = true
 
-    // Note: CameraX ImageProxy.image is marked with @ExperimentalGetImage because it exposes the direct
-    // underlying android.media.Image. Google's official CameraX + ML Kit guide requires opting in to this API.
-    @OptIn(ExperimentalGetImage::class)
+    /**
+     * A decoder failure is almost always systematic, such as an unexpected buffer layout on one
+     * device, and would otherwise be reported once per frame. The release log tree forwards every
+     * error to Crashlytics, so only the first occurrence is reported.
+     */
+    private var hasReportedDecodeFailure = false
+
     override fun analyze(imageProxy: ImageProxy) {
         if (!isScanningActive) {
             imageProxy.close()
             return
         }
 
-        val mediaImage = imageProxy.image
-        if (mediaImage == null) {
+        val rawValue = try {
+            decoder.decode(imageProxy)
+        } catch (e: Exception) {
+            if (!hasReportedDecodeFailure) {
+                hasReportedDecodeFailure = true
+                Timber.e(e, "Failed to decode camera frame")
+            }
+            null
+        } finally {
             imageProxy.close()
-            return
         }
 
-        try {
-            val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-            scanner.process(image)
-                .addOnSuccessListener { barcodes ->
-                    if (isScanningActive) {
-                        for (barcode in barcodes) {
-                            val rawValue = barcode.rawValue
-                            if (rawValue.isNullOrBlank()) continue
+        if (!rawValue.isNullOrBlank()) {
+            handlePayload(rawValue)
+        }
+    }
 
-                            when (val result = TotpUriParser.parse(rawValue)) {
-                                is TotpUriParseResult.Success -> {
-                                    isScanningActive = false
-                                    onQrCodeScanned(result.data)
-                                    return@addOnSuccessListener
-                                }
+    private fun handlePayload(rawValue: String) {
+        when (val result = TotpUriParser.parse(rawValue)) {
+            is TotpUriParseResult.Success -> {
+                isScanningActive = false
+                onQrCodeScanned(result.data)
+            }
 
-                                is TotpUriParseResult.Unsupported -> {
-                                    Timber.i("Unusable otpauth QR code scanned: %s", result.reason)
-                                    isScanningActive = false
-                                    onUnsupportedQrCode(result.reason)
-                                    return@addOnSuccessListener
-                                }
+            is TotpUriParseResult.Unsupported -> {
+                Timber.i("Unusable otpauth QR code scanned: %s", result.reason)
+                isScanningActive = false
+                onUnsupportedQrCode(result.reason)
+            }
 
-                                TotpUriParseResult.NotTotpUri -> {
-                                    Timber.d("Non-TOTP QR code in frame, continuing to scan")
-                                }
-                            }
-                        }
-                    }
-                }
-                .addOnFailureListener { error ->
-                    Timber.e(error, "Barcode scanning failed")
-                }
-                .addOnCompleteListener {
-                    imageProxy.close()
-                }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to process image frame")
-            imageProxy.close()
+            TotpUriParseResult.NotTotpUri -> {
+                Timber.d("Non-TOTP QR code in frame, continuing to scan")
+            }
         }
     }
 

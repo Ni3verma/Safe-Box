@@ -116,6 +116,14 @@ android {
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
             buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
+            /**
+             * The launcher and biometric-sheet label. "Safe Box QA" tells a QA install apart from
+             * the production app installed beside it. The store screenshots are photographed from
+             * a QA build (release cannot be built without the production keystore) and the
+             * biometric sheet prints this label, so that run builds with -PappLabel="Safe Box".
+             * See .agents/skills/store-screenshots/SKILL.md.
+             * */
+            resValue "string", "app_name", project.findProperty("appLabel") ?: "Safe Box QA"
             firebaseCrashlytics {
                 /**
                  * I don't want this to be enabled on local machine or CI because it is an indirect
@@ -149,6 +157,8 @@ android {
     buildFeatures {
         compose true
         buildConfig true
+        // For the qa build type's app_name resValue above; off by default since AGP 8.
+        resValues true
     }
 
     tasks.matching { (it.name.startsWith("compileDebugAndroidTest") || it.name.startsWith("dexBuilderDebugAndroidTest")) && it.name != "kspDebugAndroidTestKotlin" }.configureEach {

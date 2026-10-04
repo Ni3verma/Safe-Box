@@ -1,8 +1,5 @@
 package com.andryoga.safebox.ui.qrScanner
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
@@ -15,9 +12,6 @@ import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.totp.models.TotpUriError
 import com.google.common.truth.Truth.assertThat
-import com.google.mlkit.vision.barcode.BarcodeScanner
-import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -32,18 +26,19 @@ class QrScannerViewModelTest {
 
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var fakePreferenceProvider: FakePreferenceProvider
-    private lateinit var mockBarcodeScanner: BarcodeScanner
     private lateinit var scannedTotpHolder: ScannedTotpHolder
     private lateinit var viewModel: QrScannerViewModel
+
+    /** The ViewModel only passes the decoder through to the camera layer, so one that never matches will do. */
+    private val noOpDecoder = QrCodeDecoder { null }
 
     @Before
     fun setUp() {
         analyticsHelper = FakeAnalyticsHelper()
         fakePreferenceProvider = FakePreferenceProvider()
-        mockBarcodeScanner = mockk(relaxed = true)
         scannedTotpHolder = ScannedTotpHolder()
         viewModel = QrScannerViewModel(
-            barcodeScanner = mockBarcodeScanner,
+            qrCodeDecoder = noOpDecoder,
             analyticsHelper = analyticsHelper,
             preferenceProvider = fakePreferenceProvider,
             scannedTotpHolder = scannedTotpHolder,
@@ -316,20 +311,6 @@ class QrScannerViewModelTest {
     }
 
     @Test
-    fun onCleared_shouldCloseBarcodeScanner() {
-        val viewModelStore = ViewModelStore()
-        val factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T = viewModel as T
-        }
-        ViewModelProvider(viewModelStore, factory)[QrScannerViewModel::class.java]
-
-        viewModelStore.clear()
-
-        verify(exactly = 1) { mockBarcodeScanner.close() }
-    }
-
-    @Test
     fun onPermissionRationaleCancelClicked_shouldDismissDialogAndLogCancelClick() {
         viewModel.onAction(QrScannerScreenAction.OnShowPermissionRationale)
 
@@ -357,7 +338,7 @@ class QrScannerViewModelTest {
             upsertBooleanPref(CommonConstants.IS_CAMERA_PERMISSION_ASKED_BEFORE, true)
         }
         val vm = QrScannerViewModel(
-            barcodeScanner = mockBarcodeScanner,
+            qrCodeDecoder = noOpDecoder,
             analyticsHelper = analyticsHelper,
             preferenceProvider = prefProvider,
             scannedTotpHolder = scannedTotpHolder,

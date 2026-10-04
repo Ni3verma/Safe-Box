@@ -144,6 +144,32 @@ internal class UiSupport(val device: UiDevice) {
     }
 
     /**
+     * Taps the button labelled [text] on a screen where the same text also appears as plain text,
+     * such as the Backup button under the Backup heading.
+     *
+     * Compose exposes a `Button` as a clickable container whose label is a separate, non-clickable
+     * child node (confirmed with `uiautomator dump` on the unlock screen, API 35, 2026-10-03), so a
+     * label node is the button's if its parent is clickable, and a heading's otherwise. Tapping the
+     * label lands inside the button. This holds on every build type, unlike a test tag, which is
+     * why the screenshot tour uses it rather than [BackupMaker]'s `By.res` lookup.
+     *
+     * @param text the button's exact label
+     */
+    fun clickButton(text: String) {
+        logStep("tap button '$text'")
+        awaitText(text)
+        retryingOnStale {
+            val labels = findAll(By.text(text))
+            val buttonLabel = labels.firstOrNull { it.parent?.isClickable == true }
+                ?: error(
+                    "none of the ${labels.size} '$text' texts on screen sits in a clickable " +
+                        "container${describeScreen()}",
+                )
+            buttonLabel.click()
+        }
+    }
+
+    /**
      * Types into the field belonging to a label, re-finding it if it goes stale, and does not
      * return until the app has taken the value.
      *
@@ -159,18 +185,31 @@ internal class UiSupport(val device: UiDevice) {
      * @param label the field's visible label
      * @param value the text to set
      */
-    fun typeInto(label: String, value: String) {
-        logStep("type ${value.length} chars into '$label'")
-        retryingOnStale { textField(label).text = value }
+    fun typeInto(label: String, value: String) = typeInto(By.text(label), value, label)
+
+    /**
+     * [typeInto] for a label that has to be matched by selector rather than by exact text.
+     *
+     * Record forms render a mandatory field's label as the resource text followed by a superscript
+     * `*` **inside the same node**, and some of those resources end in a space (`"Title "`), so the
+     * node reads `Title *`. A caller that cannot know which spelling it will meet passes a pattern.
+     *
+     * @param labelSelector matches the field's label node
+     * @param value the text to set
+     * @param labelName how the label is named in the step log and in failures
+     */
+    fun typeInto(labelSelector: BySelector, value: String, labelName: String) {
+        logStep("type ${value.length} chars into '$labelName'")
+        retryingOnStale { textField(labelSelector, labelName).text = value }
         if (value.isEmpty()) return
         val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
         while (true) {
             flushAccessibilityCache()
-            val shown = retryingOnStale { textField(label).text }
+            val shown = retryingOnStale { textField(labelSelector, labelName).text }
             if (!shown.isNullOrEmpty()) return
             check(SystemClock.uptimeMillis() < deadline) {
-                "the '$label' field is still empty after being set to '$value', so the app never " +
-                    "took the value${describeScreen()}"
+                "the '$labelName' field is still empty after being set to '$value', so the app " +
+                    "never took the value${describeScreen()}"
             }
             SystemClock.sleep(POLL_INTERVAL_MS)
         }
@@ -190,11 +229,12 @@ internal class UiSupport(val device: UiDevice) {
      */
     fun retypeMasked(label: String, value: String) {
         logStep("retype ${value.length} chars into masked '$label'")
-        retryingOnStale { textField(label).text = value }
+        val selector = By.text(label)
+        retryingOnStale { textField(selector, label).text = value }
         val deadline = SystemClock.uptimeMillis() + FIND_TIMEOUT_MS
         while (true) {
             flushAccessibilityCache()
-            val shownLength = retryingOnStale { textField(label).text }?.length ?: 0
+            val shownLength = retryingOnStale { textField(selector, label).text }?.length ?: 0
             if (shownLength == value.length) return
             check(SystemClock.uptimeMillis() < deadline) {
                 "the '$label' field shows $shownLength characters after being set to a " +
@@ -229,11 +269,14 @@ internal class UiSupport(val device: UiDevice) {
      * The label and the editable node are separate leaves, so the label is located first and its
      * container searched for the `EditText` that Compose exposes to the accessibility layer. This
      * is why text fields need no test tag.
+     *
+     * @param labelSelector matches the field's label node
+     * @param labelName how the label is named in the failure
      */
-    private fun textField(label: String): UiObject2 {
-        val labelNode = awaitText(label)
+    private fun textField(labelSelector: BySelector, labelName: String): UiObject2 {
+        val labelNode = awaitObject(labelSelector)
         return labelNode.parent?.findObject(By.clazz(EDIT_TEXT_CLASS))
-            ?: error("no editable field beside the '$label' label${describeScreen()}")
+            ?: error("no editable field beside the '$labelName' label${describeScreen()}")
     }
 
     /**
@@ -305,6 +348,43 @@ internal class UiSupport(val device: UiDevice) {
     }
 
     /**
+     * Waits until the soft keyboard is drawn, for captures that must show it.
+     *
+     * `mInputShown` (see [hideKeyboard]) is not the signal: it flips when the input method manager
+     * has asked the IME to show, which on a fresh AVD is up to 2.5 s before Gboard has built its
+     * keys. Observed 2026-10-04 on the store-screenshot AVD: a capture half a second after the
+     * show request's `onShown` had no keyboard in it, while the same step in the next pass did.
+     * The window manager only reports a window to accessibility once its first frame is drawn, so
+     * a tappable node of the keyboard's own package means the keys are in the picture. The IME
+     * package is read from settings rather than assumed, so another keyboard works the same.
+     */
+    fun awaitKeyboard() {
+        val ime = device.executeShellCommand("settings get secure $DEFAULT_IME_SETTING")
+            .trim()
+            .substringBefore('/')
+        check(ime.isNotEmpty() && ime != "null") { "the device has no default input method" }
+        logStep("wait for the $ime keyboard")
+        awaitObject(By.pkg(ime).clickable(true))
+    }
+
+    /**
+     * Hides the soft keyboard if it is showing, leaving focus where it is.
+     *
+     * Back is the only way to dismiss an IME from outside the app, and back with no keyboard up
+     * would navigate instead, so the IME's state is read first. `mInputShown` is the input method
+     * manager's own flag for "the input view is on screen" and has carried that name since
+     * Android 4; it is also what `dumpsys input_method` reports when Gboard shows only its
+     * hardware-keyboard toolbar, which this dismisses too.
+     */
+    fun hideKeyboard() {
+        val report = device.executeShellCommand("dumpsys input_method")
+        if (IME_SHOWN_FLAG !in report) return
+        logStep("hide keyboard")
+        device.pressBack()
+        device.waitForIdle()
+    }
+
+    /**
      * Discards the accessibility node cache this process holds for the app under test.
      *
      * Without this the harness reads a tree that is a navigation behind reality. Observed on
@@ -325,6 +405,8 @@ internal class UiSupport(val device: UiDevice) {
         const val EDIT_TEXT_CLASS = "android.widget.EditText"
 
         private const val POLL_INTERVAL_MS = 250L
+        private const val IME_SHOWN_FLAG = "mInputShown=true"
+        private const val DEFAULT_IME_SETTING = "default_input_method"
 
         // What scrollTo spends before it starts swiping: a few polls of a screen that already
         // shows the node, short enough that looking below the fold stays cheap.

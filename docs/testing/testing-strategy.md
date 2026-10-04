@@ -52,6 +52,7 @@ These are deliberate, recorded so nobody re-discovers them as "bugs".
 | Keystore alias continuity is covered only by the upgrade test | nothing else survives an in-place install — see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md) |
 | Builds released before #249 do not reject a *newer* `BACKUP_VERSION` | unfixable retroactively; builds from #249 on reject it with `BACKUP_TOO_NEW` (see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md#restore-semantics)) |
 | CameraX `bindToLifecycle` failure path | considered, not prioritised |
+| The real `BiometricManager`/`BiometricPrompt` is never exercised: every androidTest injects `FakeDeviceSecurityAuthProvider`, and API 34 (`pixel8Api34`) is the only level any automated test runs on | that is how `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` — unsupported by androidx.biometric on API 28-29 — blocked every master-password change on Android 9/10 for two months (#279). Version-specific library rules must be pinned by JVM tests with an injected API level (`DeviceSecurityAuthProviderTest`); prompt behaviour on 28-29 needs a real device or an API 29 AVD |
 
 ## The failure that looks like a bug but isn't
 

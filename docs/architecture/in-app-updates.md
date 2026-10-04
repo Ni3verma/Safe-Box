@@ -1,7 +1,7 @@
 # In-app updates
 
 How Safe-Box offers Play updates from inside the app. The decisions and their evidence are in
-[ADR-0005](../decisions/0005-in-app-updates-flexible-only.md); this page covers the design and how
+[ADR-0007](../decisions/0007-in-app-updates-flexible-only.md); this page covers the design and how
 to test it.
 
 ## Components

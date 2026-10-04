@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * Implementations must never throw: failures are reported as [AppUpdateState.NotAvailable] or a
  * `false` return, because an update check must never break the vault.
  *
- * Only the FLEXIBLE flow is offered. See ADR 0005 for why IMMEDIATE is out of scope.
+ * Only the FLEXIBLE flow is offered. See ADR 0007 for why IMMEDIATE is out of scope.
  */
 interface AppUpdateController {
     /**
