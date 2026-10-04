@@ -288,7 +288,11 @@ class StoreScreenshotTour {
         logStep("tap topmost '$text'")
         ui.awaitText(text)
         ui.retryingOnStale {
-            ui.findAll(By.text(text)).minBy { it.visibleBounds.top }.click()
+            // awaitText has just seen the text, but a recomposition can take it away before findAll
+            // runs; a bare minBy would then fail without saying what was being looked for.
+            val topmost = ui.findAll(By.text(text)).minByOrNull { it.visibleBounds.top }
+                ?: error("'$text' disappeared before it could be tapped${ui.describeScreen()}")
+            topmost.click()
         }
     }
 

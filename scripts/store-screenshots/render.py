@@ -692,8 +692,9 @@ def run(args):
         width, height, _, _, _ = png_info(target)
         print("%-28s %dx%d RGB %4d KB  %s" % (target.name, width, height, target.stat().st_size // 1024, scene.layout_name))
 
-    if not wanted:
-        remove_stale_outputs(out_dir, {scene.output_name for scene in scenes})
+    # In every mode: the expected set is the whole scene list, so this only ever deletes files
+    # whose number or id is no longer in it, such as 02-first.png after a reorder.
+    remove_stale_outputs(out_dir, {scene.output_name for scene in scenes})
     missing = [scene.output_name for scene in scenes if not (out_dir / scene.output_name).is_file()]
     if missing:
         print("README and preview not written: %s not rendered yet" % ", ".join(missing))

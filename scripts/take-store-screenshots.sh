@@ -367,6 +367,10 @@ fi
 
 ensure_avd
 assert_avd_has_no_keyboard
+# Covered from the moment it boots: harness_init below can exit (no harness APK, no build tools),
+# and an emulator this script started must not outlive that. The trap widens once there is
+# something to unpin and logs to collect.
+trap 'stop_emulator' EXIT
 start_emulator
 harness_init "$OUT_ROOT"
 trap 'unpin_device; harness_collect_logs; stop_emulator' EXIT

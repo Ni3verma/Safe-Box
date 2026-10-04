@@ -66,7 +66,8 @@ scripts/take-store-screenshots.sh --render-only --render-theme path/to/other-the
 
 The captures in `screenshots/raw/` are the input; they are not committed, so a fresh clone needs a
 full run first. `python3 scripts/store-screenshots/render.py --help` lists the compositor's own
-options (`--only scene`, `--out`, `--readme -`), which the wrapper does not expose.
+options (`--only <scene>`, `--scenes <file>`, `--readme -`, `--preview -`), which the wrapper does
+not expose; the wrapper's `--out` is the trial directory described below, not the renderer's.
 
 ## Recapture a subset
 
@@ -118,10 +119,13 @@ rest, one render composites all eight.
 Two limits. `screenshots/raw/` is **gitignored**, so a hand-made capture lives on your machine only;
 a fresh clone renders `scene x needs x.png, which does not exist` until the file is put back. And
 the biometric sheet cannot be screenshotted on a phone at all (`FLAG_SECURE` gives a black image);
-only the emulator-console path in the script sees it. For a one-off image outside the listing, the
-2–8 scene rule still applies to any scenes file: add the scene to the committed file and render it
-alone with `python3 scripts/store-screenshots/render.py --only <id>`, which holds the README and
-preview back until every scene exists.
+only the emulator-console path in the script sees it. For a one-off image outside the listing, do
+not touch the committed `scenes.json` (a ninth scene is refused, and `--only` rewrites the README as
+soon as every scene has an image on disk). Render in isolation from your own scenes file, which
+needs at least two scenes because the Play rule applies to every scenes file:
+```bash
+python3 scripts/store-screenshots/render.py --scenes my-scenes.json --raw my-captures --out my-out --readme - --preview -
+```
 
 ## Change what the images say or look like
 

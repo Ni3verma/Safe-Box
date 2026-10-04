@@ -123,8 +123,9 @@ camera cut-out), not an alpha mask; it is drawn above the capture and below the 
 use an undefined layout, mismatch captures and slots, duplicate ids, exceed 2–8 scenes, or touch a
 README without the marker block. Every output is verified as the canvas size, 8-bit RGB with no
 alpha. Chrome emits RGB for an opaque page; should that change, `strip_alpha` re-encodes losslessly
-from the pure-Python PNG decoder. `--only` renders a subset and holds the README and preview back
-until every image exists; a full render removes `NN-*.png` outputs that are no longer in the set.
+from the pure-Python PNG decoder. `--only` renders a subset; the README and preview are written as
+soon as every scene has an image on disk, whether from this render or an earlier one. Every render
+removes `NN-*.png` outputs that are no longer in the set, so a reorder cannot leave an old number behind.
 
 ## Presentation issues the images exposed
 

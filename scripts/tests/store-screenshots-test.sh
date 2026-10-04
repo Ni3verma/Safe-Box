@@ -235,6 +235,19 @@ else
     fail "only_renders_the_named_scene_and_keeps_readme_until_complete" "$(output_of "$dir")"
 fi
 
+# A subset render after a reorder must still drop the file left under the old number; otherwise it
+# sits in the output directory, unreferenced by the README, and gets committed.
+write_scenes "$dir/scenes.json" '{ "scenes": [' \
+    '{ "id": "b", "layout": "single", "captures": ["b-light"], "headline": "B" },' \
+    '{ "id": "a", "layout": "single", "captures": ["a-light"], "headline": "A" } ] }'
+render_case "$dir" "$dir/scenes.json" --only b
+if [ "$(status_of "$dir")" = 0 ] && [ -f "$dir/out/01-b.png" ] && [ ! -f "$dir/out/01-a.png" ] &&
+    [ ! -f "$dir/out/02-a.png" ] && output_of "$dir" | grep -q 'not written'; then
+    ok "only_after_a_reorder_removes_the_stale_numbered_output"
+else
+    fail "only_after_a_reorder_removes_the_stale_numbered_output" "$(ls "$dir/out")" "$(output_of "$dir")"
+fi
+
 # --- refusals ---------------------------------------------------------------------------------
 
 # $1 case name, $2 expected message fragment, $3 scenes JSON, rest: captures to provide

@@ -127,7 +127,7 @@ Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/S
 - The QA signing certificate has been **stable** from `v1.4.4.0` to local builds: SHA-256
   `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`, pinned as `QA_CERT_SHA256`
   in `scripts/lib/harness.sh` and checked on every upgrade/restore run. Verified 2026-09-26.
-- APK output names: `SafeBox-<variant>.apk`, set in `androidComponents`; the workflows hard-code them.
+- APK output names: `SafeBox-<variant>.apk` (`androidComponents` in `app/build.gradle`); four workflow paths hard-code them. Verified 2026-10-04.
 - **Store listing images are generated, never edited**: `screenshots/readme/NN-*.png` and the README
   grid between the `store-screenshots` markers are written by `scripts/take-store-screenshots.sh`
   (captures → `scripts/store-screenshots/render.py`). Edit `scenes.json`/`theme.json`, re-render.
