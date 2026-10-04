@@ -4,11 +4,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -19,8 +21,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ShareCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.andryoga.safebox.ui.MainViewModel
-import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.previewHelper.getAuthenticatorLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getBankAccountLayoutPlan
@@ -28,14 +28,11 @@ import com.andryoga.safebox.ui.previewHelper.getCardLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getLoginLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getNoteLayoutPlan
 import com.andryoga.safebox.ui.singleRecord.components.ActionButtonRow
-import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarActions
-import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarNavIcon
-import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopBarTitle
+import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopAppBar
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.OnStart
 import timber.log.Timber
 
 /**
@@ -51,27 +48,12 @@ import timber.log.Timber
  * */
 @Composable
 fun SingleRecordScreenRoot(
-    mainViewModel: MainViewModel,
     onScreenClose: () -> Unit,
 ) {
     val viewModel = hiltViewModel<SingleRecordViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
-
-    OnStart {
-        val config = TopAppBarConfig(
-            title = { SingleRecordTopBarTitle(uiState.topAppBarUiState.title) },
-            navigationIcon = { SingleRecordTopBarNavIcon(onScreenClose) },
-            actions = {
-                SingleRecordTopBarActions(uiState.topAppBarUiState, onSaveClick = {
-                    keyboardController?.hide()
-                    viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
-                })
-            },
-        )
-        mainViewModel.updateTopBar(config)
-    }
 
     LaunchedEffect(Unit) {
         viewModel.screenCloseEvent.collect {
@@ -90,23 +72,40 @@ fun SingleRecordScreenRoot(
         }
     }
 
-    if (!uiState.isLoading) {
-        SingleRecordScreen(
-            uiState = uiState,
-            screenAction = viewModel::onAction
-        )
-    } else {
-        // TODO : laoding screen.
+    Scaffold(
+        topBar = {
+            SingleRecordTopAppBar(
+                uiState = uiState.topAppBarUiState,
+                onBackClick = onScreenClose,
+                onSaveClick = {
+                    keyboardController?.hide()
+                    viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+                },
+            )
+        },
+    ) { innerPadding ->
+        if (!uiState.isLoading) {
+            SingleRecordScreen(
+                uiState = uiState,
+                screenAction = viewModel::onAction,
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
+            )
+        } else {
+            // TODO : laoding screen.
+        }
     }
 }
 
 @Composable
 fun SingleRecordScreen(
     uiState: SingleRecordScreenUiState,
-    screenAction: (SingleRecordScreenAction) -> Unit
+    screenAction: (SingleRecordScreenAction) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .imePadding()

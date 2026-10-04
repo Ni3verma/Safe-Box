@@ -5,8 +5,10 @@ package com.andryoga.safebox.ui.home.records
 import android.os.Build
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,7 +21,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,6 +33,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -39,18 +44,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordType
-import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.InAppReviewSource
-import com.andryoga.safebox.ui.core.ScrollBehaviorType
 import com.andryoga.safebox.ui.core.TestTags
-import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.safebox.ui.home.records.components.NotificationPermissionRationaleDialog
 import com.andryoga.safebox.ui.home.records.components.RecordItem
 import com.andryoga.safebox.ui.home.records.components.RecordTypeFilterRow
-import com.andryoga.safebox.ui.home.records.components.RecordsSearchBarActions
-import com.andryoga.safebox.ui.home.records.components.RecordsSearchBarNavIcon
-import com.andryoga.safebox.ui.home.records.components.RecordsSearchBarTitle
+import com.andryoga.safebox.ui.home.records.components.RecordsTopAppBar
 import com.andryoga.safebox.ui.home.records.components.shouldShowNotificationPermissionRationaleDialog
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
@@ -61,13 +61,11 @@ import com.andryoga.safebox.ui.previewHelper.getCardRecordItem
 import com.andryoga.safebox.ui.previewHelper.getLoginRecordItem
 import com.andryoga.safebox.ui.previewHelper.getNoteRecordItem
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.OnStart
 import com.andryoga.safebox.ui.utils.findActivity
 import timber.log.Timber
 
 @Composable
 fun RecordsScreenRoot(
-    mainViewModel: MainViewModel,
     onAddNewRecord: (RecordType) -> Unit,
     onRestoreFromBackup: () -> Unit,
     onRecordClick: (id: Int, recordType: RecordType) -> Unit,
@@ -76,16 +74,7 @@ fun RecordsScreenRoot(
     val uiState by viewModel.uiState.collectAsState()
     val notificationPermissionState by viewModel.notificationPermissionState.collectAsState()
     val context = LocalContext.current
-
-    OnStart {
-        val config = TopAppBarConfig(
-            title = { RecordsSearchBarTitle(uiState.searchText, viewModel::onScreenAction) },
-            navigationIcon = { RecordsSearchBarNavIcon() },
-            actions = { RecordsSearchBarActions(uiState.searchText, viewModel::onScreenAction) },
-            scrollBehaviorType = ScrollBehaviorType.ENTER_ALWAYS
-        )
-        mainViewModel.updateTopBar(config)
-    }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     LaunchedEffect(Unit) {
         viewModel.startInAppReview.collect {
@@ -96,30 +85,87 @@ fun RecordsScreenRoot(
         }
     }
 
-    RecordsScreen(
-        uiState = uiState,
-        notificationPermissionState = notificationPermissionState,
-        onRestoreFromBackup = onRestoreFromBackup,
-        onScreenAction = { action ->
-            when (action) {
-                is RecordScreenAction.OnAddNewRecord -> {
-                    Timber.i("add new record action")
-                    onAddNewRecord(action.recordType)
-                }
-
-                is RecordScreenAction.OnRecordClick -> {
-                    Timber.i("record click action")
-                    onRecordClick(action.id, action.recordType)
-                }
-                else -> viewModel.onScreenAction(action)
-            }
+    Scaffold(
+        topBar = {
+            RecordsTopAppBar(
+                searchTextState = viewModel.searchTextState,
+                onScreenAction = viewModel::onScreenAction,
+                scrollBehavior = scrollBehavior,
+            )
         },
-    )
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    ) { innerPadding ->
+        RecordsScreen(
+            uiState = uiState,
+            notificationPermissionState = notificationPermissionState,
+            onRestoreFromBackup = onRestoreFromBackup,
+            onScreenAction = { action ->
+                when (action) {
+                    is RecordScreenAction.OnAddNewRecord -> {
+                        Timber.i("add new record action")
+                        onAddNewRecord(action.recordType)
+                    }
+
+                    is RecordScreenAction.OnRecordClick -> {
+                        Timber.i("record click action")
+                        onRecordClick(action.id, action.recordType)
+                    }
+                    else -> viewModel.onScreenAction(action)
+                }
+            },
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+        )
+    }
 }
 
 @VisibleForTesting
 @Composable
 internal fun RecordsScreen(
+    uiState: RecordsUiState,
+    notificationPermissionState: NotificationPermissionState,
+    onRestoreFromBackup: () -> Unit,
+    onScreenAction: (RecordScreenAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        RecordsContent(
+            uiState = uiState,
+            notificationPermissionState = notificationPermissionState,
+            onRestoreFromBackup = onRestoreFromBackup,
+            onScreenAction = onScreenAction,
+        )
+    }
+
+    if (uiState.isShowAddNewRecordsBottomSheet) {
+        AddNewRecordBottomSheet(
+            onDismiss = {
+                onScreenAction(
+                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = false,
+                    )
+                )
+            },
+            onAddNewRecord = {
+                onScreenAction(RecordScreenAction.OnAddNewRecord(it))
+                onScreenAction(
+                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                        showAddNewRecordBottomSheet = false,
+                    )
+                )
+            }
+        )
+    }
+}
+
+/**
+ * The body of the records screen: loader, one of the two empty states, or the filtered list.
+ * Split out of [RecordsScreen] only so the scaffold padding can be applied to it as a unit while
+ * the bottom sheet, which is a window of its own, stays outside the padded area.
+ */
+@Composable
+private fun RecordsContent(
     uiState: RecordsUiState,
     notificationPermissionState: NotificationPermissionState,
     onRestoreFromBackup: () -> Unit,
@@ -273,26 +319,6 @@ internal fun RecordsScreen(
                 }
             )
         }
-    }
-
-    if (uiState.isShowAddNewRecordsBottomSheet) {
-        AddNewRecordBottomSheet(
-            onDismiss = {
-                onScreenAction(
-                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
-                        showAddNewRecordBottomSheet = false
-                    )
-                )
-            },
-            onAddNewRecord = {
-                onScreenAction(RecordScreenAction.OnAddNewRecord(it))
-                onScreenAction(
-                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
-                        showAddNewRecordBottomSheet = false
-                    )
-                )
-            }
-        )
     }
 }
 

@@ -7,16 +7,12 @@ import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.andryoga.safebox.ui.core.TopAppBarConfig
-import com.andryoga.safebox.ui.core.TopBarState
 import com.andryoga.safebox.ui.loading.LoadingState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -33,9 +29,6 @@ class MainViewModel @Inject constructor(
     activeSessionManager: ActiveSessionManager,
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
 ) : ViewModel() {
-    private val _topBarState = MutableStateFlow<TopBarState>(TopBarState.Hidden)
-    val topBarState = _topBarState.asStateFlow()
-
     val isBackupPathSet: StateFlow<Boolean> = backupMetadataRepository.getBackupMetadata().map {
         it != null
     }.stateIn(
@@ -78,18 +71,4 @@ class MainViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = true
     )
-
-    /**
-     * A screen calls this to configure and show the top bar.
-     */
-    fun updateTopBar(config: TopAppBarConfig) {
-        _topBarState.value = TopBarState.Visible(config)
-    }
-
-    /**
-     * The helper method for screens to opt-out of showing a top bar.
-     */
-    fun hideTopBar() {
-        _topBarState.value = TopBarState.Hidden
-    }
 }
