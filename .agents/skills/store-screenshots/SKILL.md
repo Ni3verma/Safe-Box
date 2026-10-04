@@ -91,17 +91,23 @@ scene whose tour step broke after a UI change while the others still work.
    screenshots are. Anything else is refused (`… is 1080x2340; the pixel_8 frame takes 1080x2400
    captures`); do not resize, add a frame for that device instead (Android Studio device art into
    `scripts/store-screenshots/frames/<name>/`, then `"frame"` in `theme.json`).
-2. For the same status bar as the tour's captures, put the phone in SystemUI demo mode first:
+2. For the same status bar as the tour's captures, put the phone in SystemUI demo mode first. These
+   are the broadcasts `apply_demo_status_bar` in `scripts/take-store-screenshots.sh` sends; if the
+   two ever differ, the script is right:
    ```bash
    adb shell settings put global sysui_demo_allowed 1
    adb shell am broadcast -a com.android.systemui.demo -e command enter
    adb shell am broadcast -a com.android.systemui.demo -e command clock -e hhmm 1000
    adb shell am broadcast -a com.android.systemui.demo -e command battery -e level 100 -e plugged false
-   adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 -e mobile show -e level 4 -e datatype none
+   adb shell am broadcast -a com.android.systemui.demo -e command network -e wifi show -e level 4 -e fully true
+   adb shell am broadcast -a com.android.systemui.demo -e command network -e mobile show -e datatype none -e level 4 -e slot 0
    adb shell am broadcast -a com.android.systemui.demo -e command notifications -e visible false
+   adb shell am broadcast -a com.android.systemui.demo -e command status -e volume hide -e bluetooth hide -e location hide -e alarm hide -e sync hide -e tty hide -e eri hide -e mute hide -e speakerphone hide
    # take the screenshot, then:
    adb shell am broadcast -a com.android.systemui.demo -e command exit
    ```
+   Light or dark is `adb shell cmd uimode night no|yes`; a Material You seed is the secure setting
+   `pin_palette` writes, which is simpler to copy from the script than to retype.
 3. Drop it in as `screenshots/raw/<name>.png` (`[A-Za-z0-9_-]+`; the `-light` / `-dark` suffix is a
    convention, not a rule) and name it in a scene's `captures` in `scenes.json`.
 4. `scripts/take-store-screenshots.sh --render-only`.
