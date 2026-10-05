@@ -1,18 +1,20 @@
 package com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircleOutline
-import androidx.compose.material.icons.filled.Downloading
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,7 +40,12 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.InAppReviewSource
+import com.andryoga.safebox.ui.core.motion.MotionTokens
+import com.andryoga.safebox.ui.core.motion.fadeThrough
+import com.andryoga.safebox.ui.core.motion.popInSwap
+import com.andryoga.safebox.ui.core.motion.rememberRejectShake
 import com.andryoga.safebox.ui.utils.findActivity
+import kotlinx.coroutines.delay
 
 @Composable
 fun NewBackupOrRestoreScreen(
@@ -86,8 +94,27 @@ private fun NewBackupOrRestoreDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = dialogIconComposable(workflowState),
-        text = dialogBodyText(operation, workflowState, password) { password = it },
+        icon = {
+            // The glyph pops in whenever the dialog changes family (prompt -> progress -> result)
+            // so the outcome of a backup or restore is announced rather than silently swapped.
+            AnimatedContent(
+                targetState = workflowState.iconKind,
+                transitionSpec = { popInSwap() },
+                label = "dialogIcon",
+            ) { kind ->
+                DialogIcon(kind)
+            }
+        },
+        text = {
+            AnimatedContent(
+                targetState = workflowState,
+                contentKey = { it.bodyKey() },
+                transitionSpec = { fadeThrough(withScale = false) using SizeTransform(clip = false) },
+                label = "dialogBody",
+            ) { state ->
+                dialogBodyText(operation, state, password) { password = it }()
+            }
+        },
         confirmButton = confirmButtonComposable(workflowState, onScreenAction, password),
         dismissButton = cancelButtonComposable(workflowState, onDismiss),
         properties = DialogProperties(
@@ -96,56 +123,88 @@ private fun NewBackupOrRestoreDialog(
     )
 }
 
+/**
+ * Visual family of the dialog's status glyph. Several [WorkflowState]s share a glyph, so the icon
+ * slot animates only when the family changes rather than on every state update.
+ */
+private enum class DialogIconKind {
+    PROMPT,
+    WARNING,
+    PROGRESS,
+    SUCCESS,
+    ERROR,
+}
+
+private val WorkflowState.iconKind: DialogIconKind
+    get() = when (this) {
+        WorkflowState.ASK_FOR_PASSWORD -> DialogIconKind.PROMPT
+        WorkflowState.WRONG_PASSWORD -> DialogIconKind.WARNING
+        WorkflowState.IN_PROGRESS -> DialogIconKind.PROGRESS
+        WorkflowState.SUCCESS -> DialogIconKind.SUCCESS
+        WorkflowState.FAILED,
+        WorkflowState.CORRUPT_FILE,
+        WorkflowState.BACKUP_TOO_NEW,
+        WorkflowState.BACKUP_EMPTY,
+        WorkflowState.BACKUP_NOTHING_TO_BACKUP,
+        WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
+        WorkflowState.BACKUP_WRITE_FAILED,
+        WorkflowState.BACKUP_UNKNOWN_ERROR,
+        -> DialogIconKind.ERROR
+    }
+
+/**
+ * Identity of the dialog body for its `AnimatedContent`: the password prompt is one body whether or
+ * not it is currently flagging an error, so a rejected password re-enters the same text field
+ * instead of fading a fresh one in. Every other state has a body of its own.
+ */
+private fun WorkflowState.bodyKey(): Any = when (this) {
+    WorkflowState.ASK_FOR_PASSWORD,
+    WorkflowState.WRONG_PASSWORD,
+    WorkflowState.FAILED,
+    -> PASSWORD_BODY_KEY
+    else -> this
+}
+
+private const val PASSWORD_BODY_KEY = "password"
+
 @Composable
-private fun dialogIconComposable(
-    workflowState: WorkflowState,
-): @Composable (() -> Unit) {
+private fun DialogIcon(kind: DialogIconKind) {
     val modifier = Modifier.size(50.dp)
-    return {
-        when (workflowState) {
-            WorkflowState.ASK_FOR_PASSWORD -> Icon(
-                Icons.Filled.SettingsBackupRestore,
-                contentDescription = null,
-                modifier = modifier,
-                tint = MaterialTheme.colorScheme.primary
-            )
+    when (kind) {
+        DialogIconKind.PROMPT -> Icon(
+            Icons.Filled.SettingsBackupRestore,
+            contentDescription = null,
+            modifier = modifier,
+            tint = MaterialTheme.colorScheme.primary
+        )
 
-            WorkflowState.WRONG_PASSWORD -> Icon(
-                Icons.Filled.WarningAmber,
-                contentDescription = null,
-                modifier = modifier,
-                tint = MaterialTheme.colorScheme.error
-            )
+        DialogIconKind.WARNING -> Icon(
+            Icons.Filled.WarningAmber,
+            contentDescription = null,
+            modifier = modifier,
+            tint = MaterialTheme.colorScheme.error
+        )
 
-            WorkflowState.IN_PROGRESS -> Icon(
-                Icons.Filled.Downloading,
-                contentDescription = null,
-                modifier = modifier,
-                tint = MaterialTheme.colorScheme.primary
-            )
+        // A live indicator instead of a static "downloading" glyph: the work runs in WorkManager
+        // and can take a while on a large vault, so the dialog should visibly be doing something.
+        DialogIconKind.PROGRESS -> CircularProgressIndicator(
+            modifier = modifier,
+            strokeWidth = 4.dp,
+        )
 
-            WorkflowState.SUCCESS -> Icon(
-                Icons.Filled.CheckCircleOutline,
-                contentDescription = null,
-                modifier = modifier,
-                tint = MaterialTheme.colorScheme.primary
-            )
+        DialogIconKind.SUCCESS -> Icon(
+            Icons.Filled.CheckCircleOutline,
+            contentDescription = null,
+            modifier = modifier,
+            tint = MaterialTheme.colorScheme.primary
+        )
 
-            WorkflowState.FAILED,
-            WorkflowState.CORRUPT_FILE,
-            WorkflowState.BACKUP_TOO_NEW,
-            WorkflowState.BACKUP_EMPTY,
-            WorkflowState.BACKUP_NOTHING_TO_BACKUP,
-            WorkflowState.BACKUP_FOLDER_INACCESSIBLE,
-            WorkflowState.BACKUP_WRITE_FAILED,
-            WorkflowState.BACKUP_UNKNOWN_ERROR,
-            -> Icon(
-                Icons.Filled.ErrorOutline,
-                contentDescription = null,
-                modifier = modifier,
-                tint = MaterialTheme.colorScheme.error
-            )
-        }
+        DialogIconKind.ERROR -> Icon(
+            Icons.Filled.ErrorOutline,
+            contentDescription = null,
+            modifier = modifier,
+            tint = MaterialTheme.colorScheme.error
+        )
     }
 }
 
@@ -325,6 +384,16 @@ fun EnterPasswordView(
     var passwordVisible by remember { mutableStateOf(false) }
     val isError =
         workflowState == WorkflowState.WRONG_PASSWORD || workflowState == WorkflowState.FAILED
+    // Each rejection bumps a counter so the shake replays per attempt. The dialog body reaches
+    // this state by fading through from the progress text, so the shake waits for that fade to
+    // finish rather than playing on a half-transparent field.
+    var rejectedAttempts by remember { mutableIntStateOf(0) }
+    LaunchedEffect(workflowState) {
+        if (workflowState == WorkflowState.WRONG_PASSWORD) {
+            delay(MotionTokens.DURATION_MEDIUM_MS.toLong())
+            rejectedAttempts++
+        }
+    }
     val supportingText: @Composable (() -> Unit)? = if (isError) {
         {
             Text(
@@ -369,6 +438,7 @@ fun EnterPasswordView(
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth()
+                .then(rememberRejectShake(rejectedAttempts))
         )
     }
 }

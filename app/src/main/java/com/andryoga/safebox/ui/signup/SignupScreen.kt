@@ -1,44 +1,26 @@
 package com.andryoga.safebox.ui.signup
 
 import androidx.annotation.VisibleForTesting
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.core.AnimatedCurveBackground
+import com.andryoga.safebox.ui.core.AuthScreenLayout
 import com.andryoga.safebox.ui.core.MandatoryLabelText
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.signup.components.PasswordTextField
@@ -68,38 +50,11 @@ internal fun SignupScreen(
     uiState: SignupUiState,
     screenAction: (SignupScreenAction) -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        AnimatedCurveBackground()
-
-        Text(
-            text = stringResource(R.string.welcome),
-            color = colorScheme.onPrimary,
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 90.dp)
+    AuthScreenLayout(title = stringResource(R.string.welcome)) {
+        SignupCardContent(
+            uiState = uiState,
+            screenAction = screenAction
         )
-
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = colorScheme.surfaceContainerLow
-            ),
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(24.dp)
-                .imePadding()
-        ) {
-            SignupCardContent(
-                uiState = uiState,
-                screenAction = screenAction
-            )
-        }
     }
 }
 
@@ -110,56 +65,35 @@ private fun SignupCardContent(
 ) {
     val focusManager = LocalFocusManager.current
 
-    Column(
+    PasswordTextField(
+        uiState = uiState,
+        screenAction = screenAction,
+        focusManager = focusManager,
+    )
+
+    OutlinedTextField(
+        value = uiState.hint,
+        onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
+        label = { MandatoryLabelText(stringResource(R.string.hint)) },
+        placeholder = { Text(stringResource(R.string.enter_hint)) },
+        singleLine = true,
         modifier = Modifier
-            .padding(20.dp)
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(bottom = 16.dp)
+            .fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = { focusManager.clearFocus() }
+        ),
+    )
+
+    Button(
+        onClick = { screenAction(SignupScreenAction.OnSignupClick) },
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(10.dp),
+        enabled = uiState.isSignupButtonEnabled,
     ) {
-        Icon(
-            imageVector = Icons.Filled.Lock,
-            contentDescription = null,
-            modifier = Modifier
-                .size(80.dp)
-                .background(
-                    color = colorScheme.primary.copy(0.8f),
-                    shape = RoundedCornerShape(percent = 50)
-                )
-                .padding(16.dp),
-            tint = Color.White,
-        )
-
-        PasswordTextField(
-            uiState = uiState,
-            screenAction = screenAction,
-            focusManager = focusManager,
-        )
-
-        OutlinedTextField(
-            value = uiState.hint,
-            onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
-            label = { MandatoryLabelText(stringResource(R.string.hint)) },
-            placeholder = { Text(stringResource(R.string.enter_hint)) },
-            singleLine = true,
-            modifier = Modifier
-                .padding(bottom = 16.dp)
-                .fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(
-                onDone = { focusManager.clearFocus() }
-            ),
-        )
-
-        Button(
-            onClick = { screenAction(SignupScreenAction.OnSignupClick) },
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            enabled = uiState.isSignupButtonEnabled,
-        ) {
-            Text(stringResource(R.string.signup))
-        }
+        Text(stringResource(R.string.signup))
     }
 }
 

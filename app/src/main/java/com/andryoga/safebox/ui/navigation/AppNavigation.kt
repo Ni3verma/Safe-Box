@@ -1,8 +1,11 @@
 package com.andryoga.safebox.ui.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraphBuilder
@@ -15,6 +18,9 @@ import androidx.navigation.navigation
 import com.andryoga.safebox.ui.LoadingRoute
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateHostRoot
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
+import com.andryoga.safebox.ui.core.motion.fadeOverEnter
+import com.andryoga.safebox.ui.core.motion.fadeThroughEnter
+import com.andryoga.safebox.ui.core.motion.fadeThroughExit
 import com.andryoga.safebox.ui.home.HomeRoute
 import com.andryoga.safebox.ui.home.HomeScreen
 import com.andryoga.safebox.ui.loading.LoadingScreenRoot
@@ -37,9 +43,22 @@ fun AppNavigation(
         navController = navController,
         inAppUpdateViewModel = inAppUpdateViewModel,
     )
+    // Every root hop replaces the whole back stack, so push and pop look the same: a fade through.
+    // Loading and the auth screens paint the same gradient, so that hop instead fades the new
+    // screen in over a Loading screen that is held in place: a sequential fade through would dip
+    // to a blank frame between two identical backgrounds, whereas this keeps the gradient solid
+    // and leaves the form's own entrance (see AuthScreenLayout) as the only motion the user sees.
     NavHost(
         navController = navController,
-        startDestination = LoginGraph
+        startDestination = LoginGraph,
+        enterTransition = {
+            if (isLeavingLoading()) fadeOverEnter() else fadeThroughEnter()
+        },
+        exitTransition = {
+            if (isLeavingLoading()) ExitTransition.KeepUntilTransitionsFinished else fadeThroughExit()
+        },
+        popEnterTransition = { fadeThroughEnter() },
+        popExitTransition = { fadeThroughExit() },
     ) {
         loginGraph(navController = navController)
         homeGraph(
@@ -72,6 +91,10 @@ private fun navigateRoot(navController: NavHostController, route: Any) {
         popUpTo(0) { inclusive = true }
     }
 }
+
+/** True while the root `NavHost` is animating away from the Loading screen. */
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.isLeavingLoading(): Boolean =
+    initialState.destination.hasRoute<LoadingRoute>()
 
 private fun NavGraphBuilder.loginGraph(
     navController: NavHostController

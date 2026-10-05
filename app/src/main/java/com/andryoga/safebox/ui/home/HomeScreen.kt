@@ -31,11 +31,11 @@ import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.LocalSnackbarHostState
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateRestartPromptRoot
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
+import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
 import com.andryoga.safebox.ui.home.components.UserAwayDialog
 import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
-import com.andryoga.safebox.ui.home.navigation.HOME_NAV_TRANSITION_DURATION_MS
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
 import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
@@ -115,11 +115,11 @@ fun HomeScreen(
                     // inside them makes it rise from / sink below the edge while its measured
                     // height animates - which is what keeps the content padding continuous.
                     enter = expandVertically(
-                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        animationSpec = tween(MotionTokens.DURATION_MEDIUM_MS),
                         expandFrom = Alignment.Top,
                     ),
                     exit = shrinkVertically(
-                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        animationSpec = tween(MotionTokens.DURATION_MEDIUM_MS),
                         shrinkTowards = Alignment.Top,
                     ),
                 ) {

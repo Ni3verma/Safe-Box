@@ -47,10 +47,11 @@ import com.andryoga.safebox.ui.utils.getTitle
 fun RecordItem(
     item: RecordListItem,
     onRecordClick: (id: Int, recordType: RecordType) -> Unit,
+    modifier: Modifier = Modifier,
     onCopyTotpCode: () -> Unit = {},
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag(TestTags.RECORD_ROW)
             .clickable(

@@ -4,9 +4,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,6 +21,9 @@ import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
+import com.andryoga.safebox.ui.core.CopyIcon
+import com.andryoga.safebox.ui.core.motion.RollingText
+import com.andryoga.safebox.ui.core.rememberCopiedFlag
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.totp.rememberTotpCodeState
@@ -48,6 +48,7 @@ fun TotpBadge(
     val label = stringResource(R.string.totp_code)
     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
     val copyToClipboard = rememberCopyToClipboardAction()
+    val copiedFlag = rememberCopiedFlag()
 
     val totpCodeState = rememberTotpCodeState(config = config, totpGenerator = totpGenerator)
     if (totpCodeState == null) {
@@ -72,7 +73,7 @@ fun TotpBadge(
             strokeWidth = 2.dp,
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(
+        RollingText(
             text = totpCodeState.formattedCode,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.secondary,
@@ -82,11 +83,12 @@ fun TotpBadge(
         IconButton(
             onClick = {
                 copyToClipboard(label, totpCodeState.code, copiedMessage)
+                copiedFlag.markCopied()
                 onCopyClick()
             },
         ) {
-            Icon(
-                imageVector = Icons.Filled.ContentCopy,
+            CopyIcon(
+                isCopied = copiedFlag.isCopied,
                 contentDescription = stringResource(R.string.cd_copy_totp_code),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),

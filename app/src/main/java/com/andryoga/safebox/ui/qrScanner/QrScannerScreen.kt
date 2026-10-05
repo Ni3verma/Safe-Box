@@ -14,6 +14,12 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,10 +65,12 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -456,9 +464,20 @@ fun QrScannerViewfinderContent(
         cameraPreview()
 
         // Viewfinder Cutout Overlay
+        val scanLineTransition = rememberInfiniteTransition(label = "scanLine")
+        val scanLineProgress by scanLineTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(SCAN_LINE_SWEEP_MS, easing = FastOutSlowInEasing),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "scanLineProgress",
+        )
         QrScannerOverlay(
             modifier = Modifier.fillMaxSize(),
             primaryColor = MaterialTheme.colorScheme.primary,
+            scanLineProgress = { scanLineProgress },
         )
 
         // Top Controls Bar
@@ -574,11 +593,15 @@ fun QrScannerViewfinderContent(
 /**
  * Visual viewfinder overlay providing a semi-transparent dark backdrop
  * with a transparent centered cutout and colored border frame.
+ *
+ * @param scanLineProgress Vertical position of the scan line as a fraction of the cutout height,
+ * read during draw so the sweep animates without recomposing the viewfinder.
  */
 @Composable
 private fun QrScannerOverlay(
     modifier: Modifier = Modifier,
     primaryColor: Color,
+    scanLineProgress: () -> Float,
 ) {
     Canvas(
         modifier = modifier.graphicsLayer {
@@ -615,6 +638,37 @@ private fun QrScannerOverlay(
             blendMode = BlendMode.Clear,
         )
 
+        // Scan line: a soft glow sweeping the cutout tells the user the camera is actively
+        // looking, which a static frame over a live preview does not. Clipped to the cutout so
+        // the glow never bleeds onto the mask or the frame border.
+        clipPath(cutoutPath) {
+            val lineY = top + cutoutSize * scanLineProgress()
+            val glowHalfHeight = SCAN_LINE_GLOW_HEIGHT.toPx() / 2f
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        primaryColor.copy(alpha = 0.35f),
+                        Color.Transparent,
+                    ),
+                    startY = lineY - glowHalfHeight,
+                    endY = lineY + glowHalfHeight,
+                ),
+                topLeft = Offset(left, lineY - glowHalfHeight),
+                size = Size(cutoutSize, glowHalfHeight * 2f),
+            )
+            drawLine(
+                brush = Brush.horizontalGradient(
+                    colors = listOf(Color.Transparent, primaryColor, Color.Transparent),
+                    startX = left,
+                    endX = left + cutoutSize,
+                ),
+                start = Offset(left, lineY),
+                end = Offset(left + cutoutSize, lineY),
+                strokeWidth = 2.dp.toPx(),
+            )
+        }
+
         // Target Frame Border
         drawRoundRect(
             color = primaryColor,
@@ -625,6 +679,10 @@ private fun QrScannerOverlay(
         )
     }
 }
+
+/** One top-to-bottom pass of the viewfinder scan line; the sweep reverses at each end. */
+private const val SCAN_LINE_SWEEP_MS = 2200
+private val SCAN_LINE_GLOW_HEIGHT = 28.dp
 
 @LightDarkModePreview
 @Composable
