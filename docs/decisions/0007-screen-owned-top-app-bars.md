@@ -32,8 +32,18 @@ defaults do.
    helper are gone. `MyAppTopAppBar` is a thin slot-based wrapper that keeps the app's colours and
    scroll behaviour in one place.
 2. **The home `NavHost` pins all six transition slots** (`enter`, `exit`, `popEnter`, `popExit`,
-   `predictivePopEnter`, `predictivePopExit`) to the same 700 ms crossfade, so gesture back and
-   button back cannot drift apart again when the library's defaults change.
+   `predictivePopEnter`, `predictivePopExit`) in `HomeNavTransitions`, so gesture back and button
+   back cannot drift apart again when the library's defaults change. The motion follows the
+   Material patterns at the spec timings (300 ms; outgoing fade 90 ms, incoming fade 210 ms after
+   a 90 ms delay): **fade through** (plus a 92% → 100% scale on the incoming screen) between the
+   three bottom-navigation tabs, **shared axis X** (the same fades plus a 30 dp slide, forwards on
+   push and reversed on pop) into and out of a record's detail/create screen and the QR scanner.
+   The predictive slots reuse the pop transitions, so a swipe scrubs the same motion it ends with.
+   The bottom bar's height is animated (`AnimatedVisibility` with `expandVertically` /
+   `shrinkVertically`, top-aligned) over the same 300 ms, so the content area resizes continuously
+   instead of jumping when the bar disappears under a deeper destination. The first landing of
+   this ADR pinned every slot to the previous 700 ms crossfade; the owner asked for the Material
+   version after seeing it.
 3. **The search field is a `TextFieldState` owned by `RecordsViewModel`.** The UI writes into it
    directly; the ViewModel observes it with `snapshotFlow` and feeds that into the existing
    `combine`. No value round-trips through the data pipeline, so the caret cannot be reset by a
@@ -43,9 +53,12 @@ Evidence that it holds (debug build vs. the 2026-10-03 QA control build, same em
 navigation): typing `abcdefghijklmnopqrstuvwxyz0123456789` with `adb shell input text` produced
 `abcdefghimnopqrstuvwxyz0123456789j` on the control and the exact string on the fix; a cancelled
 gesture left the control showing detail content under the home search bar and the fix showing
-`← Login`; a committed gesture scaled the control's detail content toward the centre while the fix
-crossfaded. `RecordsViewModelTest` (34) and `RecordsSearchBarTest` (5, including a caret-at-end
-assertion after appending text) cover the search path on the JVM and on device.
+`← Login` (with the fix's bar nudged 20 px right while held, back at its place after the cancel);
+a committed gesture scaled the control's detail content toward the centre while the fix slid and
+faded it. Frame bursts at `animator_duration_scale 4` show the outgoing screen gone after the first
+three frames (~90 ms), the incoming one fading in over the rest, and the bottom bar's edge moving
+continuously with no end jump. `RecordsViewModelTest` (34) and `RecordsSearchBarTest` (5, including
+a caret-at-end assertion after appending text) cover the search path on the JVM and on device.
 
 ## Alternatives rejected
 
@@ -53,7 +66,9 @@ assertion after appending text) cover the search path on the JVM and on device.
 |---|---|
 | Keep the shared bar but key it by `NavBackStackEntry.id` so a cancelled gesture can restore it | Fixes the stale-state symptom only. The bar still sits outside the `NavHost`, so it cannot scrub with the gesture, and with the 2.10 defaults the screen would scale down under a static bar — which is exactly what looked broken in bug 2. |
 | Pin only `predictivePopExit`/`predictivePopEnter` and keep the shared bar | Same objection; also leaves bug 3 unfixed because `prepareForTransition` fires `ON_START` regardless of which animation is used. |
-| Adopt the platform-style scale-down for gesture back instead of pinning it to the crossfade | Viable now that every screen is opaque with its own bar, but the owner approved the rc3 look. Switching later is a two-line change: drop the two `predictivePop*` pins in `HomeScreen.kt`. |
+| Keep the 700 ms crossfade for everything | 700 ms is Material's *extra-long* tier, meant for large expressive transforms; as a plain fade it reads as lag, and tabs and hierarchy look identical. The owner chose the Material version after seeing both. |
+| Platform-style predictive back (leaving screen scales down and tracks the finger, previous screen revealed beneath) | That is the look reported as bug 2 — "collapses in the centre with both screens visible" — and the owner rejected it. Shared axis X keeps the gesture scrubbable without the shrink. |
+| Container transform from the record row into the detail screen | Needs shared-element transitions across a collapsing top bar and a `LazyColumn`; fragile for the benefit. |
 | Module-wide `-opt-in=androidx.compose.material3.ExperimentalMaterial3Api` compiler flag | Would hide which call sites depend on experimental API. `MyAppTopAppBar` and `RecordsTopAppBar` expose `TopAppBarScrollBehavior` in their signatures, so they carry `@ExperimentalMaterial3Api` and each caller opts in locally. |
 | Debounce or `distinctUntilChanged` the search value flow | Treats the symptom; any asynchronous write-back into a value-based `TextField` can still land between two keystrokes. `TextFieldState` is the Compose-recommended model for exactly this reason. |
 
@@ -67,5 +82,9 @@ assertion after appending text) cover the search path on the JVM and on device.
 - JVM tests that drive a `TextFieldState` must call `Snapshot.sendApplyNotifications()` after
   mutating it, or `snapshotFlow` never emits — nothing on the JVM sends global-snapshot apply
   notifications. See [testing-strategy.md](../testing/testing-strategy.md#principles).
-- Future Dependabot bumps of `navigation-compose` cannot silently change the home graph's back
-  animation; a change there is now a deliberate edit to `HomeScreen.kt`.
+- Future Dependabot bumps of `navigation-compose` cannot silently change the home graph's motion;
+  a change there is now a deliberate edit to `HomeNavTransitions.kt`.
+- A new destination gets the right pattern automatically: anything that is not one of the three
+  tabs (`isHomeTopLevelRoute()`) is treated as hierarchical and also hides the bottom bar.
+- The ADR title keeps its original scope; the motion decision lives here because it was made in
+  the same change and shares the same evidence.

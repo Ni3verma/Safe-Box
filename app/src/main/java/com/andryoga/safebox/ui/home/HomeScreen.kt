@@ -1,11 +1,9 @@
 package com.andryoga.safebox.ui.home
 
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,11 +17,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -37,7 +33,10 @@ import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
 import com.andryoga.safebox.ui.home.components.UserAwayDialog
 import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
+import com.andryoga.safebox.ui.home.navigation.HOME_NAV_TRANSITION_DURATION_MS
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
+import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
+import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
 import com.andryoga.safebox.ui.home.records.RecordsScreenRoot
 import com.andryoga.safebox.ui.home.settings.SettingsScreenRoot
 import com.andryoga.safebox.ui.qrScanner.QrScannerRoute
@@ -46,25 +45,6 @@ import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
 import kotlinx.serialization.Serializable
 import timber.log.Timber
-
-private const val NAV_TRANSITION_DURATION_MS = 700
-
-/**
- * Every navigation inside the home graph is a crossfade, and a predictive back gesture scrubs
- * that same crossfade instead of the library's own gesture animation.
- *
- * Navigation Compose 2.10 gave the gesture separate defaults (`scaleOut(0.7f)` for the leaving
- * screen, a spring fade for the returning one), so a `NavHost` that only pins the four button-driven
- * slots still changes look whenever the library's defaults do. All six slots are pinned here so the
- * two back paths cannot drift apart again.
- */
-private val homeEnterTransition:
-    AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition =
-    { fadeIn(animationSpec = tween(NAV_TRANSITION_DURATION_MS)) }
-
-private val homeExitTransition:
-    AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition =
-    { fadeOut(animationSpec = tween(NAV_TRANSITION_DURATION_MS)) }
 
 /**
  * This is home Nav graph container with Records screen as the start destination.
@@ -75,6 +55,10 @@ private val homeExitTransition:
  * Window insets are therefore left to the destinations: this scaffold passes none down and the
  * `NavHost` consumes whatever the bottom bar occupies, so a destination's own scaffold or inset
  * modifiers see only what is still unhandled.
+ *
+ * Screen-to-screen motion is defined in [rememberHomeNavTransitions]; the bottom bar slides below
+ * the screen edge over the same duration when a deeper destination opens, so the content area
+ * resizes smoothly instead of jumping when the bar disappears.
  *
  * @param onExitHomeNavGraph: this lambda is called when home nav graph will be exited. Clients need
  * to handle this callback and navigate to appropriate screen
@@ -89,7 +73,8 @@ fun HomeScreen(
     val mainViewModel = hiltViewModel<MainViewModel>()
 
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
-    val isBottomBarVisible = isUserOnHomeRouteScreen(currentDestination)
+    val isBottomBarVisible = currentDestination.isHomeTopLevelRoute()
+    val transitions = rememberHomeNavTransitions()
 
     val globalSnackbarHostState = remember { SnackbarHostState() }
 
@@ -115,7 +100,20 @@ fun HomeScreen(
     CompositionLocalProvider(LocalSnackbarHostState provides globalSnackbarHostState) {
         Scaffold(
             bottomBar = {
-                if (isBottomBarVisible) {
+                AnimatedVisibility(
+                    visible = isBottomBarVisible,
+                    // The scaffold pins these bounds to the bottom edge, so top-aligning the bar
+                    // inside them makes it rise from / sink below the edge while its measured
+                    // height animates - which is what keeps the content padding continuous.
+                    enter = expandVertically(
+                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        expandFrom = Alignment.Top,
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        shrinkTowards = Alignment.Top,
+                    ),
+                ) {
                     BottomNavBar(nestedNavController, isBackupPathSet)
                 }
             },
@@ -135,12 +133,12 @@ fun HomeScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding),
-                enterTransition = homeEnterTransition,
-                exitTransition = homeExitTransition,
-                popEnterTransition = homeEnterTransition,
-                popExitTransition = homeExitTransition,
-                predictivePopEnterTransition = { homeEnterTransition() },
-                predictivePopExitTransition = { homeExitTransition() },
+                enterTransition = transitions.enter,
+                exitTransition = transitions.exit,
+                popEnterTransition = transitions.popEnter,
+                popExitTransition = transitions.popExit,
+                predictivePopEnterTransition = { transitions.popEnter(this) },
+                predictivePopExitTransition = { transitions.popExit(this) },
             ) {
                 composable<HomeRouteType.RecordRoute> {
                     RecordsScreenRoot(
@@ -207,13 +205,6 @@ fun HomeScreen(
             }
         }
     }
-}
-
-private fun isUserOnHomeRouteScreen(currentDestination: NavDestination?): Boolean {
-    return currentDestination?.run {
-        hasRoute<HomeRouteType.RecordRoute>() || hasRoute<HomeRouteType.BackupAndRestoreRoute>() ||
-                hasRoute<HomeRouteType.SettingsRoute>()
-    } ?: false
 }
 
 /**
