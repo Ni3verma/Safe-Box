@@ -103,7 +103,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 ## Testing
 
 - Unit tests: `app/src/test` — run with `:app:testDebugUnitTest`.
-- Instrumentation: `app/src/androidTest`, ~199 tests across ~29 classes, **debug build only**
+- Instrumentation: `app/src/androidTest`, **debug build only**
   (see [ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
 - Runner is `com.andryoga.safebox.CustomHiltTestRunner`; test Application is `BaseTestApplication`.
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
@@ -116,6 +116,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
   `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See
   [upgrade-testing.md](../docs/testing/upgrade-testing.md).
+- In-app updates are `release`-only (`IN_APP_UPDATE_ENABLED`, 2026-09-28); every androidTest gets
+  Play's `FakeAppUpdateManager` via `FakeAppUpdateModule`. [Design](../docs/architecture/in-app-updates.md)
 
 Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md)
 
@@ -142,8 +144,6 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
-- **`CICD/cicd.gradle` is orphaned** (`331ee64`): no `detekt` task, no hook-install tasks. Detail:
-  [skills/build-and-test/SKILL.md](skills/build-and-test/SKILL.md#git-hooks). Verified 2026-09-21.
 - Adding any new Android module: a subproject can only `alias(libs.plugins.android.*)` if the
   **root `build.gradle` also declares it `apply false`**. Otherwise Gradle fails with "the plugin is
   already on the classpath with an unknown version", because AGP arrives a second time via the root

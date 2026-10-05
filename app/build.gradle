@@ -42,6 +42,10 @@ android {
         println "Building SafeBox: ${versionName} (${versionCode})"
 
         testInstrumentationRunner "com.andryoga.safebox.CustomHiltTestRunner"
+
+        // Play in-app updates can only succeed for the applicationId installed from Play, so every
+        // build type is off unless it opts in. Only release does. See docs/architecture/in-app-updates.md
+        buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
     }
 
     signingConfigs {
@@ -105,11 +109,13 @@ android {
             ndk {
                 debugSymbolLevel = "FULL"
             }
+            buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "true"
         }
         qa {
             initWith(buildTypes["release"])
             applicationIdSuffix ".qa"
             signingConfig signingConfigs.qa
+            buildConfigField "boolean", "IN_APP_UPDATE_ENABLED", "false"
             /**
              * The launcher and biometric-sheet label. "Safe Box QA" tells a QA install apart from
              * the production app installed beside it. The store screenshots are photographed from
@@ -191,6 +197,7 @@ dependencies {
     implementation libs.kotlinx.serialization.json
     implementation libs.biometric
     implementation libs.bundles.play.review
+    implementation libs.bundles.play.app.update
     implementation libs.data.store.pref
     implementation libs.bundles.camera
 

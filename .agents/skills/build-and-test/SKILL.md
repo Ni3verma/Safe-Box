@@ -108,8 +108,9 @@ tar xzf lychee.tar.gz && ./lychee-aarch64-apple-darwin/lychee --version
 
 ## Git hooks
 
-`CICD/cicd.gradle` is orphaned, so the `copyGitHooks` / `installGitHooks` tasks do not exist and
-nothing installs the hook for you:
+`CICD/cicd.gradle` is orphaned (`331ee64`, verified 2026-09-21): nothing applies it, so there is no
+`detekt` task, and the `copyGitHooks` / `installGitHooks` tasks do not exist. Nothing installs the
+hook for you:
 
 ```bash
 cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
@@ -293,6 +294,13 @@ task, that block needs updating or Hilt's generated test sources go missing.
 
 Unmocked Android framework calls return defaults instead of throwing in unit tests. Convenient, but
 it means a unit test can pass while doing nothing. Prefer asserting on observable state.
+
+### `FakeAppUpdateModule` applies to every instrumentation test
+
+Every androidTest runs over Play's `FakeAppUpdateManager`, which reports no update until a test
+sets one. Driving it has three traps (main thread, a persisted prompted-version pref, and no
+consent result ever arriving); see
+[in-app-updates.md](../../../docs/architecture/in-app-updates.md#driving-the-fake-in-instrumentation-tests).
 
 ## Selector strategy for UI tests
 
