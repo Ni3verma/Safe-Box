@@ -10,9 +10,6 @@ import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.andryoga.safebox.ui.core.ScrollBehaviorType
-import com.andryoga.safebox.ui.core.TopAppBarConfig
-import com.andryoga.safebox.ui.core.TopBarState
 import com.andryoga.safebox.ui.loading.LoadingState
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
@@ -161,43 +158,6 @@ class MainViewModelTest {
             assertThat(awaitItem()).isFalse()
             isPrivacyEnabledFlow.emit(true) // changed
             assertThat(awaitItem()).isTrue()
-        }
-    }
-
-    @Test
-    fun `updateTopBar updates the state to visible`() = runTest {
-        val topAppBarConfig = TopAppBarConfig({}, {}, {})
-        viewModel.topBarState.test {
-            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
-            viewModel.updateTopBar(topAppBarConfig)
-            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
-        }
-    }
-
-    @Test
-    fun `updateTopBar updates the state second time`() = runTest {
-        val topAppBarConfig = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.NONE)
-        val topAppBarConfigNew = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.ENTER_ALWAYS)
-
-        viewModel.topBarState.test {
-            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
-            viewModel.updateTopBar(topAppBarConfig)
-            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
-            viewModel.updateTopBar(topAppBarConfigNew)
-            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfigNew))
-        }
-    }
-
-    @Test
-    fun `hideTopBar updates the state to hidden`() = runTest {
-        val topAppBarConfig = TopAppBarConfig({}, {}, {}, ScrollBehaviorType.NONE)
-
-        viewModel.topBarState.test {
-            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
-            viewModel.updateTopBar(topAppBarConfig)
-            assertThat(awaitItem()).isEqualTo(TopBarState.Visible(topAppBarConfig))
-            viewModel.hideTopBar()
-            assertThat(awaitItem()).isEqualTo(TopBarState.Hidden)
         }
     }
 }

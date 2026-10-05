@@ -2,6 +2,8 @@
 
 package com.andryoga.safebox.ui.home.records
 
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.runtime.snapshots.Snapshot
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
@@ -281,7 +283,7 @@ class RecordsViewModelTest {
             awaitItem()
             setupAndEmitDefaultRecords()
 
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("login 1"))
+            typeSearchText("login 1")
             advanceUntilIdle()
 
             val lastState = expectMostRecentItem()
@@ -343,7 +345,7 @@ class RecordsViewModelTest {
 
             // Filter by NOTE, but search for "2" which exists in both NOTE and other types
             viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.NOTE))
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("note 2"))
+            typeSearchText("note 2")
             advanceUntilIdle()
 
             val lastState = expectMostRecentItem()
@@ -364,7 +366,7 @@ class RecordsViewModelTest {
             awaitItem()
             setupAndEmitDefaultRecords()
 
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("non existent test search string"))
+            typeSearchText("non existent test search string")
             advanceUntilIdle()
 
             val lastState = expectMostRecentItem()
@@ -419,7 +421,7 @@ class RecordsViewModelTest {
                 awaitItem()
                 setupAndEmitEmptyRecords()
 
-                viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("search text"))
+                typeSearchText("search text")
                 advanceUntilIdle()
 
                 val lastState = expectMostRecentItem()
@@ -460,10 +462,10 @@ class RecordsViewModelTest {
             viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.BANK_ACCOUNT))
 
             // Apply first search string
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("Account 1"))
+            typeSearchText("Account 1")
 
             // Apply second search string
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("Account 2"))
+            typeSearchText("Account 2")
             advanceUntilIdle()
 
             val lastState = expectMostRecentItem()
@@ -487,7 +489,7 @@ class RecordsViewModelTest {
             setupAndEmitEmptyRecords()
 
             // 2. User searches for "Login 1", but DB is empty
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("Login 1"))
+            typeSearchText("Login 1")
             advanceUntilIdle()
 
             var lastState = expectMostRecentItem()
@@ -522,7 +524,7 @@ class RecordsViewModelTest {
             setupAndEmitDefaultRecords() // Emits 8 records
 
             // 1. Add Search text
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("Login 1"))
+            typeSearchText("Login 1")
             advanceUntilIdle()
 
             var lastState = expectMostRecentItem()
@@ -530,10 +532,11 @@ class RecordsViewModelTest {
             assertThat(lastState.records).hasSize(1) // Only matches 1 record
 
             // 2. Clear Search text
-            viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate(""))
+            clearSearchText()
             advanceUntilIdle()
 
             lastState = expectMostRecentItem()
+            assertThat(viewModel.searchTextState.text.toString()).isEmpty()
             assertThat(lastState.totalDbRecords).isEqualTo(8)
             assertThat(lastState.searchText).isEmpty()
 
@@ -584,7 +587,7 @@ class RecordsViewModelTest {
 
                 // 1. Initial State: DB has 8 records. User filters by BANK_ACCOUNT and searches "Account 1"
                 viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.BANK_ACCOUNT))
-                viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("Account 1"))
+                typeSearchText("Account 1")
                 advanceUntilIdle()
 
                 var lastState = expectMostRecentItem()
@@ -601,7 +604,7 @@ class RecordsViewModelTest {
                 // 3. User realizes screen is empty, changes category filter to CARD and clears text
                 viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.BANK_ACCOUNT)) // Unselects BANK_ACCOUNT
                 viewModel.onScreenAction(RecordScreenAction.OnToggleRecordTypeFilter(RecordType.CARD)) // Selects CARD
-                viewModel.onScreenAction(RecordScreenAction.OnSearchTextUpdate("")) // Clears Text
+                clearSearchText() // Clears Text
                 advanceUntilIdle()
 
                 lastState = expectMostRecentItem()
@@ -894,6 +897,23 @@ class RecordsViewModelTest {
         cardDataFlow.emit(emptyList())
         authenticatorDataFlow.emit(emptyList())
         advanceUntilIdle()
+    }
+
+    /**
+     * Mimics the user typing into the search field. The VM observes [RecordsViewModel.searchTextState]
+     * through `snapshotFlow`, which is only notified once a snapshot is applied. On a device the
+     * Compose runtime does that every frame; on the JVM nothing does, so send the notifications by
+     * hand or the flow never sees the write.
+     */
+    private fun typeSearchText(text: String) {
+        viewModel.searchTextState.setTextAndPlaceCursorAtEnd(text)
+        Snapshot.sendApplyNotifications()
+    }
+
+    /** Clears the field through the screen action, see [typeSearchText] for the snapshot flush. */
+    private fun clearSearchText() {
+        viewModel.onScreenAction(RecordScreenAction.OnClearSearchText)
+        Snapshot.sendApplyNotifications()
     }
 
     private fun getExpectedDefaultRecords(): List<RecordListItem> = listOf(

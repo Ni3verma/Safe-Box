@@ -1,23 +1,25 @@
 package com.andryoga.safebox.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavDestination
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -27,16 +29,16 @@ import androidx.navigation.compose.rememberNavController
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.LocalSnackbarHostState
-import com.andryoga.safebox.ui.core.MyAppTopAppBar
-import com.andryoga.safebox.ui.core.ScrollBehaviorType
-import com.andryoga.safebox.ui.core.TopBarState
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateRestartPromptRoot
 import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
 import com.andryoga.safebox.ui.home.components.UserAwayDialog
 import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
+import com.andryoga.safebox.ui.home.navigation.HOME_NAV_TRANSITION_DURATION_MS
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
+import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
+import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
 import com.andryoga.safebox.ui.home.records.RecordsScreenRoot
 import com.andryoga.safebox.ui.home.settings.SettingsScreenRoot
 import com.andryoga.safebox.ui.qrScanner.QrScannerRoute
@@ -48,12 +50,23 @@ import timber.log.Timber
 
 /**
  * This is home Nav graph container with Records screen as the start destination.
+ *
+ * The scaffold here owns only what is shared across destinations: the bottom navigation bar and
+ * the global snackbar host. Each destination composes its own `Scaffold` with its own top app bar,
+ * so the bar is part of the destination content and animates (including predictive back) with it.
+ * Window insets are therefore left to the destinations: this scaffold passes none down and the
+ * `NavHost` consumes whatever the bottom bar occupies, so a destination's own scaffold or inset
+ * modifiers see only what is still unhandled.
+ *
+ * Screen-to-screen motion is defined in [rememberHomeNavTransitions]; the bottom bar slides below
+ * the screen edge over the same duration when a deeper destination opens, so the content area
+ * resizes smoothly instead of jumping when the bar disappears.
+ *
  * @param inAppUpdateViewModel: activity-scoped ViewModel shared with the app-level update host,
  * so the restart snackbar reflects the same update state
  * @param onExitHomeNavGraph: this lambda is called when home nav graph will be exited. Clients need
  * to handle this callback and navigate to appropriate screen
  * */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     inAppUpdateViewModel: InAppUpdateViewModel,
@@ -64,24 +77,11 @@ fun HomeScreen(
     val currentDestination = navBackStackEntry?.destination
     val mainViewModel = hiltViewModel<MainViewModel>()
 
-    val enterAlwaysScrollBehavior =
-        TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val exitUntilCollapsedScrollBehavior =
-        TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-
-    val topBarState by mainViewModel.topBarState.collectAsState()
-    val currentConfig = (topBarState as? TopBarState.Visible)?.config
-
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
+    val isBottomBarVisible = currentDestination.isHomeTopLevelRoute()
+    val transitions = rememberHomeNavTransitions()
 
     val globalSnackbarHostState = remember { SnackbarHostState() }
-
-    // Use a 'when' block to select the BEHAVIOR and its CONNECTION for the current screen.
-    val (scrollBehavior, nestedScrollConnection) = when (currentConfig?.scrollBehaviorType) {
-        ScrollBehaviorType.ENTER_ALWAYS -> enterAlwaysScrollBehavior to enterAlwaysScrollBehavior.nestedScrollConnection
-        ScrollBehaviorType.EXIT_UNTIL_COLLAPSED -> exitUntilCollapsedScrollBehavior to exitUntilCollapsedScrollBehavior.nestedScrollConnection
-        else -> null to object : NestedScrollConnection {} // For NONE or when hidden
-    }
 
     LaunchedEffect(nestedNavController) {
         nestedNavController.currentBackStackEntryFlow.collect { backStackEntry ->
@@ -108,30 +108,49 @@ fun HomeScreen(
             snackbarHostState = globalSnackbarHostState,
         )
         Scaffold(
-            topBar = {
-                if (currentConfig != null) {
-                    MyAppTopAppBar(
-                        config = currentConfig,
-                        scrollBehavior = scrollBehavior
-                    )
-                }
-            },
             bottomBar = {
-                if (isUserOnHomeRouteScreen(currentDestination)) {
+                AnimatedVisibility(
+                    visible = isBottomBarVisible,
+                    // The scaffold pins these bounds to the bottom edge, so top-aligning the bar
+                    // inside them makes it rise from / sink below the edge while its measured
+                    // height animates - which is what keeps the content padding continuous.
+                    enter = expandVertically(
+                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        expandFrom = Alignment.Top,
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = tween(HOME_NAV_TRANSITION_DURATION_MS),
+                        shrinkTowards = Alignment.Top,
+                    ),
+                ) {
                     BottomNavBar(nestedNavController, isBackupPathSet)
                 }
             },
-            snackbarHost = { SnackbarHost(globalSnackbarHostState) },
-            modifier = Modifier.nestedScroll(nestedScrollConnection)
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = globalSnackbarHostState,
+                    // Scaffold lifts the snackbar above the bottom bar; without one it would sit
+                    // under the system navigation bar because this scaffold handles no insets.
+                    modifier = if (isBottomBarVisible) Modifier else Modifier.navigationBarsPadding(),
+                )
+            },
+            contentWindowInsets = WindowInsets(0),
         ) { innerPadding ->
             NavHost(
                 navController = nestedNavController,
                 startDestination = HomeRouteType.RecordRoute,
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding),
+                enterTransition = transitions.enter,
+                exitTransition = transitions.exit,
+                popEnterTransition = transitions.popEnter,
+                popExitTransition = transitions.popExit,
+                predictivePopEnterTransition = { transitions.popEnter(this) },
+                predictivePopExitTransition = { transitions.popExit(this) },
             ) {
                 composable<HomeRouteType.RecordRoute> {
                     RecordsScreenRoot(
-                        mainViewModel = mainViewModel,
                         onAddNewRecord = { recordType ->
                             if (recordType == RecordType.AUTHENTICATOR) {
                                 nestedNavController.navigate(route = QrScannerRoute)
@@ -163,18 +182,13 @@ fun HomeScreen(
                     )
                 }
                 composable<HomeRouteType.BackupAndRestoreRoute> {
-                    BackupAndRestoreScreenRoot(
-                        mainViewModel = mainViewModel
-                    )
+                    BackupAndRestoreScreenRoot()
                 }
                 composable<HomeRouteType.SettingsRoute> {
-                    SettingsScreenRoot(
-                        mainViewModel = mainViewModel
-                    )
+                    SettingsScreenRoot()
                 }
                 composable<QrScannerRoute> {
                     QrScannerScreenRoot(
-                        mainViewModel = mainViewModel,
                         onQrCodeScanned = {
                             nestedNavController.navigateToNewAuthenticatorRecord()
                         },
@@ -188,7 +202,6 @@ fun HomeScreen(
                 }
                 composable<SingleRecordScreenRoute> {
                     SingleRecordScreenRoot(
-                        mainViewModel = mainViewModel,
                         onScreenClose = {
                             Timber.i("single record screen closure callback")
                             nestedNavController.popBackStack()
@@ -201,13 +214,6 @@ fun HomeScreen(
             }
         }
     }
-}
-
-private fun isUserOnHomeRouteScreen(currentDestination: NavDestination?): Boolean {
-    return currentDestination?.run {
-        hasRoute<HomeRouteType.RecordRoute>() || hasRoute<HomeRouteType.BackupAndRestoreRoute>() ||
-                hasRoute<HomeRouteType.SettingsRoute>()
-    } ?: false
 }
 
 /**

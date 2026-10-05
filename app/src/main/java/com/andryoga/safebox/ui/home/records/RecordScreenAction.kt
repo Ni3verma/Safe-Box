@@ -3,7 +3,11 @@ package com.andryoga.safebox.ui.home.records
 import com.andryoga.safebox.domain.models.record.RecordType
 
 sealed interface RecordScreenAction {
-    data class OnSearchTextUpdate(val searchText: String) : RecordScreenAction
+    /**
+     * User tapped the clear icon in the search bar. Typing itself is not an action: the search
+     * field edits `RecordsViewModel.searchTextState` directly.
+     */
+    data object OnClearSearchText : RecordScreenAction
     data class OnUpdateShowAddNewRecordBottomSheet(val showAddNewRecordBottomSheet: Boolean) :
         RecordScreenAction
 

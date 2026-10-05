@@ -232,6 +232,19 @@ emulator -avd <name> -wipe-data -partition-size 8192
 
 A fresh wipe sits at ~641 MB used.
 
+### A manually granted camera permission fails the scanner tests
+
+The test install is `-r`, so a runtime grant the package already holds survives it. Camera granted
+by hand to `com.andryoga.safebox.debug` makes every `AddNewRecordFlowsE2ETest` case that passes
+through `openQrScannerAndDismissRationale` time out after 25 s: `QrScannerScreen` shows the
+rationale dialog only when `checkSelfPermission` is *not* granted, so the test sees a live preview
+instead. Observed 2026-10-04 — 5 failures in a 215-test run, all green on a clean install. Revoke
+before the first run after manual testing (Gradle uninstalls at the end, so later runs are clean):
+
+```bash
+adb shell pm revoke com.andryoga.safebox.debug android.permission.CAMERA
+```
+
 ### Two adb binaries kill each other's server mid-run
 
 On this machine `adb` on `PATH` is `/usr/local/bin/adb` (37.0.0), while Android Studio uses

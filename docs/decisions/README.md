@@ -13,7 +13,8 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 | [0004](0004-verify-upgrade-and-restore-by-decoded-backup.md) | Verify upgrade and restore by decoded backup comparison | Accepted |
 | [0005](0005-qr-decoding-with-zxing-core.md) | QR codes are decoded with ZXing `core`, not ML Kit | Accepted |
 | [0006](0006-store-screenshots-from-emulator-captures.md) | Store screenshots are composited from emulator captures of the real app | Accepted |
-| [0007](0007-in-app-updates-flexible-only.md) | In-app updates use the FLEXIBLE flow only, with a lock-aware restart | Accepted |
+| [0007](0007-screen-owned-top-app-bars.md) | Top app bars are owned by each screen's `Scaffold`; the home `NavHost` pins all six transitions | Accepted |
+| [0008](0008-in-app-updates-flexible-only.md) | In-app updates use the FLEXIBLE flow only, with a lock-aware restart | Accepted |
 
 ## Format
 

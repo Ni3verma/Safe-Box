@@ -1,4 +1,4 @@
-# 7. In-app updates use the FLEXIBLE flow only, with a lock-aware restart
+# 8. In-app updates use the FLEXIBLE flow only, with a lock-aware restart
 
 Date: 2026-09-28
 

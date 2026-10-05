@@ -78,13 +78,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.andryoga.safebox.R
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpUriError
-import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.qrScanner.components.CameraPermissionRationaleDialog
 import com.andryoga.safebox.ui.qrScanner.components.UnsupportedQrCodeDialog
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.OnResume
-import com.andryoga.safebox.ui.utils.OnStart
 import com.andryoga.safebox.ui.utils.findActivity
 import com.andryoga.safebox.ui.utils.openAppSettings
 import timber.log.Timber
@@ -94,7 +92,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Entry composable for the QR Code Scanner screen.
  *
- * @param mainViewModel Shared view model owning the app bar state for the home nav graph.
+ * The scanner is a full-bleed viewfinder and deliberately has no app bar; it applies the status
+ * and navigation bar insets itself inside [QrScannerViewfinderContent].
+ *
  * @param onQrCodeScanned Callback invoked once a usable TOTP QR code has been scanned and handed
  * to [ScannedTotpHolder]. The parsed payload is deliberately not passed here so the seed never
  * reaches the navigation layer.
@@ -103,17 +103,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 @Composable
 fun QrScannerScreenRoot(
-    mainViewModel: MainViewModel,
     onQrCodeScanned: () -> Unit,
     onEnterKeyManually: () -> Unit,
     onClose: () -> Unit,
 ) {
     val viewModel = hiltViewModel<QrScannerViewModel>()
     val uiState by viewModel.uiState.collectAsState()
-
-    OnStart {
-        mainViewModel.hideTopBar()
-    }
 
     QrScannerScreen(
         uiState = uiState,

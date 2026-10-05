@@ -1,7 +1,12 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.andryoga.safebox.ui.home.records.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
@@ -14,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,30 +29,48 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
-import com.andryoga.safebox.ui.core.ScrollBehaviorType
-import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.home.records.RecordScreenAction
-import com.andryoga.safebox.ui.home.records.RecordsUiState
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
+/**
+ * Top app bar of the records screen: a search field as the title, flanked by the search icon and
+ * the clear / add-record actions.
+ *
+ * @param searchTextState the query, owned by `RecordsViewModel` so it outlives this bar. The field
+ * edits it directly; see [RecordsSearchBarTitle] for why it is not a `String` + callback.
+ * @param scrollBehavior lets the bar collapse while the records list scrolls.
+ */
+@ExperimentalMaterial3Api
+@Composable
+fun RecordsTopAppBar(
+    searchTextState: TextFieldState,
+    onScreenAction: (RecordScreenAction) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
+) {
+    MyAppTopAppBar(
+        title = { RecordsSearchBarTitle(searchTextState) },
+        navigationIcon = { RecordsSearchBarNavIcon() },
+        actions = { RecordsSearchBarActions(searchTextState, onScreenAction) },
+        scrollBehavior = scrollBehavior,
+    )
+}
+
+/**
+ * The search field. It is state-based rather than `value`/`onValueChange` on purpose: a
+ * value-based field must be handed its new value synchronously, and the records query is
+ * consumed by a `combine` running off the main thread. Feeding the field from that pipeline's
+ * output lagged behind fast typing and dropped the caret one position short of the end.
+ */
 @Composable
 fun RecordsSearchBarTitle(
-    query: String,
-    onScreenAction: (RecordScreenAction) -> Unit,
+    searchTextState: TextFieldState,
 ) {
     TextField(
-        value = query,
-        onValueChange = {
-            onScreenAction(
-                RecordScreenAction.OnSearchTextUpdate(
-                    searchText = it
-                )
-            )
-        },
+        state = searchTextState,
         modifier = Modifier.fillMaxWidth(),
         placeholder = { Text(stringResource(R.string.search_bar_placeholder)) },
-        singleLine = true,
+        lineLimits = TextFieldLineLimits.SingleLine,
         colors = TextFieldDefaults.colors(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
@@ -68,20 +92,16 @@ fun RecordsSearchBarNavIcon() {
 
 @Composable
 fun RecordsSearchBarActions(
-    query: String,
+    searchTextState: TextFieldState,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    if (query.isNotEmpty()) {
+    if (searchTextState.text.isNotEmpty()) {
         IconButton(onClick = {
             keyboardController?.hide()
             focusManager.clearFocus()
-            onScreenAction(
-                RecordScreenAction.OnSearchTextUpdate(
-                    searchText = ""
-                )
-            )
+            onScreenAction(RecordScreenAction.OnClearSearchText)
         }) {
             Icon(
                 Icons.Default.Clear,
@@ -109,40 +129,24 @@ fun RecordsSearchBarActions(
     }
 }
 
-private fun getAppBarConfig(
-    uiState: RecordsUiState,
-    onScreenAction: (RecordScreenAction) -> Unit,
-): TopAppBarConfig {
-    return TopAppBarConfig(
-        title = { RecordsSearchBarTitle(uiState.searchText, onScreenAction) },
-        navigationIcon = { RecordsSearchBarNavIcon() },
-        actions = { RecordsSearchBarActions(uiState.searchText, onScreenAction) },
-        scrollBehaviorType = ScrollBehaviorType.ENTER_ALWAYS
-    )
-}
-
 @LightDarkModePreview
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun RecordsSearchBarEmptyPreview() {
     SafeBoxTheme {
-        MyAppTopAppBar(
-            config = getAppBarConfig(
-                uiState = RecordsUiState(searchText = ""),
-                onScreenAction = {}
-            )
+        RecordsTopAppBar(
+            searchTextState = rememberTextFieldState(),
+            onScreenAction = {},
         )
     }
 }
 
 @LightDarkModePreview
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun RecordsSearchBarWithSearchTextPreview() {
-    MyAppTopAppBar(
-        config = getAppBarConfig(
-            uiState = RecordsUiState(searchText = "abc"),
-            onScreenAction = {}
+    SafeBoxTheme {
+        RecordsTopAppBar(
+            searchTextState = rememberTextFieldState("abc"),
+            onScreenAction = {},
         )
-    )
+    }
 }
