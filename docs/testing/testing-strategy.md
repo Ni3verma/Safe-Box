@@ -37,6 +37,14 @@ dump the offending record.
 **Dispatchers are injected, never hardcoded.** `DispatchersProvider` makes virtual-time execution
 deterministic under `TestDispatcher`. A test that needs a real delay is usually a design smell.
 
+**Text input a ViewModel observes is a `TextFieldState`, read through `snapshotFlow`.** Nothing on
+the JVM sends global-snapshot apply notifications, so a unit test that mutates the state
+(`setTextAndPlaceCursorAtEnd`, `clearText`) must call `Snapshot.sendApplyNotifications()` before
+asserting, or the flow never emits and the test fails in a way that looks like a pipeline bug.
+`RecordsViewModelTest` wraps this in `typeSearchText` / `clearSearchText`; copy that pattern. Why
+the field is state-based rather than value-based is in
+[ADR-0007](../decisions/0007-screen-owned-top-app-bars.md).
+
 **Analytics are part of the contract.** Every user-visible action, including every dialog
 (`*_SHOW`, `*_ALLOW_CLICK`, `*_CANCEL_CLICK`), gets an `AnalyticsKey` and a ViewModel test
 asserting `analyticsHelper.logEvent(...)` fires.

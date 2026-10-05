@@ -1,5 +1,7 @@
 package com.andryoga.safebox.ui.home.navigation
 
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import kotlinx.serialization.Serializable
 
 /*
@@ -22,3 +24,16 @@ sealed interface HomeRouteType {
     @Serializable
     object SettingsRoute : HomeRouteType
 }
+
+/**
+ * Whether this destination is one of the three bottom-navigation tabs.
+ *
+ * Everything else in the home graph (a record's detail or create screen, the QR scanner) is a
+ * level deeper: it hides the bottom bar and is reached with the hierarchical transition.
+ */
+fun NavDestination?.isHomeTopLevelRoute(): Boolean =
+    this?.run {
+        hasRoute<HomeRouteType.RecordRoute>() ||
+            hasRoute<HomeRouteType.BackupAndRestoreRoute>() ||
+            hasRoute<HomeRouteType.SettingsRoute>()
+    } ?: false

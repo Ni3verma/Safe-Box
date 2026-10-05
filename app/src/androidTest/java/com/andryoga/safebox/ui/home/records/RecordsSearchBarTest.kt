@@ -1,8 +1,7 @@
 package com.andryoga.safebox.ui.home.records
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -11,7 +10,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.text.TextRange
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
@@ -35,21 +36,12 @@ class RecordsSearchBarTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
-    fun searchBarTitle_typingTextShouldEmitOnSearchTextUpdate() {
-        var emittedQuery: String? = null
-        var currentQuery by mutableStateOf("")
+    fun searchBarTitle_typingTextShouldWriteIntoTextFieldState() {
+        val searchTextState = TextFieldState()
 
         composeTestRule.setContent {
             SafeBoxTheme {
-                RecordsSearchBarTitle(
-                    query = currentQuery,
-                    onScreenAction = { action ->
-                        if (action is RecordScreenAction.OnSearchTextUpdate) {
-                            emittedQuery = action.searchText
-                            currentQuery = action.searchText
-                        }
-                    }
-                )
+                RecordsSearchBarTitle(searchTextState = searchTextState)
             }
         }
 
@@ -59,23 +51,38 @@ class RecordsSearchBarTest {
             .performTextReplacement("abc")
         composeTestRule.waitForIdle()
 
-        assertThat(emittedQuery).isEqualTo("abc")
+        assertThat(searchTextState.text.toString()).isEqualTo("abc")
     }
 
     @Test
-    fun searchBarActions_whenQueryNotEmpty_shouldShowClearButtonAndEmitClear() {
-        var emittedQuery: String? = null
+    fun searchBarTitle_appendingTextShouldKeepCaretAtEnd() {
+        val searchTextState = TextFieldState()
 
         composeTestRule.setContent {
             SafeBoxTheme {
-                androidx.compose.foundation.layout.Row {
+                RecordsSearchBarTitle(searchTextState = searchTextState)
+            }
+        }
+
+        val field = composeTestRule.onNode(hasSetTextAction())
+        field.performTextInput("abc")
+        field.performTextInput("def")
+        composeTestRule.waitForIdle()
+
+        assertThat(searchTextState.text.toString()).isEqualTo("abcdef")
+        assertThat(searchTextState.selection).isEqualTo(TextRange(6))
+    }
+
+    @Test
+    fun searchBarActions_whenQueryNotEmpty_shouldShowClearButtonAndEmitClearAction() {
+        var emittedAction: RecordScreenAction? = null
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                Row {
                     RecordsSearchBarActions(
-                        query = "Sample query",
-                        onScreenAction = { action ->
-                            if (action is RecordScreenAction.OnSearchTextUpdate) {
-                                emittedQuery = action.searchText
-                            }
-                        }
+                        searchTextState = TextFieldState("Sample query"),
+                        onScreenAction = { action -> emittedAction = action },
                     )
                 }
             }
@@ -86,7 +93,25 @@ class RecordsSearchBarTest {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertThat(emittedQuery).isEqualTo("")
+        assertThat(emittedAction).isEqualTo(RecordScreenAction.OnClearSearchText)
+    }
+
+    @Test
+    fun searchBarActions_whenQueryEmpty_shouldNotShowClearButton() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                Row {
+                    RecordsSearchBarActions(
+                        searchTextState = TextFieldState(),
+                        onScreenAction = {},
+                    )
+                }
+            }
+        }
+
+        val clearDesc = context.getString(R.string.cd_clear_search_bar)
+        composeTestRule.onNodeWithContentDescription(clearDesc, useUnmergedTree = true)
+            .assertDoesNotExist()
     }
 
     @Test
@@ -95,14 +120,14 @@ class RecordsSearchBarTest {
 
         composeTestRule.setContent {
             SafeBoxTheme {
-                androidx.compose.foundation.layout.Row {
+                Row {
                     RecordsSearchBarActions(
-                        query = "",
+                        searchTextState = TextFieldState(),
                         onScreenAction = { action ->
                             if (action is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet) {
                                 showBottomSheetEmitted = action.showAddNewRecordBottomSheet
                             }
-                        }
+                        },
                     )
                 }
             }

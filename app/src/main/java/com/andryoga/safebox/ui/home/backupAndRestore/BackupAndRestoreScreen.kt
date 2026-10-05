@@ -4,11 +4,18 @@ import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.VisibleForTesting
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
@@ -22,19 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.MainViewModel
-import com.andryoga.safebox.ui.core.TopAppBarConfig
+import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.home.backupAndRestore.components.BackupView
 import com.andryoga.safebox.ui.home.backupAndRestore.components.RestoreView
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.NewBackupOrRestoreScreen
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.Operation
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.OnStart
 import timber.log.Timber
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
+fun BackupAndRestoreScreenRoot() {
     val viewModel = hiltViewModel<BackupAndRestoreVM>()
     val uiState by viewModel.uiState.collectAsState()
 
@@ -55,13 +61,6 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
             viewModel.onScreenAction(ScreenAction.BackupPathSelected(uri))
         }
     )
-
-    OnStart {
-        val config = TopAppBarConfig(
-            title = { Text(stringResource(R.string.bottom_nav_backup_and_restore)) },
-        )
-        mainViewModel.updateTopBar(config)
-    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val errorMessage = stringResource(R.string.backup_path_select_failed_message)
@@ -86,34 +85,44 @@ fun BackupAndRestoreScreenRoot(mainViewModel: MainViewModel) {
         }
     }
 
-    BackupAndRestoreScreen(
-        uiState = uiState,
-        snackBarHostState = snackbarHostState,
-        launchRestoreFilePicker = {
-            Timber.i("launching restore file picker")
-            launchRestorePicker(viewModel, selectRestoreFileLauncher)
+    Scaffold(
+        topBar = {
+            MyAppTopAppBar(title = { Text(stringResource(R.string.bottom_nav_backup_and_restore)) })
         },
-        launchSelectBackupPath = {
-            Timber.i("launching select backup path")
-            launchSelectBackupPath(viewModel, selectBackupPathLauncher)
-        },
-        onScreenAction = { action ->
-            viewModel.onScreenAction(action)
-        }
-    )
+    ) { innerPadding ->
+        BackupAndRestoreScreen(
+            uiState = uiState,
+            snackBarHostState = snackbarHostState,
+            launchRestoreFilePicker = {
+                Timber.i("launching restore file picker")
+                launchRestorePicker(viewModel, selectRestoreFileLauncher)
+            },
+            launchSelectBackupPath = {
+                Timber.i("launching select backup path")
+                launchSelectBackupPath(viewModel, selectBackupPathLauncher)
+            },
+            onScreenAction = { action ->
+                viewModel.onScreenAction(action)
+            },
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+        )
+    }
 }
 
-@androidx.annotation.VisibleForTesting
+@VisibleForTesting
 @Composable
 internal fun BackupAndRestoreScreen(
     uiState: ScreenState,
+    modifier: Modifier = Modifier,
     snackBarHostState: SnackbarHostState = remember { SnackbarHostState() },
     launchRestoreFilePicker: () -> Unit,
     launchSelectBackupPath: () -> Unit,
     onScreenAction: (ScreenAction) -> Unit,
 ) {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier.fillMaxSize()
+    Box(
+        modifier = modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier.verticalScroll(rememberScrollState())
@@ -128,7 +137,7 @@ internal fun BackupAndRestoreScreen(
             )
         }
 
-        androidx.compose.material3.SnackbarHost(
+        SnackbarHost(
             hostState = snackBarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )

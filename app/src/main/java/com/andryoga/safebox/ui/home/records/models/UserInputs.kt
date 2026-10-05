@@ -2,8 +2,12 @@ package com.andryoga.safebox.ui.home.records.models
 
 import com.andryoga.safebox.domain.models.record.RecordType
 
+/**
+ * Driving state for the records list that is not text input. The search query is deliberately
+ * not here: it lives in `RecordsViewModel.searchTextState` as a `TextFieldState`, because a text
+ * field must see its own edits synchronously and a value routed through a flow does not.
+ */
 data class UserInputs(
-    val searchText: String = "",
     val recordTypeFilters: List<RecordTypeFilter> = getDefaultRecordTypeFilters(),
     val isAddNewRecordBottomSheetVisible: Boolean = false,
 ) {

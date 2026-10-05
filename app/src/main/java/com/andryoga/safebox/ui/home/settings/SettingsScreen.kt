@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -11,8 +12,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.RateReview
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,11 +34,10 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.data.dataStore.Settings
-import com.andryoga.safebox.ui.MainViewModel
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.core.TestTags
-import com.andryoga.safebox.ui.core.TopAppBarConfig
 import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
@@ -44,39 +46,48 @@ import com.andryoga.safebox.ui.home.settings.components.SwitchPreference
 import com.andryoga.safebox.ui.home.settings.components.TextPreference
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
-import com.andryoga.safebox.ui.utils.OnStart
 import timber.log.Timber
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreenRoot(mainViewModel: MainViewModel) {
-    OnStart {
-        val config = TopAppBarConfig(
-            title = { Text(stringResource(R.string.bottom_nav_settings)) },
-        )
-        mainViewModel.updateTopBar(config)
-    }
-
+fun SettingsScreenRoot() {
     val viewModel = hiltViewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    SettingsScreen(uiState = uiState, onScreenAction = {
-        // intercept some of the events in UI
-        Timber.i("on screen action: ${it::class.simpleName}")
-        when (it) {
-            SettingsScreenAction.OpenGithubProject -> openGitHub(context)
-            SettingsScreenAction.ReviewApp -> launchReview(context)
-            SettingsScreenAction.SendFeedback -> sendFeedback(context)
-            else -> Unit
-        }
+    Scaffold(
+        topBar = {
+            MyAppTopAppBar(title = { Text(stringResource(R.string.bottom_nav_settings)) })
+        },
+    ) { innerPadding ->
+        SettingsScreen(
+            uiState = uiState,
+            onScreenAction = {
+                // intercept some of the events in UI
+                Timber.i("on screen action: ${it::class.simpleName}")
+                when (it) {
+                    SettingsScreenAction.OpenGithubProject -> openGitHub(context)
+                    SettingsScreenAction.ReviewApp -> launchReview(context)
+                    SettingsScreenAction.SendFeedback -> sendFeedback(context)
+                    else -> Unit
+                }
 
-        // forward events to VM
-        viewModel.onScreenAction(it)
-    })
+                // forward events to VM
+                viewModel.onScreenAction(it)
+            },
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
+        )
+    }
 }
 
 @Composable
-fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> Unit) {
+fun SettingsScreen(
+    uiState: Settings,
+    onScreenAction: (SettingsScreenAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val scrollState = rememberScrollState()
     val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
     var showAuthForPasswordChange by remember { mutableStateOf(false) }
@@ -85,7 +96,7 @@ fun SettingsScreen(uiState: Settings, onScreenAction: (SettingsScreenAction) -> 
     val context = LocalContext.current
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .verticalScroll(scrollState)
             .padding(8.dp)

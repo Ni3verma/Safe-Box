@@ -11,7 +11,9 @@ data class RecordsUiState(
     // when true, add new record BS is visible on the screen
     val isShowAddNewRecordsBottomSheet: Boolean = false,
 
-    // the search text that user has entered
+    // the search text that has been applied to [records]. The text field itself is not driven by
+    // this (it reads RecordsViewModel.searchTextState synchronously); this is the derived copy
+    // for everything that only needs to know what the list is currently filtered by.
     val searchText: String = "",
 
     // all the possible record type filters

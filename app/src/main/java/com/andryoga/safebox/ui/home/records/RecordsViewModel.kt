@@ -1,5 +1,8 @@
 package com.andryoga.safebox.ui.home.records
 
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
@@ -23,6 +26,7 @@ import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.home.records.models.UserInputs
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -97,7 +101,20 @@ class RecordsViewModel @Inject constructor(
 
     private val userInputs = MutableStateFlow(UserInputs())
 
-    val uiState = combine(dbRecords, userInputs) { dbRecords, userInputs ->
+    /**
+     * Driving state of the search bar, owned here so it survives navigation to a record and back.
+     *
+     * The text field edits this directly and reads it back in the same frame. Routing the query
+     * through [userInputs] instead — `onValueChange` → flow → `combine` on the default dispatcher →
+     * `collectAsState` — fed the field a stale value whenever two key presses landed within one
+     * round trip, which reset the caret one position short of the end. The derived
+     * [RecordsUiState.searchText] still exists for consumers that only need the applied query.
+     */
+    val searchTextState = TextFieldState()
+
+    private val searchText: Flow<String> = snapshotFlow { searchTextState.text.toString() }
+
+    val uiState = combine(dbRecords, userInputs, searchText) { dbRecords, userInputs, searchText ->
         if (dbRecords == null) {
             RecordsUiState()
         } else {
@@ -105,7 +122,7 @@ class RecordsViewModel @Inject constructor(
             val totalRecordsInDb = dbRecords.size
             filteredRecords = dbRecords.filter {
                 it.title.contains(
-                    userInputs.searchText,
+                    searchText,
                     ignoreCase = true
                 )
             }
@@ -119,7 +136,7 @@ class RecordsViewModel @Inject constructor(
             RecordsUiState(
                 isLoading = false,
                 isShowAddNewRecordsBottomSheet = userInputs.isAddNewRecordBottomSheetVisible,
-                searchText = userInputs.searchText,
+                searchText = searchText,
                 recordTypeFilters = userInputs.recordTypeFilters,
                 records = filteredRecords,
                 totalDbRecords = totalRecordsInDb,
@@ -151,8 +168,8 @@ class RecordsViewModel @Inject constructor(
     fun onScreenAction(action: RecordScreenAction) {
         Timber.i("on screen action: ${action::class.simpleName}")
         when (action) {
-            is RecordScreenAction.OnSearchTextUpdate -> {
-                onSearchTextUpdate(searchText = action.searchText)
+            RecordScreenAction.OnClearSearchText -> {
+                searchTextState.clearText()
             }
 
             is RecordScreenAction.OnToggleRecordTypeFilter -> {
@@ -247,14 +264,6 @@ class RecordsViewModel @Inject constructor(
         userInputs.update {
             it.copy(
                 isAddNewRecordBottomSheetVisible = showAddNewRecordBottomSheet
-            )
-        }
-    }
-
-    private fun onSearchTextUpdate(searchText: String) {
-        userInputs.update {
-            it.copy(
-                searchText = searchText
             )
         }
     }
