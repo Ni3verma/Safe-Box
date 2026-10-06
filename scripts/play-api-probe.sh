@@ -7,13 +7,14 @@
 # Developer API not enabled on the key's project, the service account not (yet) invited in Play
 # Console - a fresh invite can take up to a day to propagate - or the wrong package name. This
 # script makes the same authenticated calls in ten seconds: it mints the OAuth token the upload
-# action would, opens an edit, lists the tracks, writes the internal track back unchanged, and
-# discards the edit. Edits are transactional, so an uncommitted one changes nothing in Play Console.
+# action would, opens an edit, lists the tracks, writes the closed and open testing tracks back
+# unchanged, and discards the edit. Edits are transactional, so an uncommitted one changes nothing
+# in Play Console.
 #
 # What a pass proves: the key is valid, the API is enabled, the invite has propagated, the account
 # can read the app, and it holds the write permission the upload needs ("Release apps to testing
-# tracks") - the no-op update is refused without it. That is everything the upload job needs
-# short of a real bundle.
+# tracks") on both tracks release.yml writes - the no-op updates are refused without it. That is
+# everything the upload job needs short of a real bundle.
 #
 # Needs network: run it from your own shell, not the agent sandbox. Nothing from the key file is
 # printed; the private key is written to a private temp directory that is removed on exit.
@@ -90,23 +91,28 @@ for t in d["tracks"]:
         print("  %s: %s [%s] versionCodes=%s" % (name, r.get("name", "?"), r.get("status"), r.get("versionCodes", [])))' "$tracks_json"
 
 # The write permission the upload needs ("Release apps to testing tracks") is only exercised by a
-# write, so put the internal track back exactly as it is. Still inside the edit that is discarded
-# below, so even a successful call changes nothing.
-python3 -c 'import json, sys
+# write, so put each track release.yml writes back exactly as it is: alpha is closed testing's
+# default track, beta is open testing. Still inside the edit that is discarded below, so even a
+# successful call changes nothing. Keep the list in step with `tracks:` in release.yml.
+failed=0
+for track in alpha beta; do
+    python3 -c 'import json, sys
 d = json.load(open(sys.argv[1]))
 for t in d["tracks"]:
-    if t["track"] == "internal":
+    if t["track"] == sys.argv[2]:
         json.dump(t, sys.stdout)
         break
 else:
-    sys.exit("no internal track found; create it in Play Console (Testing -> Internal testing)")' "$tracks_json" > "$work_dir/internal.json"
-curl -sS -X PUT "${auth[@]}" -H 'Content-Type: application/json' \
-    --data-binary @"$work_dir/internal.json" "$base/edits/$edit_id/tracks/internal" |
-    python3 -c 'import json, sys
+    sys.exit("no %s track in the listing above; set it up in Play Console under Testing first" % sys.argv[2])' \
+        "$tracks_json" "$track" > "$work_dir/track.json"
+    curl -sS -X PUT "${auth[@]}" -H 'Content-Type: application/json' \
+        --data-binary @"$work_dir/track.json" "$base/edits/$edit_id/tracks/$track" |
+        python3 -c 'import json, sys
 d = json.load(sys.stdin)
-if d.get("track") != "internal":
-    sys.exit("edits.tracks.update failed - the account lacks \"Release apps to testing tracks\": " + json.dumps(d))
-print("OK: internal track writable (no-op update accepted)")'
+if d.get("track") != sys.argv[1]:
+    sys.exit("edits.tracks.update on %s refused - the account lacks \"Release apps to testing tracks\": %s" % (sys.argv[1], json.dumps(d)))
+print("OK: %s track writable (no-op update accepted)" % sys.argv[1])' "$track" || failed=1
+done
 
 status=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "${auth[@]}" "$base/edits/$edit_id")
 if [ "$status" != "204" ]; then
@@ -114,3 +120,4 @@ if [ "$status" != "204" ]; then
 else
     echo "OK: edit discarded, nothing changed"
 fi
+exit "$failed"

@@ -238,13 +238,15 @@ jobs:
             ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
           files: downloaded-artifacts/*
 
-  # Uploads the app-release.aab the GitHub release carries to Play's internal track, RC and stable
-  # alike. Nothing reaches production from here: promotion is a human step in Play Console, and the
-  # service account holds only "Release apps to testing tracks", so a leaked PLAY_SERVICE_ACCOUNT_JSON
-  # cannot ship to users either. Ordered after release_on_github so Play never has a build GitHub
-  # does not, and a Play-side refusal can be retried alone with "re-run failed jobs". A re-run after
-  # a successful upload fails on the already-used versionCode, which is correct and harmless.
-  # See ADR-0009 and the release-and-ci skill.
+  # Uploads the app-release.aab the GitHub release carries to Play's closed testing (alpha) and open
+  # testing (beta) tracks as completed releases, RC and stable alike, in one edit. Committing the
+  # edit sends both changes for review by itself; the API refuses to hold them for a manual "send
+  # for review" (ADR-0009). Nothing reaches production from here: that is a promotion in Play
+  # Console, and the service account holds only "Release apps to testing tracks", so a leaked
+  # PLAY_SERVICE_ACCOUNT_JSON cannot ship to users either. Ordered after release_on_github so Play
+  # never has a build GitHub does not, and a Play-side refusal can be retried alone with "re-run
+  # failed jobs". A re-run after a successful upload fails on the already-used versionCode, which is
+  # correct and harmless. See ADR-0009 and the release-and-ci skill.
   release_on_play:
     needs:
       - release_on_github
@@ -272,13 +274,14 @@ jobs:
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
 
       # Pinned to a commit rather than a tag: this is the one third-party action that receives a
-      # credential able to publish the app.
-      - name: Upload to the Play internal track
+      # credential able to publish the app. One edit covers both tracks, so Play gets both releases
+      # or neither. Keep the list in step with the tracks scripts/play-api-probe.sh writes.
+      - name: Upload to the Play testing tracks
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.andryoga.safebox
           releaseFiles: downloaded-artifacts/*.aab
-          tracks: internal
+          tracks: alpha,beta
           status: completed
           whatsNewDirectory: ${{ steps.notes.outputs.dir }}

@@ -25,7 +25,7 @@ Safe-Box is a password vault, so two properties set it apart from a typical app:
      gates. The real question is what would *trigger* it, and nothing does today:
      - Priority can only be set through the Play Publishing API. CI does not publish to Play; the
        AAB is uploaded by hand. *(No longer true since 2026-10-06: `release_on_play` uploads every
-       tag to the internal track, [ADR-0009](0009-play-upload-internal-track.md), so
+       tag to the testing tracks, [ADR-0009](0009-play-upload-testing-tracks.md), so
        `inAppUpdatePriority` is settable. The decision stands; the trigger below is unchanged.)*
      - No release has needed to force users off an old version. Room migrations run on any upgrade
        path, so skipping versions is safe.

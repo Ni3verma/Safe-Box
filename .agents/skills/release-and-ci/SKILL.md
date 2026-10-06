@@ -27,7 +27,7 @@ tag_db_version → quality ──┬─ debug_pipeline    → SafeBox-debug.apk 
                                      │
                                      └─ release_on_github → needs qa, release and upgrade_test
                                                │
-                                               └─ release_on_play → app-release.aab to the Play internal track
+                                               └─ release_on_play → app-release.aab to Play's closed + open testing tracks
 ```
 
 `quality` runs lint, unit tests, `pixel8Api34DebugAndroidTest`, and an **NDK gatekeeper** that
@@ -240,10 +240,12 @@ upload `app/build/outputs/mapping/qa/mapping.txt` manually.
 
 ## Play upload
 
-Decision and alternatives: [ADR-0009](../../../docs/decisions/0009-play-upload-internal-track.md).
+Decision and alternatives: [ADR-0009](../../../docs/decisions/0009-play-upload-testing-tracks.md).
 `release_on_play` uploads the `app-release.aab` artifact — the same file the GitHub release carries —
-to the **internal** track as a completed release, on every `v*` tag, RC and stable. Nothing here
-reaches production.
+to the **closed testing (`alpha`) and open testing (`beta`)** tracks as completed releases, in one
+edit, on every `v*` tag, RC and stable. Committing the edit sends both for review by itself; the
+API cannot hold them for a manual *Send for review* (the flag for that is only accepted when Play
+already has un-sent changes queued, see the ADR). Nothing here reaches production.
 
 ### One-time setup (owner only; the agent cannot do any of it)
 
@@ -255,13 +257,16 @@ reaches production.
    security boundary.
 3. **Probe the key before storing it** — `./scripts/play-api-probe.sh <key.json>` (your shell, not
    the sandbox: it needs network). It mints the same OAuth token the action does, opens an edit,
-   lists the tracks and discards the edit, so nothing changes in Play. A failure names which of the
-   three setup mistakes it is: API not enabled, invite not propagated, wrong package.
+   lists the tracks, writes `alpha` and `beta` back unchanged and discards the edit, so nothing
+   changes in Play. A failure names which setup mistake it is: API not enabled, invite not
+   propagated, wrong package, or the permission missing on a track. Passed on 2026-10-06 for
+   `internal`; the `alpha`/`beta` variant has not been run against the real key yet (the local copy
+   was deleted after the secret was set), so its first real run is the next tag.
 4. **GitHub** — repository secret `PLAY_SERVICE_ACCOUNT_JSON` holding the key file's full contents.
    Delete the local copy. Set it **before** the next tag; without it the job fails on auth (the
    GitHub release is unaffected).
-5. The internal track needs a tester list containing the owner's account, so the build is actually
-   installable.
+5. Closed testing needs a tester list containing the owner's account so the build is installable
+   from Play; open testing is public, so every tag — RC included — is visible to anyone who opted in.
 
 A freshly invited service account can get `403` for up to ~24 h; the probe shows when it clears.
 
@@ -300,9 +305,13 @@ listing language must be present for the notes to show.
 
 ### Promoting
 
-Play Console → *Testing → Internal testing* → the release → **Promote release** → *Open testing* or
-*Production*. The bundle and notes come across pre-filled and editable; choose the rollout
-percentage there. Review happens as before. A later stable upload supersedes the RC on internal.
+Play Console → *Testing → Closed testing* → the release → **Promote release** → *Production*. The
+bundle and notes come across pre-filled and editable; choose the rollout percentage there and send
+it for review. A later tag supersedes the previous release on both testing tracks by itself.
+
+If a promotion is still in review when the next tag lands, Play withdraws that submission and
+re-sends it together with the new testing-track changes (`edits.commit` default
+`changesInReviewBehavior = CANCEL_IN_REVIEW_AND_SUBMIT`); the review restarts, nothing is lost.
 
 `inAppUpdatePriority` is not set (default 0) and the app does not read it ([ADR-0008](../../../docs/decisions/0008-in-app-updates-flexible-only.md)). If it is ever needed it goes on the upload step; Play applies it per version code regardless of track and it cannot be changed after the first release of that code.
 
@@ -312,8 +321,8 @@ percentage there. Review happens as before. A later stable upload supersedes the
 |---|---|---|
 | auth error on the upload step | secret missing or key revoked | set `PLAY_SERVICE_ACCOUNT_JSON`, re-run failed jobs |
 | `403` right after setup | Play has not propagated the invite | wait up to a day, re-run failed jobs |
-| "version code … has already been used" | re-run after a successful upload | nothing; the release is already on internal |
-| "changes cannot be sent for review automatically" | the console holds unsent draft changes (a listing edit) | finish or discard them in the console and re-run; `changesNotSentForReview: true` is the knob if it must go through anyway, after which *Send for review* is manual |
+| "version code … has already been used" | re-run after a successful upload | nothing; the release is already on both tracks |
+| "Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true" | the console holds un-sent or rejected changes (a saved listing edit, a rejected submission) | send or discard them in the console and re-run. Setting `changesNotSentForReview: true` on the step is a one-off escape, not a mode: once the queue is clear Play rejects the flag with "Changes are sent for review automatically" (ADR-0009) |
 | the notes step fails | a committed `distribution/whatsnew/<version>/` is invalid — only possible past the PR suite, i.e. a direct push | a re-run checks out the same tag, so upload that `app-release.aab` by hand this once and fix the directory for the next tag |
 
 The job is last, so any of these leaves the GitHub release intact; nothing needs deleting.
