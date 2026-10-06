@@ -79,6 +79,12 @@ jobs:
       - name: Verify the previous-release rule
         run: ./scripts/tests/previous-release-test.sh
 
+      # The Play upload reads distribution/whatsnew/<version>/ only on tag runs, and a misnamed or
+      # over-long notes file would fail there, after the bundle was uploaded. The suite also
+      # validates every committed version directory, so the PR adding the notes is the one that fails.
+      - name: Verify the release notes picker
+        run: ./scripts/tests/release-notes-test.sh
+
       # The store images are rebuilt by scripts/store-screenshots/render.py a few times a year, so
       # a regression in it would otherwise surface only when a listing update is due. Its tests
       # need Python and the Chrome the runner image ships, and they push synthetic captures through

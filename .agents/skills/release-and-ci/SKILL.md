@@ -26,6 +26,8 @@ tag_db_version → quality ──┬─ debug_pipeline    → SafeBox-debug.apk 
                                      ├─ upgrade_test      → upgrade-test.yml on that exact APK
                                      │
                                      └─ release_on_github → needs qa, release and upgrade_test
+                                               │
+                                               └─ release_on_play → app-release.aab to the Play internal track
 ```
 
 `quality` runs lint, unit tests, `pixel8Api34DebugAndroidTest`, and an **NDK gatekeeper** that
@@ -34,7 +36,8 @@ fails the build if the runner lacks the exact `ndkVersion` from `app/build.gradl
 **A failing `upgrade_test` blocks the release**, RC or stable; one re-run is allowed for a suspected
 flake. It is a `workflow_call` rather than an `on: release` trigger because a release created with
 `GITHUB_TOKEN` never triggers other workflows. N-1 excludes the tag under test (and, for an RC, the
-stable version it previews), so a re-run after publishing picks the same N-1.
+stable version it previews), so a re-run after publishing picks the same N-1. `release_on_play`
+runs last, so Play never holds a build GitHub does not; see [Play upload](#play-upload).
 
 ## Versioning
 
@@ -235,9 +238,69 @@ Note that `gh` and `curl` both need network access, so they must run **outside t
 the minify task and would defeat incremental builds. If a qa stack trace needs deobfuscating,
 upload `app/build/outputs/mapping/qa/mapping.txt` manually.
 
+## Play upload
+
+Decision and alternatives: [ADR-0009](../../../docs/decisions/0009-play-upload-internal-track.md).
+`release_on_play` uploads the `app-release.aab` artifact — the same file the GitHub release carries —
+to the **internal** track as a completed release, on every `v*` tag, RC and stable. Nothing here
+reaches production.
+
+### One-time setup (owner only; the agent cannot do any of it)
+
+1. **GCP** — in the Firebase project's GCP console (or any project): enable the *Google Play Android
+   Developer API*; create a service account with no GCP roles; create a JSON key for it.
+2. **Play Console** — *Users and permissions → Invite new users*, the service account's email,
+   app permission on Safe-Box: **Release apps to testing tracks** only (the read-only view
+   permission comes with it). Not the production permission: the human promotion step is also the
+   security boundary.
+3. **GitHub** — repository secret `PLAY_SERVICE_ACCOUNT_JSON` holding the key file's full contents.
+   Delete the local copy. Set it **before** the next tag; without it the job fails on auth (the
+   GitHub release is unaffected).
+4. The internal track needs a tester list containing the owner's account, so the build is actually
+   installable.
+
+A freshly invited service account can get `403` for up to ~24 h. Wait before debugging.
+
+### Release notes
+
+`distribution/whatsnew/<MAJOR.MINOR.DBVERSION.FIX>/whatsnew-<locale>`, chosen by the tag's base
+version (`v2.2.5.0-rc3` → `2.2.5.0`), so an RC and its stable share one set and a previous
+version's notes can never be reused. Plain text, **≤ 500 characters per locale counting the final
+newline**, no markup, locale as Play lists it (`en-US`, `hi-IN`, `es-419`, `fil`). The default
+listing language must be present for the notes to show.
+
+- **No directory** is fine: the release is uploaded without notes (`::warning::` in the run) and
+  they are typed in Play Console when promoting.
+- **A directory that exists must be valid.** `scripts/lib/release-notes.sh` rejects anything other
+  than non-empty `whatsnew-<locale>` files within the limit, because the action sends the name's
+  suffix as the language verbatim and ignores other names (verified in its `src/whatsnew.ts`,
+  v1.1.5), and Play enforces the limit only after the bundle upload.
+  `scripts/tests/release-notes-test.sh` validates every committed directory on each PR.
+- Write them in the PR that prepares the release, or in their own PR; `git log <N-1>..HEAD
+  --first-parent` lists what changed.
+
+### Promoting
+
+Play Console → *Testing → Internal testing* → the release → **Promote release** → *Open testing* or
+*Production*. The bundle and notes come across pre-filled and editable; choose the rollout
+percentage there. Review happens as before. A later stable upload supersedes the RC on internal.
+
+`inAppUpdatePriority` is not set (default 0) and the app does not read it ([ADR-0008](../../../docs/decisions/0008-in-app-updates-flexible-only.md)). If it is ever needed it goes on the upload step; Play applies it per version code regardless of track and it cannot be changed after the first release of that code.
+
+### When the job fails
+
+| Symptom | Cause | Do |
+|---|---|---|
+| auth error on the upload step | secret missing or key revoked | set `PLAY_SERVICE_ACCOUNT_JSON`, re-run failed jobs |
+| `403` right after setup | Play has not propagated the invite | wait up to a day, re-run failed jobs |
+| "version code … has already been used" | re-run after a successful upload | nothing; the release is already on internal |
+| "changes cannot be sent for review automatically" | the console holds unsent draft changes (a listing edit) | finish or discard them in the console and re-run; `changesNotSentForReview: true` is the knob if it must go through anyway, after which *Send for review* is manual |
+| the notes step fails | a committed `distribution/whatsnew/<version>/` is invalid — only possible past the PR suite, i.e. a direct push | a re-run checks out the same tag, so upload that `app-release.aab` by hand this once and fix the directory for the next tag |
+
+The job is last, so any of these leaves the GitHub release intact; nothing needs deleting.
+
 ## Store listing
 
-Play Console uploads (AAB and listing) are manual; nothing in `release.yml` talks to Play. The
-listing screenshots and the README grid are generated, not drawn — refresh them with the
-[store-screenshots skill](../store-screenshots/SKILL.md) after a UI change, then upload
-`screenshots/readme/01-…08-….png` in order.
+Listing text and screenshots are still manual. The screenshots and the README grid are generated,
+not drawn — refresh them with the [store-screenshots skill](../store-screenshots/SKILL.md) after a
+UI change, then upload `screenshots/readme/01-…08-….png` in order.

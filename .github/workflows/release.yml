@@ -237,3 +237,48 @@ jobs:
           body: |
             ${{ contains(github.ref_name, 'rc') && '🧪 This is a **Release Candidate** for testing purposes.' || '🚀 This is a **Stable Production** release.' }}
           files: downloaded-artifacts/*
+
+  # Uploads the app-release.aab the GitHub release carries to Play's internal track, RC and stable
+  # alike. Nothing reaches production from here: promotion is a human step in Play Console, and the
+  # service account holds only "Release apps to testing tracks", so a leaked PLAY_SERVICE_ACCOUNT_JSON
+  # cannot ship to users either. Ordered after release_on_github so Play never has a build GitHub
+  # does not, and a Play-side refusal can be retried alone with "re-run failed jobs". A re-run after
+  # a successful upload fails on the already-used versionCode, which is correct and harmless.
+  # See ADR-0009 and the release-and-ci skill.
+  release_on_play:
+    needs:
+      - release_on_github
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Retrieve Release AAB
+        uses: actions/download-artifact@v8
+        with:
+          name: release aab
+          path: downloaded-artifacts/
+
+      # Notes are optional: no distribution/whatsnew/<MAJOR.MINOR.DBVERSION.FIX>/ uploads without
+      # them (they are typed in Play Console when promoting) and warns; a directory that exists is
+      # checked, because a misnamed or over-long file would otherwise fail only after the upload.
+      - name: Pick the release notes for this version
+        id: notes
+        run: |
+          dir=$(./scripts/lib/release-notes.sh "$GITHUB_REF_NAME")
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      # Pinned to a commit rather than a tag: this is the one third-party action that receives a
+      # credential able to publish the app.
+      - name: Upload to the Play internal track
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.andryoga.safebox
+          releaseFiles: downloaded-artifacts/*.aab
+          tracks: internal
+          status: completed
+          whatsNewDirectory: ${{ steps.notes.outputs.dir }}

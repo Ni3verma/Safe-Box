@@ -139,7 +139,8 @@ App-side work, visible in the current listing until fixed. Re-render after each 
 
 ## Not automated
 
-Uploading to Play Console is manual (Main store listing → Phone screenshots, in `NN` order). The
-`r0adkll/upload-google-play` action could take the images as `mappings`, but it also needs a
-service-account key in repository secrets and would upload the AAB; that is a release-process
-decision, separate from this pipeline.
+Uploading the images to Play Console is manual (Main store listing → Phone screenshots, in `NN`
+order). The AAB itself is uploaded by CI since [ADR-0009](decisions/0009-play-upload-internal-track.md)
+through `r0adkll/upload-google-play`, which could also take these images as `mappings`; that was
+left out on purpose — the listing changes a few times a year, and wiring it in would put listing
+edits on the release path.
