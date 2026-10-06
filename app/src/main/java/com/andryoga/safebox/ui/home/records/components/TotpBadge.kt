@@ -22,7 +22,6 @@ import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.CopyIcon
-import com.andryoga.safebox.ui.core.motion.RollingText
 import com.andryoga.safebox.ui.core.rememberCopiedFlag
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -73,7 +72,7 @@ fun TotpBadge(
             strokeWidth = 2.dp,
         )
         Spacer(modifier = Modifier.width(8.dp))
-        RollingText(
+        Text(
             text = totpCodeState.formattedCode,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.secondary,

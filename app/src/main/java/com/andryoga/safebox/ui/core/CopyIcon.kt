@@ -12,13 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import com.andryoga.safebox.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** How long the check mark stays before the glyph reverts to the copy icon. */
 private const val COPIED_FEEDBACK_MS = 1_500L
@@ -27,44 +35,38 @@ private const val SWAP_INITIAL_SCALE = 0.4f
 /**
  * UI-local memory of "the user just copied this": [isCopied] turns on with [markCopied] and turns
  * itself off after [COPIED_FEEDBACK_MS]. Copying again while it is on restarts the timer. Obtain
- * one with [rememberCopiedFlag].
+ * one with [rememberCopiedFlag], which scopes the timer to the composition.
  */
 @Stable
-class CopiedFlag {
-    private var copyCount by mutableIntStateOf(0)
-
-    val isCopied: Boolean
-        get() = copyCount > 0
+class CopiedFlag internal constructor(private val scope: CoroutineScope) {
+    var isCopied: Boolean by mutableStateOf(false)
+        private set
+    private var revertJob: Job? = null
 
     fun markCopied() {
-        copyCount++
-    }
-
-    internal val generation: Int
-        get() = copyCount
-
-    internal fun reset() {
-        copyCount = 0
+        isCopied = true
+        revertJob?.cancel()
+        revertJob = scope.launch {
+            delay(COPIED_FEEDBACK_MS)
+            isCopied = false
+        }
     }
 }
 
+/** A [CopiedFlag] whose revert timer is cancelled when the caller leaves the composition. */
 @Composable
 fun rememberCopiedFlag(): CopiedFlag {
-    val flag = remember { CopiedFlag() }
-    LaunchedEffect(flag.generation) {
-        if (flag.generation > 0) {
-            delay(COPIED_FEEDBACK_MS)
-            flag.reset()
-        }
-    }
-    return flag
+    val scope = rememberCoroutineScope()
+    return remember { CopiedFlag(scope) }
 }
 
 /**
  * Copy glyph that becomes a check mark while [isCopied] is true, each swap popping in from
  * [SWAP_INITIAL_SCALE] with a spring. It is deliberately a single node (the vector swaps on the
  * same `Icon`) rather than an `AnimatedContent`, so the semantics tree always holds exactly one
- * element with [contentDescription] and tests and screen readers never see two copy buttons.
+ * element with [contentDescription] and tests and screen readers never see two copy buttons. While
+ * the check is shown the node also carries a "Copied" state description, which is how screen
+ * readers learn about the swap.
  *
  * @param isCopied Whether to show the confirmation check instead of the copy glyph.
  * @param contentDescription Accessibility label; kept constant across both glyphs because the
@@ -78,11 +80,12 @@ fun CopyIcon(
     tint: Color = LocalContentColor.current,
 ) {
     val scale = remember { Animatable(1f) }
-    var renderedState by remember { mutableIntStateOf(if (isCopied) 1 else 0) }
+    // Tracks the glyph on screen separately from isCopied so the first composition draws the
+    // right glyph at full size and only later changes pop in.
+    var showsCheck by remember { mutableStateOf(isCopied) }
     LaunchedEffect(isCopied) {
-        val target = if (isCopied) 1 else 0
-        if (renderedState == target) return@LaunchedEffect
-        renderedState = target
+        if (showsCheck == isCopied) return@LaunchedEffect
+        showsCheck = isCopied
         scale.snapTo(SWAP_INITIAL_SCALE)
         scale.animateTo(
             targetValue = 1f,
@@ -92,13 +95,16 @@ fun CopyIcon(
             ),
         )
     }
+    val copiedState = stringResource(R.string.state_copied)
     Icon(
-        imageVector = if (renderedState == 1) Icons.Filled.Check else Icons.Filled.ContentCopy,
+        imageVector = if (showsCheck) Icons.Filled.Check else Icons.Filled.ContentCopy,
         contentDescription = contentDescription,
         tint = tint,
-        modifier = modifier.graphicsLayer {
-            scaleX = scale.value
-            scaleY = scale.value
-        },
+        modifier = modifier
+            .semantics { if (showsCheck) stateDescription = copiedState }
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            },
     )
 }

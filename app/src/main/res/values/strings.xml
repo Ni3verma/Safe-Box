@@ -195,6 +195,7 @@
     <string name="unsupported_qr_code_reason_period">This QR code specifies an invalid refresh interval.</string>
     <string name="unsupported_qr_code_reason_ambiguous">This QR code gives conflicting settings for the same value, so Safe Box cannot tell which one it is meant to use.</string>
     <string name="copied_to_clipboard">Copied %1$s to clipboard</string>
+    <string name="state_copied">Copied</string>
     <!-- Authenticator -->
     <string name="totp_code">One-time code</string>
     <string name="secret_key">Secret key</string>

@@ -3,7 +3,6 @@ package com.andryoga.safebox.ui.core.motion
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.EaseOutBack
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -64,33 +63,6 @@ fun fadeThroughExit(): ExitTransition = fadeOut(animationSpec = outgoingSpec())
  */
 fun fadeThrough(withScale: Boolean = true): ContentTransform =
     fadeThroughEnter(withScale) togetherWith fadeThroughExit()
-
-/**
- * Incoming half of a **fade over**: the new screen fades in on top of the old one, which must be
- * held in place with `ExitTransition.KeepUntilTransitionsFinished` so it stays fully opaque until
- * the fade completes. Reserved for hops between screens that paint the same background, where a
- * fade through would dip to a blank frame between two identical images and a plain crossfade
- * would still thin the background at the midpoint.
- */
-fun fadeOverEnter(): EnterTransition =
-    fadeIn(animationSpec = tween(MotionTokens.DURATION_MEDIUM_MS, easing = LinearOutSlowInEasing))
-
-/**
- * Content swap where the incoming element pops in with a slight overshoot while the outgoing one
- * fades away; meant for single glyphs such as a dialog's status icon, where a plain crossfade
- * reads as a flicker.
- */
-fun popInSwap(): ContentTransform {
-    val enter = fadeIn(animationSpec = incomingSpec()) + scaleIn(
-        animationSpec = tween(
-            durationMillis = MotionTokens.DURATION_INCOMING_MS,
-            delayMillis = MotionTokens.DURATION_OUTGOING_MS,
-            easing = EaseOutBack,
-        ),
-        initialScale = MotionTokens.POP_IN_INITIAL_SCALE,
-    )
-    return enter togetherWith fadeThroughExit()
-}
 
 /** Timing of the incoming content in every fade through: waits for the outgoing fade, then eases in. */
 fun incomingSpec() = tween<Float>(

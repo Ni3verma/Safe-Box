@@ -5,16 +5,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.test.fakes.FakeClipboard
 import com.andryoga.safebox.ui.previewHelper.getAuthenticatorLayoutPlan
@@ -27,6 +32,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -41,6 +47,21 @@ class SingleRecordScreenTest {
     val composeTestRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Before
+    fun setup() {
+        // The copyable field goes through the production rememberCopyToClipboardAction, which
+        // schedules the clipboard clear via WorkManager.getInstance. AndroidManifest removes
+        // WorkManagerInitializer, so without standing WorkManager up here the copy test fails when
+        // the class runs on its own ("The component was not created. Check that you have added the
+        // HiltAndroidRule") and only passes after a Hilt test has initialised it in the same
+        // process. SynchronousExecutor also keeps the scheduled clear out of the app's real work
+        // database.
+        val configuration = Configuration.Builder()
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+    }
 
     @Test
     fun viewMode_shouldShowActionButtons() {
@@ -415,6 +436,52 @@ class SingleRecordScreenTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText(context.getString(R.string.created_on)).assertDoesNotExist()
         composeTestRule.onNodeWithText("12 Jul 2026, 10:00 AM").assertDoesNotExist()
+    }
+
+    @Test
+    fun switchingViewToEditAndBack_shouldSwapReadOnlyValuesForEditableFieldsAndToggleActions() {
+        var viewModeState by mutableStateOf(ViewMode.VIEW)
+        val titlePlan = LayoutPlan(
+            id = LayoutId.LOGIN,
+            arrangement = listOf(listOf(LayoutPlan.Field(FieldId.LOGIN_TITLE))),
+            fieldUiState = mapOf(
+                FieldId.LOGIN_TITLE to FieldUiState(
+                    cell = FieldUiState.Cell(
+                        label = R.string.title,
+                        isMandatory = true
+                    ),
+                    data = "Sample Title"
+                )
+            )
+        )
+        val editDesc = context.getString(R.string.cd_action_edit)
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SingleRecordScreen(
+                    uiState = SingleRecordScreenUiState(
+                        isLoading = false,
+                        viewMode = viewModeState,
+                        layoutPlan = titlePlan
+                    ),
+                    screenAction = {}
+                )
+            }
+        }
+        composeTestRule.onNode(hasText("Sample Title") and hasSetTextAction()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Sample Title").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
+
+        composeTestRule.runOnIdle { viewModeState = ViewMode.EDIT }
+        composeTestRule.onNode(hasText("Sample Title") and hasSetTextAction()).assertIsDisplayed()
+        // the read-only rendering must be gone, not merely faded out underneath the field
+        composeTestRule.onAllNodesWithText("Sample Title").assertCountEquals(1)
+        composeTestRule.onNodeWithContentDescription(editDesc).assertDoesNotExist()
+
+        composeTestRule.runOnIdle { viewModeState = ViewMode.VIEW }
+        composeTestRule.onNode(hasText("Sample Title") and hasSetTextAction()).assertDoesNotExist()
+        composeTestRule.onAllNodesWithText("Sample Title").assertCountEquals(1)
+        composeTestRule.onNodeWithContentDescription(editDesc).assertIsDisplayed()
     }
 
     @Test

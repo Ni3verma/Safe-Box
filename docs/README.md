@@ -29,9 +29,9 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 
 ## UI
 
-- [Motion](ui/motion.md) — the animation vocabulary (fade through, fade over, shared axis,
-  entrance, shake, odometer roll…), the shared tokens behind it, where each pattern is used, and
-  how to capture animations on the emulator for review.
+- [Motion](ui/motion.md) — the animation vocabulary (fade through, shared axis, reject shake,
+  glyph swap, reveal, reflow), the shared tokens behind it, where each pattern is used, how it is
+  tested, and how to capture animations on the emulator for review.
 
 ## Decisions
 

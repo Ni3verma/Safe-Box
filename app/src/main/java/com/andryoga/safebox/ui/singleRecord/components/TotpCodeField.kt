@@ -24,7 +24,6 @@ import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
 import com.andryoga.safebox.ui.core.CopyIcon
-import com.andryoga.safebox.ui.core.motion.RollingText
 import com.andryoga.safebox.ui.core.rememberCopiedFlag
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
@@ -89,7 +88,7 @@ fun TotpCodeField(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RollingText(
+                Text(
                     text = totpCodeState.formattedCode,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineSmall,

@@ -245,6 +245,23 @@ before the first run after manual testing (Gradle uninstalls at the end, so late
 adb shell pm revoke com.andryoga.safebox.debug android.permission.CAMERA
 ```
 
+### A component test that copies to the clipboard fails when run on its own
+
+`rememberCopyToClipboardAction` schedules the clipboard wipe through `WorkManager.getInstance`,
+and the manifest removes `WorkManagerInitializer`, so the first access resolves the configuration
+from `BaseTestApplication` — which needs a Hilt component that a plain `createComposeRule()` test
+never creates:
+
+```
+IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.
+```
+
+In a full run the class passes anyway because an earlier Hilt test already initialised
+WorkManager in the same process, which is exactly why the one-class invocation above exposes it
+(`TotpCodeFieldTest`, 2026-10-06). Any component test whose composable can copy must stand
+WorkManager up in `@Before` with `WorkManagerTestInitHelper.initializeTestWorkManager` and a
+`SynchronousExecutor`; `TotpBadgeTest` is the template.
+
 ### Two adb binaries kill each other's server mid-run
 
 On this machine `adb` on `PATH` is `/usr/local/bin/adb` (37.0.0), while Android Studio uses

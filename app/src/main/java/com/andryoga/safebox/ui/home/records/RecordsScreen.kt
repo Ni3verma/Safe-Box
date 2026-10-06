@@ -218,11 +218,15 @@ private const val NO_FILTERED_RECORDS_KEY = "no_filtered_records"
  * `animateItem` with fade through timing: rows that leave clear out quickly before rows that
  * arrive fade in, so a filter change never crossfades the old rows on top of the new ones.
  * Placement keeps the default spring so surviving rows glide into their new slots.
+ *
+ * @param itemScope The `LazyItemScope` of the item being composed; `animateItem` only exists there.
  */
-private fun LazyItemScope.fadeThroughItem(): Modifier = Modifier.animateItem(
-    fadeInSpec = incomingSpec(),
-    fadeOutSpec = outgoingSpec(),
-)
+private fun Modifier.fadeThroughItem(itemScope: LazyItemScope): Modifier = with(itemScope) {
+    animateItem(
+        fadeInSpec = incomingSpec(),
+        fadeOutSpec = outgoingSpec(),
+    )
+}
 
 @Composable
 private fun LoadingBody() {
@@ -297,12 +301,12 @@ private fun RecordsListBody(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item(key = FILTER_ROW_KEY) {
-            FilterRow(uiState, onScreenAction, modifier = fadeThroughItem())
+            FilterRow(uiState, onScreenAction, modifier = Modifier.fadeThroughItem(this))
         }
         if (records.isEmpty()) {
             // user has some records in db but has also applied some filters because pf which nothing can be displayed
             item(key = NO_FILTERED_RECORDS_KEY) {
-                NoFilteredRecords(modifier = fadeThroughItem())
+                NoFilteredRecords(modifier = Modifier.fadeThroughItem(this))
             }
         } else {
             items(
@@ -319,7 +323,7 @@ private fun RecordsListBody(
                     onCopyTotpCode = {
                         onScreenAction(RecordScreenAction.OnCopyTotpCode)
                     },
-                    modifier = fadeThroughItem(),
+                    modifier = Modifier.fadeThroughItem(this),
                 )
             }
         }

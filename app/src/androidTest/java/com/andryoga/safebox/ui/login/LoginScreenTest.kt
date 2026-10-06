@@ -1,6 +1,11 @@
 package com.andryoga.safebox.ui.login
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -16,6 +21,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
+import com.andryoga.safebox.test.fakes.FakeHapticFeedback
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
@@ -138,6 +144,28 @@ class LoginScreenTest {
     }
 
     @Test
+    fun clickHideHint_shouldRemoveHintText() {
+        val testHint = "My secret hint"
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(hint = testHint),
+                    screenAction = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(testHint).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.show_hint)).performClick()
+        composeTestRule.onNodeWithText(testHint).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.hide_hint)).performClick()
+        composeTestRule.onNodeWithText(testHint).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.show_hint)).assertIsDisplayed()
+    }
+
+    @Test
     fun incorrectPasswordState_shouldShowIncorrectPasswordErrorText() {
         composeTestRule.setContent {
             SafeBoxTheme {
@@ -150,6 +178,62 @@ class LoginScreenTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.incorrect_pswrd_message))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun failedLoginAttempt_shouldPerformRejectHapticOncePerRejection() {
+        val haptic = FakeHapticFeedback()
+        var uiState by mutableStateOf(LoginUiState())
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalHapticFeedback provides haptic) {
+                SafeBoxTheme {
+                    LoginScreen(
+                        uiState = uiState,
+                        screenAction = {}
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        assertThat(haptic.performed).isEmpty()
+
+        composeTestRule.runOnIdle {
+            uiState = uiState.copy(
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
+                failedLoginAttempts = 1,
+            )
+        }
+        composeTestRule.waitForIdle()
+        assertThat(haptic.performed).containsExactly(HapticFeedbackType.Reject)
+
+        // A second wrong password leaves userAuthState unchanged; only the counter moves.
+        composeTestRule.runOnIdle { uiState = uiState.copy(failedLoginAttempts = 2) }
+        composeTestRule.waitForIdle()
+        assertThat(haptic.performed)
+            .containsExactly(HapticFeedbackType.Reject, HapticFeedbackType.Reject)
+    }
+
+    @Test
+    fun screenCreatedAfterFailedAttempts_shouldNotReplayRejectHaptic() {
+        val haptic = FakeHapticFeedback()
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalHapticFeedback provides haptic) {
+                SafeBoxTheme {
+                    LoginScreen(
+                        uiState = LoginUiState(
+                            userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
+                            failedLoginAttempts = 2,
+                        ),
+                        screenAction = {}
+                    )
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(haptic.performed).isEmpty()
     }
 
     @Test

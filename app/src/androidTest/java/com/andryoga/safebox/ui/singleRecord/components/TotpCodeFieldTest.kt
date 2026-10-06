@@ -2,20 +2,26 @@ package com.andryoga.safebox.ui.singleRecord.components
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.test.fakes.FakeClipboard
 import com.andryoga.safebox.test.fakes.FakeTotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +38,21 @@ class TotpCodeFieldTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val clipboard = FakeClipboard()
+
+    @Before
+    fun setup() {
+        // Copying goes through the production rememberCopyToClipboardAction, which schedules the
+        // clipboard clear via WorkManager.getInstance. AndroidManifest removes
+        // WorkManagerInitializer, so without standing WorkManager up here this class fails when
+        // run on its own ("The component was not created. Check that you have added the
+        // HiltAndroidRule") and only passes after a Hilt test has initialised it in the same
+        // process. SynchronousExecutor also keeps the scheduled clear out of the app's real work
+        // database.
+        val configuration = Configuration.Builder()
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+    }
 
     @Test
     fun validSeed_shouldDisplayLabelSplitCodeAndCopyAffordance() {
@@ -86,6 +107,22 @@ class TotpCodeFieldTest {
         // the space is a display concern only; pasting it into an issuer's 2FA prompt would fail.
         assertThat(clipboard.lastCopiedText).isEqualTo("123456")
         assertThat(copyClickCount).isEqualTo(1)
+    }
+
+    @Test
+    fun clickField_shouldShowCopiedStateUntilTheFeedbackExpires() {
+        setFieldContent(generator = FakeTotpGenerator(code = "123456"))
+        val field = composeTestRule.onNode(hasClickAction())
+        val copied = hasStateDescription(context.getString(R.string.state_copied))
+        field.assert(!copied)
+
+        field.performClick()
+
+        field.assert(copied)
+        composeTestRule.mainClock.advanceTimeBy(500)
+        field.assert(copied)
+        composeTestRule.mainClock.advanceTimeBy(2_000)
+        field.assert(!copied)
     }
 
     private fun setFieldContent(
