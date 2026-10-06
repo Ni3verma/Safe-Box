@@ -60,7 +60,8 @@ fun SingleRecordTopBarActions(
     onSaveClick: () -> Unit,
 ) {
     // Pop the save button in when the screen enters edit mode so the eye is drawn to the new
-    // affordance, and shrink it away again once the record has been saved.
+    // affordance. The exit mirrors it for symmetry; saving closes the screen, so in practice only
+    // the entrance is ever seen.
     AnimatedVisibility(
         visible = uiState.isSaveButtonVisible,
         enter = fadeIn() + scaleIn(initialScale = MotionTokens.POP_IN_INITIAL_SCALE),
