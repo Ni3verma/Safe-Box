@@ -7,13 +7,13 @@
 # Developer API not enabled on the key's project, the service account not (yet) invited in Play
 # Console - a fresh invite can take up to a day to propagate - or the wrong package name. This
 # script makes the same authenticated calls in ten seconds: it mints the OAuth token the upload
-# action would, opens an edit, lists the tracks, and discards the edit. Edits are transactional, so
-# an uncommitted one changes nothing in Play Console.
+# action would, opens an edit, lists the tracks, writes the internal track back unchanged, and
+# discards the edit. Edits are transactional, so an uncommitted one changes nothing in Play Console.
 #
-# What a pass proves: the key is valid, the API is enabled, the invite has propagated, and the
-# account can read the app. It does not exercise the track-write permission ("Release apps to
-# testing tracks"); the console grants that in the same screen as the read permission, so a pass
-# here plus the right box ticked is as far as a dry run can go.
+# What a pass proves: the key is valid, the API is enabled, the invite has propagated, the account
+# can read the app, and it holds the write permission the upload needs ("Release apps to testing
+# tracks") - the no-op update is refused without it. That is everything the upload job needs
+# short of a real bundle.
 #
 # Needs network: run it from your own shell, not the agent sandbox. Nothing from the key file is
 # printed; the private key is written to a private temp directory that is removed on exit.
@@ -74,8 +74,10 @@ if "id" not in d:
 print(d["id"])')
 echo "OK: edit opened for $package"
 
-curl -sS "${auth[@]}" "$base/edits/$edit_id/tracks" | python3 -c 'import json, sys
-d = json.load(sys.stdin)
+tracks_json="$work_dir/tracks.json"
+curl -sS "${auth[@]}" "$base/edits/$edit_id/tracks" > "$tracks_json"
+python3 -c 'import json, sys
+d = json.load(open(sys.argv[1]))
 if "tracks" not in d:
     sys.exit("edits.tracks.list failed: " + json.dumps(d))
 print("OK: tracks readable")
@@ -85,7 +87,26 @@ for t in d["tracks"]:
     if not releases:
         print("  %s: no releases" % name)
     for r in releases:
-        print("  %s: %s [%s] versionCodes=%s" % (name, r.get("name", "?"), r.get("status"), r.get("versionCodes", [])))'
+        print("  %s: %s [%s] versionCodes=%s" % (name, r.get("name", "?"), r.get("status"), r.get("versionCodes", [])))' "$tracks_json"
+
+# The write permission the upload needs ("Release apps to testing tracks") is only exercised by a
+# write, so put the internal track back exactly as it is. Still inside the edit that is discarded
+# below, so even a successful call changes nothing.
+python3 -c 'import json, sys
+d = json.load(open(sys.argv[1]))
+for t in d["tracks"]:
+    if t["track"] == "internal":
+        json.dump(t, sys.stdout)
+        break
+else:
+    sys.exit("no internal track found; create it in Play Console (Testing -> Internal testing)")' "$tracks_json" > "$work_dir/internal.json"
+curl -sS -X PUT "${auth[@]}" -H 'Content-Type: application/json' \
+    --data-binary @"$work_dir/internal.json" "$base/edits/$edit_id/tracks/internal" |
+    python3 -c 'import json, sys
+d = json.load(sys.stdin)
+if d.get("track") != "internal":
+    sys.exit("edits.tracks.update failed - the account lacks \"Release apps to testing tracks\": " + json.dumps(d))
+print("OK: internal track writable (no-op update accepted)")'
 
 status=$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "${auth[@]}" "$base/edits/$edit_id")
 if [ "$status" != "204" ]; then
