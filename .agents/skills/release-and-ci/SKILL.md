@@ -253,13 +253,32 @@ reaches production.
    app permission on Safe-Box: **Release apps to testing tracks** only (the read-only view
    permission comes with it). Not the production permission: the human promotion step is also the
    security boundary.
-3. **GitHub** — repository secret `PLAY_SERVICE_ACCOUNT_JSON` holding the key file's full contents.
+3. **Probe the key before storing it** — `./scripts/play-api-probe.sh <key.json>` (your shell, not
+   the sandbox: it needs network). It mints the same OAuth token the action does, opens an edit,
+   lists the tracks and discards the edit, so nothing changes in Play. A failure names which of the
+   three setup mistakes it is: API not enabled, invite not propagated, wrong package.
+4. **GitHub** — repository secret `PLAY_SERVICE_ACCOUNT_JSON` holding the key file's full contents.
    Delete the local copy. Set it **before** the next tag; without it the job fails on auth (the
    GitHub release is unaffected).
-4. The internal track needs a tester list containing the owner's account, so the build is actually
+5. The internal track needs a tester list containing the owner's account, so the build is actually
    installable.
 
-A freshly invited service account can get `403` for up to ~24 h. Wait before debugging.
+A freshly invited service account can get `403` for up to ~24 h; the probe shows when it clears.
+
+### Verifying a pipeline change before it merges
+
+Push-event workflows run **the workflow file at the pushed commit**, and `release.yml` triggers on
+any `v*` tag, so an RC tag on the PR branch exercises that branch's pipeline end to end — real
+signing, `upgrade_test`, the GitHub prerelease and the Play upload — with nothing merged:
+
+```bash
+git push                                  # the branch first, so the PR's CI sees the same commit
+git tag v2.2.5.0-rcN && git push origin v2.2.5.0-rcN
+gh run list --workflow=release.yml --limit 1 && gh run watch <run-id>
+```
+
+The tag stays valid after a squash merge; it just points off `master`'s first-parent line, which
+nothing reads (N-1 selection only looks at stable tags). Costs one version code and a full run.
 
 ### Release notes
 
