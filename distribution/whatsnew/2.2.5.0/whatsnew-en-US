@@ -1,5 +1,1 @@
-• New: Authenticator records — keep 2FA (TOTP) secrets in the vault and get live one-time codes beside the logins they protect. Add them by scanning a QR code or typing the key.
-• Updates can now be downloaded inside the app, with a restart when you are ready.
-• Changing or resetting the master password works again on Android 9 and 10.
-• Restore refuses empty or newer-version backup files instead of wiping the vault.
-• Smoother screen transitions and a smaller download.
+Authenticator (2FA) codes: store TOTP secrets and generate codes inside Safe Box. Add them via QR scan or manual key entry.
