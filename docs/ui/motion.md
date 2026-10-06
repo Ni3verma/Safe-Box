@@ -54,6 +54,11 @@ digits, backup/restore dialog motion, QR scan line. The working prototype is the
   and fails to compile ("cannot be called in this context with an implicit receiver") because of
   the layout DSL marker. Keep the `AnimatedVisibility` directly in the column instead of wrapping
   it; scale and alpha transitions do not change layout size, so no slot reservation is needed.
+- **Exiting content stays tappable.** `AnimatedVisibility` keeps its content composed, and
+  hit-testable, until the exit finishes, so controls that leave because of a state change can still
+  dispatch a tap during the ~300 ms exit. Gate their callbacks on the state that hid them
+  (`SingleRecordScreen` forwards action-row taps only while `viewMode == VIEW`); do not rely on the
+  exit to remove the control. Caught by CodeRabbit on PR #286.
 
 ## Testing motion
 
@@ -61,8 +66,10 @@ Compose UI tests auto-advance the frame clock, so by the time an assertion runs 
 `AnimatedVisibility` / `AnimatedContent` has finished and outgoing content is gone; assert on the
 end state and on *counts* (`onAllNodesWithText(...).assertCountEquals(1)`) to catch content that a
 transition failed to remove. `delay()`-based timers inside composition (the copy check's revert)
-run on the same test scheduler: `mainClock.advanceTimeBy(ms)` fires them. Haptics are asserted by
-substituting `LocalHapticFeedback` with `FakeHapticFeedback` (androidTest `test/fakes`). Examples:
+run on the same test scheduler: `mainClock.advanceTimeBy(ms)` fires them. To interact *during* a
+transition, set `mainClock.autoAdvance = false` and advance a frame or two by hand before the second
+interaction (`SingleRecordScreenTest` taps the collapsing action row this way). Haptics are asserted
+by substituting `LocalHapticFeedback` with `FakeHapticFeedback` (androidTest `test/fakes`). Examples:
 `RejectShakeTest`, `LoginScreenTest`, `TotpBadgeTest`, `RecordsScreenTest`, `SingleRecordScreenTest`.
 
 ## Verifying on the emulator

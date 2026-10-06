@@ -485,6 +485,47 @@ class SingleRecordScreenTest {
     }
 
     @Test
+    fun clickingShareWhileTheActionRowCollapsesAfterEdit_shouldNotEmitTheAction() {
+        var viewModeState by mutableStateOf(ViewMode.VIEW)
+        val emittedActions = mutableListOf<SingleRecordScreenAction>()
+        val editDesc = context.getString(R.string.cd_action_edit)
+        val shareDesc = context.getString(R.string.cd_action_share)
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SingleRecordScreen(
+                    uiState = SingleRecordScreenUiState(
+                        isLoading = false,
+                        viewMode = viewModeState,
+                        layoutPlan = getLoginLayoutPlan(withData = true),
+                    ),
+                    screenAction = { action ->
+                        emittedActions += action
+                        if (action is SingleRecordScreenAction.OnEditClicked) {
+                            viewModeState = ViewMode.EDIT
+                        }
+                    },
+                )
+            }
+        }
+        composeTestRule.onNodeWithContentDescription(shareDesc).assertIsDisplayed()
+
+        // Drive the clock by hand so the second tap lands while the row is still collapsing.
+        composeTestRule.mainClock.autoAdvance = false
+        composeTestRule.onNodeWithContentDescription(editDesc).performClick()
+        composeTestRule.mainClock.advanceTimeBy(32)
+        // the row is still composed, and therefore hit-testable, part-way through its exit
+        composeTestRule.onNodeWithContentDescription(shareDesc).assertExists().performClick()
+        composeTestRule.mainClock.advanceTimeBy(32)
+        assertThat(emittedActions).containsExactly(SingleRecordScreenAction.OnEditClicked)
+
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithContentDescription(shareDesc).assertDoesNotExist()
+        assertThat(emittedActions).containsExactly(SingleRecordScreenAction.OnEditClicked)
+    }
+
+    @Test
     fun passwordField_inEditModeShouldShowToggleIconAndMaskUnmaskText_andInvisibleInViewMode() {
         var viewModeState by mutableStateOf(ViewMode.EDIT)
         val passwordLayoutPlan =

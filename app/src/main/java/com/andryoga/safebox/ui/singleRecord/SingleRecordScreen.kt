@@ -125,7 +125,12 @@ fun SingleRecordScreen(
             exit = fadeOut() + shrinkVertically(),
         ) {
             ActionButtonRow(
-                screenAction = screenAction
+                // The row stays composed, and tappable, until its collapse finishes, so a quick
+                // second tap after Edit must not share or delete the record on the way into edit
+                // mode.
+                screenAction = { action ->
+                    if (uiState.viewMode == ViewMode.VIEW) screenAction(action)
+                },
             )
         }
 
