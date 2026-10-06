@@ -31,7 +31,9 @@ expect() {
     total=$((total + 1))
 
     local stdout status
-    stdout=$(release_notes_dir "$tag" "$root" 2>"$work_dir/stderr")
+    # Unset so the plain "warning:" form is what is checked wherever the suite runs; the
+    # annotation form a runner gets has its own case below.
+    stdout=$(unset GITHUB_ACTIONS; release_notes_dir "$tag" "$root" 2>"$work_dir/stderr")
     status=$?
 
     local verdict=""
@@ -107,6 +109,17 @@ expect dir  "several locales, dotfile ignored"      v2.2.5.0      "$r"
 r=$(root absent)
 expect none "root without any version directory"    v2.2.5.0      "$r"
 expect none "root that does not exist"              v2.2.5.0      "$work_dir/nowhere"
+
+# On a runner the same message is a workflow-command annotation, so it shows in the run summary.
+# The runner reads commands from stderr too (run 37466672994 rendered this one as ##[warning]).
+total=$((total + 1))
+annotation=$(GITHUB_ACTIONS=true release_notes_dir v2.2.5.0 "$r" 2>&1 >/dev/null)
+if [ "$?" -eq 0 ] && printf '%s' "$annotation" | grep -q '^::warning::no release notes for v2.2.5.0 '; then
+    echo "ok    absent directory on a runner is a ::warning:: annotation"
+else
+    echo "FAIL  absent directory on a runner is a ::warning:: annotation: got '$annotation'"
+    failures=$((failures + 1))
+fi
 
 # Play's length limit, counted exactly as the action sends the file.
 r=$(root limit)
