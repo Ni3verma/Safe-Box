@@ -275,7 +275,7 @@ jobs:
 
       # Pinned to a commit rather than a tag: this is the one third-party action that receives a
       # credential able to publish the app. One edit covers both tracks, so Play gets both releases
-      # or neither. Keep the list in step with the tracks scripts/play-api-probe.sh writes.
+      # or neither.
       - name: Upload to the Play testing tracks
         uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
         with:
