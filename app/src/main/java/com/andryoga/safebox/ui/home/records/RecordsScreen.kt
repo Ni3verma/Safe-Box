@@ -4,15 +4,18 @@ package com.andryoga.safebox.ui.home.records
 
 import android.os.Build
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
@@ -46,6 +49,9 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.InAppReviewSource
 import com.andryoga.safebox.ui.core.TestTags
+import com.andryoga.safebox.ui.core.motion.fadeThrough
+import com.andryoga.safebox.ui.core.motion.incomingSpec
+import com.andryoga.safebox.ui.core.motion.outgoingSpec
 import com.andryoga.safebox.ui.home.records.components.AddNewRecordBottomSheet
 import com.andryoga.safebox.ui.home.records.components.NotificationPermissionRationaleDialog
 import com.andryoga.safebox.ui.home.records.components.RecordItem
@@ -163,6 +169,10 @@ internal fun RecordsScreen(
  * The body of the records screen: loader, one of the two empty states, or the filtered list.
  * Split out of [RecordsScreen] only so the scaffold padding can be applied to it as a unit while
  * the bottom sheet, which is a window of its own, stays outside the padded area.
+ *
+ * The three layouts fade through each other. The "nothing matches the filters" message is an
+ * item of the list itself rather than a fourth layout, so when a filter empties the list the
+ * chips stay put while the rows animate out and the message animates in.
  */
 @Composable
 private fun RecordsContent(
@@ -171,103 +181,134 @@ private fun RecordsContent(
     onRestoreFromBackup: () -> Unit,
     onScreenAction: (RecordScreenAction) -> Unit,
 ) {
-    if (uiState.isLoading) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            CircularProgressIndicator()
-            Text(
-                text = stringResource(R.string.loading_data),
-                fontSize = 24.sp,
-                modifier = Modifier
-                    .padding(top = 8.dp)
+    AnimatedContent(
+        targetState = uiState.body(),
+        transitionSpec = { fadeThrough() },
+        label = "recordsBody",
+    ) { body ->
+        when (body) {
+            RecordsBody.LOADING -> LoadingBody()
+            RecordsBody.EMPTY_VAULT -> EmptyVaultBody(
+                onRestoreFromBackup = onRestoreFromBackup,
+                onScreenAction = onScreenAction,
+            )
+            RecordsBody.LIST -> RecordsListBody(
+                uiState = uiState,
+                notificationPermissionState = notificationPermissionState,
+                onScreenAction = onScreenAction,
             )
         }
-    } else if (uiState.records.isEmpty() && uiState.totalDbRecords == 0) {
-        // user has added no record and probably this is the first time he has logged in
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.ErrorOutline,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(72.dp),
-            )
-            Text(
-                text = stringResource(R.string.no_record),
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            Button(onClick = {
-                onScreenAction(
-                    RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
-                        showAddNewRecordBottomSheet = true
-                    )
-                )
-            }) {
-                Text(stringResource(R.string.new_record_button))
-            }
-            Button(onClick = {
-                onRestoreFromBackup()
-            }) {
-                Text(stringResource(R.string.restore_records_button))
-            }
-        }
+    }
+}
 
-    } else if (uiState.records.isEmpty() && uiState.totalDbRecords > 0) {
-        // user has some records in db but has also applied some filters because pf which nothing can be displayed
-        Column(
+/** Which of the records layouts is on screen; the key the body fade through animates between. */
+private enum class RecordsBody { LOADING, EMPTY_VAULT, LIST }
+
+private fun RecordsUiState.body(): RecordsBody = when {
+    isLoading -> RecordsBody.LOADING
+    // user has added no record and probably this is the first time he has logged in
+    records.isEmpty() && totalDbRecords == 0 -> RecordsBody.EMPTY_VAULT
+    else -> RecordsBody.LIST
+}
+
+private const val FILTER_ROW_KEY = "filter_row"
+private const val NO_FILTERED_RECORDS_KEY = "no_filtered_records"
+
+/**
+ * `animateItem` with fade through timing: rows that leave clear out quickly before rows that
+ * arrive fade in, so a filter change never crossfades the old rows on top of the new ones.
+ * Placement keeps the default spring so surviving rows glide into their new slots.
+ *
+ * @param itemScope The `LazyItemScope` of the item being composed; `animateItem` only exists there.
+ */
+private fun Modifier.fadeThroughItem(itemScope: LazyItemScope): Modifier = with(itemScope) {
+    animateItem(
+        fadeInSpec = incomingSpec(),
+        fadeOutSpec = outgoingSpec(),
+    )
+}
+
+@Composable
+private fun LoadingBody() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = stringResource(R.string.loading_data),
+            fontSize = 24.sp,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FilterRow(uiState, onScreenAction)
-            Icon(
-                imageVector = Icons.Outlined.ErrorOutline,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .padding(top = 64.dp)
-                    .size(72.dp)
-                    .align(Alignment.CenterHorizontally)
+                .padding(top = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun EmptyVaultBody(
+    onRestoreFromBackup: () -> Unit,
+    onScreenAction: (RecordScreenAction) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.ErrorOutline,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(72.dp),
+        )
+        Text(
+            text = stringResource(R.string.no_record),
+            textAlign = TextAlign.Center,
+            fontSize = 20.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Button(onClick = {
+            onScreenAction(
+                RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
+                    showAddNewRecordBottomSheet = true
+                )
             )
-            Text(
-                text = stringResource(R.string.no_filtered_record_title),
-                textAlign = TextAlign.Center,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-            Text(
-                text = stringResource(R.string.no_filtered_record_body),
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
+        }) {
+            Text(stringResource(R.string.new_record_button))
         }
-    } else {
-        val records = uiState.records
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(TestTags.RECORDS_LIST),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item { FilterRow(uiState, onScreenAction) }
+        Button(onClick = {
+            onRestoreFromBackup()
+        }) {
+            Text(stringResource(R.string.restore_records_button))
+        }
+    }
+}
+
+@Composable
+private fun RecordsListBody(
+    uiState: RecordsUiState,
+    notificationPermissionState: NotificationPermissionState,
+    onScreenAction: (RecordScreenAction) -> Unit,
+) {
+    val records = uiState.records
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(TestTags.RECORDS_LIST),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item(key = FILTER_ROW_KEY) {
+            FilterRow(uiState, onScreenAction, modifier = Modifier.fadeThroughItem(this))
+        }
+        if (records.isEmpty()) {
+            // user has some records in db but has also applied some filters because pf which nothing can be displayed
+            item(key = NO_FILTERED_RECORDS_KEY) {
+                NoFilteredRecords(modifier = Modifier.fadeThroughItem(this))
+            }
+        } else {
             items(
                 items = records,
                 key = { it.key }
@@ -282,43 +323,75 @@ private fun RecordsContent(
                     onCopyTotpCode = {
                         onScreenAction(RecordScreenAction.OnCopyTotpCode)
                     },
+                    modifier = Modifier.fadeThroughItem(this),
                 )
             }
         }
+    }
 
-        var showNotificationPermissionRationaleDialog by rememberSaveable { mutableStateOf(true) }
+    var showNotificationPermissionRationaleDialog by rememberSaveable { mutableStateOf(true) }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shouldShowNotificationPermissionRationaleDialog(
-                showNotificationPermissionRationaleDialog,
-                notificationPermissionState,
-                LocalContext.current
-            )
-        ) {
-            NotificationPermissionRationaleDialog(
-                isNotificationPermissionAskedBefore = notificationPermissionState.isNotificationPermissionAskedBefore,
-                onAllowClick = { isRedirectingToSettings ->
-                    // update is notification asked before in pref
-                    showNotificationPermissionRationaleDialog = false
-                    onScreenAction(
-                        RecordScreenAction.OnNotificationAllowedFromRationaleDialog(
-                            isRedirectingToSettingsPage = isRedirectingToSettings
-                        )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shouldShowNotificationPermissionRationaleDialog(
+            showNotificationPermissionRationaleDialog,
+            notificationPermissionState,
+            LocalContext.current
+        )
+    ) {
+        NotificationPermissionRationaleDialog(
+            isNotificationPermissionAskedBefore = notificationPermissionState.isNotificationPermissionAskedBefore,
+            onAllowClick = { isRedirectingToSettings ->
+                // update is notification asked before in pref
+                showNotificationPermissionRationaleDialog = false
+                onScreenAction(
+                    RecordScreenAction.OnNotificationAllowedFromRationaleDialog(
+                        isRedirectingToSettingsPage = isRedirectingToSettings
                     )
-                },
-                onCancelClick = { neverAsk ->
-                    showNotificationPermissionRationaleDialog = false
-                    Timber.i("notification permission rationale dialog cancelled, never ask = $neverAsk")
-                    onScreenAction(
-                        RecordScreenAction.OnCancelClickFromRationaleDialog(
-                            neverAsk = neverAsk
-                        )
+                )
+            },
+            onCancelClick = { neverAsk ->
+                showNotificationPermissionRationaleDialog = false
+                Timber.i("notification permission rationale dialog cancelled, never ask = $neverAsk")
+                onScreenAction(
+                    RecordScreenAction.OnCancelClickFromRationaleDialog(
+                        neverAsk = neverAsk
                     )
-                },
-                dismissDialogAction = {
-                    showNotificationPermissionRationaleDialog = false
-                }
-            )
-        }
+                )
+            },
+            dismissDialogAction = {
+                showNotificationPermissionRationaleDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun NoFilteredRecords(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.ErrorOutline,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(top = 64.dp)
+                .size(72.dp)
+        )
+        Text(
+            text = stringResource(R.string.no_filtered_record_title),
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Text(
+            text = stringResource(R.string.no_filtered_record_body),
+            textAlign = TextAlign.Center,
+            fontSize = 20.sp,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
     }
 }
 

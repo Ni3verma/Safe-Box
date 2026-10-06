@@ -1,6 +1,11 @@
 package com.andryoga.safebox.ui.login
 
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +52,7 @@ import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
+import com.andryoga.safebox.ui.core.motion.rejectShake
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
@@ -255,6 +261,7 @@ private fun LoginCardContent(
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth()
+                .rejectShake(uiState.failedLoginAttempts)
         )
 
         TextButton(onClick = {
@@ -268,7 +275,11 @@ private fun LoginCardContent(
             }
         }
 
-        if (showHint) {
+        AnimatedVisibility(
+            visible = showHint,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
             Text(
                 text = uiState.hint,
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),

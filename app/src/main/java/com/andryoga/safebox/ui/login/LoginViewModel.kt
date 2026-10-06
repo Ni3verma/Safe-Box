@@ -153,7 +153,8 @@ class LoginViewModel @Inject constructor(
         analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED)
         _uiState.update {
             it.copy(
-                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
+                failedLoginAttempts = it.failedLoginAttempts + 1,
             )
         }
     }

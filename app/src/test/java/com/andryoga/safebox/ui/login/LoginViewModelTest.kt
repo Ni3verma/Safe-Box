@@ -239,9 +239,32 @@ class LoginViewModelTest {
             verify { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
             val updated = expectMostRecentItem()
             assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
+            assertThat(updated.failedLoginAttempts).isEqualTo(1)
             coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
         }
     }
+
+    @Test
+    fun `onLoginClicked with consecutive incorrect passwords increments failedLoginAttempts`() =
+        runTest {
+            val password = "wrong_password"
+            coEvery { userDetailsRepository.checkPassword(password) } returns false
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                advanceUntilIdle()
+                assertThat(expectMostRecentItem().failedLoginAttempts).isEqualTo(1)
+
+                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                advanceUntilIdle()
+
+                val updated = expectMostRecentItem()
+                assertThat(updated.failedLoginAttempts).isEqualTo(2)
+                assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
+                verify(exactly = 2) { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
+            }
+        }
 
     @Test
     fun `onLoginClicked with incorrect password does not trigger backup work`() = runTest {

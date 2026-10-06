@@ -27,6 +27,12 @@ Long-form knowledge about the project. Short, always-relevant facts live in
   generated from the app, the scene set and why, the `scenes.json` / `theme.json` formats, and the
   presentation issues the images exposed.
 
+## UI
+
+- [Motion](ui/motion.md) — the animation vocabulary (fade through, shared axis, reject shake,
+  glyph swap, reveal, reflow), the shared tokens behind it, where each pattern is used, how it is
+  tested, and how to capture animations on the emulator for review.
+
 ## Decisions
 
 - [Architecture Decision Records](decisions/README.md)

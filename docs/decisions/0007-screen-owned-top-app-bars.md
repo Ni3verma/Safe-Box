@@ -88,3 +88,6 @@ a caret-at-end assertion after appending text) cover the search path on the JVM 
   tabs (`isHomeTopLevelRoute()`) is treated as hierarchical and also hides the bottom bar.
 - The ADR title keeps its original scope; the motion decision lives here because it was made in
   the same change and shares the same evidence.
+- The durations and the fade-through / shared-axis helpers used by `HomeNavTransitions.kt` have
+  since moved to `ui/core/motion/` so that in-screen animations share them; the full vocabulary
+  and where each pattern is used is in [docs/ui/motion.md](../ui/motion.md).

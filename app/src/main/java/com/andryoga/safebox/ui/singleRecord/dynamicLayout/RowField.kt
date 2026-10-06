@@ -1,5 +1,7 @@
 package com.andryoga.safebox.ui.singleRecord.dynamicLayout
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.MandatoryLabelText
+import com.andryoga.safebox.ui.core.motion.fadeThrough
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenAction
@@ -46,8 +49,16 @@ fun RowField(
     var isPasswordVisible by remember { mutableStateOf(false) }
     val copyToClipboard = rememberCopyToClipboardAction()
 
-    Column {
-        if (viewMode == ViewMode.VIEW) {
+    // Fade through between the read-only and editable rendering of the cell so Edit/Save feel
+    // like one field changing state rather than two unrelated layouts replacing each other. The
+    // scale is dropped because both renderings share the same column; the size transform keeps
+    // neighbouring rows gliding instead of jumping when the heights differ slightly.
+    AnimatedContent(
+        targetState = viewMode == ViewMode.VIEW,
+        transitionSpec = { fadeThrough(withScale = false) using SizeTransform(clip = false) },
+        label = "fieldMode",
+    ) { isViewMode ->
+        if (isViewMode) {
             when (val fieldType = uiState.cell.type) {
                 is FieldType.Totp -> {
                     // the stored value is the secret seed, so this field renders the derived

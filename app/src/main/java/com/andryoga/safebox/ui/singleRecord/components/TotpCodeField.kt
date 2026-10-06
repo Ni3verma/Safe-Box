@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +23,8 @@ import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.CircularCountdownRing
+import com.andryoga.safebox.ui.core.CopyIcon
+import com.andryoga.safebox.ui.core.rememberCopiedFlag
 import com.andryoga.safebox.ui.core.rememberCopyToClipboardAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -56,6 +55,7 @@ fun TotpCodeField(
     val label = stringResource(R.string.totp_code)
     val copiedMessage = stringResource(R.string.copied_to_clipboard, label)
     val copyToClipboard = rememberCopyToClipboardAction()
+    val copiedFlag = rememberCopiedFlag()
 
     // restore-from-backup can insert an unvalidated seed, so degrade to an inline error.
     val totpCodeState = rememberTotpCodeState(config = config, totpGenerator = totpGenerator)
@@ -69,6 +69,7 @@ fun TotpCodeField(
             onClickLabel = stringResource(R.string.cd_copy_totp_code),
             onClick = {
                 copyToClipboard(label, totpCodeState.code, copiedMessage)
+                copiedFlag.markCopied()
                 onCopyClick()
             },
         ),
@@ -95,8 +96,8 @@ fun TotpCodeField(
                     fontFamily = FontFamily.Monospace,
                 )
                 Spacer(modifier = Modifier.width(12.dp))
-                Icon(
-                    imageVector = Icons.Filled.ContentCopy,
+                CopyIcon(
+                    isCopied = copiedFlag.isCopied,
                     contentDescription = stringResource(R.string.cd_copy_totp_code),
                     tint = MaterialTheme.colorScheme.primary,
                 )

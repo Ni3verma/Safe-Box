@@ -2,7 +2,9 @@ package com.andryoga.safebox.ui.home.records.components
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -141,6 +143,23 @@ class TotpBadgeTest {
         // the space is a display concern only; pasting it into an issuer's 2FA prompt would fail.
         assertThat(clipboard.lastCopiedText).isEqualTo("123456")
         assertThat(copyClickCount).isEqualTo(1)
+    }
+
+    @Test
+    fun clickCopyIcon_shouldShowCopiedStateUntilTheFeedbackExpires() {
+        setBadgeContent(generator = FakeTotpGenerator(code = "123456"))
+        val copyIcon = composeTestRule
+            .onNodeWithContentDescription(context.getString(R.string.cd_copy_totp_code))
+        val copied = hasStateDescription(context.getString(R.string.state_copied))
+        copyIcon.assert(!copied)
+
+        copyIcon.performClick()
+
+        copyIcon.assert(copied)
+        composeTestRule.mainClock.advanceTimeBy(500)
+        copyIcon.assert(copied)
+        composeTestRule.mainClock.advanceTimeBy(2_000)
+        copyIcon.assert(!copied)
     }
 
     private fun setBadgeContent(

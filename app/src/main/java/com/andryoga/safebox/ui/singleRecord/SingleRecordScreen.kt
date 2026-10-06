@@ -1,5 +1,10 @@
 package com.andryoga.safebox.ui.singleRecord
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +36,7 @@ import com.andryoga.safebox.ui.singleRecord.components.ActionButtonRow
 import com.andryoga.safebox.ui.singleRecord.components.SingleRecordTopAppBar
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.RowField
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.LayoutPlan
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import timber.log.Timber
@@ -111,44 +117,79 @@ fun SingleRecordScreen(
             .imePadding()
             .verticalScroll(rememberScrollState())
     ) {
-        if (uiState.viewMode == ViewMode.VIEW) {
+        // Collapse the action row instead of removing it abruptly so the fields below glide up
+        // when the user taps Edit, and settle back down after Save.
+        AnimatedVisibility(
+            visible = uiState.viewMode == ViewMode.VIEW,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
             ActionButtonRow(
-                screenAction = screenAction
+                // The row stays composed, and tappable, until its collapse finishes, so a quick
+                // second tap after Edit must not share or delete the record on the way into edit
+                // mode.
+                screenAction = { action ->
+                    if (uiState.viewMode == ViewMode.VIEW) screenAction(action)
+                },
             )
         }
 
         uiState.layoutPlan.arrangement.forEachIndexed { rowIndex, fields ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
+            val rowMode = uiState.layoutPlan.rowRenderMode(fields, uiState.viewMode)
+            // counting one or two cells is cheaper than memoising it, and recomputing keeps
+            // the weight honest if a cell ever becomes visible based on its data.
+            val visibleFields = fields.count {
+                uiState.layoutPlan.fieldUiState[it.fieldId]?.isVisibleIn(rowMode) == true
+            }
+            // Rows whose fields exist in one mode only (the created / updated dates) collapse and
+            // expand with the mode switch instead of vanishing while the other rows animate.
+            AnimatedVisibility(
+                visible = rowMode == uiState.viewMode,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
             ) {
-                val visibleFields = fields.count {
-                    val fieldUiState = uiState.layoutPlan.fieldUiState[it.fieldId]
-                    fieldUiState != null && fieldUiState.isVisibleIn(uiState.viewMode)
-                }
-                // counting one or two cells is cheaper than memoising it, and recomputing keeps
-                // the weight honest if a cell ever becomes visible based on its data.
-                val weightOfEachField = if (visibleFields == 0) 1F else 1F / visibleFields
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    val weightOfEachField = if (visibleFields == 0) 1F else 1F / visibleFields
 
-                fields.forEachIndexed { columnIndex, field ->
-                    val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]
-                        ?: return@forEachIndexed
+                    fields.forEachIndexed { columnIndex, field ->
+                        val fieldUiState = uiState.layoutPlan.fieldUiState[field.fieldId]
+                            ?: return@forEachIndexed
 
-                    if (fieldUiState.isVisibleIn(uiState.viewMode)) {
-                        Box(Modifier.weight(weightOfEachField)) {
-                            RowField(
-                                fieldId = field.fieldId,
-                                uiState = fieldUiState,
-                                viewMode = uiState.viewMode,
-                                screenAction = screenAction
-                            )
+                        if (fieldUiState.isVisibleIn(rowMode)) {
+                            Box(Modifier.weight(weightOfEachField)) {
+                                RowField(
+                                    fieldId = field.fieldId,
+                                    uiState = fieldUiState,
+                                    viewMode = rowMode,
+                                    screenAction = screenAction
+                                )
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * Mode a row of [fields] is drawn in: [viewMode] whenever the row has something to show in it.
+ *
+ * A row with nothing to show in [viewMode] is still composed while it collapses away, so it is
+ * drawn as it looked in the first mode where it does have content (the created / updated dates
+ * in view mode, an authenticator seed in create mode); otherwise the row would already be empty,
+ * and therefore have no height, when the collapse starts.
+ *
+ * @return [viewMode], or the first mode with content when the row has none in [viewMode], or
+ * [viewMode] again when no mode shows the row at all.
+ */
+private fun LayoutPlan.rowRenderMode(fields: List<LayoutPlan.Field>, viewMode: ViewMode): ViewMode {
+    fun hasContentIn(mode: ViewMode) = fields.any { fieldUiState[it.fieldId]?.isVisibleIn(mode) == true }
+    return if (hasContentIn(viewMode)) viewMode else ViewMode.entries.firstOrNull(::hasContentIn) ?: viewMode
 }
 
 @LightDarkModePreview

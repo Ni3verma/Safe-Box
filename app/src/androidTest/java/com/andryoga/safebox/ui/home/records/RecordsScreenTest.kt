@@ -1,9 +1,14 @@
 package com.andryoga.safebox.ui.home.records
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -311,6 +316,54 @@ class RecordsScreenTest {
         assertThat(copyActionCount).isEqualTo(1)
         // the icon sits inside the row, so a leaking click would also navigate away from the list.
         assertThat(recordClicked).isFalse()
+    }
+
+    @Test
+    fun stateTransitions_shouldReplaceEachBodyWithoutLeavingStaleContent() {
+        val populated = RecordsUiState(
+            isLoading = false,
+            records = listOf(
+                RecordListItem(
+                    id = 101,
+                    title = "Personal Gmail",
+                    subTitle = "user@gmail.com",
+                    recordType = RecordType.LOGIN
+                )
+            ),
+            totalDbRecords = 1
+        )
+        var uiState by mutableStateOf(RecordsUiState(isLoading = true))
+        val loadingText = context.getString(R.string.loading_data)
+        val noResultsTitle = context.getString(R.string.no_filtered_record_title)
+        // the Card chip is unique here; the row itself also renders "Login" as its type label
+        val cardChip = context.getString(R.string.type_display_card)
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = uiState,
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = {},
+                    onScreenAction = {}
+                )
+            }
+        }
+        composeTestRule.onNodeWithText(loadingText).assertIsDisplayed()
+
+        composeTestRule.runOnIdle { uiState = populated }
+        composeTestRule.onNodeWithText(loadingText).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Personal Gmail").assertIsDisplayed()
+
+        // a filter that matches nothing empties the rows but keeps the chips in place
+        composeTestRule.runOnIdle { uiState = populated.copy(records = emptyList()) }
+        composeTestRule.onNodeWithText("Personal Gmail").assertDoesNotExist()
+        composeTestRule.onNodeWithText(noResultsTitle).assertIsDisplayed()
+        composeTestRule.onNodeWithText(cardChip).assertIsDisplayed()
+
+        composeTestRule.runOnIdle { uiState = populated }
+        composeTestRule.onNodeWithText(noResultsTitle).assertDoesNotExist()
+        composeTestRule.onAllNodesWithText("Personal Gmail").assertCountEquals(1)
+        composeTestRule.onNodeWithText(cardChip).assertIsDisplayed()
     }
 
     private fun authenticatorRecord() = RecordListItem(

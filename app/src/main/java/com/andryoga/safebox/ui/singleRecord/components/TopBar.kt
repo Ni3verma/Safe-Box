@@ -1,5 +1,10 @@
 package com.andryoga.safebox.ui.singleRecord.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -11,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.core.PulseButton
+import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenUiState
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
@@ -53,7 +59,14 @@ fun SingleRecordTopBarActions(
     uiState: SingleRecordScreenUiState.TopAppBarUiState,
     onSaveClick: () -> Unit,
 ) {
-    if (uiState.isSaveButtonVisible) {
+    // Pop the save button in when the screen enters edit mode so the eye is drawn to the new
+    // affordance. The exit mirrors it for symmetry; saving closes the screen, so in practice only
+    // the entrance is ever seen.
+    AnimatedVisibility(
+        visible = uiState.isSaveButtonVisible,
+        enter = fadeIn() + scaleIn(initialScale = MotionTokens.POP_IN_INITIAL_SCALE),
+        exit = fadeOut() + scaleOut(targetScale = MotionTokens.POP_IN_INITIAL_SCALE),
+    ) {
         PulseButton(
             textResId = R.string.save,
             enabled = uiState.isSaveButtonEnabled,
