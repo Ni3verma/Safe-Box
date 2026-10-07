@@ -24,13 +24,14 @@ therefore not something to hand to a script on the strength of a green pipeline.
 
 ## Decision
 
-1. **Every `v*` tag, RC and stable, is uploaded to the closed testing (`alpha`) and open testing
-   (`beta`) tracks as completed releases, in one Play edit**, by a `release_on_play` job that runs
-   after `release_on_github`, so Play never holds a build GitHub does not and a Play-side refusal
-   can be re-run alone.
-2. **Committing the edit sends both changes for review; the job does not try to hold them.** The
+1. **Every `v*` tag, RC and stable, is uploaded to the internal (`internal`), closed testing
+   (`alpha`) and open testing (`beta`) tracks as completed releases, in one Play edit**, by a
+   `release_on_play` job that runs after `release_on_github`, so Play never holds a build GitHub
+   does not and a Play-side refusal can be re-run alone.
+2. **Committing the edit sends the changes for review; the job does not try to hold them.** The
    API's `changesNotSentForReview` is not a general hold (see the alternatives), so the testing
-   tracks are reviewed on their own and reach testers without anyone touching the console.
+   tracks are reviewed on their own and reach testers without anyone touching the console (`internal`
+   is available immediately without review).
 3. **Production is reached only by promoting in Play Console** (*Closed testing → Promote release
    → Production*, bundle and notes pre-filled, rollout percentage chosen there). The service
    account is granted *Release apps to testing tracks* and nothing else, so neither the workflow
@@ -44,9 +45,10 @@ therefore not something to hand to a script on the strength of a green pipeline.
 
 ## Why
 
-- **The testing tracks, not internal.** They are where every release already went by hand, and
-  the closed track's testers get a real Play install for the in-app-update test. Internal would be
-  one more promotion per release for nothing.
+- **All three testing tracks (`internal`, `alpha`, `beta`) in one edit.** Closed and open testing are
+  where every release already went by hand, while internal gives instant availability without waiting
+  on Play's automated testing-track review. Including all three in the same edit adds zero console
+  steps.
 - **Testing tracks, not production-as-draft.** A draft on production is installable nowhere and
   needs the production permission on the service account.
 - **Notes keyed by version, not a single file.** A single `whatsnew-en-US` either ships the previous
@@ -92,6 +94,6 @@ therefore not something to hand to a script on the strength of a green pipeline.
   CANCEL_IN_REVIEW_AND_SUBMIT`, discovery document 2026-10-06). The review restarts; nothing is
   lost.
 - `PLAY_SERVICE_ACCOUNT_JSON` is a long-lived credential. If it leaks, revoke the key in GCP and
-  halt the release in the console; the blast radius is the two testing tracks.
+  halt the release in the console; the blast radius is the three testing tracks.
 - Store listing text and screenshots stay manual ([store-listing.md](../store-listing.md)).
 - Procedure, setup and failure modes: [release-and-ci skill](../../.agents/skills/release-and-ci/SKILL.md#play-upload).

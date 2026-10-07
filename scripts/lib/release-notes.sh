@@ -2,7 +2,7 @@
 #
 # Release notes for the Play upload: picks the "what's new" directory for a release tag.
 #
-# release.yml uploads app-release.aab to Play's closed and open testing tracks on every tag, and the
+# release.yml uploads app-release.aab to Play's internal, closed and open testing tracks on every tag, and the
 # release notes it attaches are read from distribution/whatsnew/<MAJOR.MINOR.DBVERSION.FIX>/whatsnew-<locale>.
 # The directory is keyed by the tag's base version, so an RC and its stable share one set and a
 # previous release's notes can never ship by mistake - there is no "current" file to forget to
