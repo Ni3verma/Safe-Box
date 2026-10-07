@@ -142,13 +142,16 @@ def check_android_escaping(locale_file: Path, key: str, raw_text: str) -> List[s
     return errors
 
 
+LOCALE_DIR_RE = re.compile(r"^values-([a-z]{2,3}(?:-r[A-Z]{2})?|b\+[A-Za-z0-9+]+)$")
+
+
 def discover_locale_files(res_dir: Path) -> List[Path]:
-    """Return sorted list of values-*/strings.xml files."""
+    """Return sorted list of values-<locale>/strings.xml files, ignoring non-locale folders."""
     files: List[Path] = []
     if not res_dir.is_dir():
         return files
     for child in sorted(res_dir.iterdir()):
-        if child.is_dir() and child.name.startswith("values-"):
+        if child.is_dir() and LOCALE_DIR_RE.match(child.name):
             strings_file = child / "strings.xml"
             if strings_file.is_file():
                 files.append(strings_file)
@@ -184,10 +187,10 @@ def mutate_locale_xml(
     content = locale_file.read_text(encoding="utf-8")
     original = content
 
-    # 1. Delete removed / non-translatable keys (match full <string name="key">...</string> line/block)
+    # 1. Delete removed / non-translatable keys (match self-closing or standard <string> block)
     for key in sorted(keys_to_delete):
         pattern = re.compile(
-            rf'^[ \t]*<string\s+name="{re.escape(key)}"[^>]*>.*?</string>[ \t]*\r?\n?',
+            rf'^[ \t]*<string\s+name="{re.escape(key)}"[^>]*(?:/>|>.*?</string>)[ \t]*\r?\n?',
             re.MULTILINE | re.DOTALL,
         )
         content = pattern.sub("", content)
@@ -454,13 +457,18 @@ def run_update_lock(base_xml: Path, res_dir: Path, lock_path: Path) -> int:
         emit_error(f"Cannot update lock: no values-*/strings.xml files found in {res_dir}")
         return 1
 
-    # Write candidate lock first, then run full CI check to guarantee lock is only updated when valid
+    # Write candidate lock first, then run full CI check; restore previous lock if check fails
     current_hashes = {k: sha256_text(v) for k, v in en_translatable.items()}
+    previous = lock_path.read_text(encoding="utf-8") if lock_path.is_file() else None
     save_lock(lock_path, current_hashes)
 
     rc = run_ci_check(base_xml, res_dir, lock_path)
     if rc == 0:
         print(f"Updated {lock_path} ({len(current_hashes)} keys).")
+    elif previous is None:
+        lock_path.unlink(missing_ok=True)
+    else:
+        lock_path.write_text(previous, encoding="utf-8")
     return rc
 
 

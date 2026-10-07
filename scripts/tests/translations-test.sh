@@ -167,7 +167,35 @@ else
     fail "missing invariant token ('Safe Box') fails verification" "did not fail"
 fi
 
-# 10. Real repository verification
+# 10. --update-lock restores previous lock when verification fails
+d=$(setup_fixture "update_lock_rollback")
+before_lock=$(cat "$d/translations.lock")
+sed 's/Delete this record?/Permanently erase this record?/' "$d/res/values/strings.xml" > "$d/res/values/strings.xml.tmp"
+mv "$d/res/values/strings.xml.tmp" "$d/res/values/strings.xml"
+sed 's/%1\$s/%1\$d/' "$d/res/values-es/strings.xml" > "$d/res/values-es/strings.xml.tmp"
+mv "$d/res/values-es/strings.xml.tmp" "$d/res/values-es/strings.xml"
+if ! python3 "$tool" --update-lock --res-dir "$d/res" --lock-file "$d/translations.lock" >/dev/null 2>&1 &&
+   [ "$(cat "$d/translations.lock")" = "$before_lock" ]; then
+    pass "--update-lock restores previous lock when verification fails"
+else
+    fail "--update-lock restores previous lock when verification fails" "lock file was modified despite failure"
+fi
+
+# 11. Non-locale values-* directories (e.g. values-night) are ignored
+d=$(setup_fixture "values_night")
+mkdir -p "$d/res/values-night"
+cat > "$d/res/values-night/strings.xml" <<'EOF'
+<resources>
+    <string name="unrelated_theme_string">Dark</string>
+</resources>
+EOF
+if python3 "$tool" --ci-check --res-dir "$d/res" --lock-file "$d/translations.lock" >/dev/null 2>&1; then
+    pass "non-locale values-* directories (values-night) are ignored"
+else
+    fail "non-locale values-* directories (values-night) are ignored" "values-night was treated as a locale"
+fi
+
+# 12. Real repository verification
 if (cd "$repo_root" && python3 "$tool" --ci-check); then
     pass "real repository app/src/main/res/ passes --ci-check"
 else
