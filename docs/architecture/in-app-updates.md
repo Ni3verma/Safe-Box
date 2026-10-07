@@ -140,9 +140,9 @@ Verified 2026-09-28 against Play `app-update` 2.1.0, as `InAppUpdateE2ETest` doe
 ### Manual test with real Play
 
 The only way to exercise real Play is a Play-served build with the `release` application id. Since
-[ADR-0009](../decisions/0009-play-upload-testing-tracks.md) every `v*` tag lands on the closed and
-open testing tracks by itself, so two consecutive tags give two version codes with no local signing
-and no internal app sharing.
+[ADR-0009](../decisions/0009-play-upload-testing-tracks.md) every `v*` tag lands on the internal,
+closed and open testing tracks by itself, so two consecutive tags give two version codes with no
+local signing and no internal app sharing.
 
 1. Be on the closed testing track's tester list and install Safe-Box from Play on the device.
 2. Tag *N* (an RC is fine). When `release_on_play` is green and Play has reviewed the release,

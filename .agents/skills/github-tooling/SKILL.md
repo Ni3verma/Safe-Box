@@ -44,7 +44,8 @@ checks consistently, and a `403` can come from repository rules rather than the 
 |---|---|---|
 | Reads (PRs, releases, runs, checks) | read | every read command works |
 | `Contents` | read | `PUT` via the contents API returned `403` |
-| `Issues` | **read + write**, granted deliberately so the agent can file issues | `gh issue create` (#282) and `gh pr edit --body-file` (#281) both succeeded 2026-10-03, but **labels on a pull request are refused**, see below |
+| `Issues` | **read + write**, granted deliberately so the agent can file issues | `gh issue create` (#282) succeeded 2026-10-03 |
+| `Pull requests` | **read + write** | `PATCH /repos/Ni3verma/Safe-Box/pulls/289` succeeded 2026-10-07 with header `X-Accepted-Github-Permissions: pull_requests=write` (`gh pr edit` title/body works), but **labels** and **GraphQL `resolveReviewThread`** are refused, see below |
 
 > [!IMPORTANT]
 > **Labels cannot be changed from here.** `DELETE /repos/Ni3verma/Safe-Box/issues/259/labels/run-upgrade-test`
@@ -53,9 +54,10 @@ checks consistently, and a `403` can come from repository rules rather than the 
 > on a PR (remove and re-add the label) has to be done by a human in the UI. Ask; do not retry.
 
 > [!IMPORTANT]
-> Merging a PR needs `Contents: write`, which is provably `403`, so **a merge cannot succeed from
-> here**. Editing a PR's title/body **does** work — `gh pr edit 281 --body-file …` succeeded on
-> 2026-10-03 — while labels on the same PR are refused (see above). Treat the permission list in
+> Merging a PR and resolving review threads both require `Contents: write`, which is provably `403`,
+> so **neither a merge nor GraphQL `resolveReviewThread` can succeed from here** (even though
+> `Pull requests: write` is granted and GraphQL reports `viewerCanResolve: true`, verified on #289,
+> 2026-10-07). Editing a PR's title/body **does** work (`gh pr edit`). Treat the permission list in
 > the GitHub UI as authoritative, not a probe's status code.
 
 > [!IMPORTANT]

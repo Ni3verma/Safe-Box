@@ -27,7 +27,7 @@ tag_db_version → quality ──┬─ debug_pipeline    → SafeBox-debug.apk 
                                      │
                                      └─ release_on_github → needs qa, release and upgrade_test
                                                │
-                                               └─ release_on_play → app-release.aab to Play's closed + open testing tracks
+                                               └─ release_on_play → app-release.aab to Play's internal, closed + open testing tracks
 ```
 
 `quality` runs lint, unit tests, `pixel8Api34DebugAndroidTest`, and an **NDK gatekeeper** that
@@ -169,10 +169,11 @@ upload `app/build/outputs/mapping/qa/mapping.txt` manually.
 
 Decision and alternatives: [ADR-0009](../../../docs/decisions/0009-play-upload-testing-tracks.md).
 `release_on_play` uploads the `app-release.aab` artifact — the same file the GitHub release carries —
-to the **closed testing (`alpha`) and open testing (`beta`)** tracks as completed releases, in one
-edit, on every `v*` tag, RC and stable. Committing the edit sends both for review by itself; the
-API cannot hold them for a manual *Send for review* (the flag for that is only accepted when Play
-already has un-sent changes queued, see the ADR). Nothing here reaches production.
+to the **internal (`internal`), closed testing (`alpha`) and open testing (`beta`)** tracks as completed
+releases, in one edit, on every `v*` tag, RC and stable. Committing the edit sends the closed and open
+testing tracks for review by itself (`internal` requires no review); the API cannot hold them for a
+manual *Send for review* (the flag for that is only accepted when Play already has un-sent changes
+queued, see the ADR). Nothing here reaches production.
 
 ### One-time setup (owner only; the agent cannot do any of it)
 
@@ -185,8 +186,9 @@ already has un-sent changes queued, see the ADR). Nothing here reaches productio
 3. **GitHub** — repository secret `PLAY_SERVICE_ACCOUNT_JSON` holding the key file's full contents.
    Delete the local copy. Set it **before** the next tag; without it the job fails on auth (the
    GitHub release is unaffected).
-4. Closed testing needs a tester list containing the owner's account so the build is installable
-   from Play; open testing is public, so every tag — RC included — is visible to anyone who opted in.
+4. Internal and closed testing need tester lists containing the owner's account so the build is
+   installable from Play; open testing is public, so every tag — RC included — is visible to anyone
+   who opted in.
 
 The job is the check for a new or rotated key: it is last, takes a minute, and *re-run failed jobs*
 repeats only it, so a wrong key costs a re-run, not a release. A freshly invited service account can
@@ -232,7 +234,7 @@ listing language must be present for the notes to show.
 
 Play Console → *Testing → Closed testing* → the release → **Promote release** → *Production*. The
 bundle and notes come across pre-filled and editable; choose the rollout percentage there and send
-it for review. A later tag supersedes the previous release on both testing tracks by itself.
+it for review. A later tag supersedes the previous release on all three testing tracks by itself.
 
 If a promotion is still in review when the next tag lands, Play withdraws that submission and
 re-sends it together with the new testing-track changes (`edits.commit` default
@@ -246,7 +248,7 @@ re-sends it together with the new testing-track changes (`edits.commit` default
 |---|---|---|
 | auth error on the upload step | secret missing or key revoked | set `PLAY_SERVICE_ACCOUNT_JSON`, re-run failed jobs |
 | `403` right after setup | Play has not propagated the invite | wait up to a day, re-run failed jobs |
-| "version code … has already been used" | re-run after a successful upload | nothing; the release is already on both tracks |
+| "version code … has already been used" | re-run after a successful upload | nothing; the release is already on all three tracks |
 | "Changes cannot be sent for review automatically. Please set the query parameter changesNotSentForReview to true" | the console holds un-sent or rejected changes (a saved listing edit, a rejected submission) | send or discard them in the console and re-run. Setting `changesNotSentForReview: true` on the step is a one-off escape, not a mode: once the queue is clear Play rejects the flag with "Changes are sent for review automatically" (ADR-0009) |
 | the notes step fails | a committed `distribution/whatsnew/<version>/` is invalid — only possible past the PR suite, i.e. a direct push | a re-run checks out the same tag, so upload that `app-release.aab` by hand this once and fix the directory for the next tag |
 
