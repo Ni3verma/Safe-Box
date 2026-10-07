@@ -124,8 +124,9 @@ Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/S
 ## CI & releases
 
 - `release.yml` publishes **`SafeBox-qa.apk` and `app-release.aab` as GitHub Release assets** on
-  every tag. Old QA APKs are therefore already archived back to at least `v2.0.4.0` — no extra
-  archiving step is needed.
+  every tag (old QA APKs are archived back to at least `v2.0.4.0`), then uploads that AAB to Play's
+  **closed + open testing** tracks (`release_on_play`, ADR-0009); production is a manual promotion.
+  Notes: `distribution/whatsnew/<MAJOR.MINOR.DB.FIX>/whatsnew-<locale>`, absent = none. (2026-10-06)
 - The QA signing certificate has been **stable** from `v1.4.4.0` to local builds: SHA-256
   `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`, pinned as `QA_CERT_SHA256`
   in `scripts/lib/harness.sh` and checked on every upgrade/restore run. Verified 2026-09-26.
@@ -144,7 +145,6 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
-- Adding any new Android module: a subproject can only `alias(libs.plugins.android.*)` if the
-  **root `build.gradle` also declares it `apply false`**. Otherwise Gradle fails with "the plugin is
-  already on the classpath with an unknown version", because AGP arrives a second time via the root
-  `buildscript` classpath. (Verified 2026-09-22.)
+- A new Android module can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also
+  declares it `apply false`**; otherwise Gradle fails with "the plugin is already on the classpath
+  with an unknown version", because AGP arrives a second time via the root `buildscript` classpath. (2026-09-22)

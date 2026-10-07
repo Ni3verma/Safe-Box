@@ -1,0 +1,1 @@
+Authenticator (2FA) codes: store TOTP secrets and generate codes inside Safe Box. Add them via QR scan or manual key entry.

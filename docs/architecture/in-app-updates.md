@@ -139,14 +139,15 @@ Verified 2026-09-28 against Play `app-update` 2.1.0, as `InAppUpdateE2ETest` doe
 
 ### Manual test with real Play
 
-The only way to exercise real Play is internal app sharing or an internal testing track. Both builds
-must come from Play with the `release` application id.
+The only way to exercise real Play is a Play-served build with the `release` application id. Since
+[ADR-0009](../decisions/0009-play-upload-testing-tracks.md) every `v*` tag lands on the closed and
+open testing tracks by itself, so two consecutive tags give two version codes with no local signing
+and no internal app sharing.
 
-1. On the device, enable internal app sharing in Play Store: *Settings → About*, tap *Play Store
-   version* seven times, then turn on *Internal app sharing*.
-2. Upload a `release` AAB with version code *N* to internal app sharing. Install it from its link
-   and sign up.
-3. Upload a second AAB with a higher version code. Open its link, but **do not** tap Update.
+1. Be on the closed testing track's tester list and install Safe-Box from Play on the device.
+2. Tag *N* (an RC is fine). When `release_on_play` is green and Play has reviewed the release,
+   update to it from Play and sign up.
+3. Tag *N+1*. Wait for its release, but **do not** update from the Play Store.
 4. Open Safe-Box and log in. Expect the flexible consent sheet.
 5. Accept, wait for the download, and expect the snackbar. Check both paths:
    - **Restart** leads to Play's install screen and then a relaunch into *N+1*.
@@ -154,5 +155,7 @@ must come from Play with the `release` application id.
      silent install.
 6. Repeat with the vault locked during the download. It installs without a snackbar.
 
-Tagged releases publish `app-release.aab` as a GitHub Release asset. Two consecutive tags give you
-two version codes without a local signing setup.
+Play can take a while to offer a new testing release to a device; "Play Store → account → Settings
+→ About → Update Play Store" is the usual nudge. Internal app sharing still works as a fallback
+(enable it under *Play Store → Settings → About* by tapping the version seven times) with the
+`app-release.aab` of any GitHub release.

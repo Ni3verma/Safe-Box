@@ -139,7 +139,9 @@ App-side work, visible in the current listing until fixed. Re-render after each 
 
 ## Not automated
 
-Uploading to Play Console is manual (Main store listing → Phone screenshots, in `NN` order). The
-`r0adkll/upload-google-play` action could take the images as `mappings`, but it also needs a
-service-account key in repository secrets and would upload the AAB; that is a release-process
-decision, separate from this pipeline.
+Uploading the images to Play Console is manual (Main store listing → Phone screenshots, in `NN`
+order). The AAB is uploaded by CI since [ADR-0009](decisions/0009-play-upload-testing-tracks.md),
+but the action it uses, `r0adkll/upload-google-play`, has no listing or screenshot input (its
+`mappingFile` is the R8 map), so automating the images would mean a second tool — Gradle Play
+Publisher or fastlane `supply`, both ruled out in that ADR. Left manual on purpose: the listing
+changes a few times a year, and wiring it in would put listing edits on the release path.
