@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Hapus entri</string>
+    <string name="cd_action_edit">Edit entri</string>
+    <string name="cd_action_share">Bagikan entri</string>
+    <string name="cd_toggle_sensitive_data_visibility">Ubah visibilitas data sensitif</string>
+    <string name="cd_add_new_record_button">Tombol tambah entri baru</string>
+    <string name="cd_search_bar">Cari entri berdasarkan judul</string>
+    <string name="cd_clear_search_bar">Hapus bilah pencarian</string>
+    <string name="cd_back_button">Tombol kembali</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Entri</string>
+    <string name="bottom_nav_backup_and_restore">Cadangkan &amp; Pulihkan</string>
+    <string name="bottom_nav_settings">Setelan</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Data disimpan dengan aman oleh Safe Box.\nUnduh dari Play Store: %1$s</string>
+    <string name="common_cancel">Batal</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="common_ok">OKE</string>
+    <string name="biometric_title_text">Masuk ke SafeBox</string>
+    <string name="biometric_sub_title_text">Verifikasi identitas Anda</string>
+    <string name="biometric_negative_button_text">Tutup</string>
+    <string name="do_not_ask_again">Jangan tanya lagi</string>
+    <string name="allow">Izinkan</string>
+    <string name="login">Masuk</string>
+    <string name="signup">Daftar</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Rekening Bank</string>
+    <string name="type_display_card">Kartu Bank</string>
+    <string name="type_display_note">Catatan</string>
+    <string name="type_display_login">Info Login</string>
+    <string name="type_display_authenticator">Autentikator</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Nomor </string>
+    <string name="expiryDate">Tanggal Kedaluwarsa</string>
+    <string name="name">Nama</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Hapus entri ini?</string>
+    <string name="delete_record_dialog_body">Saya mengerti bahwa entri ini akan dihapus secara permanen.</string>
+
+    <!--     backup-->
+    <string name="backup">Cadangkan</string>
+    <string name="backup_path_not_set_message">"Lokasi pencadangan Anda belum diatur! Gunakan tombol di bawah untuk memilihnya.\nTips: Sebaiknya buat folder baru khusus untuk cadangan Anda (mis., \'Safe Box Backup\')."</string>
+    <string name="backup_set_location">Atur Lokasi</string>
+    <string name="backup_set_message">Lokasi pencadangan telah diatur</string>
+    <string name="backup_path">Lokasi cadangan: %1$s</string>
+    <string name="backup_path_select_failed_message">Tidak dapat mengakses folder yang dipilih. Coba buat folder baru untuk cadangan Anda.</string>
+    <string name="retry">Coba Lagi</string>
+    <string name="backup_time">Cadangan terakhir dibuat pada %1$s</string>
+    <string name="backup_info_1">* Cadangan dibuat setiap kali Anda masuk dengan kata sandi dan dienkripsi menggunakan kata sandi utama Anda saat ini </string>
+    <string name="backup_edit_path">Ubah Lokasi</string>
+    <string name="new_backup_dialog_body_text">Masukkan kata sandi untuk membuat file cadangan baru.</string>
+    <string name="backup_in_progress_message">Mencadangkan data mungkin memerlukan waktu. Duduk santai dan tunggu sebentar!</string>
+    <string name="backup_complete_message">Pencadangan selesai! Ingat kata sandinya.</string>
+    <string name="backup_nothing_to_backup_message">Brankas Anda kosong. Tidak ada yang perlu dicadangkan.</string>
+    <string name="backup_folder_inaccessible_message">Folder cadangan tidak dapat diakses lagi. Silakan pilih kembali.</string>
+    <string name="backup_write_failed_message">Pencadangan gagal. Tidak dapat menulis file cadangan, periksa ruang kosong di folder cadangan.</string>
+    <string name="backup_unknown_error_message">Pencadangan gagal karena kesalahan tak terduga. Laporkan melalui Setelan &gt; Kirim masukan.</string>
+
+    <!--     restore-->
+    <string name="restore">Pulihkan</string>
+    <string name="restore_info">"Ketuk tombol di bawah untuk memilih file cadangan.\nPerlu diingat bahwa untuk memulihkan data, masukkan kata sandi yang sama dengan yang digunakan saat membuat file cadangan.\n\nPemulihan akan menggantikan semua data yang saat ini tersimpan di aplikasi dengan isi file cadangan. Entri apa pun yang tidak ada di dalam file cadangan akan hilang secara permanen."</string>
+    <string name="new_restore_dialog_body_text">Masukkan kata sandi yang digunakan saat membuat file cadangan.</string>
+    <string name="restore_complete_message">Data berhasil dipulihkan.</string>
+    <string name="restore_in_progress_message">Memulihkan data mungkin memerlukan waktu. Duduk santai dan tunggu sebentar!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Kata sandi salah!</string>
+    <string name="restore_corrupt_file_message">File cadangan yang dipilih rusak atau tidak valid. Silakan pilih file cadangan yang valid.</string>
+    <string name="restore_backup_too_new_message">Cadangan ini dibuat oleh versi Safe Box yang lebih baru. File cadangan Anda baik-baik saja, silakan perbarui aplikasi untuk memulihkannya.</string>
+    <string name="restore_backup_empty_message">Cadangan ini tidak berisi entri apa pun. Tidak ada yang dipulihkan.</string>
+    <string name="failed_message">Terjadi kesalahan tak terduga saat memproses data Anda.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Cadangan Safe Box</string>
+    <string name="notification_backup_channel_desc">Notifikasi ini membantu Anda memantau progres pencadangan</string>
+    <string name="notification_backup_title">Pencadangan Data</string>
+    <string name="notification_backup_in_progress">"Mencadangkan data Anda ke penyimpanan lokal. Anda akan diberi tahu setelah selesai"</string>
+    <string name="notification_backup_failure">Pencadangan Gagal! Harap atur lokasi cadangan</string>
+    <string name="notification_backup_success">Pencadangan selesai. Sebaiknya simpan salinannya di cloud</string>
+    <string name="notification_permission_rationale_dialog_body">Agar Anda selalu mengetahui status pencadangan otomatis, harap izinkan notifikasi.\nAnda akan diberi tahu saat pencadangan selesai atau jika terjadi masalah.</string>
+    <string name="notification_permission_rationale_dialog_heading">Perlu izin Notifikasi</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Memuat data Anda …</string>
+    <string name="no_record">Mulai dari awal dengan menambahkan entri atau pulihkan data Anda dari cadangan.</string>
+    <string name="new_record_button">Tambah entri baru</string>
+    <string name="restore_records_button">Pulihkan data</string>
+    <string name="no_filtered_record_title">Ups! Tidak ada hasil.</string>
+    <string name="no_filtered_record_body">Kami tidak menemukan apa pun yang cocok dengan pencarian Anda. Coba sesuaikan filter atau periksa salah ketik.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Keamanan &amp; Privasi</string>
+    <string name="settings_section_support_and_community">Dukungan &amp; Komunitas</string>
+
+    <string name="settings_privacy_enabled_title">Mode privasi</string>
+    <string name="settings_privacy_enabled_body">Menyembunyikan konten aplikasi di layar ringkasan perangkat untuk melindungi data sensitif dan mencegah tangkapan layar aplikasi. Disarankan tetap aktif.</string>
+
+    <string name="settings_auto_backup_title">Cadangkan otomatis saat masuk</string>
+    <string name="settings_auto_backup_body">Mencadangkan data Anda secara otomatis saat Anda masuk dengan kata sandi utama (bukan biometrik). Disarankan tetap aktif.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Minta kata sandi setelah %1$d kali masuk dengan biometrik.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Ini adalah batas berapa kali masuk dengan biometrik secara berturut-turut diizinkan. Setelah batas ini tercapai, kata sandi akan diminta untuk masuk. Ini memastikan Anda tetap mengingat kata sandi utama Anda.</string>
+
+    <string name="settings_away_timeout_title">Kunci otomatis setelah %1$d detik.</string>
+    <string name="settings_away_timeout_body">Aplikasi mengeluarkan Anda secara otomatis jika Anda meninggalkan aplikasi terlalu lama. Durasi yang lebih singkat lebih aman.</string>
+
+    <string name="settings_feedback_title">Kirim masukan</string>
+    <string name="settings_feedback_body">Laporkan bug atau sarankan fitur baru. Kami menghargai masukan Anda untuk menjadikan Safe Box lebih baik.</string>
+
+    <string name="settings_review_title">Beri nilai di Play Store</string>
+    <string name="settings_review_body">Jika Anda menyukai aplikasi ini, luangkan waktu sejenak untuk memberikan ulasan. Ini membantu orang lain menemukan kami!</string>
+
+    <string name="settings_github_title">Berkontribusi di GitHub</string>
+    <string name="settings_github_body">SafeBox bersifat sumber terbuka. Lihat kode, laporkan masalah, atau berkontribusi pada proyek di GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Masukkan sesuatu!</string>
+    <string name="length_validation_text">Terlalu pendek!</string>
+    <string name="special_char_validation_text">Masukkan karakter khusus (mis. @, *, $)</string>
+    <string name="case_validation_text">Harus memuat minimal satu huruf besar (A) dan satu huruf kecil (a).</string>
+    <string name="numeric_validation_text">Masukkan minimal dua angka (mis. 1, 2, 3)</string>
+    <string name="save">Simpan</string>
+    <string name="password">Kata Sandi</string>
+    <string name="enter_hint">Masukkan petunjuk</string>
+    <string name="show_hint">Tampilkan Petunjuk</string>
+    <string name="hide_hint">Sembunyikan Petunjuk</string>
+    <string name="hint">Petunjuk</string>
+    <string name="title">Judul </string>
+    <string name="user_id">ID Pengguna </string>
+    <string name="notes">Catatan</string>
+    <string name="account_number">Nomor Rekening </string>
+    <string name="customer_name">Nama Nasabah</string>
+    <string name="customer_id">ID Nasabah</string>
+    <string name="branch_code">Kode Cabang</string>
+    <string name="branch_name">Nama Cabang</string>
+    <string name="branch_address">Alamat Cabang</string>
+    <string name="ifsc_code">Kode IFSC</string>
+    <string name="micr_code">Kode MICR</string>
+    <string name="welcome_back">Selamat Datang Kembali!</string>
+    <string name="welcome">Selamat Datang!</string>
+    <string name="timeout_dialog_message">Anda meninggalkan aplikasi terlalu lama. Ketuk OKE untuk masuk kembali ke aplikasi</string>
+    <string name="timeout_dialog_positive_button_text">OKE</string>
+    <string name="created_on">Dibuat pada</string>
+    <string name="updated_on">Diperbarui pada</string>
+    <string name="add_a_new_record">Tambah entri baru</string>
+    <string name="search_bar_placeholder">Cari …</string>
+    <string name="send_feedback_email">Kirim email masukan</string>
+    <string name="no_email_app_found">Aplikasi email tidak ditemukan</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Lupa Kata Sandi?</string>
+    <string name="forgot_password_device_security_subtitle">Autentikasi untuk mengatur ulang kata sandi utama</string>
+    <string name="update_password">Perbarui Kata Sandi Utama</string>
+    <string name="new_password">Kata Sandi Baru</string>
+    <string name="confirm_new_password">Konfirmasi Kata Sandi Baru</string>
+    <string name="passwords_do_not_match">Kata sandi tidak cocok</string>
+    <string name="change_master_password">Ubah Kata Sandi Utama</string>
+    <string name="change_master_password_body">Perbarui kata sandi utama dan petunjuk Anda</string>
+    <string name="password_updated_success">Kata sandi utama berhasil diperbarui</string>
+    <string name="device_security_required_title">Keamanan Perangkat Diperlukan</string>
+    <string name="device_security_required_body">Aktifkan keamanan perangkat (PIN, pola, kata sandi, atau biometrik) di Setelan Android Anda untuk memverifikasi identitas sebelum mengubah kata sandi utama.</string>
+    <string name="open_settings">Buka Setelan</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Izin Kamera Diperlukan</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box memerlukan akses kamera untuk memindai kode QR guna menyiapkan autentikasi dua faktor.</string>
+    <string name="qr_scanner_title">Pindai Kode QR</string>
+    <string name="qr_scanner_instruction">Sejajarkan kode QR di dalam bingkai</string>
+    <string name="enter_key_manually">Masukkan Kunci Secara Manual</string>
+    <string name="cd_turn_flash_on">Nyalakan lampu kilat</string>
+    <string name="cd_turn_flash_off">Matikan lampu kilat</string>
+    <string name="close">Tutup</string>
+    <string name="unsupported_qr_code_dialog_heading">Tidak dapat menggunakan kode QR ini</string>
+    <string name="unsupported_qr_code_reason_malformed">Kode QR ini rusak atau formatnya salah sehingga Safe Box tidak dapat membacanya.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box hanya mendukung kode berbasis waktu (TOTP). Kode QR ini diperuntukkan bagi jenis kata sandi sekali pakai lainnya.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Kunci rahasia dalam kode QR ini tidak ada atau bukan Base32 yang valid.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Kode QR ini menggunakan algoritma hash yang tidak dapat dihitung oleh Safe Box. Hanya SHA1, SHA256, dan SHA512 yang didukung.</string>
+    <string name="unsupported_qr_code_reason_digits">Kode QR ini meminta panjang kode yang tidak dapat dibuat oleh Safe Box. Hanya 6 hingga 8 digit yang didukung.</string>
+    <string name="unsupported_qr_code_reason_period">Kode QR ini menentukan interval pembaruan yang tidak valid.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Kode QR ini memberikan pengaturan yang bertentangan untuk nilai yang sama, sehingga Safe Box tidak dapat menentukan mana yang harus digunakan.</string>
+    <string name="copied_to_clipboard">%1$s disalin ke papan klip</string>
+    <string name="state_copied">Disalin</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Kode sekali pakai</string>
+    <string name="secret_key">Kunci rahasia</string>
+    <string name="cd_copy_totp_code">Salin kode sekali pakai</string>
+    <string name="totp_invalid_secret_key">Kunci rahasia tidak valid, tidak dapat membuat kode</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Pembaruan selesai diunduh. Mulai ulang Safe Box untuk memasangnya.</string>
+    <string name="in_app_update_restart">Mulai Ulang</string>
+</resources>

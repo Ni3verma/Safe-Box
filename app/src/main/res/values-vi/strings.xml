@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Xóa bản ghi</string>
+    <string name="cd_action_edit">Chỉnh sửa bản ghi</string>
+    <string name="cd_action_share">Chia sẻ bản ghi</string>
+    <string name="cd_toggle_sensitive_data_visibility">Bật/tắt hiển thị dữ liệu nhạy cảm</string>
+    <string name="cd_add_new_record_button">Nút thêm bản ghi mới</string>
+    <string name="cd_search_bar">Tìm kiếm bản ghi theo tiêu đề</string>
+    <string name="cd_clear_search_bar">Xóa thanh tìm kiếm</string>
+    <string name="cd_back_button">Nút quay lại</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Bản ghi</string>
+    <string name="bottom_nav_backup_and_restore">Sao lưu &amp; Khôi phục</string>
+    <string name="bottom_nav_settings">Cài đặt</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Dữ liệu được lưu trữ an toàn bởi Safe Box.\nTải ứng dụng trên Play Store: %1$s</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="confirm">Xác nhận</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Đăng nhập vào SafeBox</string>
+    <string name="biometric_sub_title_text">Xác minh danh tính của bạn</string>
+    <string name="biometric_negative_button_text">Đóng</string>
+    <string name="do_not_ask_again">Không hỏi lại</string>
+    <string name="allow">Cho phép</string>
+    <string name="login">Đăng nhập</string>
+    <string name="signup">Đăng ký</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Tài khoản ngân hàng</string>
+    <string name="type_display_card">Thẻ ngân hàng</string>
+    <string name="type_display_note">Ghi chú</string>
+    <string name="type_display_login">Thông tin đăng nhập</string>
+    <string name="type_display_authenticator">Trình xác thực</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Số thẻ </string>
+    <string name="expiryDate">Ngày hết hạn</string>
+    <string name="name">Tên</string>
+    <string name="pin">Mã PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Xóa bản ghi này?</string>
+    <string name="delete_record_dialog_body">Tôi hiểu rằng bản ghi này sẽ bị xóa vĩnh viễn.</string>
+
+    <!--     backup-->
+    <string name="backup">Sao lưu</string>
+    <string name="backup_path_not_set_message">"Bạn chưa đặt vị trí sao lưu! Hãy dùng nút bên dưới để chọn một vị trí.\nMẹo: Bạn nên tạo một thư mục mới dành riêng cho bản sao lưu (ví dụ: \'Safe Box Backup\')."</string>
+    <string name="backup_set_location">Đặt vị trí</string>
+    <string name="backup_set_message">Đã đặt vị trí sao lưu</string>
+    <string name="backup_path">Đường dẫn sao lưu là %1$s</string>
+    <string name="backup_path_select_failed_message">Không thể truy cập thư mục đã chọn. Hãy thử tạo một thư mục mới cho các bản sao lưu của bạn.</string>
+    <string name="retry">Thử lại</string>
+    <string name="backup_time">Lần sao lưu gần nhất vào %1$s</string>
+    <string name="backup_info_1">* Bản sao lưu được tạo mỗi khi bạn đăng nhập bằng mật khẩu và được mã hóa bằng mật khẩu chính hiện tại của bạn </string>
+    <string name="backup_edit_path">Chỉnh sửa đường dẫn</string>
+    <string name="new_backup_dialog_body_text">Vui lòng nhập mật khẩu để tạo tệp sao lưu mới.</string>
+    <string name="backup_in_progress_message">Quá trình sao lưu dữ liệu có thể mất một chút thời gian. Hãy thư giãn và chờ nhé!</string>
+    <string name="backup_complete_message">Sao lưu hoàn tất! Hãy ghi nhớ mật khẩu của bạn.</string>
+    <string name="backup_nothing_to_backup_message">Kho lưu trữ của bạn đang trống. Không có gì để sao lưu.</string>
+    <string name="backup_folder_inaccessible_message">Thư mục sao lưu không còn truy cập được nữa. Vui lòng chọn lại.</string>
+    <string name="backup_write_failed_message">Sao lưu thất bại. Không thể ghi tệp sao lưu, vui lòng kiểm tra dung lượng trống trong thư mục sao lưu.</string>
+    <string name="backup_unknown_error_message">Sao lưu thất bại do lỗi không mong muốn. Vui lòng báo cáo qua mục Cài đặt &gt; Gửi phản hồi.</string>
+
+    <!--     restore-->
+    <string name="restore">Khôi phục</string>
+    <string name="restore_info">"Nhấn vào nút bên dưới để chọn tệp sao lưu.\nLưu ý rằng để khôi phục dữ liệu, bạn cần nhập đúng mật khẩu đã dùng khi tạo tệp sao lưu đó.\n\nViệc khôi phục sẽ thay thế toàn bộ dữ liệu hiện có trong ứng dụng bằng nội dung của tệp sao lưu. Mọi bản ghi không có trong tệp sao lưu sẽ bị mất vĩnh viễn."</string>
+    <string name="new_restore_dialog_body_text">Vui lòng nhập mật khẩu đã dùng để tạo tệp sao lưu.</string>
+    <string name="restore_complete_message">Đã khôi phục dữ liệu thành công.</string>
+    <string name="restore_in_progress_message">Quá trình khôi phục dữ liệu có thể mất một chút thời gian. Hãy thư giãn và chờ nhé!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Mật khẩu không chính xác!</string>
+    <string name="restore_corrupt_file_message">Tệp sao lưu đã chọn bị hỏng hoặc không hợp lệ. Vui lòng chọn một tệp sao lưu hợp lệ.</string>
+    <string name="restore_backup_too_new_message">Bản sao lưu này được tạo bởi phiên bản Safe Box mới hơn. Tệp sao lưu của bạn vẫn an toàn, vui lòng cập nhật ứng dụng để khôi phục.</string>
+    <string name="restore_backup_empty_message">Bản sao lưu này không chứa bản ghi nào. Không có dữ liệu nào được khôi phục.</string>
+    <string name="failed_message">Đã xảy ra lỗi không mong muốn khi xử lý dữ liệu của bạn.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Sao lưu Safe Box</string>
+    <string name="notification_backup_channel_desc">Thông báo này giúp bạn theo dõi tiến trình sao lưu</string>
+    <string name="notification_backup_title">Sao lưu dữ liệu</string>
+    <string name="notification_backup_in_progress">"Đang sao lưu dữ liệu của bạn vào bộ nhớ thiết bị. Bạn sẽ nhận được thông báo khi hoàn tất"</string>
+    <string name="notification_backup_failure">Sao lưu thất bại! Vui lòng đặt đường dẫn sao lưu</string>
+    <string name="notification_backup_success">Sao lưu hoàn tất. Bạn nên giữ thêm một bản sao trên đám mây</string>
+    <string name="notification_permission_rationale_dialog_body">Để luôn nắm được trạng thái các bản sao lưu tự động, vui lòng cho phép thông báo.\nBạn sẽ nhận được cảnh báo khi sao lưu hoàn tất hoặc khi có sự cố xảy ra.</string>
+    <string name="notification_permission_rationale_dialog_heading">Cần quyền Thông báo</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Đang tải dữ liệu của bạn …</string>
+    <string name="no_record">Bắt đầu bằng cách thêm bản ghi mới hoặc khôi phục dữ liệu từ bản sao lưu.</string>
+    <string name="new_record_button">Thêm bản ghi mới</string>
+    <string name="restore_records_button">Khôi phục dữ liệu</string>
+    <string name="no_filtered_record_title">Rất tiếc! Không có kết quả nào.</string>
+    <string name="no_filtered_record_body">Chúng tôi không tìm thấy kết quả nào khớp với tìm kiếm của bạn. Hãy thử điều chỉnh bộ lọc hoặc kiểm tra lỗi chính tả.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Bảo mật &amp; Quyền riêng tư</string>
+    <string name="settings_section_support_and_community">Hỗ trợ &amp; Cộng đồng</string>
+
+    <string name="settings_privacy_enabled_title">Chế độ riêng tư</string>
+    <string name="settings_privacy_enabled_body">Che nội dung ứng dụng trên màn hình đa nhiệm của thiết bị để bảo vệ dữ liệu nhạy cảm và chặn chụp ảnh màn hình. Khuyên dùng.</string>
+
+    <string name="settings_auto_backup_title">Tự động sao lưu khi đăng nhập</string>
+    <string name="settings_auto_backup_body">Tự động sao lưu dữ liệu khi bạn đăng nhập bằng mật khẩu chính (không áp dụng cho sinh trắc học). Khuyên dùng.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Yêu cầu mật khẩu sau %1$d lần đăng nhập sinh trắc học.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Đây là giới hạn số lần được phép đăng nhập liên tiếp bằng sinh trắc học. Khi đạt đến giới hạn này, bạn sẽ phải nhập mật khẩu để đăng nhập nhằm đảm bảo không quên mật khẩu chính.</string>
+
+    <string name="settings_away_timeout_title">Tự động khóa sau %1$d giây.</string>
+    <string name="settings_away_timeout_body">Ứng dụng sẽ tự động đăng xuất nếu bạn rời khỏi ứng dụng quá lâu. Thời gian càng ngắn thì càng an toàn.</string>
+
+    <string name="settings_feedback_title">Gửi phản hồi</string>
+    <string name="settings_feedback_body">Báo lỗi hoặc đề xuất tính năng mới. Chúng tôi trân trọng ý kiến đóng góp của bạn để giúp Safe Box tốt hơn.</string>
+
+    <string name="settings_review_title">Đánh giá trên Play Store</string>
+    <string name="settings_review_body">Nếu bạn yêu thích ứng dụng, hãy dành ít phút để lại đánh giá. Điều đó giúp nhiều người khác biết đến chúng tôi hơn!</string>
+
+    <string name="settings_github_title">Đóng góp trên GitHub</string>
+    <string name="settings_github_body">SafeBox là dự án mã nguồn mở. Xem mã nguồn, báo cáo sự cố hoặc đóng góp cho dự án trên GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Vui lòng nhập nội dung!</string>
+    <string name="length_validation_text">Quá ngắn!</string>
+    <string name="special_char_validation_text">Nhập ít nhất một ký tự đặc biệt (ví dụ: @, *, $)</string>
+    <string name="case_validation_text">Phải bao gồm ít nhất một chữ hoa (A) và một chữ thường (a).</string>
+    <string name="numeric_validation_text">Nhập ít nhất hai chữ số (ví dụ: 1, 2, 3)</string>
+    <string name="save">Lưu</string>
+    <string name="password">Mật khẩu</string>
+    <string name="enter_hint">Nhập gợi ý</string>
+    <string name="show_hint">Hiện gợi ý</string>
+    <string name="hide_hint">Ẩn gợi ý</string>
+    <string name="hint">Gợi ý</string>
+    <string name="title">Tiêu đề </string>
+    <string name="user_id">ID người dùng </string>
+    <string name="notes">Ghi chú</string>
+    <string name="account_number">Số tài khoản </string>
+    <string name="customer_name">Tên khách hàng</string>
+    <string name="customer_id">Mã khách hàng</string>
+    <string name="branch_code">Mã chi nhánh</string>
+    <string name="branch_name">Tên chi nhánh</string>
+    <string name="branch_address">Địa chỉ chi nhánh</string>
+    <string name="ifsc_code">Mã IFSC</string>
+    <string name="micr_code">Mã MICR</string>
+    <string name="welcome_back">Chào mừng trở lại!</string>
+    <string name="welcome">Chào mừng!</string>
+    <string name="timeout_dialog_message">Bạn đã rời khỏi ứng dụng quá lâu. Vui lòng nhấn OK để đăng nhập lại</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Tạo vào</string>
+    <string name="updated_on">Cập nhật vào</string>
+    <string name="add_a_new_record">Thêm bản ghi mới</string>
+    <string name="search_bar_placeholder">Tìm kiếm …</string>
+    <string name="send_feedback_email">Gửi email phản hồi</string>
+    <string name="no_email_app_found">Không tìm thấy ứng dụng email</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="forgot_password_device_security_subtitle">Xác thực để đặt lại mật khẩu chính</string>
+    <string name="update_password">Cập nhật mật khẩu chính</string>
+    <string name="new_password">Mật khẩu mới</string>
+    <string name="confirm_new_password">Xác nhận mật khẩu mới</string>
+    <string name="passwords_do_not_match">Mật khẩu không khớp</string>
+    <string name="change_master_password">Đổi mật khẩu chính</string>
+    <string name="change_master_password_body">Cập nhật mật khẩu chính và gợi ý của bạn</string>
+    <string name="password_updated_success">Đã cập nhật mật khẩu chính thành công</string>
+    <string name="device_security_required_title">Yêu cầu bảo mật thiết bị</string>
+    <string name="device_security_required_body">Vui lòng bật bảo mật thiết bị (mã PIN, hình vẽ, mật khẩu hoặc sinh trắc học) trong Cài đặt Android để xác minh danh tính trước khi đổi mật khẩu chính.</string>
+    <string name="open_settings">Mở Cài đặt</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Yêu cầu quyền Máy ảnh</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box cần quyền truy cập máy ảnh để quét mã QR nhằm thiết lập xác thực hai yếu tố.</string>
+    <string name="qr_scanner_title">Quét mã QR</string>
+    <string name="qr_scanner_instruction">Căn chỉnh mã QR nằm gọn trong khung</string>
+    <string name="enter_key_manually">Nhập khóa thủ công</string>
+    <string name="cd_turn_flash_on">Bật đèn flash</string>
+    <string name="cd_turn_flash_off">Tắt đèn flash</string>
+    <string name="close">Đóng</string>
+    <string name="unsupported_qr_code_dialog_heading">Không thể dùng mã QR này</string>
+    <string name="unsupported_qr_code_reason_malformed">Mã QR này bị hỏng hoặc sai định dạng nên Safe Box không thể đọc được.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box chỉ hỗ trợ mã dựa trên thời gian (TOTP). Mã QR này dành cho một loại mật khẩu dùng một lần khác.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Khóa bí mật trong mã QR này bị thiếu hoặc không phải định dạng Base32 hợp lệ.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Mã QR này sử dụng thuật toán băm mà Safe Box không thể tính toán. Chỉ hỗ trợ SHA1, SHA256 và SHA512.</string>
+    <string name="unsupported_qr_code_reason_digits">Mã QR này yêu cầu độ dài mã mà Safe Box không thể tạo. Chỉ hỗ trợ từ 6 đến 8 chữ số.</string>
+    <string name="unsupported_qr_code_reason_period">Mã QR này chỉ định khoảng thời gian làm mới không hợp lệ.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Mã QR này chứa các thiết lập xung đột cho cùng một giá trị, vì vậy Safe Box không thể xác định cần dùng thiết lập nào.</string>
+    <string name="copied_to_clipboard">Đã sao chép %1$s vào bảng nhớ tạm</string>
+    <string name="state_copied">Đã sao chép</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Mã dùng một lần</string>
+    <string name="secret_key">Khóa bí mật</string>
+    <string name="cd_copy_totp_code">Sao chép mã dùng một lần</string>
+    <string name="totp_invalid_secret_key">Khóa bí mật không hợp lệ, không thể tạo mã</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Đã tải bản cập nhật xuống. Khởi động lại Safe Box để cài đặt.</string>
+    <string name="in_app_update_restart">Khởi động lại</string>
+</resources>

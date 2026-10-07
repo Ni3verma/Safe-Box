@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Видалити запис</string>
+    <string name="cd_action_edit">Редагувати запис</string>
+    <string name="cd_action_share">Поділитися записом</string>
+    <string name="cd_toggle_sensitive_data_visibility">Перемкнути видимість конфіденційних даних</string>
+    <string name="cd_add_new_record_button">Кнопка додавання нового запису</string>
+    <string name="cd_search_bar">Пошук записів за назвою</string>
+    <string name="cd_clear_search_bar">Очистити рядок пошуку</string>
+    <string name="cd_back_button">Кнопка «Назад»</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Записи</string>
+    <string name="bottom_nav_backup_and_restore">Копія та відновлення</string>
+    <string name="bottom_nav_settings">Налаштування</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Дані надійно захищено в Safe Box.\nЗавантажити з Google Play: %1$s</string>
+    <string name="common_cancel">Скасувати</string>
+    <string name="confirm">Підтвердити</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Вхід у SafeBox</string>
+    <string name="biometric_sub_title_text">Підтвердьте свою особу</string>
+    <string name="biometric_negative_button_text">Закрити</string>
+    <string name="do_not_ask_again">Більше не запитувати</string>
+    <string name="allow">Дозволити</string>
+    <string name="login">Увійти</string>
+    <string name="signup">Зареєструватися</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Банківський рахунок</string>
+    <string name="type_display_card">Платіжна картка</string>
+    <string name="type_display_note">Нотатка</string>
+    <string name="type_display_login">Логін</string>
+    <string name="type_display_authenticator">Автентифікатор</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Номер</string>
+    <string name="expiryDate">Термін дії</string>
+    <string name="name">Ім\'я власника</string>
+    <string name="pin">PIN-код</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Видалити цей запис?</string>
+    <string name="delete_record_dialog_body">Я розумію, що цей запис буде видалено безповоротно.</string>
+
+    <!--     backup-->
+    <string name="backup">Резервна копія</string>
+    <string name="backup_path_not_set_message">"Папку для резервних копій не вибрано! Натисніть кнопку нижче, щоб вибрати її.\nПорада: варто створити окрему папку для резервних копій (наприклад, «Safe Box Backup»)."</string>
+    <string name="backup_set_location">Вибрати папку</string>
+    <string name="backup_set_message">Папку для резервних копій вибрано</string>
+    <string name="backup_path">Шлях до резервних копій: %1$s</string>
+    <string name="backup_path_select_failed_message">Не вдалося отримати доступ до вибраної папки. Спробуйте створити нову папку для резервних копій.</string>
+    <string name="retry">Повторити</string>
+    <string name="backup_time">Остання резервна копія: %1$s</string>
+    <string name="backup_info_1">* Резервна копія створюється під час кожного входу з паролем і шифрується вашим поточним майстер-паролем</string>
+    <string name="backup_edit_path">Змінити шлях</string>
+    <string name="new_backup_dialog_body_text">Введіть пароль для створення нового файлу резервної копії.</string>
+    <string name="backup_in_progress_message">Створення резервної копії може тривати деякий час. Будь ласка, зачекайте!</string>
+    <string name="backup_complete_message">Резервну копію створено! Запам\'ятайте пароль.</string>
+    <string name="backup_nothing_to_backup_message">Ваше сховище порожнє. Немає даних для резервного копіювання.</string>
+    <string name="backup_folder_inaccessible_message">Папка для резервних копій більше недоступна. Виберіть її знову.</string>
+    <string name="backup_write_failed_message">Не вдалося створити резервну копію. Не вдалося записати файл — перевірте вільне місце в папці резервних копій.</string>
+    <string name="backup_unknown_error_message">Не вдалося створити резервну копію через неочікувану помилку. Повідомте про неї через Налаштування &gt; Надіслати відгук.</string>
+
+    <!--     restore-->
+    <string name="restore">Відновити</string>
+    <string name="restore_info">"Натисніть кнопку нижче, щоб вибрати файл резервної копії.\nЗверніть увагу: для відновлення даних потрібно ввести той самий пароль, який використовувався під час створення файлу резервної копії.\n\nВідновлення замінить усі поточні дані в додатку вмістом файлу резервної копії. Будь-які записи, відсутні у файлі резервної копії, буде безповоротно втрачено."</string>
+    <string name="new_restore_dialog_body_text">Введіть пароль, який використовувався під час створення файлу резервної копії.</string>
+    <string name="restore_complete_message">Дані успішно відновлено.</string>
+    <string name="restore_in_progress_message">Відновлення даних може тривати деякий час. Будь ласка, зачекайте!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Неправильний пароль!</string>
+    <string name="restore_corrupt_file_message">Вибраний файл резервної копії пошкоджений або недійсний. Виберіть дійсний файл резервної копії.</string>
+    <string name="restore_backup_too_new_message">Цю резервну копію створено в новішій версії Safe Box. З вашим файлом усе гаразд — оновіть додаток, щоб відновити дані.</string>
+    <string name="restore_backup_empty_message">Ця резервна копія не містить записів. Нічого не відновлено.</string>
+    <string name="failed_message">Під час обробки даних сталася неочікувана помилка.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Резервне копіювання Safe Box</string>
+    <string name="notification_backup_channel_desc">Це сповіщення допомагає відстежувати перебіг резервного копіювання</string>
+    <string name="notification_backup_title">Резервне копіювання даних</string>
+    <string name="notification_backup_in_progress">"Триває резервне копіювання даних у локальне сховище. Ви отримаєте сповіщення після завершення"</string>
+    <string name="notification_backup_failure">Помилка резервного копіювання! Укажіть шлях для резервних копій</string>
+    <string name="notification_backup_success">Резервне копіювання завершено. Рекомендуємо зберегти копію в хмарі</string>
+    <string name="notification_permission_rationale_dialog_body">Щоб завжди знати про стан автоматичного резервного копіювання, дозвольте сповіщення.\nВи отримаєте сповіщення після завершення копіювання або в разі виникнення проблеми.</string>
+    <string name="notification_permission_rationale_dialog_heading">Потрібен дозвіл на сповіщення</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Завантаження даних…</string>
+    <string name="no_record">Почніть із додавання запису або відновіть дані з резервної копії.</string>
+    <string name="new_record_button">Додати новий запис</string>
+    <string name="restore_records_button">Відновити дані</string>
+    <string name="no_filtered_record_title">Нічого не знайдено.</string>
+    <string name="no_filtered_record_body">За вашим запитом нічого не знайдено. Спробуйте змінити фільтри або перевірте запит на помилки.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Безпека та конфіденційність</string>
+    <string name="settings_section_support_and_community">Підтримка та спільнота</string>
+
+    <string name="settings_privacy_enabled_title">Режим конфіденційності</string>
+    <string name="settings_privacy_enabled_body">Приховує вміст додатка на екрані нещодавніх програм для захисту конфіденційних даних і забороняє створення знімків екрана. Рекомендовано залишити ввімкненим.</string>
+
+    <string name="settings_auto_backup_title">Автокопіювання під час входу</string>
+    <string name="settings_auto_backup_body">Автоматично створює резервну копію даних під час входу за допомогою майстер-пароля (не біометрії). Рекомендовано залишити ввімкненим.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Запитувати пароль після %1$d входів за біометрією.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Ліміт послідовних входів за допомогою біометрії. Коли ліміт буде вичерпано, для входу знадобиться пароль. Це гарантує, що ви пам\'ятаєте свій майстер-пароль.</string>
+
+    <string name="settings_away_timeout_title">Автоблокування через %1$d с.</string>
+    <string name="settings_away_timeout_body">Додаток автоматично завершує сеанс, якщо ви довго ним не користуєтеся. Менший час забезпечує вищу безпеку.</string>
+
+    <string name="settings_feedback_title">Надіслати відгук</string>
+    <string name="settings_feedback_body">Повідомте про помилку або запропонуйте нову функцію. Ми цінуємо ваші відгуки, щоб робити Safe Box кращим.</string>
+
+    <string name="settings_review_title">Оцінити в Google Play</string>
+    <string name="settings_review_body">Якщо вам подобається користуватися додатком, залиште відгук. Це допоможе іншим знайти нас!</string>
+
+    <string name="settings_github_title">Долучитися на GitHub</string>
+    <string name="settings_github_body">SafeBox — проєкт із відкритим вихідним кодом. Переглядайте код, повідомляйте про проблеми або долучайтеся до розробки на GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Поле не може бути порожнім!</string>
+    <string name="length_validation_text">Занадто коротке значення!</string>
+    <string name="special_char_validation_text">Додайте спеціальний символ (наприклад, @, *, $)</string>
+    <string name="case_validation_text">Має містити щонайменше одну велику (A) і одну малу літеру (a).</string>
+    <string name="numeric_validation_text">Введіть щонайменше дві цифри (наприклад, 1, 2, 3)</string>
+    <string name="save">Зберегти</string>
+    <string name="password">Пароль</string>
+    <string name="enter_hint">Введіть підказку</string>
+    <string name="show_hint">Показати підказку</string>
+    <string name="hide_hint">Приховати підказку</string>
+    <string name="hint">Підказка</string>
+    <string name="title">Назва</string>
+    <string name="user_id">Ім\'я користувача</string>
+    <string name="notes">Нотатки</string>
+    <string name="account_number">Номер рахунку</string>
+    <string name="customer_name">Ім\'я клієнта</string>
+    <string name="customer_id">ID клієнта</string>
+    <string name="branch_code">Код відділення</string>
+    <string name="branch_name">Назва відділення</string>
+    <string name="branch_address">Адреса відділення</string>
+    <string name="ifsc_code">Код IFSC</string>
+    <string name="micr_code">Код MICR</string>
+    <string name="welcome_back">З поверненням!</string>
+    <string name="welcome">Ласкаво просимо!</string>
+    <string name="timeout_dialog_message">Ви були відсутні занадто довго. Натисніть OK, щоб знову увійти в додаток</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Створено</string>
+    <string name="updated_on">Оновлено</string>
+    <string name="add_a_new_record">Додати новий запис</string>
+    <string name="search_bar_placeholder">Пошук…</string>
+    <string name="send_feedback_email">Надіслати відгук ел. поштою</string>
+    <string name="no_email_app_found">Поштовий додаток не знайдено</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Забули пароль?</string>
+    <string name="forgot_password_device_security_subtitle">Підтвердьте особу для скидання майстер-пароля</string>
+    <string name="update_password">Оновити майстер-пароль</string>
+    <string name="new_password">Новий пароль</string>
+    <string name="confirm_new_password">Підтвердьте новий пароль</string>
+    <string name="passwords_do_not_match">Паролі не збігаються</string>
+    <string name="change_master_password">Змінити майстер-пароль</string>
+    <string name="change_master_password_body">Оновіть майстер-пароль і підказку</string>
+    <string name="password_updated_success">Майстер-пароль успішно оновлено</string>
+    <string name="device_security_required_title">Потрібен захист пристрою</string>
+    <string name="device_security_required_body">Увімкніть блокування екрана (PIN-код, графічний ключ, пароль або біометрію) в налаштуваннях Android, щоб підтвердити особу перед зміною майстер-пароля.</string>
+    <string name="open_settings">Відкрити налаштування</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Потрібен доступ до камери</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box потребує доступу до камери для сканування QR-кодів під час налаштування двофакторної автентифікації.</string>
+    <string name="qr_scanner_title">Сканувати QR-код</string>
+    <string name="qr_scanner_instruction">Розмістіть QR-код у рамці</string>
+    <string name="enter_key_manually">Ввести ключ вручну</string>
+    <string name="cd_turn_flash_on">Увімкнути спалах</string>
+    <string name="cd_turn_flash_off">Вимкнути спалах</string>
+    <string name="close">Закрити</string>
+    <string name="unsupported_qr_code_dialog_heading">Не вдається використати цей QR-код</string>
+    <string name="unsupported_qr_code_reason_malformed">Цей QR-код пошкоджений або має неправильний формат, тому Safe Box не може його прочитати.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box підтримує лише коди на основі часу (TOTP). Цей QR-код призначений для іншого типу одноразового пароля.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">У цьому QR-коді відсутній секретний ключ або він не у форматі Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Цей QR-код використовує алгоритм хешування, який Safe Box не може обчислити. Підтримуються лише SHA1, SHA256 і SHA512.</string>
+    <string name="unsupported_qr_code_reason_digits">Цей QR-код запитує довжину коду, яку Safe Box не може згенерувати. Підтримуються лише коди з 6–8 цифр.</string>
+    <string name="unsupported_qr_code_reason_period">Цей QR-код указує неприпустимий інтервал оновлення.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Цей QR-код містить суперечливі параметри для одного значення, тому Safe Box не може визначити, який із них використовувати.</string>
+    <string name="copied_to_clipboard">%1$s скопійовано до буфера обміну</string>
+    <string name="state_copied">Скопійовано</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Одноразовий код</string>
+    <string name="secret_key">Секретний ключ</string>
+    <string name="cd_copy_totp_code">Копіювати одноразовий код</string>
+    <string name="totp_invalid_secret_key">Недійсний секретний ключ, неможливо згенерувати код</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Оновлення завантажено. Перезапустіть Safe Box, щоб установити його.</string>
+    <string name="in_app_update_restart">Перезапустити</string>
+</resources>

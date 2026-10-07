@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Item verwijderen</string>
+    <string name="cd_action_edit">Item bewerken</string>
+    <string name="cd_action_share">Item delen</string>
+    <string name="cd_toggle_sensitive_data_visibility">Zichtbaarheid van gevoelige gegevens wisselen</string>
+    <string name="cd_add_new_record_button">Knop voor nieuw item toevoegen</string>
+    <string name="cd_search_bar">Items zoeken op titel</string>
+    <string name="cd_clear_search_bar">Zoekbalk wissen</string>
+    <string name="cd_back_button">Knop Terug</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Items</string>
+    <string name="bottom_nav_backup_and_restore">Back-up &amp; herstel</string>
+    <string name="bottom_nav_settings">Instellingen</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Gegevens veilig opgeslagen door Safe Box.\nDownload de app in de Play Store: %1$s</string>
+    <string name="common_cancel">Annuleren</string>
+    <string name="confirm">Bevestigen</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Inloggen bij SafeBox</string>
+    <string name="biometric_sub_title_text">Verifieer je identiteit</string>
+    <string name="biometric_negative_button_text">Sluiten</string>
+    <string name="do_not_ask_again">Niet meer vragen</string>
+    <string name="allow">Toestaan</string>
+    <string name="login">Inloggen</string>
+    <string name="signup">Registreren</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Bankrekening</string>
+    <string name="type_display_card">Betaalkaart</string>
+    <string name="type_display_note">Notitie</string>
+    <string name="type_display_login">Inloggegevens</string>
+    <string name="type_display_authenticator">Authenticator</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Nummer</string>
+    <string name="expiryDate">Vervaldatum</string>
+    <string name="name">Naam</string>
+    <string name="pin">Pincode</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Dit item verwijderen?</string>
+    <string name="delete_record_dialog_body">Ik begrijp dat dit item definitief wordt verwijderd.</string>
+
+    <!--     backup-->
+    <string name="backup">Back-up</string>
+    <string name="backup_path_not_set_message">"Je back-uplocatie is nog niet ingesteld! Gebruik de knop hieronder om er een te kiezen.\nTip: het is verstandig om een nieuwe map voor je back-ups aan te maken (bijv. 'Safe Box Backup')."</string>
+    <string name="backup_set_location">Locatie instellen</string>
+    <string name="backup_set_message">Back-uplocatie is ingesteld</string>
+    <string name="backup_path">Back-uppad is %1$s</string>
+    <string name="backup_path_select_failed_message">Geen toegang tot de geselecteerde map. Probeer een nieuwe map voor je back-ups aan te maken.</string>
+    <string name="retry">Opnieuw proberen</string>
+    <string name="backup_time">Laatste back-up gemaakt op %1$s</string>
+    <string name="backup_info_1">* Er wordt een back-up gemaakt telkens wanneer je inlogt met je wachtwoord, versleuteld met je huidige hoofdwachtwoord</string>
+    <string name="backup_edit_path">Pad bewerken</string>
+    <string name="new_backup_dialog_body_text">Voer een wachtwoord in om een nieuw back-upbestand te maken.</string>
+    <string name="backup_in_progress_message">Het maken van een back-up kan even duren. Leun achterover en ontspan!</string>
+    <string name="backup_complete_message">Je back-up is voltooid! Onthoud het wachtwoord.</string>
+    <string name="backup_nothing_to_backup_message">Je kluis is leeg. Er is niets om een back-up van te maken.</string>
+    <string name="backup_folder_inaccessible_message">De back-upmap is niet meer toegankelijk. Kies deze opnieuw.</string>
+    <string name="backup_write_failed_message">Back-up mislukt. Kan het back-upbestand niet schrijven; controleer de vrije ruimte in de back-upmap.</string>
+    <string name="backup_unknown_error_message">Back-up mislukt door een onverwachte fout. Meld dit via Instellingen &gt; Feedback sturen.</string>
+
+    <!--     restore-->
+    <string name="restore">Herstellen</string>
+    <string name="restore_info">"Tik op de knop hieronder om een back-upbestand te selecteren.\nLet op: voer voor het herstellen van je gegevens hetzelfde wachtwoord in waarmee het back-upbestand is gemaakt.\n\nBij het herstellen wordt alles wat momenteel in de app is opgeslagen vervangen door de inhoud van het back-upbestand. Elk item dat niet in het back-upbestand staat, gaat definitief verloren."</string>
+    <string name="new_restore_dialog_body_text">Voer het wachtwoord in waarmee het back-upbestand is gemaakt.</string>
+    <string name="restore_complete_message">Gegevens zijn succesvol hersteld.</string>
+    <string name="restore_in_progress_message">Het herstellen van gegevens kan even duren. Leun achterover en ontspan!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Wachtwoord is onjuist!</string>
+    <string name="restore_corrupt_file_message">Het geselecteerde back-upbestand is beschadigd of ongeldig. Kies een geldig back-upbestand.</string>
+    <string name="restore_backup_too_new_message">Deze back-up is gemaakt met een nieuwere versie van Safe Box. Je back-upbestand is in orde; werk de app bij om het te herstellen.</string>
+    <string name="restore_backup_empty_message">Deze back-up bevat geen items. Er is niets hersteld.</string>
+    <string name="failed_message">Er is een onverwachte fout opgetreden bij het verwerken van je gegevens.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box-back-up</string>
+    <string name="notification_backup_channel_desc">Deze melding helpt je de voortgang van de back-up te volgen</string>
+    <string name="notification_backup_title">Gegevensback-up</string>
+    <string name="notification_backup_in_progress">"Er wordt een back-up van je gegevens gemaakt op de lokale opslag. Je ontvangt een melding zodra dit is voltooid."</string>
+    <string name="notification_backup_failure">Back-up mislukt! Stel het back-uppad in</string>
+    <string name="notification_backup_success">Back-up is voltooid. Het is verstandig om een kopie in de cloud te bewaren</string>
+    <string name="notification_permission_rationale_dialog_body">Sta meldingen toe zodat je altijd op de hoogte bent van je automatische back-ups.\nJe krijgt een melding wanneer een back-up is voltooid of als er een probleem optreedt.</string>
+    <string name="notification_permission_rationale_dialog_heading">Meldingstoestemming vereist</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Je gegevens laden…</string>
+    <string name="no_record">Begin opnieuw door een item toe te voegen of herstel je gegevens vanuit een back-up.</string>
+    <string name="new_record_button">Nieuw item toevoegen</string>
+    <string name="restore_records_button">Gegevens herstellen</string>
+    <string name="no_filtered_record_title">Oeps! Geen resultaten gevonden.</string>
+    <string name="no_filtered_record_body">We hebben niets gevonden dat overeenkomt met je zoekopdracht. Pas je filters aan of controleer op typfouten.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Beveiliging &amp; privacy</string>
+    <string name="settings_section_support_and_community">Ondersteuning &amp; community</string>
+
+    <string name="settings_privacy_enabled_title">Privacymodus</string>
+    <string name="settings_privacy_enabled_body">Verbergt app-inhoud in het overzicht van recente apps om gevoelige gegevens te beschermen en blokkeert schermafbeeldingen. Aanbevolen om ingeschakeld te laten.</string>
+
+    <string name="settings_auto_backup_title">Automatische back-up bij inloggen</string>
+    <string name="settings_auto_backup_body">Maakt automatisch een back-up van je gegevens wanneer je inlogt met je hoofdwachtwoord (niet met biometrie). Aanbevolen om ingeschakeld te laten.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Vraag om wachtwoord na %1$d biometrische aanmeldingen.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Dit is het maximale aantal keren dat je achter elkaar biometrisch kunt inloggen. Zodra deze limiet is bereikt, is je wachtwoord vereist om in te loggen. Zo vergeet je je hoofdwachtwoord niet.</string>
+
+    <string name="settings_away_timeout_title">Automatisch vergrendelen na %1$d seconden.</string>
+    <string name="settings_away_timeout_body">De app logt je automatisch uit als je te lang weg bent uit de app. Een kortere duur is veiliger.</string>
+
+    <string name="settings_feedback_title">Feedback sturen</string>
+    <string name="settings_feedback_body">Meld een bug of stel een nieuwe functie voor. We waarderen je feedback om Safe Box beter te maken.</string>
+
+    <string name="settings_review_title">Beoordelen in de Play Store</string>
+    <string name="settings_review_body">Als je de app graag gebruikt, neem dan even de tijd om een recensie achter te laten. Zo kunnen anderen ons makkelijker vinden!</string>
+
+    <string name="settings_github_title">Bijdragen op GitHub</string>
+    <string name="settings_github_body">SafeBox is opensource. Bekijk de code, meld problemen of draag bij aan het project op GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Voer iets in!</string>
+    <string name="length_validation_text">Te kort!</string>
+    <string name="special_char_validation_text">Voer een speciaal teken in (bijv. @, *, $)</string>
+    <string name="case_validation_text">Moet minimaal één hoofdletter (A) en één kleine letter (a) bevatten.</string>
+    <string name="numeric_validation_text">Voer minimaal twee cijfers in (bijv. 1, 2, 3)</string>
+    <string name="save">Opslaan</string>
+    <string name="password">Wachtwoord</string>
+    <string name="enter_hint">Voer een geheugensteuntje in</string>
+    <string name="show_hint">Geheugensteuntje tonen</string>
+    <string name="hide_hint">Geheugensteuntje verbergen</string>
+    <string name="hint">Geheugensteuntje</string>
+    <string name="title">Titel</string>
+    <string name="user_id">Gebruikers-ID</string>
+    <string name="notes">Notities</string>
+    <string name="account_number">Rekeningnummer</string>
+    <string name="customer_name">Klantnaam</string>
+    <string name="customer_id">Klant-ID</string>
+    <string name="branch_code">Kantoorcode</string>
+    <string name="branch_name">Kantoornaam</string>
+    <string name="branch_address">Kantooradres</string>
+    <string name="ifsc_code">IFSC-code</string>
+    <string name="micr_code">MICR-code</string>
+    <string name="welcome_back">Welkom terug!</string>
+    <string name="welcome">Welkom!</string>
+    <string name="timeout_dialog_message">Je was te lang afwezig. Tik op OK om opnieuw in te loggen bij de app.</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Aangemaakt op</string>
+    <string name="updated_on">Bijgewerkt op</string>
+    <string name="add_a_new_record">Nieuw item toevoegen</string>
+    <string name="search_bar_placeholder">Zoeken…</string>
+    <string name="send_feedback_email">Feedback-e-mail sturen</string>
+    <string name="no_email_app_found">Geen e-mailapp gevonden</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Wachtwoord vergeten?</string>
+    <string name="forgot_password_device_security_subtitle">Verifieer je identiteit om het hoofdwachtwoord opnieuw in te stellen</string>
+    <string name="update_password">Hoofdwachtwoord bijwerken</string>
+    <string name="new_password">Nieuw wachtwoord</string>
+    <string name="confirm_new_password">Nieuw wachtwoord bevestigen</string>
+    <string name="passwords_do_not_match">Wachtwoorden komen niet overeen</string>
+    <string name="change_master_password">Hoofdwachtwoord wijzigen</string>
+    <string name="change_master_password_body">Werk je hoofdwachtwoord en geheugensteuntje bij</string>
+    <string name="password_updated_success">Hoofdwachtwoord succesvol bijgewerkt</string>
+    <string name="device_security_required_title">Apparaatbeveiliging vereist</string>
+    <string name="device_security_required_body">Schakel apparaatbeveiliging (pincode, patroon, wachtwoord of biometrie) in via de Android-instellingen om je identiteit te verifiëren voordat je het hoofdwachtwoord wijzigt.</string>
+    <string name="open_settings">Instellingen openen</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Cameratoestemming vereist</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box heeft cameratoegang nodig om QR-codes te scannen voor het instellen van tweefactorauthenticatie.</string>
+    <string name="qr_scanner_title">QR-code scannen</string>
+    <string name="qr_scanner_instruction">Plaats de QR-code binnen het kader</string>
+    <string name="enter_key_manually">Sleutel handmatig invoeren</string>
+    <string name="cd_turn_flash_on">Flitser inschakelen</string>
+    <string name="cd_turn_flash_off">Flitser uitschakelen</string>
+    <string name="close">Sluiten</string>
+    <string name="unsupported_qr_code_dialog_heading">Deze QR-code kan niet worden gebruikt</string>
+    <string name="unsupported_qr_code_reason_malformed">Deze QR-code is beschadigd of onjuist opgemaakt, waardoor Safe Box deze niet kan lezen.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box ondersteunt alleen tijdgebaseerde codes (TOTP). Deze QR-code is bedoeld voor een ander type eenmalig wachtwoord.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">De geheime sleutel in deze QR-code ontbreekt of is geen geldige Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Deze QR-code gebruikt een hash-algoritme dat Safe Box niet kan berekenen. Alleen SHA1, SHA256 en SHA512 worden ondersteund.</string>
+    <string name="unsupported_qr_code_reason_digits">Deze QR-code vraagt om een codelengte die Safe Box niet kan genereren. Alleen 6 tot 8 cijfers worden ondersteund.</string>
+    <string name="unsupported_qr_code_reason_period">Deze QR-code geeft een ongeldig vernieuwingsinterval op.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Deze QR-code bevat tegenstrijdige instellingen voor dezelfde waarde, waardoor Safe Box niet kan bepalen welke moet worden gebruikt.</string>
+    <string name="copied_to_clipboard">%1$s gekopieerd naar klembord</string>
+    <string name="state_copied">Gekopieerd</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Eenmalige code</string>
+    <string name="secret_key">Geheime sleutel</string>
+    <string name="cd_copy_totp_code">Eenmalige code kopiëren</string>
+    <string name="totp_invalid_secret_key">Ongeldige geheime sleutel, kan geen code genereren</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Update gedownload. Start Safe Box opnieuw op om deze te installeren.</string>
+    <string name="in_app_update_restart">Opnieuw starten</string>
+</resources>

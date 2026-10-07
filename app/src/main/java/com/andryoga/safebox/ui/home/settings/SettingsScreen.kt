@@ -283,7 +283,7 @@ fun sendFeedback(context: Context) {
             )
         )
     } catch (e: Exception) {
-        Toast.makeText(context, "No email app found", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.no_email_app_found), Toast.LENGTH_SHORT).show()
     }
 }
 

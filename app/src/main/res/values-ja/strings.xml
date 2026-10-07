@@ -1,0 +1,193 @@
+<resources>
+    <!-- Content descriptions -->
+    <string name="cd_action_delete">レコードを削除</string>
+    <string name="cd_action_edit">レコードを編集</string>
+    <string name="cd_action_share">レコードを共有</string>
+    <string name="cd_toggle_sensitive_data_visibility">機密データの表示を切り替え</string>
+    <string name="cd_add_new_record_button">新しいレコードを追加ボタン</string>
+    <string name="cd_search_bar">タイトルでレコードを検索</string>
+    <string name="cd_clear_search_bar">検索バーをクリア</string>
+    <string name="cd_back_button">戻るボタン</string>
+
+    <!-- Screen title -->
+    <string name="bottom_nav_records">レコード</string>
+    <string name="bottom_nav_backup_and_restore">バックアップと復元</string>
+    <string name="bottom_nav_settings">設定</string>
+
+    <!-- Common -->
+    <string name="common_app_playstore_download">Safe Box で安全に保管されたデータです。\nPlay ストアからダウンロード: %1$s</string>
+    <string name="common_cancel">キャンセル</string>
+    <string name="confirm">確認</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">SafeBox にログイン</string>
+    <string name="biometric_sub_title_text">本人確認を行ってください</string>
+    <string name="biometric_negative_button_text">閉じる</string>
+    <string name="do_not_ask_again">今後表示しない</string>
+    <string name="allow">許可</string>
+    <string name="login">ログイン</string>
+    <string name="signup">新規登録</string>
+
+    <!-- User data type text -->
+    <string name="type_display_account">銀行口座</string>
+    <string name="type_display_card">銀行カード</string>
+    <string name="type_display_note">セキュアメモ</string>
+    <string name="type_display_login">ログイン情報</string>
+    <string name="type_display_authenticator">認証システム</string>
+
+    <!-- Bank card dialog -->
+    <string name="number">カード番号</string>
+    <string name="expiryDate">有効期限</string>
+    <string name="name">名義人名</string>
+    <string name="pin">PIN</string>
+
+    <!-- delete record dialog -->
+    <string name="delete_this_record">このレコードを削除しますか？</string>
+    <string name="delete_record_dialog_body">このレコードが完全に削除されることを理解しています。</string>
+
+    <!-- backup -->
+    <string name="backup">バックアップ</string>
+    <string name="backup_path_not_set_message">"バックアップの保存先が設定されていません。下のボタンから選択してください。\nヒント: バックアップ用に新しいフォルダ（例: 「Safe Box Backup」）を作成することをおすすめします。"</string>
+    <string name="backup_set_location">保存先を設定</string>
+    <string name="backup_set_message">バックアップの保存先が設定されました</string>
+    <string name="backup_path">バックアップ先: %1$s</string>
+    <string name="backup_path_select_failed_message">選択したフォルダにアクセスできませんでした。バックアップ用に新しいフォルダを作成してみてください。</string>
+    <string name="retry">再試行</string>
+    <string name="backup_time">前回のバックアップ日時: %1$s</string>
+    <string name="backup_info_1">* バックアップはパスワードでログインするたびに実行され、現在のマスターパスワードで暗号化されます</string>
+    <string name="backup_edit_path">保存先を変更</string>
+    <string name="new_backup_dialog_body_text">新しいバックアップファイルを作成するためのパスワードを入力してください。</string>
+    <string name="backup_in_progress_message">データのバックアップには少し時間がかかる場合があります。そのままお待ちください。</string>
+    <string name="backup_complete_message">バックアップが完了しました！パスワードを忘れないようにしてください。</string>
+    <string name="backup_nothing_to_backup_message">保管庫が空のため、バックアップするデータがありません。</string>
+    <string name="backup_folder_inaccessible_message">バックアップフォルダにアクセスできなくなりました。もう一度選択してください。</string>
+    <string name="backup_write_failed_message">バックアップに失敗しました。バックアップファイルを書き込めませんでした。保存先フォルダの空き容量を確認してください。</string>
+    <string name="backup_unknown_error_message">予期しないエラーによりバックアップに失敗しました。「設定 &gt; フィードバックを送信」からご報告ください。</string>
+
+    <!-- restore -->
+    <string name="restore">復元</string>
+    <string name="restore_info">"下のボタンを押してバックアップファイルを選択してください。\nデータを復元するには、バックアップファイルの作成時に使用したのと同じパスワードを入力する必要があります。\n\n復元を実行すると、現在アプリに保存されているすべてのデータがバックアップファイルの内容に置き換えられます。バックアップファイルに含まれていないレコードは完全に失われます。"</string>
+    <string name="new_restore_dialog_body_text">バックアップファイルの作成時に使用したパスワードを入力してください。</string>
+    <string name="restore_complete_message">データが正常に復元されました。</string>
+    <string name="restore_in_progress_message">データの復元には少し時間がかかる場合があります。そのままお待ちください。</string>
+
+    <!-- master password dialog -->
+    <string name="incorrect_pswrd_message">パスワードが正しくありません！</string>
+    <string name="restore_corrupt_file_message">選択したバックアップファイルは破損しているか無効です。有効なバックアップファイルを選択してください。</string>
+    <string name="restore_backup_too_new_message">このバックアップは新しいバージョンの Safe Box で作成されました。バックアップファイルは正常ですので、復元するにはアプリをアップデートしてください。</string>
+    <string name="restore_backup_empty_message">このバックアップにはレコードが含まれていません。復元されたデータはありません。</string>
+    <string name="failed_message">データの処理中に予期しないエラーが発生しました。</string>
+
+    <!-- Notification -->
+    <string name="notification_backup_channel_name">Safe Box バックアップ</string>
+    <string name="notification_backup_channel_desc">バックアップの進行状況を通知でお知らせします</string>
+    <string name="notification_backup_title">データのバックアップ</string>
+    <string name="notification_backup_in_progress">"ローカルストレージにデータをバックアップしています。完了すると通知されます"</string>
+    <string name="notification_backup_failure">バックアップに失敗しました。バックアップの保存先を設定してください</string>
+    <string name="notification_backup_success">バックアップが完了しました。クラウドにもコピーを保管しておくことをおすすめします</string>
+    <string name="notification_permission_rationale_dialog_body">自動バックアップの状況を常に確認できるよう、通知を許可してください。\nバックアップが完了したときや問題が発生したときに通知されます。</string>
+    <string name="notification_permission_rationale_dialog_heading">通知の許可が必要です</string>
+
+    <!-- Record screen -->
+    <string name="loading_data">データを読み込み中…</string>
+    <string name="no_record">新しいレコードを追加して始めるか、バックアップからデータを復元してください。</string>
+    <string name="new_record_button">新しいレコードを追加</string>
+    <string name="restore_records_button">データを復元</string>
+    <string name="no_filtered_record_title">一致する結果がありません</string>
+    <string name="no_filtered_record_body">検索条件に一致するレコードが見つかりませんでした。フィルタを変更するか、入力ミスがないか確認してください。</string>
+
+    <!-- Settings screen -->
+    <string name="settings_section_security_and_privacy">セキュリティとプライバシー</string>
+    <string name="settings_section_support_and_community">サポートとコミュニティ</string>
+    <string name="settings_privacy_enabled_title">プライバシーモード</string>
+    <string name="settings_privacy_enabled_body">機密データを保護するため、最近使ったアプリ画面でアプリの内容を非表示にし、スクリーンショットを禁止します。オンのままにすることをおすすめします。</string>
+    <string name="settings_auto_backup_title">ログイン時に自動バックアップ</string>
+    <string name="settings_auto_backup_body">マスターパスワードでログインしたとき（生体認証を除く）にデータを自動的にバックアップします。オンのままにすることをおすすめします。</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">生体認証で %1$d 回ログインした後にパスワードを要求する</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">生体認証による連続ログインを許可する上限回数です。この上限に達すると、ログインにパスワードの入力が必要になります。これによりマスターパスワードを忘れるのを防ぎます。</string>
+    <string name="settings_away_timeout_title">%1$d 秒後に自動ロック</string>
+    <string name="settings_away_timeout_body">アプリから離れた状態が一定時間続くと自動的にログアウトします。短い時間に設定するほど安全性が高まります。</string>
+    <string name="settings_feedback_title">フィードバックを送信</string>
+    <string name="settings_feedback_body">不具合の報告や新機能の提案をお寄せください。Safe Box をより良くするため、皆様のご意見をお待ちしています。</string>
+    <string name="settings_review_title">Play ストアで評価する</string>
+    <string name="settings_review_body">このアプリを気に入っていただけましたら、ぜひレビューをご投稿ください。他のユーザーがこのアプリを見つける助けになります！</string>
+    <string name="settings_github_title">GitHub で貢献する</string>
+    <string name="settings_github_body">SafeBox はオープンソースです。GitHub でコードの閲覧、問題の報告、プロジェクトへの貢献ができます。</string>
+
+    <!-- Other -->
+    <string name="blank_validation_text">入力してください！</string>
+    <string name="length_validation_text">短すぎます！</string>
+    <string name="special_char_validation_text">特殊文字を含めてください（例: @, *, $）</string>
+    <string name="case_validation_text">大文字 (A) と小文字 (a) をそれぞれ1文字以上含める必要があります。</string>
+    <string name="numeric_validation_text">数字を2つ以上含めてください（例: 1, 2, 3）</string>
+    <string name="save">保存</string>
+    <string name="password">パスワード</string>
+    <string name="enter_hint">ヒントを入力</string>
+    <string name="show_hint">ヒントを表示</string>
+    <string name="hide_hint">ヒントを非表示</string>
+    <string name="hint">ヒント</string>
+    <string name="title">タイトル</string>
+    <string name="user_id">ユーザーID</string>
+    <string name="notes">メモ</string>
+    <string name="account_number">口座番号</string>
+    <string name="customer_name">顧客名</string>
+    <string name="customer_id">顧客ID</string>
+    <string name="branch_code">支店コード</string>
+    <string name="branch_name">支店名</string>
+    <string name="branch_address">支店住所</string>
+    <string name="ifsc_code">IFSC コード</string>
+    <string name="micr_code">MICR コード</string>
+    <string name="welcome_back">お帰りなさい！</string>
+    <string name="welcome">ようこそ！</string>
+    <string name="timeout_dialog_message">しばらく操作がなかったため自動ログアウトしました。OK を押して再度ログインしてください</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">作成日</string>
+    <string name="updated_on">更新日</string>
+    <string name="add_a_new_record">新しいレコードを追加</string>
+    <string name="search_bar_placeholder">検索…</string>
+    <string name="send_feedback_email">フィードバックメールを送信</string>
+    <string name="no_email_app_found">メールアプリが見つかりません</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">パスワードをお忘れですか？</string>
+    <string name="forgot_password_device_security_subtitle">認証してマスターパスワードをリセット</string>
+    <string name="update_password">マスターパスワードを更新</string>
+    <string name="new_password">新しいパスワード</string>
+    <string name="confirm_new_password">新しいパスワード（確認）</string>
+    <string name="passwords_do_not_match">パスワードが一致しません</string>
+    <string name="change_master_password">マスターパスワードを変更</string>
+    <string name="change_master_password_body">マスターパスワードとヒントを更新します</string>
+    <string name="password_updated_success">マスターパスワードが正常に更新されました</string>
+    <string name="device_security_required_title">デバイスのセキュリティ設定が必要です</string>
+    <string name="device_security_required_body">マスターパスワードを変更する前に本人確認を行うため、Android の「設定」で画面ロック（PIN、パターン、パスワード、または生体認証）を有効にしてください。</string>
+    <string name="open_settings">設定を開く</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">カメラの許可が必要です</string>
+    <string name="camera_permission_rationale_dialog_body">二段階認証のセットアップ用 QR コードをスキャンするには、Safe Box にカメラへのアクセスを許可してください。</string>
+    <string name="qr_scanner_title">QR コードをスキャン</string>
+    <string name="qr_scanner_instruction">QR コードを枠内に合わせてください</string>
+    <string name="enter_key_manually">キーを手動で入力</string>
+    <string name="cd_turn_flash_on">フラッシュをオンにする</string>
+    <string name="cd_turn_flash_off">フラッシュをオフにする</string>
+    <string name="close">閉じる</string>
+    <string name="unsupported_qr_code_dialog_heading">この QR コードは使用できません</string>
+    <string name="unsupported_qr_code_reason_malformed">この QR コードは破損しているか形式が正しくないため、Safe Box で読み取れませんでした。</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box は時間ベース（TOTP）のコードのみに対応しています。この QR コードは別の種類のワンタイムパスワード用です。</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">この QR コードにシークレットキーが含まれていないか、有効な Base32 形式ではありません。</string>
+    <string name="unsupported_qr_code_reason_algorithm">この QR コードは Safe Box が計算できないハッシュアルゴリズムを使用しています。対応しているのは SHA1、SHA256、SHA512 のみです。</string>
+    <string name="unsupported_qr_code_reason_digits">この QR コードは Safe Box が生成できない桁数を指定しています。対応しているのは 6〜8 桁のみです。</string>
+    <string name="unsupported_qr_code_reason_period">この QR コードには無効な更新間隔が指定されています。</string>
+    <string name="unsupported_qr_code_reason_ambiguous">この QR コードには同じ項目に対して矛盾する設定が含まれているため、Safe Box でどちらを使用すべきか判断できません。</string>
+    <string name="copied_to_clipboard">%1$s をクリップボードにコピーしました</string>
+    <string name="state_copied">コピー済み</string>
+
+    <!-- Authenticator -->
+    <string name="totp_code">ワンタイムコード</string>
+    <string name="secret_key">シークレットキー</string>
+    <string name="cd_copy_totp_code">ワンタイムコードをコピー</string>
+    <string name="totp_invalid_secret_key">シークレットキーが無効なため、コードを生成できません</string>
+
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">アップデートをダウンロードしました。Safe Box を再起動してインストールしてください。</string>
+    <string name="in_app_update_restart">再起動</string>
+</resources>

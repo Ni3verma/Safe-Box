@@ -85,6 +85,12 @@ jobs:
       - name: Verify the release notes picker
         run: ./scripts/tests/release-notes-test.sh
 
+      # Local builds deliberately allow untranslated new/modified English strings so APK compilation
+      # and testing never block. CI enforces 100% translation completeness, placeholder parity,
+      # invariant brand/crypto tokens, and lock synchronization before JDK/Gradle setup.
+      - name: Verify translations and lock file
+        run: ./scripts/tests/translations-test.sh
+
       # The store images are rebuilt by scripts/store-screenshots/render.py a few times a year, so
       # a regression in it would otherwise surface only when a listing update is due. Its tests
       # need Python and the Chrome the runner image ships, and they push synthetic captures through

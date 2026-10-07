@@ -1,0 +1,193 @@
+<resources>
+    <!-- Content descriptions -->
+    <string name="cd_action_delete">ลบรายการ</string>
+    <string name="cd_action_edit">แก้ไขรายการ</string>
+    <string name="cd_action_share">แชร์รายการ</string>
+    <string name="cd_toggle_sensitive_data_visibility">สลับการแสดงข้อมูลสำคัญ</string>
+    <string name="cd_add_new_record_button">ปุ่มเพิ่มรายการใหม่</string>
+    <string name="cd_search_bar">ค้นหารายการตามชื่อ</string>
+    <string name="cd_clear_search_bar">ล้างช่องค้นหา</string>
+    <string name="cd_back_button">ปุ่มย้อนกลับ</string>
+
+    <!-- Screen title -->
+    <string name="bottom_nav_records">รายการ</string>
+    <string name="bottom_nav_backup_and_restore">สำรองและกู้คืน</string>
+    <string name="bottom_nav_settings">การตั้งค่า</string>
+
+    <!-- Common -->
+    <string name="common_app_playstore_download">จัดเก็บข้อมูลอย่างปลอดภัยด้วย Safe Box\nดาวน์โหลดจาก Play Store : %1$s</string>
+    <string name="common_cancel">ยกเลิก</string>
+    <string name="confirm">ยืนยัน</string>
+    <string name="common_ok">ตกลง</string>
+    <string name="biometric_title_text">เข้าสู่ระบบ SafeBox</string>
+    <string name="biometric_sub_title_text">ยืนยันตัวตนของคุณ</string>
+    <string name="biometric_negative_button_text">ปิด</string>
+    <string name="do_not_ask_again">ไม่ต้องถามอีก</string>
+    <string name="allow">อนุญาต</string>
+    <string name="login">เข้าสู่ระบบ</string>
+    <string name="signup">สมัครใช้งาน</string>
+
+    <!-- User data type text -->
+    <string name="type_display_account">บัญชีธนาคาร</string>
+    <string name="type_display_card">บัตรธนาคาร</string>
+    <string name="type_display_note">บันทึกส่วนตัว</string>
+    <string name="type_display_login">ข้อมูลเข้าสู่ระบบ</string>
+    <string name="type_display_authenticator">เครื่องมือยืนยันตัวตน</string>
+
+    <!-- Bank card dialog -->
+    <string name="number">หมายเลขบัตร</string>
+    <string name="expiryDate">วันหมดอายุ</string>
+    <string name="name">ชื่อบนบัตร</string>
+    <string name="pin">PIN</string>
+
+    <!-- delete record dialog -->
+    <string name="delete_this_record">ลบรายการนี้หรือไม่?</string>
+    <string name="delete_record_dialog_body">ฉันเข้าใจว่ารายการนี้จะถูกลบออกอย่างถาวร</string>
+
+    <!-- backup -->
+    <string name="backup">สำรองข้อมูล</string>
+    <string name="backup_path_not_set_message">"ยังไม่ได้ตั้งค่าตำแหน่งสำรองข้อมูล! ใช้ปุ่มด้านล่างเพื่อเลือกโฟลเดอร์\nเคล็ดลับ: แนะนำให้สร้างโฟลเดอร์ใหม่สำหรับการสำรองข้อมูล (เช่น \'Safe Box Backup\')"</string>
+    <string name="backup_set_location">ตั้งค่าตำแหน่ง</string>
+    <string name="backup_set_message">ตั้งค่าตำแหน่งสำรองข้อมูลแล้ว</string>
+    <string name="backup_path">ตำแหน่งสำรองข้อมูลคือ %1$s</string>
+    <string name="backup_path_select_failed_message">ไม่สามารถเข้าถึงโฟลเดอร์ที่เลือกได้ โปรดลองสร้างโฟลเดอร์ใหม่สำหรับการสำรองข้อมูล</string>
+    <string name="retry">ลองอีกครั้ง</string>
+    <string name="backup_time">สำรองข้อมูลล่าสุดเมื่อ %1$s</string>
+    <string name="backup_info_1">* ระบบจะสำรองข้อมูลทุกครั้งที่คุณเข้าสู่ระบบด้วยรหัสผ่าน และเข้ารหัสด้วยรหัสผ่านหลักปัจจุบันของคุณ</string>
+    <string name="backup_edit_path">แก้ไขตำแหน่ง</string>
+    <string name="new_backup_dialog_body_text">โปรดป้อนรหัสผ่านเพื่อสร้างไฟล์สำรองข้อมูลใหม่</string>
+    <string name="backup_in_progress_message">การสำรองข้อมูลอาจใช้เวลาสักครู่ โปรดรอสักครู่!</string>
+    <string name="backup_complete_message">สำรองข้อมูลเสร็จสมบูรณ์แล้ว! โปรดจำรหัสผ่านของคุณไว้</string>
+    <string name="backup_nothing_to_backup_message">ตู้นิรภัยของคุณว่างเปล่า ไม่มีข้อมูลให้สำรอง</string>
+    <string name="backup_folder_inaccessible_message">ไม่สามารถเข้าถึงโฟลเดอร์สำรองข้อมูลได้อีกต่อไป โปรดเลือกใหม่อีกครั้ง</string>
+    <string name="backup_write_failed_message">การสำรองข้อมูลล้มเหลว ไม่สามารถเขียนไฟล์สำรองข้อมูลได้ โปรดตรวจสอบพื้นที่ว่างในโฟลเดอร์สำรองข้อมูล</string>
+    <string name="backup_unknown_error_message">การสำรองข้อมูลล้มเหลวเนื่องจากข้อผิดพลาดที่ไม่คาดคิด โปรดรายงานปัญหาที่ การตั้งค่า &gt; ส่งความคิดเห็น</string>
+
+    <!-- restore -->
+    <string name="restore">กู้คืนข้อมูล</string>
+    <string name="restore_info">"กดปุ่มด้านล่างเพื่อเลือกไฟล์สำรองข้อมูล\nโปรดทราบว่าในการกู้คืนข้อมูล คุณต้องป้อนรหัสผ่านเดียวกับที่ใช้สร้างไฟล์สำรองข้อมูลนั้น\n\nการกู้คืนจะแทนที่ข้อมูลทั้งหมดที่บันทึกไว้ในแอปด้วยข้อมูลจากไฟล์สำรอง รายการใดที่ไม่อยู่ในไฟล์สำรองข้อมูลจะสูญหายอย่างถาวร"</string>
+    <string name="new_restore_dialog_body_text">โปรดป้อนรหัสผ่านที่ใช้สร้างไฟล์สำรองข้อมูลนี้</string>
+    <string name="restore_complete_message">กู้คืนข้อมูลเรียบร้อยแล้ว</string>
+    <string name="restore_in_progress_message">การกู้คืนข้อมูลอาจใช้เวลาสักครู่ โปรดรอสักครู่!</string>
+
+    <!-- master password dialog -->
+    <string name="incorrect_pswrd_message">รหัสผ่านไม่ถูกต้อง !</string>
+    <string name="restore_corrupt_file_message">ไฟล์สำรองข้อมูลที่เลือกเสียหายหรือไม่ถูกต้อง โปรดเลือกไฟล์สำรองข้อมูลที่ถูกต้อง</string>
+    <string name="restore_backup_too_new_message">ไฟล์สำรองนี้สร้างโดย Safe Box เวอร์ชันที่ใหม่กว่า ไฟล์สำรองของคุณยังใช้งานได้ โปรดอัปเดตแอปเพื่อกู้คืนข้อมูล</string>
+    <string name="restore_backup_empty_message">ไฟล์สำรองนี้ไม่มีรายการข้อมูล ไม่มีการกู้คืนข้อมูลใดๆ</string>
+    <string name="failed_message">เกิดข้อผิดพลาดที่ไม่คาดคิดขณะประมวลผลข้อมูลของคุณ</string>
+
+    <!-- Notification -->
+    <string name="notification_backup_channel_name">การสำรองข้อมูล Safe Box</string>
+    <string name="notification_backup_channel_desc">การแจ้งเตือนนี้ช่วยให้คุณติดตามความคืบหน้าของการสำรองข้อมูล</string>
+    <string name="notification_backup_title">การสำรองข้อมูล</string>
+    <string name="notification_backup_in_progress">"กำลังสำรองข้อมูลของคุณไปยังพื้นที่จัดเก็บในเครื่อง ระบบจะแจ้งเตือนเมื่อเสร็จสมบูรณ์"</string>
+    <string name="notification_backup_failure">การสำรองข้อมูลล้มเหลว! โปรดตั้งค่าตำแหน่งสำรองข้อมูล</string>
+    <string name="notification_backup_success">สำรองข้อมูลเสร็จสมบูรณ์ แนะนำให้เก็บสำเนาไว้บนคลาวด์ด้วย</string>
+    <string name="notification_permission_rationale_dialog_body">เพื่อให้คุณทราบสถานะการสำรองข้อมูลอัตโนมัติอยู่เสมอ โปรดอนุญาตการแจ้งเตือน\nคุณจะได้รับการแจ้งเตือนเมื่อการสำรองข้อมูลเสร็จสมบูรณ์หรือเมื่อเกิดปัญหาขึ้น</string>
+    <string name="notification_permission_rationale_dialog_heading">ต้องการสิทธิ์การแจ้งเตือน</string>
+
+    <!-- Record screen -->
+    <string name="loading_data">กำลังโหลดข้อมูลของคุณ …</string>
+    <string name="no_record">เริ่มต้นด้วยการเพิ่มรายการใหม่ หรือกู้คืนข้อมูลของคุณจากไฟล์สำรอง</string>
+    <string name="new_record_button">เพิ่มรายการใหม่</string>
+    <string name="restore_records_button">กู้คืนข้อมูล</string>
+    <string name="no_filtered_record_title">ไม่พบผลลัพธ์</string>
+    <string name="no_filtered_record_body">ไม่พบรายการที่ตรงกับการค้นหาของคุณ ลองปรับตัวกรองหรือตรวจสอบตัวสะกดอีกครั้ง</string>
+
+    <!-- Settings screen -->
+    <string name="settings_section_security_and_privacy">ความปลอดภัยและความเป็นส่วนตัว</string>
+    <string name="settings_section_support_and_community">การสนับสนุนและชุมชน</string>
+    <string name="settings_privacy_enabled_title">โหมดความเป็นส่วนตัว</string>
+    <string name="settings_privacy_enabled_body">ซ่อนเนื้อหาแอปในหน้าจอแอปพลิเคชันล่าสุดเพื่อปกป้องข้อมูลสำคัญ และไม่อนุญาตให้ถ่ายภาพหน้าจอ แนะนำให้เปิดไว้</string>
+    <string name="settings_auto_backup_title">สำรองข้อมูลอัตโนมัติเมื่อเข้าสู่ระบบ</string>
+    <string name="settings_auto_backup_body">สำรองข้อมูลโดยอัตโนมัติเมื่อคุณเข้าสู่ระบบด้วยรหัสผ่านหลัก (ไม่ใช่ข้อมูลไบโอเมตริก) แนะนำให้เปิดไว้</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">ขอรหัสผ่านหลังจากเข้าสู่ระบบด้วยไบโอเมตริก %1$d ครั้ง</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">นี่คือจำนวนครั้งสูงสุดที่อนุญาตให้เข้าสู่ระบบด้วยไบโอเมตริกติดต่อกัน เมื่อถึงจำนวนที่กำหนด ระบบจะขอรหัสผ่านเพื่อเข้าสู่ระบบ เพื่อช่วยให้คุณจำรหัสผ่านหลักได้</string>
+    <string name="settings_away_timeout_title">ล็อกอัตโนมัติหลังจาก %1$d วินาที</string>
+    <string name="settings_away_timeout_body">แอปจะออกจากระบบโดยอัตโนมัติหากคุณออกจากแอปนานเกินไป ระยะเวลาที่สั้นลงจะปลอดภัยยิ่งขึ้น</string>
+    <string name="settings_feedback_title">ส่งความคิดเห็น</string>
+    <string name="settings_feedback_body">รายงานข้อบกพร่องหรือแนะนำฟีเจอร์ใหม่ เรารับฟังความคิดเห็นของคุณเพื่อพัฒนา Safe Box ให้ดียิ่งขึ้น</string>
+    <string name="settings_review_title">ให้คะแนนบน Play Store</string>
+    <string name="settings_review_body">หากคุณชื่นชอบการใช้งานแอปนี้ โปรดสละเวลาสักครู่เพื่อเขียนรีวิว ซึ่งจะช่วยให้ผู้อื่นค้นพบแอปของเราได้!</string>
+    <string name="settings_github_title">ร่วมพัฒนาบน GitHub</string>
+    <string name="settings_github_body">SafeBox เป็นโอเพนซอร์ส คุณสามารถดูโค้ด รายงานปัญหา หรือร่วมพัฒนาโปรเจกต์ได้บน GitHub</string>
+
+    <!-- Other -->
+    <string name="blank_validation_text">โปรดป้อนข้อมูล !</string>
+    <string name="length_validation_text">สั้นเกินไป !</string>
+    <string name="special_char_validation_text">โปรดป้อนอักขระพิเศษอย่างน้อย 1 ตัว (เช่น @, *, $)</string>
+    <string name="case_validation_text">ต้องมีตัวพิมพ์ใหญ่ (A) อย่างน้อย 1 ตัว และตัวพิมพ์เล็ก (a) อย่างน้อย 1 ตัว</string>
+    <string name="numeric_validation_text">โปรดป้อนตัวเลขอย่างน้อย 2 ตัว (เช่น 1, 2, 3)</string>
+    <string name="save">บันทึก</string>
+    <string name="password">รหัสผ่าน</string>
+    <string name="enter_hint">ป้อนคำใบ้</string>
+    <string name="show_hint">แสดงคำใบ้</string>
+    <string name="hide_hint">ซ่อนคำใบ้</string>
+    <string name="hint">คำใบ้</string>
+    <string name="title">ชื่อรายการ</string>
+    <string name="user_id">ชื่อผู้ใช้ / ID</string>
+    <string name="notes">บันทึกย่อ</string>
+    <string name="account_number">เลขที่บัญชี</string>
+    <string name="customer_name">ชื่อลูกค้า</string>
+    <string name="customer_id">รหัสลูกค้า</string>
+    <string name="branch_code">รหัสสาขา</string>
+    <string name="branch_name">ชื่อสาขา</string>
+    <string name="branch_address">ที่อยู่สาขา</string>
+    <string name="ifsc_code">รหัส IFSC</string>
+    <string name="micr_code">รหัส MICR</string>
+    <string name="welcome_back">ยินดีต้อนรับกลับมา !</string>
+    <string name="welcome">ยินดีต้อนรับ !</string>
+    <string name="timeout_dialog_message">คุณไม่ได้ใช้งานนานเกินไป โปรดกด ตกลง เพื่อเข้าสู่ระบบอีกครั้ง</string>
+    <string name="timeout_dialog_positive_button_text">ตกลง</string>
+    <string name="created_on">สร้างเมื่อ</string>
+    <string name="updated_on">อัปเดตเมื่อ</string>
+    <string name="add_a_new_record">เพิ่มรายการใหม่</string>
+    <string name="search_bar_placeholder">ค้นหา …</string>
+    <string name="send_feedback_email">ส่งอีเมลแสดงความคิดเห็น</string>
+    <string name="no_email_app_found">ไม่พบแอปอีเมล</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">ลืมรหัสผ่าน?</string>
+    <string name="forgot_password_device_security_subtitle">ยืนยันตัวตนเพื่อรีเซ็ตรหัสผ่านหลัก</string>
+    <string name="update_password">อัปเดตรหัสผ่านหลัก</string>
+    <string name="new_password">รหัสผ่านใหม่</string>
+    <string name="confirm_new_password">ยืนยันรหัสผ่านใหม่</string>
+    <string name="passwords_do_not_match">รหัสผ่านไม่ตรงกัน</string>
+    <string name="change_master_password">เปลี่ยนรหัสผ่านหลัก</string>
+    <string name="change_master_password_body">อัปเดตรหัสผ่านหลักและคำใบ้ของคุณ</string>
+    <string name="password_updated_success">อัปเดตรหัสผ่านหลักเรียบร้อยแล้ว</string>
+    <string name="device_security_required_title">ต้องเปิดใช้งานความปลอดภัยของอุปกรณ์</string>
+    <string name="device_security_required_body">โปรดเปิดใช้งานการล็อกหน้าจอ (PIN, รูปแบบ, รหัสผ่าน หรือไบโอเมตริก) ในการตั้งค่า Android เพื่อยืนยันตัวตนของคุณก่อนเปลี่ยนรหัสผ่านหลัก</string>
+    <string name="open_settings">เปิดการตั้งค่า</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">ต้องการสิทธิ์การใช้กล้อง</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box ต้องการสิทธิ์เข้าถึงกล้องเพื่อสแกนคิวอาร์โค้ดสำหรับการตั้งค่าการยืนยันตัวตนแบบสองขั้นตอน</string>
+    <string name="qr_scanner_title">สแกนคิวอาร์โค้ด</string>
+    <string name="qr_scanner_instruction">จัดคิวอาร์โค้ดให้อยู่ในกรอบ</string>
+    <string name="enter_key_manually">ป้อนคีย์ด้วยตนเอง</string>
+    <string name="cd_turn_flash_on">เปิดแฟลช</string>
+    <string name="cd_turn_flash_off">ปิดแฟลช</string>
+    <string name="close">ปิด</string>
+    <string name="unsupported_qr_code_dialog_heading">ไม่สามารถใช้คิวอาร์โค้ดนี้ได้</string>
+    <string name="unsupported_qr_code_reason_malformed">คิวอาร์โค้ดนี้เสียหายหรือมีรูปแบบไม่ถูกต้อง Safe Box จึงไม่สามารถอ่านได้</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box รองรับเฉพาะรหัสแบบอิงตามเวลา (TOTP) เท่านั้น คิวอาร์โค้ดนี้เป็นรหัสผ่านใช้ครั้งเดียวประเภทอื่น</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">คีย์ลับในคิวอาร์โค้ดนี้หายไปหรือไม่ได้อยู่ในรูปแบบ Base32 ที่ถูกต้อง</string>
+    <string name="unsupported_qr_code_reason_algorithm">คิวอาร์โค้ดนี้ใช้อัลกอริทึมการแฮชที่ Safe Box ไม่สามารถคำนวณได้ รองรับเฉพาะ SHA1, SHA256 และ SHA512 เท่านั้น</string>
+    <string name="unsupported_qr_code_reason_digits">คิวอาร์โค้ดนี้ระบุความยาวรหัสที่ Safe Box ไม่สามารถสร้างได้ รองรับเฉพาะรหัส 6 ถึง 8 หลักเท่านั้น</string>
+    <string name="unsupported_qr_code_reason_period">คิวอาร์โค้ดนี้ระบุช่วงเวลารีเฟรชที่ไม่ถูกต้อง</string>
+    <string name="unsupported_qr_code_reason_ambiguous">คิวอาร์โค้ดนี้มีการตั้งค่าที่ขัดแย้งกันสำหรับค่าเดียวกัน Safe Box จึงไม่สามารถระบุได้ว่าควรใช้ค่าใด</string>
+    <string name="copied_to_clipboard">คัดลอก %1$s ไปยังคลิปบอร์ดแล้ว</string>
+    <string name="state_copied">คัดลอกแล้ว</string>
+
+    <!-- Authenticator -->
+    <string name="totp_code">รหัสใช้ครั้งเดียว</string>
+    <string name="secret_key">คีย์ลับ</string>
+    <string name="cd_copy_totp_code">คัดลอกรหัสใช้ครั้งเดียว</string>
+    <string name="totp_invalid_secret_key">คีย์ลับไม่ถูกต้อง ไม่สามารถสร้างรหัสได้</string>
+
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">ดาวน์โหลดอัปเดตแล้ว รีสตาร์ท Safe Box เพื่อติดตั้ง</string>
+    <string name="in_app_update_restart">รีสตาร์ท</string>
+</resources>

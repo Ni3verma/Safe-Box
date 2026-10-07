@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Radera post</string>
+    <string name="cd_action_edit">Redigera post</string>
+    <string name="cd_action_share">Dela post</string>
+    <string name="cd_toggle_sensitive_data_visibility">Växla synlighet för känsliga uppgifter</string>
+    <string name="cd_add_new_record_button">Knapp för att lägga till ny post</string>
+    <string name="cd_search_bar">Sök poster efter titel</string>
+    <string name="cd_clear_search_bar">Rensa sökfältet</string>
+    <string name="cd_back_button">Tillbakaknapp</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Poster</string>
+    <string name="bottom_nav_backup_and_restore">Backup &amp; återställning</string>
+    <string name="bottom_nav_settings">Inställningar</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Data lagras säkert av Safe Box.\nLadda ner från Play Butik: %1$s</string>
+    <string name="common_cancel">Avbryt</string>
+    <string name="confirm">Bekräfta</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Logga in i SafeBox</string>
+    <string name="biometric_sub_title_text">Verifiera din identitet</string>
+    <string name="biometric_negative_button_text">Stäng</string>
+    <string name="do_not_ask_again">Fråga inte igen</string>
+    <string name="allow">Tillåt</string>
+    <string name="login">Logga in</string>
+    <string name="signup">Registrera</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Bankkonto</string>
+    <string name="type_display_card">Betalkort</string>
+    <string name="type_display_note">Anteckning</string>
+    <string name="type_display_login">Inloggningsuppgift</string>
+    <string name="type_display_authenticator">Autentiserare</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Nummer</string>
+    <string name="expiryDate">Utgångsdatum</string>
+    <string name="name">Namn</string>
+    <string name="pin">PIN-kod</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Vill du radera denna post?</string>
+    <string name="delete_record_dialog_body">Jag förstår att denna post kommer att tas bort permanent.</string>
+
+    <!--     backup-->
+    <string name="backup">Säkerhetskopiering</string>
+    <string name="backup_path_not_set_message">"Din plats för säkerhetskopior är inte inställd! Använd knappen nedan för att välja en.\nTips: Det är en bra idé att skapa en ny mapp för dina säkerhetskopior (t.ex. 'Safe Box Backup')."</string>
+    <string name="backup_set_location">Ange plats</string>
+    <string name="backup_set_message">Plats för säkerhetskopiering är inställd</string>
+    <string name="backup_path">Sökväg för säkerhetskopiering är %1$s</string>
+    <string name="backup_path_select_failed_message">Det gick inte att komma åt den valda mappen. Försök att skapa en ny mapp för dina säkerhetskopior.</string>
+    <string name="retry">Försök igen</string>
+    <string name="backup_time">Senaste säkerhetskopieringen gjordes %1$s</string>
+    <string name="backup_info_1">* En säkerhetskopia skapas varje gång du loggar in med lösenord och krypteras med ditt nuvarande huvudlösenord</string>
+    <string name="backup_edit_path">Redigera sökväg</string>
+    <string name="new_backup_dialog_body_text">Ange ett lösenord för att skapa en ny säkerhetskopia.</string>
+    <string name="backup_in_progress_message">Det kan ta en stund att säkerhetskopiera data. Luta dig tillbaka och koppla av!</string>
+    <string name="backup_complete_message">Din säkerhetskopiering är klar! Kom ihåg lösenordet.</string>
+    <string name="backup_nothing_to_backup_message">Ditt valv är tomt. Det finns inget att säkerhetskopiera.</string>
+    <string name="backup_folder_inaccessible_message">Säkerhetskopieringsmappen är inte längre tillgänglig. Välj den igen.</string>
+    <string name="backup_write_failed_message">Säkerhetskopieringen misslyckades. Det gick inte att skriva säkerhetskopian, kontrollera ledigt utrymme i mappen.</string>
+    <string name="backup_unknown_error_message">Säkerhetskopieringen misslyckades på grund av ett oväntat fel. Rapportera det via Inställningar &gt; Skicka feedback.</string>
+
+    <!--     restore-->
+    <string name="restore">Återställ</string>
+    <string name="restore_info">"Tryck på knappen nedan för att välja en säkerhetskopia.\nObservera att du måste ange samma lösenord som användes när säkerhetskopian skapades för att återställa data.\n\nEn återställning ersätter allt som för närvarande är sparat i appen med innehållet i säkerhetskopian. Alla poster som inte finns med i säkerhetskopian går förlorade permanent."</string>
+    <string name="new_restore_dialog_body_text">Ange lösenordet som användes för att skapa säkerhetskopian.</string>
+    <string name="restore_complete_message">Data har återställts.</string>
+    <string name="restore_in_progress_message">Det kan ta en stund att återställa data. Luta dig tillbaka och koppla av!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Lösenordet är felaktigt!</string>
+    <string name="restore_corrupt_file_message">Den valda säkerhetskopian är skadad eller ogiltig. Välj en giltig säkerhetskopia.</string>
+    <string name="restore_backup_too_new_message">Denna säkerhetskopia skapades av en nyare version av Safe Box. Det är inget fel på din säkerhetskopia, men du behöver uppdatera appen för att återställa den.</string>
+    <string name="restore_backup_empty_message">Denna säkerhetskopia innehåller inga poster. Inget återställdes.</string>
+    <string name="failed_message">Ett oväntat fel uppstod när dina data behandlades.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box-säkerhetskopiering</string>
+    <string name="notification_backup_channel_desc">Denna avisering hjälper dig att följa säkerhetskopieringens förlopp</string>
+    <string name="notification_backup_title">Säkerhetskopiering av data</string>
+    <string name="notification_backup_in_progress">"Säkerhetskopierar dina data till lokal lagring. Du får en avisering när det är klart."</string>
+    <string name="notification_backup_failure">Säkerhetskopiering misslyckades! Ange sökväg för säkerhetskopiering</string>
+    <string name="notification_backup_success">Säkerhetskopieringen är klar. Det är en bra idé att spara en kopia i molnet</string>
+    <string name="notification_permission_rationale_dialog_body">Tillåt aviseringar så att du alltid har koll på dina automatiska säkerhetskopieringar.\nDu meddelas när en säkerhetskopiering är klar eller om ett problem uppstår.</string>
+    <string name="notification_permission_rationale_dialog_heading">Aviseringsbehörighet krävs</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Läser in dina data…</string>
+    <string name="no_record">Börja från början genom att lägga till en post eller återställ dina data från en säkerhetskopia.</string>
+    <string name="new_record_button">Lägg till en ny post</string>
+    <string name="restore_records_button">Återställ data</string>
+    <string name="no_filtered_record_title">Hoppsan! Inga resultat här.</string>
+    <string name="no_filtered_record_body">Vi hittade inget som matchade din sökning. Försök att justera dina filter eller kontrollera om det finns stavfel.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Säkerhet &amp; integritet</string>
+    <string name="settings_section_support_and_community">Support &amp; community</string>
+
+    <string name="settings_privacy_enabled_title">Integritetsläge</string>
+    <string name="settings_privacy_enabled_body">Döljer appinnehåll i översikten över senaste appar för att skydda känsliga uppgifter och blockerar skärmbilder. Vi rekommenderar att ha detta aktiverat.</string>
+
+    <string name="settings_auto_backup_title">Automatisk säkerhetskopiering vid inloggning</string>
+    <string name="settings_auto_backup_body">Säkerhetskopierar automatiskt dina data när du loggar in med ditt huvudlösenord (inte med biometri). Vi rekommenderar att ha detta aktiverat.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Fråga efter lösenord efter %1$d biometriska inloggningar.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Detta är gränsen för hur många gånger i rad biometrisk inloggning tillåts. När gränsen nås krävs lösenord för att logga in. Det hjälper dig att komma ihåg ditt huvudlösenord.</string>
+
+    <string name="settings_away_timeout_title">Automatiskt lås efter %1$d sekunder.</string>
+    <string name="settings_away_timeout_body">Appen loggar ut dig automatiskt om du lämnar appen för länge. En kortare tid är säkrare.</string>
+
+    <string name="settings_feedback_title">Skicka feedback</string>
+    <string name="settings_feedback_body">Rapportera ett fel eller föreslå en ny funktion. Vi värdesätter dina synpunkter för att göra Safe Box bättre.</string>
+
+    <string name="settings_review_title">Betygsätt på Play Butik</string>
+    <string name="settings_review_body">Om du gillar att använda appen får du gärna lämna ett omdöme. Det hjälper andra att hitta oss!</string>
+
+    <string name="settings_github_title">Bidra på GitHub</string>
+    <string name="settings_github_body">SafeBox har öppen källkod. Visa koden, rapportera problem eller bidra till projektet på GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Ange något!</string>
+    <string name="length_validation_text">För kort!</string>
+    <string name="special_char_validation_text">Ange ett specialtecken (t.ex. @, *, $)</string>
+    <string name="case_validation_text">Måste innehålla minst en stor bokstav (A) och en liten bokstav (a).</string>
+    <string name="numeric_validation_text">Ange minst två siffror (t.ex. 1, 2, 3)</string>
+    <string name="save">Spara</string>
+    <string name="password">Lösenord</string>
+    <string name="enter_hint">Ange en ledtråd</string>
+    <string name="show_hint">Visa ledtråd</string>
+    <string name="hide_hint">Dölj ledtråd</string>
+    <string name="hint">Ledtråd</string>
+    <string name="title">Titel</string>
+    <string name="user_id">Användar-ID</string>
+    <string name="notes">Anteckningar</string>
+    <string name="account_number">Kontonummer</string>
+    <string name="customer_name">Kundnamn</string>
+    <string name="customer_id">Kund-ID</string>
+    <string name="branch_code">Kontorskod</string>
+    <string name="branch_name">Kontorsnamn</string>
+    <string name="branch_address">Kontorsadress</string>
+    <string name="ifsc_code">IFSC-kod</string>
+    <string name="micr_code">MICR-kod</string>
+    <string name="welcome_back">Välkommen tillbaka!</string>
+    <string name="welcome">Välkommen!</string>
+    <string name="timeout_dialog_message">Du har varit inaktiv för länge. Tryck på OK för att logga in i appen igen.</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Skapad</string>
+    <string name="updated_on">Uppdaterad</string>
+    <string name="add_a_new_record">Lägg till en ny post</string>
+    <string name="search_bar_placeholder">Sök…</string>
+    <string name="send_feedback_email">Skicka e-post med feedback</string>
+    <string name="no_email_app_found">Ingen e-postapp hittades</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Glömt lösenordet?</string>
+    <string name="forgot_password_device_security_subtitle">Autentisera dig för att återställa huvudlösenordet</string>
+    <string name="update_password">Uppdatera huvudlösenord</string>
+    <string name="new_password">Nytt lösenord</string>
+    <string name="confirm_new_password">Bekräfta nytt lösenord</string>
+    <string name="passwords_do_not_match">Lösenorden matchar inte</string>
+    <string name="change_master_password">Ändra huvudlösenord</string>
+    <string name="change_master_password_body">Uppdatera ditt huvudlösenord och din ledtråd</string>
+    <string name="password_updated_success">Huvudlösenordet har uppdaterats</string>
+    <string name="device_security_required_title">Enhetssäkerhet krävs</string>
+    <string name="device_security_required_body">Aktivera enhetssäkerhet (PIN-kod, mönster, lösenord eller biometri) i Android-inställningarna för att verifiera din identitet innan du ändrar ditt huvudlösenord.</string>
+    <string name="open_settings">Öppna inställningar</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Kamerabehörighet krävs</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box behöver åtkomst till kameran för att skanna QR-koder vid inställning av tvåfaktorsautentisering.</string>
+    <string name="qr_scanner_title">Skanna QR-kod</string>
+    <string name="qr_scanner_instruction">Rikta in QR-koden inom ramen</string>
+    <string name="enter_key_manually">Ange nyckel manuellt</string>
+    <string name="cd_turn_flash_on">Slå på blixten</string>
+    <string name="cd_turn_flash_off">Slå av blixten</string>
+    <string name="close">Stäng</string>
+    <string name="unsupported_qr_code_dialog_heading">Det går inte att använda denna QR-kod</string>
+    <string name="unsupported_qr_code_reason_malformed">Denna QR-kod är skadad eller felformaterad, så Safe Box kunde inte läsa den.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box stöder endast tidsbaserade koder (TOTP). Denna QR-kod är för en annan typ av engångslösenord.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Den hemliga nyckeln i denna QR-kod saknas eller är inte giltig Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Denna QR-kod använder en hashalgoritm som Safe Box inte kan beräkna. Endast SHA1, SHA256 och SHA512 stöds.</string>
+    <string name="unsupported_qr_code_reason_digits">Denna QR-kod begär en kodlängd som Safe Box inte kan generera. Endast 6 till 8 siffror stöds.</string>
+    <string name="unsupported_qr_code_reason_period">Denna QR-kod anger ett ogiltigt uppdateringsintervall.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Denna QR-kod innehåller motstridiga inställningar för samma värde, så Safe Box kan inte avgöra vilken som ska användas.</string>
+    <string name="copied_to_clipboard">Kopierade %1$s till urklipp</string>
+    <string name="state_copied">Kopierad</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Engångskod</string>
+    <string name="secret_key">Hemlig nyckel</string>
+    <string name="cd_copy_totp_code">Kopiera engångskod</string>
+    <string name="totp_invalid_secret_key">Ogiltig hemlig nyckel, kan inte generera kod</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Uppdateringen har laddats ner. Starta om Safe Box för att installera den.</string>
+    <string name="in_app_update_restart">Starta om</string>
+</resources>

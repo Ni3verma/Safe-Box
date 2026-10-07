@@ -1,0 +1,191 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Eintrag löschen</string>
+    <string name="cd_action_edit">Eintrag bearbeiten</string>
+    <string name="cd_action_share">Eintrag teilen</string>
+    <string name="cd_toggle_sensitive_data_visibility">Sichtbarkeit sensibler Daten umschalten</string>
+    <string name="cd_add_new_record_button">Schaltfläche zum Hinzufügen eines neuen Eintrags</string>
+    <string name="cd_search_bar">Einträge nach Titel durchsuchen</string>
+    <string name="cd_clear_search_bar">Suchleiste leeren</string>
+    <string name="cd_back_button">Zurück-Schaltfläche</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Einträge</string>
+    <string name="bottom_nav_backup_and_restore">Sichern &amp; Wiederherstellen</string>
+    <string name="bottom_nav_settings">Einstellungen</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Daten sicher gespeichert mit Safe Box.\nJetzt im Play Store herunterladen: %1$s</string>
+    <string name="common_cancel">Abbrechen</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Bei SafeBox anmelden</string>
+    <string name="biometric_sub_title_text">Identität bestätigen</string>
+    <string name="biometric_negative_button_text">Schließen</string>
+    <string name="do_not_ask_again">Nicht mehr fragen</string>
+    <string name="allow">Zulassen</string>
+    <string name="login">Anmelden</string>
+    <string name="signup">Registrieren</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Bankkonto</string>
+    <string name="type_display_card">Bankkarte</string>
+    <string name="type_display_note">Notiz</string>
+    <string name="type_display_login">Zugangsdaten</string>
+    <string name="type_display_authenticator">Authentifikator</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Nummer </string>
+    <string name="expiryDate">Ablaufdatum</string>
+    <string name="name">Name</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Diesen Eintrag löschen?</string>
+    <string name="delete_record_dialog_body">Mir ist bewusst, dass dieser Eintrag dauerhaft gelöscht wird.</string>
+
+    <!--     backup-->
+    <string name="backup">Sicherung</string>
+    <string name="backup_path_not_set_message">Ihr Sicherungsort ist noch nicht festgelegt! Wählen Sie über die Schaltfläche unten einen Ordner aus.\nTipp: Es empfiehlt sich, einen neuen Ordner für Ihre Sicherungen anzulegen (z. B. „Safe Box Backup“).</string>
+    <string name="backup_set_location">Speicherort festlegen</string>
+    <string name="backup_set_message">Sicherungsort ist festgelegt</string>
+    <string name="backup_path">Sicherungspfad: %1$s</string>
+    <string name="backup_path_select_failed_message">Auf den ausgewählten Ordner konnte nicht zugegriffen werden. Versuchen Sie, einen neuen Ordner für Ihre Sicherungen zu erstellen.</string>
+    <string name="retry">Wiederholen</string>
+    <string name="backup_time">Letzte Sicherung am %1$s</string>
+    <string name="backup_info_1">* Bei jeder Anmeldung mit Passwort wird eine Sicherung erstellt und mit Ihrem aktuellen Master-Passwort verschlüsselt </string>
+    <string name="backup_edit_path">Pfad ändern</string>
+    <string name="new_backup_dialog_body_text">Bitte geben Sie ein Passwort ein, um eine neue Sicherungsdatei zu erstellen.</string>
+    <string name="backup_in_progress_message">Das Sichern der Daten kann einen Moment dauern. Lehnen Sie sich entspannt zurück!</string>
+    <string name="backup_complete_message">Ihre Sicherung ist abgeschlossen! Merken Sie sich das Passwort.</string>
+    <string name="backup_nothing_to_backup_message">Ihr Tresor ist leer. Es gibt nichts zu sichern.</string>
+    <string name="backup_folder_inaccessible_message">Der Sicherungsordner ist nicht mehr zugänglich. Bitte wählen Sie ihn erneut aus.</string>
+    <string name="backup_write_failed_message">Sicherung fehlgeschlagen. Die Sicherungsdatei konnte nicht geschrieben werden. Prüfen Sie den freien Speicherplatz im Sicherungsordner.</string>
+    <string name="backup_unknown_error_message">Sicherung aufgrund eines unerwarteten Fehlers fehlgeschlagen. Bitte melden Sie dies unter Einstellungen &gt; Feedback senden.</string>
+
+    <!--     restore-->
+    <string name="restore">Wiederherstellen</string>
+    <string name="restore_info">Tippen Sie auf die Schaltfläche unten, um eine Sicherungsdatei auszuwählen.\nBitte beachten Sie, dass Sie zum Wiederherstellen der Daten dasselbe Passwort eingeben müssen, das beim Erstellen der Sicherungsdatei verwendet wurde.\n\nBeim Wiederherstellen werden alle derzeit in der App gespeicherten Daten durch den Inhalt der Sicherungsdatei ersetzt. Jeder Eintrag, der nicht in der Sicherungsdatei enthalten ist, geht dauerhaft verloren.</string>
+    <string name="new_restore_dialog_body_text">Bitte geben Sie das Passwort ein, mit dem die Sicherungsdatei erstellt wurde.</string>
+    <string name="restore_complete_message">Daten wurden erfolgreich wiederhergestellt.</string>
+    <string name="restore_in_progress_message">Das Wiederherstellen der Daten kann einen Moment dauern. Lehnen Sie sich entspannt zurück!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Passwort ist falsch!</string>
+    <string name="restore_corrupt_file_message">Die ausgewählte Sicherungsdatei ist beschädigt oder ungültig. Bitte wählen Sie eine gültige Sicherungsdatei aus.</string>
+    <string name="restore_backup_too_new_message">Diese Sicherung wurde mit einer neueren Version von Safe Box erstellt. Ihre Sicherungsdatei ist in Ordnung – bitte aktualisieren Sie die App, um sie wiederherzustellen.</string>
+    <string name="restore_backup_empty_message">Diese Sicherung enthält keine Einträge. Es wurde nichts wiederhergestellt.</string>
+    <string name="failed_message">Beim Verarbeiten Ihrer Daten ist ein unerwarteter Fehler aufgetreten.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box-Sicherung</string>
+    <string name="notification_backup_channel_desc">Diese Benachrichtigung informiert Sie über den Fortschritt der Datensicherung</string>
+    <string name="notification_backup_title">Datensicherung</string>
+    <string name="notification_backup_in_progress">Ihre Daten werden im lokalen Speicher gesichert. Sie werden benachrichtigt, sobald der Vorgang abgeschlossen ist</string>
+    <string name="notification_backup_failure">Sicherung fehlgeschlagen! Bitte Sicherungspfad festlegen</string>
+    <string name="notification_backup_success">Sicherung abgeschlossen. Es empfiehlt sich, eine Kopie in der Cloud aufzubewahren</string>
+    <string name="notification_permission_rationale_dialog_body">Damit Sie jederzeit über Ihre automatischen Sicherungen informiert sind, lassen Sie bitte Benachrichtigungen zu.\nSie werden benachrichtigt, sobald eine Sicherung abgeschlossen ist oder falls ein Problem auftritt.</string>
+    <string name="notification_permission_rationale_dialog_heading">Benachrichtigungsberechtigung erforderlich</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Ihre Daten werden geladen …</string>
+    <string name="no_record">Beginnen Sie neu, indem Sie einen Eintrag hinzufügen, oder stellen Sie Ihre Daten aus einer Sicherung wieder her.</string>
+    <string name="new_record_button">Neuen Eintrag hinzufügen</string>
+    <string name="restore_records_button">Daten wiederherstellen</string>
+    <string name="no_filtered_record_title">Hoppla! Keine Ergebnisse.</string>
+    <string name="no_filtered_record_body">Es wurden keine passenden Einträge gefunden. Passen Sie Ihre Filter an oder prüfen Sie die Eingabe auf Tippfehler.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Sicherheit &amp; Datenschutz</string>
+    <string name="settings_section_support_and_community">Support &amp; Community</string>
+    <string name="settings_privacy_enabled_title">Datenschutzmodus</string>
+    <string name="settings_privacy_enabled_body">Verbirgt App-Inhalte in der Übersicht zuletzt verwendeter Apps zum Schutz sensibler Daten und blockiert Bildschirmfotos. Aktivierung empfohlen.</string>
+    <string name="settings_auto_backup_title">Auto-Sicherung bei Anmeldung</string>
+    <string name="settings_auto_backup_body">Sichert Ihre Daten automatisch, wenn Sie sich mit Ihrem Master-Passwort anmelden (nicht bei Biometrie). Aktivierung empfohlen.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">Passwort nach %1$d biometrischen Anmeldungen anfordern.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Legt fest, wie oft hintereinander eine biometrische Anmeldung möglich ist. Nach Erreichen dieses Limits ist zur Anmeldung das Passwort erforderlich, damit Sie Ihr Master-Passwort nicht vergessen.</string>
+    <string name="settings_away_timeout_title">Automatische Sperre nach %1$d Sekunden.</string>
+    <string name="settings_away_timeout_body">Meldet Sie automatisch ab, wenn Sie die App zu lange verlassen. Eine kürzere Dauer ist sicherer.</string>
+    <string name="settings_feedback_title">Feedback senden</string>
+    <string name="settings_feedback_body">Melden Sie einen Fehler oder schlagen Sie eine Funktion vor. Ihr Feedback hilft uns, Safe Box weiter zu verbessern.</string>
+    <string name="settings_review_title">Im Play Store bewerten</string>
+    <string name="settings_review_body">Wenn Ihnen die App gefällt, nehmen Sie sich bitte einen Moment Zeit für eine Bewertung. Das hilft anderen, uns zu finden!</string>
+    <string name="settings_github_title">Auf GitHub mitwirken</string>
+    <string name="settings_github_body">SafeBox ist Open Source. Sehen Sie sich den Code an, melden Sie Probleme oder wirken Sie auf GitHub am Projekt mit.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Bitte geben Sie etwas ein!</string>
+    <string name="length_validation_text">Zu kurz!</string>
+    <string name="special_char_validation_text">Mindestens ein Sonderzeichen eingeben (z. B. @, *, $)</string>
+    <string name="case_validation_text">Muss mindestens einen Großbuchstaben (A) und einen Kleinbuchstaben (a) enthalten.</string>
+    <string name="numeric_validation_text">Mindestens zwei Ziffern eingeben (z. B. 1, 2, 3)</string>
+    <string name="save">Speichern</string>
+    <string name="password">Passwort</string>
+    <string name="enter_hint">Hinweis eingeben</string>
+    <string name="show_hint">Hinweis anzeigen</string>
+    <string name="hide_hint">Hinweis ausblenden</string>
+    <string name="hint">Hinweis</string>
+    <string name="title">Titel </string>
+    <string name="user_id">Benutzerkennung </string>
+    <string name="notes">Notizen</string>
+    <string name="account_number">Kontonummer </string>
+    <string name="customer_name">Name des Kontoinhabers</string>
+    <string name="customer_id">Kundennummer</string>
+    <string name="branch_code">Filialcode</string>
+    <string name="branch_name">Filialname</string>
+    <string name="branch_address">Filialadresse</string>
+    <string name="ifsc_code">IFSC-Code</string>
+    <string name="micr_code">MICR-Code</string>
+    <string name="welcome_back">Willkommen zurück!</string>
+    <string name="welcome">Willkommen!</string>
+    <string name="timeout_dialog_message">Sie waren zu lange inaktiv. Bitte tippen Sie auf OK, um sich erneut anzumelden</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Erstellt am</string>
+    <string name="updated_on">Aktualisiert am</string>
+    <string name="add_a_new_record">Neuen Eintrag hinzufügen</string>
+    <string name="search_bar_placeholder">Suchen …</string>
+    <string name="send_feedback_email">Feedback-E-Mail senden</string>
+    <string name="no_email_app_found">Keine E-Mail-App gefunden</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Passwort vergessen?</string>
+    <string name="forgot_password_device_security_subtitle">Authentifizieren, um das Master-Passwort zurückzusetzen</string>
+    <string name="update_password">Master-Passwort aktualisieren</string>
+    <string name="new_password">Neues Passwort</string>
+    <string name="confirm_new_password">Neues Passwort bestätigen</string>
+    <string name="passwords_do_not_match">Die Passwörter stimmen nicht überein</string>
+    <string name="change_master_password">Master-Passwort ändern</string>
+    <string name="change_master_password_body">Master-Passwort und Hinweis aktualisieren</string>
+    <string name="password_updated_success">Master-Passwort erfolgreich aktualisiert</string>
+    <string name="device_security_required_title">Gerätesicherheit erforderlich</string>
+    <string name="device_security_required_body">Bitte aktivieren Sie die Gerätesicherheit (PIN, Muster, Passwort oder Biometrie) in den Android-Einstellungen, um Ihre Identität vor dem Ändern Ihres Master-Passworts zu bestätigen.</string>
+    <string name="open_settings">Einstellungen öffnen</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Kameraberechtigung erforderlich</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box benötigt Kamerazugriff, um QR-Codes für die Einrichtung der Zwei-Faktor-Authentifizierung zu scannen.</string>
+    <string name="qr_scanner_title">QR-Code scannen</string>
+    <string name="qr_scanner_instruction">QR-Code im Rahmen ausrichten</string>
+    <string name="enter_key_manually">Schlüssel manuell eingeben</string>
+    <string name="cd_turn_flash_on">Blitz einschalten</string>
+    <string name="cd_turn_flash_off">Blitz ausschalten</string>
+    <string name="close">Schließen</string>
+    <string name="unsupported_qr_code_dialog_heading">Dieser QR-Code kann nicht verwendet werden</string>
+    <string name="unsupported_qr_code_reason_malformed">Dieser QR-Code ist beschädigt oder fehlerhaft formatiert, sodass Safe Box ihn nicht lesen konnte.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box unterstützt nur zeitbasierte Codes (TOTP). Dieser QR-Code ist für eine andere Art von Einmalpasswort bestimmt.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Der geheime Schlüssel in diesem QR-Code fehlt oder ist kein gültiges Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Dieser QR-Code verwendet einen Hash-Algorithmus, den Safe Box nicht berechnen kann. Es werden nur SHA1, SHA256 und SHA512 unterstützt.</string>
+    <string name="unsupported_qr_code_reason_digits">Dieser QR-Code erfordert eine Codelänge, die Safe Box nicht erzeugen kann. Es werden nur 6 bis 8 Ziffern unterstützt.</string>
+    <string name="unsupported_qr_code_reason_period">Dieser QR-Code gibt ein ungültiges Aktualisierungsintervall an.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Dieser QR-Code enthält widersprüchliche Einstellungen für denselben Wert, sodass Safe Box nicht entscheiden kann, welche Einstellung verwendet werden soll.</string>
+    <string name="copied_to_clipboard">%1$s in die Zwischenablage kopiert</string>
+    <string name="state_copied">Kopiert</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Einmalcode</string>
+    <string name="secret_key">Geheimer Schlüssel</string>
+    <string name="cd_copy_totp_code">Einmalcode kopieren</string>
+    <string name="totp_invalid_secret_key">Ungültiger geheimer Schlüssel, Code kann nicht erzeugt werden</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Update heruntergeladen. Starten Sie Safe Box neu, um es zu installieren.</string>
+    <string name="in_app_update_restart">Neu starten</string>
+</resources>

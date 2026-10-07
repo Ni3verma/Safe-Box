@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Smazat záznam</string>
+    <string name="cd_action_edit">Upravit záznam</string>
+    <string name="cd_action_share">Sdílet záznam</string>
+    <string name="cd_toggle_sensitive_data_visibility">Přepnout viditelnost citlivých údajů</string>
+    <string name="cd_add_new_record_button">Tlačítko pro přidání nového záznamu</string>
+    <string name="cd_search_bar">Hledat záznamy podle názvu</string>
+    <string name="cd_clear_search_bar">Vymazat vyhledávací pole</string>
+    <string name="cd_back_button">Tlačítko Zpět</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Záznamy</string>
+    <string name="bottom_nav_backup_and_restore">Záloha a obnovení</string>
+    <string name="bottom_nav_settings">Nastavení</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Data bezpečně uložena v aplikaci Safe Box.\nStáhnout z Obchodu Play: %1$s</string>
+    <string name="common_cancel">Zrušit</string>
+    <string name="confirm">Potvrdit</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Přihlášení do SafeBox</string>
+    <string name="biometric_sub_title_text">Ověřte svou totožnost</string>
+    <string name="biometric_negative_button_text">Zavřít</string>
+    <string name="do_not_ask_again">Příště se neptat</string>
+    <string name="allow">Povolit</string>
+    <string name="login">Přihlásit se</string>
+    <string name="signup">Zaregistrovat se</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Bankovní účet</string>
+    <string name="type_display_card">Platební karta</string>
+    <string name="type_display_note">Poznámka</string>
+    <string name="type_display_login">Přihlašovací údaje</string>
+    <string name="type_display_authenticator">Autentifikátor</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Číslo</string>
+    <string name="expiryDate">Datum platnosti</string>
+    <string name="name">Jméno držitele</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Smazat tento záznam?</string>
+    <string name="delete_record_dialog_body">Rozumím, že tento záznam bude trvale odstraněn.</string>
+
+    <!--     backup-->
+    <string name="backup">Záloha</string>
+    <string name="backup_path_not_set_message">"Umístění zálohy není nastaveno! Pomocí tlačítka níže ho vyberte.\nTip: Doporučujeme pro zálohy vytvořit novou složku (např. „Safe Box Backup“)."</string>
+    <string name="backup_set_location">Nastavit umístění</string>
+    <string name="backup_set_message">Umístění zálohy je nastaveno</string>
+    <string name="backup_path">Cesta k záloze: %1$s</string>
+    <string name="backup_path_select_failed_message">K vybrané složce se nepodařilo získat přístup. Zkuste pro zálohy vytvořit novou složku.</string>
+    <string name="retry">Zkusit znovu</string>
+    <string name="backup_time">Poslední záloha proběhla: %1$s</string>
+    <string name="backup_info_1">* Záloha se vytváří při každém přihlášení heslem a je šifrována vaším aktuálním hlavním heslem</string>
+    <string name="backup_edit_path">Upravit cestu</string>
+    <string name="new_backup_dialog_body_text">Zadejte heslo pro vytvoření nového záložního souboru.</string>
+    <string name="backup_in_progress_message">Zálohování dat může chvíli trvat. Prosím vyčkejte!</string>
+    <string name="backup_complete_message">Záloha je dokončena! Zapamatujte si heslo.</string>
+    <string name="backup_nothing_to_backup_message">Váš trezor je prázdný. Není co zálohovat.</string>
+    <string name="backup_folder_inaccessible_message">Složka se zálohami již není dostupná. Vyberte ji prosím znovu.</string>
+    <string name="backup_write_failed_message">Zálohování se nezdařilo. Záložní soubor nelze zapsat – zkontrolujte volné místo ve složce se zálohami.</string>
+    <string name="backup_unknown_error_message">Zálohování se nezdařilo kvůli neočekávané chybě. Nahlaste ji prosím v části Nastavení &gt; Odeslat zpětnou vazbu.</string>
+
+    <!--     restore-->
+    <string name="restore">Obnovit</string>
+    <string name="restore_info">"Kliknutím na tlačítko níže vyberte záložní soubor.\nUpozornění: k obnovení dat je nutné zadat stejné heslo, které bylo použito při vytvoření záložního souboru.\n\nObnovením nahradíte všechna aktuálně uložená data v aplikaci obsahem záložního souboru. Záznamy, které v záložním souboru nejsou, budou trvale ztraceny."</string>
+    <string name="new_restore_dialog_body_text">Zadejte heslo, které bylo použito při vytvoření záložního souboru.</string>
+    <string name="restore_complete_message">Data byla úspěšně obnovena.</string>
+    <string name="restore_in_progress_message">Obnovení dat může chvíli trvat. Prosím vyčkejte!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Nesprávné heslo!</string>
+    <string name="restore_corrupt_file_message">Vybraný záložní soubor je poškozený nebo neplatný. Vyberte platný záložní soubor.</string>
+    <string name="restore_backup_too_new_message">Tato záloha byla vytvořena v novější verzi aplikace Safe Box. Záložní soubor je v pořádku – pro jeho obnovení aktualizujte aplikaci.</string>
+    <string name="restore_backup_empty_message">Tato záloha neobsahuje žádné záznamy. Nic nebylo obnoveno.</string>
+    <string name="failed_message">Při zpracování dat došlo k neočekávané chybě.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Zálohování Safe Box</string>
+    <string name="notification_backup_channel_desc">Toto oznámení vám pomůže sledovat průběh zálohování</string>
+    <string name="notification_backup_title">Zálohování dat</string>
+    <string name="notification_backup_in_progress">"Probíhá zálohování dat do místního úložiště. Po dokončení obdržíte oznámení"</string>
+    <string name="notification_backup_failure">Zálohování se nezdařilo! Nastavte cestu k záloze</string>
+    <string name="notification_backup_success">Zálohování je dokončeno. Doporučujeme uchovávat kopii také v cloudu</string>
+    <string name="notification_permission_rationale_dialog_body">Abyste měli vždy přehled o automatických zálohách, povolte prosím oznámení.\nUpozorníme vás na dokončení zálohy nebo případný problém.</string>
+    <string name="notification_permission_rationale_dialog_heading">Vyžadováno oprávnění k oznámením</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Načítání dat…</string>
+    <string name="no_record">Začněte přidáním záznamu nebo obnovte svá data ze zálohy.</string>
+    <string name="new_record_button">Přidat nový záznam</string>
+    <string name="restore_records_button">Obnovit data</string>
+    <string name="no_filtered_record_title">Žádné výsledky.</string>
+    <string name="no_filtered_record_body">Nenalezli jsme nic, co by odpovídalo vašemu hledání. Zkuste upravit filtry nebo zkontrolujte překlepy.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Zabezpečení a soukromí</string>
+    <string name="settings_section_support_and_community">Podpora a komunita</string>
+
+    <string name="settings_privacy_enabled_title">Režim soukromí</string>
+    <string name="settings_privacy_enabled_body">Skryje obsah aplikace v přehledu nedávných aplikací pro ochranu citlivých údajů a zakáže pořizování snímků obrazovky. Doporučujeme ponechat zapnuté.</string>
+
+    <string name="settings_auto_backup_title">Automatická záloha při přihlášení</string>
+    <string name="settings_auto_backup_body">Automaticky zálohuje vaše data při přihlášení hlavním heslem (nikoli biometricky). Doporučujeme ponechat zapnuté.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Vyžadovat heslo po %1$d biometrických přihlášeních.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Limit pro počet po sobě jdoucích biometrických přihlášení. Po dosažení tohoto limitu bude k přihlášení vyžadováno heslo, abyste své hlavní heslo nezapomněli.</string>
+
+    <string name="settings_away_timeout_title">Automatické uzamčení po %1$d s.</string>
+    <string name="settings_away_timeout_body">Aplikace vás automaticky odhlásí, pokud ji delší dobu nepoužíváte. Kratší doba je bezpečnější.</string>
+
+    <string name="settings_feedback_title">Odeslat zpětnou vazbu</string>
+    <string name="settings_feedback_body">Nahlaste chybu nebo navrhněte novou funkci. Vážíme si vašich podnětů k vylepšování aplikace Safe Box.</string>
+
+    <string name="settings_review_title">Ohodnotit v Obchodě Play</string>
+    <string name="settings_review_body">Pokud aplikaci rádi používáte, věnujte prosím chvíli napsání recenze. Pomůže to ostatním nás najít!</string>
+
+    <string name="settings_github_title">Přispět na GitHub</string>
+    <string name="settings_github_body">SafeBox je open source. Prohlédněte si kód, nahlaste chyby nebo se zapojte do vývoje na platformě GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Zadejte hodnotu!</string>
+    <string name="length_validation_text">Příliš krátké!</string>
+    <string name="special_char_validation_text">Zadejte speciální znak (např. @, *, $)</string>
+    <string name="case_validation_text">Musí obsahovat alespoň jedno velké (A) a jedno malé písmeno (a).</string>
+    <string name="numeric_validation_text">Zadejte alespoň dvě číslice (např. 1, 2, 3)</string>
+    <string name="save">Uložit</string>
+    <string name="password">Heslo</string>
+    <string name="enter_hint">Zadejte nápovědu</string>
+    <string name="show_hint">Zobrazit nápovědu</string>
+    <string name="hide_hint">Skrýt nápovědu</string>
+    <string name="hint">Nápověda</string>
+    <string name="title">Název</string>
+    <string name="user_id">Uživatelské ID</string>
+    <string name="notes">Poznámky</string>
+    <string name="account_number">Číslo účtu</string>
+    <string name="customer_name">Jméno klienta</string>
+    <string name="customer_id">ID klienta</string>
+    <string name="branch_code">Kód pobočky</string>
+    <string name="branch_name">Název pobočky</string>
+    <string name="branch_address">Adresa pobočky</string>
+    <string name="ifsc_code">Kód IFSC</string>
+    <string name="micr_code">Kód MICR</string>
+    <string name="welcome_back">Vítejte zpět!</string>
+    <string name="welcome">Vítejte!</string>
+    <string name="timeout_dialog_message">Byli jste příliš dlouho neaktivní. Kliknutím na OK se znovu přihlaste do aplikace</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Vytvořeno</string>
+    <string name="updated_on">Aktualizováno</string>
+    <string name="add_a_new_record">Přidat nový záznam</string>
+    <string name="search_bar_placeholder">Hledat…</string>
+    <string name="send_feedback_email">Odeslat zpětnou vazbu e-mailem</string>
+    <string name="no_email_app_found">Nebyla nalezena žádná e-mailová aplikace</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Zapomněli jste heslo?</string>
+    <string name="forgot_password_device_security_subtitle">Ověřte totožnost pro obnovení hlavního hesla</string>
+    <string name="update_password">Aktualizovat hlavní heslo</string>
+    <string name="new_password">Nové heslo</string>
+    <string name="confirm_new_password">Potvrdit nové heslo</string>
+    <string name="passwords_do_not_match">Hesla se neshodují</string>
+    <string name="change_master_password">Změnit hlavní heslo</string>
+    <string name="change_master_password_body">Aktualizujte své hlavní heslo a nápovědu</string>
+    <string name="password_updated_success">Hlavní heslo bylo úspěšně aktualizováno</string>
+    <string name="device_security_required_title">Vyžadováno zabezpečení zařízení</string>
+    <string name="device_security_required_body">Před změnou hlavního hesla povolte v nastavení systému Android zabezpečení zařízení (PIN, gesto, heslo nebo biometrii) pro ověření vaší totožnosti.</string>
+    <string name="open_settings">Otevřít nastavení</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Vyžadováno oprávnění ke kameře</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box vyžaduje přístup ke kameře pro skenování QR kódů při nastavení dvoufaktorového ověřování.</string>
+    <string name="qr_scanner_title">Naskenovat QR kód</string>
+    <string name="qr_scanner_instruction">Umístěte QR kód do rámečku</string>
+    <string name="enter_key_manually">Zadat klíč ručně</string>
+    <string name="cd_turn_flash_on">Zapnout blesk</string>
+    <string name="cd_turn_flash_off">Vypnout blesk</string>
+    <string name="close">Zavřít</string>
+    <string name="unsupported_qr_code_dialog_heading">Tento QR kód nelze použít</string>
+    <string name="unsupported_qr_code_reason_malformed">Tento QR kód je poškozený nebo má neplatný formát, takže ho aplikace Safe Box nemohla přečíst.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box podporuje pouze jednorázové kódy založené na čase (TOTP). Tento QR kód je určen pro jiný typ jednorázového hesla.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">V tomto QR kódu chybí tajný klíč nebo není v platném formátu Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Tento QR kód používá hašovací algoritmus, který Safe Box neumí vypočítat. Podporovány jsou pouze algoritmy SHA1, SHA256 a SHA512.</string>
+    <string name="unsupported_qr_code_reason_digits">Tento QR kód vyžaduje délku kódu, kterou Safe Box neumí vygenerovat. Podporováno je pouze 6 až 8 číslic.</string>
+    <string name="unsupported_qr_code_reason_period">Tento QR kód uvádí neplatný interval obnovování.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Tento QR kód obsahuje protichůdná nastavení pro stejnou hodnotu, takže Safe Box nedokáže určit, které z nich má použít.</string>
+    <string name="copied_to_clipboard">Položka %1$s byla zkopírována do schránky</string>
+    <string name="state_copied">Zkopírováno</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Jednorázový kód</string>
+    <string name="secret_key">Tajný klíč</string>
+    <string name="cd_copy_totp_code">Kopírovat jednorázový kód</string>
+    <string name="totp_invalid_secret_key">Neplatný tajný klíč, kód nelze vygenerovat</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Aktualizace byla stažena. Pro instalaci restartujte aplikaci Safe Box.</string>
+    <string name="in_app_update_restart">Restartovat</string>
+</resources>
