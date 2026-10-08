@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Șterge înregistrarea</string>
+    <string name="cd_action_edit">Editează înregistrarea</string>
+    <string name="cd_action_share">Distribuie înregistrarea</string>
+    <string name="cd_toggle_sensitive_data_visibility">Comută vizibilitatea datelor sensibile</string>
+    <string name="cd_add_new_record_button">Buton de adăugare a unei înregistrări noi</string>
+    <string name="cd_search_bar">Caută înregistrări după titlu</string>
+    <string name="cd_clear_search_bar">Golește bara de căutare</string>
+    <string name="cd_back_button">Butonul Înapoi</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Înregistrări</string>
+    <string name="bottom_nav_backup_and_restore">Backup și restaurare</string>
+    <string name="bottom_nav_settings">Setări</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Date stocate în siguranță cu Safe Box.\nDescarcă aplicația din Play Store: %1$s</string>
+    <string name="common_cancel">Anulează</string>
+    <string name="confirm">Confirmă</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Conectare la SafeBox</string>
+    <string name="biometric_sub_title_text">Verifică-ți identitatea</string>
+    <string name="biometric_negative_button_text">Închide</string>
+    <string name="do_not_ask_again">Nu mai întreba</string>
+    <string name="allow">Permite</string>
+    <string name="login">Conectare</string>
+    <string name="signup">Înregistrare</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Cont bancar</string>
+    <string name="type_display_card">Card bancar</string>
+    <string name="type_display_note">Notă</string>
+    <string name="type_display_login">Date de conectare</string>
+    <string name="type_display_authenticator">Autentificator</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Număr </string>
+    <string name="expiryDate">Data expirării</string>
+    <string name="name">Nume</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Ștergi această înregistrare?</string>
+    <string name="delete_record_dialog_body">Înțeleg că această înregistrare va fi ștearsă definitiv.</string>
+
+    <!--     backup-->
+    <string name="backup">Backup</string>
+    <string name="backup_path_not_set_message">"Locația de backup nu este setată! Folosește butonul de mai jos pentru a alege una.\nSfat: Este o idee bună să creezi un dosar nou pentru copii de rezervă (de ex., \'Safe Box Backup\')."</string>
+    <string name="backup_set_location">Setează locația</string>
+    <string name="backup_set_message">Locația de backup este setată</string>
+    <string name="backup_path">Calea de backup este %1$s</string>
+    <string name="backup_path_select_failed_message">Nu s-a putut accesa dosarul selectat. Încearcă să creezi un dosar nou pentru copiile de rezervă.</string>
+    <string name="retry">Reîncearcă</string>
+    <string name="backup_time">Ultimul backup a fost realizat pe %1$s</string>
+    <string name="backup_info_1">* Un backup este creat de fiecare dată când te conectezi cu parola și este criptat cu parola ta principală actuală </string>
+    <string name="backup_edit_path">Editează calea</string>
+    <string name="new_backup_dialog_body_text">Introdu o parolă pentru a crea un fișier nou de backup.</string>
+    <string name="backup_in_progress_message">Salvarea datelor poate dura puțin. Relaxează-te și așteaptă!</string>
+    <string name="backup_complete_message">Backupul este complet! Nu uita parola.</string>
+    <string name="backup_nothing_to_backup_message">Seiful tău este gol. Nu există nimic de salvat.</string>
+    <string name="backup_folder_inaccessible_message">Dosarul de backup nu mai este accesibil. Te rugăm să îl alegi din nou.</string>
+    <string name="backup_write_failed_message">Backupul a eșuat. Nu s-a putut scrie fișierul de backup; verifică spațiul liber din dosarul de backup.</string>
+    <string name="backup_unknown_error_message">Backupul a eșuat din cauza unei erori neașteptate. Raporteaz-o din Setări &gt; Trimite feedback.</string>
+
+    <!--     restore-->
+    <string name="restore">Restaurare</string>
+    <string name="restore_info">"Apasă butonul de mai jos pentru a selecta un fișier de backup.\nReține că, pentru a restaura datele, trebuie să introduci aceeași parolă folosită la crearea fișierului de backup.\n\nRestaurarea înlocuiește tot ce este salvat în prezent în aplicație cu conținutul fișierului de backup. Orice înregistrare care nu se află în fișierul de backup va fi pierdută definitiv."</string>
+    <string name="new_restore_dialog_body_text">Introdu parola folosită pentru a crea fișierul de backup.</string>
+    <string name="restore_complete_message">Datele au fost restaurate cu succes.</string>
+    <string name="restore_in_progress_message">Restaurarea datelor poate dura puțin. Relaxează-te și așteaptă!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Parola este incorectă!</string>
+    <string name="restore_corrupt_file_message">Fișierul de backup selectat este deteriorat sau nevalid. Alege un fișier de backup valid.</string>
+    <string name="restore_backup_too_new_message">Acest backup a fost creat de o versiune mai nouă de Safe Box. Fișierul tău de backup este în regulă; actualizează aplicația pentru a-l restaura.</string>
+    <string name="restore_backup_empty_message">Acest backup nu conține nicio înregistrare. Nu a fost restaurat nimic.</string>
+    <string name="failed_message">A apărut o eroare neașteptată la procesarea datelor tale.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Backup Safe Box</string>
+    <string name="notification_backup_channel_desc">Această notificare te ajută să urmărești progresul backupului</string>
+    <string name="notification_backup_title">Backup de date</string>
+    <string name="notification_backup_in_progress">"Se salvează datele în spațiul de stocare local. Vei primi o notificare când procesul este complet"</string>
+    <string name="notification_backup_failure">Backup eșuat! Setează calea de backup</string>
+    <string name="notification_backup_success">Backupul este complet. Este recomandat să păstrezi o copie și în cloud</string>
+    <string name="notification_permission_rationale_dialog_body">Pentru a fi mereu la curent cu backupurile automate, permite notificările.\nVei primi o alertă când un backup este finalizat sau dacă apare o problemă.</string>
+    <string name="notification_permission_rationale_dialog_heading">Este necesară permisiunea pentru notificări</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Se încarcă datele …</string>
+    <string name="no_record">Începe de la zero adăugând o înregistrare sau recuperează-ți datele dintr-un backup.</string>
+    <string name="new_record_button">Adaugă o înregistrare nouă</string>
+    <string name="restore_records_button">Restaurează datele</string>
+    <string name="no_filtered_record_title">Hopa! Niciun rezultat aici.</string>
+    <string name="no_filtered_record_body">Nu am găsit nimic care să corespundă căutării tale. Încearcă să ajustezi filtrele sau să verifici eventualele greșeli de scriere.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Securitate și confidențialitate</string>
+    <string name="settings_section_support_and_community">Asistență și comunitate</string>
+
+    <string name="settings_privacy_enabled_title">Mod confidențialitate</string>
+    <string name="settings_privacy_enabled_body">Maschează conținutul aplicației în ecranul de aplicații recente pentru a proteja datele sensibile și blochează capturile de ecran. Este recomandat să îl păstrezi activat.</string>
+
+    <string name="settings_auto_backup_title">Backup automat la conectare</string>
+    <string name="settings_auto_backup_body">Creează automat o copie de rezervă a datelor când te conectezi cu parola principală (nu prin biometrie). Este recomandat să îl păstrezi activat.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Solicită parola după %1$d conectări biometrice.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Aceasta este limita pentru numărul de conectări biometrice consecutive permise. După atingerea acestei limite, va fi necesară parola pentru conectare. Astfel te asiguri că nu uiți parola principală.</string>
+
+    <string name="settings_away_timeout_title">Blocare automată după %1$d secunde.</string>
+    <string name="settings_away_timeout_body">Aplicația te deconectează automat dacă rămâi inactiv prea mult timp. O durată mai scurtă este mai sigură.</string>
+
+    <string name="settings_feedback_title">Trimite feedback</string>
+    <string name="settings_feedback_body">Raportează o eroare sau sugerează o funcție nouă. Apreciem opiniile tale pentru a face Safe Box mai bun.</string>
+
+    <string name="settings_review_title">Evaluează în Play Store</string>
+    <string name="settings_review_body">Dacă îți place aplicația, acordă-ne un moment pentru a lăsa o recenzie. Îi ajută și pe alții să ne descopere!</string>
+
+    <string name="settings_github_title">Contribuie pe GitHub</string>
+    <string name="settings_github_body">SafeBox este open source. Vezi codul, raportează probleme sau contribuie la proiect pe GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Introdu ceva!</string>
+    <string name="length_validation_text">Prea scurt!</string>
+    <string name="special_char_validation_text">Introdu un caracter special (de ex. @, *, $)</string>
+    <string name="case_validation_text">Trebuie să conțină cel puțin o literă mare (A) și o literă mică (a).</string>
+    <string name="numeric_validation_text">Introdu cel puțin două cifre (de ex. 1, 2, 3)</string>
+    <string name="save">Salvează</string>
+    <string name="password">Parolă</string>
+    <string name="enter_hint">Introdu un indiciu</string>
+    <string name="show_hint">Afișează indiciul</string>
+    <string name="hide_hint">Ascunde indiciul</string>
+    <string name="hint">Indiciu</string>
+    <string name="title">Titlu </string>
+    <string name="user_id">ID utilizator </string>
+    <string name="notes">Note</string>
+    <string name="account_number">Număr cont </string>
+    <string name="customer_name">Nume client</string>
+    <string name="customer_id">ID client</string>
+    <string name="branch_code">Cod sucursală</string>
+    <string name="branch_name">Nume sucursală</string>
+    <string name="branch_address">Adresa sucursalei</string>
+    <string name="ifsc_code">Cod IFSC</string>
+    <string name="micr_code">Cod MICR</string>
+    <string name="welcome_back">Bine ai revenit!</string>
+    <string name="welcome">Bun venit!</string>
+    <string name="timeout_dialog_message">Ai fost inactiv prea mult timp. Apasă pe OK pentru a te conecta din nou în aplicație</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Creat la</string>
+    <string name="updated_on">Actualizat la</string>
+    <string name="add_a_new_record">Adaugă o înregistrare nouă</string>
+    <string name="search_bar_placeholder">Caută …</string>
+    <string name="send_feedback_email">Trimite e-mail de feedback</string>
+    <string name="no_email_app_found">Nu s-a găsit nicio aplicație de e-mail</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Ai uitat parola?</string>
+    <string name="forgot_password_device_security_subtitle">Autentifică-te pentru a reseta parola principală</string>
+    <string name="update_password">Actualizează parola principală</string>
+    <string name="new_password">Parolă nouă</string>
+    <string name="confirm_new_password">Confirmă parola nouă</string>
+    <string name="passwords_do_not_match">Parolele nu coincid</string>
+    <string name="change_master_password">Schimbă parola principală</string>
+    <string name="change_master_password_body">Actualizează parola principală și indiciul</string>
+    <string name="password_updated_success">Parola principală a fost actualizată cu succes</string>
+    <string name="device_security_required_title">Securitatea dispozitivului este necesară</string>
+    <string name="device_security_required_body">Activează securitatea dispozitivului (PIN, model, parolă sau biometrie) în Setările Android pentru a-ți verifica identitatea înainte de a schimba parola principală.</string>
+    <string name="open_settings">Deschide setările</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Este necesară permisiunea pentru cameră</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box are nevoie de acces la cameră pentru a scana coduri QR în vederea configurării autentificării în doi pași.</string>
+    <string name="qr_scanner_title">Scanează codul QR</string>
+    <string name="qr_scanner_instruction">Aliniază codul QR în interiorul cadrului</string>
+    <string name="enter_key_manually">Introdu cheia manual</string>
+    <string name="cd_turn_flash_on">Pornește blițul</string>
+    <string name="cd_turn_flash_off">Oprește blițul</string>
+    <string name="close">Închide</string>
+    <string name="unsupported_qr_code_dialog_heading">Acest cod QR nu poate fi folosit</string>
+    <string name="unsupported_qr_code_reason_malformed">Acest cod QR este deteriorat sau formatat incorect, astfel că Safe Box nu l-a putut citi.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box acceptă doar coduri bazate pe timp (TOTP). Acest cod QR este pentru un alt tip de parolă unică.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Cheia secretă din acest cod QR lipsește sau nu este în format Base32 valid.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Acest cod QR folosește un algoritm de dispersie pe care Safe Box nu îl poate calcula. Sunt acceptate doar SHA1, SHA256 și SHA512.</string>
+    <string name="unsupported_qr_code_reason_digits">Acest cod QR solicită o lungime a codului pe care Safe Box nu o poate genera. Sunt acceptate doar coduri de 6 până la 8 cifre.</string>
+    <string name="unsupported_qr_code_reason_period">Acest cod QR specifică un interval de reîmprospătare nevalid.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Acest cod QR oferă setări contradictorii pentru aceeași valoare, astfel că Safe Box nu poate determina pe care trebuie să o folosească.</string>
+    <string name="copied_to_clipboard">%1$s a fost copiat în clipboard</string>
+    <string name="state_copied">Copiat</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Cod unic</string>
+    <string name="secret_key">Cheie secretă</string>
+    <string name="cd_copy_totp_code">Copiază codul unic</string>
+    <string name="totp_invalid_secret_key">Cheie secretă nevalidă, codul nu poate fi generat</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Actualizarea a fost descărcată. Repornește Safe Box pentru a o instala.</string>
+    <string name="in_app_update_restart">Repornește</string>
+</resources>

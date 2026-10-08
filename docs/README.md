@@ -12,6 +12,8 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 - [TOTP auth record type design](TotpAuthRecordTypeDesign.md)
 - [In-app updates](architecture/in-app-updates.md): Play flexible updates, the lock-aware restart,
   analytics bounds, and how to test with real Play.
+- [Localization](architecture/localization.md) — 26-locale strings workflow, `app/translations.lock`
+  stale-translation detection, local `preBuild` auto-sync vs strict CI enforcement.
 
 ## Testing
 

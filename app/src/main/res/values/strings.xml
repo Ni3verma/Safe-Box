@@ -43,7 +43,7 @@
     <string name="expiryDate">Expiry Date</string>
     <string name="name">Name</string>
     <string name="pin">PIN</string>
-    <string name="cvv">CVV</string>
+    <string name="cvv" translatable="false">CVV</string>
 
     <!--    delete record dialog-->
     <string name="delete_this_record">Delete this record?</string>
@@ -84,7 +84,7 @@
     <string name="failed_message">An unexpected error occurred while processing your data.</string>
 
     <!--    Notification-->
-    <string name="notification_backup_channel_id">backup data safebox</string>
+    <string name="notification_backup_channel_id" translatable="false">backup data safebox</string>
     <string name="notification_backup_channel_name">Safe Box Backup</string>
     <string name="notification_backup_channel_desc">This notification helps you to keep track of backup progress</string>
     <string name="notification_backup_title">Data Backup</string>
@@ -112,10 +112,10 @@
     <string name="settings_auto_backup_title">Auto-backup on login</string>
     <string name="settings_auto_backup_body">Automatically backs up your data when you sign in with your master password (not with biometric). Recommended to keep it on.</string>
 
-    <string name="settings_ask_for_pswrd_after_biometric_title">Ask for password after %d biometric logins.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">Ask for password after %1$d biometric logins.</string>
     <string name="settings_ask_for_pswrd_after_biometric_body">This is the limit for how many times is continuous biometric login allowed. Once this limit is reached, password will be required to login. This ensures you remember your master password.</string>
 
-    <string name="settings_away_timeout_title">Auto-lock after %d seconds.</string>
+    <string name="settings_away_timeout_title">Auto-lock after %1$d seconds.</string>
     <string name="settings_away_timeout_body">App logs you out automatically if you are away from the app for too long. A shorter duration is safer.</string>
 
     <string name="settings_feedback_title">Send feedback</string>
@@ -128,7 +128,7 @@
     <string name="settings_github_body">SafeBox is open source. View the code, report issues, or contribute to the project on GitHub.</string>
 
     <!--    Other-->
-    <string name="app_name">Safe Box</string>
+    <string name="app_name" translatable="false">Safe Box</string>
     <string name="blank_validation_text">Enter something !</string>
     <string name="length_validation_text">Too short !</string>
     <string name="special_char_validation_text">Enter a special character (e.g. @, *, $)</string>
@@ -141,7 +141,7 @@
     <string name="hide_hint">Hide Hint</string>
     <string name="hint">Hint</string>
     <string name="title">Title </string>
-    <string name="url">URL</string>
+    <string name="url" translatable="false">URL</string>
     <string name="user_id">User Id </string>
     <string name="notes">Notes</string>
     <string name="account_number">Account Number </string>
@@ -161,7 +161,8 @@
     <string name="add_a_new_record">Add a new record</string>
     <string name="search_bar_placeholder">Search …</string>
     <string name="send_feedback_email">Send feedback Email</string>
-    <string name="safe_box_feedback">Safe Box Feedback</string>
+    <string name="safe_box_feedback" translatable="false">Safe Box Feedback</string>
+    <string name="no_email_app_found">No email app found</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Forgot Password?</string>

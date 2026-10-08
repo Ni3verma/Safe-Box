@@ -1,0 +1,193 @@
+<resources>
+    <!-- Content descriptions -->
+    <string name="cd_action_delete">刪除記錄</string>
+    <string name="cd_action_edit">編輯記錄</string>
+    <string name="cd_action_share">分享記錄</string>
+    <string name="cd_toggle_sensitive_data_visibility">切換敏感資料顯示狀態</string>
+    <string name="cd_add_new_record_button">新增記錄按鈕</string>
+    <string name="cd_search_bar">依標題搜尋記錄</string>
+    <string name="cd_clear_search_bar">清除搜尋欄</string>
+    <string name="cd_back_button">返回按鈕</string>
+
+    <!-- Screen title -->
+    <string name="bottom_nav_records">記錄</string>
+    <string name="bottom_nav_backup_and_restore">備份與還原</string>
+    <string name="bottom_nav_settings">設定</string>
+
+    <!-- Common -->
+    <string name="common_app_playstore_download">資料由 Safe Box 安全儲存。\n從 Play 商店下載：%1$s</string>
+    <string name="common_cancel">取消</string>
+    <string name="confirm">確認</string>
+    <string name="common_ok">確定</string>
+    <string name="biometric_title_text">登入 SafeBox</string>
+    <string name="biometric_sub_title_text">驗證您的身分</string>
+    <string name="biometric_negative_button_text">關閉</string>
+    <string name="do_not_ask_again">不再詢問</string>
+    <string name="allow">允許</string>
+    <string name="login">登入</string>
+    <string name="signup">註冊</string>
+
+    <!-- User data type text -->
+    <string name="type_display_account">銀行帳戶</string>
+    <string name="type_display_card">銀行卡</string>
+    <string name="type_display_note">安全筆記</string>
+    <string name="type_display_login">登入資訊</string>
+    <string name="type_display_authenticator">驗證器</string>
+
+    <!-- Bank card dialog -->
+    <string name="number">卡號</string>
+    <string name="expiryDate">有效期限</string>
+    <string name="name">持卡人姓名</string>
+    <string name="pin">PIN 碼</string>
+
+    <!-- delete record dialog -->
+    <string name="delete_this_record">刪除此記錄？</string>
+    <string name="delete_record_dialog_body">我瞭解此記錄將會永久刪除。</string>
+
+    <!-- backup -->
+    <string name="backup">備份</string>
+    <string name="backup_path_not_set_message">"尚未設定備份位置！請點擊下方按鈕選擇備份資料夾。\n提示：建議為備份建立一個新資料夾（例如「Safe Box Backup」）。"</string>
+    <string name="backup_set_location">設定位置</string>
+    <string name="backup_set_message">已設定備份位置</string>
+    <string name="backup_path">備份路徑：%1$s</string>
+    <string name="backup_path_select_failed_message">無法存取所選資料夾，請嘗試建立一個新資料夾來存放備份。</string>
+    <string name="retry">重試</string>
+    <string name="backup_time">上次備份時間：%1$s</string>
+    <string name="backup_info_1">* 每次使用密碼登入時都會自動備份，並使用您目前的主密碼進行加密</string>
+    <string name="backup_edit_path">編輯路徑</string>
+    <string name="new_backup_dialog_body_text">請輸入密碼以建立新的備份檔案。</string>
+    <string name="backup_in_progress_message">備份資料可能需要一點時間，請稍候！</string>
+    <string name="backup_complete_message">備份已完成！請牢記您的備份密碼。</string>
+    <string name="backup_nothing_to_backup_message">您的保險庫是空的，沒有可備份的資料。</string>
+    <string name="backup_folder_inaccessible_message">已無法存取備份資料夾，請重新選擇。</string>
+    <string name="backup_write_failed_message">備份失敗。無法寫入備份檔案，請檢查備份資料夾的可用儲存空間。</string>
+    <string name="backup_unknown_error_message">發生未預期的錯誤，導致備份失敗。請前往「設定 &gt; 傳送意見回饋」回報此問題。</string>
+
+    <!-- restore -->
+    <string name="restore">還原</string>
+    <string name="restore_info">"點擊下方按鈕選擇備份檔案。\n請注意，還原資料時必須輸入建立該備份檔案時所使用的相同密碼。\n\n還原作業會將應用程式中目前儲存的所有資料替換為備份檔案的內容，不在備份檔案中的任何記錄都將永久遺失。"</string>
+    <string name="new_restore_dialog_body_text">請輸入建立該備份檔案時所使用的密碼。</string>
+    <string name="restore_complete_message">資料已成功還原。</string>
+    <string name="restore_in_progress_message">還原資料可能需要一點時間，請稍候！</string>
+
+    <!-- master password dialog -->
+    <string name="incorrect_pswrd_message">密碼不正確！</string>
+    <string name="restore_corrupt_file_message">所選的備份檔案已損毀或無效，請選擇有效的備份檔案。</string>
+    <string name="restore_backup_too_new_message">此備份是由較新版本的 Safe Box 建立。您的備份檔案完好無損，請更新應用程式後再進行還原。</string>
+    <string name="restore_backup_empty_message">此備份不包含任何記錄，未還原任何資料。</string>
+    <string name="failed_message">處理您的資料時發生未預期的錯誤。</string>
+
+    <!-- Notification -->
+    <string name="notification_backup_channel_name">Safe Box 備份</string>
+    <string name="notification_backup_channel_desc">此通知可協助您追蹤資料備份進度</string>
+    <string name="notification_backup_title">資料備份</string>
+    <string name="notification_backup_in_progress">"正在將您的資料備份至本機儲存空間，完成後會通知您"</string>
+    <string name="notification_backup_failure">備份失敗！請設定備份路徑</string>
+    <string name="notification_backup_success">備份已完成。建議同時在雲端保留一份副本</string>
+    <string name="notification_permission_rationale_dialog_body">為確保您隨時掌握自動備份狀態，請允許通知權限。\n備份完成或發生問題時，系統會發出通知提醒您。</string>
+    <string name="notification_permission_rationale_dialog_heading">需要通知權限</string>
+
+    <!-- Record screen -->
+    <string name="loading_data">正在載入資料…</string>
+    <string name="no_record">新增一筆記錄開始使用，或從備份還原您的資料。</string>
+    <string name="new_record_button">新增記錄</string>
+    <string name="restore_records_button">還原資料</string>
+    <string name="no_filtered_record_title">找不到符合的結果</string>
+    <string name="no_filtered_record_body">找不到符合搜尋條件的項目。請嘗試調整篩選條件或檢查是否有錯字。</string>
+
+    <!-- Settings screen -->
+    <string name="settings_section_security_and_privacy">安全性與隱私權</string>
+    <string name="settings_section_support_and_community">支援與社群</string>
+    <string name="settings_privacy_enabled_title">隱私模式</string>
+    <string name="settings_privacy_enabled_body">在最近使用的應用程式畫面中隱藏畫面內容以保護敏感資料，並禁止螢幕截圖。建議保持開啟。</string>
+    <string name="settings_auto_backup_title">登入時自動備份</string>
+    <string name="settings_auto_backup_body">當您使用主密碼（而非生物辨識）登入時自動備份資料。建議保持開啟。</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">使用生物辨識登入 %1$d 次後要求輸入密碼</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">此設定限制連續使用生物辨識登入的次數。達到上限後，必須輸入密碼才能登入，以確保您牢記主密碼。</string>
+    <string name="settings_away_timeout_title">離開 %1$d 秒後自動鎖定</string>
+    <string name="settings_away_timeout_body">離開應用程式過久時會自動登出。設定的時間越短越安全。</string>
+    <string name="settings_feedback_title">傳送意見回饋</string>
+    <string name="settings_feedback_body">回報錯誤或建議新功能。我們重視您的寶貴意見，讓 Safe Box 持續進步。</string>
+    <string name="settings_review_title">在 Play 商店評分</string>
+    <string name="settings_review_body">如果您喜歡這款應用程式，請撥冗留下評論，這能幫助更多人認識我們！</string>
+    <string name="settings_github_title">在 GitHub 上參與貢獻</string>
+    <string name="settings_github_body">SafeBox 為開放原始碼專案。歡迎在 GitHub 上檢視原始碼、回報問題或參與專案貢獻。</string>
+
+    <!-- Other -->
+    <string name="blank_validation_text">請輸入內容！</string>
+    <string name="length_validation_text">長度太短！</string>
+    <string name="special_char_validation_text">請輸入特殊字元（例如 @、*、$）</string>
+    <string name="case_validation_text">必須包含至少一個大寫字母 (A) 和一個小寫字母 (a)。</string>
+    <string name="numeric_validation_text">請輸入至少兩個數字（例如 1、2、3）</string>
+    <string name="save">儲存</string>
+    <string name="password">密碼</string>
+    <string name="enter_hint">輸入提示</string>
+    <string name="show_hint">顯示提示</string>
+    <string name="hide_hint">隱藏提示</string>
+    <string name="hint">提示</string>
+    <string name="title">標題</string>
+    <string name="user_id">使用者 ID</string>
+    <string name="notes">備註</string>
+    <string name="account_number">帳號</string>
+    <string name="customer_name">客戶姓名</string>
+    <string name="customer_id">客戶編號</string>
+    <string name="branch_code">分行代碼</string>
+    <string name="branch_name">分行名稱</string>
+    <string name="branch_address">分行地址</string>
+    <string name="ifsc_code">IFSC 代碼</string>
+    <string name="micr_code">MICR 代碼</string>
+    <string name="welcome_back">歡迎回來！</string>
+    <string name="welcome">歡迎使用！</string>
+    <string name="timeout_dialog_message">您離開的時間過久，請點擊「確定」重新登入應用程式</string>
+    <string name="timeout_dialog_positive_button_text">確定</string>
+    <string name="created_on">建立日期</string>
+    <string name="updated_on">更新日期</string>
+    <string name="add_a_new_record">新增記錄</string>
+    <string name="search_bar_placeholder">搜尋…</string>
+    <string name="send_feedback_email">傳送意見回饋電子郵件</string>
+    <string name="no_email_app_found">找不到電子郵件應用程式</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">忘記密碼？</string>
+    <string name="forgot_password_device_security_subtitle">驗證身分以重設主密碼</string>
+    <string name="update_password">更新主密碼</string>
+    <string name="new_password">新密碼</string>
+    <string name="confirm_new_password">確認新密碼</string>
+    <string name="passwords_do_not_match">密碼不一致</string>
+    <string name="change_master_password">變更主密碼</string>
+    <string name="change_master_password_body">更新您的主密碼與密碼提示</string>
+    <string name="password_updated_success">主密碼已成功更新</string>
+    <string name="device_security_required_title">需要啟用裝置安全性設定</string>
+    <string name="device_security_required_body">請先在 Android 系統「設定」中啟用螢幕鎖定保護（PIN 碼、圖形、密碼或生物辨識），以便在變更主密碼前驗證您的身分。</string>
+    <string name="open_settings">開啟設定</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">需要相機權限</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box 需要相機存取權限，才能掃描 QR 碼以進行雙重驗證設定。</string>
+    <string name="qr_scanner_title">掃描 QR 碼</string>
+    <string name="qr_scanner_instruction">將 QR 碼對準方框內</string>
+    <string name="enter_key_manually">手動輸入金鑰</string>
+    <string name="cd_turn_flash_on">開啟閃光燈</string>
+    <string name="cd_turn_flash_off">關閉閃光燈</string>
+    <string name="close">關閉</string>
+    <string name="unsupported_qr_code_dialog_heading">無法使用此 QR 碼</string>
+    <string name="unsupported_qr_code_reason_malformed">此 QR 碼已損毀或格式錯誤，因此 Safe Box 無法讀取。</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box 僅支援時間型一次性驗證碼 (TOTP)。此 QR 碼適用於其他類型的一次性密碼。</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">此 QR 碼缺少密鑰，或密鑰不是有效的 Base32 格式。</string>
+    <string name="unsupported_qr_code_reason_algorithm">此 QR 碼使用了 Safe Box 無法計算的雜湊演算法。僅支援 SHA1、SHA256 及 SHA512。</string>
+    <string name="unsupported_qr_code_reason_digits">此 QR 碼要求的驗證碼長度不受 Safe Box 支援。僅支援 6 至 8 位數字。</string>
+    <string name="unsupported_qr_code_reason_period">此 QR 碼指定了無效的更新週期。</string>
+    <string name="unsupported_qr_code_reason_ambiguous">此 QR 碼針對同一個參數提供了相衝突的設定，因此 Safe Box 無法判斷應使用哪一項。</string>
+    <string name="copied_to_clipboard">已將 %1$s 複製到剪貼簿</string>
+    <string name="state_copied">已複製</string>
+
+    <!-- Authenticator -->
+    <string name="totp_code">一次性驗證碼</string>
+    <string name="secret_key">密鑰</string>
+    <string name="cd_copy_totp_code">複製一次性驗證碼</string>
+    <string name="totp_invalid_secret_key">密鑰無效，無法產生驗證碼</string>
+
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">已下載更新。請重新啟動 Safe Box 以進行安裝。</string>
+    <string name="in_app_update_restart">重新啟動</string>
+</resources>

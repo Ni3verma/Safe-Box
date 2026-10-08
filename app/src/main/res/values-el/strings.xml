@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Διαγραφή εγγραφής</string>
+    <string name="cd_action_edit">Επεξεργασία εγγραφής</string>
+    <string name="cd_action_share">Κοινοποίηση εγγραφής</string>
+    <string name="cd_toggle_sensitive_data_visibility">Εναλλαγή ορατότητας ευαίσθητων δεδομένων</string>
+    <string name="cd_add_new_record_button">Κουμπί προσθήκης νέας εγγραφής</string>
+    <string name="cd_search_bar">Αναζήτηση εγγραφών κατά τίτλο</string>
+    <string name="cd_clear_search_bar">Εκκαθάριση γραμμής αναζήτησης</string>
+    <string name="cd_back_button">Κουμπί επιστροφής</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Εγγραφές</string>
+    <string name="bottom_nav_backup_and_restore">Αντίγραφα &amp; επαναφορά</string>
+    <string name="bottom_nav_settings">Ρυθμίσεις</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Τα δεδομένα αποθηκεύονται με ασφάλεια από το Safe Box.\nΚατεβάστε το από το Play Store: %1$s</string>
+    <string name="common_cancel">Ακύρωση</string>
+    <string name="confirm">Επιβεβαίωση</string>
+    <string name="common_ok">OK</string>
+    <string name="biometric_title_text">Σύνδεση στο SafeBox</string>
+    <string name="biometric_sub_title_text">Επαληθεύστε την ταυτότητά σας</string>
+    <string name="biometric_negative_button_text">Κλείσιμο</string>
+    <string name="do_not_ask_again">Να μην ερωτηθώ ξανά</string>
+    <string name="allow">Έγκριση</string>
+    <string name="login">Σύνδεση</string>
+    <string name="signup">Εγγραφή</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Τραπεζικός λογαριασμός</string>
+    <string name="type_display_card">Τραπεζική κάρτα</string>
+    <string name="type_display_note">Σημείωση</string>
+    <string name="type_display_login">Στοιχεία σύνδεσης</string>
+    <string name="type_display_authenticator">Επαληθευτής</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Αριθμός </string>
+    <string name="expiryDate">Ημερομηνία λήξης</string>
+    <string name="name">Όνομα</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Διαγραφή αυτής της εγγραφής;</string>
+    <string name="delete_record_dialog_body">Κατανοώ ότι αυτή η εγγραφή θα αφαιρεθεί οριστικά.</string>
+
+    <!--     backup-->
+    <string name="backup">Αντίγραφο ασφαλείας</string>
+    <string name="backup_path_not_set_message">"Η τοποθεσία αντιγράφων ασφαλείας δεν έχει οριστεί! Χρησιμοποιήστε το παρακάτω κουμπί για να επιλέξετε μία.\nΣυμβουλή: Είναι καλή ιδέα να δημιουργήσετε έναν νέο φάκελο για τα αντίγραφα ασφαλείας σας (π.χ. \'Safe Box Backup\')."</string>
+    <string name="backup_set_location">Ορισμός τοποθεσίας</string>
+    <string name="backup_set_message">Η τοποθεσία αντιγράφων ασφαλείας ορίστηκε</string>
+    <string name="backup_path">Η διαδρομή αντιγράφων ασφαλείας είναι %1$s</string>
+    <string name="backup_path_select_failed_message">Δεν ήταν δυνατή η πρόσβαση στον επιλεγμένο φάκελο. Δοκιμάστε να δημιουργήσετε έναν νέο φάκελο για τα αντίγραφα ασφαλείας σας.</string>
+    <string name="retry">Επανάληψη</string>
+    <string name="backup_time">Το τελευταίο αντίγραφο ασφαλείας λήφθηκε στις %1$s</string>
+    <string name="backup_info_1">* Το αντίγραφο ασφαλείας λαμβάνεται κάθε φορά που συνδέεστε με κωδικό πρόσβασης και κρυπτογραφείται με τον τρέχοντα κύριο κωδικό πρόσβασής σας </string>
+    <string name="backup_edit_path">Επεξεργασία διαδρομής</string>
+    <string name="new_backup_dialog_body_text">Εισαγάγετε έναν κωδικό πρόσβασης για να δημιουργήσετε ένα νέο αρχείο αντιγράφου ασφαλείας.</string>
+    <string name="backup_in_progress_message">Η δημιουργία αντιγράφου ασφαλείας των δεδομένων μπορεί να διαρκέσει λίγο. Χαλαρώστε και περιμένετε!</string>
+    <string name="backup_complete_message">Το αντίγραφο ασφαλείας ολοκληρώθηκε! Μην ξεχάσετε τον κωδικό πρόσβασης.</string>
+    <string name="backup_nothing_to_backup_message">Το χρηματοκιβώτιό σας είναι άδειο. Δεν υπάρχει τίποτα για αποθήκευση.</string>
+    <string name="backup_folder_inaccessible_message">Ο φάκελος αντιγράφων ασφαλείας δεν είναι πλέον προσβάσιμος. Επιλέξτε τον ξανά.</string>
+    <string name="backup_write_failed_message">Η δημιουργία αντιγράφου ασφαλείας απέτυχε. Δεν ήταν δυνατή η εγγραφή του αρχείου, ελέγξτε τον ελεύθερο χώρο στον φάκελο αντιγράφων ασφαλείας.</string>
+    <string name="backup_unknown_error_message">Η δημιουργία αντιγράφου ασφαλείας απέτυχε λόγω μη αναμενόμενου σφάλματος. Αναφέρετέ το από τις Ρυθμίσεις &gt; Αποστολή σχολίων.</string>
+
+    <!--     restore-->
+    <string name="restore">Επαναφορά</string>
+    <string name="restore_info">"Πατήστε το παρακάτω κουμπί για να επιλέξετε ένα αρχείο αντιγράφου ασφαλείας.\nΛάβετε υπόψη ότι για την επαναφορά των δεδομένων πρέπει να εισαγάγετε τον ίδιο κωδικό πρόσβασης που χρησιμοποιήθηκε για τη δημιουργία του αρχείου.\n\nΗ επαναφορά αντικαθιστά όλα όσα είναι αποθηκευμένα αυτήν τη στιγμή στην εφαρμογή με το περιεχόμενο του αρχείου αντιγράφου ασφαλείας. Οποιαδήποτε εγγραφή δεν υπάρχει στο αρχείο αντιγράφου ασφαλείας θα χαθεί οριστικά."</string>
+    <string name="new_restore_dialog_body_text">Εισαγάγετε τον κωδικό πρόσβασης που χρησιμοποιήθηκε για τη δημιουργία του αρχείου αντιγράφου ασφαλείας.</string>
+    <string name="restore_complete_message">Τα δεδομένα επαναφέρθηκαν με επιτυχία.</string>
+    <string name="restore_in_progress_message">Η επαναφορά των δεδομένων μπορεί να διαρκέσει λίγο. Χαλαρώστε και περιμένετε!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Ο κωδικός πρόσβασης είναι εσφαλμένος!</string>
+    <string name="restore_corrupt_file_message">Το επιλεγμένο αρχείο αντιγράφου ασφαλείας είναι κατεστραμμένο ή μη έγκυρο. Επιλέξτε ένα έγκυρο αρχείο αντιγράφου ασφαλείας.</string>
+    <string name="restore_backup_too_new_message">Αυτό το αντίγραφο ασφαλείας δημιουργήθηκε από νεότερη έκδοση του Safe Box. Το αρχείο σας είναι εντάξει, ενημερώστε την εφαρμογή για να το επαναφέρετε.</string>
+    <string name="restore_backup_empty_message">Αυτό το αντίγραφο ασφαλείας δεν περιέχει εγγραφές. Δεν έγινε επαναφορά.</string>
+    <string name="failed_message">Παρουσιάστηκε μη αναμενόμενο σφάλμα κατά την επεξεργασία των δεδομένων σας.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Αντίγραφο ασφαλείας Safe Box</string>
+    <string name="notification_backup_channel_desc">Αυτή η ειδοποίηση σάς βοηθά να παρακολουθείτε την πρόοδο των αντιγράφων ασφαλείας</string>
+    <string name="notification_backup_title">Αντίγραφο ασφαλείας δεδομένων</string>
+    <string name="notification_backup_in_progress">"Δημιουργία αντιγράφου ασφαλείας των δεδομένων σας στον τοπικό αποθηκευτικό χώρο. Θα ειδοποιηθείτε μόλις ολοκληρωθεί"</string>
+    <string name="notification_backup_failure">Το αντίγραφο ασφαλείας απέτυχε! Ορίστε τη διαδρομή αντιγράφων ασφαλείας</string>
+    <string name="notification_backup_success">Το αντίγραφο ασφαλείας ολοκληρώθηκε. Συνιστάται να διατηρείτε ένα αντίγραφο στο cloud</string>
+    <string name="notification_permission_rationale_dialog_body">Για να είστε πάντα ενήμεροι σχετικά με τα αυτόματα αντίγραφα ασφαλείας σας, επιτρέψτε τις ειδοποιήσεις.\nΘα ενημερώνεστε όταν ολοκληρώνεται ένα αντίγραφο ασφαλείας ή αν προκύψει κάποιο πρόβλημα.</string>
+    <string name="notification_permission_rationale_dialog_heading">Απαιτείται άδεια ειδοποιήσεων</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Φόρτωση των δεδομένων σας …</string>
+    <string name="no_record">Ξεκινήστε προσθέτοντας μια νέα εγγραφή ή επαναφέρετε τα δεδομένα σας από ένα αντίγραφο ασφαλείας.</string>
+    <string name="new_record_button">Προσθήκη νέας εγγραφής</string>
+    <string name="restore_records_button">Επαναφορά δεδομένων</string>
+    <string name="no_filtered_record_title">Ωχ! Δεν βρέθηκαν αποτελέσματα.</string>
+    <string name="no_filtered_record_body">Δεν βρήκαμε τίποτα που να ταιριάζει με την αναζήτησή σας. Δοκιμάστε να προσαρμόσετε τα φίλτρα σας ή να ελέγξετε για τυπογραφικά λάθη.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Ασφάλεια &amp; απόρρητο</string>
+    <string name="settings_section_support_and_community">Υποστήριξη &amp; κοινότητα</string>
+
+    <string name="settings_privacy_enabled_title">Λειτουργία απορρήτου</string>
+    <string name="settings_privacy_enabled_body">Κρύβει το περιεχόμενο της εφαρμογής στην οθόνη επισκόπησης της συσκευής για την προστασία ευαίσθητων δεδομένων και δεν επιτρέπει στιγμιότυπα οθόνης. Συνιστάται να παραμένει ενεργή.</string>
+
+    <string name="settings_auto_backup_title">Αυτόματο αντίγραφο ασφαλείας κατά τη σύνδεση</string>
+    <string name="settings_auto_backup_body">Δημιουργεί αυτόματα αντίγραφο ασφαλείας των δεδομένων σας όταν συνδέεστε με τον κύριο κωδικό πρόσβασής σας (όχι με βιομετρικά στοιχεία). Συνιστάται να παραμένει ενεργό.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">Αίτημα κωδικού πρόσβασης μετά από %1$d βιομετρικές συνδέσεις.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Αυτό είναι το όριο για το πόσες συνεχόμενες φορές επιτρέπεται η βιομετρική σύνδεση. Μόλις συμπληρωθεί αυτό το όριο, θα απαιτείται ο κωδικός πρόσβασης για τη σύνδεση. Έτσι διασφαλίζεται ότι θυμάστε τον κύριο κωδικό πρόσβασής σας.</string>
+
+    <string name="settings_away_timeout_title">Αυτόματο κλείδωμα μετά από %1$d δευτερόλεπτα.</string>
+    <string name="settings_away_timeout_body">Η εφαρμογή σάς αποσυνδέει αυτόματα αν λείπετε από την εφαρμογή για μεγάλο χρονικό διάστημα. Η μικρότερη διάρκεια είναι ασφαλέστερη.</string>
+
+    <string name="settings_feedback_title">Αποστολή σχολίων</string>
+    <string name="settings_feedback_body">Αναφέρετε ένα σφάλμα ή προτείνετε μια νέα λειτουργία. Εκτιμούμε τη γνώμη σας για να κάνουμε το Safe Box καλύτερο.</string>
+
+    <string name="settings_review_title">Αξιολόγηση στο Play Store</string>
+    <string name="settings_review_body">Αν σας αρέσει η εφαρμογή, αφιερώστε λίγο χρόνο για να αφήσετε μια κριτική. Βοηθά και άλλους να μας βρουν!</string>
+
+    <string name="settings_github_title">Συνεισφέρετε στο GitHub</string>
+    <string name="settings_github_body">Το SafeBox είναι ανοιχτού κώδικα. Δείτε τον κώδικα, αναφέρετε ζητήματα ή συνεισφέρετε στο έργο στο GitHub.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Εισαγάγετε κάτι!</string>
+    <string name="length_validation_text">Πολύ σύντομο!</string>
+    <string name="special_char_validation_text">Εισαγάγετε έναν ειδικό χαρακτήρα (π.χ. @, *, $)</string>
+    <string name="case_validation_text">Πρέπει να περιλαμβάνει τουλάχιστον ένα κεφαλαίο (A) και ένα πεζό γράμμα (a).</string>
+    <string name="numeric_validation_text">Εισαγάγετε τουλάχιστον δύο αριθμούς (π.χ. 1, 2, 3)</string>
+    <string name="save">Αποθήκευση</string>
+    <string name="password">Κωδικός πρόσβασης</string>
+    <string name="enter_hint">Εισαγάγετε μια υπόδειξη</string>
+    <string name="show_hint">Εμφάνιση υπόδειξης</string>
+    <string name="hide_hint">Απόκρυψη υπόδειξης</string>
+    <string name="hint">Υπόδειξη</string>
+    <string name="title">Τίτλος </string>
+    <string name="user_id">Αναγνωριστικό χρήστη </string>
+    <string name="notes">Σημειώσεις</string>
+    <string name="account_number">Αριθμός λογαριασμού </string>
+    <string name="customer_name">Όνομα πελάτη</string>
+    <string name="customer_id">Αναγνωριστικό πελάτη</string>
+    <string name="branch_code">Κωδικός καταστήματος</string>
+    <string name="branch_name">Όνομα καταστήματος</string>
+    <string name="branch_address">Διεύθυνση καταστήματος</string>
+    <string name="ifsc_code">Κωδικός IFSC</string>
+    <string name="micr_code">Κωδικός MICR</string>
+    <string name="welcome_back">Καλώς ορίσατε ξανά!</string>
+    <string name="welcome">Καλώς ορίσατε!</string>
+    <string name="timeout_dialog_message">Λείπατε για πολύ ώρα. Πατήστε OK για να συνδεθείτε ξανά στην εφαρμογή</string>
+    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="created_on">Δημιουργήθηκε στις</string>
+    <string name="updated_on">Ενημερώθηκε στις</string>
+    <string name="add_a_new_record">Προσθήκη νέας εγγραφής</string>
+    <string name="search_bar_placeholder">Αναζήτηση …</string>
+    <string name="send_feedback_email">Αποστολή email σχολίων</string>
+    <string name="no_email_app_found">Δεν βρέθηκε εφαρμογή email</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Ξεχάσατε τον κωδικό πρόσβασης;</string>
+    <string name="forgot_password_device_security_subtitle">Πραγματοποιήστε έλεγχο ταυτότητας για επαναφορά του κύριου κωδικού πρόσβασης</string>
+    <string name="update_password">Ενημέρωση κύριου κωδικού πρόσβασης</string>
+    <string name="new_password">Νέος κωδικός πρόσβασης</string>
+    <string name="confirm_new_password">Επιβεβαίωση νέου κωδικού πρόσβασης</string>
+    <string name="passwords_do_not_match">Οι κωδικοί πρόσβασης δεν ταιριάζουν</string>
+    <string name="change_master_password">Αλλαγή κύριου κωδικού πρόσβασης</string>
+    <string name="change_master_password_body">Ενημερώστε τον κύριο κωδικό πρόσβασης και την υπόδειξή σας</string>
+    <string name="password_updated_success">Ο κύριος κωδικός πρόσβασης ενημερώθηκε με επιτυχία</string>
+    <string name="device_security_required_title">Απαιτείται ασφάλεια συσκευής</string>
+    <string name="device_security_required_body">Ενεργοποιήστε την ασφάλεια συσκευής (PIN, μοτίβο, κωδικό πρόσβασης ή βιομετρικά στοιχεία) στις Ρυθμίσεις Android για να επαληθεύσετε την ταυτότητά σας πριν αλλάξετε τον κύριο κωδικό πρόσβασής σας.</string>
+    <string name="open_settings">Άνοιγμα ρυθμίσεων</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Απαιτείται άδεια κάμερας</string>
+    <string name="camera_permission_rationale_dialog_body">Το Safe Box χρειάζεται πρόσβαση στην κάμερα για τη σάρωση κωδικών QR κατά τη ρύθμιση του ελέγχου ταυτότητας δύο παραγόντων.</string>
+    <string name="qr_scanner_title">Σάρωση κωδικού QR</string>
+    <string name="qr_scanner_instruction">Ευθυγραμμίστε τον κωδικό QR μέσα στο πλαίσιο</string>
+    <string name="enter_key_manually">Χειροκίνητη εισαγωγή κλειδιού</string>
+    <string name="cd_turn_flash_on">Ενεργοποίηση φλας</string>
+    <string name="cd_turn_flash_off">Απενεργοποίηση φλας</string>
+    <string name="close">Κλείσιμο</string>
+    <string name="unsupported_qr_code_dialog_heading">Δεν είναι δυνατή η χρήση αυτού του κωδικού QR</string>
+    <string name="unsupported_qr_code_reason_malformed">Αυτός ο κωδικός QR είναι κατεστραμμένος ή δεν έχει σωστή μορφή, επομένως το Safe Box δεν μπόρεσε να τον διαβάσει.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Το Safe Box υποστηρίζει μόνο κωδικούς βάσει χρόνου (TOTP). Αυτός ο κωδικός QR προορίζεται για διαφορετικό τύπο κωδικού μίας χρήσης.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Το μυστικό κλειδί σε αυτόν τον κωδικό QR λείπει ή δεν είναι έγκυρο Base32.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Αυτός ο κωδικός QR χρησιμοποιεί αλγόριθμο κατακερματισμού που το Safe Box δεν μπορεί να υπολογίσει. Υποστηρίζονται μόνο τα SHA1, SHA256 και SHA512.</string>
+    <string name="unsupported_qr_code_reason_digits">Αυτός ο κωδικός QR απαιτεί μήκος κωδικού που το Safe Box δεν μπορεί να δημιουργήσει. Υποστηρίζονται μόνο 6 έως 8 ψηφία.</string>
+    <string name="unsupported_qr_code_reason_period">Αυτός ο κωδικός QR καθορίζει μη έγκυρο διάστημα ανανέωσης.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Αυτός ο κωδικός QR περιέχει αντικρουόμενες ρυθμίσεις για την ίδια τιμή, επομένως το Safe Box δεν μπορεί να προσδιορίσει ποια πρέπει να χρησιμοποιήσει.</string>
+    <string name="copied_to_clipboard">Το %1$s αντιγράφηκε στο πρόχειρο</string>
+    <string name="state_copied">Αντιγράφηκε</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Κωδικός μίας χρήσης</string>
+    <string name="secret_key">Μυστικό κλειδί</string>
+    <string name="cd_copy_totp_code">Αντιγραφή κωδικού μίας χρήσης</string>
+    <string name="totp_invalid_secret_key">Μη έγκυρο μυστικό κλειδί, αδυναμία δημιουργίας κωδικού</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Η ενημέρωση ολοκληρώθηκε. Επανεκκινήστε το Safe Box για εγκατάσταση.</string>
+    <string name="in_app_update_restart">Επανεκκίνηση</string>
+</resources>

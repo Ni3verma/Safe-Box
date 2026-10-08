@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">பதிவை நீக்கு</string>
+    <string name="cd_action_edit">பதிவைத் திருத்து</string>
+    <string name="cd_action_share">பதிவைப் பகிர்</string>
+    <string name="cd_toggle_sensitive_data_visibility">முக்கியத் தரவைக் காட்டு அல்லது மறை</string>
+    <string name="cd_add_new_record_button">புதிய பதிவைச் சேர்க்கும் பொத்தான்</string>
+    <string name="cd_search_bar">தலைப்பின் மூலம் பதிவுகளைத் தேடு</string>
+    <string name="cd_clear_search_bar">தேடல் பட்டியை அழி</string>
+    <string name="cd_back_button">பின்செல்லும் பொத்தான்</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">பதிவுகள்</string>
+    <string name="bottom_nav_backup_and_restore">காப்பு &amp; மீட்பு</string>
+    <string name="bottom_nav_settings">அமைப்புகள்</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Safe Box மூலம் தரவு பாதுகாப்பாகச் சேமிக்கப்பட்டுள்ளது.\nPlay Store இலிருந்து பதிவிறக்கவும் : %1$s</string>
+    <string name="common_cancel">ரத்துசெய்</string>
+    <string name="confirm">உறுதிசெய்</string>
+    <string name="common_ok">சரி</string>
+    <string name="biometric_title_text">SafeBox இல் உள்நுழைக</string>
+    <string name="biometric_sub_title_text">உங்கள் அடையாளத்தைச் சரிபார்க்கவும்</string>
+    <string name="biometric_negative_button_text">மூடு</string>
+    <string name="do_not_ask_again">மீண்டும் கேட்க வேண்டாம்</string>
+    <string name="allow">அனுமதி</string>
+    <string name="login">உள்நுழைக</string>
+    <string name="signup">பதிவுசெய்க</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">வங்கிக் கணக்கு</string>
+    <string name="type_display_card">வங்கி கார்டு</string>
+    <string name="type_display_note">குறிப்பு</string>
+    <string name="type_display_login">உள்நுழைவு</string>
+    <string name="type_display_authenticator">அங்கீகரிப்பான்</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">கார்டு எண் </string>
+    <string name="expiryDate">காலாவதி தேதி</string>
+    <string name="name">பெயர்</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">இந்தப் பதிவை நீக்கவா?</string>
+    <string name="delete_record_dialog_body">இந்தப் பதிவு நிரந்தரமாக நீக்கப்படும் என்பதை நான் புரிந்துகொள்கிறேன்.</string>
+
+    <!--     backup-->
+    <string name="backup">காப்புப்பிரதி</string>
+    <string name="backup_path_not_set_message">"உங்கள் காப்புப்பிரதி இடம் அமைக்கப்படவில்லை!! ஒன்றைத் தேர்ந்தெடுக்க கீழே உள்ள பொத்தானைப் பயன்படுத்தவும்.\nகுறிப்பு: உங்கள் காப்புப்பிரதிகளுக்கு ஒரு புதிய கோப்புறையை உருவாக்குவது நல்லது (எ.கா., 'Safe Box Backup')."</string>
+    <string name="backup_set_location">இடத்தை அமை</string>
+    <string name="backup_set_message">காப்புப்பிரதி இடம் அமைக்கப்பட்டது</string>
+    <string name="backup_path">காப்புப்பிரதி பாதை %1$s</string>
+    <string name="backup_path_select_failed_message">தேர்ந்தெடுக்கப்பட்ட கோப்புறையை அணுக முடியவில்லை. உங்கள் காப்புப்பிரதிகளுக்கு புதிய கோப்புறையை உருவாக்கி முயற்சிக்கவும்.</string>
+    <string name="retry">மீண்டும் முயல்க</string>
+    <string name="backup_time">கடைசியாக காப்புப்பிரதி எடுக்கப்பட்டது: %1$s</string>
+    <string name="backup_info_1">* நீங்கள் கடவுச்சொல் மூலம் உள்நுழையும்போதெல்லாம் காப்புப்பிரதி எடுக்கப்பட்டு, உங்கள் தற்போதைய முதன்மைக் கடவுச்சொல்லால் குறியாக்கம் செய்யப்படுகிறது </string>
+    <string name="backup_edit_path">பாதையை மாற்று</string>
+    <string name="new_backup_dialog_body_text">புதிய காப்புப்பிரதி கோப்பை உருவாக்க கடவுச்சொல்லை உள்ளிடவும்.</string>
+    <string name="backup_in_progress_message">தரவை காப்புப்பிரதி எடுக்க சிறிது நேரம் ஆகலாம். சற்று காத்திருக்கவும்!</string>
+    <string name="backup_complete_message">உங்கள் காப்புப்பிரதி முடிந்தது! கடவுச்சொல்லை நினைவில் கொள்ளுங்கள்.</string>
+    <string name="backup_nothing_to_backup_message">உங்கள் பெட்டகம் காலியாக உள்ளது. காப்புப்பிரதி எடுக்க எதுவும் இல்லை.</string>
+    <string name="backup_folder_inaccessible_message">காப்புப்பிரதி கோப்புறையை இனி அணுக முடியாது. தயவுசெய்து அதை மீண்டும் தேர்ந்தெடுக்கவும்.</string>
+    <string name="backup_write_failed_message">காப்புப்பிரதி தோல்வியடைந்தது. காப்புப்பிரதி கோப்பை எழுத முடியவில்லை, கோப்புறையில் காலியிடம் உள்ளதா எனச் சரிபார்க்கவும்.</string>
+    <string name="backup_unknown_error_message">எதிர்பாராத பிழையால் காப்புப்பிரதி தோல்வியடைந்தது. அமைப்புகள் &gt; கருத்தை அனுப்பு என்பதன் மூலம் புகாரளிக்கவும்.</string>
+
+    <!--     restore-->
+    <string name="restore">மீட்டெடு</string>
+    <string name="restore_info">"காப்புப்பிரதி கோப்பைத் தேர்ந்தெடுக்க கீழே உள்ள பொத்தானைக் கிளிக் செய்யவும்.\nதரவை மீட்டெடுக்க, காப்புப்பிரதி கோப்பை உருவாக்கப் பயன்படுத்திய அதே கடவுச்சொல்லை உள்ளிடவும்.\n\nமீட்டெடுப்பது செயலியில் தற்போது சேமிக்கப்பட்டுள்ள அனைத்தையும் காப்புப்பிரதி கோப்பில் உள்ள தரவால் மாற்றிவிடும். காப்புப்பிரதி கோப்பில் இல்லாத எந்தப் பதிவும் நிரந்தரமாக இழக்கப்படும்."</string>
+    <string name="new_restore_dialog_body_text">காப்புப்பிரதி கோப்பை உருவாக்கப் பயன்படுத்திய கடவுச்சொல்லை உள்ளிடவும்.</string>
+    <string name="restore_complete_message">தரவு வெற்றிகரமாக மீட்டெடுக்கப்பட்டது.</string>
+    <string name="restore_in_progress_message">தரவை மீட்டெடுக்க சிறிது நேரம் ஆகலாம். சற்று காத்திருக்கவும்!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">கடவுச்சொல் தவறானது!</string>
+    <string name="restore_corrupt_file_message">தேர்ந்தெடுக்கப்பட்ட காப்புப்பிரதி கோப்பு சிதைந்துள்ளது அல்லது செல்லாதது. செல்லுபடியாகும் காப்புப்பிரதி கோப்பைத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="restore_backup_too_new_message">இந்தக் காப்புப்பிரதி Safe Box இன் புதிய பதிப்பால் உருவாக்கப்பட்டது. உங்கள் காப்புப்பிரதி கோப்பு பாதுகாப்பாக உள்ளது, அதை மீட்டெடுக்க செயலியைப் புதுப்பிக்கவும்.</string>
+    <string name="restore_backup_empty_message">இந்தக் காப்புப்பிரதியில் பதிவுகள் எதுவும் இல்லை. எதுவும் மீட்டெடுக்கப்படவில்லை.</string>
+    <string name="failed_message">உங்கள் தரவைச் செயலாக்கும்போது எதிர்பாராத பிழை ஏற்பட்டது.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box காப்புப்பிரதி</string>
+    <string name="notification_backup_channel_desc">காப்புப்பிரதியின் நிலையைக் கண்காணிக்க இந்த அறிவிப்பு உதவுகிறது</string>
+    <string name="notification_backup_title">தரவு காப்புப்பிரதி</string>
+    <string name="notification_backup_in_progress">"உங்கள் தரவு உள்ளூர் சேமிப்பகத்தில் காப்புப்பிரதி எடுக்கப்படுகிறது. முடிந்ததும் உங்களுக்கு அறிவிக்கப்படும்"</string>
+    <string name="notification_backup_failure">காப்புப்பிரதி தோல்வியடைந்தது! காப்புப்பிரதி பாதையை அமைக்கவும்</string>
+    <string name="notification_backup_success">காப்புப்பிரதி முடிந்தது. கிளவுடில் ஒரு நகலை வைத்திருப்பது நல்லது</string>
+    <string name="notification_permission_rationale_dialog_body">உங்கள் தானியங்கி காப்புப்பிரதிகளைப் பற்றி எப்போதும் அறிந்திருக்க, அறிவிப்புகளை அனுமதிக்கவும்.\nகாப்புப்பிரதி முடிந்ததும் அல்லது ஏதேனும் சிக்கல் ஏற்பட்டால் உங்களுக்குத் தெரிவிக்கப்படும்.</string>
+    <string name="notification_permission_rationale_dialog_heading">அறிவிப்பு அனுமதி தேவை</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">உங்கள் தரவு ஏற்றப்படுகிறது …</string>
+    <string name="no_record">புதிய பதிவைச் சேர்த்துத் தொடங்கவும் அல்லது காப்புப்பிரதியிலிருந்து தரவை மீட்டெடுக்கவும்.</string>
+    <string name="new_record_button">புதிய பதிவைச் சேர்</string>
+    <string name="restore_records_button">தரவை மீட்டெடு</string>
+    <string name="no_filtered_record_title">அடடே! முடிவுகள் எதுவும் இல்லை.</string>
+    <string name="no_filtered_record_body">உங்கள் தேடலுக்குப் பொருந்தக்கூடிய எதுவும் கிடைக்கவில்லை. வடிகட்டிகளை மாற்றியோ அல்லது எழுத்துப்பிழைகளைச் சரிபார்த்தோ முயற்சிக்கவும்.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">பாதுகாப்பு &amp; தனியுரிமை</string>
+    <string name="settings_section_support_and_community">ஆதரவு &amp; சமூகம்</string>
+
+    <string name="settings_privacy_enabled_title">தனியுரிமைப் பயன்முறை</string>
+    <string name="settings_privacy_enabled_body">முக்கியத் தரவைப் பாதுகாக்க சமீபத்திய செயலிகள் திரையில் செயலி உள்ளடக்கத்தை மறைக்கிறது மற்றும் ஸ்கிரீன்ஷாட் எடுக்க அனுமதிக்காது. இதை ஆன் செய்து வைத்திருக்கப் பரிந்துரைக்கப்படுகிறது.</string>
+
+    <string name="settings_auto_backup_title">உள்நுழையும்போது தானியங்கி காப்புப்பிரதி</string>
+    <string name="settings_auto_backup_body">முதன்மைக் கடவுச்சொல் மூலம் உள்நுழையும்போது (பயோமெட்ரிக் அல்ல) உங்கள் தரவைத் தானாகவே காப்புப்பிரதி எடுக்கிறது. இதை ஆன் செய்து வைத்திருக்கப் பரிந்துரைக்கப்படுகிறது.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">%1$d பயோமெட்ரிக் உள்நுழைவுகளுக்குப் பிறகு கடவுச்சொல்லைக் கேள்.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">தொடர்ச்சியாக எத்தனை முறை பயோமெட்ரிக் மூலம் உள்நுழையலாம் என்பதற்கான வரம்பு இதுவாகும். இந்த வரம்பை அடைந்ததும், உள்நுழைய கடவுச்சொல் தேவைப்படும். இது உங்கள் முதன்மைக் கடவுச்சொல்லை நினைவில் வைத்திருப்பதை உறுதி செய்கிறது.</string>
+
+    <string name="settings_away_timeout_title">%1$d விநாடிகளுக்குப் பிறகு தானாகப் பூட்டு.</string>
+    <string name="settings_away_timeout_body">நீங்கள் நீண்ட நேரம் செயலியைப் பயன்படுத்தாமல் இருந்தால் செயலி தானாகவே வெளியேறிவிடும். குறைந்த கால அளவு மிகவும் பாதுகாப்பானது.</string>
+
+    <string name="settings_feedback_title">கருத்தை அனுப்பு</string>
+    <string name="settings_feedback_body">பிழையைப் புகாரளிக்கவும் அல்லது புதிய அம்சத்தைப் பரிந்துரைக்கவும். Safe Box ஐ மேம்படுத்த உங்கள் கருத்துக்களை மதிக்கிறோம்.</string>
+
+    <string name="settings_review_title">Play Store இல் மதிப்பிடுக</string>
+    <string name="settings_review_body">இந்தச் செயலியைப் பயன்படுத்துவது உங்களுக்குப் பிடித்திருந்தால், மதிப்பாய்வை வழங்க சிறிது நேரம் ஒதுக்கவும். இது மற்றவர்கள் எங்களைக் கண்டறிய உதவும்!</string>
+
+    <string name="settings_github_title">GitHub இல் பங்களிக்கவும்</string>
+    <string name="settings_github_body">SafeBox ஒரு திறந்த மூல (open source) செயலி. GitHub இல் குறியீட்டைப் பார்க்கவும், சிக்கல்களைப் புகாரளிக்கவும் அல்லது திட்டத்திற்குப் பங்களிக்கவும்.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">ஏதாவது உள்ளிடவும்!</string>
+    <string name="length_validation_text">மிகவும் சிறியது!</string>
+    <string name="special_char_validation_text">சிறப்பு எழுத்து ஒன்றை உள்ளிடவும் (எ.கா. @, *, $)</string>
+    <string name="case_validation_text">குறைந்தது ஒரு பெரிய எழுத்தும் (A) ஒரு சிறிய எழுத்தும் (a) இருக்க வேண்டும்.</string>
+    <string name="numeric_validation_text">குறைந்தது இரண்டு எண்களை உள்ளிடவும் (எ.கா. 1, 2, 3)</string>
+    <string name="save">சேமி</string>
+    <string name="password">கடவுச்சொல்</string>
+    <string name="enter_hint">குறிப்பை உள்ளிடவும்</string>
+    <string name="show_hint">குறிப்பைக் காட்டு</string>
+    <string name="hide_hint">குறிப்பை மறை</string>
+    <string name="hint">குறிப்பு</string>
+    <string name="title">தலைப்பு </string>
+    <string name="user_id">பயனர் ஐடி </string>
+    <string name="notes">குறிப்புகள்</string>
+    <string name="account_number">கணக்கு எண் </string>
+    <string name="customer_name">வாடிக்கையாளர் பெயர்</string>
+    <string name="customer_id">வாடிக்கையாளர் ஐடி</string>
+    <string name="branch_code">கிளைக் குறியீடு</string>
+    <string name="branch_name">கிளையின் பெயர்</string>
+    <string name="branch_address">கிளை முகவரி</string>
+    <string name="ifsc_code">IFSC குறியீடு</string>
+    <string name="micr_code">MICR குறியீடு</string>
+    <string name="welcome_back">மீண்டும் வருக!</string>
+    <string name="welcome">வருக!</string>
+    <string name="timeout_dialog_message">நீங்கள் நீண்ட நேரம் செயலியை விட்டு விலகியிருந்தீர்கள். மீண்டும் உள்நுழைய சரி என்பதைக் கிளிக் செய்யவும்</string>
+    <string name="timeout_dialog_positive_button_text">சரி</string>
+    <string name="created_on">உருவாக்கப்பட்ட தேதி</string>
+    <string name="updated_on">புதுப்பிக்கப்பட்ட தேதி</string>
+    <string name="add_a_new_record">புதிய பதிவைச் சேர்</string>
+    <string name="search_bar_placeholder">தேடு …</string>
+    <string name="send_feedback_email">கருத்து மின்னஞ்சலை அனுப்பு</string>
+    <string name="no_email_app_found">மின்னஞ்சல் செயலி எதுவும் கிடைக்கவில்லை</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">கடவுச்சொல்லை மறந்துவிட்டீர்களா?</string>
+    <string name="forgot_password_device_security_subtitle">முதன்மைக் கடவுச்சொல்லை மீட்டமைக்க உறுதிப்படுத்தவும்</string>
+    <string name="update_password">முதன்மைக் கடவுச்சொல்லைப் புதுப்பி</string>
+    <string name="new_password">புதிய கடவுச்சொல்</string>
+    <string name="confirm_new_password">புதிய கடவுச்சொல்லை உறுதிசெய்</string>
+    <string name="passwords_do_not_match">கடவுச்சொற்கள் பொருந்தவில்லை</string>
+    <string name="change_master_password">முதன்மைக் கடவுச்சொல்லை மாற்று</string>
+    <string name="change_master_password_body">உங்கள் முதன்மைக் கடவுச்சொல் மற்றும் குறிப்பைப் புதுப்பிக்கவும்</string>
+    <string name="password_updated_success">முதன்மைக் கடவுச்சொல் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது</string>
+    <string name="device_security_required_title">சாதனப் பாதுகாப்பு தேவை</string>
+    <string name="device_security_required_body">முதன்மைக் கடவுச்சொல்லை மாற்றுவதற்கு முன் உங்கள் அடையாளத்தைச் சரிபார்க்க, Android அமைப்புகளில் சாதனப் பாதுகாப்பை (PIN, பேட்டர்ன், கடவுச்சொல் அல்லது பயோமெட்ரிக்) இயக்கவும்.</string>
+    <string name="open_settings">அமைப்புகளைத் திற</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">கேமரா அனுமதி தேவை</string>
+    <string name="camera_permission_rationale_dialog_body">இரு-காரணி அங்கீகரிப்பு அமைப்பிற்கான QR குறியீடுகளை ஸ்கேன் செய்ய Safe Box க்கு கேமரா அனுமதி தேவை.</string>
+    <string name="qr_scanner_title">QR குறியீட்டை ஸ்கேன் செய்</string>
+    <string name="qr_scanner_instruction">QR குறியீட்டைச் சட்டத்திற்குள் நேராக வைக்கவும்</string>
+    <string name="enter_key_manually">திறவுகோலை கைமுறையாக உள்ளிடவும்</string>
+    <string name="cd_turn_flash_on">ஃபிளாஷை இயக்கு</string>
+    <string name="cd_turn_flash_off">ஃபிளாஷை நிறுத்து</string>
+    <string name="close">மூடு</string>
+    <string name="unsupported_qr_code_dialog_heading">இந்த QR குறியீட்டைப் பயன்படுத்த முடியாது</string>
+    <string name="unsupported_qr_code_reason_malformed">இந்த QR குறியீடு சேதமடைந்துள்ளது அல்லது தவறான வடிவத்தில் உள்ளது, எனவே Safe Box ஆல் இதைப் படிக்க முடியவில்லை.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box நேர அடிப்படையிலான (TOTP) குறியீடுகளை மட்டுமே ஆதரிக்கிறது. இந்த QR குறியீடு வேறொரு வகையான ஒருமுறை கடவுச்சொல்லுக்கானது.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">இந்த QR குறியீட்டில் இரகசியத் திறவுகோல் இல்லை அல்லது செல்லுபடியாகும் Base32 ஆக இல்லை.</string>
+    <string name="unsupported_qr_code_reason_algorithm">இந்த QR குறியீடு Safe Box ஆல் கணக்கிட முடியாத ஹேஷிங் வழிமுறையைப் பயன்படுத்துகிறது. SHA1, SHA256 மற்றும் SHA512 மட்டுமே ஆதரிக்கப்படுகின்றன.</string>
+    <string name="unsupported_qr_code_reason_digits">இந்த QR குறியீடு Safe Box ஆல் உருவாக்க முடியாத குறியீட்டு நீளத்தைக் கேட்கிறது. 6 முதல் 8 இலக்கங்கள் மட்டுமே ஆதரிக்கப்படுகின்றன.</string>
+    <string name="unsupported_qr_code_reason_period">இந்த QR குறியீடு தவறான புதுப்பிப்பு இடைவெளியைக் குறிப்பிடுகிறது.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">இந்த QR குறியீடு ஒரே மதிப்பிற்கு முரண்பட்ட அமைப்புகளை வழங்குகிறது, எனவே எதைப் பயன்படுத்துவது என்று Safe Box ஆல் தீர்மானிக்க முடியவில்லை.</string>
+    <string name="copied_to_clipboard">%1$s கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது</string>
+    <string name="state_copied">நகலெடுக்கப்பட்டது</string>
+    <!-- Authenticator -->
+    <string name="totp_code">ஒருமுறை குறியீடு</string>
+    <string name="secret_key">இரகசியத் திறவுகோல்</string>
+    <string name="cd_copy_totp_code">ஒருமுறை குறியீட்டை நகலெடு</string>
+    <string name="totp_invalid_secret_key">செல்லாத இரகசியத் திறவுகோல், குறியீட்டை உருவாக்க முடியாது</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">புதுப்பிப்பு பதிவிறக்கப்பட்டது. நிறுவ Safe Box ஐ மறுதொடக்கம் செய்யவும்.</string>
+    <string name="in_app_update_restart">மறுதொடக்கம் செய்</string>
+</resources>

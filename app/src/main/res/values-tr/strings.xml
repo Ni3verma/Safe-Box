@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">Kaydı sil</string>
+    <string name="cd_action_edit">Kaydı düzenle</string>
+    <string name="cd_action_share">Kaydı paylaş</string>
+    <string name="cd_toggle_sensitive_data_visibility">Hassas veri görünürlüğünü değiştir</string>
+    <string name="cd_add_new_record_button">Yeni kayıt ekleme düğmesi</string>
+    <string name="cd_search_bar">Kayıtları başlığa göre ara</string>
+    <string name="cd_clear_search_bar">Arama çubuğunu temizle</string>
+    <string name="cd_back_button">Geri düğmesi</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">Kayıtlar</string>
+    <string name="bottom_nav_backup_and_restore">Yedekle ve Geri Yükle</string>
+    <string name="bottom_nav_settings">Ayarlar</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Veriler Safe Box ile güvenle saklanıyor.\nPlay Store\'dan indirin: %1$s</string>
+    <string name="common_cancel">İptal</string>
+    <string name="confirm">Onayla</string>
+    <string name="common_ok">Tamam</string>
+    <string name="biometric_title_text">SafeBox\'a Giriş Yap</string>
+    <string name="biometric_sub_title_text">Kimliğinizi doğrulayın</string>
+    <string name="biometric_negative_button_text">Kapat</string>
+    <string name="do_not_ask_again">Bir daha sorma</string>
+    <string name="allow">İzin Ver</string>
+    <string name="login">Giriş Yap</string>
+    <string name="signup">Kayıt Ol</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">Banka Hesabı</string>
+    <string name="type_display_card">Banka Kartı</string>
+    <string name="type_display_note">Not</string>
+    <string name="type_display_login">Giriş Bilgileri</string>
+    <string name="type_display_authenticator">Kimlik Doğrulayıcı</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">Numara </string>
+    <string name="expiryDate">Son Kullanma Tarihi</string>
+    <string name="name">Ad</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">Bu kayıt silinsin mi?</string>
+    <string name="delete_record_dialog_body">Bu kaydın kalıcı olarak silineceğini anlıyorum.</string>
+
+    <!--     backup-->
+    <string name="backup">Yedekle</string>
+    <string name="backup_path_not_set_message">"Yedekleme konumunuz ayarlanmamış! Bir konum seçmek için aşağıdaki düğmeyi kullanın.\nİpucu: Yedekleriniz için yeni bir klasör oluşturmanız önerilir (ör. \'Safe Box Backup\')."</string>
+    <string name="backup_set_location">Konum Ayarla</string>
+    <string name="backup_set_message">Yedekleme konumu ayarlandı</string>
+    <string name="backup_path">Yedekleme yolu: %1$s</string>
+    <string name="backup_path_select_failed_message">Seçilen klasöre erişilemedi. Yedekleriniz için yeni bir klasör oluşturmayı deneyin.</string>
+    <string name="retry">Tekrar Dene</string>
+    <string name="backup_time">Son yedekleme tarihi: %1$s</string>
+    <string name="backup_info_1">* Parolayla her giriş yaptığınızda yedekleme alınır ve mevcut ana parolanızla şifrelenir </string>
+    <string name="backup_edit_path">Yolu Düzenle</string>
+    <string name="new_backup_dialog_body_text">Yeni bir yedekleme dosyası oluşturmak için lütfen bir parola girin.</string>
+    <string name="backup_in_progress_message">Verilerin yedeklenmesi biraz zaman alabilir. Arkanıza yaslanın ve rahatlayın!</string>
+    <string name="backup_complete_message">Yedeklemeniz tamamlandı! Parolayı unutmayın.</string>
+    <string name="backup_nothing_to_backup_message">Kasanız boş. Yedeklenecek bir şey yok.</string>
+    <string name="backup_folder_inaccessible_message">Yedekleme klasörüne artık erişilemiyor. Lütfen klasörü yeniden seçin.</string>
+    <string name="backup_write_failed_message">Yedekleme başarısız oldu. Yedekleme dosyası yazılamadı; yedekleme klasöründeki boş alanı kontrol edin.</string>
+    <string name="backup_unknown_error_message">Yedekleme beklenmeyen bir hata nedeniyle başarısız oldu. Lütfen Ayarlar &gt; Geri bildirim gönder bölümünden bildirin.</string>
+
+    <!--     restore-->
+    <string name="restore">Geri Yükle</string>
+    <string name="restore_info">"Bir yedekleme dosyası seçmek için aşağıdaki düğmeye dokunun.\nVerileri geri yüklemek için yedekleme dosyasını oluştururken kullandığınız parolanın aynısını girmeniz gerektiğini unutmayın.\n\nGeri yükleme işlemi, uygulamada mevcut olan tüm verileri yedekleme dosyasının içeriğiyle değiştirir. Yedekleme dosyasında bulunmayan tüm kayıtlar kalıcı olarak silinir."</string>
+    <string name="new_restore_dialog_body_text">Lütfen yedekleme dosyasını oluşturmak için kullanılan parolayı girin.</string>
+    <string name="restore_complete_message">Veriler başarıyla geri yüklendi.</string>
+    <string name="restore_in_progress_message">Verilerin geri yüklenmesi biraz zaman alabilir. Arkanıza yaslanın ve rahatlayın!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">Parola yanlış!</string>
+    <string name="restore_corrupt_file_message">Seçilen yedekleme dosyası bozuk veya geçersiz. Lütfen geçerli bir yedekleme dosyası seçin.</string>
+    <string name="restore_backup_too_new_message">Bu yedekleme, Safe Box\'ın daha yeni bir sürümüyle oluşturulmuş. Yedekleme dosyanız sağlam; geri yüklemek için lütfen uygulamayı güncelleyin.</string>
+    <string name="restore_backup_empty_message">Bu yedekleme hiçbir kayıt içermiyor. Hiçbir şey geri yüklenmedi.</string>
+    <string name="failed_message">Verileriniz işlenirken beklenmeyen bir hata oluştu.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box Yedekleme</string>
+    <string name="notification_backup_channel_desc">Bu bildirim, yedekleme ilerlemesini takip etmenize yardımcı olur</string>
+    <string name="notification_backup_title">Veri Yedekleme</string>
+    <string name="notification_backup_in_progress">"Verileriniz yerel depolamaya yedekleniyor. İşlem tamamlandığında bilgilendirileceksiniz"</string>
+    <string name="notification_backup_failure">Yedekleme Başarısız! Lütfen yedekleme yolunu ayarlayın</string>
+    <string name="notification_backup_success">Yedekleme tamamlandı. Bulutta bir kopyasını saklamanız önerilir</string>
+    <string name="notification_permission_rationale_dialog_body">Otomatik yedeklemelerinizden her zaman haberdar olmak için lütfen bildirimlere izin verin.\nBir yedekleme tamamlandığında veya bir sorun oluştuğunda uyarılırsınız.</string>
+    <string name="notification_permission_rationale_dialog_heading">Bildirim izni gerekiyor</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">Verileriniz yükleniyor …</string>
+    <string name="no_record">Yeni bir kayıt ekleyerek başlayın veya verilerinizi bir yedekten geri yükleyin.</string>
+    <string name="new_record_button">Yeni kayıt ekle</string>
+    <string name="restore_records_button">Verileri geri yükle</string>
+    <string name="no_filtered_record_title">Üzgünüz! Burada sonuç yok.</string>
+    <string name="no_filtered_record_body">Aramanızla eşleşen hiçbir şey bulamadık. Filtrelerinizi değiştirmeyi veya yazım hatalarını kontrol etmeyi deneyin.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">Güvenlik ve Gizlilik</string>
+    <string name="settings_section_support_and_community">Destek ve Topluluk</string>
+
+    <string name="settings_privacy_enabled_title">Gizlilik modu</string>
+    <string name="settings_privacy_enabled_body">Hassas verileri korumak için son kullanılanlar ekranında uygulama içeriğini gizler ve ekran görüntüsü alınmasını engeller. Açık tutulması önerilir.</string>
+
+    <string name="settings_auto_backup_title">Girişte otomatik yedekleme</string>
+    <string name="settings_auto_backup_body">Ana parolanızla giriş yaptığınızda (biyometrik giriş hariç) verilerinizi otomatik olarak yedekler. Açık tutulması önerilir.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">%1$d biyometrik girişten sonra parola sor.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">Bu ayar, arka arkaya kaç kez biyometrik girişe izin verileceğini belirler. Bu sınıra ulaşıldığında giriş yapmak için parola gerekir. Böylece ana parolanızı unutmamanız sağlanır.</string>
+
+    <string name="settings_away_timeout_title">%1$d saniye sonra otomatik kilitle.</string>
+    <string name="settings_away_timeout_body">Uygulamadan çok uzun süre uzak kaldığınızda oturumunuzu otomatik olarak kapatır. Daha kısa bir süre daha güvenlidir.</string>
+
+    <string name="settings_feedback_title">Geri bildirim gönder</string>
+    <string name="settings_feedback_body">Bir hata bildirin veya yeni bir özellik önerin. Safe Box\'ı daha iyi hale getirmek için görüşlerinize değer veriyoruz.</string>
+
+    <string name="settings_review_title">Play Store\'da değerlendir</string>
+    <string name="settings_review_body">Uygulamayı kullanmaktan memnunsanız lütfen bir değerlendirme bırakmak için birkaç saniyenizi ayırın. Bu, başkalarının da bizi keşfetmesine yardımcı olur!</string>
+
+    <string name="settings_github_title">GitHub\'da katkıda bulunun</string>
+    <string name="settings_github_body">SafeBox açık kaynaklıdır. GitHub üzerinde kodu inceleyin, sorun bildirin veya projeye katkıda bulunun.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">Bir şey girin!</string>
+    <string name="length_validation_text">Çok kısa!</string>
+    <string name="special_char_validation_text">Özel bir karakter girin (ör. @, *, $)</string>
+    <string name="case_validation_text">En az bir büyük harf (A) ve bir küçük harf (a) içermelidir.</string>
+    <string name="numeric_validation_text">En az iki rakam girin (ör. 1, 2, 3)</string>
+    <string name="save">Kaydet</string>
+    <string name="password">Parola</string>
+    <string name="enter_hint">Bir ipucu girin</string>
+    <string name="show_hint">İpucunu Göster</string>
+    <string name="hide_hint">İpucunu Gizle</string>
+    <string name="hint">İpucu</string>
+    <string name="title">Başlık </string>
+    <string name="user_id">Kullanıcı Kimliği </string>
+    <string name="notes">Notlar</string>
+    <string name="account_number">Hesap Numarası </string>
+    <string name="customer_name">Müşteri Adı</string>
+    <string name="customer_id">Müşteri Kimliği</string>
+    <string name="branch_code">Şube Kodu</string>
+    <string name="branch_name">Şube Adı</string>
+    <string name="branch_address">Şube Adresi</string>
+    <string name="ifsc_code">IFSC Kodu</string>
+    <string name="micr_code">MICR Kodu</string>
+    <string name="welcome_back">Tekrar Hoş Geldiniz!</string>
+    <string name="welcome">Hoş Geldiniz!</string>
+    <string name="timeout_dialog_message">Çok uzun süre işlem yapmadınız. Uygulamaya yeniden giriş yapmak için lütfen Tamam\'a dokunun</string>
+    <string name="timeout_dialog_positive_button_text">Tamam</string>
+    <string name="created_on">Oluşturulma tarihi:</string>
+    <string name="updated_on">Güncellenme tarihi:</string>
+    <string name="add_a_new_record">Yeni kayıt ekle</string>
+    <string name="search_bar_placeholder">Ara …</string>
+    <string name="send_feedback_email">Geri bildirim e-postası gönder</string>
+    <string name="no_email_app_found">E-posta uygulaması bulunamadı</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">Parolanızı mı Unuttunuz?</string>
+    <string name="forgot_password_device_security_subtitle">Ana parolayı sıfırlamak için kimliğinizi doğrulayın</string>
+    <string name="update_password">Ana Parolayı Güncelle</string>
+    <string name="new_password">Yeni Parola</string>
+    <string name="confirm_new_password">Yeni Parolayı Onayla</string>
+    <string name="passwords_do_not_match">Parolalar eşleşmiyor</string>
+    <string name="change_master_password">Ana Parolayı Değiştir</string>
+    <string name="change_master_password_body">Ana parolanızı ve ipucunuzu güncelleyin</string>
+    <string name="password_updated_success">Ana parola başarıyla güncellendi</string>
+    <string name="device_security_required_title">Cihaz Güvenliği Gerekli</string>
+    <string name="device_security_required_body">Ana parolanızı değiştirmeden önce kimliğinizi doğrulamak için lütfen Android Ayarları\'ndan cihaz güvenliğini (PIN, desen, parola veya biyometri) etkinleştirin.</string>
+    <string name="open_settings">Ayarları Aç</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">Kamera İzni Gerekli</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box, iki faktörlü kimlik doğrulama kurulumu için QR kodlarını taramak üzere kamera erişimine ihtiyaç duyar.</string>
+    <string name="qr_scanner_title">QR Kodunu Tara</string>
+    <string name="qr_scanner_instruction">QR kodunu çerçevenin içine hizalayın</string>
+    <string name="enter_key_manually">Anahtarı Manuel Gir</string>
+    <string name="cd_turn_flash_on">Flaşı aç</string>
+    <string name="cd_turn_flash_off">Flaşı kapat</string>
+    <string name="close">Kapat</string>
+    <string name="unsupported_qr_code_dialog_heading">Bu QR kodu kullanılamıyor</string>
+    <string name="unsupported_qr_code_reason_malformed">Bu QR kodu hasarlı veya hatalı biçimlendirilmiş olduğundan Safe Box tarafından okunamadı.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box yalnızca zamana dayalı (TOTP) kodları destekler. Bu QR kodu farklı türde bir tek kullanımlık parola içindir.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">Bu QR kodundaki gizli anahtar eksik veya geçerli bir Base32 değil.</string>
+    <string name="unsupported_qr_code_reason_algorithm">Bu QR kodu, Safe Box\'ın hesaplayamayacağı bir karma algoritması kullanıyor. Yalnızca SHA1, SHA256 ve SHA512 desteklenir.</string>
+    <string name="unsupported_qr_code_reason_digits">Bu QR kodu, Safe Box\'ın oluşturamayacağı bir kod uzunluğu istiyor. Yalnızca 6 ila 8 hane desteklenir.</string>
+    <string name="unsupported_qr_code_reason_period">Bu QR kodu geçersiz bir yenileme aralığı belirtiyor.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">Bu QR kodu aynı değer için çelişkili ayarlar içerdiğinden Safe Box hangisini kullanacağını belirleyemiyor.</string>
+    <string name="copied_to_clipboard">%1$s panoya kopyalandı</string>
+    <string name="state_copied">Kopyalandı</string>
+    <!-- Authenticator -->
+    <string name="totp_code">Tek kullanımlık kod</string>
+    <string name="secret_key">Gizli anahtar</string>
+    <string name="cd_copy_totp_code">Tek kullanımlık kodu kopyala</string>
+    <string name="totp_invalid_secret_key">Geçersiz gizli anahtar, kod oluşturulamıyor</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">Güncelleme indirildi. Yüklemek için Safe Box\'ı yeniden başlatın.</string>
+    <string name="in_app_update_restart">Yeniden Başlat</string>
+</resources>

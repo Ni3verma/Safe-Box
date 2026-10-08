@@ -1,0 +1,193 @@
+<resources>
+    <!-- Content descriptions -->
+    <string name="cd_action_delete">항목 삭제</string>
+    <string name="cd_action_edit">항목 편집</string>
+    <string name="cd_action_share">항목 공유</string>
+    <string name="cd_toggle_sensitive_data_visibility">민감한 정보 표시 전환</string>
+    <string name="cd_add_new_record_button">새 항목 추가 버튼</string>
+    <string name="cd_search_bar">제목으로 항목 검색</string>
+    <string name="cd_clear_search_bar">검색창 지우기</string>
+    <string name="cd_back_button">뒤로 버튼</string>
+
+    <!-- Screen title -->
+    <string name="bottom_nav_records">항목</string>
+    <string name="bottom_nav_backup_and_restore">백업 및 복원</string>
+    <string name="bottom_nav_settings">설정</string>
+
+    <!-- Common -->
+    <string name="common_app_playstore_download">Safe Box에 안전하게 저장된 데이터입니다.\nPlay 스토어에서 다운로드: %1$s</string>
+    <string name="common_cancel">취소</string>
+    <string name="confirm">확인</string>
+    <string name="common_ok">확인</string>
+    <string name="biometric_title_text">SafeBox 로그인</string>
+    <string name="biometric_sub_title_text">본인 인증을 진행해 주세요</string>
+    <string name="biometric_negative_button_text">닫기</string>
+    <string name="do_not_ask_again">다시 묻지 않음</string>
+    <string name="allow">허용</string>
+    <string name="login">로그인</string>
+    <string name="signup">가입하기</string>
+
+    <!-- User data type text -->
+    <string name="type_display_account">은행 계좌</string>
+    <string name="type_display_card">결제 카드</string>
+    <string name="type_display_note">보안 메모</string>
+    <string name="type_display_login">로그인 정보</string>
+    <string name="type_display_authenticator">인증기</string>
+
+    <!-- Bank card dialog -->
+    <string name="number">카드 번호</string>
+    <string name="expiryDate">유효기간</string>
+    <string name="name">소유자 이름</string>
+    <string name="pin">PIN</string>
+
+    <!-- delete record dialog -->
+    <string name="delete_this_record">이 항목을 삭제하시겠습니까?</string>
+    <string name="delete_record_dialog_body">이 항목이 영구적으로 삭제됨을 이해합니다.</string>
+
+    <!-- backup -->
+    <string name="backup">백업</string>
+    <string name="backup_path_not_set_message">"백업 위치가 설정되지 않았습니다! 아래 버튼을 눌러 위치를 선택하세요.\n팁: 백업 전용 새 폴더(예: \'Safe Box Backup\')를 만드는 것이 좋습니다."</string>
+    <string name="backup_set_location">위치 설정</string>
+    <string name="backup_set_message">백업 위치가 설정되었습니다</string>
+    <string name="backup_path">백업 경로: %1$s</string>
+    <string name="backup_path_select_failed_message">선택한 폴더에 액세스할 수 없습니다. 백업용 새 폴더를 만들어 보세요.</string>
+    <string name="retry">재시도</string>
+    <string name="backup_time">마지막 백업 일시: %1$s</string>
+    <string name="backup_info_1">* 비밀번호로 로그인할 때마다 백업이 수행되며 현재 마스터 비밀번호로 암호화됩니다</string>
+    <string name="backup_edit_path">경로 변경</string>
+    <string name="new_backup_dialog_body_text">새 백업 파일을 만들려면 비밀번호를 입력하세요.</string>
+    <string name="backup_in_progress_message">데이터를 백업하는 데 시간이 걸릴 수 있습니다. 잠시만 기다려 주세요!</string>
+    <string name="backup_complete_message">백업이 완료되었습니다! 비밀번호를 꼭 기억해 두세요.</string>
+    <string name="backup_nothing_to_backup_message">보관함이 비어 있어 백업할 데이터가 없습니다.</string>
+    <string name="backup_folder_inaccessible_message">백업 폴더에 더 이상 액세스할 수 없습니다. 다시 선택해 주세요.</string>
+    <string name="backup_write_failed_message">백업에 실패했습니다. 백업 파일을 쓸 수 없습니다. 백업 폴더의 여유 공간을 확인하세요.</string>
+    <string name="backup_unknown_error_message">예기치 않은 오류로 인해 백업에 실패했습니다. 설정 &gt; 의견 보내기에서 신고해 주세요.</string>
+
+    <!-- restore -->
+    <string name="restore">복원</string>
+    <string name="restore_info">"아래 버튼을 눌러 백업 파일을 선택하세요.\n데이터를 복원하려면 백업 파일을 만들 때 사용한 것과 동일한 비밀번호를 입력해야 합니다.\n\n복원하면 현재 앱에 저장된 모든 내용이 백업 파일의 내용으로 대체됩니다. 백업 파일에 없는 항목은 영구적으로 삭제됩니다."</string>
+    <string name="new_restore_dialog_body_text">백업 파일을 만들 때 사용한 비밀번호를 입력하세요.</string>
+    <string name="restore_complete_message">데이터가 성공적으로 복원되었습니다.</string>
+    <string name="restore_in_progress_message">데이터를 복원하는 데 시간이 걸릴 수 있습니다. 잠시만 기다려 주세요!</string>
+
+    <!-- master password dialog -->
+    <string name="incorrect_pswrd_message">비밀번호가 올바르지 않습니다!</string>
+    <string name="restore_corrupt_file_message">선택한 백업 파일이 손상되었거나 유효하지 않습니다. 올바른 백업 파일을 선택해 주세요.</string>
+    <string name="restore_backup_too_new_message">이 백업은 더 최신 버전의 Safe Box에서 생성되었습니다. 백업 파일에는 문제가 없으니 앱을 업데이트한 후 복원해 주세요.</string>
+    <string name="restore_backup_empty_message">이 백업 파일에는 항목이 없습니다. 복원된 데이터가 없습니다.</string>
+    <string name="failed_message">데이터를 처리하는 중 예기치 않은 오류가 발생했습니다.</string>
+
+    <!-- Notification -->
+    <string name="notification_backup_channel_name">Safe Box 백업</string>
+    <string name="notification_backup_channel_desc">백업 진행 상황을 확인할 수 있도록 알려주는 알림입니다</string>
+    <string name="notification_backup_title">데이터 백업</string>
+    <string name="notification_backup_in_progress">"로컬 저장소에 데이터를 백업하는 중입니다. 완료되면 알림을 보내드립니다"</string>
+    <string name="notification_backup_failure">백업 실패! 백업 경로를 설정해 주세요</string>
+    <string name="notification_backup_success">백업이 완료되었습니다. 클라우드에도 사본을 보관하는 것이 좋습니다</string>
+    <string name="notification_permission_rationale_dialog_body">자동 백업 상태를 항상 확인할 수 있도록 알림을 허용해 주세요.\n백업이 완료되거나 문제가 발생할 때 알림을 받게 됩니다.</string>
+    <string name="notification_permission_rationale_dialog_heading">알림 권한 필요</string>
+
+    <!-- Record screen -->
+    <string name="loading_data">데이터를 불러오는 중…</string>
+    <string name="no_record">새 항목을 추가하여 시작하거나 백업에서 데이터를 복원하세요.</string>
+    <string name="new_record_button">새 항목 추가</string>
+    <string name="restore_records_button">데이터 복원</string>
+    <string name="no_filtered_record_title">앗! 검색 결과가 없습니다.</string>
+    <string name="no_filtered_record_body">검색어와 일치하는 항목을 찾을 수 없습니다. 필터를 조정하거나 오타가 없는지 확인해 보세요.</string>
+
+    <!-- Settings screen -->
+    <string name="settings_section_security_and_privacy">보안 및 개인정보 보호</string>
+    <string name="settings_section_support_and_community">지원 및 커뮤니티</string>
+    <string name="settings_privacy_enabled_title">개인정보 보호 모드</string>
+    <string name="settings_privacy_enabled_body">민감한 데이터를 보호하기 위해 최근 앱 화면에서 앱 내용을 가리고 스크린샷 촬영을 차단합니다. 켜 두는 것을 권장합니다.</string>
+    <string name="settings_auto_backup_title">로그인 시 자동 백업</string>
+    <string name="settings_auto_backup_body">마스터 비밀번호로 로그인할 때(생체 인식 제외) 데이터를 자동으로 백업합니다. 켜 두는 것을 권장합니다.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_title">생체 인식으로 %1$d회 로그인 후 비밀번호 요청</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">연속으로 허용되는 생체 인식 로그인 횟수 제한입니다. 이 횟수에 도달하면 비밀번호로 로그인해야 합니다. 이를 통해 마스터 비밀번호를 잊지 않도록 돕습니다.</string>
+    <string name="settings_away_timeout_title">%1$d초 후 자동 잠금</string>
+    <string name="settings_away_timeout_body">일정 시간 동안 앱을 사용하지 않으면 자동으로 로그아웃됩니다. 시간이 짧을수록 더 안전합니다.</string>
+    <string name="settings_feedback_title">의견 보내기</string>
+    <string name="settings_feedback_body">버그를 신고하거나 새로운 기능을 제안해 주세요. 더 나은 Safe Box를 만들기 위해 여러분의 소중한 의견을 기다립니다.</string>
+    <string name="settings_review_title">Play 스토어에서 평가하기</string>
+    <string name="settings_review_body">앱이 마음에 드신다면 잠시 시간을 내어 리뷰를 남겨 주세요. 다른 사용자들이 앱을 찾는 데 큰 도움이 됩니다!</string>
+    <string name="settings_github_title">GitHub에서 기여하기</string>
+    <string name="settings_github_body">SafeBox는 오픈 소스입니다. GitHub에서 코드를 확인하고, 문제를 제보하거나 프로젝트에 기여해 보세요.</string>
+
+    <!-- Other -->
+    <string name="blank_validation_text">내용을 입력해 주세요!</string>
+    <string name="length_validation_text">너무 짧습니다!</string>
+    <string name="special_char_validation_text">특수 문자(예: @, *, $)를 포함해 주세요</string>
+    <string name="case_validation_text">대문자(A)와 소문자(a)를 각각 하나 이상 포함해야 합니다.</string>
+    <string name="numeric_validation_text">숫자를 두 개 이상 입력해 주세요(예: 1, 2, 3)</string>
+    <string name="save">저장</string>
+    <string name="password">비밀번호</string>
+    <string name="enter_hint">힌트 입력</string>
+    <string name="show_hint">힌트 보기</string>
+    <string name="hide_hint">힌트 숨기기</string>
+    <string name="hint">힌트</string>
+    <string name="title">제목</string>
+    <string name="user_id">사용자 ID</string>
+    <string name="notes">메모</string>
+    <string name="account_number">계좌 번호</string>
+    <string name="customer_name">고객명</string>
+    <string name="customer_id">고객 ID</string>
+    <string name="branch_code">지점 코드</string>
+    <string name="branch_name">지점명</string>
+    <string name="branch_address">지점 주소</string>
+    <string name="ifsc_code">IFSC 코드</string>
+    <string name="micr_code">MICR 코드</string>
+    <string name="welcome_back">다시 오신 것을 환영합니다!</string>
+    <string name="welcome">환영합니다!</string>
+    <string name="timeout_dialog_message">오랫동안 자리를 비우셨습니다. 확인을 눌러 앱에 다시 로그인해 주세요</string>
+    <string name="timeout_dialog_positive_button_text">확인</string>
+    <string name="created_on">생성일</string>
+    <string name="updated_on">수정일</string>
+    <string name="add_a_new_record">새 항목 추가</string>
+    <string name="search_bar_placeholder">검색…</string>
+    <string name="send_feedback_email">의견 이메일 보내기</string>
+    <string name="no_email_app_found">이메일 앱을 찾을 수 없습니다</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">비밀번호를 잊으셨나요?</string>
+    <string name="forgot_password_device_security_subtitle">마스터 비밀번호를 재설정하려면 인증하세요</string>
+    <string name="update_password">마스터 비밀번호 업데이트</string>
+    <string name="new_password">새 비밀번호</string>
+    <string name="confirm_new_password">새 비밀번호 확인</string>
+    <string name="passwords_do_not_match">비밀번호가 일치하지 않습니다</string>
+    <string name="change_master_password">마스터 비밀번호 변경</string>
+    <string name="change_master_password_body">마스터 비밀번호 및 힌트 업데이트</string>
+    <string name="password_updated_success">마스터 비밀번호가 성공적으로 업데이트되었습니다</string>
+    <string name="device_security_required_title">기기 보안 설정 필요</string>
+    <string name="device_security_required_body">마스터 비밀번호를 변경하기 전에 본인 인증을 진행하려면 Android 설정에서 기기 보안(PIN, 패턴, 비밀번호 또는 생체 인식)을 활성화해 주세요.</string>
+    <string name="open_settings">설정 열기</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">카메라 권한 필요</string>
+    <string name="camera_permission_rationale_dialog_body">Safe Box에서 2단계 인증 설정을 위한 QR 코드를 스캔하려면 카메라 액세스 권한이 필요합니다.</string>
+    <string name="qr_scanner_title">QR 코드 스캔</string>
+    <string name="qr_scanner_instruction">프레임 안에 QR 코드를 맞춰 주세요</string>
+    <string name="enter_key_manually">키 직접 입력</string>
+    <string name="cd_turn_flash_on">플래시 켜기</string>
+    <string name="cd_turn_flash_off">플래시 끄기</string>
+    <string name="close">닫기</string>
+    <string name="unsupported_qr_code_dialog_heading">이 QR 코드는 사용할 수 없습니다</string>
+    <string name="unsupported_qr_code_reason_malformed">이 QR 코드는 손상되었거나 형식이 올바르지 않아 Safe Box에서 읽을 수 없습니다.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box는 시간 기반(TOTP) 코드만 지원합니다. 이 QR 코드는 다른 유형의 일회용 비밀번호용입니다.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">이 QR 코드에 비밀 키가 없거나 유효한 Base32 형식이 아닙니다.</string>
+    <string name="unsupported_qr_code_reason_algorithm">이 QR 코드는 Safe Box에서 계산할 수 없는 해시 알고리즘을 사용합니다. SHA1, SHA256 및 SHA512만 지원됩니다.</string>
+    <string name="unsupported_qr_code_reason_digits">이 QR 코드는 Safe Box에서 생성할 수 없는 코드 길이를 요청합니다. 6~8자리 숫자만 지원됩니다.</string>
+    <string name="unsupported_qr_code_reason_period">이 QR 코드에 잘못된 새로고침 주기가 지정되어 있습니다.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">이 QR 코드에 동일한 값에 대한 상충되는 설정이 포함되어 있어 Safe Box에서 어떤 설정을 사용해야 할지 판단할 수 없습니다.</string>
+    <string name="copied_to_clipboard">%1$s 복사됨</string>
+    <string name="state_copied">복사됨</string>
+
+    <!-- Authenticator -->
+    <string name="totp_code">일회용 코드</string>
+    <string name="secret_key">비밀 키</string>
+    <string name="cd_copy_totp_code">일회용 코드 복사</string>
+    <string name="totp_invalid_secret_key">비밀 키가 유효하지 않아 코드를 생성할 수 없습니다</string>
+
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">업데이트가 다운로드되었습니다. 설치하려면 Safe Box를 다시 시작하세요.</string>
+    <string name="in_app_update_restart">다시 시작</string>
+</resources>

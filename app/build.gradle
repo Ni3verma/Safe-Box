@@ -177,7 +177,42 @@ android {
             }
         }
     }
+    androidResources {
+        // Generates the supported locales config so Android 13+ system settings expose per-app language selection.
+        generateLocaleConfig = true
+    }
+
+    lint {
+        // Local builds (including assembleQa) should not block when a new English string is not yet
+        // translated; CI's scripts/tests/translations-test.sh enforces 100% translation completeness.
+        warning 'MissingTranslation'
+    }
+
     ndkVersion '29.0.14206865'
+}
+
+// Propagates deterministic string key renames, deletions, and translatable="false" removals across
+// values-<locale>/strings.xml on local builds without blocking when new English strings await
+// translation. In CI, scripts/tests/translations-test.sh runs in strict read-only mode instead.
+def syncTranslationsStamp = layout.buildDirectory.file('intermediates/translations-sync/stamp.txt')
+def syncTranslationsTask = tasks.register('syncTranslations', Exec) {
+    group = 'verification'
+    description = 'Propagates deterministic string key renames and deletions across locales on local builds.'
+    def isCi = providers.environmentVariable('CI').present
+    onlyIf { !isCi }
+    inputs.file(layout.projectDirectory.file('src/main/res/values/strings.xml'))
+    inputs.files(layout.projectDirectory.dir('src/main/res').asFileTree.matching {
+        include 'values-*/strings.xml'
+    })
+    inputs.file(layout.projectDirectory.file('translations.lock'))
+    inputs.file(rootProject.layout.projectDirectory.file('scripts/translations.py'))
+    outputs.file(syncTranslationsStamp)
+    workingDir = rootProject.projectDir
+    commandLine 'python3', 'scripts/translations.py', '--local-sync', '--stamp-file', syncTranslationsStamp.get().asFile.absolutePath
+}
+
+tasks.named('preBuild').configure {
+    dependsOn(syncTranslationsTask)
 }
 
 dependencies {

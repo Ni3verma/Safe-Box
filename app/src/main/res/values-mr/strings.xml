@@ -1,0 +1,198 @@
+<resources>
+    <!--    Content descriptions-->
+    <string name="cd_action_delete">रेकॉर्ड हटवा</string>
+    <string name="cd_action_edit">रेकॉर्ड संपादित करा</string>
+    <string name="cd_action_share">रेकॉर्ड शेअर करा</string>
+    <string name="cd_toggle_sensitive_data_visibility">संवेदनशील डेटा दर्शवा किंवा लपवा</string>
+    <string name="cd_add_new_record_button">नवीन रेकॉर्ड जोडण्याचे बटण</string>
+    <string name="cd_search_bar">शीर्षकानुसार रेकॉर्ड शोधा</string>
+    <string name="cd_clear_search_bar">सर्च बार साफ करा</string>
+    <string name="cd_back_button">मागे जाण्याचे बटण</string>
+
+    <!--    Screen title-->
+    <string name="bottom_nav_records">रेकॉर्ड</string>
+    <string name="bottom_nav_backup_and_restore">बॅकअप आणि रिस्टोअर</string>
+    <string name="bottom_nav_settings">सेटिंग्ज</string>
+
+    <!--    Common-->
+    <string name="common_app_playstore_download">Safe Box द्वारे डेटा सुरक्षितपणे साठवला आहे.\nPlay Store वरून डाउनलोड करा : %1$s</string>
+    <string name="common_cancel">रद्द करा</string>
+    <string name="confirm">पुष्टी करा</string>
+    <string name="common_ok">ठीक आहे</string>
+    <string name="biometric_title_text">SafeBox मध्ये लॉग इन करा</string>
+    <string name="biometric_sub_title_text">तुमची ओळख पडताळून पहा</string>
+    <string name="biometric_negative_button_text">बंद करा</string>
+    <string name="do_not_ask_again">पुन्हा विचारू नका</string>
+    <string name="allow">परवानगी द्या</string>
+    <string name="login">लॉग इन करा</string>
+    <string name="signup">साइन अप करा</string>
+
+    <!--    User data type text-->
+    <string name="type_display_account">बँक खाते</string>
+    <string name="type_display_card">बँक कार्ड</string>
+    <string name="type_display_note">टीप</string>
+    <string name="type_display_login">लॉगिन</string>
+    <string name="type_display_authenticator">ऑथेंटिकेटर</string>
+
+    <!--    Bank card dialog-->
+    <string name="number">कार्ड क्रमांक </string>
+    <string name="expiryDate">कालबाह्यता तारीख</string>
+    <string name="name">नाव</string>
+    <string name="pin">PIN</string>
+
+    <!--    delete record dialog-->
+    <string name="delete_this_record">हा रेकॉर्ड हटवायचा का?</string>
+    <string name="delete_record_dialog_body">मला समजले आहे की हा रेकॉर्ड कायमचा काढून टाकला जाईल.</string>
+
+    <!--     backup-->
+    <string name="backup">बॅकअप</string>
+    <string name="backup_path_not_set_message">"तुमचे बॅकअप स्थान सेट केलेले नाही!! निवडण्यासाठी खालील बटण वापरा.\nटिप: तुमच्या बॅकअपसाठी नवीन फोल्डर तयार करणे चांगले राहील (उदा. 'Safe Box Backup')."</string>
+    <string name="backup_set_location">स्थान सेट करा</string>
+    <string name="backup_set_message">बॅकअप स्थान सेट केले आहे</string>
+    <string name="backup_path">बॅकअप पाथ %1$s आहे</string>
+    <string name="backup_path_select_failed_message">निवडलेल्या फोल्डरमध्ये प्रवेश करता आला नाही. तुमच्या बॅकअपसाठी नवीन फोल्डर तयार करून पहा.</string>
+    <string name="retry">पुन्हा प्रयत्न करा</string>
+    <string name="backup_time">शेवटचा बॅकअप %1$s रोजी घेतला होता</string>
+    <string name="backup_info_1">* तुम्ही जेव्हा पासवर्डने लॉग इन करता तेव्हा बॅकअप घेतला जातो आणि तो तुमच्या सध्याच्या मास्टर पासवर्डने एन्क्रिप्ट केलेला असतो </string>
+    <string name="backup_edit_path">पाथ बदला</string>
+    <string name="new_backup_dialog_body_text">नवीन बॅकअप फाइल तयार करण्यासाठी कृपया पासवर्ड प्रविष्ट करा.</string>
+    <string name="backup_in_progress_message">डेटाचा बॅकअप घेण्यासाठी थोडा वेळ लागू शकतो. निश्चिंत रहा!</string>
+    <string name="backup_complete_message">तुमचा बॅकअप पूर्ण झाला आहे! पासवर्ड लक्षात ठेवा.</string>
+    <string name="backup_nothing_to_backup_message">तुमची तिजोरी रिकामी आहे. बॅकअप घेण्यासारखे काहीही नाही.</string>
+    <string name="backup_folder_inaccessible_message">बॅकअप फोल्डरमध्ये आता प्रवेश करता येत नाही. कृपया ते पुन्हा निवडा.</string>
+    <string name="backup_write_failed_message">बॅकअप अयशस्वी झाला. बॅकअप फाइल लिहिता आली नाही, बॅकअप फोल्डरमध्ये मोकळी जागा तपासा.</string>
+    <string name="backup_unknown_error_message">अनपेक्षित त्रुटीमुळे बॅकअप अयशस्वी झाला. कृपया सेटिंग्ज &gt; अभिप्राय पाठवा मधून तक्रार नोंदवा.</string>
+
+    <!--     restore-->
+    <string name="restore">रिस्टोअर</string>
+    <string name="restore_info">"बॅकअप फाइल निवडण्यासाठी खालील बटणावर क्लिक करा.\nकृपया लक्षात घ्या की डेटा रिस्टोअर करण्यासाठी बॅकअप फाइल तयार करताना वापरलेलाच पासवर्ड प्रविष्ट करा.\n\nरिस्टोअर केल्याने अ‍ॅपमध्ये सध्या सेव्ह केलेली सर्व माहिती बॅकअप फाइलमधील मजकुराने बदलली जाईल. बॅकअप फाइलमध्ये नसलेला कोणताही रेकॉर्ड कायमचा नष्ट होईल."</string>
+    <string name="new_restore_dialog_body_text">कृपया बॅकअप फाइल तयार करण्यासाठी वापरलेला पासवर्ड प्रविष्ट करा.</string>
+    <string name="restore_complete_message">डेटा यशस्वीरित्या रिस्टोअर केला गेला आहे.</string>
+    <string name="restore_in_progress_message">डेटा रिस्टोअर होण्यासाठी थोडा वेळ लागू शकतो. निश्चिंत रहा!</string>
+
+    <!--     master password dialog-->
+    <string name="incorrect_pswrd_message">पासवर्ड चुकीचा आहे!</string>
+    <string name="restore_corrupt_file_message">निवडलेली बॅकअप फाइल खराब किंवा अवैध आहे. कृपया वैध बॅकअप फाइल निवडा.</string>
+    <string name="restore_backup_too_new_message">हा बॅकअप Safe Box च्या नवीन आवृत्तीद्वारे तयार केला गेला आहे. तुमची बॅकअप फाइल सुरक्षित आहे, कृपया ती रिस्टोअर करण्यासाठी अ‍ॅप अपडेट करा.</string>
+    <string name="restore_backup_empty_message">या बॅकअपमध्ये कोणतेही रेकॉर्ड नाहीत. काहीही रिस्टोअर केले गेले नाही.</string>
+    <string name="failed_message">तुमच्या डेटावर प्रक्रिया करताना एक अनपेक्षित त्रुटी आली.</string>
+
+    <!--    Notification-->
+    <string name="notification_backup_channel_name">Safe Box बॅकअप</string>
+    <string name="notification_backup_channel_desc">ही सूचना तुम्हाला बॅकअपच्या प्रगतीचा मागोवा ठेवण्यास मदत करते</string>
+    <string name="notification_backup_title">डेटा बॅकअप</string>
+    <string name="notification_backup_in_progress">"तुमच्या डेटाचा लोकल स्टोरेजवर बॅकअप घेतला जात आहे. पूर्ण झाल्यावर तुम्हाला सूचित केले जाईल"</string>
+    <string name="notification_backup_failure">बॅकअप अयशस्वी! कृपया बॅकअप पाथ सेट करा</string>
+    <string name="notification_backup_success">बॅकअप पूर्ण झाला आहे. क्लाउडमध्ये एक प्रत ठेवणे चांगले राहील</string>
+    <string name="notification_permission_rationale_dialog_body">तुमच्या स्वयंचलित बॅकअपबद्दल तुम्हाला नेहमी माहिती राहावी यासाठी कृपया सूचनांना परवानगी द्या.\nबॅकअप पूर्ण झाल्यावर किंवा काही समस्या आल्यास तुम्हाला सूचित केले जाईल.</string>
+    <string name="notification_permission_rationale_dialog_heading">सूचना परवानगी आवश्यक आहे</string>
+
+    <!--    Record screen-->
+    <string name="loading_data">तुमचा डेटा लोड होत आहे …</string>
+    <string name="no_record">नवीन रेकॉर्ड जोडून सुरुवात करा किंवा बॅकअपमधून तुमचा डेटा परत आणा.</string>
+    <string name="new_record_button">नवीन रेकॉर्ड जोडा</string>
+    <string name="restore_records_button">डेटा रिस्टोअर करा</string>
+    <string name="no_filtered_record_title">अरेरे! येथे कोणतेही परिणाम नाहीत.</string>
+    <string name="no_filtered_record_body">तुमच्या शोधाशी जुळणारे काहीही आढळले नाही. तुमचे फिल्टर बदलून किंवा स्पेलिंग तपासून पहा.</string>
+
+    <!--    Settings screen-->
+    <string name="settings_section_security_and_privacy">सुरक्षा आणि गोपनीयता</string>
+    <string name="settings_section_support_and_community">मदत आणि समुदाय</string>
+
+    <string name="settings_privacy_enabled_title">प्रायव्हसी मोड</string>
+    <string name="settings_privacy_enabled_body">संवेदनशील डेटाचे संरक्षण करण्यासाठी डिव्हाइस ओव्हरव्ह्यू स्क्रीनमध्ये अ‍ॅप मजकूर लपवते आणि स्क्रीनशॉट घेण्यास परवानगी देत नाही. हे चालू ठेवण्याची शिफारस केली जाते.</string>
+
+    <string name="settings_auto_backup_title">लॉगिनवर ऑटो-बॅकअप</string>
+    <string name="settings_auto_backup_body">तुम्ही मास्टर पासवर्डने साइन इन करता तेव्हा (बायोमेट्रिकने नाही) तुमच्या डेटाचा आपोआप बॅकअप घेते. हे चालू ठेवण्याची शिफारस केली जाते.</string>
+
+    <string name="settings_ask_for_pswrd_after_biometric_title">%1$d बायोमेट्रिक लॉगिननंतर पासवर्ड विचारा.</string>
+    <string name="settings_ask_for_pswrd_after_biometric_body">सलग किती वेळा बायोमेट्रिक लॉगिनला परवानगी आहे याची ही मर्यादा आहे. ही मर्यादा पूर्ण झाल्यावर लॉगिन करण्यासाठी पासवर्ड आवश्यक असेल. यामुळे तुमचा मास्टर पासवर्ड तुमच्या लक्षात राहतो.</string>
+
+    <string name="settings_away_timeout_title">%1$d सेकंदांनंतर ऑटो-लॉक करा.</string>
+    <string name="settings_away_timeout_body">तुम्ही बराच वेळ अ‍ॅपपासून दूर राहिल्यास अ‍ॅप तुम्हाला आपोआप लॉग आउट करते. कमी कालावधी ठेवणे अधिक सुरक्षित आहे.</string>
+
+    <string name="settings_feedback_title">अभिप्राय पाठवा</string>
+    <string name="settings_feedback_body">बग कळवा किंवा नवीन वैशिष्ट्य सुचवा. Safe Box अधिक चांगले करण्यासाठी आम्ही तुमच्या मताचा आदर करतो.</string>
+
+    <string name="settings_review_title">Play Store वर रेट करा</string>
+    <string name="settings_review_body">तुम्हाला हे अ‍ॅप वापरणे आवडत असल्यास, कृपया थोडा वेळ काढून परीक्षण लिहा. यामुळे इतरांना आमचा शोध घेण्यात मदत होते!</string>
+
+    <string name="settings_github_title">GitHub वर योगदान द्या</string>
+    <string name="settings_github_body">SafeBox ओपन सोर्स आहे. GitHub वर कोड पहा, समस्या कळवा किंवा प्रकल्पात योगदान द्या.</string>
+
+    <!--    Other-->
+    <string name="blank_validation_text">काहीतरी प्रविष्ट करा!</string>
+    <string name="length_validation_text">खूप लहान आहे!</string>
+    <string name="special_char_validation_text">एक विशेष चिन्ह प्रविष्ट करा (उदा. @, *, $)</string>
+    <string name="case_validation_text">किमान एक मोठे अक्षर (A) आणि एक लहान अक्षर (a) असणे आवश्यक आहे.</string>
+    <string name="numeric_validation_text">किमान दोन अंक प्रविष्ट करा (उदा. 1, 2, 3)</string>
+    <string name="save">सेव्ह करा</string>
+    <string name="password">पासवर्ड</string>
+    <string name="enter_hint">हिंट प्रविष्ट करा</string>
+    <string name="show_hint">हिंट दर्शवा</string>
+    <string name="hide_hint">हिंट लपवा</string>
+    <string name="hint">हिंट</string>
+    <string name="title">शीर्षक </string>
+    <string name="user_id">युझर आयडी </string>
+    <string name="notes">टिपा</string>
+    <string name="account_number">खाते क्रमांक </string>
+    <string name="customer_name">ग्राहकाचे नाव</string>
+    <string name="customer_id">ग्राहक आयडी</string>
+    <string name="branch_code">शाखा कोड</string>
+    <string name="branch_name">शाखेचे नाव</string>
+    <string name="branch_address">शाखेचा पत्ता</string>
+    <string name="ifsc_code">IFSC कोड</string>
+    <string name="micr_code">MICR कोड</string>
+    <string name="welcome_back">पुन्हा स्वागत आहे!</string>
+    <string name="welcome">स्वागत आहे!</string>
+    <string name="timeout_dialog_message">तुम्ही बराच वेळ अ‍ॅपपासून दूर होता. पुन्हा लॉग इन करण्यासाठी कृपया ठीक आहे वर क्लिक करा</string>
+    <string name="timeout_dialog_positive_button_text">ठीक आहे</string>
+    <string name="created_on">तयार केल्याची तारीख</string>
+    <string name="updated_on">अपडेट केल्याची तारीख</string>
+    <string name="add_a_new_record">नवीन रेकॉर्ड जोडा</string>
+    <string name="search_bar_placeholder">शोधा …</string>
+    <string name="send_feedback_email">अभिप्राय ईमेल पाठवा</string>
+    <string name="no_email_app_found">कोणतेही ईमेल अ‍ॅप सापडले नाही</string>
+
+    <!-- Password Reset & Update -->
+    <string name="forgot_password">पासवर्ड विसरलात?</string>
+    <string name="forgot_password_device_security_subtitle">मास्टर पासवर्ड रिसेट करण्यासाठी ओळख पटवा</string>
+    <string name="update_password">मास्टर पासवर्ड अपडेट करा</string>
+    <string name="new_password">नवीन पासवर्ड</string>
+    <string name="confirm_new_password">नवीन पासवर्डची पुष्टी करा</string>
+    <string name="passwords_do_not_match">पासवर्ड जुळत नाहीत</string>
+    <string name="change_master_password">मास्टर पासवर्ड बदला</string>
+    <string name="change_master_password_body">तुमचा मास्टर पासवर्ड आणि हिंट अपडेट करा</string>
+    <string name="password_updated_success">मास्टर पासवर्ड यशस्वीरित्या अपडेट केला</string>
+    <string name="device_security_required_title">डिव्हाइस सुरक्षा आवश्यक आहे</string>
+    <string name="device_security_required_body">मास्टर पासवर्ड बदलण्यापूर्वी तुमची ओळख पडताळण्यासाठी कृपया तुमच्या Android सेटिंग्जमध्ये डिव्हाइस सुरक्षा (PIN, पॅटर्न, पासवर्ड किंवा बायोमेट्रिक) सक्षम करा.</string>
+    <string name="open_settings">सेटिंग्ज उघडा</string>
+
+    <!-- QR Scanner & Camera Permission -->
+    <string name="camera_permission_rationale_dialog_heading">कॅमेरा परवानगी आवश्यक आहे</string>
+    <string name="camera_permission_rationale_dialog_body">टू-फॅक्टर ऑथेंटिकेशन सेटअपसाठी QR कोड स्कॅन करण्याकरिता Safe Box ला कॅमेरा परवानगीची आवश्यकता आहे.</string>
+    <string name="qr_scanner_title">QR कोड स्कॅन करा</string>
+    <string name="qr_scanner_instruction">QR कोड फ्रेमच्या आत ठेवा</string>
+    <string name="enter_key_manually">की मॅन्युअली प्रविष्ट करा</string>
+    <string name="cd_turn_flash_on">फ्लॅश चालू करा</string>
+    <string name="cd_turn_flash_off">फ्लॅश बंद करा</string>
+    <string name="close">बंद करा</string>
+    <string name="unsupported_qr_code_dialog_heading">हा QR कोड वापरता येणार नाही</string>
+    <string name="unsupported_qr_code_reason_malformed">हा QR कोड खराब झाला आहे किंवा चुकीच्या फॉरमॅटमध्ये आहे, त्यामुळे Safe Box तो वाचू शकले नाही.</string>
+    <string name="unsupported_qr_code_reason_otp_type">Safe Box केवळ वेळ-आधारित (TOTP) कोडला सपोर्ट करते. हा QR कोड वेगळ्या प्रकारच्या वन-टाइम पासवर्डसाठी आहे.</string>
+    <string name="unsupported_qr_code_reason_invalid_secret">या QR कोडमध्ये सिक्रेट की नाही किंवा वैध Base32 नाही.</string>
+    <string name="unsupported_qr_code_reason_algorithm">हा QR कोड असा हॅशिंग अल्गोरिदम वापरतो ज्याची गणना Safe Box करू शकत नाही. फक्त SHA1, SHA256 आणि SHA512 समर्थित आहेत.</string>
+    <string name="unsupported_qr_code_reason_digits">हा QR कोड अशी कोड लांबी मागतो जी Safe Box तयार करू शकत नाही. फक्त 6 ते 8 अंक समर्थित आहेत.</string>
+    <string name="unsupported_qr_code_reason_period">हा QR कोड अवैध रिफ्रेश कालावधी दर्शवतो.</string>
+    <string name="unsupported_qr_code_reason_ambiguous">हा QR कोड एकाच मूल्यासाठी परस्परविरोधी सेटिंग्ज देतो, त्यामुळे नेमके कोणते वापरायचे हे Safe Box ठरवू शकत नाही.</string>
+    <string name="copied_to_clipboard">%1$s क्लिपबोर्डवर कॉपी केले</string>
+    <string name="state_copied">कॉपी केले</string>
+    <!-- Authenticator -->
+    <string name="totp_code">वन-टाइम कोड</string>
+    <string name="secret_key">सिक्रेट की</string>
+    <string name="cd_copy_totp_code">वन-टाइम कोड कॉपी करा</string>
+    <string name="totp_invalid_secret_key">अवैध सिक्रेट की, कोड तयार करता येत नाही</string>
+    <!-- In-app updates -->
+    <string name="in_app_update_downloaded">अपडेट डाउनलोड झाले. इन्स्टॉल करण्यासाठी Safe Box रीस्टार्ट करा.</string>
+    <string name="in_app_update_restart">रीस्टार्ट करा</string>
+</resources>
