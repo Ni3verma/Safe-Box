@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Cargando tus datos…</string>
-    <string name="no_record">Empieza desde cero añadiendo un registro o recupera tus datos desde una copia de seguridad.</string>
-    <string name="new_record_button">Añadir nuevo registro</string>
-    <string name="restore_records_button">Restaurar datos</string>
+    <string name="empty_vault_title">Tu bóveda está vacía</string>
+    <string name="no_record">Guarda tu primer registro: tardarás menos de un minuto. Todo se cifra y permanece en este dispositivo.</string>
+    <string name="restore_records_button">Restaurar desde una copia de seguridad</string>
+    <string name="record_type_desc_login">Nombres de usuario y contraseñas de sitios web y aplicaciones</string>
+    <string name="record_type_desc_card">Números de tarjetas de débito y crédito, caducidad, PIN y CVV</string>
+    <string name="record_type_desc_bank_account">Números de cuenta, datos de la sucursal y del cliente</string>
+    <string name="record_type_desc_note">Cualquier texto privado, desde códigos de recuperación hasta contraseñas de Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Códigos TOTP de doble factor, a partir de un código QR o una clave secreta</string>
     <string name="no_filtered_record_title">¡Ups! No hay resultados.</string>
     <string name="no_filtered_record_body">No encontramos nada que coincida con tu búsqueda. Prueba a ajustar los filtros o revisar si hay errores de escritura.</string>
 

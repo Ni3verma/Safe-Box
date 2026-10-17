@@ -102,10 +102,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 
 ## Testing
 
-- Unit tests: `app/src/test` — run with `:app:testDebugUnitTest`.
-- Instrumentation: `app/src/androidTest`, **debug build only**
-  (see [ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
-- Runner is `com.andryoga.safebox.CustomHiltTestRunner`; test Application is `BaseTestApplication`.
+- Unit tests: `:app:testDebugUnitTest`. Instrumentation: **debug build only**
+  ([ADR-0001](../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)); runner
+  `com.andryoga.safebox.CustomHiltTestRunner`, test Application `BaseTestApplication`.
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
 - QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
@@ -145,6 +144,8 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
+- Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
+  funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
 - A new Android module can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also
   declares it `apply false`**; otherwise Gradle fails with "the plugin is already on the classpath
   with an unknown version", because AGP arrives a second time via the root `buildscript` classpath. (2026-09-22)

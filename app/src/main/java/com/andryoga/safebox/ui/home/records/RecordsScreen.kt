@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.InAppReviewSource
 import com.andryoga.safebox.ui.core.TestTags
@@ -53,6 +53,7 @@ import com.andryoga.safebox.ui.core.motion.fadeThrough
 import com.andryoga.safebox.ui.core.motion.incomingSpec
 import com.andryoga.safebox.ui.core.motion.outgoingSpec
 import com.andryoga.safebox.ui.home.records.components.AddNewRecordBottomSheet
+import com.andryoga.safebox.ui.home.records.components.EmptyVaultBody
 import com.andryoga.safebox.ui.home.records.components.NotificationPermissionRationaleDialog
 import com.andryoga.safebox.ui.home.records.components.RecordItem
 import com.andryoga.safebox.ui.home.records.components.RecordTypeFilterRow
@@ -109,6 +110,8 @@ fun RecordsScreenRoot(
                 when (action) {
                     is RecordScreenAction.OnAddNewRecord -> {
                         Timber.i("add new record action")
+                        // the ViewModel only records the pick; navigation stays here
+                        viewModel.onScreenAction(action)
                         onAddNewRecord(action.recordType)
                     }
 
@@ -154,7 +157,12 @@ internal fun RecordsScreen(
                 )
             },
             onAddNewRecord = {
-                onScreenAction(RecordScreenAction.OnAddNewRecord(it))
+                onScreenAction(
+                    RecordScreenAction.OnAddNewRecord(
+                        recordType = it,
+                        source = AnalyticsSource.ADD_RECORD_SHEET,
+                    )
+                )
                 onScreenAction(
                     RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
                         showAddNewRecordBottomSheet = false,
@@ -242,47 +250,6 @@ private fun LoadingBody() {
             modifier = Modifier
                 .padding(top = 8.dp)
         )
-    }
-}
-
-@Composable
-private fun EmptyVaultBody(
-    onRestoreFromBackup: () -> Unit,
-    onScreenAction: (RecordScreenAction) -> Unit,
-) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.ErrorOutline,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(72.dp),
-        )
-        Text(
-            text = stringResource(R.string.no_record),
-            textAlign = TextAlign.Center,
-            fontSize = 20.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        Button(onClick = {
-            onScreenAction(
-                RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(
-                    showAddNewRecordBottomSheet = true
-                )
-            )
-        }) {
-            Text(stringResource(R.string.new_record_button))
-        }
-        Button(onClick = {
-            onRestoreFromBackup()
-        }) {
-            Text(stringResource(R.string.restore_records_button))
-        }
     }
 }
 

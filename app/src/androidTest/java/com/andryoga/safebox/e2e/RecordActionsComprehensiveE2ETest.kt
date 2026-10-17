@@ -143,7 +143,7 @@ class RecordActionsComprehensiveE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }
@@ -251,7 +251,7 @@ class RecordActionsComprehensiveE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }

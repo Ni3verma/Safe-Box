@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Đang tải dữ liệu của bạn …</string>
-    <string name="no_record">Bắt đầu bằng cách thêm bản ghi mới hoặc khôi phục dữ liệu từ bản sao lưu.</string>
-    <string name="new_record_button">Thêm bản ghi mới</string>
-    <string name="restore_records_button">Khôi phục dữ liệu</string>
+    <string name="empty_vault_title">Kho lưu trữ của bạn đang trống</string>
+    <string name="no_record">Hãy lưu bản ghi đầu tiên – chỉ mất chưa đến một phút. Mọi dữ liệu đều được mã hóa và chỉ lưu trên thiết bị này.</string>
+    <string name="restore_records_button">Khôi phục từ bản sao lưu</string>
+    <string name="record_type_desc_login">Tên người dùng và mật khẩu cho trang web và ứng dụng</string>
+    <string name="record_type_desc_card">Số thẻ ghi nợ và thẻ tín dụng, ngày hết hạn, mã PIN và CVV</string>
+    <string name="record_type_desc_bank_account">Số tài khoản, thông tin chi nhánh và khách hàng</string>
+    <string name="record_type_desc_note">Bất kỳ văn bản riêng tư nào, từ mã khôi phục đến mật khẩu Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Mã TOTP xác thực hai yếu tố, từ mã QR hoặc khóa bí mật</string>
     <string name="no_filtered_record_title">Rất tiếc! Không có kết quả nào.</string>
     <string name="no_filtered_record_body">Chúng tôi không tìm thấy kết quả nào khớp với tìm kiếm của bạn. Hãy thử điều chỉnh bộ lọc hoặc kiểm tra lỗi chính tả.</string>
 

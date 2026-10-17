@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">உங்கள் தரவு ஏற்றப்படுகிறது …</string>
-    <string name="no_record">புதிய பதிவைச் சேர்த்துத் தொடங்கவும் அல்லது காப்புப்பிரதியிலிருந்து தரவை மீட்டெடுக்கவும்.</string>
-    <string name="new_record_button">புதிய பதிவைச் சேர்</string>
-    <string name="restore_records_button">தரவை மீட்டெடு</string>
+    <string name="empty_vault_title">உங்கள் பெட்டகம் காலியாக உள்ளது</string>
+    <string name="no_record">உங்கள் முதல் பதிவைச் சேமியுங்கள் — ஒரு நிமிடத்திற்கும் குறைவாகவே ஆகும். அனைத்தும் என்க்ரிப்ட் செய்யப்பட்டு இந்தச் சாதனத்திலேயே இருக்கும்.</string>
+    <string name="restore_records_button">காப்புப்பிரதியிலிருந்து மீட்டெடு</string>
+    <string name="record_type_desc_login">இணையதளங்கள் மற்றும் ஆப்ஸுக்கான பயனர்பெயர்கள் மற்றும் கடவுச்சொற்கள்</string>
+    <string name="record_type_desc_card">டெபிட் மற்றும் கிரெடிட் கார்டு எண்கள், காலாவதி தேதி, PIN மற்றும் CVV</string>
+    <string name="record_type_desc_bank_account">கணக்கு எண்கள், கிளை மற்றும் வாடிக்கையாளர் விவரங்கள்</string>
+    <string name="record_type_desc_note">மீட்பு குறியீடுகள் முதல் Wi-Fi கடவுச்சொற்கள் வரை எந்தத் தனிப்பட்ட உரையும்</string>
+    <string name="record_type_desc_authenticator">QR குறியீடு அல்லது ரகசியச் சாவியிலிருந்து சேர்க்கப்படும் இரு-காரணி TOTP குறியீடுகள்</string>
     <string name="no_filtered_record_title">அடடே! முடிவுகள் எதுவும் இல்லை.</string>
     <string name="no_filtered_record_body">உங்கள் தேடலுக்குப் பொருந்தக்கூடிய எதுவும் கிடைக்கவில்லை. வடிகட்டிகளை மாற்றியோ அல்லது எழுத்துப்பிழைகளைச் சரிபார்த்தோ முயற்சிக்கவும்.</string>
 

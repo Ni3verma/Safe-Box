@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Läser in dina data…</string>
-    <string name="no_record">Börja från början genom att lägga till en post eller återställ dina data från en säkerhetskopia.</string>
-    <string name="new_record_button">Lägg till en ny post</string>
-    <string name="restore_records_button">Återställ data</string>
+    <string name="empty_vault_title">Ditt valv är tomt</string>
+    <string name="no_record">Spara din första post – det tar mindre än en minut. Allt krypteras och stannar på den här enheten.</string>
+    <string name="restore_records_button">Återställ från en säkerhetskopia</string>
+    <string name="record_type_desc_login">Användarnamn och lösenord för webbplatser och appar</string>
+    <string name="record_type_desc_card">Betal- och kreditkortsnummer, utgångsdatum, PIN och CVV</string>
+    <string name="record_type_desc_bank_account">Kontonummer, kontors- och kunduppgifter</string>
+    <string name="record_type_desc_note">Valfri privat text, från återställningskoder till wifi-lösenord</string>
+    <string name="record_type_desc_authenticator">TOTP-koder för tvåfaktorsautentisering, från en QR-kod eller en hemlig nyckel</string>
     <string name="no_filtered_record_title">Hoppsan! Inga resultat här.</string>
     <string name="no_filtered_record_body">Vi hittade inget som matchade din sökning. Försök att justera dina filter eller kontrollera om det finns stavfel.</string>
 

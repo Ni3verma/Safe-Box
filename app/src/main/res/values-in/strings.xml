@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Memuat data Anda …</string>
-    <string name="no_record">Mulai dari awal dengan menambahkan entri atau pulihkan data Anda dari cadangan.</string>
-    <string name="new_record_button">Tambah entri baru</string>
-    <string name="restore_records_button">Pulihkan data</string>
+    <string name="empty_vault_title">Brankas Anda kosong</string>
+    <string name="no_record">Simpan entri pertama Anda – butuh kurang dari satu menit. Semuanya dienkripsi dan tetap berada di perangkat ini.</string>
+    <string name="restore_records_button">Pulihkan dari cadangan</string>
+    <string name="record_type_desc_login">Nama pengguna dan kata sandi untuk situs web dan aplikasi</string>
+    <string name="record_type_desc_card">Nomor kartu debit dan kredit, masa berlaku, PIN, dan CVV</string>
+    <string name="record_type_desc_bank_account">Nomor rekening, data cabang, dan data nasabah</string>
+    <string name="record_type_desc_note">Teks pribadi apa pun, dari kode pemulihan hingga kata sandi Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Kode TOTP autentikasi dua faktor, dari kode QR atau kunci rahasia</string>
     <string name="no_filtered_record_title">Ups! Tidak ada hasil.</string>
     <string name="no_filtered_record_body">Kami tidak menemukan apa pun yang cocok dengan pencarian Anda. Coba sesuaikan filter atau periksa salah ketik.</string>
 

@@ -116,7 +116,7 @@ class RecordsScreenScrollAndAppBarTest {
             // Verify empty screen central elements
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
 
             // Verify Top App Bar is visible and contains the Add New (`+`) action button

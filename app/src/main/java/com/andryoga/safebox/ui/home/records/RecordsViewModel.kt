@@ -6,6 +6,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.analytics.toAnalyticsValue
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
@@ -102,6 +103,13 @@ class RecordsViewModel @Inject constructor(
     private val userInputs = MutableStateFlow(UserInputs())
 
     /**
+     * Bounds [AnalyticsKey.EMPTY_VAULT_SHOW] to once per ViewModel. The empty layout re-enters
+     * composition every time the user comes back to the list, which would otherwise count a
+     * backed-out create form as another show.
+     */
+    private var isEmptyVaultShowLogged = false
+
+    /**
      * Driving state of the search bar, owned here so it survives navigation to a record and back.
      *
      * The text field edits this directly and reads it back in the same frame. Routing the query
@@ -177,7 +185,26 @@ class RecordsViewModel @Inject constructor(
             }
 
             is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet -> {
+                if (action.showAddNewRecordBottomSheet) {
+                    analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW)
+                }
                 updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
+            }
+
+            // navigation is done in the UI layer; the pick is recorded here so both entry points
+            // (sheet and empty vault) land in one event, told apart by SOURCE
+            is RecordScreenAction.OnAddNewRecord -> {
+                analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_TYPE_PICK) {
+                    param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())
+                    param(AnalyticsParam.SOURCE, action.source.value)
+                }
+            }
+
+            RecordScreenAction.OnEmptyVaultShown -> {
+                if (!isEmptyVaultShowLogged) {
+                    isEmptyVaultShowLogged = true
+                    analyticsHelper.logEvent(AnalyticsKey.EMPTY_VAULT_SHOW)
+                }
             }
 
             RecordScreenAction.OnCopyTotpCode -> {
@@ -186,8 +213,8 @@ class RecordsViewModel @Inject constructor(
                 }
             }
 
-            // these are handled in UI layer and flow should ideally never come here
-            is RecordScreenAction.OnAddNewRecord, is RecordScreenAction.OnRecordClick -> {
+            // handled in UI layer and flow should ideally never come here
+            is RecordScreenAction.OnRecordClick -> {
                 Utils.crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
             }
 

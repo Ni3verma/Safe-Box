@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Ihre Daten werden geladen …</string>
-    <string name="no_record">Beginnen Sie neu, indem Sie einen Eintrag hinzufügen, oder stellen Sie Ihre Daten aus einer Sicherung wieder her.</string>
-    <string name="new_record_button">Neuen Eintrag hinzufügen</string>
-    <string name="restore_records_button">Daten wiederherstellen</string>
+    <string name="empty_vault_title">Ihr Tresor ist leer</string>
+    <string name="no_record">Speichern Sie Ihren ersten Eintrag – das dauert keine Minute. Alles wird verschlüsselt und bleibt auf diesem Gerät.</string>
+    <string name="restore_records_button">Aus einer Sicherung wiederherstellen</string>
+    <string name="record_type_desc_login">Benutzernamen und Passwörter für Websites und Apps</string>
+    <string name="record_type_desc_card">Debit- und Kreditkartennummern, Ablaufdatum, PIN und CVV</string>
+    <string name="record_type_desc_bank_account">Kontonummern, Filial- und Kundendaten</string>
+    <string name="record_type_desc_note">Beliebiger privater Text, von Wiederherstellungscodes bis zu WLAN-Passwörtern</string>
+    <string name="record_type_desc_authenticator">TOTP-Codes für die Zwei-Faktor-Authentifizierung, aus einem QR-Code oder einem geheimen Schlüssel</string>
     <string name="no_filtered_record_title">Hoppla! Keine Ergebnisse.</string>
     <string name="no_filtered_record_body">Es wurden keine passenden Einträge gefunden. Passen Sie Ihre Filter an oder prüfen Sie die Eingabe auf Tippfehler.</string>
 

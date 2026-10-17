@@ -89,9 +89,14 @@
 
     <!-- Record screen -->
     <string name="loading_data">データを読み込み中…</string>
-    <string name="no_record">新しいレコードを追加して始めるか、バックアップからデータを復元してください。</string>
-    <string name="new_record_button">新しいレコードを追加</string>
-    <string name="restore_records_button">データを復元</string>
+    <string name="empty_vault_title">保管庫は空です</string>
+    <string name="no_record">最初のレコードを保存しましょう。1分もかかりません。すべて暗号化され、この端末の外に出ることはありません。</string>
+    <string name="restore_records_button">バックアップから復元</string>
+    <string name="record_type_desc_login">ウェブサイトやアプリのユーザー名とパスワード</string>
+    <string name="record_type_desc_card">デビットカード・クレジットカードの番号、有効期限、PIN、CVV</string>
+    <string name="record_type_desc_bank_account">口座番号、支店情報、顧客情報</string>
+    <string name="record_type_desc_note">復旧コードから Wi-Fi のパスワードまで、あらゆる秘密のテキスト</string>
+    <string name="record_type_desc_authenticator">QR コードまたはシークレットキーから登録する二要素認証の TOTP コード</string>
     <string name="no_filtered_record_title">一致する結果がありません</string>
     <string name="no_filtered_record_body">検索条件に一致するレコードが見つかりませんでした。フィルタを変更するか、入力ミスがないか確認してください。</string>
 

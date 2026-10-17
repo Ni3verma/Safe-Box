@@ -3,6 +3,7 @@
 package com.andryoga.safebox.ui.singleRecord
 
 import android.content.Context
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
@@ -312,5 +313,104 @@ class SingleRecordViewModelTest {
         val event = analyticsHelper.loggedEvents
             .first { it.key == AnalyticsKey.AUTHENTICATOR_COPY_CLICK }
         assertThat(event.params[AnalyticsParam.SOURCE.paramName]).isEqualTo("record_detail")
+    }
+
+    @Test
+    fun clearNewRecordWithoutTyping_shouldLogFormAbandonWithoutInput() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.CARD)
+        initViewModel()
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("card")
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun clearNewRecordAfterTyping_shouldLogFormAbandonWithInput() = runTest {
+        coEvery { layout.getLayoutPlan() } returns LayoutPlan(
+            fieldUiState = mapOf(
+                FieldId.LOGIN_TITLE to FieldUiState(cell = mockk(relaxed = true), data = ""),
+            )
+        )
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
+        initViewModel()
+        advanceUntilIdle()
+        viewModel.onAction(SingleRecordScreenAction.OnCellValueUpdate(FieldId.LOGIN_TITLE, "Gmail"))
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("login")
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(true)
+    }
+
+    @Test
+    fun clearPrefilledNewRecordLeftUntouched_shouldLogFormAbandonWithoutInput() = runTest {
+        // how a scanned QR code arrives: the form opens with data the user never typed
+        coEvery { layout.getLayoutPlan() } returns LayoutPlan(
+            fieldUiState = mapOf(
+                FieldId.AUTHENTICATOR_TITLE to FieldUiState(
+                    cell = mockk(relaxed = true),
+                    data = "AcmeCorp - alice@example.com",
+                ),
+            )
+        )
+        every { singleRecordRouteProvider.getRoute() } returns
+            SingleRecordScreenRoute(RecordType.AUTHENTICATOR)
+        initViewModel()
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun clearNewRecordAfterSave_shouldNotLogFormAbandon() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.NOTE)
+        coEvery { layout.saveLayout(any()) } just runs
+        initViewModel()
+        advanceUntilIdle()
+        viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_FORM_ABANDON)).isFalse()
+    }
+
+    @Test
+    fun clearExistingRecord_shouldNotLogFormAbandon() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.LOGIN,
+            1,
+        )
+        initViewModel()
+        advanceUntilIdle()
+        // leaving an edit unsaved is not an abandoned create form
+        viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
+
+        clearViewModel()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_FORM_ABANDON)).isFalse()
+    }
+
+    /**
+     * Clears the ViewModel the way the framework does when its navigation entry is popped, so the
+     * test exercises `onCleared` without the production class exposing a hook for it.
+     */
+    private fun clearViewModel() {
+        ViewModelStore().apply {
+            put(VIEW_MODEL_KEY, viewModel)
+            clear()
+        }
+    }
+
+    companion object {
+        private const val VIEW_MODEL_KEY = "single_record"
     }
 }

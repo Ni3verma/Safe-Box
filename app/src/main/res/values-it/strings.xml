@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Caricamento dei dati…</string>
-    <string name="no_record">Inizia aggiungendo una voce o recupera i tuoi dati da un backup.</string>
-    <string name="new_record_button">Aggiungi una nuova voce</string>
-    <string name="restore_records_button">Ripristina dati</string>
+    <string name="empty_vault_title">La tua cassaforte è vuota</string>
+    <string name="no_record">Salva la tua prima voce: ci vuole meno di un minuto. Tutto è cifrato e resta su questo dispositivo.</string>
+    <string name="restore_records_button">Ripristina da un backup</string>
+    <string name="record_type_desc_login">Nomi utente e password di siti web e app</string>
+    <string name="record_type_desc_card">Numeri di carte di debito e di credito, scadenza, PIN e CVV</string>
+    <string name="record_type_desc_bank_account">Numeri di conto, dati della filiale e del cliente</string>
+    <string name="record_type_desc_note">Qualsiasi testo privato, dai codici di recupero alle password Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Codici TOTP a due fattori, da un codice QR o da una chiave segreta</string>
     <string name="no_filtered_record_title">Ops! Nessun risultato.</string>
     <string name="no_filtered_record_body">Non abbiamo trovato nulla che corrisponda alla tua ricerca. Prova a modificare i filtri o a controllare eventuali errori di battitura.</string>
 

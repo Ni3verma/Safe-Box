@@ -14,4 +14,8 @@ enum class AnalyticsParam(val paramName: String) {
     COUNT("count"),
     SOURCE("source"),
     REASON("reason"),
+    // a RecordType, as RecordType.toAnalyticsValue() renders it
+    RECORD_TYPE("record_type"),
+    // whether the user changed anything in a form before leaving it
+    HAD_INPUT("had_input"),
 }

@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Wczytywanie danych…</string>
-    <string name="no_record">Zacznij od dodania wpisu lub przywróć dane z kopii zapasowej.</string>
-    <string name="new_record_button">Dodaj nowy wpis</string>
-    <string name="restore_records_button">Przywróć dane</string>
+    <string name="empty_vault_title">Twój sejf jest pusty</string>
+    <string name="no_record">Zapisz swój pierwszy wpis – zajmie to mniej niż minutę. Wszystko jest szyfrowane i pozostaje na tym urządzeniu.</string>
+    <string name="restore_records_button">Przywróć z kopii zapasowej</string>
+    <string name="record_type_desc_login">Nazwy użytkownika i hasła do stron internetowych i aplikacji</string>
+    <string name="record_type_desc_card">Numery kart debetowych i kredytowych, data ważności, PIN i CVV</string>
+    <string name="record_type_desc_bank_account">Numery kont, dane oddziału i klienta</string>
+    <string name="record_type_desc_note">Dowolny prywatny tekst, od kodów odzyskiwania po hasła do Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Kody TOTP do uwierzytelniania dwuskładnikowego, z kodu QR lub tajnego klucza</string>
     <string name="no_filtered_record_title">Brak wyników.</string>
     <string name="no_filtered_record_body">Nie znaleziono wpisów pasujących do wyszukiwania. Spróbuj zmienić filtry lub sprawdź pisownię.</string>
 

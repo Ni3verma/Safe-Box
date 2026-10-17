@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">आपका डेटा लोड हो रहा है …</string>
-    <string name="no_record">नया रिकॉर्ड जोड़कर शुरुआत करें या बैकअप से अपना डेटा वापस लाएं।</string>
-    <string name="new_record_button">नया रिकॉर्ड जोड़ें</string>
-    <string name="restore_records_button">डेटा रीस्टोर करें</string>
+    <string name="empty_vault_title">आपकी तिजोरी खाली है</string>
+    <string name="no_record">अपना पहला रिकॉर्ड सहेजें — इसमें एक मिनट से भी कम लगता है। सब कुछ एन्क्रिप्टेड है और इसी डिवाइस पर रहता है।</string>
+    <string name="restore_records_button">बैकअप से रीस्टोर करें</string>
+    <string name="record_type_desc_login">वेबसाइटों और ऐप्स के यूज़रनेम और पासवर्ड</string>
+    <string name="record_type_desc_card">डेबिट और क्रेडिट कार्ड नंबर, एक्सपायरी, PIN और CVV</string>
+    <string name="record_type_desc_bank_account">खाता संख्या, शाखा और ग्राहक विवरण</string>
+    <string name="record_type_desc_note">कोई भी निजी टेक्स्ट, रिकवरी कोड से लेकर Wi-Fi पासवर्ड तक</string>
+    <string name="record_type_desc_authenticator">QR कोड या सीक्रेट की से जोड़े गए टू-फ़ैक्टर TOTP कोड</string>
     <string name="no_filtered_record_title">ओह! यहाँ कोई परिणाम नहीं मिला।</string>
     <string name="no_filtered_record_body">हमें आपकी खोज से मेल खाता कुछ नहीं मिला। अपने फ़िल्टर बदलकर देखें या वर्तनी जांचें।</string>
 

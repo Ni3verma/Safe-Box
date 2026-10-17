@@ -35,6 +35,12 @@ Long-form knowledge about the project. Short, always-relevant facts live in
   glyph swap, reveal, reflow), the shared tokens behind it, where each pattern is used, how it is
   tested, and how to capture animations on the emulator for review.
 
+## Analytics
+
+- [Post-signup activation funnel](analytics/activation-funnel.md) — why every funnel step is an
+  explicit event in this single-Activity app, what each event means and is bounded by, what was
+  deliberately not logged, and how to read the Firebase funnel into a decision.
+
 ## Decisions
 
 - [Architecture Decision Records](decisions/README.md)

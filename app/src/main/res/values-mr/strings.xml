@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">तुमचा डेटा लोड होत आहे …</string>
-    <string name="no_record">नवीन रेकॉर्ड जोडून सुरुवात करा किंवा बॅकअपमधून तुमचा डेटा परत आणा.</string>
-    <string name="new_record_button">नवीन रेकॉर्ड जोडा</string>
-    <string name="restore_records_button">डेटा रिस्टोअर करा</string>
+    <string name="empty_vault_title">तुमची तिजोरी रिकामी आहे</string>
+    <string name="no_record">तुमचा पहिला रेकॉर्ड जतन करा — याला एका मिनिटापेक्षाही कमी वेळ लागतो. सर्व काही एन्क्रिप्ट केलेले असते आणि याच डिव्हाइसवर राहते.</string>
+    <string name="restore_records_button">बॅकअपमधून रिस्टोअर करा</string>
+    <string name="record_type_desc_login">वेबसाइट आणि ॲप्ससाठी वापरकर्तानावे आणि पासवर्ड</string>
+    <string name="record_type_desc_card">डेबिट आणि क्रेडिट कार्ड नंबर, एक्सपायरी, PIN आणि CVV</string>
+    <string name="record_type_desc_bank_account">खाते क्रमांक, शाखा आणि ग्राहक तपशील</string>
+    <string name="record_type_desc_note">रिकव्हरी कोडपासून Wi-Fi पासवर्डपर्यंत कोणताही खासगी मजकूर</string>
+    <string name="record_type_desc_authenticator">QR कोड किंवा सिक्रेट की वरून जोडलेले टू-फॅक्टर TOTP कोड</string>
     <string name="no_filtered_record_title">अरेरे! येथे कोणतेही परिणाम नाहीत.</string>
     <string name="no_filtered_record_body">तुमच्या शोधाशी जुळणारे काहीही आढळले नाही. तुमचे फिल्टर बदलून किंवा स्पेलिंग तपासून पहा.</string>
 

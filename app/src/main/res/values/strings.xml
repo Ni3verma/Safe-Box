@@ -96,9 +96,16 @@
 
     <!--    Record screen-->
     <string name="loading_data">Loading your data …</string>
-    <string name="no_record">Start fresh by adding a record or bring back your data from a backup.</string>
-    <string name="new_record_button">Add a new record</string>
-    <string name="restore_records_button">Restore data</string>
+    <!--    Empty vault: the first thing a new user sees after sign up. The type descriptions double
+            as the only explanation of the record types in the app, so keep them concrete. -->
+    <string name="empty_vault_title">Your vault is empty</string>
+    <string name="no_record">Save your first record — it takes under a minute. Everything is encrypted and stays on this device.</string>
+    <string name="restore_records_button">Restore from a backup</string>
+    <string name="record_type_desc_login">Usernames and passwords for websites and apps</string>
+    <string name="record_type_desc_card">Debit and credit card numbers, expiry, PIN and CVV</string>
+    <string name="record_type_desc_bank_account">Account numbers, branch and customer details</string>
+    <string name="record_type_desc_note">Any private text, from recovery codes to Wi-Fi passwords</string>
+    <string name="record_type_desc_authenticator">Two-factor TOTP codes, from a QR code or a secret key</string>
     <string name="no_filtered_record_title">Oops! No results here.</string>
     <string name="no_filtered_record_body">We couldn\'t find anything matching your search. Try adjusting your filters or checking for typos.</string>
 

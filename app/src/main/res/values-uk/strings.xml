@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Завантаження даних…</string>
-    <string name="no_record">Почніть із додавання запису або відновіть дані з резервної копії.</string>
-    <string name="new_record_button">Додати новий запис</string>
-    <string name="restore_records_button">Відновити дані</string>
+    <string name="empty_vault_title">Ваше сховище порожнє</string>
+    <string name="no_record">Збережіть перший запис — це займе менше хвилини. Усе шифрується й залишається на цьому пристрої.</string>
+    <string name="restore_records_button">Відновити з резервної копії</string>
+    <string name="record_type_desc_login">Імена користувачів і паролі для сайтів і застосунків</string>
+    <string name="record_type_desc_card">Номери дебетових і кредитних карток, термін дії, PIN і CVV</string>
+    <string name="record_type_desc_bank_account">Номери рахунків, дані відділення та клієнта</string>
+    <string name="record_type_desc_note">Будь-який особистий текст: від кодів відновлення до паролів Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Коди TOTP для двофакторної автентифікації з QR-коду або секретного ключа</string>
     <string name="no_filtered_record_title">Нічого не знайдено.</string>
     <string name="no_filtered_record_body">За вашим запитом нічого не знайдено. Спробуйте змінити фільтри або перевірте запит на помилки.</string>
 

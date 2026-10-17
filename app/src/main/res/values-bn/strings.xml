@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">আপনার ডেটা লোড হচ্ছে …</string>
-    <string name="no_record">নতুন রেকর্ড যোগ করে শুরু করুন অথবা ব্যাকআপ থেকে আপনার ডেটা ফিরিয়ে আনুন।</string>
-    <string name="new_record_button">নতুন রেকর্ড যোগ করুন</string>
-    <string name="restore_records_button">ডেটা রিস্টোর করুন</string>
+    <string name="empty_vault_title">আপনার ভল্ট খালি</string>
+    <string name="no_record">আপনার প্রথম রেকর্ড সংরক্ষণ করুন — এক মিনিটেরও কম সময় লাগে। সবকিছু এনক্রিপ্ট করা থাকে এবং এই ডিভাইসেই থাকে।</string>
+    <string name="restore_records_button">ব্যাকআপ থেকে রিস্টোর করুন</string>
+    <string name="record_type_desc_login">ওয়েবসাইট ও অ্যাপের ইউজারনেম ও পাসওয়ার্ড</string>
+    <string name="record_type_desc_card">ডেবিট ও ক্রেডিট কার্ড নম্বর, মেয়াদ, PIN ও CVV</string>
+    <string name="record_type_desc_bank_account">অ্যাকাউন্ট নম্বর, শাখা ও গ্রাহকের তথ্য</string>
+    <string name="record_type_desc_note">যেকোনো ব্যক্তিগত লেখা, রিকভারি কোড থেকে Wi-Fi পাসওয়ার্ড পর্যন্ত</string>
+    <string name="record_type_desc_authenticator">QR কোড বা সিক্রেট কি থেকে যোগ করা টু-ফ্যাক্টর TOTP কোড</string>
     <string name="no_filtered_record_title">ওহো! এখানে কোনো ফলাফল নেই।</string>
     <string name="no_filtered_record_body">আপনার অনুসন্ধানের সাথে মেলে এমন কিছু পাওয়া যায়নি। ফিল্টার পরিবর্তন করে বা বানান পরীক্ষা করে দেখুন।</string>
 

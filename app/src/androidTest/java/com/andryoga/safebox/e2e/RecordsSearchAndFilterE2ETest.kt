@@ -352,7 +352,7 @@ class RecordsSearchAndFilterE2ETest {
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.no_filtered_record_body))
                 .assertIsDisplayed()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertDoesNotExist()
         }
     }

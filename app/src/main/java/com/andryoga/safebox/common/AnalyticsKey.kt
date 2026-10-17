@@ -33,6 +33,24 @@ enum class AnalyticsKey(val eventName: String) {
     NEW_LOGIN("new_login"),
     NEW_BANK_ACCOUNT("new_bank_account"),
     NEW_AUTHENTICATOR("new_authenticator"),
+
+    // Post-signup activation funnel: the steps between SIGN_UP and the first NEW_* above. Firebase
+    // cannot see them on its own, because the whole app is one Activity and its automatic
+    // screen_view is therefore a single screen. See docs/analytics/activation-funnel.md.
+    // The empty vault (no records at all) was displayed. Once per records ViewModel, i.e. at
+    // most once per unlock session, so re-entering the list from an abandoned form is not a
+    // second show.
+    EMPTY_VAULT_SHOW("empty_vault_show"),
+    // the record-type bottom sheet opened from the list's add button. The empty vault opens no
+    // sheet: its type cards go straight to the form.
+    ADD_RECORD_SHEET_SHOW("add_record_sheet_show"),
+    // a record type was chosen; logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.SOURCE
+    // (AnalyticsSource.ADD_RECORD_SHEET or EMPTY_VAULT) so the two entry points can be compared.
+    ADD_RECORD_TYPE_PICK("add_record_type_pick"),
+    // a create form was left without saving: back, the away timeout, or any other way its
+    // ViewModel is cleared. Logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT,
+    // which is false when nothing was typed (including a QR-prefilled authenticator left as is).
+    RECORD_FORM_ABANDON("record_form_abandon"),
     DEVICE_SECURITY_REQUIRED_DIALOG_SHOW("device_security_required_dialog_show"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK("device_sec_dialog_open_settings_click"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE("device_sec_dialog_open_settings_fail"),

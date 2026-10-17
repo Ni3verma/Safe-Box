@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.R
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.analytics.toAnalyticsValue
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
@@ -14,6 +15,7 @@ import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,15 +49,27 @@ class SingleRecordViewModel @Inject constructor(
     private val _shareContentEvent = MutableSharedFlow<String>()
     val shareContentEvent: SharedFlow<String> = _shareContentEvent.asSharedFlow()
     private val layout: Layout
+    private val recordType: RecordType
+    private val isNewRecord: Boolean
+
+    /**
+     * Field values the create form opened with, captured when the plan loads. Comparing against
+     * them rather than against empty strings is what lets a QR-prefilled authenticator that was
+     * never touched report `had_input = false`.
+     */
+    private var initialFieldData: Map<FieldId, String> = emptyMap()
+    private var isSaved = false
 
     init {
         val args = singleRecordRouteProvider.getRoute()
+        recordType = args.recordType
+        isNewRecord = args.id == null
         layout = layoutFactory.getLayout(args.id, args.recordType)
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
         viewModelScope.launch {
             val layoutPlan = layout.getLayoutPlan()
-            val isNewRecord = args.id == null
+            initialFieldData = layoutPlan.fieldUiState.mapValues { it.value.data }
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -73,6 +87,23 @@ class SingleRecordViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * A create form whose ViewModel is cleared before a save is an abandoned form, whichever way
+     * it was left: back, the away timeout popping the home graph, or the activity finishing. The
+     * ViewModel outlives configuration changes, so a rotation is not counted. Process death fires
+     * nothing, which under-counts slightly rather than over-counting.
+     */
+    override fun onCleared() {
+        if (isNewRecord && !isSaved) {
+            val currentFieldData = _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
+            analyticsHelper.logEvent(AnalyticsKey.RECORD_FORM_ABANDON) {
+                param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                param(AnalyticsParam.HAD_INPUT, currentFieldData != initialFieldData)
+            }
+        }
+        super.onCleared()
     }
 
     fun onAction(action: SingleRecordScreenAction) {
@@ -103,6 +134,7 @@ class SingleRecordViewModel @Inject constructor(
                     layout.saveLayout(
                         _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
                     )
+                    isSaved = true
                     _screenCloseEvent.emit(Unit)
                 }
             }

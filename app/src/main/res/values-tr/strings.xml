@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Verileriniz yükleniyor …</string>
-    <string name="no_record">Yeni bir kayıt ekleyerek başlayın veya verilerinizi bir yedekten geri yükleyin.</string>
-    <string name="new_record_button">Yeni kayıt ekle</string>
-    <string name="restore_records_button">Verileri geri yükle</string>
+    <string name="empty_vault_title">Kasanız boş</string>
+    <string name="no_record">İlk kaydınızı ekleyin; bir dakikadan az sürer. Her şey şifrelenir ve bu cihazda kalır.</string>
+    <string name="restore_records_button">Yedekten geri yükle</string>
+    <string name="record_type_desc_login">Web siteleri ve uygulamalar için kullanıcı adları ve parolalar</string>
+    <string name="record_type_desc_card">Banka ve kredi kartı numaraları, son kullanma tarihi, PIN ve CVV</string>
+    <string name="record_type_desc_bank_account">Hesap numaraları, şube ve müşteri bilgileri</string>
+    <string name="record_type_desc_note">Kurtarma kodlarından Wi-Fi parolalarına kadar her türlü özel metin</string>
+    <string name="record_type_desc_authenticator">QR kodundan veya gizli anahtardan alınan iki adımlı doğrulama TOTP kodları</string>
     <string name="no_filtered_record_title">Üzgünüz! Burada sonuç yok.</string>
     <string name="no_filtered_record_body">Aramanızla eşleşen hiçbir şey bulamadık. Filtrelerinizi değiştirmeyi veya yazım hatalarını kontrol etmeyi deneyin.</string>
 

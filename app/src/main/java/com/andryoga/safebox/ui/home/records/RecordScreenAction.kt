@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.home.records
 
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.domain.models.record.RecordType
 
 sealed interface RecordScreenAction {
@@ -11,9 +12,24 @@ sealed interface RecordScreenAction {
     data class OnUpdateShowAddNewRecordBottomSheet(val showAddNewRecordBottomSheet: Boolean) :
         RecordScreenAction
 
-    data class OnAddNewRecord(val recordType: RecordType) : RecordScreenAction
+    /**
+     * User picked a record type to create. Navigation is the UI layer's job; the ViewModel only
+     * records the pick.
+     *
+     * @param source which surface offered the type: the bottom sheet or the empty vault's cards.
+     */
+    data class OnAddNewRecord(
+        val recordType: RecordType,
+        val source: AnalyticsSource,
+    ) : RecordScreenAction
     data class OnRecordClick(val id: Int, val recordType: RecordType) : RecordScreenAction
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
+
+    /**
+     * The empty-vault layout entered composition. Sent on every entry; the ViewModel decides how
+     * often that is worth an analytics event.
+     */
+    data object OnEmptyVaultShown : RecordScreenAction
 
     /** User copied the live one-time code from an authenticator row. */
     object OnCopyTotpCode : RecordScreenAction
