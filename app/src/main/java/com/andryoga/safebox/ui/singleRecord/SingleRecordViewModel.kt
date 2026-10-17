@@ -141,6 +141,9 @@ class SingleRecordViewModel @Inject constructor(
 
             SingleRecordScreenAction.OnDeleteClicked -> {
                 Timber.i("delete clicked")
+                analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
+                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                }
                 viewModelScope.launch {
                     layout.deleteLayout()
                     _screenCloseEvent.emit(Unit)
@@ -158,11 +161,24 @@ class SingleRecordViewModel @Inject constructor(
                 }
             }
 
-            SingleRecordScreenAction.OnShareClicked -> handleShareRecord()
+            SingleRecordScreenAction.OnShareClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.RECORD_SHARE) {
+                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                }
+                handleShareRecord()
+            }
 
             SingleRecordScreenAction.OnCopyTotpCode -> {
                 analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
                     param(AnalyticsParam.SOURCE, AnalyticsSource.RECORD_DETAIL.value)
+                }
+            }
+
+            is SingleRecordScreenAction.OnFieldCopied -> {
+                analyticsHelper.logEvent(AnalyticsKey.FIELD_COPY) {
+                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                    // the field's name, e.g. login_password; the value never leaves the device
+                    param(AnalyticsParam.FIELD, action.fieldId.name.lowercase())
                 }
             }
         }

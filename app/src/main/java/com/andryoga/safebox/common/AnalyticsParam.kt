@@ -18,4 +18,10 @@ enum class AnalyticsParam(val paramName: String) {
     RECORD_TYPE("record_type"),
     // whether the user changed anything in a form before leaving it
     HAD_INPUT("had_input"),
+    // how the vault was unlocked, a LoginMethod.analyticsValue
+    METHOD("method"),
+    // 1-based ordinal of a login for this install
+    LOGIN_COUNT("login_count"),
+    // a FieldId name in lower case, never a field's value
+    FIELD("field"),
 }

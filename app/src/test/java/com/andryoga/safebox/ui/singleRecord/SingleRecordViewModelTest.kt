@@ -399,6 +399,56 @@ class SingleRecordViewModelTest {
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_FORM_ABANDON)).isFalse()
     }
 
+    @Test
+    fun fieldCopied_shouldLogFieldCopyWithRecordTypeAndFieldName() {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.LOGIN,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnFieldCopied(FieldId.LOGIN_PASSWORD))
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.FIELD_COPY }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("login")
+        assertThat(event.params[AnalyticsParam.FIELD.paramName]).isEqualTo("login_password")
+        // the field's name is all that leaves the device
+        assertThat(event.params.values).hasSize(2)
+    }
+
+    @Test
+    fun shareClicked_shouldLogRecordShareWithRecordType() = runTest {
+        coEvery { layout.getShareableFields() } returns emptyList()
+        every { context.getString(any(), any()) } returns "some app link"
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.CARD,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+        advanceUntilIdle()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_SHARE }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("card")
+    }
+
+    @Test
+    fun deleteClicked_shouldLogRecordDeleteWithRecordType() = runTest {
+        coEvery { layout.deleteLayout() } just runs
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.BANK_ACCOUNT,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+        advanceUntilIdle()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_DELETE }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("bank_account")
+    }
+
     /**
      * Clears the ViewModel the way the framework does when its navigation entry is popped, so the
      * test exercises `onCleared` without the production class exposing a hook for it.

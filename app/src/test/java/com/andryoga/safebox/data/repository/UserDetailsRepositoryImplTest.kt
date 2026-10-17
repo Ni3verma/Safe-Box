@@ -97,7 +97,7 @@ class UserDetailsRepositoryImplTest {
             )
             preferenceProvider.upsertIntPref(CommonConstants.TOTAL_LOGIN_COUNT, 2)
 
-            repository.onAuthSuccess(withBiometric = true)
+            val loginOrdinal = repository.onAuthSuccess(withBiometric = true)
 
             verify { mockCrashlytics.setUserId("uid-biometric-1") }
             verify {
@@ -115,6 +115,8 @@ class UserDetailsRepositoryImplTest {
 
             assertThat(remaining).isEqualTo(4)
             assertThat(total).isEqualTo(3)
+            // the pref is stored post-increment, so a stored 2 means this was the second login
+            assertThat(loginOrdinal).isEqualTo(2)
         }
 
     @Test

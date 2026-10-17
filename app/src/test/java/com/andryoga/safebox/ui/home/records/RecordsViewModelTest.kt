@@ -12,7 +12,6 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -50,7 +49,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -104,6 +102,8 @@ class RecordsViewModelTest {
         every { loginDataRepository.getAllLoginData() } returns loginDataFlow
         every { cardDataRepository.getAllBankCardData() } returns cardDataFlow
         every { authenticatorDataRepository.getAllAuthenticatorData() } returns authenticatorDataFlow
+        // SEARCH_USED fires from the search flow that most tests type into
+        every { analyticsHelper.logEvent(any()) } just runs
 
         viewModel = RecordsViewModel(
             bankAccountDataRepository,
@@ -619,7 +619,6 @@ class RecordsViewModelTest {
 
     @Test
     fun `uiState updates isShowAddNewRecordsBottomSheet when triggered`() = runTest {
-        every { analyticsHelper.logEvent(any()) } just runs
         viewModel.uiState.test {
             awaitItem()
             setupAndEmitDefaultRecords()
@@ -634,8 +633,6 @@ class RecordsViewModelTest {
 
     @Test
     fun openAddRecordSheet_shouldLogSheetShow() {
-        every { analyticsHelper.logEvent(any()) } just runs
-
         viewModel.onScreenAction(RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(true))
 
         verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW) }
@@ -643,8 +640,6 @@ class RecordsViewModelTest {
 
     @Test
     fun closeAddRecordSheet_shouldNotLogSheetShow() {
-        every { analyticsHelper.logEvent(any()) } just runs
-
         viewModel.onScreenAction(RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(false))
 
         verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW) }
@@ -678,8 +673,6 @@ class RecordsViewModelTest {
 
     @Test
     fun emptyVaultShown_shouldLogShowOncePerViewModel() {
-        every { analyticsHelper.logEvent(any()) } just runs
-
         // the layout re-enters composition each time the user returns to the list
         viewModel.onScreenAction(RecordScreenAction.OnEmptyVaultShown)
         viewModel.onScreenAction(RecordScreenAction.OnEmptyVaultShown)
@@ -696,10 +689,34 @@ class RecordsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction with OnRecordClick calls crashInDebugBuild`() = runTest {
-        assertThrows(Exceptions.DebugFatalException::class.java) {
-            viewModel.onScreenAction(RecordScreenAction.OnRecordClick(1, RecordType.NOTE))
-        }
+    fun recordClick_shouldLogRecordOpenWithRecordType() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+
+        viewModel.onScreenAction(RecordScreenAction.OnRecordClick(1, RecordType.NOTE))
+
+        val params = capturedParams(AnalyticsKey.RECORD_OPEN)
+        assertThat(params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("note")
+    }
+
+    @Test
+    fun typeSearchText_shouldLogSearchUsedOncePerViewModel() = runTest {
+        typeSearchText("gm")
+        advanceUntilIdle()
+        typeSearchText("gmail")
+        advanceUntilIdle()
+        clearSearchText()
+        typeSearchText("bank")
+        advanceUntilIdle()
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
+    }
+
+    @Test
+    fun blankSearchText_shouldNotLogSearchUsed() = runTest {
+        typeSearchText("   ")
+        advanceUntilIdle()
+
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
     }
 
     @Test

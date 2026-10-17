@@ -8,7 +8,9 @@ import androidx.work.WorkManager
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -64,6 +66,7 @@ class LoginViewModelTest {
         MockKAnnotations.init(this)
         every { lazyWorkManager.get() } returns workManager
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns false
+        coEvery { userDetailsRepository.onAuthSuccess(any()) } returns FIRST_LOGIN_ORDINAL
         viewModel = LoginViewModel(
             userDetailsRepository = userDetailsRepository,
             workManager = lazyWorkManager,
@@ -385,4 +388,64 @@ class LoginViewModelTest {
             viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
             verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK) }
         }
+
+    @Test
+    fun passwordLogin_shouldLogLoginSuccessWithPasswordMethodAndOrdinal() = runTest {
+        coEvery { userDetailsRepository.checkPassword("password") } returns true
+        coEvery { userDetailsRepository.onAuthSuccess(withBiometric = false) } returns 7
+
+        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+        advanceUntilIdle()
+
+        val params = capturedLoginSuccessParams()
+        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("password")
+        assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(7)
+    }
+
+    @Test
+    fun biometricLogin_shouldLogLoginSuccessWithBiometricMethod() = runTest {
+        viewModel.onAction(LoginScreenAction.BiometricSuccess)
+        advanceUntilIdle()
+
+        val params = capturedLoginSuccessParams()
+        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("biometric")
+        assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(FIRST_LOGIN_ORDINAL)
+        coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
+    }
+
+    @Test
+    fun passwordReset_shouldLogLoginSuccessWithPasswordResetMethod() = runTest {
+        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
+
+        viewModel.onAction(
+            LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "hint")
+        )
+        advanceUntilIdle()
+
+        val params = capturedLoginSuccessParams()
+        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("password_reset")
+        // a reset is not a biometric unlock, so the biometric allowance is reset, not spent
+        coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+    }
+
+    @Test
+    fun incorrectPassword_shouldNotLogLoginSuccess() = runTest {
+        coEvery { userDetailsRepository.checkPassword("wrong") } returns false
+
+        viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
+        advanceUntilIdle()
+
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
+    }
+
+    /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */
+    private fun capturedLoginSuccessParams(): Map<String, Any> {
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
+        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), capture(slot)) }
+        return AnalyticsParamsBuilder().apply(slot.captured).params
+    }
+
+    companion object {
+        private const val FIRST_LOGIN_ORDINAL = 1
+    }
 }

@@ -16,6 +16,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.work.Configuration
+import androidx.work.testing.SynchronousExecutor
+import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.getBankAccountLayoutPlan
 import com.andryoga.safebox.ui.previewHelper.getCardLayoutPlan
@@ -28,6 +31,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.visualTransformers.Exp
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.visualTransformers.SpaceAfterEveryFourCharsTransformation
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +46,20 @@ class SingleRecordActionsComprehensiveTest {
     val composeTestRule = createComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    @Before
+    fun setup() {
+        // Field copies go through the production rememberCopyToClipboardAction, which schedules
+        // the clipboard clear via WorkManager.getInstance. AndroidManifest removes
+        // WorkManagerInitializer, so run on its own this class would resolve a Hilt entry point
+        // it never registered (it only passed in a full run by inheriting the instance an earlier
+        // Hilt test left behind). SynchronousExecutor keeps the scheduled clear out of the app's
+        // real work database.
+        val configuration = Configuration.Builder()
+            .setExecutor(SynchronousExecutor())
+            .build()
+        WorkManagerTestInitHelper.initializeTestWorkManager(context, configuration)
+    }
 
     // --- SENSITIVE DATA MASKING & TOGGLING (LOGIN & BANK CARD) ---
 

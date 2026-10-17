@@ -12,7 +12,6 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
-import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -33,11 +32,15 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -121,6 +124,15 @@ class RecordsViewModel @Inject constructor(
     val searchTextState = TextFieldState()
 
     private val searchText: Flow<String> = snapshotFlow { searchTextState.text.toString() }
+
+    init {
+        // one SEARCH_USED per unlock session: the first non-blank query ends this collector
+        searchText
+            .filter { it.isNotBlank() }
+            .take(1)
+            .onEach { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
+            .launchIn(viewModelScope)
+    }
 
     val uiState = combine(dbRecords, userInputs, searchText) { dbRecords, userInputs, searchText ->
         if (dbRecords == null) {
@@ -213,9 +225,12 @@ class RecordsViewModel @Inject constructor(
                 }
             }
 
-            // handled in UI layer and flow should ideally never come here
+            // navigation is done in the UI layer; an open is the first sign a saved record was
+            // worth something, which is why it is logged at all
             is RecordScreenAction.OnRecordClick -> {
-                Utils.crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
+                analyticsHelper.logEvent(AnalyticsKey.RECORD_OPEN) {
+                    param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())
+                }
             }
 
             is RecordScreenAction.OnCancelClickFromRationaleDialog -> {

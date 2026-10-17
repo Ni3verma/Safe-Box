@@ -51,6 +51,23 @@ enum class AnalyticsKey(val eventName: String) {
     // ViewModel is cleared. Logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT,
     // which is false when nothing was typed (including a QR-prefilled authenticator left as is).
     RECORD_FORM_ABANDON("record_form_abandon"),
+
+    // Retention and value realisation: whether users come back, and whether a saved record is
+    // ever retrieved. Same doc as the funnel above.
+    // the vault was unlocked; logged with AnalyticsParam.METHOD (a LoginMethod) and
+    // AnalyticsParam.LOGIN_COUNT, the 1-based ordinal of this login, so "users on their third
+    // login or later" is a plain filter in Firebase. Pairs with LOGIN_FAILED.
+    LOGIN_SUCCESS("login_success"),
+    // an existing record was opened from the list; AnalyticsParam.RECORD_TYPE
+    RECORD_OPEN("record_open"),
+    // a field value was copied on the detail screen; AnalyticsParam.RECORD_TYPE and
+    // AnalyticsParam.FIELD (a FieldId name in lower case). Authenticator codes are not included:
+    // they stay on AUTHENTICATOR_COPY_CLICK.
+    FIELD_COPY("field_copy"),
+    RECORD_SHARE("record_share"),
+    RECORD_DELETE("record_delete"),
+    // the list was searched; once per records ViewModel, i.e. per unlock session
+    SEARCH_USED("search_used"),
     DEVICE_SECURITY_REQUIRED_DIALOG_SHOW("device_security_required_dialog_show"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK("device_sec_dialog_open_settings_click"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE("device_sec_dialog_open_settings_fail"),

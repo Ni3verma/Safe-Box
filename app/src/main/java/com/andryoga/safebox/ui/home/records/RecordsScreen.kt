@@ -117,6 +117,7 @@ fun RecordsScreenRoot(
 
                     is RecordScreenAction.OnRecordClick -> {
                         Timber.i("record click action")
+                        viewModel.onScreenAction(action)
                         onRecordClick(action.id, action.recordType)
                     }
                     else -> viewModel.onScreenAction(action)

@@ -38,7 +38,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
         return userDetailsDaoSecure.checkPassword(password)
     }
 
-    override suspend fun onAuthSuccess(withBiometric: Boolean) {
+    override suspend fun onAuthSuccess(withBiometric: Boolean): Int {
         Timber.i("auth success: with biometric: $withBiometric, setting crashlytics user id")
         setCrashlyticsUid(userDetailsDaoSecure.getUid())
 
@@ -60,6 +60,8 @@ class UserDetailsRepositoryImpl @Inject constructor(
             max(0, newBiometricLoginCountRemaining)
         )
 
+        // the pref defaults to 1 and is stored post-increment, so the value read here is this
+        // login's 1-based ordinal: 1 on the first login after sign-up, 2 on the next
         val currLoginCount = preferenceProvider.getIntPref(CommonConstants.TOTAL_LOGIN_COUNT, 1)
         preferenceProvider.upsertIntPref(
             CommonConstants.TOTAL_LOGIN_COUNT,
@@ -70,6 +72,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
             "setting biometric login count remaining to: $newBiometricLoginCountRemaining" +
                     " and total login count to: ${currLoginCount + 1}"
         )
+        return currLoginCount
     }
 
     override suspend fun getHint(): String? {

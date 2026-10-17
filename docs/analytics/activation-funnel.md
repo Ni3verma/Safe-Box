@@ -31,6 +31,25 @@ In funnel order. Bounds matter: a funnel in GA4 counts users, but event counts a
 `record_type` values are `RecordType.toAnalyticsValue()`: `login`, `card`, `bank_account`, `note`,
 `authenticator`.
 
+## Retention and value
+
+The funnel above ends at "saved one record". Whether the app earned its place is a different
+question: did the user come back, and did a saved record ever get *used*?
+
+| Event | Fired by | Params | Bound |
+|---|---|---|---|
+| `login_success` | `LoginViewModel.onAuthSuccess`, the single exit of all three unlock paths | `method` ∈ {`password`, `biometric`, `password_reset`}, `login_count` (1-based ordinal of this login for the install) | per unlock. Sign-up itself is not a login, so the first `login_success` is the first *return* |
+| `record_open` | `RecordsViewModel` on `OnRecordClick` | `record_type` | per open |
+| `field_copy` | `SingleRecordViewModel` on `OnFieldCopied` from `RowField` | `record_type`, `field` (a `FieldId` name, e.g. `login_password`; never a value) | per copy. Authenticator codes stay on `authenticator_copy_click` |
+| `record_share` | `SingleRecordViewModel` | `record_type` | per share |
+| `record_delete` | `SingleRecordViewModel` | `record_type` | per delete |
+| `search_used` | `RecordsViewModel`, first non-blank query | — | once per `RecordsViewModel`, i.e. per unlock session |
+
+`login_count` exists so that retention needs no BigQuery: an audience of users whose
+`login_success` has `login_count >= 3` is the returning cohort, and `login_failed` without a
+following `login_success` in the same session is a lockout. `method = password_reset` is the
+forgot-password recovery and is kept apart from `password` on purpose.
+
 ### Deliberately not logged
 
 - **`first_record_saved` with time since sign-up.** Redundant: GA4's funnel exploration shows
@@ -38,6 +57,13 @@ In funnel order. Bounds matter: a funnel in GA4 counts users, but event counts a
   a persisted "first ever" flag with a migration for existing vaults.
 - **A restore click on the empty vault.** `restore_started` already marks a reinstalling or
   migrating user, which is the segment that matters; which button they used does not.
+- **`signup_abandon` with the last password-validator state.** Attractive for the "are the
+  password rules the friction" question, but it cannot be measured honestly: `onCleared` fires on
+  an explicit back-press exit, not when the user presses Home and the process is later killed,
+  which is how most abandons happen. Per-keystroke validator states are noise, because every user
+  passes through invalid states while typing a valid password. `first_open → sign_up` is the
+  measure; if that step ever becomes the largest drop, the fix is a UX review of the rules, not
+  more telemetry.
 - **A `screen_view` per destination.** Tempting as a general fix, but this is a vault: a stream of
   screen names per session is more telemetry than the question needs. Add a step when there is a
   question only that step answers.
@@ -69,6 +95,8 @@ first_open → sign_up → empty_vault_show → add_record_type_pick → [new_lo
 | `add_record_type_pick → new_*` with `record_form_abandon.had_input = false` | wrong type, or the form looks like too much work | type descriptions; fewer visible fields |
 | same, with `had_input = true` | form friction mid-way | mandatory fields, keyboard flow, save discoverability |
 | `new_* → app_remove` days later | no reason to come back | autofill (`origin/feature/auto-fill`), not onboarding |
+| `new_*` saved but no later `record_open` / `field_copy` | records are stored, never retrieved: the app is a notebook, not a tool | autofill; copy affordances |
+| few `login_success` with `login_count >= 2` | users do not return after the first session | same as above; also check `login_failed` for lockouts |
 
 Give a change two weeks of data before judging it; sign-up volume is low enough that a week is
 noise.
