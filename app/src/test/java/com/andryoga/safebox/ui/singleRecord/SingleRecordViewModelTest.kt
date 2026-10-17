@@ -28,6 +28,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -447,6 +448,26 @@ class SingleRecordViewModelTest {
 
         val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_DELETE }
         assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("bank_account")
+    }
+
+    @Test
+    fun deleteClicked_shouldNotLogRecordDeleteBeforeTheDeleteCompletes() = runTest {
+        val deletion = CompletableDeferred<Unit>()
+        coEvery { layout.deleteLayout() } coAnswers { deletion.await() }
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.NOTE,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+        advanceUntilIdle()
+        // the record is still in the vault at this point, so analytics must not say otherwise
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_DELETE)).isFalse()
+
+        deletion.complete(Unit)
+        advanceUntilIdle()
+        assertThat(analyticsHelper.count(AnalyticsKey.RECORD_DELETE)).isEqualTo(1)
     }
 
     /**

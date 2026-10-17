@@ -141,11 +141,12 @@ class SingleRecordViewModel @Inject constructor(
 
             SingleRecordScreenAction.OnDeleteClicked -> {
                 Timber.i("delete clicked")
-                analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
-                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
-                }
                 viewModelScope.launch {
                     layout.deleteLayout()
+                    // after the delete, like isSaved after the save: a failed delete is not one
+                    analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
+                        param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                    }
                     _screenCloseEvent.emit(Unit)
                 }
             }
