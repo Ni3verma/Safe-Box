@@ -29,7 +29,11 @@
   anti-pattern, structurally flawed, premature, out of scope, or deviates from Android industry
   standards / established app architecture, immediately and proactively challenge it upfront in
   the chat. Detail the concrete technical drawbacks or trade-offs, explain the rationale, and steer
-  toward the standard solution before writing or modifying any code.
+  toward the standard solution before writing or modifying any code. Automated review findings
+  (CodeRabbit, PR agent) get the same scrutiny, not automatic compliance: fix only when the real
+  impact justifies the added code, otherwise reply on the thread with the reasoning. (Review
+  feedback on #294, 2026-10-19: a double-tap guard was added for a bot finding whose only effect
+  was a duplicate analytics event.)
 * **Architecture Consistency & Advance Notification:** Always adhere strictly to established app
   patterns. If there is a compelling reason to deviate from the
   established app architecture or standard, proactively push back and inform the user upfront in the

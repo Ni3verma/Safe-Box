@@ -35,12 +35,6 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    /** The Login button stays enabled during the password check; a second tap must not start another. */
-    private var isLoginInProgress = false
-
-    /** Set once an unlock path has claimed success, before it suspends; a later path must not count again. */
-    private var isUnlockHandled = false
-
     init {
         if (isDebug) {
             _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
@@ -123,52 +117,33 @@ class LoginViewModel @Inject constructor(
     }
 
     private fun onLoginClicked(password: String) {
-        if (isLoginInProgress) {
-            Timber.i("login already in progress, ignoring click")
-            return
-        }
-        isLoginInProgress = true
         Timber.i("login clicked")
         viewModelScope.launch {
-            try {
-                val isPasswordCorrect = userDetailsRepository.checkPassword(password)
-                Timber.i("is password correct: $isPasswordCorrect")
+            val isPasswordCorrect = userDetailsRepository.checkPassword(password)
+            Timber.i("is password correct: $isPasswordCorrect")
 
-                if (isPasswordCorrect) {
-                    if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
-                        Timber.i("enqueuing auto backup request after login with pswrd")
-                        BackupDataWorker.enqueueRequest(
-                            password = password,
-                            showBackupStartNotification = false,
-                            workManager = workManager.get(),
-                            symmetricKeyUtils
-                        )
-                    } else {
-                        Timber.i("auto backup disabled from settings")
-                    }
-                    onAuthSuccess(LoginMethod.PASSWORD)
+            if (isPasswordCorrect) {
+                if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
+                    Timber.i("enqueuing auto backup request after login with pswrd")
+                    BackupDataWorker.enqueueRequest(
+                        password = password,
+                        showBackupStartNotification = false,
+                        workManager = workManager.get(),
+                        symmetricKeyUtils
+                    )
                 } else {
-                    onIncorrectPassword()
+                    Timber.i("auto backup disabled from settings")
                 }
-            } finally {
-                isLoginInProgress = false
+                onAuthSuccess(LoginMethod.PASSWORD)
+            } else {
+                onIncorrectPassword()
             }
         }
     }
 
-    /** Single exit of every unlock path; claimed before the first suspension so one login counts once. */
+    /** Single exit of every unlock path. */
     private suspend fun onAuthSuccess(method: LoginMethod) {
-        if (isUnlockHandled) {
-            Timber.i("already unlocked, ignoring a second ${method.analyticsValue} success")
-            return
-        }
-        isUnlockHandled = true
-        val loginCount = try {
-            userDetailsRepository.onAuthSuccess(withBiometric = method == LoginMethod.BIOMETRIC)
-        } catch (e: Exception) {
-            isUnlockHandled = false
-            throw e
-        }
+        val loginCount = userDetailsRepository.onAuthSuccess(withBiometric = method == LoginMethod.BIOMETRIC)
         analyticsHelper.logEvent(AnalyticsKey.LOGIN_SUCCESS) {
             param(AnalyticsParam.LOGIN_METHOD, method.analyticsValue)
             param(AnalyticsParam.LOGIN_COUNT, loginCount)

@@ -26,7 +26,6 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.slot
 import io.mockk.verify
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -437,71 +436,6 @@ class LoginViewModelTest {
         advanceUntilIdle()
 
         verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
-    }
-
-    @Test
-    fun secondLoginClickWhileFirstIsInFlight_shouldAuthenticateOnce() = runTest {
-        // the button stays enabled during the check, so two taps can land before it resolves
-        val passwordCheck = CompletableDeferred<Boolean>()
-        coEvery { userDetailsRepository.checkPassword("password") } coAnswers { passwordCheck.await() }
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
-        passwordCheck.complete(true)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { userDetailsRepository.checkPassword("password") }
-        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-    }
-
-    @Test
-    fun successAfterAlreadyVerified_shouldNotCountASecondLogin() = runTest {
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
-        advanceUntilIdle()
-
-        // a late biometric callback after the password already unlocked the vault
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(any()) }
-        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
-    }
-
-    @Test
-    fun secondSuccessWhileTheFirstIsStillInTheRepository_shouldNotCountASecondLogin() = runTest {
-        // the window between passing the guard and the state turning VERIFIED
-        val repositoryCall = CompletableDeferred<Int>()
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
-        coEvery { userDetailsRepository.onAuthSuccess(any()) } coAnswers { repositoryCall.await() }
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
-        advanceUntilIdle()
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
-        repositoryCall.complete(FIRST_LOGIN_ORDINAL)
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(any()) }
-        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-    }
-
-    @Test
-    fun loginClickAfterAFailedAttempt_shouldStillAuthenticate() = runTest {
-        coEvery { userDetailsRepository.checkPassword("wrong") } returns false
-        coEvery { userDetailsRepository.checkPassword("right") } returns true
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
-        advanceUntilIdle()
-        viewModel.onAction(LoginScreenAction.LoginClicked("right"))
-        advanceUntilIdle()
-
-        // the in-flight guard is released by the failure, so the retry goes through
-        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
     }
 
     /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */

@@ -38,7 +38,7 @@ question: did the user come back, and did a saved record ever get *used*?
 
 | Event | Fired by | Params | Bound |
 |---|---|---|---|
-| `login_success` | `LoginViewModel.onAuthSuccess`, the single exit of all three unlock paths | `login_method` ∈ {`password`, `biometric`, `password_reset`}, `login_count` (1-based ordinal of this login for the install) | per unlock. Sign-up itself is not a login, so the first `login_success` is the first *return* |
+| `login_success` | `LoginViewModel.onAuthSuccess`, the single exit of all three unlock paths | `login_method` ∈ {`password`, `biometric`, `password_reset`}, `login_count` (1-based ordinal of this login for the install) | per unlock. Sign-up itself is not a login, so the first `login_success` is the first *return*. The Login button is not debounced, so a double tap during the password check can log twice; deliberately not guarded, since every use of this event below is user-scoped and the duplicate only inflates the raw count |
 | `record_open` | `RecordsViewModel` on `OnRecordClick` | `record_type` | per open |
 | `field_copy` | `SingleRecordViewModel` on `OnFieldCopied` from `RowField` | `record_type`, `field` (a `FieldId` name, e.g. `login_password`; never a value) | per copy. Authenticator codes stay on `authenticator_copy_click` |
 | `record_share` | `SingleRecordViewModel` | `record_type` | per share |
