@@ -163,7 +163,7 @@ class LoginViewModel @Inject constructor(
             withBiometric = method == LoginMethod.BIOMETRIC,
         )
         analyticsHelper.logEvent(AnalyticsKey.LOGIN_SUCCESS) {
-            param(AnalyticsParam.METHOD, method.analyticsValue)
+            param(AnalyticsParam.LOGIN_METHOD, method.analyticsValue)
             param(AnalyticsParam.LOGIN_COUNT, loginCount)
         }
         _uiState.update {

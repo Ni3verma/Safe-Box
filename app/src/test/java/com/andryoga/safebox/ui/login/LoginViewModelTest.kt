@@ -399,7 +399,7 @@ class LoginViewModelTest {
         advanceUntilIdle()
 
         val params = capturedLoginSuccessParams()
-        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("password")
+        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password")
         assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(7)
     }
 
@@ -409,7 +409,7 @@ class LoginViewModelTest {
         advanceUntilIdle()
 
         val params = capturedLoginSuccessParams()
-        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("biometric")
+        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("biometric")
         assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(FIRST_LOGIN_ORDINAL)
         coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
     }
@@ -424,7 +424,7 @@ class LoginViewModelTest {
         advanceUntilIdle()
 
         val params = capturedLoginSuccessParams()
-        assertThat(params[AnalyticsParam.METHOD.paramName]).isEqualTo("password_reset")
+        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password_reset")
         // a reset is not a biometric unlock, so the biometric allowance is reset, not spent
         coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
     }

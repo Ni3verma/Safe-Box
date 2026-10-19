@@ -42,7 +42,7 @@ enum class AnalyticsKey(val eventName: String) {
     ADD_RECORD_TYPE_PICK("add_record_type_pick"),
     // a create form cleared without a save; AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT
     RECORD_FORM_ABANDON("record_form_abandon"),
-    // logged with AnalyticsParam.METHOD and AnalyticsParam.LOGIN_COUNT
+    // logged with AnalyticsParam.LOGIN_METHOD and AnalyticsParam.LOGIN_COUNT
     LOGIN_SUCCESS("login_success"),
     RECORD_OPEN("record_open"),
     // AnalyticsParam.RECORD_TYPE and AnalyticsParam.FIELD; TOTP codes stay on AUTHENTICATOR_COPY_CLICK

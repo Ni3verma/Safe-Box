@@ -38,7 +38,7 @@ question: did the user come back, and did a saved record ever get *used*?
 
 | Event | Fired by | Params | Bound |
 |---|---|---|---|
-| `login_success` | `LoginViewModel.onAuthSuccess`, the single exit of all three unlock paths | `method` ∈ {`password`, `biometric`, `password_reset`}, `login_count` (1-based ordinal of this login for the install) | per unlock. Sign-up itself is not a login, so the first `login_success` is the first *return* |
+| `login_success` | `LoginViewModel.onAuthSuccess`, the single exit of all three unlock paths | `login_method` ∈ {`password`, `biometric`, `password_reset`}, `login_count` (1-based ordinal of this login for the install) | per unlock. Sign-up itself is not a login, so the first `login_success` is the first *return* |
 | `record_open` | `RecordsViewModel` on `OnRecordClick` | `record_type` | per open |
 | `field_copy` | `SingleRecordViewModel` on `OnFieldCopied` from `RowField` | `record_type`, `field` (a `FieldId` name, e.g. `login_password`; never a value) | per copy. Authenticator codes stay on `authenticator_copy_click` |
 | `record_share` | `SingleRecordViewModel` | `record_type` | per share |
@@ -47,7 +47,7 @@ question: did the user come back, and did a saved record ever get *used*?
 
 `login_count` exists so that retention needs no BigQuery: an audience of users whose
 `login_success` has `login_count >= 3` is the returning cohort, and `login_failed` without a
-following `login_success` in the same session is a lockout. `method = password_reset` is the
+following `login_success` in the same session is a lockout. `login_method = password_reset` is the
 forgot-password recovery and is kept apart from `password` on purpose.
 
 ### Deliberately not logged
@@ -82,7 +82,7 @@ track, not when the first question comes up:
 | `source` | event-scoped dimension | which entry point the pick came from |
 | `record_type` | event-scoped dimension | breakdown of every record event |
 | `had_input` | event-scoped dimension | typed vs. untouched abandons |
-| `method` | event-scoped dimension | password / biometric / password_reset |
+| `login_method` | event-scoped dimension | password / biometric / password_reset |
 | `field` | event-scoped dimension | which field gets copied |
 | `login_count` | event-scoped **metric** | average logins per user; audiences use the raw param |
 

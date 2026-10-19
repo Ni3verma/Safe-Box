@@ -18,7 +18,7 @@ enum class AnalyticsParam(val paramName: String) {
     RECORD_TYPE("record_type"),
     HAD_INPUT("had_input"),
     // how the vault was unlocked
-    METHOD("method"),
+    LOGIN_METHOD("login_method"),
     // 1-based ordinal of a login for this install
     LOGIN_COUNT("login_count"),
     // lower-case field id name, never a value
