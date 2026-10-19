@@ -32,9 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.domain.models.record.RecordType
-import com.andryoga.safebox.ui.home.records.RecordScreenAction
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.andryoga.safebox.ui.utils.getDescription
@@ -42,27 +40,19 @@ import com.andryoga.safebox.ui.utils.getIcon
 import com.andryoga.safebox.ui.utils.getTitle
 
 /**
- * The records screen's body while the vault holds no record at all: for most users the first
- * screen after sign-up, and the app's only onboarding
- * (`docs/decisions/0010-empty-vault-is-the-onboarding.md`).
- *
- * It teaches by offering the action: one card per [RecordType] with a line on what it holds, each
- * opening that type's create form directly rather than through the bottom sheet, so a new user is
- * one tap from a form instead of two. Restore stays available for a reinstalling user, as a text
- * button under the intro: visible without scrolling, which the upgrade-test harness relies on
- * (it taps the button by label and never scrolls), yet not competing with the cards.
- *
- * Sends [RecordScreenAction.OnEmptyVaultShown] whenever it enters composition; the ViewModel
- * decides how often that is worth an analytics event.
+ * The records screen's body while the vault holds no record at all: one card per [RecordType]
+ * that opens that type's create form directly, with restore as a text button under the intro.
+ * Restore must stay visible without scrolling: the upgrade-test harness taps it by label.
  */
 @Composable
 fun EmptyVaultBody(
-    onRestoreFromBackup: () -> Unit,
-    onScreenAction: (RecordScreenAction) -> Unit,
+    onShown: () -> Unit,
+    onRecordTypeClick: (RecordType) -> Unit,
+    onRestoreClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LaunchedEffect(Unit) {
-        onScreenAction(RecordScreenAction.OnEmptyVaultShown)
+        onShown()
     }
     Column(
         modifier = modifier
@@ -94,7 +84,7 @@ fun EmptyVaultBody(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        TextButton(onClick = onRestoreFromBackup) {
+        TextButton(onClick = onRestoreClick) {
             Icon(
                 imageVector = Icons.Filled.Restore,
                 contentDescription = null,
@@ -107,25 +97,14 @@ fun EmptyVaultBody(
         RecordType.entries.forEach { recordType ->
             RecordTypeCard(
                 recordType = recordType,
-                onClick = {
-                    onScreenAction(
-                        RecordScreenAction.OnAddNewRecord(
-                            recordType = recordType,
-                            source = AnalyticsSource.EMPTY_VAULT,
-                        )
-                    )
-                },
+                onClick = { onRecordTypeClick(recordType) },
                 modifier = Modifier.padding(bottom = 8.dp),
             )
         }
     }
 }
 
-/**
- * One record type as a tappable row: icon, title, one-line description, chevron. The whole card
- * is the click target and its children merge into it, so the title alone identifies the card to
- * tests and to TalkBack.
- */
+/** One record type as a tappable row; the whole card is the click target, so its title identifies it. */
 @Composable
 private fun RecordTypeCard(
     recordType: RecordType,
@@ -175,8 +154,9 @@ private fun RecordTypeCard(
 private fun EmptyVaultBodyPreview() {
     SafeBoxTheme {
         EmptyVaultBody(
-            onRestoreFromBackup = {},
-            onScreenAction = {},
+            onShown = {},
+            onRecordTypeClick = {},
+            onRestoreClick = {},
         )
     }
 }

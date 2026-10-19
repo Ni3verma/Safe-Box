@@ -48,3 +48,6 @@ fun RecordType.getDescription(): String {
         }
     )
 }
+
+/** Analytics wire value (`login`, `bank_account`, …); append-only once an event has shipped. */
+fun RecordType.toAnalyticsValue(): String = name.lowercase()

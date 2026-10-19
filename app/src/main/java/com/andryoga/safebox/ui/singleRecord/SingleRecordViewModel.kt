@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.R
 import com.andryoga.safebox.analytics.AnalyticsHelper
-import com.andryoga.safebox.analytics.toAnalyticsValue
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
@@ -17,6 +16,7 @@ import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
+import com.andryoga.safebox.ui.utils.toAnalyticsValue
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -52,11 +52,7 @@ class SingleRecordViewModel @Inject constructor(
     private val recordType: RecordType
     private val isNewRecord: Boolean
 
-    /**
-     * Field values the create form opened with, captured when the plan loads. Comparing against
-     * them rather than against empty strings is what lets a QR-prefilled authenticator that was
-     * never touched report `had_input = false`.
-     */
+    /** What the create form opened with, so `had_input` means changed by the user, not non-empty. */
     private var initialFieldData: Map<FieldId, String> = emptyMap()
     private var isSaved = false
 
@@ -89,12 +85,7 @@ class SingleRecordViewModel @Inject constructor(
         }
     }
 
-    /**
-     * A create form whose ViewModel is cleared before a save is an abandoned form, whichever way
-     * it was left: back, the away timeout popping the home graph, or the activity finishing. The
-     * ViewModel outlives configuration changes, so a rotation is not counted. Process death fires
-     * nothing, which under-counts slightly rather than over-counting.
-     */
+    /** A create form cleared before a save was abandoned; a configuration change does not clear it. */
     override fun onCleared() {
         if (isNewRecord && !isSaved) {
             val currentFieldData = _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
@@ -143,7 +134,6 @@ class SingleRecordViewModel @Inject constructor(
                 Timber.i("delete clicked")
                 viewModelScope.launch {
                     layout.deleteLayout()
-                    // after the delete, like isSaved after the save: a failed delete is not one
                     analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
                         param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
                     }
@@ -178,7 +168,7 @@ class SingleRecordViewModel @Inject constructor(
             is SingleRecordScreenAction.OnFieldCopied -> {
                 analyticsHelper.logEvent(AnalyticsKey.FIELD_COPY) {
                     param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
-                    // the field's name, e.g. login_password; the value never leaves the device
+                    // field name only, never its value
                     param(AnalyticsParam.FIELD, action.fieldId.name.lowercase())
                 }
             }

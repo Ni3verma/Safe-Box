@@ -35,12 +35,7 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState = _uiState.asStateFlow()
 
-    /**
-     * Set while a password check is in flight. The Login button stays enabled during the check,
-     * so without this a second tap started a second coroutine and a correct password reached
-     * [onAuthSuccess] twice: two login counts, two backup requests, two events. Main-thread
-     * confined like every other ViewModel field, so no atomic is needed.
-     */
+    /** The Login button stays enabled during the password check; a second tap must not start another. */
     private var isLoginInProgress = false
 
     init {
@@ -158,12 +153,7 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    /**
-     * The single exit of every unlock path, so [AnalyticsKey.LOGIN_SUCCESS] is logged exactly
-     * once per unlock whichever way it happened. Idempotent: a second success arriving after the
-     * state is already [UserAuthState.VERIFIED] (a tap that slipped through, a late biometric
-     * callback) must not count a second login.
-     */
+    /** Single exit of every unlock path; a no-op once already verified, so one login counts once. */
     private suspend fun onAuthSuccess(method: LoginMethod) {
         if (_uiState.value.userAuthState == UserAuthState.VERIFIED) {
             Timber.i("already verified, ignoring a second ${method.analyticsValue} success")

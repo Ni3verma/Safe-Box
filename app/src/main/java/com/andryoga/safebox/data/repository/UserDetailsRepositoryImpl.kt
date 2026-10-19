@@ -60,8 +60,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
             max(0, newBiometricLoginCountRemaining)
         )
 
-        // the pref defaults to 1 and is stored post-increment, so the value read here is this
-        // login's 1-based ordinal: 1 on the first login after sign-up, 2 on the next
+        // the pref defaults to 1 and is stored post-increment, so this read is the login's ordinal
         val currLoginCount = preferenceProvider.getIntPref(CommonConstants.TOTAL_LOGIN_COUNT, 1)
         preferenceProvider.upsertIntPref(
             CommonConstants.TOTAL_LOGIN_COUNT,

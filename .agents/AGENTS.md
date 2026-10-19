@@ -12,6 +12,11 @@
   comments on trivial getters/setters).
 - Feel free to modify, clarify, or add new well-structured comments to make the code more readable
   and self-documenting where required.
+- **Comments stay local and short.** A comment states the invariant of the code it sits on, in one
+  or two lines. It does not explain other classes, product reasoning, or how a metric is read; that
+  belongs in `docs/` with a pointer at most. If a longer explanatory comment is useful for the
+  owner's first read of a change, mark it `// TODO(review): remove before merge` so it is stripped
+  before the PR lands. (Review feedback on #294, 2026-10-19.)
 
 ## Interaction Style & Tone
 

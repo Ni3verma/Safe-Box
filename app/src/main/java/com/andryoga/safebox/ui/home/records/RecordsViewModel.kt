@@ -6,7 +6,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
-import com.andryoga.safebox.analytics.toAnalyticsValue
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
@@ -24,6 +23,7 @@ import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.home.records.models.UserInputs
+import com.andryoga.safebox.ui.utils.toAnalyticsValue
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -105,11 +105,7 @@ class RecordsViewModel @Inject constructor(
 
     private val userInputs = MutableStateFlow(UserInputs())
 
-    /**
-     * Bounds [AnalyticsKey.EMPTY_VAULT_SHOW] to once per ViewModel. The empty layout re-enters
-     * composition every time the user comes back to the list, which would otherwise count a
-     * backed-out create form as another show.
-     */
+    /** The empty layout re-enters composition on every return to the list; log its show once. */
     private var isEmptyVaultShowLogged = false
 
     /**
@@ -126,7 +122,7 @@ class RecordsViewModel @Inject constructor(
     private val searchText: Flow<String> = snapshotFlow { searchTextState.text.toString() }
 
     init {
-        // one SEARCH_USED per unlock session: the first non-blank query ends this collector
+        // the first non-blank query ends this collector, so one event per ViewModel
         searchText
             .filter { it.isNotBlank() }
             .take(1)
@@ -203,8 +199,7 @@ class RecordsViewModel @Inject constructor(
                 updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
             }
 
-            // navigation is done in the UI layer; the pick is recorded here so both entry points
-            // (sheet and empty vault) land in one event, told apart by SOURCE
+            // navigation happens in the UI layer; only the event is recorded here
             is RecordScreenAction.OnAddNewRecord -> {
                 analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_TYPE_PICK) {
                     param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())
@@ -225,8 +220,6 @@ class RecordsViewModel @Inject constructor(
                 }
             }
 
-            // navigation is done in the UI layer; an open is the first sign a saved record was
-            // worth something, which is why it is logged at all
             is RecordScreenAction.OnRecordClick -> {
                 analyticsHelper.logEvent(AnalyticsKey.RECORD_OPEN) {
                     param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())

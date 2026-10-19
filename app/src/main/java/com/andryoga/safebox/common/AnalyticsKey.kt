@@ -34,39 +34,22 @@ enum class AnalyticsKey(val eventName: String) {
     NEW_BANK_ACCOUNT("new_bank_account"),
     NEW_AUTHENTICATOR("new_authenticator"),
 
-    // Post-signup activation funnel: the steps between SIGN_UP and the first NEW_* above. Firebase
-    // cannot see them on its own, because the whole app is one Activity and its automatic
-    // screen_view is therefore a single screen. See docs/analytics/activation-funnel.md.
-    // The empty vault (no records at all) was displayed. Once per records ViewModel, i.e. at
-    // most once per unlock session, so re-entering the list from an abandoned form is not a
-    // second show.
+    // activation funnel and retention; bounds and reading guide in docs/analytics/activation-funnel.md
+    // once per records ViewModel
     EMPTY_VAULT_SHOW("empty_vault_show"),
-    // the record-type bottom sheet opened from the list's add button. The empty vault opens no
-    // sheet: its type cards go straight to the form.
     ADD_RECORD_SHEET_SHOW("add_record_sheet_show"),
-    // a record type was chosen; logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.SOURCE
-    // (AnalyticsSource.ADD_RECORD_SHEET or EMPTY_VAULT) so the two entry points can be compared.
+    // logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.SOURCE
     ADD_RECORD_TYPE_PICK("add_record_type_pick"),
-    // a create form was left without saving: back, the away timeout, or any other way its
-    // ViewModel is cleared. Logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT,
-    // which is false when nothing was typed (including a QR-prefilled authenticator left as is).
+    // a create form cleared without a save; AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT
     RECORD_FORM_ABANDON("record_form_abandon"),
-
-    // Retention and value realisation: whether users come back, and whether a saved record is
-    // ever retrieved. Same doc as the funnel above.
-    // the vault was unlocked; logged with AnalyticsParam.METHOD (a LoginMethod) and
-    // AnalyticsParam.LOGIN_COUNT, the 1-based ordinal of this login, so "users on their third
-    // login or later" is a plain filter in Firebase. Pairs with LOGIN_FAILED.
+    // logged with AnalyticsParam.METHOD and AnalyticsParam.LOGIN_COUNT
     LOGIN_SUCCESS("login_success"),
-    // an existing record was opened from the list; AnalyticsParam.RECORD_TYPE
     RECORD_OPEN("record_open"),
-    // a field value was copied on the detail screen; AnalyticsParam.RECORD_TYPE and
-    // AnalyticsParam.FIELD (a FieldId name in lower case). Authenticator codes are not included:
-    // they stay on AUTHENTICATOR_COPY_CLICK.
+    // AnalyticsParam.RECORD_TYPE and AnalyticsParam.FIELD; TOTP codes stay on AUTHENTICATOR_COPY_CLICK
     FIELD_COPY("field_copy"),
     RECORD_SHARE("record_share"),
     RECORD_DELETE("record_delete"),
-    // the list was searched; once per records ViewModel, i.e. per unlock session
+    // once per records ViewModel
     SEARCH_USED("search_used"),
     DEVICE_SECURITY_REQUIRED_DIALOG_SHOW("device_security_required_dialog_show"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK("device_sec_dialog_open_settings_click"),

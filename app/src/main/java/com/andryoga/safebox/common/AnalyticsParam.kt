@@ -14,14 +14,13 @@ enum class AnalyticsParam(val paramName: String) {
     COUNT("count"),
     SOURCE("source"),
     REASON("reason"),
-    // a RecordType, as RecordType.toAnalyticsValue() renders it
+    // lower-case record type name
     RECORD_TYPE("record_type"),
-    // whether the user changed anything in a form before leaving it
     HAD_INPUT("had_input"),
-    // how the vault was unlocked, a LoginMethod.analyticsValue
+    // how the vault was unlocked
     METHOD("method"),
     // 1-based ordinal of a login for this install
     LOGIN_COUNT("login_count"),
-    // a FieldId name in lower case, never a field's value
+    // lower-case field id name, never a value
     FIELD("field"),
 }

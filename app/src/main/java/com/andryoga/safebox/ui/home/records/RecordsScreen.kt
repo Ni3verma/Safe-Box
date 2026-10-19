@@ -107,20 +107,12 @@ fun RecordsScreenRoot(
             notificationPermissionState = notificationPermissionState,
             onRestoreFromBackup = onRestoreFromBackup,
             onScreenAction = { action ->
+                viewModel.onScreenAction(action)
+                // navigation stays in the UI layer
                 when (action) {
-                    is RecordScreenAction.OnAddNewRecord -> {
-                        Timber.i("add new record action")
-                        // the ViewModel only records the pick; navigation stays here
-                        viewModel.onScreenAction(action)
-                        onAddNewRecord(action.recordType)
-                    }
-
-                    is RecordScreenAction.OnRecordClick -> {
-                        Timber.i("record click action")
-                        viewModel.onScreenAction(action)
-                        onRecordClick(action.id, action.recordType)
-                    }
-                    else -> viewModel.onScreenAction(action)
+                    is RecordScreenAction.OnAddNewRecord -> onAddNewRecord(action.recordType)
+                    is RecordScreenAction.OnRecordClick -> onRecordClick(action.id, action.recordType)
+                    else -> Unit
                 }
             },
             modifier = Modifier
@@ -198,8 +190,16 @@ private fun RecordsContent(
         when (body) {
             RecordsBody.LOADING -> LoadingBody()
             RecordsBody.EMPTY_VAULT -> EmptyVaultBody(
-                onRestoreFromBackup = onRestoreFromBackup,
-                onScreenAction = onScreenAction,
+                onShown = { onScreenAction(RecordScreenAction.OnEmptyVaultShown) },
+                onRecordTypeClick = { recordType ->
+                    onScreenAction(
+                        RecordScreenAction.OnAddNewRecord(
+                            recordType = recordType,
+                            source = AnalyticsSource.EMPTY_VAULT,
+                        )
+                    )
+                },
+                onRestoreClick = onRestoreFromBackup,
             )
             RecordsBody.LIST -> RecordsListBody(
                 uiState = uiState,

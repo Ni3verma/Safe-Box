@@ -13,7 +13,6 @@ package com.andryoga.safebox.common
 enum class AnalyticsSource(val value: String) {
     RECORDS_LIST("records_list"),
     RECORD_DETAIL("record_detail"),
-    // the two places a record type can be picked, see AnalyticsKey.ADD_RECORD_TYPE_PICK
     ADD_RECORD_SHEET("add_record_sheet"),
     EMPTY_VAULT("empty_vault"),
 }

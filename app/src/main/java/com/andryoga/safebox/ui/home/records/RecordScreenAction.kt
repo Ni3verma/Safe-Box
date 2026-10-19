@@ -12,12 +12,7 @@ sealed interface RecordScreenAction {
     data class OnUpdateShowAddNewRecordBottomSheet(val showAddNewRecordBottomSheet: Boolean) :
         RecordScreenAction
 
-    /**
-     * User picked a record type to create. Navigation is the UI layer's job; the ViewModel only
-     * records the pick.
-     *
-     * @param source which surface offered the type: the bottom sheet or the empty vault's cards.
-     */
+    /** User picked a record type to create; [source] is the surface that offered it. */
     data class OnAddNewRecord(
         val recordType: RecordType,
         val source: AnalyticsSource,
@@ -25,10 +20,7 @@ sealed interface RecordScreenAction {
     data class OnRecordClick(val id: Int, val recordType: RecordType) : RecordScreenAction
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
 
-    /**
-     * The empty-vault layout entered composition. Sent on every entry; the ViewModel decides how
-     * often that is worth an analytics event.
-     */
+    /** The empty-vault layout entered composition. */
     data object OnEmptyVaultShown : RecordScreenAction
 
     /** User copied the live one-time code from an authenticator row. */

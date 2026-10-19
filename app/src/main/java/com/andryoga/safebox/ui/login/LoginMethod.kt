@@ -1,19 +1,13 @@
 package com.andryoga.safebox.ui.login
 
-import com.andryoga.safebox.common.AnalyticsParam
-
 /**
- * How the vault was unlocked, as reported on `AnalyticsKey.LOGIN_SUCCESS`.
+ * How the vault was unlocked. Kept separate from the repository's `withBiometric` flag so the
+ * forgot-password recovery is not folded into plain password logins.
  *
- * Kept apart from the repository's `withBiometric` flag because a login that follows a master
- * password reset is neither a normal password login nor a biometric one, and conflating it with
- * `PASSWORD` would hide the recovery path in the numbers.
- *
- * @param analyticsValue wire value for [AnalyticsParam.METHOD]; append-only once shipped.
+ * @param analyticsValue wire value; append-only once shipped.
  */
 enum class LoginMethod(val analyticsValue: String) {
     PASSWORD("password"),
     BIOMETRIC("biometric"),
-    /** The forgot-password flow: device-credential auth, new master password, then unlocked. */
     PASSWORD_RESET("password_reset"),
 }
