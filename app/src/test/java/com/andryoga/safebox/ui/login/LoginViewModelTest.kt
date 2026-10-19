@@ -471,6 +471,25 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun secondSuccessWhileTheFirstIsStillInTheRepository_shouldNotCountASecondLogin() = runTest {
+        // the window between passing the guard and the state turning VERIFIED
+        val repositoryCall = CompletableDeferred<Int>()
+        coEvery { userDetailsRepository.checkPassword("password") } returns true
+        coEvery { userDetailsRepository.onAuthSuccess(any()) } coAnswers { repositoryCall.await() }
+
+        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+        advanceUntilIdle()
+        viewModel.onAction(LoginScreenAction.BiometricSuccess)
+        advanceUntilIdle()
+        repositoryCall.complete(FIRST_LOGIN_ORDINAL)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(any()) }
+        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
+        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+    }
+
+    @Test
     fun loginClickAfterAFailedAttempt_shouldStillAuthenticate() = runTest {
         coEvery { userDetailsRepository.checkPassword("wrong") } returns false
         coEvery { userDetailsRepository.checkPassword("right") } returns true

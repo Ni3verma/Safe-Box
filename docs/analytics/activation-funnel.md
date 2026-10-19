@@ -84,10 +84,12 @@ track, not when the first question comes up:
 | `had_input` | event-scoped dimension | typed vs. untouched abandons |
 | `login_method` | event-scoped dimension | password / biometric / password_reset |
 | `field` | event-scoped dimension | which field gets copied |
-| `login_count` | event-scoped **metric** | average logins per user; audiences use the raw param |
+| `login_count` | event-scoped dimension | exact-ordinal filters, e.g. a funnel step on `login_count = 2` for second-login retention. **Not a metric**: it is an ordinal, so a sum is `1 + 2 + 3`, not three logins. Average logins per user is `login_success` event count ÷ active users, both built in |
 
-Audience conditions can read raw parameters (including `login_count >= 3`) without registration;
-funnel breakdowns and tables cannot. Six definitions, against a free-tier quota of 50 of each.
+Audience conditions can read raw parameters without registration, and compare them numerically
+(`login_count >= 3`); a registered dimension is a string, so use it for exact values only.
+Funnel breakdowns and tables cannot use unregistered parameters at all. Six definitions, against a
+free-tier quota of 50 event-scoped dimensions.
 
 **Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
 **`0` / `1`**, not `true` / `false`, so a `had_input` breakdown has values `0` and `1`; `Int` params
@@ -103,7 +105,7 @@ arrive as numbers (`login_count=1`). This holds for the older boolean params too
 | Sheet conversion | Funnel, closed | `add_record_sheet_show` → `add_record_type_pick` where `source = add_record_sheet` | same for the sheet; compare the two step rates, not the raw counts |
 | Form friction | Funnel, closed | `add_record_type_pick` → `new_*`; compare with a free-form table of `record_form_abandon` by `record_type` × `had_input` | is the form the problem, and for which type |
 | Early removes | User segment, sequence | `first_open` → is followed by `app_remove`, **within 30 minutes** | expectation mismatch (same session) vs. retention (later) |
-| Returned, still empty | User segment | has `login_success` AND has `empty_vault_show` | came back at least once and still never saved: value, not bounce |
+| Returned, still empty | User segment, sequence | `login_success` is followed by `empty_vault_show`; **exclude** users with any `new_*`. The order matters: a user who saw the empty vault on day one, saved, and returned later also has both events | came back and found the vault still empty, and never saved: value, not bounce |
 | Returning cohort | Audience | `login_success` with `login_count >= 3` | retention without BigQuery |
 
 Why **closed**: step 1 is `first_open`, so in a closed funnel the population is exactly the users

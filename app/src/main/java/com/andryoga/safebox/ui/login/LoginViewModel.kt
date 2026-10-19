@@ -38,6 +38,9 @@ class LoginViewModel @Inject constructor(
     /** The Login button stays enabled during the password check; a second tap must not start another. */
     private var isLoginInProgress = false
 
+    /** Set once an unlock path has claimed success, before it suspends; a later path must not count again. */
+    private var isUnlockHandled = false
+
     init {
         if (isDebug) {
             _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
@@ -153,15 +156,19 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    /** Single exit of every unlock path; a no-op once already verified, so one login counts once. */
+    /** Single exit of every unlock path; claimed before the first suspension so one login counts once. */
     private suspend fun onAuthSuccess(method: LoginMethod) {
-        if (_uiState.value.userAuthState == UserAuthState.VERIFIED) {
-            Timber.i("already verified, ignoring a second ${method.analyticsValue} success")
+        if (isUnlockHandled) {
+            Timber.i("already unlocked, ignoring a second ${method.analyticsValue} success")
             return
         }
-        val loginCount = userDetailsRepository.onAuthSuccess(
-            withBiometric = method == LoginMethod.BIOMETRIC,
-        )
+        isUnlockHandled = true
+        val loginCount = try {
+            userDetailsRepository.onAuthSuccess(withBiometric = method == LoginMethod.BIOMETRIC)
+        } catch (e: Exception) {
+            isUnlockHandled = false
+            throw e
+        }
         analyticsHelper.logEvent(AnalyticsKey.LOGIN_SUCCESS) {
             param(AnalyticsParam.LOGIN_METHOD, method.analyticsValue)
             param(AnalyticsParam.LOGIN_COUNT, loginCount)
