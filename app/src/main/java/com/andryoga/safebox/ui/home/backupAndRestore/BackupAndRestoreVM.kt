@@ -38,8 +38,7 @@ class BackupAndRestoreVM @Inject constructor(
     val showBackupPathPermissionError = _showBackupPathPermissionError.receiveAsFlow()
 
     init {
-        val args = backupAndRestoreRouteProvider.getRoute()
-        if (args.startWithRestoreWorkflow) {
+        if (backupAndRestoreRouteProvider.consumeStartWithRestoreWorkflow()) {
             Timber.i("starting restore workflow directly")
             _startRestoreWorkflow.trySend(Unit)
         }

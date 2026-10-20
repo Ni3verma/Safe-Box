@@ -17,6 +17,8 @@ sealed interface HomeRouteType {
          * If restore workflow should be started immediately when backup and restore screen is opened.
          * e.g. use case: when user has installed app for the first time, he has no record.
          * On the records screen, he has an option to restore from  backup file.
+         * One-shot: read it through `BackupAndRestoreRouteProvider.consumeStartWithRestoreWorkflow()`,
+         * never directly, or a ViewModel recreated after process death replays it.
          * */
         val startWithRestoreWorkflow: Boolean = false
     ) : HomeRouteType

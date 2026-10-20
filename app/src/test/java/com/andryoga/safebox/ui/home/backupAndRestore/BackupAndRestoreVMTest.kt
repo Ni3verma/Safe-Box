@@ -8,7 +8,6 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.andryoga.safebox.ui.home.navigation.HomeRouteType.BackupAndRestoreRoute
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -50,8 +49,7 @@ class BackupAndRestoreVMTest {
     }
 
     private fun initViewModel(startWithRestore: Boolean = false) {
-        val route = BackupAndRestoreRoute(startWithRestore)
-        every { backupAndRestoreRouteProvider.getRoute() } returns route
+        every { backupAndRestoreRouteProvider.consumeStartWithRestoreWorkflow() } returns startWithRestore
         viewModel = BackupAndRestoreVM(
             backupMetadataRepository,
             activeSessionManager,
