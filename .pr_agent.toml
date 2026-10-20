@@ -10,10 +10,6 @@ reasoning_effort = "high"
 repo_context_files = [".agents/AGENTS.md", ".agents/PROJECT_FACTS.md"]
 repo_context_max_lines = 600
 restricted_mode = true
-# TODO(review): remove before merge - dumps prompts and responses into the job log.
-verbosity_level = 2
-# TODO(review): remove before merge - appends the effective config to each bot comment.
-output_relevant_configurations = true
 
 [github_app]
 pr_commands = [
