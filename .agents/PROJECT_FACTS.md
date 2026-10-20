@@ -146,6 +146,6 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
   funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
-- A new Android module can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also
-  declares it `apply false`**; otherwise Gradle fails with "the plugin is already on the classpath
-  with an unknown version", because AGP arrives a second time via the root `buildscript` classpath. (2026-09-22)
+- GA drops an **unregistered event param from every report, with no backfill**; only CI release
+  builds reach the property. IDs, BigQuery dataset, registered definitions and query recipes:
+  [firebase-setup.md](../docs/analytics/firebase-setup.md). (2026-10-20)

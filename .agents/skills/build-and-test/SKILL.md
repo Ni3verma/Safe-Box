@@ -319,6 +319,13 @@ sets one. Driving it has three traps (main thread, a persisted prompted-version 
 consent result ever arriving); see
 [in-app-updates.md](../../../docs/architecture/in-app-updates.md#driving-the-fake-in-instrumentation-tests).
 
+### A new module's `alias(libs.plugins.android.*)` needs a root `apply false`
+
+A new Android module can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also
+declares it `apply false`**; otherwise Gradle fails with "the plugin is already on the classpath
+with an unknown version", because AGP arrives a second time via the root `buildscript` classpath.
+(Hit while adding `:upgrade-test`, 2026-09-22.)
+
 ## Selector strategy for UI tests
 
 Everything is found by text or content description, which is why the existing suite is

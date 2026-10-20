@@ -73,28 +73,19 @@ forgot-password recovery and is kept apart from `password` on purpose.
 ### Before the release ships: register the parameters
 
 GA4 does not expose event parameters in Explorations until each is registered as a custom
-definition (Admin → Custom definitions), and registration is **not retroactive**: data collected
-before it has no value for that dimension. Register these the day the build goes to a testing
-track, not when the first question comes up:
+definition, and registration is **not retroactive**: data collected before it has no value for that
+dimension. The register of what is registered, wire formats and the BigQuery fallback are in
+[firebase-setup.md](firebase-setup.md#custom-definitions). Two funnel-specific points:
 
-| Parameter | Register as | Used for |
-|---|---|---|
-| `source` | event-scoped dimension | which entry point the pick came from |
-| `record_type` | event-scoped dimension | breakdown of every record event |
-| `had_input` | event-scoped dimension | typed vs. untouched abandons |
-| `login_method` | event-scoped dimension | password / biometric / password_reset |
-| `field` | event-scoped dimension | which field gets copied |
-| `login_count` | event-scoped dimension | exact-ordinal filters, e.g. a funnel step on `login_count = 2` for second-login retention. **Not a metric**: it is an ordinal, so a sum is `1 + 2 + 3`, not three logins. Average logins per user is `login_success` event count ÷ active users, both built in |
+- `login_count` is an event-scoped **dimension, not a metric**: it is an ordinal, so a sum is
+  `1 + 2 + 3`, not three logins. Average logins per user is `login_success` event count ÷ active
+  users, both built in. Use it for exact-ordinal filters, e.g. a funnel step on `login_count = 2`
+  for second-login retention.
+- Audience conditions can read raw parameters without registration, and compare them numerically
+  (`login_count >= 3`); a registered dimension is a string, so use it for exact values only.
+  Funnel breakdowns and tables cannot use unregistered parameters at all.
 
-Audience conditions can read raw parameters without registration, and compare them numerically
-(`login_count >= 3`); a registered dimension is a string, so use it for exact values only.
-Funnel breakdowns and tables cannot use unregistered parameters at all. Six definitions, against a
-free-tier quota of 50 event-scoped dimensions.
-
-**Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
-**`0` / `1`**, not `true` / `false`, so a `had_input` breakdown has values `0` and `1`; `Int` params
-arrive as numbers (`login_count=1`). This holds for the older boolean params too
-(`do_not_ask_again`, `is_enabled`).
+Booleans arrive as **`0` / `1`**, so a `had_input` breakdown has values `0` and `1`.
 
 ### The explorations
 
@@ -157,4 +148,7 @@ noise.
   (`isEmptyVaultShowLogged` is the template).
 - Add a ViewModel unit test asserting the event and its params (`capturedParams` in
   `RecordsViewModelTest`, `FakeAnalyticsHelper` in `SingleRecordViewModelTest`).
+- A new param must be registered as a GA custom definition the day the build reaches a testing
+  track, and added to the register in [firebase-setup.md](firebase-setup.md#custom-definitions).
+  Say so in the PR; it is a console step the owner does, and it is not retroactive.
 - Update the table above.

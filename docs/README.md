@@ -40,6 +40,9 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 - [Post-signup activation funnel](analytics/activation-funnel.md) — why every funnel step is an
   explicit event in this single-Activity app, what each event means and is bounded by, what was
   deliberately not logged, and how to read the Firebase funnel into a decision.
+- [Firebase, GA and BigQuery setup](analytics/firebase-setup.md) — project and property
+  identifiers, the BigQuery export and its sandbox limits, which parameters are registered as
+  custom definitions, where a parameter's value can be seen, and query recipes.
 
 ## Decisions
 
