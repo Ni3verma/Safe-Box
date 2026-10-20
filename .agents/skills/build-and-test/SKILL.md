@@ -301,6 +301,26 @@ Do not attempt to run the existing suite against the `qa` (minified) build. It f
 [ADR-0001](../../../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md). Read that
 before re-investigating.
 
+### The CI image cannot have a lock screen, and API 24 has no `locksettings`
+
+The GMD `aosp-atd` image (`pixel8Api34`, also when booted by hand) has no
+`android.software.secure_lock_screen`: `locksettings set-pin` answers *"The device does not
+support lock screen - ignoring the command"*, `isDeviceSecure` stays false, and any Keystore key
+with `setUserAuthenticationRequired(true)` fails to generate. Tests that need a PIN or a
+biometric must use a `google_apis` image. On the API 24 `google_apis` image the `locksettings`
+binary does not exist at all (present on API 28 and later; 26–27 not checked); set the PIN through *Settings → Security →
+Screen lock*. Do **not** probe for it from a test: running a missing binary through
+`UiAutomation.executeShellCommand` killed the whole instrumentation (`Killed` in the `am
+instrument` stream, twice). Verified 2026-10-21, [ADR-0011](../../../docs/decisions/0011-envelope-encryption-spike-results.md) S8.
+
+### Simulated fingerprints on emulators
+
+`adb -s emulator-NNNN emu finger touch <id>` enrols and authenticates on the API 24–30
+`google_apis` images (enrol first in Settings; the finger id is whatever you touched during
+enrolment). The console is also reachable from inside the guest at `10.0.2.2:<console port>`
+after `auth <token>` with the token from `~/.emulator_console_auth_token`, which lets an
+instrumentation test trigger its own touch; the app needs `INTERNET` for that socket.
+
 ### KSP ordering for androidTest
 
 `app/build.gradle` has an explicit `dependsOn("kspDebugAndroidTestKotlin")` wiring for

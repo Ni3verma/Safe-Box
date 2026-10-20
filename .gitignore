@@ -20,3 +20,7 @@ app/releaseKeyStore.jks
 # composited store images under screenshots/readme/ are committed.
 /screenshots/raw/
 /screenshots/preview.html
+# Local-only working area for temporary APKs, .bak files, seeds, DB dumps, emulator snapshots and
+# spike code (docs/design/envelope-encryption.md §15.2). Anything worth sharing goes through the
+# harness paths (upgrade-test/fixtures/ via scripts/update-seed.sh), never from here.
+/scratch/
