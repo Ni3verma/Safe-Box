@@ -42,7 +42,7 @@ require_tests_review = true
 extra_instructions = """\
 Apply the project rules supplied as repository context (.agents/AGENTS.md, .agents/PROJECT_FACTS.md).
 Prioritise correctness bugs, Room/backup/crypto invariants, Compose state handling, coroutine and dispatcher misuse, missing unit tests for new ViewModel logic and analytics events, and knowledge-base files the change should have updated.
-In markdown files, flag only statements that contradict the code change or a verifiable fact; never comment on wording, structure or style.
+In markdown files, flag a statement that contradicts the code, another statement in the docs, or a verifiable technical fact, quoting both sides; never comment on wording, structure or style.
 Report only findings verified against the diff; do not restate rules the diff already follows.\
 """
 
@@ -51,6 +51,6 @@ num_code_suggestions_per_chunk = 8
 commitable_code_suggestions = true
 extra_instructions = """\
 Follow the project rules supplied as repository context (.agents/AGENTS.md): trailing commas on multi-line declarations, imports instead of fully qualified names, an injected DispatchersProvider instead of hardcoded Dispatchers, KDoc on new classes, no extra blank lines.
-Do not suggest edits to markdown files unless the text contradicts the code change.
+Suggest an edit to a markdown file only to fix a contradiction with the code, with another statement in the docs, or with a verifiable technical fact.
 Suggest only changes that fix a bug, a stated rule or a real maintainability problem; skip equivalent rewrites.\
 """
