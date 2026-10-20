@@ -6,6 +6,7 @@ import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 
+// TODO(MR3): delete with logKeystoreKeyCreated (debt D12).
 class SecurityModuleTelemetryTest {
 
     private val analyticsHelper = FakeAnalyticsHelper()

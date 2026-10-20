@@ -78,7 +78,11 @@ object SecurityModule {
         keyStore.load(null)
 
         if (!keyStore.containsAlias(alias)) {
-            onKeyGenerated()
+            try {
+                onKeyGenerated()
+            } catch (_: Exception) {
+                // telemetry only: a failing hook must not stop the key from being generated
+            }
             val keyGenerator =
                 KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
             val keyGenParameterSpec = KeyGenParameterSpec.Builder(
@@ -105,8 +109,11 @@ object SecurityModule {
  *
  * @param dbExists whether the Room database file already existed. `true` is the signature of the
  * silent-data-loss case: a vault exists but the key that encrypted it is gone, and the fresh key
- * cannot read it. `false` is an ordinary first launch.
+ * cannot read it. `false` is an ordinary first launch. Room creates the file on its first query,
+ * not at startup, and the key is requested when the first `*DaoSecure` is constructed, so on a
+ * first launch this is read before the file exists (verified on a fresh install, 2026-10-20).
  */
+// TODO(MR3): delete with the regenerate branch in SecurityModule (debt D12).
 internal fun logKeystoreKeyCreated(analyticsHelper: AnalyticsHelper, dbExists: Boolean) {
     analyticsHelper.logEvent(AnalyticsKey.KEYSTORE_KEY_CREATED) {
         param(AnalyticsParam.DB_EXISTS, dbExists)
