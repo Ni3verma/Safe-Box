@@ -157,9 +157,10 @@ WHERE event_name = 'session_timeout'
 GROUP BY worker_running;
 ```
 
-`-1` means "could not be read" for `db_size_kb`, `free_space_mb` and `size_kb`. Recipes 4 and 6
-drop it inside the parameter sub-select, before any `MIN`, `MAX` or quantile sees it; copy that
-pattern into any new query over these three.
+`-1` means "could not be read" for `db_size_kb` and `free_space_mb`, and "the document provider did
+not report a length" for `size_kb` — the backup itself was written. Recipes 4 and 6 drop it inside
+the parameter sub-select, before any `MIN`, `MAX` or quantile sees it; copy that pattern into any
+new query over these three.
 
 ## Before the carrying build reaches a testing track
 

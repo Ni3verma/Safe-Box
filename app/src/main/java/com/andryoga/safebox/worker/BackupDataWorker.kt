@@ -320,7 +320,7 @@ class BackupDataWorker
      * for analytics only; the write itself is unchanged.
      */
     private suspend fun exportToFile(
-        pickedDir: DocumentFile
+        pickedDir: DocumentFile,
     ): Long = withContext(dispatchersProvider.io) {
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
