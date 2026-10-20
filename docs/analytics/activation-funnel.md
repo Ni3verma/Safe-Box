@@ -148,7 +148,7 @@ noise.
   (`isEmptyVaultShowLogged` is the template).
 - Add a ViewModel unit test asserting the event and its params (`capturedParams` in
   `RecordsViewModelTest`, `FakeAnalyticsHelper` in `SingleRecordViewModelTest`).
-- A new param must be registered as a GA custom definition the day the build reaches a testing
+- A new param must be registered as a GA custom definition before the build reaches a testing
   track, and added to the register in [firebase-setup.md](firebase-setup.md#custom-definitions).
   Say so in the PR; it is a console step the owner does, and it is not retroactive.
 - Update the table above.

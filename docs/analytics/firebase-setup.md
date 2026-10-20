@@ -46,11 +46,13 @@ link date is exported. (Observed 2026-10-20; confirm the dataset exists and upda
 
 ## Custom definitions
 
-GA keeps an event parameter only if a custom definition for it existed when the event was collected.
-Unregistered parameters never appear in Events cards or Explorations and are **never backfilled**;
-before the BigQuery link they were unrecoverable, which is how the `reason` of every
+GA reports an event parameter only if a custom definition for it existed when the event was
+collected. Unregistered parameters never appear in Events cards or Explorations and are **never
+backfilled**; they stay visible only in Realtime (30 minutes), on-device logcat and BigQuery. Before
+the BigQuery link they were unrecoverable, which is how the `reason` of every
 `backup_failure_dialog_show` before 2026-10-20 was lost. So **a new `AnalyticsParam` is registered
-the day the build reaches a testing track**, and the PR that adds it says so.
+before the build reaches a testing track**, and the PR that adds it says so. The form accepts a
+parameter name GA has not seen yet.
 
 Registered on 2026-10-20 (GA Admin → Custom definitions), all **event-scoped**, dimension name =
 parameter name:
@@ -100,7 +102,8 @@ read raw parameters without registration and compare them numerically.
 
 Run in Cloud console → BigQuery → SQL workspace with project `andryoga-safe-box` selected. In the
 Explorer, `analytics_286937401` → `events_(N)` → **Query** opens an editor with the exact table path
-pre-filled; replace the date suffix with `*`. The wildcard also matches `events_intraday_*`.
+pre-filled; replace the date suffix with `*`. The wildcard would also match `events_intraday_*`,
+which only exist while streaming export is on (it is off).
 
 Parameters live in the `event_params` array: strings in `value.string_value`, booleans and ints in
 `value.int_value`, `version` in `value.double_value`.
@@ -124,6 +127,8 @@ ORDER BY event_name, n DESC;
  FROM UNNEST(event_params) WHERE key = 'version') AS version
 ```
 
-A `NULL` parameter means the event came from a build that did not log it yet. Add
-`AND _TABLE_SUFFIX BETWEEN '20261020' AND '20261031'` to bound the scan; at this volume it is
-a cost of nothing either way.
+Read `NULL` per event and parameter: `message` is only logged by `backup_data_failure`, so it is
+always `NULL` for `backup_failure_dialog_show`; a `NULL` `reason` means the event came from a build
+that did not log it yet. Add `AND _TABLE_SUFFIX BETWEEN '20261020' AND '20261031'` to bound the
+scan to daily tables (an intraday suffix starts with `intraday_`, so it falls outside the range); at
+this volume it is a cost of nothing either way.
