@@ -16,7 +16,7 @@ truth = "1.4.5"
 turbine = "1.2.1"
 
 composeBom = "2026.09.00"
-firebaseBom = "35.0.0"
+firebaseBom = "35.0.2"
 
 kotlinComposeCompiler = "2.4.21"
 ksp = "2.3.12"
