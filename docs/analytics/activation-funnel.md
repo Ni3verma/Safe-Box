@@ -100,7 +100,7 @@ arrive as numbers (`login_count=1`). This holds for the older boolean params too
 
 | Exploration | Type | Definition | Question it answers |
 |---|---|---|---|
-| Activation | Funnel, **closed**, elapsed time on | `first_open` → `sign_up` → `empty_vault_show` → `add_record_type_pick` → [`new_login` OR `new_card` OR `new_bank_account` OR `new_note` OR `new_authenticator`] | where new installs drop, and how long each step takes |
+| Activation | Funnel, **closed**, elapsed time on | `first_open` → `sign_up` → `empty_vault_show` → `add_record_type_pick` → [`new_login` OR `new_bank_card` OR `new_bank_account` OR `new_secure_note` OR `new_authenticator`] | where new installs drop, and how long each step takes |
 | Empty-vault conversion | Funnel, closed | `empty_vault_show` → `add_record_type_pick` where `source = empty_vault` | how many who saw the cards used one. A `source` breakdown on the activation funnel cannot answer this: users who never picked carry no `source`, and GA4 assigns breakdown values from the first step that has one |
 | Sheet conversion | Funnel, closed | `add_record_sheet_show` → `add_record_type_pick` where `source = add_record_sheet` | same for the sheet; compare the two step rates, not the raw counts |
 | Form friction | Funnel, closed | `add_record_type_pick` → `new_*`; compare with a free-form table of `record_form_abandon` by `record_type` × `had_input` | is the form the problem, and for which type |
