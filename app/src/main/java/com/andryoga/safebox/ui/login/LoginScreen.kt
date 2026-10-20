@@ -120,6 +120,7 @@ internal fun LoginScreen(
                 screenAction = screenAction,
                 onForgotPasswordClick = {
                     Timber.i("forgot password clicked on login screen, checking device security auth availability")
+                    screenAction(LoginScreenAction.ForgotPasswordClicked)
                     if (
                         canAuthenticateUsingDeviceSecurity(
                             context,

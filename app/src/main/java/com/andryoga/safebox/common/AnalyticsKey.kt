@@ -105,4 +105,26 @@ enum class AnalyticsKey(val eventName: String) {
     // Play refused to install a downloaded update, after the Restart tap or the silent attempt.
     // At most once per trigger, so at most twice per process.
     IN_APP_UPDATE_COMPLETE_FAILED("in_app_update_complete_failed"),
+
+    // Envelope-encryption readiness. Logging only; read-back and the decisions each one feeds are
+    // in docs/analytics/envelope-readiness.md.
+    // a stored field failed to decrypt under the Keystore key; AnalyticsParam.EXCEPTION. Once per
+    // exception class per process, so a broken list of many rows is one event, not many.
+    RECORD_DECRYPT_FAILURE("record_decrypt_failure"),
+
+    // the Keystore alias was absent and a fresh key was generated; AnalyticsParam.DB_EXISTS tells
+    // a first launch (0) from the silent-data-loss case where a vault already existed (1).
+    // TODO(MR3): delete with the regenerate branch in SecurityModule; its only firing site.
+    KEYSTORE_KEY_CREATED("keystore_key_created"),
+
+    // vault size and storage headroom; RECORD_COUNT, DB_SIZE_KB, FREE_SPACE_MB. Once per records
+    // ViewModel, i.e. per unlock session.
+    VAULT_STATS("vault_stats"),
+
+    // the Forgot password button on the login screen, before any device-security check
+    FORGOT_PASSWORD_CLICK("forgot_password_click"),
+
+    // the away timeout fired; AnalyticsParam.WORKER_RUNNING says whether a backup or restore was
+    // in progress at that moment
+    SESSION_TIMEOUT("session_timeout"),
 }

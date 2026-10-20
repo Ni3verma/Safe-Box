@@ -54,7 +54,10 @@ upgrade test must be `qa → qa`.
 - Field encryption: AES-GCM key in `AndroidKeyStore` under alias **`symmetricDataKey`**
   (`di/SecurityModule.kt`). The provider does `if (!keyStore.containsAlias(alias)) generateKey()`,
   so a lost alias **silently regenerates** and every stored record becomes undecryptable with no
-  error. This is the single highest-severity failure mode in the app.
+  error. This is the single highest-severity failure mode in the app. Since 2026-10-20 it is at
+  least visible: `keystore_key_created` with `db_exists = 1`, and `record_decrypt_failure` from the
+  decorator around `SymmetricKeyUtilsImpl`
+  ([envelope-readiness.md](../docs/analytics/envelope-readiness.md)).
 - `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
   `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
   export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until
@@ -146,6 +149,3 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
   funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
-- GA drops an **unregistered event param from every report, with no backfill**; only CI release
-  builds reach the property. IDs, BigQuery dataset, registered definitions and query recipes:
-  [firebase-setup.md](../docs/analytics/firebase-setup.md). (2026-10-20)

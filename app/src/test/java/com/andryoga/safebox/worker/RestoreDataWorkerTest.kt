@@ -197,7 +197,10 @@ class RestoreDataWorkerTest {
                 },
             )
         }
-        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isTrue()
+        val successEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RESTORE_DATA_SUCCESS }
+        assertThat(successEvent.params[AnalyticsParam.VERSION.paramName])
+            .isEqualTo(CommonConstants.BACKUP_VERSION.toDouble())
+        assertThat(successEvent.params[AnalyticsParam.DURATION_MS.paramName] as Long).isAtLeast(0L)
     }
 
     @Test

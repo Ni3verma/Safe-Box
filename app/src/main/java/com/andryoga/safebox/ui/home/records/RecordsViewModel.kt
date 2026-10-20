@@ -11,6 +11,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
+import com.andryoga.safebox.common.VaultStorageStats
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -53,10 +55,11 @@ class RecordsViewModel @Inject constructor(
     loginDataRepository: LoginDataRepository,
     cardDataRepository: BankCardDataRepository,
     authenticatorDataRepository: AuthenticatorDataRepository,
-    dispatchersProvider: DispatchersProvider,
+    private val dispatchersProvider: DispatchersProvider,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val preferenceProvider: PreferenceProvider,
     private val analyticsHelper: AnalyticsHelper,
+    private val vaultStorageStats: VaultStorageStats,
     val inAppReviewManager: Lazy<InAppReviewManager>,
 ) : ViewModel() {
     private val _notificationPermissionState = MutableStateFlow(
@@ -100,6 +103,8 @@ class RecordsViewModel @Inject constructor(
                 authenticatorData.map { it.toRecordListItem() }
         combinedList.sortedBy { it.title.lowercase() }
     }
+        // sits inside the shared pipeline so it runs only once a collector exists
+        .onEach { logVaultStatsOnce(recordCount = it.size) }
         .flowOn(dispatchersProvider.default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
@@ -107,6 +112,9 @@ class RecordsViewModel @Inject constructor(
 
     /** The empty layout re-enters composition on every return to the list; log its show once. */
     private var isEmptyVaultShowLogged = false
+
+    /** The pipeline above re-emits on every record change; the vault size is logged once per ViewModel. */
+    private val isVaultStatsLogged = AtomicBoolean(false)
 
     /**
      * Driving state of the search bar, owned here so it survives navigation to a record and back.
@@ -316,6 +324,26 @@ class RecordsViewModel @Inject constructor(
                 }
 
             it.copy(recordTypeFilters = newFilterState)
+        }
+    }
+
+    /**
+     * Logs [AnalyticsKey.VAULT_STATS] for the first record list this ViewModel sees.
+     *
+     * @param recordCount records across all five types, from the list that just arrived.
+     */
+    private fun logVaultStatsOnce(recordCount: Int) {
+        if (!isVaultStatsLogged.compareAndSet(false, true)) return
+        viewModelScope.launch(dispatchersProvider.io) {
+            // telemetry only: a failed storage read costs the two size params, nothing else
+            val storage = runCatching { vaultStorageStats.snapshot() }.getOrNull()
+            analyticsHelper.logEvent(AnalyticsKey.VAULT_STATS) {
+                param(AnalyticsParam.RECORD_COUNT, recordCount)
+                if (storage != null) {
+                    param(AnalyticsParam.DB_SIZE_KB, storage.dbSizeKb)
+                    param(AnalyticsParam.FREE_SPACE_MB, storage.freeSpaceMb)
+                }
+            }
         }
     }
 

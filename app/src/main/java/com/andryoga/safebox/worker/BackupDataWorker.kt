@@ -112,6 +112,7 @@ class BackupDataWorker
      */
     private suspend fun backup(backupMetadata: BackupPathData): Result {
         startTime = System.currentTimeMillis()
+        val backupStartedAt = startTime
 
         val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
             ?: throw IllegalArgumentException("expected password input was not received")
@@ -173,7 +174,7 @@ class BackupDataWorker
             authenticatorData,
         )
 
-        try {
+        val writtenBytes = try {
             deleteExtraBackupFiles(pickedDir)
             exportToFile(pickedDir)
         } catch (exception: CancellationException) {
@@ -187,7 +188,14 @@ class BackupDataWorker
         sendNotification(
             getNotificationOptions(applicationContext.getString(R.string.notification_backup_success))
         )
-        analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_SUCCESS)
+        analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_SUCCESS) {
+            param(AnalyticsParam.VERSION, CommonConstants.BACKUP_VERSION.toDouble())
+            param(AnalyticsParam.DURATION_MS, System.currentTimeMillis() - backupStartedAt)
+            param(
+                AnalyticsParam.SIZE_KB,
+                if (writtenBytes < 0) UNKNOWN_SIZE else writtenBytes / BYTES_PER_KIB,
+            )
+        }
         return Result.success()
     }
 
@@ -305,9 +313,15 @@ class BackupDataWorker
             }
         }
 
+    /**
+     * Writes the export map to a new file in [pickedDir].
+     *
+     * @return the written file's size in bytes, or -1 when the provider cannot report it. Read
+     * for analytics only; the write itself is unchanged.
+     */
     private suspend fun exportToFile(
         pickedDir: DocumentFile
-    ) = withContext(dispatchersProvider.io) {
+    ): Long = withContext(dispatchersProvider.io) {
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
         val fileName = "SafeBoxBackup$nameSuffix"
@@ -320,6 +334,7 @@ class BackupDataWorker
                 Timber.i("$localTag writing to backup file")
                 it.writeObject(exportMap)
             }
+            targetFile.length()
         } else {
             Timber.i("$localTag  creating file")
             val file = pickedDir.createFile("application/octet-stream", fileName)
@@ -336,6 +351,8 @@ class BackupDataWorker
                     it.writeObject(exportMap)
                 }
             } ?: throw IOException("Failed to open file descriptor for URI: $fileUri")
+            // telemetry only: a provider that cannot answer must not fail a backup that was written
+            runCatching { file.length() }.getOrDefault(UNKNOWN_SIZE)
         }
     }
 
@@ -463,6 +480,11 @@ class BackupDataWorker
     }
 
     companion object {
+        private const val BYTES_PER_KIB = 1024L
+
+        /** `size_kb` when the document provider cannot report the written file's length. */
+        private const val UNKNOWN_SIZE = -1L
+
         fun enqueueRequest(
             password: String,
             showBackupStartNotification: Boolean,

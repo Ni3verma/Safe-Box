@@ -12,6 +12,8 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.VaultStorageSnapshot
+import com.andryoga.safebox.common.VaultStorageStats
 import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -85,6 +87,9 @@ class RecordsViewModelTest {
     @MockK
     lateinit var analyticsHelper: AnalyticsHelper
 
+    @MockK
+    lateinit var vaultStorageStats: VaultStorageStats
+
     private lateinit var viewModel: RecordsViewModel
     private val bankAccountDataFlow = MutableSharedFlow<List<SearchBankAccountData>>(replay = 1)
     private val secureNoteDataFlow = MutableSharedFlow<List<SearchSecureNoteData>>(replay = 1)
@@ -104,6 +109,10 @@ class RecordsViewModelTest {
         every { authenticatorDataRepository.getAllAuthenticatorData() } returns authenticatorDataFlow
         // SEARCH_USED fires from the search flow that most tests type into
         every { analyticsHelper.logEvent(any()) } just runs
+        // VAULT_STATS fires from the record pipeline that most tests collect
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+        every { vaultStorageStats.snapshot() } returns
+            VaultStorageSnapshot(dbSizeKb = 120, freeSpaceMb = 2048)
 
         viewModel = RecordsViewModel(
             bankAccountDataRepository,
@@ -115,6 +124,7 @@ class RecordsViewModelTest {
             backupMetadataRepository,
             preferenceProvider,
             analyticsHelper,
+            vaultStorageStats,
             inAppReviewManager,
         )
     }
@@ -717,6 +727,48 @@ class RecordsViewModelTest {
         advanceUntilIdle()
 
         verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
+    }
+
+    @Test
+    fun firstRecordList_shouldLogVaultStatsOnceWithRecordCountAndStorage() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            setupAndEmitDefaultRecords()
+
+            val params = capturedParams(AnalyticsKey.VAULT_STATS)
+            assertThat(params[AnalyticsParam.RECORD_COUNT.paramName]).isEqualTo(8)
+            assertThat(params[AnalyticsParam.DB_SIZE_KB.paramName]).isEqualTo(120L)
+            assertThat(params[AnalyticsParam.FREE_SPACE_MB.paramName]).isEqualTo(2048L)
+
+            // the pipeline re-emits on every db change; the event must not
+            loginDataFlow.emit(getLoginDataList(3))
+            advanceUntilIdle()
+            verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.VAULT_STATS), any()) }
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun storageReadThrows_shouldStillLogVaultStatsWithRecordCountOnly() = runTest {
+        every { vaultStorageStats.snapshot() } throws IllegalStateException("no db file")
+
+        viewModel.uiState.test {
+            awaitItem()
+            setupAndEmitEmptyRecords()
+
+            val params = capturedParams(AnalyticsKey.VAULT_STATS)
+            assertThat(params[AnalyticsParam.RECORD_COUNT.paramName]).isEqualTo(0)
+            assertThat(params).doesNotContainKey(AnalyticsParam.DB_SIZE_KB.paramName)
+            assertThat(params).doesNotContainKey(AnalyticsParam.FREE_SPACE_MB.paramName)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun noUiStateCollector_shouldNotLogVaultStats() = runTest {
+        setupAndEmitDefaultRecords()
+
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.VAULT_STATS), any()) }
     }
 
     @Test

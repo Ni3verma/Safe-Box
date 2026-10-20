@@ -7,9 +7,11 @@ import androidx.work.WorkManager
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
+import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.worker.BackupDataWorker
@@ -30,6 +32,7 @@ class LoginViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
     private val activeSessionManager: ActiveSessionManager,
+    private val deviceSecurityStatus: DeviceSecurityStatus,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -49,36 +52,47 @@ class LoginViewModel @Inject constructor(
             LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
             LoginScreenAction.BiometricError -> onBiometricError()
             is LoginScreenAction.OnResetPassword -> onResetPassword(action.newPassword, action.hint)
+            LoginScreenAction.ForgotPasswordClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK)
+            }
+
             LoginScreenAction.OnDeviceSecurityRequiredDialogShown -> {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
+                logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
             }
 
             LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked -> {
                 activeSessionManager.setPaused(true)
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+                logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
             }
 
             LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed -> {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+                logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
             }
 
             LoginScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+                logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
             }
 
             LoginScreenAction.OnUpdatePasswordDialogShown -> {
-                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
+                logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
             }
 
             LoginScreenAction.OnUpdatePasswordDismissClicked -> {
-                analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
+                logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
             }
+        }
+    }
+
+    /** The same dialog events are raised from Settings; `source` keeps the two apart in Firebase. */
+    private fun logFromLoginScreen(key: AnalyticsKey) {
+        analyticsHelper.logEvent(key) {
+            param(AnalyticsParam.SOURCE, AnalyticsSource.LOGIN.value)
         }
     }
 
     private fun onResetPassword(newPassword: String, hint: String) {
         Timber.i("resetting master password and hint from login screen")
-        analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
+        logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         viewModelScope.launch {
             userDetailsRepository.updatePasswordAndHint(newPassword, hint)
             Timber.i("master password and hint successfully updated from login screen")
@@ -144,9 +158,16 @@ class LoginViewModel @Inject constructor(
     /** Single exit of every unlock path. */
     private suspend fun onAuthSuccess(method: LoginMethod) {
         val loginCount = userDetailsRepository.onAuthSuccess(withBiometric = method == LoginMethod.BIOMETRIC)
+        // Telemetry must not be able to stop an unlock: a failed read only drops these params.
+        val deviceSecurity = runCatching { deviceSecurityStatus.snapshot() }.getOrNull()
         analyticsHelper.logEvent(AnalyticsKey.LOGIN_SUCCESS) {
             param(AnalyticsParam.LOGIN_METHOD, method.analyticsValue)
             param(AnalyticsParam.LOGIN_COUNT, loginCount)
+            if (deviceSecurity != null) {
+                param(AnalyticsParam.DEVICE_SECURE, deviceSecurity.isDeviceSecure)
+                param(AnalyticsParam.BIOMETRIC_CLASS, deviceSecurity.biometricClass.analyticsValue)
+                param(AnalyticsParam.STRONGBOX, deviceSecurity.hasStrongBox)
+            }
         }
         _uiState.update {
             it.copy(
