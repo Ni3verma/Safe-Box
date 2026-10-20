@@ -1,5 +1,6 @@
 package com.andryoga.safebox.security
 
+import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
@@ -8,6 +9,7 @@ import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -92,5 +94,18 @@ class DecryptFailureReportingSymmetricKeyUtilsTest {
         val params = analyticsHelper.loggedEvents.single().params
         assertThat(params.keys).containsExactly(AnalyticsParam.EXCEPTION.paramName)
         assertThat(params.values.map { it.toString() }).doesNotContain("very-secret-ciphertext")
+    }
+
+    @Test
+    fun decrypt_whenReporterThrows_shouldStillRethrowTheDecryptionException() {
+        val throwingAnalytics = mockk<AnalyticsHelper>()
+        every { throwingAnalytics.logEvent(any(), any()) } throws IllegalStateException("Firebase not initialised")
+        val failure = AEADBadTagException("tag mismatch")
+        every { delegate.decrypt("cipher") } throws failure
+        val subject = DecryptFailureReportingSymmetricKeyUtils(delegate, throwingAnalytics)
+
+        val thrown = assertThrows(AEADBadTagException::class.java) { subject.decrypt("cipher") }
+
+        assertThat(thrown).isSameInstanceAs(failure)
     }
 }

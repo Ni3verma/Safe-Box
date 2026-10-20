@@ -41,7 +41,7 @@ the non-fatal's stack trace, which names the DAO.
 | How big are vaults, how full are phones? | P50 / P95 of `record_count`, `db_size_kb`, `free_space_mb` from `vault_stats` | P95 `record_count` under 200 means indeterminate progress only; nobody under 100 MB free means the free-space precheck stays but its copy goes |
 | Does StrongBox matter? | `login_success` share with `strongbox = 1` | whether StrongBox timing needs its own spike |
 | How often is forgot-password used, and on which Android versions? | `forgot_password_click` and `update_password_dialog_allow_click` with `source = login`, split by GA's *OS version* dimension (`device.operating_system_version` in BigQuery) | recovery usage on API 24–29 near zero drops the time-bound credential path and everything that exists only for it |
-| Which backup formats circulate; how long do backup and restore take? | `version`, `duration_ms`, `size_kb` on the two success events | sizes the PBKDF2 budget of the next format and sets the horizon for dropping the legacy reader |
+| Which backup formats circulate; how long do backup and restore take? | `version` and `duration_ms` on both success events, `size_kb` on `backup_data_success` only | sizes the PBKDF2 budget of the next format and sets the horizon for dropping the legacy reader |
 | Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means cancel-on-lock stays but its dialog state can be a toast |
 
 ## Query recipes
@@ -97,12 +97,14 @@ GROUP BY db_exists;
 ```
 
 ```sql
--- 4. Vault size and storage headroom, one sample per user (largest vault wins).
+-- 4. Vault size and storage headroom, one sample per user (largest vault, least headroom).
+--    The -1 sentinel of a failed read is dropped inside each sub-select, so one failed read does
+--    not throw away a user's other samples through MIN().
 WITH per_user AS (
   SELECT user_pseudo_id,
-         MAX((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'record_count'))  AS record_count,
-         MAX((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'db_size_kb'))    AS db_size_kb,
-         MIN((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'free_space_mb')) AS free_space_mb
+         MAX((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'record_count'))                          AS record_count,
+         MAX((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'db_size_kb'    AND value.int_value >= 0)) AS db_size_kb,
+         MIN((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'free_space_mb' AND value.int_value >= 0)) AS free_space_mb
   FROM `andryoga-safe-box.analytics_286937401.events_*`
   WHERE event_name = 'vault_stats'
   GROUP BY user_pseudo_id
@@ -112,7 +114,7 @@ SELECT COUNT(*) AS users,
        APPROX_QUANTILES(record_count, 100)[OFFSET(95)]  AS p95_records,
        MAX(record_count)                                AS max_records,
        APPROX_QUANTILES(db_size_kb, 100)[OFFSET(95)]    AS p95_db_kb,
-       COUNTIF(free_space_mb >= 0 AND free_space_mb < 100) AS users_under_100mb_free
+       COUNTIF(free_space_mb < 100)                     AS users_under_100mb_free
 FROM per_user;
 ```
 
@@ -131,12 +133,14 @@ ORDER BY android, event_name;
 ```
 
 ```sql
--- 6. Backup formats in circulation and how long the workers take.
+-- 6. Backup formats in circulation and how long the workers take. size_kb exists only on
+--    backup_data_success (NULL for restore rows, which APPROX_QUANTILES ignores); its -1 sentinel
+--    is dropped inside the sub-select.
 SELECT event_name,
        (SELECT value.double_value FROM UNNEST(event_params) WHERE key = 'version') AS version,
        COUNT(*) AS events,
-       APPROX_QUANTILES((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'duration_ms'), 100)[OFFSET(95)] AS p95_duration_ms,
-       APPROX_QUANTILES((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'size_kb'), 100)[OFFSET(95)]     AS p95_size_kb
+       APPROX_QUANTILES((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'duration_ms'), 100)[OFFSET(95)]                        AS p95_duration_ms,
+       APPROX_QUANTILES((SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'size_kb' AND value.int_value >= 0), 100)[OFFSET(95)] AS p95_size_kb
 FROM `andryoga-safe-box.analytics_286937401.events_*`
 WHERE event_name IN ('backup_data_success', 'restore_data_success')
 GROUP BY event_name, version
@@ -153,8 +157,9 @@ WHERE event_name = 'session_timeout'
 GROUP BY worker_running;
 ```
 
-Recipe 6 reads `size_kb = -1` as "unknown"; exclude it before averaging. Recipe 4 skips the same
-sentinel for `free_space_mb` with the `>= 0` guard.
+`-1` means "could not be read" for `db_size_kb`, `free_space_mb` and `size_kb`. Recipes 4 and 6
+drop it inside the parameter sub-select, before any `MIN`, `MAX` or quantile sees it; copy that
+pattern into any new query over these three.
 
 ## Before the carrying build reaches a testing track
 

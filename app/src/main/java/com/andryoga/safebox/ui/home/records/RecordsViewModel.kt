@@ -11,6 +11,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
+import com.andryoga.safebox.common.VaultStorageSnapshot
 import com.andryoga.safebox.common.VaultStorageStats
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
@@ -335,14 +336,13 @@ class RecordsViewModel @Inject constructor(
     private fun logVaultStatsOnce(recordCount: Int) {
         if (!isVaultStatsLogged.compareAndSet(false, true)) return
         viewModelScope.launch(dispatchersProvider.io) {
-            // telemetry only: a failed storage read costs the two size params, nothing else
-            val storage = runCatching { vaultStorageStats.snapshot() }.getOrNull()
+            // telemetry only: a failed storage read reports -1 for both sizes, like the reader itself
+            val storage = runCatching { vaultStorageStats.snapshot() }
+                .getOrDefault(VaultStorageSnapshot.UNAVAILABLE)
             analyticsHelper.logEvent(AnalyticsKey.VAULT_STATS) {
                 param(AnalyticsParam.RECORD_COUNT, recordCount)
-                if (storage != null) {
-                    param(AnalyticsParam.DB_SIZE_KB, storage.dbSizeKb)
-                    param(AnalyticsParam.FREE_SPACE_MB, storage.freeSpaceMb)
-                }
+                param(AnalyticsParam.DB_SIZE_KB, storage.dbSizeKb)
+                param(AnalyticsParam.FREE_SPACE_MB, storage.freeSpaceMb)
             }
         }
     }

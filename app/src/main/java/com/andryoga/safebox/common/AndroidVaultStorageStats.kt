@@ -27,15 +27,12 @@ class AndroidVaultStorageStats(
     } catch (e: RuntimeException) {
         // telemetry only: a missing number is the whole cost of a failed read
         Timber.w(e, "vault storage stats read failed")
-        VaultStorageSnapshot(dbSizeKb = UNKNOWN, freeSpaceMb = UNKNOWN)
+        VaultStorageSnapshot.UNAVAILABLE
     }
 
     companion object {
         private const val WAL_SUFFIX = "-wal"
         private const val BYTES_PER_KIB = 1024L
         private const val BYTES_PER_MIB = 1024L * 1024L
-
-        /** Reported when the read failed, so the analytics value stays numeric and recognisable. */
-        const val UNKNOWN = -1L
     }
 }

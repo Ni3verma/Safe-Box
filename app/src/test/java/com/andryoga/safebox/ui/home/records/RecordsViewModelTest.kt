@@ -749,7 +749,7 @@ class RecordsViewModelTest {
     }
 
     @Test
-    fun storageReadThrows_shouldStillLogVaultStatsWithRecordCountOnly() = runTest {
+    fun storageReadThrows_shouldLogVaultStatsWithUnknownSizes() = runTest {
         every { vaultStorageStats.snapshot() } throws IllegalStateException("no db file")
 
         viewModel.uiState.test {
@@ -758,8 +758,8 @@ class RecordsViewModelTest {
 
             val params = capturedParams(AnalyticsKey.VAULT_STATS)
             assertThat(params[AnalyticsParam.RECORD_COUNT.paramName]).isEqualTo(0)
-            assertThat(params).doesNotContainKey(AnalyticsParam.DB_SIZE_KB.paramName)
-            assertThat(params).doesNotContainKey(AnalyticsParam.FREE_SPACE_MB.paramName)
+            assertThat(params[AnalyticsParam.DB_SIZE_KB.paramName]).isEqualTo(VaultStorageSnapshot.UNKNOWN)
+            assertThat(params[AnalyticsParam.FREE_SPACE_MB.paramName]).isEqualTo(VaultStorageSnapshot.UNKNOWN)
             cancelAndIgnoreRemainingEvents()
         }
     }

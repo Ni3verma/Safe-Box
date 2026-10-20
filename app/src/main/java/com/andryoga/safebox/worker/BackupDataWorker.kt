@@ -351,8 +351,10 @@ class BackupDataWorker
                     it.writeObject(exportMap)
                 }
             } ?: throw IOException("Failed to open file descriptor for URI: $fileUri")
-            // telemetry only: a provider that cannot answer must not fail a backup that was written
-            runCatching { file.length() }.getOrDefault(UNKNOWN_SIZE)
+            // telemetry only: a provider that cannot answer must not fail a backup that was written.
+            // DocumentFile.length() is 0 when the provider cannot report it; a written backup is never empty.
+            val reportedLength = runCatching { file.length() }.getOrDefault(UNKNOWN_SIZE)
+            if (reportedLength > 0) reportedLength else UNKNOWN_SIZE
         }
     }
 
