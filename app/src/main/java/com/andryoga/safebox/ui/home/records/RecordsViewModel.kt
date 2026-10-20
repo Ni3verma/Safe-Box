@@ -11,7 +11,6 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
-import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -24,6 +23,7 @@ import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.ui.home.records.models.NotificationPermissionState
 import com.andryoga.safebox.ui.home.records.models.UserInputs
+import com.andryoga.safebox.ui.utils.toAnalyticsValue
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -32,11 +32,15 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -101,6 +105,9 @@ class RecordsViewModel @Inject constructor(
 
     private val userInputs = MutableStateFlow(UserInputs())
 
+    /** The empty layout re-enters composition on every return to the list; log its show once. */
+    private var isEmptyVaultShowLogged = false
+
     /**
      * Driving state of the search bar, owned here so it survives navigation to a record and back.
      *
@@ -113,6 +120,15 @@ class RecordsViewModel @Inject constructor(
     val searchTextState = TextFieldState()
 
     private val searchText: Flow<String> = snapshotFlow { searchTextState.text.toString() }
+
+    init {
+        // the first non-blank query ends this collector, so one event per ViewModel
+        searchText
+            .filter { it.isNotBlank() }
+            .take(1)
+            .onEach { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
+            .launchIn(viewModelScope)
+    }
 
     val uiState = combine(dbRecords, userInputs, searchText) { dbRecords, userInputs, searchText ->
         if (dbRecords == null) {
@@ -177,7 +193,25 @@ class RecordsViewModel @Inject constructor(
             }
 
             is RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet -> {
+                if (action.showAddNewRecordBottomSheet) {
+                    analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW)
+                }
                 updateShowAddNewRecordBottomSheet(showAddNewRecordBottomSheet = action.showAddNewRecordBottomSheet)
+            }
+
+            // navigation happens in the UI layer; only the event is recorded here
+            is RecordScreenAction.OnAddNewRecord -> {
+                analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_TYPE_PICK) {
+                    param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())
+                    param(AnalyticsParam.SOURCE, action.source.value)
+                }
+            }
+
+            RecordScreenAction.OnEmptyVaultShown -> {
+                if (!isEmptyVaultShowLogged) {
+                    isEmptyVaultShowLogged = true
+                    analyticsHelper.logEvent(AnalyticsKey.EMPTY_VAULT_SHOW)
+                }
             }
 
             RecordScreenAction.OnCopyTotpCode -> {
@@ -186,9 +220,10 @@ class RecordsViewModel @Inject constructor(
                 }
             }
 
-            // these are handled in UI layer and flow should ideally never come here
-            is RecordScreenAction.OnAddNewRecord, is RecordScreenAction.OnRecordClick -> {
-                Utils.crashInDebugBuild(errorMessage = "${action.javaClass.simpleName} should have been handled in UI layer")
+            is RecordScreenAction.OnRecordClick -> {
+                analyticsHelper.logEvent(AnalyticsKey.RECORD_OPEN) {
+                    param(AnalyticsParam.RECORD_TYPE, action.recordType.toAnalyticsValue())
+                }
             }
 
             is RecordScreenAction.OnCancelClickFromRationaleDialog -> {

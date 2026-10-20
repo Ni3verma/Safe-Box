@@ -1,6 +1,14 @@
 [config]
-model = "gemini/gemini-3.6-flash"
-fallback_models = ["gemini/gemini-3.5-flash", "gemini/gemini-2.5-flash", "gemini/gemini-2.0-flash", "gemini/gemini-3.1-pro"]
+model = "gemini/gemini-4-argon"
+fallback_models = ["gemini/gemini-3.8-flash"]
+# The 32000 default pruned the 53k-token diff of #294; Gemini's window is 1M.
+max_model_tokens = 400000
+# Token limit for a model id that litellm does not know yet; without it the run aborts.
+custom_model_max_tokens = 1048576
+reasoning_effort = "high"
+# Root-relative paths; the default ["AGENTS.md"] matches nothing in this repo.
+repo_context_files = [".agents/AGENTS.md", ".agents/PROJECT_FACTS.md"]
+repo_context_max_lines = 600
 restricted_mode = true
 
 [github_app]
@@ -20,6 +28,10 @@ push_commands = [
     "/improve"
 ]
 
+[ignore]
+# Translations are generated; the English source under values/ is still reviewed.
+glob = ["app/src/main/res/values-*/strings.xml"]
+
 [pr_description]
 generate_ai_title = true
 
@@ -27,7 +39,18 @@ generate_ai_title = true
 num_max_findings = 20
 require_score_review = true
 require_tests_review = true
+extra_instructions = """\
+Apply the project rules supplied as repository context (.agents/AGENTS.md, .agents/PROJECT_FACTS.md).
+Prioritise correctness bugs, Room/backup/crypto invariants, Compose state handling, coroutine and dispatcher misuse, missing unit tests for new ViewModel logic and analytics events, and knowledge-base files the change should have updated.
+In markdown files, flag only statements that contradict the code change or a verifiable fact; never comment on wording, structure or style.
+Report only findings verified against the diff; do not restate rules the diff already follows.\
+"""
 
 [pr_code_suggestions]
 num_code_suggestions_per_chunk = 8
 commitable_code_suggestions = true
+extra_instructions = """\
+Follow the project rules supplied as repository context (.agents/AGENTS.md): trailing commas on multi-line declarations, imports instead of fully qualified names, an injected DispatchersProvider instead of hardcoded Dispatchers, KDoc on new classes, no extra blank lines.
+Do not suggest edits to markdown files unless the text contradicts the code change.
+Suggest only changes that fix a bug, a stated rule or a real maintainability problem; skip equivalent rewrites.\
+"""

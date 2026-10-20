@@ -16,6 +16,7 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 | [0007](0007-screen-owned-top-app-bars.md) | Top app bars are owned by each screen's `Scaffold`; the home `NavHost` pins all six transitions | Accepted |
 | [0008](0008-in-app-updates-flexible-only.md) | In-app updates use the FLEXIBLE flow only, with a lock-aware restart | Accepted |
 | [0009](0009-play-upload-testing-tracks.md) | CI uploads every tag to Play's internal, closed and open testing tracks; production is a human promotion | Accepted |
+| [0010](0010-empty-vault-is-the-onboarding.md) | The empty vault is the post-signup onboarding; no intro carousel, instrument the funnel first | Accepted |
 
 ## Format
 

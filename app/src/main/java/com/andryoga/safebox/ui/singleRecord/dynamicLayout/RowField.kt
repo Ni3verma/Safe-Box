@@ -91,6 +91,7 @@ fun RowField(
                                 .clickable {
                                     // while copying we copy the original data and not the formatted data
                                     copyToClipboard(label, uiState.data, copiedMessage)
+                                    screenAction(SingleRecordScreenAction.OnFieldCopied(fieldId))
                                 }
                         )
                     }

@@ -19,6 +19,7 @@ import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.domain.models.record.RecordListItem
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.totp.models.TotpConfig
@@ -58,7 +59,7 @@ class RecordsScreenTest {
     }
 
     @Test
-    fun initialStateZeroRecords_shouldShowNoRecordsTextAndButtons() {
+    fun initialStateZeroRecords_shouldShowIntroRestoreAndOneCardPerRecordType() {
         composeTestRule.setContent {
             SafeBoxTheme {
                 RecordsScreen(
@@ -74,11 +75,104 @@ class RecordsScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
-        composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+        composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
             .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.restore_records_button))
             .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.type_display_login))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.record_type_desc_login))
+            .assertIsDisplayed()
+        // the last card may sit below the fold on a small test device; existing is enough
+        composeTestRule.onNodeWithText(context.getString(R.string.type_display_authenticator))
+            .assertExists()
+        // no generic add button any more: the cards are the only way in from here
+        composeTestRule.onNodeWithText(context.getString(R.string.add_a_new_record))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun clickRecordTypeCardInEmptyVault_shouldEmitAddNewRecordWithEmptyVaultSource() {
+        var emittedAction: RecordScreenAction.OnAddNewRecord? = null
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = RecordsUiState(
+                        isLoading = false,
+                        records = emptyList(),
+                        totalDbRecords = 0
+                    ),
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = {},
+                    onScreenAction = { action ->
+                        if (action is RecordScreenAction.OnAddNewRecord) {
+                            emittedAction = action
+                        }
+                    }
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.type_display_card)).performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(emittedAction?.recordType).isEqualTo(RecordType.CARD)
+        assertThat(emittedAction?.source).isEqualTo(AnalyticsSource.EMPTY_VAULT)
+    }
+
+    @Test
+    fun emptyVaultEntersComposition_shouldEmitEmptyVaultShown() {
+        var shownCount = 0
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = RecordsUiState(
+                        isLoading = false,
+                        records = emptyList(),
+                        totalDbRecords = 0
+                    ),
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = {},
+                    onScreenAction = { action ->
+                        if (action is RecordScreenAction.OnEmptyVaultShown) {
+                            shownCount++
+                        }
+                    }
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(shownCount).isEqualTo(1)
+    }
+
+    @Test
+    fun clickRestoreInEmptyVault_shouldInvokeRestoreCallback() {
+        var restoreClicked = false
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                RecordsScreen(
+                    uiState = RecordsUiState(
+                        isLoading = false,
+                        records = emptyList(),
+                        totalDbRecords = 0
+                    ),
+                    notificationPermissionState = NotificationPermissionState(),
+                    onRestoreFromBackup = { restoreClicked = true },
+                    onScreenAction = {}
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.restore_records_button))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(restoreClicked).isTrue()
     }
 
     @Test
@@ -193,8 +287,8 @@ class RecordsScreenTest {
     }
 
     @Test
-    fun addNewRecordBottomSheet_shouldRenderRecordTypesAndEmitAction() {
-        var selectedRecordType: RecordType? = null
+    fun addNewRecordBottomSheet_shouldRenderRecordTypesAndEmitActionWithSheetSource() {
+        var emittedAction: RecordScreenAction.OnAddNewRecord? = null
 
         composeTestRule.setContent {
             SafeBoxTheme {
@@ -210,7 +304,7 @@ class RecordsScreenTest {
                     onRestoreFromBackup = {},
                     onScreenAction = { action ->
                         if (action is RecordScreenAction.OnAddNewRecord) {
-                            selectedRecordType = action.recordType
+                            emittedAction = action
                         }
                     }
                 )
@@ -224,7 +318,8 @@ class RecordsScreenTest {
 
         composeTestRule.onNodeWithText(loginTypeTitle).performClick()
         composeTestRule.waitForIdle()
-        assertThat(selectedRecordType).isEqualTo(RecordType.LOGIN)
+        assertThat(emittedAction?.recordType).isEqualTo(RecordType.LOGIN)
+        assertThat(emittedAction?.source).isEqualTo(AnalyticsSource.ADD_RECORD_SHEET)
     }
 
     @Test

@@ -433,7 +433,7 @@ class RecordActionsE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }
@@ -495,7 +495,7 @@ class RecordActionsE2ETest {
             composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(uncommittedTitle).assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertDoesNotExist()
         }
     }
@@ -542,7 +542,7 @@ class RecordActionsE2ETest {
             composeTestRule.onNodeWithText(targetTitle).assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.search_bar_placeholder))
                 .assertIsDisplayed()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertDoesNotExist()
         }
     }
@@ -655,7 +655,7 @@ class RecordActionsE2ETest {
             }
 
             composeTestRule.onNodeWithText(targetTitle).assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }

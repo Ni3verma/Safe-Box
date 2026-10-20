@@ -33,6 +33,24 @@ enum class AnalyticsKey(val eventName: String) {
     NEW_LOGIN("new_login"),
     NEW_BANK_ACCOUNT("new_bank_account"),
     NEW_AUTHENTICATOR("new_authenticator"),
+
+    // activation funnel and retention; bounds and reading guide in docs/analytics/activation-funnel.md
+    // once per records ViewModel
+    EMPTY_VAULT_SHOW("empty_vault_show"),
+    ADD_RECORD_SHEET_SHOW("add_record_sheet_show"),
+    // logged with AnalyticsParam.RECORD_TYPE and AnalyticsParam.SOURCE
+    ADD_RECORD_TYPE_PICK("add_record_type_pick"),
+    // a create form cleared without a save; AnalyticsParam.RECORD_TYPE and AnalyticsParam.HAD_INPUT
+    RECORD_FORM_ABANDON("record_form_abandon"),
+    // logged with AnalyticsParam.LOGIN_METHOD and AnalyticsParam.LOGIN_COUNT
+    LOGIN_SUCCESS("login_success"),
+    RECORD_OPEN("record_open"),
+    // AnalyticsParam.RECORD_TYPE and AnalyticsParam.FIELD; TOTP codes stay on AUTHENTICATOR_COPY_CLICK
+    FIELD_COPY("field_copy"),
+    RECORD_SHARE("record_share"),
+    RECORD_DELETE("record_delete"),
+    // once per records ViewModel
+    SEARCH_USED("search_used"),
     DEVICE_SECURITY_REQUIRED_DIALOG_SHOW("device_security_required_dialog_show"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK("device_sec_dialog_open_settings_click"),
     DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE("device_sec_dialog_open_settings_fail"),

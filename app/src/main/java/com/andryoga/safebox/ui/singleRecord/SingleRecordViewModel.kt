@@ -14,7 +14,9 @@ import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.layouts.Layout
+import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.FieldId
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.models.ViewMode
+import com.andryoga.safebox.ui.utils.toAnalyticsValue
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,15 +49,23 @@ class SingleRecordViewModel @Inject constructor(
     private val _shareContentEvent = MutableSharedFlow<String>()
     val shareContentEvent: SharedFlow<String> = _shareContentEvent.asSharedFlow()
     private val layout: Layout
+    private val recordType: RecordType
+    private val isNewRecord: Boolean
+
+    /** What the create form opened with, so `had_input` means changed by the user, not non-empty. */
+    private var initialFieldData: Map<FieldId, String> = emptyMap()
+    private var isSaved = false
 
     init {
         val args = singleRecordRouteProvider.getRoute()
+        recordType = args.recordType
+        isNewRecord = args.id == null
         layout = layoutFactory.getLayout(args.id, args.recordType)
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
         viewModelScope.launch {
             val layoutPlan = layout.getLayoutPlan()
-            val isNewRecord = args.id == null
+            initialFieldData = layoutPlan.fieldUiState.mapValues { it.value.data }
             _uiState.update {
                 it.copy(
                     isLoading = false,
@@ -73,6 +83,18 @@ class SingleRecordViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    /** A create form cleared before a save was abandoned; a configuration change does not clear it. */
+    override fun onCleared() {
+        if (isNewRecord && !isSaved) {
+            val currentFieldData = _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
+            analyticsHelper.logEvent(AnalyticsKey.RECORD_FORM_ABANDON) {
+                param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                param(AnalyticsParam.HAD_INPUT, currentFieldData != initialFieldData)
+            }
+        }
+        super.onCleared()
     }
 
     fun onAction(action: SingleRecordScreenAction) {
@@ -103,6 +125,7 @@ class SingleRecordViewModel @Inject constructor(
                     layout.saveLayout(
                         _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
                     )
+                    isSaved = true
                     _screenCloseEvent.emit(Unit)
                 }
             }
@@ -111,6 +134,9 @@ class SingleRecordViewModel @Inject constructor(
                 Timber.i("delete clicked")
                 viewModelScope.launch {
                     layout.deleteLayout()
+                    analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
+                        param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                    }
                     _screenCloseEvent.emit(Unit)
                 }
             }
@@ -126,11 +152,24 @@ class SingleRecordViewModel @Inject constructor(
                 }
             }
 
-            SingleRecordScreenAction.OnShareClicked -> handleShareRecord()
+            SingleRecordScreenAction.OnShareClicked -> {
+                analyticsHelper.logEvent(AnalyticsKey.RECORD_SHARE) {
+                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                }
+                handleShareRecord()
+            }
 
             SingleRecordScreenAction.OnCopyTotpCode -> {
                 analyticsHelper.logEvent(AnalyticsKey.AUTHENTICATOR_COPY_CLICK) {
                     param(AnalyticsParam.SOURCE, AnalyticsSource.RECORD_DETAIL.value)
+                }
+            }
+
+            is SingleRecordScreenAction.OnFieldCopied -> {
+                analyticsHelper.logEvent(AnalyticsKey.FIELD_COPY) {
+                    param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
+                    // field name only, never its value
+                    param(AnalyticsParam.FIELD, action.fieldId.name.lowercase())
                 }
             }
         }

@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Φόρτωση των δεδομένων σας …</string>
-    <string name="no_record">Ξεκινήστε προσθέτοντας μια νέα εγγραφή ή επαναφέρετε τα δεδομένα σας από ένα αντίγραφο ασφαλείας.</string>
-    <string name="new_record_button">Προσθήκη νέας εγγραφής</string>
-    <string name="restore_records_button">Επαναφορά δεδομένων</string>
+    <string name="empty_vault_title">Το χρηματοκιβώτιό σας είναι άδειο</string>
+    <string name="no_record">Αποθηκεύστε την πρώτη σας εγγραφή – χρειάζεται λιγότερο από ένα λεπτό. Όλα κρυπτογραφούνται και παραμένουν σε αυτήν τη συσκευή.</string>
+    <string name="restore_records_button">Επαναφορά από αντίγραφο ασφαλείας</string>
+    <string name="record_type_desc_login">Ονόματα χρήστη και κωδικοί πρόσβασης για ιστότοπους και εφαρμογές</string>
+    <string name="record_type_desc_card">Αριθμοί χρεωστικών και πιστωτικών καρτών, ημερομηνία λήξης, PIN και CVV</string>
+    <string name="record_type_desc_bank_account">Αριθμοί λογαριασμών, στοιχεία καταστήματος και πελάτη</string>
+    <string name="record_type_desc_note">Οποιοδήποτε ιδιωτικό κείμενο, από κωδικούς ανάκτησης έως κωδικούς Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Κωδικοί TOTP δύο παραγόντων, από κωδικό QR ή μυστικό κλειδί</string>
     <string name="no_filtered_record_title">Ωχ! Δεν βρέθηκαν αποτελέσματα.</string>
     <string name="no_filtered_record_body">Δεν βρήκαμε τίποτα που να ταιριάζει με την αναζήτησή σας. Δοκιμάστε να προσαρμόσετε τα φίλτρα σας ή να ελέγξετε για τυπογραφικά λάθη.</string>
 

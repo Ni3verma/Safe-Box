@@ -89,9 +89,14 @@
 
     <!-- Record screen -->
     <string name="loading_data">데이터를 불러오는 중…</string>
-    <string name="no_record">새 항목을 추가하여 시작하거나 백업에서 데이터를 복원하세요.</string>
-    <string name="new_record_button">새 항목 추가</string>
-    <string name="restore_records_button">데이터 복원</string>
+    <string name="empty_vault_title">보관함이 비어 있습니다</string>
+    <string name="no_record">첫 번째 항목을 저장해 보세요. 1분도 걸리지 않습니다. 모든 데이터는 암호화되어 이 기기에만 보관됩니다.</string>
+    <string name="restore_records_button">백업에서 복원</string>
+    <string name="record_type_desc_login">웹사이트와 앱의 사용자 이름 및 비밀번호</string>
+    <string name="record_type_desc_card">체크카드와 신용카드 번호, 유효기간, PIN, CVV</string>
+    <string name="record_type_desc_bank_account">계좌번호, 지점 및 고객 정보</string>
+    <string name="record_type_desc_note">복구 코드부터 Wi-Fi 비밀번호까지 모든 개인 텍스트</string>
+    <string name="record_type_desc_authenticator">QR 코드 또는 비밀 키로 등록하는 2단계 인증 TOTP 코드</string>
     <string name="no_filtered_record_title">앗! 검색 결과가 없습니다.</string>
     <string name="no_filtered_record_body">검색어와 일치하는 항목을 찾을 수 없습니다. 필터를 조정하거나 오타가 없는지 확인해 보세요.</string>
 

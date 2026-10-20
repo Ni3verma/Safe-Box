@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
@@ -81,7 +82,7 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             userDetailsRepository.updatePasswordAndHint(newPassword, hint)
             Timber.i("master password and hint successfully updated from login screen")
-            onAuthSuccess(withBiometric = false)
+            onAuthSuccess(LoginMethod.PASSWORD_RESET)
         }
     }
 
@@ -102,7 +103,7 @@ class LoginViewModel @Inject constructor(
     private fun onBiometricSuccess() {
         Timber.i("device security auth success")
         viewModelScope.launch {
-            onAuthSuccess(withBiometric = true)
+            onAuthSuccess(LoginMethod.BIOMETRIC)
         }
     }
 
@@ -133,15 +134,20 @@ class LoginViewModel @Inject constructor(
                 } else {
                     Timber.i("auto backup disabled from settings")
                 }
-                onAuthSuccess(withBiometric = false)
+                onAuthSuccess(LoginMethod.PASSWORD)
             } else {
                 onIncorrectPassword()
             }
         }
     }
 
-    private suspend fun onAuthSuccess(withBiometric: Boolean) {
-        userDetailsRepository.onAuthSuccess(withBiometric = withBiometric)
+    /** Single exit of every unlock path. */
+    private suspend fun onAuthSuccess(method: LoginMethod) {
+        val loginCount = userDetailsRepository.onAuthSuccess(withBiometric = method == LoginMethod.BIOMETRIC)
+        analyticsHelper.logEvent(AnalyticsKey.LOGIN_SUCCESS) {
+            param(AnalyticsParam.LOGIN_METHOD, method.analyticsValue)
+            param(AnalyticsParam.LOGIN_COUNT, loginCount)
+        }
         _uiState.update {
             it.copy(
                 userAuthState = UserAuthState.VERIFIED

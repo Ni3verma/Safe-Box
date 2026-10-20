@@ -288,7 +288,7 @@ class AddNewRecordFlowsE2ETest {
             // camera on a code the user already dealt with.
             composeTestRule.onNodeWithText(context.getString(R.string.qr_scanner_title))
                 .assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }
@@ -311,7 +311,7 @@ class AddNewRecordFlowsE2ETest {
 
             composeTestRule.onNodeWithText(context.getString(R.string.qr_scanner_title))
                 .assertDoesNotExist()
-            composeTestRule.onNodeWithText(context.getString(R.string.new_record_button))
+            composeTestRule.onNodeWithText(context.getString(R.string.empty_vault_title))
                 .assertIsDisplayed()
         }
     }

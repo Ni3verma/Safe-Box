@@ -34,3 +34,20 @@ fun RecordType.getIcon(): ImageVector {
         RecordType.AUTHENTICATOR -> Icons.Filled.Password
     }
 }
+
+/** One line on what the type holds, shown under [getTitle] where a bare type name is not enough. */
+@Composable
+fun RecordType.getDescription(): String {
+    return stringResource(
+        when (this) {
+            RecordType.LOGIN -> R.string.record_type_desc_login
+            RecordType.CARD -> R.string.record_type_desc_card
+            RecordType.BANK_ACCOUNT -> R.string.record_type_desc_bank_account
+            RecordType.NOTE -> R.string.record_type_desc_note
+            RecordType.AUTHENTICATOR -> R.string.record_type_desc_authenticator
+        }
+    )
+}
+
+/** Analytics wire value (`login`, `bank_account`, …); append-only once an event has shipped. */
+fun RecordType.toAnalyticsValue(): String = name.lowercase()

@@ -89,9 +89,14 @@
 
     <!-- Record screen -->
     <string name="loading_data">正在加载数据…</string>
-    <string name="no_record">添加一条新记录开始使用，或从备份恢复您的数据。</string>
-    <string name="new_record_button">添加新记录</string>
-    <string name="restore_records_button">恢复数据</string>
+    <string name="empty_vault_title">您的保险库是空的</string>
+    <string name="no_record">保存您的第一条记录，不到一分钟即可完成。所有数据均经过加密，并且只保存在此设备上。</string>
+    <string name="restore_records_button">从备份恢复</string>
+    <string name="record_type_desc_login">网站和应用的用户名与密码</string>
+    <string name="record_type_desc_card">借记卡和信用卡的卡号、有效期、PIN 和 CVV</string>
+    <string name="record_type_desc_bank_account">账号、开户行及客户信息</string>
+    <string name="record_type_desc_note">任何私密文本，从恢复代码到 Wi-Fi 密码</string>
+    <string name="record_type_desc_authenticator">通过二维码或密钥添加的双重验证 TOTP 代码</string>
     <string name="no_filtered_record_title">未找到匹配结果</string>
     <string name="no_filtered_record_body">未找到与搜索内容匹配的记录。请尝试调整筛选条件或检查拼写。</string>
 

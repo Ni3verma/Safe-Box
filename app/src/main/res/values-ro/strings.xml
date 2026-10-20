@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Se încarcă datele …</string>
-    <string name="no_record">Începe de la zero adăugând o înregistrare sau recuperează-ți datele dintr-un backup.</string>
-    <string name="new_record_button">Adaugă o înregistrare nouă</string>
-    <string name="restore_records_button">Restaurează datele</string>
+    <string name="empty_vault_title">Seiful tău este gol</string>
+    <string name="no_record">Salvează prima ta înregistrare – durează mai puțin de un minut. Totul este criptat și rămâne pe acest dispozitiv.</string>
+    <string name="restore_records_button">Restaurează dintr-un backup</string>
+    <string name="record_type_desc_login">Nume de utilizator și parole pentru site-uri web și aplicații</string>
+    <string name="record_type_desc_card">Numere de carduri de debit și de credit, data expirării, PIN și CVV</string>
+    <string name="record_type_desc_bank_account">Numere de cont, date despre sucursală și client</string>
+    <string name="record_type_desc_note">Orice text privat, de la coduri de recuperare la parole Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Coduri TOTP pentru autentificare în doi pași, dintr-un cod QR sau o cheie secretă</string>
     <string name="no_filtered_record_title">Hopa! Niciun rezultat aici.</string>
     <string name="no_filtered_record_body">Nu am găsit nimic care să corespundă căutării tale. Încearcă să ajustezi filtrele sau să verifici eventualele greșeli de scriere.</string>
 

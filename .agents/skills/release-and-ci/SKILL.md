@@ -14,7 +14,7 @@ description: How Safe-Box is versioned, signed, built and released through GitHu
 | `release.yml` | push of a `v*` tag | the full release pipeline (below) |
 | `upgrade-test.yml` | called by `release.yml`; PR label `run-upgrade-test`; manual | upgrade (N-1 → N) and restore tests on two emulators |
 | `run-ui-test.yml` | manual / reusable | on-demand UI test run |
-| `gemini-pr-review.yml` | PR | automated bot review |
+| `gemini-pr-review.yml` | PR / PR comment | [PR-Agent review bot](#pr-agent-review-bot) |
 
 ## `release.yml` job graph
 
@@ -158,6 +158,25 @@ gh release download v2.0.4.0 -p 'SafeBox-qa.apk' -D old/     # fetch a baseline 
 gh run list --workflow=release.yml --limit 5                 # recent release runs
 gh run watch <run-id>                                        # follow a run to completion
 ```
+
+## PR-Agent review bot
+
+`gemini-pr-review.yml` runs [PR-Agent](https://github.com/the-pr-agent/pr-agent) on the
+`GEMINI_API_KEY` secret, configured by `.pr_agent.toml` at the repo root. Verified 2026-10-20 in
+PR-Agent's `github_provider.get_repo_settings` and in the log of run 39059557837 (#294):
+
+- **The config is fetched through the API from `master`**, not from the checkout or the PR branch,
+  unless `PR_AGENT_CONFIG_BRANCH` names a branch (no file there → `master`). The workflow sets it to
+  `github.head_ref`, so a `pull_request` run uses the PR branch's file and a `.pr_agent.toml` change
+  is tested by the PR that makes it; `issue_comment` runs have no `head_ref` and read `master`.
+- A PR comment can override most keys for one run, applied after the file:
+  `/review --config.model=gemini/gemini-4-argon --config.max_model_tokens=400000`. Not
+  `config.fallback_models` or `config.repo_context_files` — those are comment-blocked.
+- `config.repo_context_files` is root-relative and injected into every prompt; the default
+  `["AGENTS.md"]` matched nothing here, hence the `.agents/` paths in the file.
+- `max_model_tokens` defaults to **32000** regardless of the model's window: #294's 53k-token diff
+  was pruned ("files were not included … because of the token budget") until the file raised it.
+- Which model actually ran: `gh run view <run-id> --log | grep 'Generating prediction with'`.
 
 ## Crashlytics
 

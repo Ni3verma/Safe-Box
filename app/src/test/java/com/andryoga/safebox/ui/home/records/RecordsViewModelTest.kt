@@ -10,8 +10,8 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -49,7 +49,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -103,6 +102,8 @@ class RecordsViewModelTest {
         every { loginDataRepository.getAllLoginData() } returns loginDataFlow
         every { cardDataRepository.getAllBankCardData() } returns cardDataFlow
         every { authenticatorDataRepository.getAllAuthenticatorData() } returns authenticatorDataFlow
+        // SEARCH_USED fires from the search flow that most tests type into
+        every { analyticsHelper.logEvent(any()) } just runs
 
         viewModel = RecordsViewModel(
             bankAccountDataRepository,
@@ -631,17 +632,91 @@ class RecordsViewModelTest {
     }
 
     @Test
-    fun `onScreenAction with OnAddNewRecord calls crashInDebugBuild`() = runTest {
-        assertThrows(Exceptions.DebugFatalException::class.java) {
-            viewModel.onScreenAction(RecordScreenAction.OnAddNewRecord(RecordType.NOTE))
-        }
+    fun openAddRecordSheet_shouldLogSheetShow() {
+        viewModel.onScreenAction(RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(true))
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW) }
     }
 
     @Test
-    fun `onScreenAction with OnRecordClick calls crashInDebugBuild`() = runTest {
-        assertThrows(Exceptions.DebugFatalException::class.java) {
-            viewModel.onScreenAction(RecordScreenAction.OnRecordClick(1, RecordType.NOTE))
-        }
+    fun closeAddRecordSheet_shouldNotLogSheetShow() {
+        viewModel.onScreenAction(RecordScreenAction.OnUpdateShowAddNewRecordBottomSheet(false))
+
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.ADD_RECORD_SHEET_SHOW) }
+    }
+
+    @Test
+    fun addNewRecordFromSheet_shouldLogTypePickWithRecordTypeAndSheetSource() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+
+        viewModel.onScreenAction(
+            RecordScreenAction.OnAddNewRecord(RecordType.BANK_ACCOUNT, AnalyticsSource.ADD_RECORD_SHEET)
+        )
+
+        val params = capturedParams(AnalyticsKey.ADD_RECORD_TYPE_PICK)
+        assertThat(params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("bank_account")
+        assertThat(params[AnalyticsParam.SOURCE.paramName]).isEqualTo("add_record_sheet")
+    }
+
+    @Test
+    fun addNewRecordFromEmptyVault_shouldLogTypePickWithEmptyVaultSource() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+
+        viewModel.onScreenAction(
+            RecordScreenAction.OnAddNewRecord(RecordType.LOGIN, AnalyticsSource.EMPTY_VAULT)
+        )
+
+        val params = capturedParams(AnalyticsKey.ADD_RECORD_TYPE_PICK)
+        assertThat(params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("login")
+        assertThat(params[AnalyticsParam.SOURCE.paramName]).isEqualTo("empty_vault")
+    }
+
+    @Test
+    fun emptyVaultShown_shouldLogShowOncePerViewModel() {
+        // the layout re-enters composition each time the user returns to the list
+        viewModel.onScreenAction(RecordScreenAction.OnEmptyVaultShown)
+        viewModel.onScreenAction(RecordScreenAction.OnEmptyVaultShown)
+        viewModel.onScreenAction(RecordScreenAction.OnEmptyVaultShown)
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.EMPTY_VAULT_SHOW) }
+    }
+
+    /** Runs the captured param block of the single [key] event and returns what it set. */
+    private fun capturedParams(key: AnalyticsKey): Map<String, Any> {
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
+        verify(exactly = 1) { analyticsHelper.logEvent(eq(key), capture(slot)) }
+        return AnalyticsParamsBuilder().apply(slot.captured).params
+    }
+
+    @Test
+    fun recordClick_shouldLogRecordOpenWithRecordType() {
+        every { analyticsHelper.logEvent(any(), any()) } just runs
+
+        viewModel.onScreenAction(RecordScreenAction.OnRecordClick(1, RecordType.NOTE))
+
+        val params = capturedParams(AnalyticsKey.RECORD_OPEN)
+        assertThat(params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("note")
+    }
+
+    @Test
+    fun typeSearchText_shouldLogSearchUsedOncePerViewModel() = runTest {
+        typeSearchText("gm")
+        advanceUntilIdle()
+        typeSearchText("gmail")
+        advanceUntilIdle()
+        clearSearchText()
+        typeSearchText("bank")
+        advanceUntilIdle()
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
+    }
+
+    @Test
+    fun blankSearchText_shouldNotLogSearchUsed() = runTest {
+        typeSearchText("   ")
+        advanceUntilIdle()
+
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.SEARCH_USED) }
     }
 
     @Test

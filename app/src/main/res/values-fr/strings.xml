@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Chargement de vos données…</string>
-    <string name="no_record">Commencez par ajouter un enregistrement ou récupérez vos données à partir d\'une sauvegarde.</string>
-    <string name="new_record_button">Ajouter un enregistrement</string>
-    <string name="restore_records_button">Restaurer les données</string>
+    <string name="empty_vault_title">Votre coffre-fort est vide</string>
+    <string name="no_record">Ajoutez votre premier enregistrement : cela prend moins d\'une minute. Tout est chiffré et reste sur cet appareil.</string>
+    <string name="restore_records_button">Restaurer depuis une sauvegarde</string>
+    <string name="record_type_desc_login">Noms d\'utilisateur et mots de passe pour sites web et applications</string>
+    <string name="record_type_desc_card">Numéros de cartes de débit et de crédit, date d\'expiration, PIN et CVV</string>
+    <string name="record_type_desc_bank_account">Numéros de compte, coordonnées de l\'agence et du client</string>
+    <string name="record_type_desc_note">Tout texte privé, des codes de récupération aux mots de passe Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Codes TOTP à deux facteurs, à partir d\'un code QR ou d\'une clé secrète</string>
     <string name="no_filtered_record_title">Oups ! Aucun résultat.</string>
     <string name="no_filtered_record_body">Nous n\'avons rien trouvé correspondant à votre recherche. Essayez de modifier vos filtres ou de vérifier l\'orthographe.</string>
 

@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.home.records
 
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.domain.models.record.RecordType
 
 sealed interface RecordScreenAction {
@@ -11,9 +12,16 @@ sealed interface RecordScreenAction {
     data class OnUpdateShowAddNewRecordBottomSheet(val showAddNewRecordBottomSheet: Boolean) :
         RecordScreenAction
 
-    data class OnAddNewRecord(val recordType: RecordType) : RecordScreenAction
+    /** User picked a record type to create; [source] is the surface that offered it. */
+    data class OnAddNewRecord(
+        val recordType: RecordType,
+        val source: AnalyticsSource,
+    ) : RecordScreenAction
     data class OnRecordClick(val id: Int, val recordType: RecordType) : RecordScreenAction
     data class OnToggleRecordTypeFilter(val recordType: RecordType) : RecordScreenAction
+
+    /** The empty-vault layout entered composition. */
+    data object OnEmptyVaultShown : RecordScreenAction
 
     /** User copied the live one-time code from an authenticator row. */
     object OnCopyTotpCode : RecordScreenAction

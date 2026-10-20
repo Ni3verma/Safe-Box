@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Načítání dat…</string>
-    <string name="no_record">Začněte přidáním záznamu nebo obnovte svá data ze zálohy.</string>
-    <string name="new_record_button">Přidat nový záznam</string>
-    <string name="restore_records_button">Obnovit data</string>
+    <string name="empty_vault_title">Váš trezor je prázdný</string>
+    <string name="no_record">Uložte svůj první záznam – zabere to méně než minutu. Vše je šifrované a zůstává v tomto zařízení.</string>
+    <string name="restore_records_button">Obnovit ze zálohy</string>
+    <string name="record_type_desc_login">Uživatelská jména a hesla k webům a aplikacím</string>
+    <string name="record_type_desc_card">Čísla debetních a kreditních karet, platnost, PIN a CVV</string>
+    <string name="record_type_desc_bank_account">Čísla účtů, údaje o pobočce a zákazníkovi</string>
+    <string name="record_type_desc_note">Jakýkoli soukromý text, od kódů pro obnovení po hesla k Wi-Fi</string>
+    <string name="record_type_desc_authenticator">Kódy TOTP pro dvoufázové ověření z QR kódu nebo tajného klíče</string>
     <string name="no_filtered_record_title">Žádné výsledky.</string>
     <string name="no_filtered_record_body">Nenalezli jsme nic, co by odpovídalo vašemu hledání. Zkuste upravit filtry nebo zkontrolujte překlepy.</string>
 

@@ -3,6 +3,7 @@
 package com.andryoga.safebox.ui.singleRecord
 
 import android.content.Context
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
@@ -27,6 +28,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -312,5 +314,174 @@ class SingleRecordViewModelTest {
         val event = analyticsHelper.loggedEvents
             .first { it.key == AnalyticsKey.AUTHENTICATOR_COPY_CLICK }
         assertThat(event.params[AnalyticsParam.SOURCE.paramName]).isEqualTo("record_detail")
+    }
+
+    @Test
+    fun clearNewRecordWithoutTyping_shouldLogFormAbandonWithoutInput() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.CARD)
+        initViewModel()
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("card")
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun clearNewRecordAfterTyping_shouldLogFormAbandonWithInput() = runTest {
+        coEvery { layout.getLayoutPlan() } returns LayoutPlan(
+            fieldUiState = mapOf(
+                FieldId.LOGIN_TITLE to FieldUiState(cell = mockk(relaxed = true), data = ""),
+            )
+        )
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
+        initViewModel()
+        advanceUntilIdle()
+        viewModel.onAction(SingleRecordScreenAction.OnCellValueUpdate(FieldId.LOGIN_TITLE, "Gmail"))
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("login")
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(true)
+    }
+
+    @Test
+    fun clearPrefilledNewRecordLeftUntouched_shouldLogFormAbandonWithoutInput() = runTest {
+        // how a scanned QR code arrives: the form opens with data the user never typed
+        coEvery { layout.getLayoutPlan() } returns LayoutPlan(
+            fieldUiState = mapOf(
+                FieldId.AUTHENTICATOR_TITLE to FieldUiState(
+                    cell = mockk(relaxed = true),
+                    data = "AcmeCorp - alice@example.com",
+                ),
+            )
+        )
+        every { singleRecordRouteProvider.getRoute() } returns
+            SingleRecordScreenRoute(RecordType.AUTHENTICATOR)
+        initViewModel()
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_FORM_ABANDON }
+        assertThat(event.params[AnalyticsParam.HAD_INPUT.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun clearNewRecordAfterSave_shouldNotLogFormAbandon() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.NOTE)
+        coEvery { layout.saveLayout(any()) } just runs
+        initViewModel()
+        advanceUntilIdle()
+        viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+        advanceUntilIdle()
+
+        clearViewModel()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_FORM_ABANDON)).isFalse()
+    }
+
+    @Test
+    fun clearExistingRecord_shouldNotLogFormAbandon() = runTest {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.LOGIN,
+            1,
+        )
+        initViewModel()
+        advanceUntilIdle()
+        // leaving an edit unsaved is not an abandoned create form
+        viewModel.onAction(SingleRecordScreenAction.OnEditClicked)
+
+        clearViewModel()
+
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_FORM_ABANDON)).isFalse()
+    }
+
+    @Test
+    fun fieldCopied_shouldLogFieldCopyWithRecordTypeAndFieldName() {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.LOGIN,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnFieldCopied(FieldId.LOGIN_PASSWORD))
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.FIELD_COPY }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("login")
+        assertThat(event.params[AnalyticsParam.FIELD.paramName]).isEqualTo("login_password")
+        // the field's name is all that leaves the device
+        assertThat(event.params.values).hasSize(2)
+    }
+
+    @Test
+    fun shareClicked_shouldLogRecordShareWithRecordType() = runTest {
+        coEvery { layout.getShareableFields() } returns emptyList()
+        every { context.getString(any(), any()) } returns "some app link"
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.CARD,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+        advanceUntilIdle()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_SHARE }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("card")
+    }
+
+    @Test
+    fun deleteClicked_shouldLogRecordDeleteWithRecordType() = runTest {
+        coEvery { layout.deleteLayout() } just runs
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.BANK_ACCOUNT,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+        advanceUntilIdle()
+
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RECORD_DELETE }
+        assertThat(event.params[AnalyticsParam.RECORD_TYPE.paramName]).isEqualTo("bank_account")
+    }
+
+    @Test
+    fun deleteClicked_shouldNotLogRecordDeleteBeforeTheDeleteCompletes() = runTest {
+        val deletion = CompletableDeferred<Unit>()
+        coEvery { layout.deleteLayout() } coAnswers { deletion.await() }
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(
+            RecordType.NOTE,
+            1,
+        )
+        initViewModel()
+
+        viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+        advanceUntilIdle()
+        // the record is still in the vault at this point, so analytics must not say otherwise
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_DELETE)).isFalse()
+
+        deletion.complete(Unit)
+        advanceUntilIdle()
+        assertThat(analyticsHelper.count(AnalyticsKey.RECORD_DELETE)).isEqualTo(1)
+    }
+
+    /**
+     * Clears the ViewModel the way the framework does when its navigation entry is popped, so the
+     * test exercises `onCleared` without the production class exposing a hook for it.
+     */
+    private fun clearViewModel() {
+        ViewModelStore().apply {
+            put(VIEW_MODEL_KEY, viewModel)
+            clear()
+        }
+    }
+
+    companion object {
+        private const val VIEW_MODEL_KEY = "single_record"
     }
 }

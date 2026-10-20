@@ -89,9 +89,14 @@
 
     <!-- Record screen -->
     <string name="loading_data">正在載入資料…</string>
-    <string name="no_record">新增一筆記錄開始使用，或從備份還原您的資料。</string>
-    <string name="new_record_button">新增記錄</string>
-    <string name="restore_records_button">還原資料</string>
+    <string name="empty_vault_title">您的保險庫是空的</string>
+    <string name="no_record">儲存您的第一筆記錄，不到一分鐘即可完成。所有資料都會加密，並且只保存在此裝置上。</string>
+    <string name="restore_records_button">從備份還原</string>
+    <string name="record_type_desc_login">網站和應用程式的使用者名稱與密碼</string>
+    <string name="record_type_desc_card">簽帳金融卡和信用卡的卡號、有效期限、PIN 和 CVV</string>
+    <string name="record_type_desc_bank_account">帳號、分行及客戶資料</string>
+    <string name="record_type_desc_note">任何私密文字，從復原代碼到 Wi-Fi 密碼</string>
+    <string name="record_type_desc_authenticator">透過 QR 碼或密鑰新增的雙重驗證 TOTP 代碼</string>
     <string name="no_filtered_record_title">找不到符合的結果</string>
     <string name="no_filtered_record_body">找不到符合搜尋條件的項目。請嘗試調整篩選條件或檢查是否有錯字。</string>
 

@@ -12,6 +12,11 @@
   comments on trivial getters/setters).
 - Feel free to modify, clarify, or add new well-structured comments to make the code more readable
   and self-documenting where required.
+- **Comments stay local and short.** A comment states the invariant of the code it sits on, in one
+  or two lines. It does not explain other classes, product reasoning, or how a metric is read; that
+  belongs in `docs/` with a pointer at most. If a longer explanatory comment is useful for the
+  owner's first read of a change, mark it `// TODO(review): remove before merge` so it is stripped
+  before the PR lands. (Review feedback on #294, 2026-10-19.)
 
 ## Interaction Style & Tone
 
@@ -24,7 +29,11 @@
   anti-pattern, structurally flawed, premature, out of scope, or deviates from Android industry
   standards / established app architecture, immediately and proactively challenge it upfront in
   the chat. Detail the concrete technical drawbacks or trade-offs, explain the rationale, and steer
-  toward the standard solution before writing or modifying any code.
+  toward the standard solution before writing or modifying any code. Automated review findings
+  (CodeRabbit, PR agent) get the same scrutiny, not automatic compliance: fix only when the real
+  impact justifies the added code, otherwise reply on the thread with the reasoning. (Review
+  feedback on #294, 2026-10-19: a double-tap guard was added for a bot finding whose only effect
+  was a duplicate analytics event.)
 * **Architecture Consistency & Advance Notification:** Always adhere strictly to established app
   patterns. If there is a compelling reason to deviate from the
   established app architecture or standard, proactively push back and inform the user upfront in the

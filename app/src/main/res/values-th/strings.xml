@@ -89,9 +89,14 @@
 
     <!-- Record screen -->
     <string name="loading_data">กำลังโหลดข้อมูลของคุณ …</string>
-    <string name="no_record">เริ่มต้นด้วยการเพิ่มรายการใหม่ หรือกู้คืนข้อมูลของคุณจากไฟล์สำรอง</string>
-    <string name="new_record_button">เพิ่มรายการใหม่</string>
-    <string name="restore_records_button">กู้คืนข้อมูล</string>
+    <string name="empty_vault_title">ตู้นิรภัยของคุณว่างเปล่า</string>
+    <string name="no_record">บันทึกรายการแรกของคุณ ใช้เวลาไม่ถึงหนึ่งนาที ข้อมูลทั้งหมดจะถูกเข้ารหัสและเก็บไว้ในอุปกรณ์นี้เท่านั้น</string>
+    <string name="restore_records_button">กู้คืนจากข้อมูลสำรอง</string>
+    <string name="record_type_desc_login">ชื่อผู้ใช้และรหัสผ่านสำหรับเว็บไซต์และแอป</string>
+    <string name="record_type_desc_card">หมายเลขบัตรเดบิตและบัตรเครดิต วันหมดอายุ PIN และ CVV</string>
+    <string name="record_type_desc_bank_account">หมายเลขบัญชี ข้อมูลสาขาและข้อมูลลูกค้า</string>
+    <string name="record_type_desc_note">ข้อความส่วนตัวใดก็ได้ ตั้งแต่รหัสกู้คืนไปจนถึงรหัสผ่าน Wi-Fi</string>
+    <string name="record_type_desc_authenticator">รหัส TOTP สำหรับการยืนยันตัวตนสองขั้นตอน จากคิวอาร์โค้ดหรือคีย์ลับ</string>
     <string name="no_filtered_record_title">ไม่พบผลลัพธ์</string>
     <string name="no_filtered_record_body">ไม่พบรายการที่ตรงกับการค้นหาของคุณ ลองปรับตัวกรองหรือตรวจสอบตัวสะกดอีกครั้ง</string>
 

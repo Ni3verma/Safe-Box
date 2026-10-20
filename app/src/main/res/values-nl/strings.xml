@@ -89,9 +89,14 @@
 
     <!--    Record screen-->
     <string name="loading_data">Je gegevens laden…</string>
-    <string name="no_record">Begin opnieuw door een item toe te voegen of herstel je gegevens vanuit een back-up.</string>
-    <string name="new_record_button">Nieuw item toevoegen</string>
-    <string name="restore_records_button">Gegevens herstellen</string>
+    <string name="empty_vault_title">Je kluis is leeg</string>
+    <string name="no_record">Sla je eerste item op – het duurt minder dan een minuut. Alles wordt versleuteld en blijft op dit apparaat.</string>
+    <string name="restore_records_button">Herstellen vanuit een back-up</string>
+    <string name="record_type_desc_login">Gebruikersnamen en wachtwoorden voor websites en apps</string>
+    <string name="record_type_desc_card">Nummers van betaal- en creditcards, vervaldatum, pincode en CVV</string>
+    <string name="record_type_desc_bank_account">Rekeningnummers, filiaal- en klantgegevens</string>
+    <string name="record_type_desc_note">Elke privétekst, van herstelcodes tot wifi-wachtwoorden</string>
+    <string name="record_type_desc_authenticator">TOTP-codes voor tweestapsverificatie, via een QR-code of een geheime sleutel</string>
     <string name="no_filtered_record_title">Oeps! Geen resultaten gevonden.</string>
     <string name="no_filtered_record_body">We hebben niets gevonden dat overeenkomt met je zoekopdracht. Pas je filters aan of controleer op typfouten.</string>
 
