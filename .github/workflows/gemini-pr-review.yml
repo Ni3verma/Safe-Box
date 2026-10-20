@@ -24,3 +24,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # .pr_agent.toml is otherwise read from master; empty on issue_comment, which keeps master.
+          PR_AGENT_CONFIG_BRANCH: ${{ github.head_ref }}
