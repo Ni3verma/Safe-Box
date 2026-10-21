@@ -326,6 +326,15 @@ instrumentation test trigger its own touch; the app needs `INTERNET` for that so
 `compileDebugAndroidTest*` and `dexBuilderDebugAndroidTest*`. If you add a variant or rename a
 task, that block needs updating or Hilt's generated test sources go missing.
 
+### Lint's `NewApi` only understands `Build.VERSION.SDK_INT`
+
+Guarding an API-gated call with an injected `sdkInt` parameter (the #280 pattern for
+JVM-testing a version split) fails `lintRelease` with `Call requires API level 30 (current min is
+29)` — lint resolves the guard only when it reads `Build.VERSION.SDK_INT` (or a method annotated
+`@ChecksSdkIntAtLeast`). Either keep the real constant in the guard and test the surrounding
+logic through pure functions instead, or annotate the predicate. Hit on
+`setUserAuthenticationParameters` in `AndroidKeystoreGateway`, 2026-10-21.
+
 ### `unitTests.returnDefaultValues = true`
 
 Unmocked Android framework calls return defaults instead of throwing in unit tests. Convenient, but

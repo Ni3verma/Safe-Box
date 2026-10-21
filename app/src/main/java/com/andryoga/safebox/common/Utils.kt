@@ -70,15 +70,18 @@ object Utils {
     /**
      * Use this in all the scenarios which should not happen.
      * this method will crash the app in debug builds and give us early signal that something is wrong.
+     *
+     * @param cause The exception that exposed the impossible state, if any. In release builds it
+     * reaches Crashlytics as a non-fatal through [Timber.e]; without it only the message is logged.
      * */
-    fun crashInDebugBuild(errorMessage: String) {
+    fun crashInDebugBuild(errorMessage: String, cause: Throwable? = null) {
         val message = "Ooooppsss, this should not have happened," +
                 " Note that this is a debug build exclusive crash but this must be addressed !! \n" +
                 " Error: $errorMessage"
-        Timber.e(message)
+        Timber.e(cause, message)
 
         if (BuildConfig.DEBUG) {
-            throw Exceptions.DebugFatalException(message)
+            throw Exceptions.DebugFatalException(message).apply { cause?.let { initCause(it) } }
         }
     }
 }

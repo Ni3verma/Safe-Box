@@ -112,4 +112,15 @@ class UtilsTest {
 
         assertThat(exception.message).contains(errorMessage)
     }
+
+    @Test
+    fun crashInDebugBuild_withCause_attachesCauseToDebugFatalException() {
+        val cause = IllegalStateException("unexpected keystore failure")
+
+        val exception = assertThrows(Exceptions.DebugFatalException::class.java) {
+            Utils.crashInDebugBuild("Keystore probe failed outside the crypto API", cause)
+        }
+
+        assertThat(exception.cause).isSameInstanceAs(cause)
+    }
 }
