@@ -34,17 +34,15 @@ object TestFixtures {
     fun createTestUserDetailsEntity(
         key: Int = 1,
         uid: String = "test-uid-123",
-        password: String = "hashed_password",
         hint: String? = "encrypted_hint",
         creationDate: Date = fixedDate,
-        updateDate: Date = fixedDate
+        updateDate: Date = fixedDate,
     ) = UserDetailsEntity(
         key = key,
         uid = uid,
-        password = password,
         hint = hint,
         creationDate = creationDate,
-        updateDate = updateDate
+        updateDate = updateDate,
     )
 
     fun createTestLoginData(

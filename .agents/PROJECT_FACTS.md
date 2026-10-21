@@ -45,7 +45,9 @@ upgrade test must be `qa → qa`.
 
 ## Persistence & crypto
 
-- Room DB version: **5** (`data/db/SafeBoxDatabase.kt`). Exported schemas `1.json`–`5.json` in
+- Room DB version: **5** on `master`; **6** on `feature/envelope-encryption` (`MIGRATION_5_6`,
+  2026-10-21: `vault_meta` + `quarantined_record`, `user_details` loses `password`, the hash is
+  parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
   `app/schemas/`, also wired in as androidTest assets.
 - `Migration.ALL` in `data/db/Migration.kt` is the single source of truth for the migration list;
   `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Add a migration there and it is
@@ -62,8 +64,6 @@ upgrade test must be `qa → qa`.
   `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
   export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until
   `BACKUP_VERSION` is bumped, `app/backup-format.lock` gains a line and a new seed is captured.
-- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE`,
-  `AUTHENTICATOR`.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
   mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
   hint. Applies to signup and change-password only — **not** to the backup file password, which is

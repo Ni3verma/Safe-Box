@@ -10,7 +10,7 @@ sufficient coverage.
 
 | Layer | Holds |
 |---|---|
-| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (password hash, and the hint encrypted with the same key as the records — `UserDetailsDaoSecure.getHint`) |
+| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (uid and the hint — encrypted with the same key as the records while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, later the wrapped keys); `quarantined_record` (rows the crypto migration could not read, see [Room](#room)) |
 | `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
@@ -231,8 +231,9 @@ backup. A skipped count is surfaced to the UI.
 
 ## Room
 
-- Current version **5**; exported schemas live in `app/schemas/` and are also mounted as androidTest
-  assets so migration tests can read them.
+- Current version **6** on `feature/envelope-encryption` (**5** on `master` until the final merge);
+  exported schemas live in `app/schemas/` and are also mounted as androidTest assets so migration
+  tests can read them.
 - `Migration.ALL` in `data/db/Migration.kt` is the canonical list; `CacheModule` does
   `.addMigrations(*Migration.ALL)`. `MigrationTest` asserts
   `Migration.ALL.maxOf { it.endVersion } == currentSchemaVersion()`, so bumping the DB without
@@ -241,6 +242,21 @@ backup. A skipped count is surfaced to the UI.
   total, silent data loss.
 - `MIGRATION_4_5` only **adds** the authenticator table. It does not `ALTER` any encrypted table,
   which is why it is low risk.
+- `MIGRATION_5_6` (envelope encryption, [design §4.2](../design/envelope-encryption.md#42-migration_5_6-runs-when-room-opens-before-any-login))
+  creates `vault_meta` (`key TEXT PRIMARY KEY, value TEXT`) and `quarantined_record`, parks
+  `crypto_version = 1` (only when a `user_details` row exists) and the master-password hash as
+  `legacy_password_hash` in `vault_meta`, then rebuilds `user_details` **without** the `password`
+  column. The rebuild is create-copy-drop-rename, not `DROP COLUMN`: that needs SQLite 3.35 and
+  API 29–33 ship 3.28–3.32. It touches no encrypted record column. Each destructive step is
+  preceded by a row-count `check`; a failed check throws, Room rolls the transaction back and the
+  database stays at version 5 (the app fails to open rather than opening without its credential).
+  Key names and values are SQL literals in the migration and constants in
+  `data/db/models/VaultMetaKey.kt`; `MigrationTest` asserts through the constants so the two
+  cannot drift apart, and also opens the migrated file through Room to drive the production DAOs.
+  Until MR 5 lands, signup still creates a legacy vault (`crypto_version = 1` + hash, written by
+  `UserDetailsRepositoryImpl` in one `withTransaction`, `crypto_version` first because
+  `UserDetailsDaoSecure` reads it to pick the hint's stored form), so a vault made by an interim
+  branch build is migrated like any other.
 
 ## Related
 
