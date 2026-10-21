@@ -21,7 +21,9 @@ class SecureNoteDataDaoSecure @Inject constructor(
     }
 
     override fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>> {
+        // No encrypted column in this list today; the operator keeps the secure-DAO Flow contract uniform.
         return secureNoteDataDao.getAllSecretNoteData()
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getSecretNoteDataByKey(key: Int): SecureNoteDataEntity {

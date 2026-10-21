@@ -2,6 +2,7 @@ package com.andryoga.safebox.test.fakes
 
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
+import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.AndroidKeystoreGateway
 import com.andryoga.safebox.security.interfaces.BiometricNotEnrolledException
 import com.andryoga.safebox.security.interfaces.KeyHealth
@@ -12,6 +13,7 @@ import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PublicKey
 import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -83,6 +85,12 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
 
     override fun legacyVaultKey(): SecretKey? = legacyKey
 
+    override fun getOrCreateLegacyVaultKey(): SecretKey {
+        return legacyKey ?: KeyGenerator.getInstance("AES").apply { init(AES_KEY_SIZE_BITS) }
+            .generateKey()
+            .also { legacyKey = it }
+    }
+
     override fun deleteLegacyVaultKey() {
         legacyKey = null
     }
@@ -124,5 +132,9 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
         generationCounts.clear()
         invalidatedAliases.clear()
         unauthenticatedAliases.clear()
+    }
+
+    private companion object {
+        const val AES_KEY_SIZE_BITS = AesGcmWrap.KEY_SIZE_BYTES * 8
     }
 }

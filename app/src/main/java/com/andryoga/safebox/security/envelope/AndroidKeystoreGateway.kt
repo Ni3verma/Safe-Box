@@ -20,6 +20,7 @@ import java.security.ProviderException
 import java.security.PublicKey
 import java.security.spec.MGF1ParameterSpec
 import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.OAEPParameterSpec
 import javax.crypto.spec.PSource
@@ -32,7 +33,8 @@ import javax.inject.Singleton
  * Wrap keys are RSA-2048 OAEP pairs generated StrongBox-first. Every private-key cipher is
  * initialised with the explicit MGF1-SHA1 parameters of [OAEP_SPEC], the only combination that
  * interoperates with the JCA encrypt side on every supported API (ADR-0011 S4). The legacy
- * `symmetricDataKey` is read but never regenerated here.
+ * `symmetricDataKey` is read but never regenerated here; the only creation path is the
+ * alias-guarded [getOrCreateLegacyVaultKey] of the signup bridge.
  *
  * The decisions (failure mapping, StrongBox retry, probe classification) are pure companion
  * functions so they are unit-tested on the JVM; the Keystore calls themselves are covered on a
@@ -105,6 +107,27 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
 
     override fun legacyVaultKey(): SecretKey? =
         keyStore().getKey(LEGACY_SYMMETRIC_KEY_ALIAS, null) as? SecretKey
+
+    // TODO(MR5): goes with the legacy signup bridge (KeystoreGateway.getOrCreateLegacyVaultKey)
+    override fun getOrCreateLegacyVaultKey(): SecretKey {
+        // containsAlias is the guard: KeyGenerator.generateKey() would silently replace an existing
+        // entry, which is the data-loss path this gateway exists to make impossible.
+        if (!keyStore().containsAlias(LEGACY_SYMMETRIC_KEY_ALIAS)) {
+            val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+            keyGenerator.init(
+                KeyGenParameterSpec.Builder(
+                    LEGACY_SYMMETRIC_KEY_ALIAS,
+                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+                )
+                    .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                    .setRandomizedEncryptionRequired(true)
+                    .build(),
+            )
+            keyGenerator.generateKey()
+        }
+        return checkNotNull(legacyVaultKey()) { "legacy vault key missing right after generation" }
+    }
 
     override fun deleteLegacyVaultKey() {
         deleteKey(LEGACY_SYMMETRIC_KEY_ALIAS)

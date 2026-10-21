@@ -5,8 +5,11 @@ import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.SessionLockedException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
@@ -39,8 +42,9 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
     )
     override val lockEvents: SharedFlow<Unit> = _lockEvents.asSharedFlow()
 
-    override val isUnlocked: Boolean
-        get() = state !is State.Locked
+    // Written together with `state` under the lock, so an observer never sees them disagree.
+    private val _isUnlocked = MutableStateFlow(false)
+    override val isUnlocked: StateFlow<Boolean> = _isUnlocked.asStateFlow()
 
     override val isLegacySession: Boolean
         get() = state is State.LegacyUnlocked
@@ -65,6 +69,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
         synchronized(lock) {
             zeroIfUnlocked(state)
             state = State.Unlocked(copy)
+            _isUnlocked.value = true
         }
     }
 
@@ -72,6 +77,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
         synchronized(lock) {
             zeroIfUnlocked(state)
             state = State.LegacyUnlocked(legacyKey)
+            _isUnlocked.value = true
         }
     }
 
@@ -79,6 +85,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
         synchronized(lock) {
             zeroIfUnlocked(state)
             state = State.Locked
+            _isUnlocked.value = false
         }
         _lockEvents.tryEmit(Unit)
     }

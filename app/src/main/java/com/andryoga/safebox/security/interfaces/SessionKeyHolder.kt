@@ -1,6 +1,7 @@
 package com.andryoga.safebox.security.interfaces
 
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import javax.crypto.SecretKey
 
 /**
@@ -10,7 +11,8 @@ import javax.crypto.SecretKey
  * DEK or `LegacyUnlocked` with a non-exportable Keystore handle) or `Locked`.
  */
 interface SessionKeyHolder {
-    val isUnlocked: Boolean
+    /** Observable so the UI leaves the vault the moment it is cleared, whoever clears it. */
+    val isUnlocked: StateFlow<Boolean>
     val isLegacySession: Boolean
     val lockEvents: SharedFlow<Unit>
 

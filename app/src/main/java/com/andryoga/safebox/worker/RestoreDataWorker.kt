@@ -183,6 +183,7 @@ class RestoreDataWorker
             }
             Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData())
         } catch (exception: Exception) {
+            // TODO(MR4): SessionLockedException maps to RestoreFailureReason.SESSION_LOCKED and the work is cancelled on lock
             onRestoreError(exception)
             val failureReason = mapExceptionToFailureReason(exception)
             Result.failure(failureReason.toWorkData())

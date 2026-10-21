@@ -32,6 +32,7 @@ class BankAccountDataDaoSecure @Inject constructor(
             .map {
                 SearchBankAccountData.Companion.decrypt(it, symmetricKeyUtils)
             }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun deleteBankAccountDataByKey(key: Int) {

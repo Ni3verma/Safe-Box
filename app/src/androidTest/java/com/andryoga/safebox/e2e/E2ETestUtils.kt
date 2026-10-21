@@ -68,6 +68,9 @@ object E2ETestUtils {
 
     /**
      * Pre-seeds the database and encrypted preferences so the app boots directly onto the LoginScreen.
+     *
+     * Opens the legacy vault session first ([VaultSessionTestBridge]): the hint and every record
+     * seeded afterwards are encrypted under it, and the UI login reopens the same key.
      */
     suspend fun setupUnlockedHomeState(
         safeBoxDatabase: SafeBoxDatabase,
@@ -77,6 +80,7 @@ object E2ETestUtils {
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
+        VaultSessionTestBridge.openLegacySessionForSeeding()
         userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
         preferenceProvider.upsertIntPref(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING, 0)
@@ -124,6 +128,7 @@ object E2ETestUtils {
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
+        VaultSessionTestBridge.openLegacySessionForSeeding()
         userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
         preferenceProvider.upsertIntPref(
@@ -144,6 +149,9 @@ object E2ETestUtils {
     /**
      * Pre-seeds the database with comprehensive sample records across all 5 vault item types
      * to guarantee deterministic testing for search, filter, and detail screens without UI interaction.
+     *
+     * Opens the legacy vault session itself, since suites call this without a preceding user seed;
+     * reopening an already open session is harmless.
      */
     suspend fun setupSeededVaultRecords(
         safeBoxDatabase: SafeBoxDatabase,
@@ -153,6 +161,7 @@ object E2ETestUtils {
         secureNoteDataRepository: SecureNoteDataRepository,
         authenticatorDataRepository: AuthenticatorDataRepository
     ) {
+        VaultSessionTestBridge.openLegacySessionForSeeding()
         safeBoxDatabase.loginDataDao().deleteAllData()
         safeBoxDatabase.bankCardDataDao().deleteAllData()
         safeBoxDatabase.bankAccountDataDao().deleteAllData()

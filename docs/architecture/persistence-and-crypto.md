@@ -19,7 +19,41 @@ sufficient coverage.
 
 ## Field encryption
 
-`di/SecurityModule.kt`:
+Encryption is per-field, applied in the `secureDao` layer (`data/db/secureDao/*DaoSecure.kt`), so
+DAOs above it deal in plaintext. The on-disk form of every encrypted column is
+`b64(ciphertext)|b64(iv)`, AES-256-GCM with a 128-bit tag, produced by the pure codec
+`security/AesGcmFieldCipher.kt` over an explicit `SecretKey`.
+
+**On `feature/envelope-encryption` (since envelope MR 3, 2026-10-21) there is no ambient key.**
+`SymmetricKeyUtilsImpl` asks `SessionKeyHolder.withSessionKey` for the key on every call — the DEK
+once a vault is envelope-encrypted, or the legacy Keystore handle in a legacy session — and a
+locked vault fails closed with `SessionLockedException` on both directions:
+
+- the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` and emit an empty list
+  (any other failure still propagates: a broken row is a bug to surface, not a state to hide);
+- suspend reads and writes throw it to the caller that owns the recovery; the workers fail through
+  their existing catch-alls until MR 4 gives them `SESSION_LOCKED`;
+- the route to Login is central: `HomeScreen` collects `MainViewModel.isVaultUnlocked`
+  (`SessionKeyHolder.isUnlocked`, a `StateFlow`) and leaves for the Login graph, composing
+  nothing, whenever it is `false` — on entry for a back stack restored after process death or
+  a navigation that skipped Login, and the moment the holder is cleared while Home is showing.
+  Whoever clears the key gets the navigation for free; nothing else navigates on a lock.
+
+The legacy `symmetricDataKey` alias is reached only through `KeystoreGateway`:
+`legacyVaultKey()` returns the handle or `null` and **never generates**; the single creation path
+is `getOrCreateLegacyVaultKey()`, called by the signup bridge while a vault is being created
+(alias-guarded, so an existing entry is never replaced). The hint of a `crypto_version = 1` vault
+goes through that handle directly on read and write (`UserDetailsDaoSecure`), because it is the
+one field touched outside a session: the login screen reads it, signup writes it before a session
+exists, the login-screen reset rewrites it while locked. A lost key reads as `null` and refuses to
+write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST` and nothing is regenerated.
+Until MR 5, `LoginViewModel` and `SignupViewModel` open the legacy session (`setLegacySession`)
+on every accepted credential; the E2E seeds do the same through `VaultSessionTestBridge`. Design:
+[envelope-encryption.md](../design/envelope-encryption.md) §3.1, §4.3, §6.9.
+
+### What `master` still does, and why the branch is shaped like this
+
+`di/SecurityModule.kt` on `master`:
 
 ```kotlin
 private fun getSymmetricKey(): SecretKey {
@@ -35,21 +69,22 @@ private fun getSymmetricKey(): SecretKey {
 ```
 
 > [!CAUTION]
-> **The highest-severity failure mode in the app.** If the alias is ever lost, this silently
-> creates a *new* key. Nothing throws *at key creation*. Every existing record becomes permanently
-> undecryptable. Observed with the alias deliberately deleted (2026-09-24, upgrade harness): the
-> app launched normally and then crashed with `javax.crypto.AEADBadTagException` from
+> **The highest-severity failure mode in the app, on `master`.** If the alias is ever lost, this
+> silently creates a *new* key. Nothing throws *at key creation*. Every existing record becomes
+> permanently undecryptable. Observed with the alias deliberately deleted (2026-09-24, upgrade
+> harness): the app launched normally and then crashed with `javax.crypto.AEADBadTagException` from
 > `AndroidKeyStoreCipherSpiBase.engineDoFinal` at the first decrypt, which was the unlock screen's
-> Show Hint, since the hint is encrypted under the same key.
+> Show Hint, since the hint is encrypted under the same key. Since 2026-10-20 it is at least
+> visible there: `keystore_key_created` with `db_exists = 1`
+> ([envelope-readiness.md](../analytics/envelope-readiness.md)). On the feature branch the path
+> does not exist; `AndroidKeystoreGatewayLegacyKeyTest` pins that a regenerated key fails the GCM
+> tag instead of reading garbage.
 >
 > Because the key lives in the Keystore and not in `/data/data`, it is invisible to Room migration
 > tests, to backup/restore tests, and to any `/data` snapshot. The only thing that can catch a
 > regression here is an **upgrade test that installs an old build, writes records, upgrades in
 > place, and compares decrypted field values**. See
 > [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md).
-
-Encryption is per-field, applied in the `secureDao` layer
-(`data/db/secureDao/*DaoSecure.kt`), so DAOs above it deal in plaintext.
 
 ## Backup file format
 

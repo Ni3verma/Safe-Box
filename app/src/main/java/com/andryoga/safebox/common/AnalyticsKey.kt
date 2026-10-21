@@ -112,11 +112,6 @@ enum class AnalyticsKey(val eventName: String) {
     // exception class per process, so a broken list of many rows is one event, not many.
     RECORD_DECRYPT_FAILURE("record_decrypt_failure"),
 
-    // the Keystore alias was absent and a fresh key was generated; AnalyticsParam.DB_EXISTS tells
-    // a first launch (0) from the silent-data-loss case where a vault already existed (1).
-    // TODO(MR3): delete with the regenerate branch in SecurityModule; its only firing site.
-    KEYSTORE_KEY_CREATED("keystore_key_created"),
-
     // vault size and storage headroom; RECORD_COUNT, DB_SIZE_KB, FREE_SPACE_MB. Once per records
     // ViewModel, i.e. per unlock session.
     VAULT_STATS("vault_stats"),

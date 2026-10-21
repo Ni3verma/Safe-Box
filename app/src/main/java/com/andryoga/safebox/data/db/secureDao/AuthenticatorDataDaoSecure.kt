@@ -32,6 +32,7 @@ class AuthenticatorDataDaoSecure @Inject constructor(
     override fun getAllAuthenticatorData(): Flow<List<SearchAuthenticatorData>> {
         return authenticatorDataDao.getAllAuthenticatorData()
             .map { SearchAuthenticatorData.decrypt(it, symmetricKeyUtils) }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getAuthenticatorDataByKey(key: Int): AuthenticatorDataEntity {

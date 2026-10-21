@@ -33,9 +33,6 @@ enum class AnalyticsParam(val paramName: String) {
     STRONGBOX("strongbox"),
     // simple class name of a caught exception, never its message
     EXCEPTION("exception"),
-    // the Room database file already existed when a Keystore key had to be generated
-    // TODO(MR3): delete with KEYSTORE_KEY_CREATED, its only event; archive the GA dimension after the read-back.
-    DB_EXISTS("db_exists"),
     // records across all five types
     RECORD_COUNT("record_count"),
     // Room database file plus its WAL, in KiB

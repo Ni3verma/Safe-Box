@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.crypto.AEADBadTagException
 
 class BankAccountDataDaoSecureTest {
 
@@ -103,6 +105,28 @@ class BankAccountDataDaoSecureTest {
             // 12 digits: first 8 masked, last 4 unmasked
             assertThat(items[0].accountNumber).isEqualTo("XXXXXXXX1012")
             awaitComplete()
+        }
+    }
+
+    @Test
+    fun getAllBankAccountData_whenVaultIsLocked_shouldEmitEmptyListInsteadOfThrowing() = runTest {
+        symmetricKeyUtils.failure = SessionLockedException()
+        every { bankAccountDataDao.getAllBankAccountData() } returns flowOf(listOf(TestFixtures.createTestSearchBankAccountData(key = 1, title = "Savings", accountNumber = "ENC[x]")))
+
+        bankAccountDataDaoSecure.getAllBankAccountData().test {
+            assertThat(awaitItem()).isEmpty()
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun getAllBankAccountData_whenARowDoesNotDecrypt_shouldPropagateTheFailure() = runTest {
+        val failure = AEADBadTagException("tag mismatch")
+        symmetricKeyUtils.failure = failure
+        every { bankAccountDataDao.getAllBankAccountData() } returns flowOf(listOf(TestFixtures.createTestSearchBankAccountData(key = 1, title = "Savings", accountNumber = "ENC[x]")))
+
+        bankAccountDataDaoSecure.getAllBankAccountData().test {
+            assertThat(awaitError()).isSameInstanceAs(failure)
         }
     }
 

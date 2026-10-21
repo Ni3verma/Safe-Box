@@ -6,6 +6,7 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.crypto.AEADBadTagException
 
 class LoginDataDaoSecureTest {
 
@@ -119,6 +121,43 @@ class LoginDataDaoSecureTest {
             assertThat(items[0].userId).isEqualTo("user@gmail.com")
             awaitComplete()
         }
+    }
+
+    @Test
+    fun getAllLoginData_whenVaultIsLocked_shouldEmitEmptyListInsteadOfThrowing() = runTest {
+        symmetricKeyUtils.failure = SessionLockedException()
+        every { loginDataDao.getAllLoginData() } returns flowOf(
+            listOf(TestFixtures.createTestSearchLoginData(key = 1, title = "Google", userId = "ENC[x]")),
+        )
+
+        loginDataDaoSecure.getAllLoginData().test {
+            assertThat(awaitItem()).isEmpty()
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun getAllLoginData_whenARowDoesNotDecrypt_shouldPropagateTheFailure() = runTest {
+        val failure = AEADBadTagException("tag mismatch")
+        symmetricKeyUtils.failure = failure
+        every { loginDataDao.getAllLoginData() } returns flowOf(
+            listOf(TestFixtures.createTestSearchLoginData(key = 1, title = "Google", userId = "ENC[x]")),
+        )
+
+        loginDataDaoSecure.getAllLoginData().test {
+            assertThat(awaitError()).isSameInstanceAs(failure)
+        }
+    }
+
+    @Test
+    fun getLoginDataByKey_whenVaultIsLocked_shouldThrowSessionLockedException() = runTest {
+        symmetricKeyUtils.failure = SessionLockedException()
+        coEvery { loginDataDao.getLoginDataByKey(10) } returns
+            TestFixtures.createTestLoginDataEntity(key = 10, userId = "ENC[root_user]")
+
+        val thrown = runCatching { loginDataDaoSecure.getLoginDataByKey(10) }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(SessionLockedException::class.java)
     }
 
     @Test

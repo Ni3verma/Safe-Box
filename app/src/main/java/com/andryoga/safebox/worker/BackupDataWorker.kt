@@ -96,6 +96,7 @@ class BackupDataWorker
             // catches this and reschedules the work; reporting it as UNKNOWN would notify the user.
             throw exception
         } catch (exception: Exception) {
+            // TODO(MR4): SessionLockedException maps to BackupFailureReason.SESSION_LOCKED and the work is cancelled on lock
             onBackupFailure(BackupFailureReason.UNKNOWN, exception)
         }
     }

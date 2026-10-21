@@ -1,6 +1,7 @@
 package com.andryoga.safebox.security.envelope
 
 import com.andryoga.safebox.security.interfaces.SessionLockedException
+import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class SessionKeyHolderTest {
 
     @Test
     fun withSessionKey_whenLocked_shouldThrowSessionLockedException() {
-        assertThat(holder.isUnlocked).isFalse()
+        assertThat(holder.isUnlocked.value).isFalse()
         assertThat(holder.isLegacySession).isFalse()
 
         assertThrows(SessionLockedException::class.java) {
@@ -39,7 +40,7 @@ class SessionKeyHolderTest {
         holder.setSessionKey(callerDek)
         callerDek.fill(0)
 
-        assertThat(holder.isUnlocked).isTrue()
+        assertThat(holder.isUnlocked.value).isTrue()
         assertThat(holder.isLegacySession).isFalse()
         val keyBytesFromHolder = holder.withSessionKey { key -> key.encoded }
         assertThat(keyBytesFromHolder).isEqualTo(expectedDek)
@@ -58,7 +59,7 @@ class SessionKeyHolderTest {
 
         holder.clearSessionKey()
 
-        assertThat(holder.isUnlocked).isFalse()
+        assertThat(holder.isUnlocked.value).isFalse()
         assertThat(internalBuffer.all { it == 0.toByte() }).isTrue()
         assertThat(lockEventCount).isEqualTo(1)
         assertThrows(SessionLockedException::class.java) {
@@ -68,12 +69,33 @@ class SessionKeyHolderTest {
     }
 
     @Test
+    fun isUnlocked_shouldEmitEveryTransitionOfTheSession() = runTest {
+        holder.isUnlocked.test {
+            assertThat(awaitItem()).isFalse()
+
+            holder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x5A })
+            assertThat(awaitItem()).isTrue()
+
+            holder.clearSessionKey()
+            assertThat(awaitItem()).isFalse()
+
+            val legacyHandle = SecretKeySpec(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x33 }, "AES")
+            holder.setLegacySession(legacyHandle)
+            assertThat(awaitItem()).isTrue()
+
+            // Re-opening an open session is not a transition the UI needs to see.
+            holder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x5B })
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun setLegacySession_shouldExposeLegacyHandleAndMarkLegacySession() {
         val legacyHandle = SecretKeySpec(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x33 }, "AES")
 
         holder.setLegacySession(legacyHandle)
 
-        assertThat(holder.isUnlocked).isTrue()
+        assertThat(holder.isUnlocked.value).isTrue()
         assertThat(holder.isLegacySession).isTrue()
         val capturedKey = holder.withSessionKey { it }
         assertThat(capturedKey).isSameInstanceAs(legacyHandle)
@@ -93,7 +115,7 @@ class SessionKeyHolderTest {
 
         assertThat(inFlightEncoded).isEqualTo(expectedDek)
         assertThat(internalBuffer.all { it == 0.toByte() }).isTrue()
-        assertThat(holder.isUnlocked).isFalse()
+        assertThat(holder.isUnlocked.value).isFalse()
         assertThrows(SessionLockedException::class.java) {
             holder.withSessionKey { }
         }
@@ -108,7 +130,7 @@ class SessionKeyHolderTest {
 
         holder.setSessionKey(newDek)
 
-        assertThat(holder.isUnlocked).isTrue()
+        assertThat(holder.isUnlocked.value).isTrue()
         assertThat(holder.isLegacySession).isFalse()
         val activeBytes = holder.withSessionKey { it.encoded }
         assertThat(activeBytes).isEqualTo(newDek)

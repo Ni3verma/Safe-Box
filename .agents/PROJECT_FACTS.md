@@ -53,13 +53,14 @@ upgrade test must be `qa → qa`.
   `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Add a migration there and it is
   wired into both production and the full-chain migration test.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
-- Field encryption: AES-GCM key in `AndroidKeyStore` under alias **`symmetricDataKey`**
-  (`di/SecurityModule.kt`). The provider does `if (!keyStore.containsAlias(alias)) generateKey()`,
-  so a lost alias **silently regenerates** and every stored record becomes undecryptable with no
-  error. This is the single highest-severity failure mode in the app. Since 2026-10-20 it is at
-  least visible: `keystore_key_created` with `db_exists = 1`, and `record_decrypt_failure` from the
-  decorator around `SymmetricKeyUtilsImpl`
-  ([envelope-readiness.md](../docs/analytics/envelope-readiness.md)).
+- Field encryption: AES-GCM per field, `b64(ct)|b64(iv)` (`security/AesGcmFieldCipher.kt`). **The key
+  differs by branch.** `master`: a `@Singleton` Keystore key, alias **`symmetricDataKey`**
+  (`di/SecurityModule.kt`), whose provider does `if (!containsAlias) generateKey()` — a lost alias
+  **silently regenerates** and every record becomes undecryptable (visible since 2026-10-20 as
+  `keystore_key_created` with `db_exists = 1`). `feature/envelope-encryption` (MR 3, 2026-10-21): no
+  ambient key; `SymmetricKeyUtilsImpl` reads `SessionKeyHolder` per call, a locked vault fails closed
+  (`SessionLockedException`; list Flows emit empty), and the legacy alias is created **only** by the
+  signup bridge (`getOrCreateLegacyVaultKey()`), never on a read. [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
 - `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
   `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
   export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until

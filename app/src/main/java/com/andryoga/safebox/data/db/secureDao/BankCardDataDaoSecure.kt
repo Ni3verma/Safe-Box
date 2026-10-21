@@ -27,6 +27,7 @@ class BankCardDataDaoSecure @Inject constructor(
         return bankCardDataDao
             .getAllBankCardData()
             .map { SearchBankCardData.decrypt(it, symmetricKeyUtils) }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity {

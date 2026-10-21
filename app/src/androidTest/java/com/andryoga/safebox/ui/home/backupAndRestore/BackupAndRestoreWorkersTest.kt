@@ -20,6 +20,7 @@ import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
+import com.andryoga.safebox.e2e.VaultSessionTestBridge
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.TotpAlgorithm
@@ -98,6 +99,8 @@ class BackupAndRestoreWorkersTest {
     @Before
     fun setup() {
         hiltRule.inject()
+        // Every seed and both workers encrypt under the session key.
+        VaultSessionTestBridge.openLegacySessionForSeeding()
     }
 
     /**
