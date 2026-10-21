@@ -1,12 +1,15 @@
 package com.andryoga.safebox.security.envelope
 
 import android.security.keystore.KeyPermanentlyInvalidatedException
+import com.andryoga.safebox.BuildConfig
+import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.security.interfaces.KeyHealth
 import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.andryoga.safebox.security.interfaces.WrongPasswordException
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -104,6 +107,33 @@ class EnvelopeEncryptionManagerTest {
         assertThat(result.isFailure).isTrue()
         assertThat(result.exceptionOrNull()).isInstanceOf(WrongPasswordException::class.java)
         assertThat(wrongPassword.all { it == '\u0000' }).isTrue()
+    }
+
+    @Test
+    fun unwrapWithPassword_withMalformedBlob_shouldReturnFailureWithoutAsserting() {
+        val params = testKdfParams(saltSeed = 6)
+
+        val result = manager.unwrapWithPassword("Any#Password99".toCharArray(), params, "###not-base64###")
+
+        assertThat(result.isFailure).isTrue()
+        assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @Test
+    fun unwrapWithPassword_withAuthenticBlobHoldingWrongSizedDek_shouldFailFastInDebugBuilds() {
+        assumeTrue("crashInDebugBuild only throws on debug variants", BuildConfig.DEBUG)
+        val params = testKdfParams(saltSeed = 7)
+        val kek = PasswordKdf.deriveKey("Any#Password99".toCharArray(), params)
+        // Same KEK and AAD as wrapWithPassword, but a 16-byte payload: the tag passes, the size check must not.
+        val blob = AesGcmWrap.wrap(
+            keyBytes = kek,
+            plaintext = ByteArray(16),
+            aad = "safebox.wrap.password.v1".toByteArray(Charsets.UTF_8),
+        )
+
+        assertThrows(Exceptions.DebugFatalException::class.java) {
+            manager.unwrapWithPassword("Any#Password99".toCharArray(), params, blob)
+        }
     }
 
     @Test

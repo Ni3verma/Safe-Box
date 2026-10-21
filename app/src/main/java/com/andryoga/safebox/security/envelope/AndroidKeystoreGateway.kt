@@ -4,7 +4,6 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
-import android.security.keystore.StrongBoxUnavailableException
 import android.security.keystore.UserNotAuthenticatedException
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.security.interfaces.BiometricNotEnrolledException
@@ -171,17 +170,16 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
         val OAEP_SPEC = OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
 
         /**
-         * Runs [generate] StrongBox-backed first and once more without StrongBox when the device
-         * has none ([StrongBoxUnavailableException], ADR-0011 S4); any other failure propagates.
+         * Runs [generate] StrongBox-backed first and once more without StrongBox if that fails for
+         * any reason: a device without StrongBox throws `StrongBoxUnavailableException` (ADR-0011
+         * S4), but OEM StrongBox implementations also reject key parameters with other classes, and
+         * a TEE key is acceptable by design. A failure unrelated to StrongBox recurs on the retry
+         * and propagates from there.
          */
         internal fun <T> withStrongBoxFallback(generate: (strongBoxBacked: Boolean) -> T): T = try {
             generate(true)
-        } catch (e: Exception) {
-            if (e is StrongBoxUnavailableException || e.cause is StrongBoxUnavailableException) {
-                generate(false)
-            } else {
-                throw e
-            }
+        } catch (_: Exception) {
+            generate(false)
         }
 
         /**

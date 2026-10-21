@@ -95,7 +95,10 @@
   operational calls lives at the boundary that owns the recovery (a ViewModel, a worker, a
   maintenance job), never inside the primitive. Exemption: code that *is* the crash-reporting path
   (`CrashlyticsCrashReporter`, `ReleaseTree`) stays silent, because `Timber.e` routes through the
-  same `FirebaseCrashlytics.getInstance()`. (Owner review of envelope MR 1, 2026-10-21.)
+  same `FirebaseCrashlytics.getInstance()`. Call `crashInDebugBuild` from a `catch` block or after
+  the `try`, never inside a `try` whose handler catches `Exception`: `DebugFatalException` is an
+  `Exception`, so the handler would swallow the assertion into the fail-safe result (CodeRabbit on
+  #302). (Owner review of envelope MR 1, 2026-10-21.)
 * **No Fully Qualified Names in Code:** Never inline fully qualified package names in code (e.g.,
   `java.nio.ByteBuffer.allocate` or `com.andryoga.safebox...`). Always add an `import` statement at
   the top of the file and use clean, short type names.

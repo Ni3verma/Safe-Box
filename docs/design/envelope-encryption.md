@@ -93,7 +93,7 @@ KeyGenParameterSpec.Builder(alias, PURPOSE_ENCRYPT or PURPOSE_DECRYPT)
                 else setUserAuthenticationValidityDurationSeconds(DEVICE_KEY_VALIDITY_SECONDS) // 5
             }
         }
-        setIsStrongBoxBacked(true)                        // retried without on StrongBoxUnavailableException
+        setIsStrongBoxBacked(true)                        // retried once without StrongBox on any failure (OEM StrongBox rejects parameters with varying classes)
     }
 ```
 

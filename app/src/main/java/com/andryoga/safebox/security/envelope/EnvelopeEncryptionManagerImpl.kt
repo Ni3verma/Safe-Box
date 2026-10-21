@@ -6,6 +6,7 @@ import com.andryoga.safebox.security.interfaces.KeyHealth
 import com.andryoga.safebox.security.interfaces.KeystoreGateway
 import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.andryoga.safebox.security.interfaces.WrongPasswordException
+import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.PublicKey
 import java.security.SecureRandom
@@ -56,23 +57,33 @@ class EnvelopeEncryptionManagerImpl @Inject constructor(
         params: KdfParams,
         blob: String,
     ): Result<ByteArray> {
-        var kek: ByteArray? = null
-        return try {
-            kek = PasswordKdf.deriveKey(password, params)
-            val dek = AesGcmWrap.unwrap(keyBytes = kek, blob = blob, aad = PASSWORD_WRAP_AAD)
-            if (dek.size != AesGcmWrap.KEY_SIZE_BYTES) {
-                // The tag just proved this blob was written by wrapWithPassword, which only ever wraps a full DEK.
-                dek.fill(0)
-                val error = IllegalStateException("Password wrap opened to ${dek.size} bytes, not a DEK")
-                Utils.crashInDebugBuild("wrapped_dek_password holds a DEK of the wrong size", error)
-                Result.failure(error)
-            } else {
-                Result.success(dek)
-            }
+        val dek = try {
+            unwrapWithDerivedKek(password, params, blob)
         } catch (e: AEADBadTagException) {
-            Result.failure(WrongPasswordException(e))
+            return Result.failure(WrongPasswordException(e))
         } catch (e: Exception) {
-            Result.failure(e)
+            // A malformed blob or a cipher failure is the expected "cannot open" answer; anything else is a bug.
+            if (e !is GeneralSecurityException && e !is IllegalArgumentException) {
+                Utils.crashInDebugBuild("Password unwrap failed outside the crypto contract", e)
+            }
+            return Result.failure(e)
+        }
+        if (dek.size != AesGcmWrap.KEY_SIZE_BYTES) {
+            // The tag just proved this blob was written by wrapWithPassword, which only ever wraps a full DEK.
+            dek.fill(0)
+            val error = IllegalStateException("Password wrap opened to ${dek.size} bytes, not a DEK")
+            Utils.crashInDebugBuild("wrapped_dek_password holds a DEK of the wrong size", error)
+            return Result.failure(error)
+        }
+        return Result.success(dek)
+    }
+
+    /** Derives `KEK_Password`, opens [blob] with it, and zeroes both the password and the KEK before returning. */
+    private fun unwrapWithDerivedKek(password: CharArray, params: KdfParams, blob: String): ByteArray {
+        var kek: ByteArray? = null
+        try {
+            kek = PasswordKdf.deriveKey(password, params)
+            return AesGcmWrap.unwrap(keyBytes = kek, blob = blob, aad = PASSWORD_WRAP_AAD)
         } finally {
             password.fill('\u0000')
             kek?.fill(0)

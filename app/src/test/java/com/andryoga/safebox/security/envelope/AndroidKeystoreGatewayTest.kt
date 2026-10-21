@@ -64,45 +64,41 @@ class AndroidKeystoreGatewayTest {
     }
 
     @Test
-    fun withStrongBoxFallback_whenStrongBoxUnavailable_shouldRetryOnceWithoutStrongBox() {
-        val attempts = mutableListOf<Boolean>()
+    fun withStrongBoxFallback_whenStrongBoxAttemptFails_shouldRetryOnceWithoutStrongBox() {
+        val strongBoxFailures = listOf(
+            StrongBoxUnavailableException("StrongBox not supported"),
+            ProviderException("StrongBox rejected the key parameters"),
+            InvalidAlgorithmParameterException("Unsupported digest for StrongBox"),
+        )
 
-        val result = AndroidKeystoreGateway.withStrongBoxFallback { strongBoxBacked ->
-            attempts.add(strongBoxBacked)
-            if (strongBoxBacked) throw StrongBoxUnavailableException("StrongBox not supported")
-            "generated"
-        }
+        strongBoxFailures.forEach { failure ->
+            val attempts = mutableListOf<Boolean>()
 
-        assertThat(result).isEqualTo("generated")
-        assertThat(attempts).containsExactly(true, false).inOrder()
-    }
-
-    @Test
-    fun withStrongBoxFallback_whenStrongBoxUnavailableIsTheCause_shouldRetryOnceWithoutStrongBox() {
-        val attempts = mutableListOf<Boolean>()
-
-        AndroidKeystoreGateway.withStrongBoxFallback { strongBoxBacked ->
-            attempts.add(strongBoxBacked)
-            if (strongBoxBacked) {
-                throw ProviderException("wrapped", StrongBoxUnavailableException("StrongBox not supported"))
+            val result = AndroidKeystoreGateway.withStrongBoxFallback { strongBoxBacked ->
+                attempts.add(strongBoxBacked)
+                if (strongBoxBacked) throw failure
+                "generated"
             }
-        }
 
-        assertThat(attempts).containsExactly(true, false).inOrder()
+            assertThat(result).isEqualTo("generated")
+            assertThat(attempts).containsExactly(true, false).inOrder()
+        }
     }
 
     @Test
-    fun withStrongBoxFallback_whenOtherFailure_shouldNotRetryAndPropagate() {
+    fun withStrongBoxFallback_whenBothAttemptsFail_shouldPropagateTheRetryFailure() {
         val attempts = mutableListOf<Boolean>()
+        val retryFailure = IllegalStateException("Secure lock screen must be enabled")
 
-        assertThrows(ProviderException::class.java) {
+        val thrown = assertThrows(IllegalStateException::class.java) {
             AndroidKeystoreGateway.withStrongBoxFallback<Unit> { strongBoxBacked ->
                 attempts.add(strongBoxBacked)
-                throw ProviderException("TEE timeout")
+                if (strongBoxBacked) throw ProviderException("TEE timeout") else throw retryFailure
             }
         }
 
-        assertThat(attempts).containsExactly(true)
+        assertThat(thrown).isSameInstanceAs(retryFailure)
+        assertThat(attempts).containsExactly(true, false).inOrder()
     }
 
     @Test
