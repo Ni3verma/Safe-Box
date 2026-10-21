@@ -1195,11 +1195,11 @@ graph LR
 
 #### MR 2 — Room Schema v6 (`→ feature/envelope-encryption`, ≈ 20 files)
 - `VaultMetaEntity` + `VaultMetaDao`, `QuarantinedRecordEntity` + `QuarantinedRecordDao` (insert, count, deleteAll), `MIGRATION_5_6` in `Migration.kt`, exported `6.json`.
-- `UserDetailsEntity` / `UserDetailsDao` without `password`; legacy login check and legacy reset read `vault_meta.legacy_password_hash`; `UserDetailsDaoSecure.getHint()` branches on `crypto_version`.
+- `UserDetailsEntity` / `UserDetailsDao` without `password`; legacy login check and legacy reset read `vault_meta.legacy_password_hash`; `UserDetailsDaoSecure.getHint()` branches on `crypto_version` — the `1` branch keeps decrypting through `SymmetricKeyUtils` (the ambient key still exists at this MR; §4.3's `legacyVaultKey()` path arrives with MR 3). MR 2 calls nothing from MR 1: the dependency in §9.2 is branch sequencing, not code.
 - Tests: `MigrationTest` 5→6, DAO tests.
 
 #### MR 3 — Holder-Backed Data Layer, Fail Closed (`→ feature/envelope-encryption`, ≈ 28 files)
-- `SymmetricKeyUtilsImpl` obtains its key through `sessionKeyHolder.withSessionKey` — the DEK, or the legacy Keystore handle in a legacy session; `SecurityModule` stops providing a `@Singleton SecretKey` and **never auto-generates** `symmetricDataKey`.
+- `SymmetricKeyUtilsImpl` obtains its key through `sessionKeyHolder.withSessionKey` — the DEK, or the legacy Keystore handle in a legacy session; `SecurityModule` stops providing a `@Singleton SecretKey` and **never auto-generates** `symmetricDataKey`. The pre-login hint read for `crypto_version = 1` moves to `keystoreGateway.legacyVaultKey()` (§4.3), because the holder is locked on the login screen.
 - MR T follow-ups: the regenerate branch was the only firing site of `keystore_key_created`, so this MR deletes `AnalyticsKey.KEYSTORE_KEY_CREATED`, `AnalyticsParam.DB_EXISTS`, `logKeystoreKeyCreated` and `SecurityModuleTelemetryTest` (D12; a lost legacy key is `VAULT_MIGRATION_FAILURE reason = legacy_key_lost` from here on). `DecryptFailureReportingSymmetricKeyUtils` is **permanent** and keeps wrapping whatever `provideSymmetricKeyUtils` returns — a row that does not decrypt under the DEK is the same silent breakage.
 - All six `*DaoSecure` `Flow`s catch `SessionLockedException` and emit empty; suspend call sites map it to a route-to-Login outcome.
 - Tests: `SymmetricKeyUtilsImplTest` (locked ⇒ `SessionLockedException`, DEK session, legacy session), `RecordsViewModelTest` (lock mid-stream ⇒ empty list, no crash).
