@@ -269,6 +269,13 @@ class BackupDataWorkerTest {
         assertThat(createdFiles).isNotNull()
         assertThat(createdFiles!!.isNotEmpty()).isTrue()
 
+        val successEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.BACKUP_DATA_SUCCESS }
+        assertThat(successEvent.params[AnalyticsParam.VERSION.paramName])
+            .isEqualTo(CommonConstants.BACKUP_VERSION.toDouble())
+        assertThat(successEvent.params[AnalyticsParam.DURATION_MS.paramName] as Long).isAtLeast(0L)
+        assertThat(successEvent.params[AnalyticsParam.SIZE_KB.paramName])
+            .isEqualTo(createdFiles.first().length() / 1024)
+
         val backupFile = createdFiles.first()
         val backupMap = ObjectInputStream(FileInputStream(backupFile)).use {
             @Suppress("UNCHECKED_CAST")

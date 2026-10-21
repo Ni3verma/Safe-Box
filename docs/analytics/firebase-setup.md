@@ -62,12 +62,12 @@ parameter name:
 | `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show` | `BackupFailureReason` names; `TotpUriError` snake case |
 | `message` | `backup_data_failure` | exception text; free-form |
 | `result` | `backup_select_dir_result`, `clipboard_auto_cleared` | `0`/`1`; `verified`/`unverified` |
-| `version` | `restore_data_failure`, `restore_data_wrong_password`, `restore_data_backup_too_new`, `restore_data_backup_empty` | backup format version, `0` if unreadable |
+| `version` | `restore_data_failure`, `restore_data_wrong_password`, `restore_data_backup_too_new`, `restore_data_backup_empty`; from the readiness patch also `backup_data_success`, `restore_data_success` | backup format version, `0` if unreadable |
 | `is_enabled` | `qr_scanner_torch_toggle` | `0`/`1` |
 | `do_not_ask_again` | `notification_permission_rationale_dialog_cancel_click` | `0`/`1` |
 | `permission_asked_before` | `notification_permission_rationale_dialog_allow_click` | `0`/`1` |
 | `redirect_to_settings` | `notification_permission_rationale_dialog_allow_click` | `0`/`1` |
-| `source` | `add_record_type_pick`, `record_open` | `empty_vault`, `add_record_sheet`, `records_list`, `record_detail` |
+| `source` | `add_record_type_pick`, `record_open`; from the readiness patch also the `device_security_required_dialog_*` / `device_sec_dialog_*` and `update_password_dialog_*` events | `empty_vault`, `add_record_sheet`, `records_list`, `record_detail`; `login`, `settings` |
 | `record_type` | `new_*`, `record_open`, `record_delete`, `record_share`, `record_form_abandon`, `field_copy`, `authenticator_copy_click` | lower-case `RecordType` names |
 | `had_input` | `record_form_abandon` | `0`/`1` |
 | `login_method` | `login_success` | `password`, `biometric`, `password_reset` |
@@ -81,6 +81,36 @@ Custom **metric**, event-scoped, unit *Standard*:
 | `count` | `restore_invalid_authenticator_skipped` | the sum is meaningful: total authenticator records silently dropped across all restores |
 
 Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 14 + 1 used.
+
+### Pending: the envelope-readiness patch
+
+Added by the readiness telemetry patch ([envelope-readiness.md](envelope-readiness.md)); **register
+before its build reaches a testing track**, then move the rows into the tables above with the date.
+Quota after: 20 dimensions, 6 metrics.
+
+Event-scoped **dimensions**, dimension name = parameter name:
+
+| Parameter | Logged by | Values |
+|---|---|---|
+| `device_secure` | `login_success` | `0`/`1` |
+| `biometric_class` | `login_success` | `strong`, `weak_only`, `none_enrolled`, `no_hardware`, `unavailable` |
+| `strongbox` | `login_success` | `0`/`1` |
+| `exception` | `record_decrypt_failure` | exception simple class name, never a message |
+| `db_exists` | `keystore_key_created` | `0`/`1`. **Temporary**: the event's only firing site goes when the key provider stops regenerating; archive this dimension once the read-back has its number, which frees the slot |
+| `worker_running` | `session_timeout` | `0`/`1` |
+
+Event-scoped **metrics**, unit *Standard*. These are per-user snapshots, so their sums mean nothing;
+they are metrics because exact values are near-unique (a dimension would be all `(other)`) and the
+GA average per event is at least readable. The real read is the P95 in BigQuery, where registration
+is irrelevant:
+
+| Parameter | Logged by | Unit |
+|---|---|---|
+| `record_count` | `vault_stats` | records |
+| `db_size_kb` | `vault_stats` | KiB; `-1` when the read failed |
+| `free_space_mb` | `vault_stats` | MiB; `-1` when the read failed |
+| `duration_ms` | `backup_data_success`, `restore_data_success` | milliseconds |
+| `size_kb` | `backup_data_success` | KiB; `-1` when the provider cannot report a length |
 
 **Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
 **`0` / `1`**, not `true` / `false`; `Int` params arrive as numbers; `version` is always logged as

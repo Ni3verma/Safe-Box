@@ -38,4 +38,7 @@ sealed interface LoginScreenAction {
 
     // when user dismisses/cancels update password dialog
     object OnUpdatePasswordDismissClicked : LoginScreenAction
+
+    // when user taps Forgot password, before the device security check decides which dialog opens
+    object ForgotPasswordClicked : LoginScreenAction
 }

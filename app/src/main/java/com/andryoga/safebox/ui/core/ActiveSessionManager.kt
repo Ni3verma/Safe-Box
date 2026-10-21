@@ -2,13 +2,22 @@ package com.andryoga.safebox.ui.core
 
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.di.ApplicationScope
+import dagger.Lazy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -24,6 +33,8 @@ import kotlin.time.Duration.Companion.seconds
 class ActiveSessionManager @Inject constructor(
     @param:ApplicationScope private val applicationScope: CoroutineScope,
     private val settingsDataStore: SettingsDataStore,
+    private val analyticsHelper: AnalyticsHelper,
+    private val workManager: Lazy<WorkManager>,
 ) : DefaultLifecycleObserver {
     private var timeout = SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT.seconds
     private var timerJob: Job? = null
@@ -58,6 +69,7 @@ class ActiveSessionManager @Inject constructor(
             delay(timeout)
             Timber.i("emitting logout event")
             _logoutEvent.emit(Unit)
+            logSessionTimeout()
         }
     }
 
@@ -73,5 +85,31 @@ class ActiveSessionManager @Inject constructor(
         Timber.i("setPaused: $paused")
         isPaused = paused
         if (paused) stopLogoutTimer()
+    }
+
+    /** Runs after the logout event has been emitted, so nothing here can delay or break a logout. */
+    private suspend fun logSessionTimeout() {
+        val workerRunning = try {
+            isBackupOrRestoreRunning()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "could not read worker state for session timeout")
+            false
+        }
+        analyticsHelper.logEvent(AnalyticsKey.SESSION_TIMEOUT) {
+            param(AnalyticsParam.WORKER_RUNNING, workerRunning)
+        }
+    }
+
+    private suspend fun isBackupOrRestoreRunning(): Boolean {
+        val manager = workManager.get()
+        return listOf(
+            CommonConstants.WORKER_NAME_BACKUP_DATA,
+            CommonConstants.WORKER_NAME_RESTORE_DATA,
+        ).any { uniqueWorkName ->
+            manager.getWorkInfosForUniqueWorkFlow(uniqueWorkName).first()
+                .any { it.state == WorkInfo.State.RUNNING }
+        }
     }
 }

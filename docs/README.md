@@ -43,6 +43,9 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 - [Firebase, GA and BigQuery setup](analytics/firebase-setup.md) — project and property
   identifiers, the BigQuery export and its sandbox limits, which parameters are registered as
   custom definitions, where a parameter's value can be seen, and query recipes.
+- [Envelope-encryption readiness telemetry](analytics/envelope-readiness.md) — the logging-only
+  events shipped ahead of the envelope-encryption work, the decision each one feeds, the read-back
+  deadline the BigQuery sandbox imposes, and one query per question.
 
 ## Decisions
 

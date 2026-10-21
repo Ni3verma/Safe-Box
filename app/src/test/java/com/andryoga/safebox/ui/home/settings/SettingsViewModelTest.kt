@@ -5,7 +5,10 @@ package com.andryoga.safebox.ui.home.settings
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
+import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.data.dataStore.Settings
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -15,6 +18,7 @@ import io.mockk.MockKAnnotations
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -154,14 +158,14 @@ class SettingsViewModelTest {
             coVerify {
                 userDetailsRepository.updatePasswordAndHint("UpdatedPass@@123", "updated hint")
             }
-            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK) }
+            assertLoggedFromSettingsScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         }
 
     @Test
     fun `OnDeviceSecurityRequiredDialogShown logs DEVICE_SECURITY_REQUIRED_DIALOG_SHOW event`() =
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDialogShown)
-            verify { analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW) }
+            assertLoggedFromSettingsScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
         }
 
     @Test
@@ -169,40 +173,42 @@ class SettingsViewModelTest {
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             verify { activeSessionManager.setPaused(true) }
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
-            }
+            assertLoggedFromSettingsScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
         }
 
     @Test
     fun `OnDeviceSecurityRequiredOpenSettingsFailed logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE event`() =
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
-            }
+            assertLoggedFromSettingsScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
         }
 
     @Test
     fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
-            }
+            assertLoggedFromSettingsScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
         }
 
     @Test
     fun `OnUpdatePasswordDialogShown logs UPDATE_PASSWORD_DIALOG_SHOW event`() =
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnUpdatePasswordDialogShown)
-            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW) }
+            assertLoggedFromSettingsScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
         }
 
     @Test
     fun `OnUpdatePasswordDismissClicked logs UPDATE_PASSWORD_DIALOG_CANCEL_CLICK event`() =
         runTest {
             viewModel.onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
-            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK) }
+            assertLoggedFromSettingsScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
         }
+
+    /** The dialog triads are shared with the login screen, so every Settings emission must say so. */
+    private fun assertLoggedFromSettingsScreen(key: AnalyticsKey) {
+        val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
+        verify(exactly = 1) { analyticsHelper.logEvent(eq(key), capture(slot)) }
+        val params = AnalyticsParamsBuilder().apply(slot.captured).params
+        assertThat(params[AnalyticsParam.SOURCE.paramName]).isEqualTo(AnalyticsSource.SETTINGS.value)
+    }
 }

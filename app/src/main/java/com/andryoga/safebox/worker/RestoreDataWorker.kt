@@ -74,6 +74,9 @@ class RestoreDataWorker
 
     private var startTime = System.currentTimeMillis()
 
+    /** Set at doWork start; [startTime] is reset by every [recordTime] so it cannot serve. */
+    private var restoreStartedAt = startTime
+
     private lateinit var importMap: Map<String, ByteArray?>
     private lateinit var salt: ByteArray
     private lateinit var iv: ByteArray
@@ -81,6 +84,7 @@ class RestoreDataWorker
 
     override suspend fun doWork(): Result {
         startTime = System.currentTimeMillis()
+        restoreStartedAt = startTime
         return try {
             inputPassword = inputData.getString(CommonConstants.RESTORE_PARAM_PASSWORD)
                 ?: throw IllegalArgumentException("expected password input was not received")
@@ -276,7 +280,10 @@ class RestoreDataWorker
             secureNoteData,
             authenticatorData,
         )
-        analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS)
+        analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS) {
+            param(AnalyticsParam.VERSION, readBackupVersion(importMap).toDouble())
+            param(AnalyticsParam.DURATION_MS, System.currentTimeMillis() - restoreStartedAt)
+        }
         return true
     }
 

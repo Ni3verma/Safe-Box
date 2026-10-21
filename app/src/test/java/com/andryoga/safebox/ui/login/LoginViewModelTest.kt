@@ -11,9 +11,13 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.analytics.AnalyticsParamsBuilder
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.security.interfaces.BiometricClass
+import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
+import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
@@ -55,6 +59,9 @@ class LoginViewModelTest {
     @MockK(relaxUnitFun = true)
     lateinit var activeSessionManager: ActiveSessionManager
 
+    @MockK
+    lateinit var deviceSecurityStatus: DeviceSecurityStatus
+
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -67,6 +74,7 @@ class LoginViewModelTest {
         every { lazyWorkManager.get() } returns workManager
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns false
         coEvery { userDetailsRepository.onAuthSuccess(any()) } returns FIRST_LOGIN_ORDINAL
+        every { deviceSecurityStatus.snapshot() } returns SECURE_WITH_STRONG_BIOMETRIC
         viewModel = LoginViewModel(
             userDetailsRepository = userDetailsRepository,
             workManager = lazyWorkManager,
@@ -74,6 +82,7 @@ class LoginViewModelTest {
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
             activeSessionManager = activeSessionManager,
+            deviceSecurityStatus = deviceSecurityStatus,
             isDebug = true
         )
     }
@@ -97,6 +106,7 @@ class LoginViewModelTest {
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
             activeSessionManager = activeSessionManager,
+            deviceSecurityStatus = deviceSecurityStatus,
             isDebug = false
         )
 
@@ -334,7 +344,7 @@ class LoginViewModelTest {
                     userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
                 }
                 coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-                verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK) }
+                assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
@@ -344,7 +354,7 @@ class LoginViewModelTest {
     fun `OnDeviceSecurityRequiredDialogShown logs DEVICE_SECURITY_REQUIRED_DIALOG_SHOW event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
-            verify { analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW) }
+            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
         }
 
     @Test
@@ -352,42 +362,44 @@ class LoginViewModelTest {
         runTest {
             viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
             verify { activeSessionManager.setPaused(true) }
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
-            }
+            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
         }
 
     @Test
     fun `OnDeviceSecurityRequiredOpenSettingsFailed logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
-            }
+            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
         }
 
     @Test
     fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
-            verify {
-                analyticsHelper.logEvent(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
-            }
+            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
         }
 
     @Test
     fun `OnUpdatePasswordDialogShown logs UPDATE_PASSWORD_DIALOG_SHOW event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
-            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW) }
+            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
         }
 
     @Test
     fun `OnUpdatePasswordDismissClicked logs UPDATE_PASSWORD_DIALOG_CANCEL_CLICK event`() =
         runTest {
             viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
-            verify { analyticsHelper.logEvent(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK) }
+            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
         }
+
+    @Test
+    fun forgotPasswordClicked_shouldLogForgotPasswordClickWithoutParams() = runTest {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK) }
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.FORGOT_PASSWORD_CLICK), any()) }
+    }
 
     @Test
     fun passwordLogin_shouldLogLoginSuccessWithPasswordMethodAndOrdinal() = runTest {
@@ -429,6 +441,43 @@ class LoginViewModelTest {
     }
 
     @Test
+    fun loginSuccess_shouldCarryDeviceSecurityParamsFromTheSnapshot() = runTest {
+        every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
+            isDeviceSecure = false,
+            biometricClass = BiometricClass.NONE_ENROLLED,
+            hasStrongBox = true,
+        )
+
+        viewModel.onAction(LoginScreenAction.BiometricSuccess)
+        advanceUntilIdle()
+
+        val params = capturedLoginSuccessParams()
+        assertThat(params[AnalyticsParam.DEVICE_SECURE.paramName]).isEqualTo(false)
+        assertThat(params[AnalyticsParam.BIOMETRIC_CLASS.paramName]).isEqualTo("none_enrolled")
+        assertThat(params[AnalyticsParam.STRONGBOX.paramName]).isEqualTo(true)
+    }
+
+    @Test
+    fun loginSuccess_whenDeviceSecurityReadThrows_shouldStillVerifyAndLogWithoutDeviceParams() =
+        runTest {
+            every { deviceSecurityStatus.snapshot() } throws IllegalStateException("keyguard gone")
+            coEvery { userDetailsRepository.checkPassword("password") } returns true
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+                advanceUntilIdle()
+
+                assertThat(expectMostRecentItem().userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            }
+            val params = capturedLoginSuccessParams()
+            assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password")
+            assertThat(params).doesNotContainKey(AnalyticsParam.DEVICE_SECURE.paramName)
+            assertThat(params).doesNotContainKey(AnalyticsParam.BIOMETRIC_CLASS.paramName)
+            assertThat(params).doesNotContainKey(AnalyticsParam.STRONGBOX.paramName)
+        }
+
+    @Test
     fun incorrectPassword_shouldNotLogLoginSuccess() = runTest {
         coEvery { userDetailsRepository.checkPassword("wrong") } returns false
 
@@ -439,13 +488,27 @@ class LoginViewModelTest {
     }
 
     /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */
-    private fun capturedLoginSuccessParams(): Map<String, Any> {
+    private fun capturedLoginSuccessParams(): Map<String, Any> = capturedParams(AnalyticsKey.LOGIN_SUCCESS)
+
+    /** Runs the captured param block of the single [key] event and returns what it set. */
+    private fun capturedParams(key: AnalyticsKey): Map<String, Any> {
         val slot = slot<AnalyticsParamsBuilder.() -> Unit>()
-        verify(exactly = 1) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), capture(slot)) }
+        verify(exactly = 1) { analyticsHelper.logEvent(eq(key), capture(slot)) }
         return AnalyticsParamsBuilder().apply(slot.captured).params
+    }
+
+    /** The dialog triads are shared with Settings, so every login-screen emission must say so. */
+    private fun assertLoggedFromLoginScreen(key: AnalyticsKey) {
+        assertThat(capturedParams(key)[AnalyticsParam.SOURCE.paramName])
+            .isEqualTo(AnalyticsSource.LOGIN.value)
     }
 
     companion object {
         private const val FIRST_LOGIN_ORDINAL = 1
+        private val SECURE_WITH_STRONG_BIOMETRIC = DeviceSecuritySnapshot(
+            isDeviceSecure = true,
+            biometricClass = BiometricClass.STRONG,
+            hasStrongBox = false,
+        )
     }
 }

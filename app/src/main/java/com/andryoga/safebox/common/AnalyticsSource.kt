@@ -15,4 +15,7 @@ enum class AnalyticsSource(val value: String) {
     RECORD_DETAIL("record_detail"),
     ADD_RECORD_SHEET("add_record_sheet"),
     EMPTY_VAULT("empty_vault"),
+    // the device-security-required and update-password dialogs open from both of these
+    LOGIN("login"),
+    SETTINGS("settings"),
 }
