@@ -15,6 +15,14 @@ Long-form knowledge about the project. Short, always-relevant facts live in
 - [Localization](architecture/localization.md) — 26-locale strings workflow, `app/translations.lock`
   stale-translation detection, local `preBuild` auto-sync vs strict CI enforcement.
 
+## Design
+
+- [Envelope encryption and session key architecture](design/envelope-encryption.md) — the staged
+  plan to replace the ambient Keystore key with a data key wrapped by the master password, a
+  Class-3 biometric and the device credential: key hierarchy, Room schema v6, backup format v4,
+  every user flow, the MR-by-MR plan, the spike checklist and the manual test plan. Measured
+  spike results: [ADR-0011](decisions/0011-envelope-encryption-spike-results.md).
+
 ## Testing
 
 - [Testing strategy](testing/testing-strategy.md) — what is tested where, and the deliberate gaps.

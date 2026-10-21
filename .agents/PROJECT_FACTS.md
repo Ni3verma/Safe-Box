@@ -111,9 +111,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
 - QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
-  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). `aosp-atd` suffices for
-  `:app`'s own UI tests but **not** `:upgrade-test`: it has no DocumentsUI (API 34 `aosp_atd`, CI
-  run 35863723921, 2026-09-23; see the operations doc).
+  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). The `aosp-atd` CI image has
+  **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock screen** (so no
+  auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
 - **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and
   restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
   `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See
@@ -129,14 +129,12 @@ Procedures and gotchas: [skills/build-and-test/SKILL.md](skills/build-and-test/S
   every tag (old QA APKs are archived back to at least `v2.0.4.0`), then uploads that AAB to Play's
   **internal, closed + open testing** tracks (`release_on_play`, ADR-0009); production is a manual promotion.
   Notes: `distribution/whatsnew/<MAJOR.MINOR.DB.FIX>/whatsnew-<locale>`, absent = none. (2026-10-07)
-- The QA signing certificate has been **stable** from `v1.4.4.0` to local builds: SHA-256
-  `257ab2043588f0b355bba6a9c9f199c088f079f6306536cd4c94fc2eba7b113d`, pinned as `QA_CERT_SHA256`
-  in `scripts/lib/harness.sh` and checked on every upgrade/restore run. Verified 2026-09-26.
+- The QA signing certificate has been **stable** from `v1.4.4.0` to local builds; its SHA-256 is pinned
+  as `QA_CERT_SHA256` in `scripts/lib/harness.sh` and checked on every upgrade/restore run. Verified 2026-09-26.
 - APK output names: `SafeBox-<variant>.apk` (`androidComponents` in `app/build.gradle`); four workflow paths hard-code them. Verified 2026-10-04.
 - **Store listing images are generated, never edited**: `screenshots/readme/NN-*.png` and the README
-  grid between the `store-screenshots` markers are written by `scripts/take-store-screenshots.sh`
-  (captures → `scripts/store-screenshots/render.py`). Edit `scenes.json`/`theme.json`, re-render.
-  The qa label is the `-PappLabel` build property. [Runbook](skills/store-screenshots/SKILL.md). (2026-10-04)
+  grid between the `store-screenshots` markers come from `scripts/take-store-screenshots.sh`; edit
+  `scenes.json`/`theme.json` and re-render. [Runbook](skills/store-screenshots/SKILL.md). (2026-10-04)
 
 Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 
@@ -149,3 +147,7 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
   funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
+- **Biometric login is unavailable on API 24–28** with the current dependencies: `androidx.core` ≥ 1.18
+  stubs `FingerprintManagerCompat`, which `androidx.biometric:1.1.0` uses for `canAuthenticate` on
+  API ≤ 28 and the fingerprint dialog on ≤ 27 (verified on API 24/28 emulators, 2026-10-20). Credential
+  flows still work. Untested fixes: `androidx.biometric` 1.4.0 (alpha, no compat references) or API 29+: #299.
