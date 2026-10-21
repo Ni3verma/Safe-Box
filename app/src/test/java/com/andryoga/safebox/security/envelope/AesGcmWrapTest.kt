@@ -8,9 +8,9 @@ import javax.crypto.AEADBadTagException
 
 class AesGcmWrapTest {
 
-    private val kek = ByteArray(32) { index -> (index + 1).toByte() }
-    private val wrongKek = ByteArray(32) { index -> (index + 2).toByte() }
-    private val dek = ByteArray(32) { index -> (0xA0 + index).toByte() }
+    private val kek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
+    private val wrongKek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 2).toByte() }
+    private val dek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (0xA0 + index).toByte() }
     private val aad = "safebox.wrap.password.v1".toByteArray(Charsets.UTF_8)
 
     @Test

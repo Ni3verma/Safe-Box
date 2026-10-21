@@ -57,8 +57,9 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
     }
 
     override fun setSessionKey(dekBytes: ByteArray) {
-        require(dekBytes.size == DEK_SIZE_BYTES) {
-            "DEK must be $DEK_SIZE_BYTES bytes, got ${dekBytes.size}"
+        // The DEK is itself an AES-256 key: it opens dek_verifier and every record field.
+        require(dekBytes.size == AesGcmWrap.KEY_SIZE_BYTES) {
+            "DEK must be ${AesGcmWrap.KEY_SIZE_BYTES} bytes, got ${dekBytes.size}"
         }
         val copy = dekBytes.copyOf()
         synchronized(lock) {
@@ -97,8 +98,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
         }
     }
 
-    companion object {
-        const val DEK_SIZE_BYTES = 32
-        private const val KEY_ALGORITHM_AES = "AES"
+    private companion object {
+        const val KEY_ALGORITHM_AES = "AES"
     }
 }

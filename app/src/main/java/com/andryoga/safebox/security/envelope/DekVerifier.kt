@@ -1,5 +1,6 @@
 package com.andryoga.safebox.security.envelope
 
+import com.andryoga.safebox.common.Utils
 import java.security.GeneralSecurityException
 import java.security.MessageDigest
 
@@ -17,7 +18,7 @@ object DekVerifier {
     /**
      * Encrypts the canonical verifier payload under [dek].
      *
-     * @param dek 32-byte Data Encryption Key.
+     * @param dek Data Encryption Key of [AesGcmWrap.KEY_SIZE_BYTES] bytes.
      * @return Base64-encoded `dek_verifier` blob.
      */
     fun makeVerifier(dek: ByteArray): String =
@@ -26,20 +27,19 @@ object DekVerifier {
     /**
      * Checks whether [dek] decrypts [verifierBlob] to the canonical verifier payload.
      *
-     * @param dek Candidate 32-byte Data Encryption Key.
+     * @param dek Candidate Data Encryption Key.
      * @param verifierBlob Base64-encoded `dek_verifier` blob from `vault_meta`.
-     * @return `true` if the GCM tag and plaintext match, `false` on any cryptographic or format failure.
+     * @return `true` if the GCM tag and plaintext match, `false` on any failure — a wrong DEK must
+     * never be installed, whatever went wrong.
      */
     fun verify(dek: ByteArray, verifierBlob: String): Boolean = try {
-        val decrypted = AesGcmWrap.unwrap(
-            keyBytes = dek,
-            blob = verifierBlob,
-            aad = VERIFIER_AAD,
-        )
+        val decrypted = AesGcmWrap.unwrap(keyBytes = dek, blob = verifierBlob, aad = VERIFIER_AAD)
         MessageDigest.isEqual(decrypted, VERIFIER_PLAINTEXT)
-    } catch (_: GeneralSecurityException) {
-        false
-    } catch (_: IllegalArgumentException) {
+    } catch (e: Exception) {
+        // A failed tag or a malformed blob is the expected "not this vault's DEK" answer; anything else is a bug.
+        if (e !is GeneralSecurityException && e !is IllegalArgumentException) {
+            Utils.crashInDebugBuild("dek_verifier check failed outside the crypto contract", e)
+        }
         false
     }
 }

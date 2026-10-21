@@ -9,7 +9,6 @@ class KdfParams(
     val algorithm: String,
     val iterations: Int,
     salt: ByteArray,
-    val version: String = VERSION_1,
 ) {
     private val saltBytes: ByteArray = salt.copyOf()
 
@@ -17,7 +16,6 @@ class KdfParams(
         get() = saltBytes.copyOf()
 
     init {
-        require(version == VERSION_1) { "Unsupported KDF params version: $version" }
         require(algorithm in SUPPORTED_ALGORITHMS) { "Unsupported KDF algorithm: $algorithm" }
         require(iterations > 0) { "KDF iterations must be positive: $iterations" }
         require(saltBytes.size == SALT_SIZE_BYTES) {
@@ -32,31 +30,29 @@ class KdfParams(
      */
     fun encode(): String {
         val encodedSalt = Base64.getEncoder().encodeToString(saltBytes)
-        return "$version$SEPARATOR$algorithm$SEPARATOR$iterations$SEPARATOR$encodedSalt"
+        return "$FORMAT_VERSION$SEPARATOR$algorithm$SEPARATOR$iterations$SEPARATOR$encodedSalt"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is KdfParams) return false
-        return version == other.version &&
-            algorithm == other.algorithm &&
+        return algorithm == other.algorithm &&
             iterations == other.iterations &&
             saltBytes.contentEquals(other.saltBytes)
     }
 
     override fun hashCode(): Int {
-        var result = version.hashCode()
-        result = 31 * result + algorithm.hashCode()
+        var result = algorithm.hashCode()
         result = 31 * result + iterations
         result = 31 * result + saltBytes.contentHashCode()
         return result
     }
 
-    override fun toString(): String =
-        "KdfParams(version=$version, algorithm=$algorithm, iterations=$iterations)"
+    override fun toString(): String = "KdfParams(algorithm=$algorithm, iterations=$iterations)"
 
     companion object {
-        const val VERSION_1 = "v1"
+        /** Wire-format version this code writes and the only one it reads. */
+        const val FORMAT_VERSION = "v1"
         const val ALGORITHM_PBKDF2_SHA256 = "PBKDF2WithHmacSHA256"
         const val SALT_SIZE_BYTES = 16
         private const val SEPARATOR = "|"
@@ -76,8 +72,7 @@ class KdfParams(
             require(parts.size == EXPECTED_PARTS) {
                 "Malformed KdfParams: expected $EXPECTED_PARTS parts"
             }
-            val version = parts[0]
-            val algorithm = parts[1]
+            require(parts[0] == FORMAT_VERSION) { "Unsupported KdfParams version: ${parts[0]}" }
             val iterations = parts[2].toIntOrNull()
                 ?: throw IllegalArgumentException("Invalid KDF iteration count")
             val salt = try {
@@ -86,10 +81,9 @@ class KdfParams(
                 throw IllegalArgumentException("Invalid Base64 salt in KdfParams", e)
             }
             return KdfParams(
-                algorithm = algorithm,
+                algorithm = parts[1],
                 iterations = iterations,
                 salt = salt,
-                version = version,
             )
         }
     }

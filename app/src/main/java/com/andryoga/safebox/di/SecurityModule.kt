@@ -11,14 +11,10 @@ import com.andryoga.safebox.security.DecryptFailureReportingSymmetricKeyUtils
 import com.andryoga.safebox.security.HashingUtilsImpl
 import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
-import com.andryoga.safebox.security.envelope.AndroidKeystoreGateway
-import com.andryoga.safebox.security.envelope.CrashlyticsCrashReporter
 import com.andryoga.safebox.security.envelope.EnvelopeEncryptionManagerImpl
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
-import com.andryoga.safebox.security.interfaces.CrashReporter
 import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.HashingUtils
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
@@ -140,27 +136,4 @@ internal fun logKeystoreKeyCreated(analyticsHelper: AnalyticsHelper, dbExists: B
     analyticsHelper.logEvent(AnalyticsKey.KEYSTORE_KEY_CREATED) {
         param(AnalyticsParam.DB_EXISTS, dbExists)
     }
-}
-
-/**
- * Provides hardware and crash-reporting seams that `androidTest` replaces via `@TestInstallIn`
- * while keeping [SecurityModule] bindings real.
- */
-@Module
-@InstallIn(SingletonComponent::class)
-object KeystoreModule {
-
-    // TODO(MR5): wired into EnvelopeEncryptionManagerImpl, LegacyVaultMigrator, and VaultKeyMaintenance
-    @Singleton
-    @Provides
-    fun provideKeystoreGateway(
-        impl: AndroidKeystoreGateway,
-    ): KeystoreGateway = impl
-
-    // TODO(MR5): wired into LegacyVaultMigrator
-    @Singleton
-    @Provides
-    fun provideCrashReporter(
-        impl: CrashlyticsCrashReporter,
-    ): CrashReporter = impl
 }

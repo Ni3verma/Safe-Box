@@ -1,10 +1,8 @@
-package com.andryoga.safebox.security.envelope
+package com.andryoga.safebox.common
 
 import com.andryoga.safebox.test.fakes.FirebaseCrashlyticsTestHelper
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
 import org.junit.After
 import org.junit.Before
@@ -45,7 +43,6 @@ class CrashlyticsCrashReporterTest {
 
     @Test
     fun allMethods_whenCrashlyticsUnavailable_shouldNotThrow() {
-        mockkStatic(FirebaseCrashlytics::class)
         every { FirebaseCrashlytics.getInstance() } throws
             IllegalStateException("FirebaseApp is not initialized")
 

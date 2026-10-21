@@ -6,8 +6,8 @@ import java.util.Base64
 
 class DekVerifierTest {
 
-    private val realDek = ByteArray(32) { index -> (index + 10).toByte() }
-    private val substitutedDek = ByteArray(32) { index -> (index + 99).toByte() }
+    private val realDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 10).toByte() }
+    private val substitutedDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 99).toByte() }
 
     @Test
     fun verify_withRealDek_shouldReturnTrue() {

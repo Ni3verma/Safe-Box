@@ -19,7 +19,9 @@ object PasswordKdf {
      * (measured 504.5 ms per 100,000 iterations in ADR-0011 S6/S10 -> 99,000 iterations ≈ 499.5 ms).
      */
     const val PBKDF2_ITERATIONS = 99_000
-    const val KEY_LENGTH_BITS = 256
+
+    /** Output length in bits; sized to the AES-256 key that [AesGcmWrap] accepts. */
+    const val KEY_LENGTH_BITS = AesGcmWrap.KEY_SIZE_BYTES * 8
     private val secureRandom = SecureRandom()
 
     /**

@@ -24,24 +24,26 @@ sealed interface KeyHealth {
 
 /**
  * Thrown when generating an authentication-bound Keystore key fails because no secure lock screen
- * is configured on the device.
+ * is configured on the device. The platform's own message travels as [cause].
  */
 class LockScreenRequiredException(
-    message: String = "Secure lock screen is required to generate a wrapping key",
     cause: Throwable? = null,
-) : GeneralSecurityException(message, cause)
+) : GeneralSecurityException("Secure lock screen is required to generate a wrapping key", cause)
 
 /**
  * Thrown when generating a biometric-bound Keystore key fails because no Class-3 biometric is
- * enrolled on the device.
+ * enrolled on the device. The platform's own message travels as [cause].
  */
 class BiometricNotEnrolledException(
-    message: String = "At least one biometric must be enrolled to generate a biometric wrapping key",
     cause: Throwable? = null,
-) : GeneralSecurityException(message, cause)
+) : GeneralSecurityException("At least one biometric must be enrolled to generate a biometric wrapping key", cause)
 
 /**
  * Seam over `AndroidKeyStore` for RSA-2048 OAEP wrapping key pairs and the legacy AES vault key.
+ *
+ * Two kinds of method, deliberately: the defensive ones ([probe], [deleteKey]) map every failure to
+ * a safe answer; the operational ones translate only the failures they understand into the typed
+ * exceptions below and let anything else propagate to the caller that owns the recovery.
  */
 interface KeystoreGateway {
     /**
@@ -56,7 +58,7 @@ interface KeystoreGateway {
     fun generateWrapKeyPair(alias: String, spec: WrapKeySpec): PublicKey
 
     /**
-     * Returns the public half of [alias], or `null` if the entry is absent.
+     * Returns the public half of [alias], or `null` if the entry is absent. Keystore errors propagate.
      */
     fun publicKey(alias: String): PublicKey?
 
@@ -65,11 +67,17 @@ interface KeystoreGateway {
      *
      * @param alias Keystore alias whose private key initializes the cipher.
      * @return Initialized [Cipher] ready for `CryptoObject` binding or immediate unwrap.
+     * @throws android.security.keystore.KeyPermanentlyInvalidatedException When the key is gone,
+     * unrecoverable or invalidated by an enrolment change.
+     * @throws android.security.keystore.UserNotAuthenticatedException When a time-bound key is
+     * outside its validity window (API 29).
      */
     fun decryptCipher(alias: String): Cipher
 
     /**
      * Probes the health of [alias] via `Cipher.init(DECRYPT_MODE)` without triggering a prompt.
+     * Every Keystore failure maps to [KeyHealth.Invalidated]; recreating a wrap is always safe
+     * because the DEK is in RAM when it happens.
      *
      * @param alias Keystore alias to inspect.
      * @return [KeyHealth] describing whether [alias] is usable, absent, or invalidated.
@@ -82,7 +90,9 @@ interface KeystoreGateway {
     fun deleteKey(alias: String)
 
     /**
-     * Returns the legacy `"symmetricDataKey"` handle if it exists, without ever regenerating it.
+     * Returns the legacy `"symmetricDataKey"` handle, or `null` only when the alias is absent, and
+     * never regenerates it. Keystore errors propagate so a transient failure is retried instead
+     * of being reported as a lost key.
      */
     fun legacyVaultKey(): SecretKey?
 

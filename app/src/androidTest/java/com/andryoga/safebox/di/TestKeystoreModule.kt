@@ -1,8 +1,6 @@
 package com.andryoga.safebox.di
 
-import com.andryoga.safebox.security.interfaces.CrashReporter
 import com.andryoga.safebox.security.interfaces.KeystoreGateway
-import com.andryoga.safebox.test.fakes.FakeCrashReporter
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import dagger.Binds
 import dagger.Module
@@ -11,8 +9,8 @@ import dagger.hilt.testing.TestInstallIn
 import javax.inject.Singleton
 
 /**
- * Replaces [KeystoreModule] in instrumentation tests with [FakeKeystoreGateway] and
- * [FakeCrashReporter].
+ * Replaces [KeystoreModule] in instrumentation tests with the JCE-backed [FakeKeystoreGateway], so
+ * suites run on images without a secure lock screen (the CI `aosp-atd` image, ADR-0011 S8).
  */
 @Module
 @TestInstallIn(
@@ -25,10 +23,4 @@ abstract class TestKeystoreModule {
     abstract fun bindKeystoreGateway(
         fake: FakeKeystoreGateway,
     ): KeystoreGateway
-
-    @Binds
-    @Singleton
-    abstract fun bindCrashReporter(
-        fake: FakeCrashReporter,
-    ): CrashReporter
 }

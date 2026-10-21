@@ -33,7 +33,7 @@ class SessionKeyHolderTest {
 
     @Test
     fun setSessionKey_shouldCopyInputAndSurviveCallerZeroingItsArray() {
-        val callerDek = ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { index -> (index + 1).toByte() }
+        val callerDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
         val expectedDek = callerDek.copyOf()
 
         holder.setSessionKey(callerDek)
@@ -47,7 +47,7 @@ class SessionKeyHolderTest {
 
     @Test
     fun clearSessionKey_shouldZeroFillInternalBufferAndEmitLockEventOnce() = runTest {
-        val dek = ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { 0x5A }
+        val dek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x5A }
         holder.setSessionKey(dek)
         val internalBuffer = checkNotNull(holder.peekInternalBufferForTesting())
 
@@ -69,7 +69,7 @@ class SessionKeyHolderTest {
 
     @Test
     fun setLegacySession_shouldExposeLegacyHandleAndMarkLegacySession() {
-        val legacyHandle = SecretKeySpec(ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { 0x33 }, "AES")
+        val legacyHandle = SecretKeySpec(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x33 }, "AES")
 
         holder.setLegacySession(legacyHandle)
 
@@ -81,7 +81,7 @@ class SessionKeyHolderTest {
 
     @Test
     fun concurrentClearDuringWithSessionKey_shouldKeepInFlightKeyIntactAndLockHolder() {
-        val dek = ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { 0x7F }
+        val dek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x7F }
         val expectedDek = dek.copyOf()
         holder.setSessionKey(dek)
         val internalBuffer = checkNotNull(holder.peekInternalBufferForTesting())
@@ -101,8 +101,8 @@ class SessionKeyHolderTest {
 
     @Test
     fun setSessionKey_afterLegacySession_shouldReplaceStateWithStandardUnlockedSession() {
-        val legacyHandle = SecretKeySpec(ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { 0x11 }, "AES")
-        val newDek = ByteArray(SessionKeyHolderImpl.DEK_SIZE_BYTES) { 0x22 }
+        val legacyHandle = SecretKeySpec(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x11 }, "AES")
+        val newDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x22 }
         holder.setLegacySession(legacyHandle)
         assertThat(holder.isLegacySession).isTrue()
 

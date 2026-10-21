@@ -1,6 +1,6 @@
 package com.andryoga.safebox.test.fakes
 
-import com.andryoga.safebox.security.interfaces.CrashReporter
+import com.andryoga.safebox.common.CrashReporter
 import javax.inject.Inject
 import javax.inject.Singleton
 
