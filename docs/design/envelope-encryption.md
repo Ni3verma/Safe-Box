@@ -33,7 +33,7 @@ Code baseline: `master` @ `7f968e8` (2026-10-21, includes MR T = #298 `80a5900`)
 | Scenario | Today | Envelope Architecture (v2) |
 |---|---|---|
 | Copy of `/data/data` without the device | ciphertext (key in Keystore) | ciphertext; password wrap attackable only at full KDF cost |
-| Copy of a `.bak` backup file on external/cloud storage | **1 324 × SHA-1, AES-CBC, no integrity, shared IV** | **v4: the §2.4 KDF (≈ 100k × SHA-256 on API 26+, ≈ 50k × SHA-1 on 24–25), AES-256-GCM, authenticated header (§5.2)** |
+| Copy of a `.bak` backup file on external/cloud storage | **1 324 × SHA-1, AES-CBC, no integrity, shared IV** | **v4: the §2.4 KDF (≈ 100k × SHA-256), AES-256-GCM, authenticated header (§5.2)** |
 | On-device code execution without any credential (patched APK, navigation bypass) | **plaintext** | ciphertext |
 | Attacker knows the device PIN | can reset master password via forgot-password → plaintext | same floor (`KEK_Device`) — unchanged by design |
 | Rooted device / Frida while unlocked | plaintext | plaintext — out of scope for any app-side design |
@@ -400,7 +400,7 @@ v4 is a **new container, not a patched map**. Since v4 breaks compatibility anyw
 | 0 | 4 | magic `SBOX` (ASCII) | unambiguous against Java serialisation, whose stream starts `AC ED 00 05` |
 | 4 | 1 | container version `0x04` | `> BACKUP_VERSION` ⇒ `BACKUP_TOO_NEW` |
 | 5 | 2 | header length `n`, big-endian | reader rejects `n > 4096` |
-| 7 | `n` | header, UTF-8 JSON: `{"createdAt": <epoch ms>, "appVersionCode": <int>, "kdf": "v1\|<algorithm>\|<iterations>\|<b64 salt>"}` — the `kdf_params` string of §2.4, so `<algorithm>` is `PBKDF2WithHmacSHA256` on API 26+ and `PBKDF2WithHmacSHA1` on 24–25 | readable without the password (`InspectBackup --header`, restore routing); additive fields later without a version bump (`ignoreUnknownKeys`) |
+| 7 | `n` | header, UTF-8 JSON: `{"createdAt": <epoch ms>, "appVersionCode": <int>, "kdf": "v1\|<algorithm>\|<iterations>\|<b64 salt>"}` — the `kdf_params` string of §2.4 (`<algorithm>` is `PBKDF2WithHmacSHA256`) | readable without the password (`InspectBackup --header`, restore routing); additive fields later without a version bump (`ignoreUnknownKeys`) |
 | 7+`n` | 12 + 16 | **key check** = `iv ‖ AES-256-GCM(key, "", aad = bytes 0 … 7+n)` — tag only | fails ⇒ `INCORRECT_PASSWORD`, body untouched |
 | … | 12 + `m` + 16 | **body** = `iv ‖ AES-256-GCM(key, payload JSON, aad = bytes 0 … 7+n)` | fails after a good key check ⇒ `CORRUPT_OR_INVALID_FILE` |
 
@@ -1445,7 +1445,7 @@ Close each row in the named MR; nothing merges into `master` with an open row ag
 
 1. **Temporary code to probe a corner case is welcome — and always leaves a trace.** Mark it `// TODO(TEMP): <what it probes> — revert before <MR n>`, add a row to the debt register (§13) in the same change, and revert it in the MR named. `// TODO(review): remove before merge` stays reserved for review-only explanatory comments (AGENTS.md). The final-PR grep covers all three markers: `git grep -nE "TODO\((MR|TEMP|review)"` must be empty.
 2. **Temporary APKs, `.bak` files, seeds, DB dumps and emulator snapshots are welcome — and never committed.** `*.apk` is already ignored; MR 0 adds `/scratch/` to `.gitignore` for everything else. Anything that must be shared goes through the harness paths that exist for it (`upgrade-test/fixtures/` via `scripts/update-seed.sh`), never ad hoc. Delete local artefacts when the MR merges.
-3. **Testing is the gate — this is the riskiest change the app has had.** Every MR adds the tests of §11 for the code it introduces and lists them in its description; a migration-touching MR (2, 5, 9) also runs the §12 rows marked for it on at least API 24 and API 34 before review. CI (`testDebugUnitTest`, `lintRelease`, `backup-format-test.sh`, the GMD suite where applicable) is green on every child MR. No MR merges with untested new code, including analytics.
+3. **Testing is the gate — this is the riskiest change the app has had.** Every MR adds the tests of §11 for the code it introduces and lists them in its description; a migration-touching MR (2, 5, 9) also runs the §12 rows marked for it on at least API 29 and API 34 before review. CI (`testDebugUnitTest`, `lintRelease`, `backup-format-test.sh`, the GMD suite where applicable) is green on every child MR. No MR merges with untested new code, including analytics.
 4. **Logging stays bounded.** The owner's standing preference is few logs (PROJECT_FACTS). The migration's breadcrumbs are one line per stage and one per table (≤ 10 per attempt); per-row detail is `Timber.d` and never reaches a release tree. No other `Timber` calls are added casually.
 5. **Every new `AnalyticsParam` is registered before the build reaches a testing track** and named in the PR description and in [`docs/analytics/firebase-setup.md#custom-definitions`](../analytics/firebase-setup.md#custom-definitions) (AGENTS.md Param Registration Rule). Wire values are append-only once shipped.
 6. **The plan stays current.** The MR that changes a decision in this document edits the document in the same change; a stage that lands rewrites its section to what was delivered (AGENTS.md knowledge-base rules).

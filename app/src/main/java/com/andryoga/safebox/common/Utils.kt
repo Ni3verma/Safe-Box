@@ -41,7 +41,7 @@ object Utils {
         val channel = NotificationChannel(
             notificationOptions.channelId,
             notificationOptions.channelName,
-            notificationOptions.channelImportance
+            notificationOptions.channelImportance,
         )
         channel.description = notificationOptions.channelDescription
 
