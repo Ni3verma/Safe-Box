@@ -301,17 +301,6 @@ Do not attempt to run the existing suite against the `qa` (minified) build. It f
 [ADR-0001](../../../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md). Read that
 before re-investigating.
 
-### Compose UI tests cannot run on the Android 17 Pixel 9 yet
-
-With a physical Pixel 9 on Android 17 (API 37, `REL`) attached, every Compose/Espresso test fails
-in `Espresso.onIdle` with `NoSuchMethodException: android.hardware.input.InputManager.getInstance`
-— Espresso 3.7.0 still reaches that hidden method by reflection and API 37 removed it. Plain
-instrumented tests (`MigrationTest`, the DAO and Hilt repository tests) pass on the same device.
-Until an Espresso release fixes it, run UI suites on the API 35 emulator and treat that device as
-a data-layer target only. Also: `connectedDebugAndroidTest` runs on **every** attached device and
-writes one results XML per device, so with the phone plugged in a green emulator run can still
-end `BUILD FAILED` on the phone's UI failures — check the device name in each XML. (2026-10-21.)
-
 ### The CI image cannot have a lock screen
 
 The GMD `aosp-atd` image (`pixel8Api34`, also when booted by hand) has no
