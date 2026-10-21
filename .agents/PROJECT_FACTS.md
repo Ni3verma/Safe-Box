@@ -150,4 +150,4 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 - **Biometric login is unavailable on API 24–28** with the current dependencies: `androidx.core` ≥ 1.18
   stubs `FingerprintManagerCompat`, which `androidx.biometric:1.1.0` uses for `canAuthenticate` on
   API ≤ 28 and the fingerprint dialog on ≤ 27 (verified on API 24/28 emulators, 2026-10-20). Credential
-  flows still work. Fix is the `androidx.biometric` 1.4.0 line or declaring API 29+: issue #299.
+  flows still work. Untested fixes: `androidx.biometric` 1.4.0 (alpha, no compat references) or API 29+: #299.

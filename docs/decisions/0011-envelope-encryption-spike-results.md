@@ -201,6 +201,12 @@ decrypting under the DEK.
 ## Decisions
 
 1. **`T` = 5 s on API 24–29**; the 3 s option is closed (S1). Confirmed by the owner 2026-10-21.
+   Measured on API 24 and 28 only; the rest of the range is inferred, not measured:
+   `setUserAuthenticationValidityDurationSeconds` has one semantics below API 30 (the
+   per-type knob only arrives with `setUserAuthenticationParameters`), API 25–27 use the same
+   separate credential Activity as the two measured endpoints, and on API 29 androidx 1.1.0
+   shows the credential inside the framework prompt — a path without the Activity round-trip
+   that dominated the measured window, so 5 s is conservative there.
 2. **Migration progress is determinate** (`progress / total`): 100 records already take 1.4 s on
    a flagship, 2 000 take 27 s (S7). The design's "indeterminate unless P95 > 3 s" branch is
    removed. `LegacyVaultMigrator` may decrypt legacy fields on a small worker pool ahead of the
@@ -212,7 +218,9 @@ decrypting under the DEK.
    *recreate*; a failed `deleteEntry` is non-fatal and the replacement gets a fresh alias** (S2/S9).
 5. **`PBKDF2_ITERATIONS` re-decided by the owner (2026-10-21): platform PBKDF2, no native KDF,
    ≤ 500 ms on the Pixel 6a** — `PBKDF2WithHmacSHA256` ≈ 100 000 iterations on API 26+,
-   `PBKDF2WithHmacSHA1` ≈ 50 000 on API 24–25, exact constants calibrated in MR 1; the
+   `PBKDF2WithHmacSHA1` ≈ 50 000 on API 24–25. The budget is the decision and the counts are
+   its estimate: S6 measured 505 ms at exactly 100 000, so MR 1 calibrates each constant as the
+   largest count that measures ≤ 500 ms with the S6 method, which lands just under 100 000. The
    algorithm is named in `kdf_params`. Argon2id / NDK PBKDF2 and the original 600 000 floor were
    ruled out (design §2.4, residual 10 in §1.4).
 6. **StrongBox is kept for `KEK_Device`** (recovery path, rare: 306 ms unwrap, keygen in the

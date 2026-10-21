@@ -33,7 +33,7 @@ Code baseline: `master` @ `7f968e8` (2026-10-21, includes MR T = #298 `80a5900`)
 | Scenario | Today | Envelope Architecture (v2) |
 |---|---|---|
 | Copy of `/data/data` without the device | ciphertext (key in Keystore) | ciphertext; password wrap attackable only at full KDF cost |
-| Copy of a `.bak` backup file on external/cloud storage | **1 324 × SHA-1, AES-CBC, no integrity, shared IV** | **v4: ≥ 600k–1.3M × SHA-1, AES-256-GCM, authenticated header (§5.2)** |
+| Copy of a `.bak` backup file on external/cloud storage | **1 324 × SHA-1, AES-CBC, no integrity, shared IV** | **v4: the §2.4 KDF (≈ 100k × SHA-256 on API 26+, ≈ 50k × SHA-1 on 24–25), AES-256-GCM, authenticated header (§5.2)** |
 | On-device code execution without any credential (patched APK, navigation bypass) | **plaintext** | ciphertext |
 | Attacker knows the device PIN | can reset master password via forgot-password → plaintext | same floor (`KEK_Device`) — unchanged by design |
 | Rooted device / Frida while unlocked | plaintext | plaintext — out of scope for any app-side design |
@@ -402,7 +402,7 @@ v4 is a **new container, not a patched map**. Since v4 breaks compatibility anyw
 | 0 | 4 | magic `SBOX` (ASCII) | unambiguous against Java serialisation, whose stream starts `AC ED 00 05` |
 | 4 | 1 | container version `0x04` | `> BACKUP_VERSION` ⇒ `BACKUP_TOO_NEW` |
 | 5 | 2 | header length `n`, big-endian | reader rejects `n > 4096` |
-| 7 | `n` | header, UTF-8 JSON: `{"createdAt": <epoch ms>, "appVersionCode": <int>, "kdf": "v1\|PBKDF2WithHmacSHA1\|<iterations>\|<b64 salt>"}` | readable without the password (`InspectBackup --header`, restore routing); additive fields later without a version bump (`ignoreUnknownKeys`) |
+| 7 | `n` | header, UTF-8 JSON: `{"createdAt": <epoch ms>, "appVersionCode": <int>, "kdf": "v1\|<algorithm>\|<iterations>\|<b64 salt>"}` — the `kdf_params` string of §2.4, so `<algorithm>` is `PBKDF2WithHmacSHA256` on API 26+ and `PBKDF2WithHmacSHA1` on 24–25 | readable without the password (`InspectBackup --header`, restore routing); additive fields later without a version bump (`ignoreUnknownKeys`) |
 | 7+`n` | 12 + 16 | **key check** = `iv ‖ AES-256-GCM(key, "", aad = bytes 0 … 7+n)` — tag only | fails ⇒ `INCORRECT_PASSWORD`, body untouched |
 | … | 12 + `m` + 16 | **body** = `iv ‖ AES-256-GCM(key, payload JSON, aad = bytes 0 … 7+n)` | fails after a good key check ⇒ `CORRUPT_OR_INVALID_FILE` |
 
@@ -1282,7 +1282,7 @@ Naming follows the repo convention: descriptive, no test-case numbers (`transien
 |---|---|
 | `MigrationTest` 5→6 | hash parked · `password` column gone · rows preserved · `crypto_version = 1` only when a user existed · `quarantined_record` created · full chain 1→6 |
 | `VaultCryptoMigrationTest` | legacy vault with a **real** legacy Keystore key → migration → every field decrypts under the DEK · hint plaintext · hash and alias gone · crash injection before commit ⇒ rollback, vault still legacy and readable · one row corrupted in SQLite beforehand ⇒ quarantined, others migrated, alias kept |
-| `KeystoreWrapKeysTest` | real `AndroidKeystoreGateway` with `locksettings set-pin`: `KEK_Device` generation, probe states, OAEP interop with a JCE-wrapped blob; biometric key creation skipped on `aosp-atd` |
+| `KeystoreWrapKeysTest` | real `AndroidKeystoreGateway` after `locksettings set-pin`: `KEK_Device` generation, probe states, OAEP interop with a JCE-wrapped blob; biometric key creation skipped where no fingerprint is enrolled. **Cannot run on the `aosp-atd` GMD image** (no `secure_lock_screen` — ADR-0011 S8, decision 7): needs a `google_apis` GMD definition, to be verified before MR 9, otherwise it stays in the §12 manual matrix |
 | `BackupAndRestoreWorkersTest` | v4 write then restore on device · `format-3.bak` fixture restores · wrong password ⇒ `INCORRECT_PASSWORD` · tampered body ⇒ `CORRUPT_OR_INVALID_FILE` · worker started while locked ⇒ `SESSION_LOCKED` |
 
 ### 11.3 Compose UI Tests (`app/src/androidTest`, `createAndroidComposeRule`, fakes bound by Hilt)
@@ -1306,7 +1306,7 @@ Naming follows the repo convention: descriptive, no test-case numbers (`transien
 | `HomeScreenNavigationAndTimeoutE2ETest` (rewrite) | timeout ⇒ Login + away banner (dialog gone) · password login restores the list |
 | `LoginBiometricAndHintE2ETest` (extend) | hint visible before login for both `crypto_version` values · biometric path through `CryptoObject` with the fake provider |
 | `SignupAndLoginE2ETest` (extend) | signup without lock screen ⇒ nudge on Home |
-| `:upgrade-test` harness | J4 against N-1 (resolved by `scripts/lib/previous-release.sh`: `v2.1.4.0` today, `v2.2.5.x` once it ships) on the final PR: hint pre-login, migration with progress, records decrypt, v4 backup decodes; restore test over `format-1..3.bak` + the v4 seed. Biometric-first cannot run on `aosp-atd` — documented gap (D8) |
+| `:upgrade-test` harness | J4 against N-1 (resolved by `scripts/lib/previous-release.sh`: `v2.1.4.0` today, `v2.2.5.x` once it ships) on the final PR: hint pre-login, migration with progress, records decrypt, v4 backup decodes; restore test over `format-1..3.bak` + the v4 seed. Runs on the `default` API 34 image of `upgrade-test.yml` (never `aosp-atd`, which lacks DocumentsUI); the biometric-first path cannot run there because the unattended emulator has no enrolled fingerprint — documented gap (D8) |
 | `scripts/tests/backup-format-test.sh` | every PR: lock line for v4, seed is v4 and decodes, fixtures 1–3 decode |
 
 ---
@@ -1401,7 +1401,7 @@ Close each row in the named MR; nothing merges into `master` with an open row ag
 | D5 | `UserAwayDialog` + route + three androidTests driving it | today | MR 4 | file deleted, tests rewritten |
 | D6 | `DeviceSecurityRequiredDialog` call sites in `LoginScreen` (v2 vaults) and Settings | today | MR 6 (login), MR 7 (Settings) | only the legacy reset (§6.4.1) references it |
 | D7 | testing-strategy "known coverage gap" row for #279 | hotfix | MR 9 | row rewritten after `KeystoreWrapKeysTest` lands |
-| D8 | `biometric-first` upgrade-harness path | — | not planned (`aosp-atd` cannot enrol a fingerprint) | documented in testing docs |
+| D8 | `biometric-first` upgrade-harness path | — | not planned (the CI emulator of `upgrade-test.yml` — `default` API 34, not `aosp-atd` — has no enrolled fingerprint, and enrolling one needs a per-API Settings walk) | documented in testing docs |
 | D9 | every `// TODO(MR<n>)`, `// TODO(TEMP)` and `// TODO(review)` (§9.1, §15.1) | MR 1 onwards | the MR named in it; all before the merge to `master` | `git grep -nE "TODO\((MR|TEMP|review)"` empty on the final PR |
 | D10 | `LegacyBackupReader` and `PasswordBasedEncryptionImpl` | MR 8 | a future release once `RESTORE_DATA_SUCCESS version ≤ 3` is zero for N months | decision recorded in the ADR |
 | D11 | `DEBUG_FAIL_MIGRATION_STAGE` debug-only switch (B4) | MR 5 | with D3 | not referenced in release code (`BuildConfig.DEBUG` only) |
