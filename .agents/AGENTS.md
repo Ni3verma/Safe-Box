@@ -72,6 +72,20 @@
 * **Dispatcher Abstraction:** Never hardcode `Dispatchers.IO` or `Dispatchers.Default` inside
   ViewModels or Repositories. Inject a `DispatchersProvider` interface to guarantee predictable,
   synchronized virtual-time execution during unit testing via a `TestDispatcher`.
+* **Should-not-happen branches assert, they do not log.** A `catch` or `else` that handles a state
+  the design says cannot occur calls `Utils.crashInDebugBuild(message, cause)` instead of only
+  logging or silently degrading: debug builds (and every test built on them) crash so the gap is
+  found while developing; release and QA builds record a Crashlytics non-fatal with the stack and
+  continue on the fail-safe path. Where the catch goes follows from the method's contract: a
+  **defensive** method whose contract is a safe answer catches `Exception`, never a hand-picked
+  list, so an unforeseen class cannot crash a release build — it degrades, and classes outside the
+  documented set are asserted as above; an **operational** method whose caller owns the recovery
+  maps only the failures it understands to typed exceptions and lets the rest propagate, because
+  swallowing there turns a failure into a silent no-op or a wrong answer. The catch-all for
+  operational calls lives at the boundary that owns the recovery (a ViewModel, a worker, a
+  maintenance job), never inside the primitive. Exemption: code that *is* the crash-reporting path
+  (`CrashlyticsCrashReporter`, `ReleaseTree`) stays silent, because `Timber.e` routes through the
+  same `FirebaseCrashlytics.getInstance()`. (Owner review of envelope MR 1, 2026-10-21.)
 * **No Fully Qualified Names in Code:** Never inline fully qualified package names in code (e.g.,
   `java.nio.ByteBuffer.allocate` or `com.andryoga.safebox...`). Always add an `import` statement at
   the top of the file and use clean, short type names.
