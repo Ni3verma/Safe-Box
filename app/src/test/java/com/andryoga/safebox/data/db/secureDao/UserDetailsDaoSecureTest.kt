@@ -4,13 +4,16 @@ package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
+import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
-import com.andryoga.safebox.test.fakes.FakeHashingUtils
+import com.andryoga.safebox.data.db.models.CryptoVersion
+import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.util.Date
 
 class UserDetailsDaoSecureTest {
 
@@ -27,65 +31,79 @@ class UserDetailsDaoSecureTest {
     @MockK(relaxUnitFun = true)
     lateinit var userDetailsDao: UserDetailsDao
 
-    private lateinit var hashingUtils: FakeHashingUtils
+    @MockK
+    lateinit var vaultMetaDao: VaultMetaDao
+
     private lateinit var symmetricKeyUtils: FakeSymmetricKeyUtils
     private lateinit var userDetailsDaoSecure: UserDetailsDaoSecure
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        hashingUtils = FakeHashingUtils()
         symmetricKeyUtils = FakeSymmetricKeyUtils()
         userDetailsDaoSecure = UserDetailsDaoSecure(
             userDetailsDao = userDetailsDao,
-            hashingUtils = hashingUtils,
-            symmetricKeyUtils = symmetricKeyUtils
+            vaultMetaDao = vaultMetaDao,
+            symmetricKeyUtils = symmetricKeyUtils,
         )
     }
 
+    private fun givenCryptoVersion(version: String?) {
+        coEvery { vaultMetaDao.get(VaultMetaKey.CRYPTO_VERSION) } returns version
+    }
+
     @Test
-    fun insertUserDetailsData_shouldHashPasswordAndEncryptHintBeforeDaoInsert() = runTest {
-        val inputEntity = TestFixtures.createTestUserDetailsEntity(
-            password = "rawPassword",
-            hint = "myHint"
-        )
+    fun insertUserDetailsData_whenVaultIsLegacy_shouldEncryptHintBeforeDaoInsert() = runTest {
+        givenCryptoVersion(CryptoVersion.LEGACY)
+        val inputEntity = TestFixtures.createTestUserDetailsEntity(hint = "myHint")
         val slot = slot<UserDetailsEntity>()
         coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
 
         userDetailsDaoSecure.insertUserDetailsData(inputEntity)
 
         assertThat(slot.isCaptured).isTrue()
-        assertThat(slot.captured.password).isEqualTo("HASH[rawPassword]|FAKE_SALT")
         assertThat(slot.captured.hint).isEqualTo("ENC[myHint]")
         assertThat(slot.captured.uid).isEqualTo(inputEntity.uid)
+        assertThat(slot.captured.key).isEqualTo(inputEntity.key)
     }
 
     @Test
-    fun insertUserDetailsData_whenHintIsNull_shouldHashPasswordAndKeepNullHint() = runTest {
-        val inputEntity = TestFixtures.createTestUserDetailsEntity(
-            password = "plainPassword",
-            hint = null
-        )
+    fun insertUserDetailsData_whenCryptoVersionRowIsAbsent_shouldEncryptHintAsLegacy() = runTest {
+        givenCryptoVersion(null)
+        val slot = slot<UserDetailsEntity>()
+        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
+
+        userDetailsDaoSecure.insertUserDetailsData(TestFixtures.createTestUserDetailsEntity(hint = "myHint"))
+
+        assertThat(slot.captured.hint).isEqualTo("ENC[myHint]")
+    }
+
+    @Test
+    fun insertUserDetailsData_whenVaultIsEnvelope_shouldStoreHintAsPlaintext() = runTest {
+        givenCryptoVersion(CryptoVersion.ENVELOPE)
+        val slot = slot<UserDetailsEntity>()
+        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
+
+        userDetailsDaoSecure.insertUserDetailsData(TestFixtures.createTestUserDetailsEntity(hint = "myHint"))
+
+        assertThat(slot.captured.hint).isEqualTo("myHint")
+    }
+
+    @Test
+    fun insertUserDetailsData_whenHintIsNull_shouldKeepNullHintWithoutReadingCryptoVersion() = runTest {
+        val inputEntity = TestFixtures.createTestUserDetailsEntity(hint = null)
         val slot = slot<UserDetailsEntity>()
         coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
 
         userDetailsDaoSecure.insertUserDetailsData(inputEntity)
 
-        assertThat(slot.captured.password).isEqualTo("HASH[plainPassword]|FAKE_SALT")
         assertThat(slot.captured.hint).isNull()
+        coVerify(exactly = 0) { vaultMetaDao.get(any()) }
     }
 
     @Test
-    fun getUserPassword_shouldDelegateToUserDetailsDao() = runTest {
-        coEvery { userDetailsDao.getUserPassword() } returns "HASH[storedPass]|FAKE_SALT"
-
-        val password = userDetailsDaoSecure.getUserPassword()
-
-        assertThat(password).isEqualTo("HASH[storedPass]|FAKE_SALT")
-    }
-
-    @Test
-    fun getHint_whenHintIsPresent_shouldDecryptHint() = runTest {
+    fun getHint_whenVaultIsLegacy_shouldDecryptHint() = runTest {
+        givenCryptoVersion(CryptoVersion.LEGACY)
         coEvery { userDetailsDao.getHint() } returns "ENC[secretHint]"
 
         val hint = userDetailsDaoSecure.getHint()
@@ -94,12 +112,33 @@ class UserDetailsDaoSecureTest {
     }
 
     @Test
-    fun getHint_whenHintIsNull_shouldReturnNull() = runTest {
+    fun getHint_whenCryptoVersionRowIsAbsent_shouldDecryptHintAsLegacy() = runTest {
+        givenCryptoVersion(null)
+        coEvery { userDetailsDao.getHint() } returns "ENC[secretHint]"
+
+        val hint = userDetailsDaoSecure.getHint()
+
+        assertThat(hint).isEqualTo("secretHint")
+    }
+
+    @Test
+    fun getHint_whenVaultIsEnvelope_shouldReturnStoredHintWithoutDecrypting() = runTest {
+        givenCryptoVersion(CryptoVersion.ENVELOPE)
+        coEvery { userDetailsDao.getHint() } returns "plain hint"
+
+        val hint = userDetailsDaoSecure.getHint()
+
+        assertThat(hint).isEqualTo("plain hint")
+    }
+
+    @Test
+    fun getHint_whenHintIsNull_shouldReturnNullWithoutReadingCryptoVersion() = runTest {
         coEvery { userDetailsDao.getHint() } returns null
 
         val hint = userDetailsDaoSecure.getHint()
 
         assertThat(hint).isNull()
+        coVerify(exactly = 0) { vaultMetaDao.get(any()) }
     }
 
     @Test
@@ -112,13 +151,22 @@ class UserDetailsDaoSecureTest {
     }
 
     @Test
-    fun checkPassword_shouldRetrieveStoredPasswordHashAndCompareViaHashingUtils() = runTest {
-        coEvery { userDetailsDao.getUserPassword() } returns "HASH[correctPass]|FAKE_SALT"
+    fun updateHint_whenVaultIsLegacy_shouldEncryptHintBeforeDaoUpdate() = runTest {
+        givenCryptoVersion(CryptoVersion.LEGACY)
+        val updateDate = Date(1700000000000L)
 
-        val matchesCorrect = userDetailsDaoSecure.checkPassword("correctPass")
-        val matchesWrong = userDetailsDaoSecure.checkPassword("wrongPass")
+        userDetailsDaoSecure.updateHint("new hint", updateDate)
 
-        assertThat(matchesCorrect).isTrue()
-        assertThat(matchesWrong).isFalse()
+        coVerify { userDetailsDao.updateHint("ENC[new hint]", updateDate) }
+    }
+
+    @Test
+    fun updateHint_whenVaultIsEnvelope_shouldStoreHintAsPlaintext() = runTest {
+        givenCryptoVersion(CryptoVersion.ENVELOPE)
+        val updateDate = Date(1700000000000L)
+
+        userDetailsDaoSecure.updateHint("new hint", updateDate)
+
+        coVerify { userDetailsDao.updateHint("new hint", updateDate) }
     }
 }
