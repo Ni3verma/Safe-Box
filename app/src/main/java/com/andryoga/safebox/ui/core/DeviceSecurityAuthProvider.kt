@@ -25,15 +25,15 @@ import javax.inject.Inject
  * the prompt, so the two can never disagree.
  *
  * `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` is documented by androidx.biometric as **unsupported on
- * API 28-29** (see `PromptInfo.Builder.setAllowedAuthenticators`): Android 9/10 have no biometric
- * strength classes in their API, and once a device-credential fallback is allowed the library can
- * no longer force strong-only behaviour, so it refuses the combination outright —
- * `BiometricManager.canAuthenticate` returns `BIOMETRIC_ERROR_UNSUPPORTED` regardless of enrolment
- * and `PromptInfo.Builder.build()` throws. Below API 30 the credential flows therefore request
- * `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`; the sensor shown to the user is the same, and those flows
- * already accept a PIN, which is weaker than any biometric. API 30+ keeps `BIOMETRIC_STRONG` with
- * the credential so a Class-2 face unlock is not newly admitted there, and biometric-only login keeps
- * `BIOMETRIC_STRONG` on every version. See issue #279.
+ * API 28-29** (see `PromptInfo.Builder.setAllowedAuthenticators`), and API 29 is the floor since
+ * minSdk 29: Android 10 has no biometric strength classes in its API, and once a device-credential
+ * fallback is allowed the library can no longer force strong-only behaviour, so it refuses the
+ * combination outright — `BiometricManager.canAuthenticate` returns `BIOMETRIC_ERROR_UNSUPPORTED`
+ * regardless of enrolment and `PromptInfo.Builder.build()` throws. On API 29 the credential flows
+ * therefore request `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`; the sensor shown to the user is the
+ * same, and those flows already accept a PIN, which is weaker than any biometric. API 30+ keeps
+ * `BIOMETRIC_STRONG` with the credential so a Class-2 face unlock is not newly admitted there, and
+ * biometric-only login keeps `BIOMETRIC_STRONG` on every version. See issue #279.
  *
  * @param allowDeviceCredential Whether PIN/pattern/password may be used instead of a biometric.
  * @param sdkInt The running API level; injectable only so the matrix is unit-testable on the JVM.

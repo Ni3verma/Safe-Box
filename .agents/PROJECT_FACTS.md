@@ -21,7 +21,7 @@ task so you do not re-derive things that are already known.
 | | |
 |---|---|
 | Namespace | `com.andryoga.safebox` |
-| `minSdk` / `targetSdk` / `compileSdk` | 24 / 37 / 37 |
+| `minSdk` / `targetSdk` / `compileSdk` | **29** / 37 / 37 on `feature/envelope-encryption` ([ADR-0012](../docs/decisions/0012-min-sdk-29.md), 2026-10-21); `master` stays 24 until the final merge |
 | JDK / Kotlin toolchain | 17 |
 | NDK | `29.0.14206865` (CI has a gatekeeper step that fails if missing) |
 | Build system | Groovy `build.gradle` — **never** Kotlin DSL |
@@ -147,7 +147,3 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
   funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
-- **Biometric login is unavailable on API 24–28** with the current dependencies: `androidx.core` ≥ 1.18
-  stubs `FingerprintManagerCompat`, which `androidx.biometric:1.1.0` uses for `canAuthenticate` on
-  API ≤ 28 and the fingerprint dialog on ≤ 27 (verified on API 24/28 emulators, 2026-10-20). Credential
-  flows still work. Untested fixes: `androidx.biometric` 1.4.0 (alpha, no compat references) or API 29+: #299.

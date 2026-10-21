@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -37,23 +36,20 @@ object Utils {
 
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     fun makeStatusNotification(context: Context, notificationOptions: NotificationOptions) {
-        // Make a channel if necessary
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Create the NotificationChannel, but only on API 26+ because
-            // the NotificationChannel class is new and not in the support library
-            val channel = NotificationChannel(
-                notificationOptions.channelId,
-                notificationOptions.channelName,
-                notificationOptions.channelImportance
-            )
-            channel.description = notificationOptions.channelDescription
+        // Channels are mandatory on every supported API level; createNotificationChannel is a no-op
+        // for an existing channel, so this is safe to repeat before every notification.
+        val channel = NotificationChannel(
+            notificationOptions.channelId,
+            notificationOptions.channelName,
+            notificationOptions.channelImportance
+        )
+        channel.description = notificationOptions.channelDescription
 
-            // Add the channel
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+        // Add the channel
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
 
-            notificationManager?.createNotificationChannel(channel)
-        }
+        notificationManager?.createNotificationChannel(channel)
 
         // Create the notification
         val builder = NotificationCompat.Builder(context, notificationOptions.channelId)
