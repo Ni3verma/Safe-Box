@@ -17,7 +17,8 @@ code, think "surely we should just do X", and burn hours rediscovering why X doe
 | [0008](0008-in-app-updates-flexible-only.md) | In-app updates use the FLEXIBLE flow only, with a lock-aware restart | Accepted |
 | [0009](0009-play-upload-testing-tracks.md) | CI uploads every tag to Play's internal, closed and open testing tracks; production is a human promotion | Accepted |
 | [0010](0010-empty-vault-is-the-onboarding.md) | The empty vault is the post-signup onboarding; no intro carousel, instrument the funnel first | Accepted |
-| [0011](0011-envelope-encryption-spike-results.md) | Envelope-encryption spike results S1–S11: measured Keystore, biometric, PBKDF2, migration and disk-full behaviour that fix `T`, the progress mode, the wrap path and the KDF iteration counts | Accepted |
+| [0011](0011-envelope-encryption-spike-results.md) | Envelope-encryption spike results S1–S11: measured Keystore, biometric, PBKDF2, migration and disk-full behaviour that fix `T`, the progress mode, the wrap path and the KDF iteration counts | Accepted, API ranges amended by 0012 |
+| [0012](0012-min-sdk-29.md) | `minSdk` 29 for the envelope-encryption release, committed to the feature branch only so interim `master` releases keep reaching Android 7–9 | Accepted |
 
 ## Format
 
