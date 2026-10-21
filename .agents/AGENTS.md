@@ -39,6 +39,16 @@
   established app architecture or standard, proactively push back and inform the user upfront in the
   chat before making changes.
 
+## Pull Requests
+
+* **Never write a PR description.** The PR Agent bot generates it from the diff and the commits, so
+  a hand-written body is wasted work that the bot overwrites. Open PRs with
+  `gh pr create --title "..." --body ""` (github-tooling skill) and put anything a rule wants "in
+  the PR" into the **commit message** instead: new `AnalyticsParam` names, a child MR's
+  `TODO(MR n)` inventory, `Part of #n` / `Closes #n`. Human-written notes that must accompany a PR
+  (manual test results, a reply to a bot finding) go in a PR comment, never the body. (Owner
+  instruction after #302, 2026-10-21.)
+
 ## Technical Stack Boundaries
 
 * **Language:** 100% Kotlin utilizing clean, modern idioms.
@@ -101,7 +111,8 @@
       `analyticsHelper.logEvent(AnalyticsKey.X)`.
     * **Param Registration Rule:** GA discards a new `AnalyticsParam` from every report until it is
       registered as a custom definition, with no backfill. A change that adds a param must name it
-      in the PR description and add it to the register in
+      in the commit message (the PR description is bot-generated, see *Pull Requests*) and add it
+      to the register in
       [docs/analytics/firebase-setup.md](../docs/analytics/firebase-setup.md#custom-definitions),
       so the owner registers it before the build reaches a testing track. (2026-10-20: the `reason`
       of every earlier `backup_failure_dialog_show` was lost this way.)
