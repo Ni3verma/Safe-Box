@@ -200,7 +200,7 @@ decrypting under the DEK.
 
 ## Decisions
 
-1. **`T` = 5 s on API 24–29**; the 3 s option is closed (S1).
+1. **`T` = 5 s on API 24–29**; the 3 s option is closed (S1). Confirmed by the owner 2026-10-21.
 2. **Migration progress is determinate** (`progress / total`): 100 records already take 1.4 s on
    a flagship, 2 000 take 27 s (S7). The design's "indeterminate unless P95 > 3 s" branch is
    removed. `LegacyVaultMigrator` may decrypt legacy fields on a small worker pool ahead of the
@@ -210,8 +210,11 @@ decrypting under the DEK.
 4. **`KeyHealth` maps alias-missing, `getKey == null`, `UnrecoverableKeyException`,
    `KeyPermanentlyInvalidatedException` *and* a `doFinal` failure after a successful prompt to
    *recreate*; a failed `deleteEntry` is non-fatal and the replacement gets a fresh alias** (S2/S9).
-5. **`PBKDF2_ITERATIONS` is an open decision** for the owner (design §2.4 lists the options with
-   the measured numbers). The design no longer states 600 000 / 1 300 000.
+5. **`PBKDF2_ITERATIONS` re-decided by the owner (2026-10-21): platform PBKDF2, no native KDF,
+   ≤ 500 ms on the Pixel 6a** — `PBKDF2WithHmacSHA256` ≈ 100 000 iterations on API 26+,
+   `PBKDF2WithHmacSHA1` ≈ 50 000 on API 24–25, exact constants calibrated in MR 1; the
+   algorithm is named in `kdf_params`. Argon2id / NDK PBKDF2 and the original 600 000 floor were
+   ruled out (design §2.4, residual 10 in §1.4).
 6. **StrongBox is kept for `KEK_Device`** (recovery path, rare: 306 ms unwrap, keygen in the
    background) **and reconsidered for `KEK_Biometric`**: a 5–20 s background keygen is acceptable
    only because it is lazy and silent, but 306 ms on every biometric login is user-visible; the
