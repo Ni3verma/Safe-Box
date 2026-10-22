@@ -251,7 +251,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 safeBoxDatabase,
                 userDetailsRepository,
                 encryptedPreferenceProvider,
-                preferenceProvider
+                preferenceProvider,
             )
         }
 
@@ -280,7 +280,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 safeBoxDatabase,
                 userDetailsRepository,
                 encryptedPreferenceProvider,
-                preferenceProvider
+                preferenceProvider,
             )
         }
 
@@ -305,7 +305,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 safeBoxDatabase,
                 userDetailsRepository,
                 encryptedPreferenceProvider,
-                preferenceProvider
+                preferenceProvider,
             )
         }
 
