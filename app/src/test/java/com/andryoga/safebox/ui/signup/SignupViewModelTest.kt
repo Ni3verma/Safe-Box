@@ -9,8 +9,12 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.CryptoTestFixtures
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
+import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
@@ -35,18 +39,26 @@ class SignupViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private lateinit var sessionKeyHolder: SessionKeyHolderImpl
+    private lateinit var keystoreGateway: FakeKeystoreGateway
     private lateinit var viewModel: SignupViewModel
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        viewModel = SignupViewModel(
-            encryptedPreferenceProvider = encryptedPreferenceProvider,
-            userDetailsRepository = userDetailsRepository,
-            analyticsHelper = analyticsHelper,
-            isDebug = false
-        )
+        sessionKeyHolder = SessionKeyHolderImpl()
+        keystoreGateway = FakeKeystoreGateway()
+        viewModel = createViewModel(isDebug = false)
     }
+
+    private fun createViewModel(isDebug: Boolean) = SignupViewModel(
+        encryptedPreferenceProvider = encryptedPreferenceProvider,
+        userDetailsRepository = userDetailsRepository,
+        analyticsHelper = analyticsHelper,
+        keystoreGateway = keystoreGateway,
+        sessionKeyHolder = sessionKeyHolder,
+        isDebug = isDebug,
+    )
 
     @Test
     fun initialUiState_matchesDefaultSignupUiState() = runTest {
@@ -69,12 +81,7 @@ class SignupViewModelTest {
 
     @Test
     fun initialUiState_whenIsDebugTrue_prefillsDebugPasswordAndHint() = runTest {
-        viewModel = SignupViewModel(
-            encryptedPreferenceProvider = encryptedPreferenceProvider,
-            userDetailsRepository = userDetailsRepository,
-            analyticsHelper = analyticsHelper,
-            isDebug = true
-        )
+        viewModel = createViewModel(isDebug = true)
         advanceUntilIdle()
         val uiState = viewModel.uiState.value
 
@@ -208,6 +215,48 @@ class SignupViewModelTest {
             }
             assertThat(expectMostRecentItem()).isTrue()
         }
+    }
+
+    @Test
+    fun onSignupClick_onAFreshInstall_createsTheLegacyKeyBeforeTheUserRowAndOpensTheSession() = runTest {
+        var keyExistedAtInsert = false
+        coEvery { userDetailsRepository.insertUserDetailsData(any(), any()) } answers {
+            keyExistedAtInsert = keystoreGateway.legacyVaultKey() != null
+        }
+        assertThat(keystoreGateway.legacyVaultKey()).isNull()
+
+        viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+        viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        // The hint is encrypted under the legacy key inside insertUserDetailsData, so it must exist first.
+        assertThat(keyExistedAtInsert).isTrue()
+        assertThat(sessionKeyHolder.isLegacySession).isTrue()
+        assertThat(viewModel.navigateToHome.value).isTrue()
+    }
+
+    @Test
+    fun onSignupClick_whenTheLegacyKeyAlreadyExists_reusesItInsteadOfReplacingIt() = runTest {
+        val existingKey = CryptoTestFixtures.TEST_AES_KEY_256
+        keystoreGateway.legacyKey = existingKey
+
+        viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+        viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        assertThat(keystoreGateway.legacyVaultKey()).isSameInstanceAs(existingKey)
+        assertThat(sessionKeyHolder.withSessionKey { it }).isSameInstanceAs(existingKey)
+    }
+
+    @Test
+    fun onSignupClick_whenBlocked_leavesTheKeystoreAndTheSessionUntouched() = runTest {
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        assertThat(keystoreGateway.legacyVaultKey()).isNull()
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
     }
 
     @Test

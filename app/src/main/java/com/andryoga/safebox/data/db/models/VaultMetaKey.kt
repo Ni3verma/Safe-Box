@@ -14,6 +14,7 @@ object VaultMetaKey {
      * `MIGRATION_5_6` when the `user_details.password` column was dropped. Present only while the
      * vault is [CryptoVersion.LEGACY].
      */
+    // TODO(D3): legacy vault (crypto_version = 1) only (debt row D2 tracks the row itself)
     const val LEGACY_PASSWORD_HASH = "legacy_password_hash"
 }
 

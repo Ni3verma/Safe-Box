@@ -6,6 +6,7 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.loading.LoadingState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,7 +29,15 @@ class MainViewModel @Inject constructor(
     settingsDataStore: SettingsDataStore,
     activeSessionManager: ActiveSessionManager,
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
+    sessionKeyHolder: SessionKeyHolder,
 ) : ViewModel() {
+    /**
+     * Whether the vault session is open. Home's gate collects it: a back stack restored after
+     * process death or a navigation that skipped Login finds it `false` on entry, and a clear while
+     * Home is showing turns it `false` the same moment, so Home leaves for Login either way.
+     */
+    val isVaultUnlocked: StateFlow<Boolean> = sessionKeyHolder.isUnlocked
+
     val isBackupPathSet: StateFlow<Boolean> = backupMetadataRepository.getBackupMetadata().map {
         it != null
     }.stateIn(

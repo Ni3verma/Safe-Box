@@ -216,6 +216,9 @@ private fun LoginCardContent(
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
     val isPasswordFieldError = uiState.userAuthState == UserAuthState.INCORRECT_PASSWORD_ENTERED
+    // TODO(MR5): the designed legacy-key-lost state replaces this generic line
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    val isLegacyKeyLost = uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST
 
     Column(
         modifier = Modifier
@@ -242,10 +245,12 @@ private fun LoginCardContent(
             label = { Text(stringResource(R.string.password)) },
             placeholder = { Text(stringResource(R.string.password)) },
             singleLine = true,
-            isError = isPasswordFieldError,
+            isError = isPasswordFieldError || isLegacyKeyLost,
             supportingText = {
                 if (isPasswordFieldError) {
                     Text(text = stringResource(R.string.incorrect_pswrd_message))
+                } else if (isLegacyKeyLost) {
+                    Text(text = stringResource(R.string.failed_message))
                 }
             },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),

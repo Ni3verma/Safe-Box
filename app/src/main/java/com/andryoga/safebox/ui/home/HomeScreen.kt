@@ -72,10 +72,20 @@ fun HomeScreen(
     inAppUpdateViewModel: InAppUpdateViewModel,
     onExitHomeNavGraph: () -> Unit,
 ) {
+    val mainViewModel = hiltViewModel<MainViewModel>()
+
+    // Home is only ever composed with an open session. A back stack restored after process death,
+    // a navigation that skipped Login, and a lock while Home is showing all leave for Login here,
+    // before anything in the graph reads the vault.
+    val isVaultUnlocked by mainViewModel.isVaultUnlocked.collectAsState()
+    LaunchedEffect(isVaultUnlocked) {
+        if (!isVaultUnlocked) onExitHomeNavGraph()
+    }
+    if (!isVaultUnlocked) return
+
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val mainViewModel = hiltViewModel<MainViewModel>()
 
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
     val isBottomBarVisible = currentDestination.isHomeTopLevelRoute()

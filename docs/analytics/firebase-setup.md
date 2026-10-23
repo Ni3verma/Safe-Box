@@ -96,8 +96,13 @@ Event-scoped **dimensions**, dimension name = parameter name:
 | `biometric_class` | `login_success` | `strong`, `weak_only`, `none_enrolled`, `no_hardware`, `unavailable` |
 | `strongbox` | `login_success` | `0`/`1` |
 | `exception` | `record_decrypt_failure` | exception simple class name, never a message |
-| `db_exists` | `keystore_key_created` | `0`/`1`. **Temporary**: the event's only firing site goes when the key provider stops regenerating; archive this dimension once the read-back has its number, which frees the slot |
 | `worker_running` | `session_timeout` | `0`/`1` |
+
+`db_exists` (on `keystore_key_created`) was in this block until 2026-10-21: the event's only firing
+site — the key provider's regenerate branch — was deleted by envelope MR 3, so the build on
+`feature/envelope-encryption` never logs it again. If the dimension was already registered,
+**archive it** once the read-back ADR has its number (week 4–8 after the patch), which frees the
+slot; BigQuery keeps the rows already collected. Quota after the archive: 19 dimensions.
 
 Event-scoped **metrics**, unit *Standard*. These are per-user snapshots, so their sums mean nothing;
 they are metrics because exact values are near-unique (a dimension would be all `(other)`) and the

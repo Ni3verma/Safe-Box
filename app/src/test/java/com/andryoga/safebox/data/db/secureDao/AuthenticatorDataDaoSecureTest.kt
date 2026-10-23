@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.AuthenticatorDataDao
 import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.models.TotpAlgorithm
@@ -20,6 +21,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import javax.crypto.AEADBadTagException
 
 class AuthenticatorDataDaoSecureTest {
 
@@ -92,6 +94,28 @@ class AuthenticatorDataDaoSecureTest {
             assertThat(items[0].title).isEqualTo("GitHub")
             assertThat(items[0].secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
             awaitComplete()
+        }
+    }
+
+    @Test
+    fun getAllAuthenticatorData_whenVaultIsLocked_shouldEmitEmptyListInsteadOfThrowing() = runTest {
+        symmetricKeyUtils.failure = SessionLockedException()
+        every { authenticatorDataDao.getAllAuthenticatorData() } returns flowOf(listOf(TestFixtures.createTestSearchAuthenticatorData(key = 1, title = "GitHub", secretKey = "ENC[x]")))
+
+        authenticatorDataDaoSecure.getAllAuthenticatorData().test {
+            assertThat(awaitItem()).isEmpty()
+            awaitComplete()
+        }
+    }
+
+    @Test
+    fun getAllAuthenticatorData_whenARowDoesNotDecrypt_shouldPropagateTheFailure() = runTest {
+        val failure = AEADBadTagException("tag mismatch")
+        symmetricKeyUtils.failure = failure
+        every { authenticatorDataDao.getAllAuthenticatorData() } returns flowOf(listOf(TestFixtures.createTestSearchAuthenticatorData(key = 1, title = "GitHub", secretKey = "ENC[x]")))
+
+        authenticatorDataDaoSecure.getAllAuthenticatorData().test {
+            assertThat(awaitError()).isSameInstanceAs(failure)
         }
     }
 

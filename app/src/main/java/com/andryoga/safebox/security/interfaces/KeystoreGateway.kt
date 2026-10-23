@@ -94,10 +94,23 @@ interface KeystoreGateway {
      * never regenerates it. Keystore errors propagate so a transient failure is retried instead
      * of being reported as a lost key.
      */
+    // TODO(D3): legacy vault (crypto_version = 1) only — the handle its fields and hint are under
     fun legacyVaultKey(): SecretKey?
+
+    /**
+     * Returns the legacy `"symmetricDataKey"` handle, generating the alias only if it is absent and
+     * never replacing an existing entry.
+     *
+     * Signup bridge only: a vault is being created, so there is no data under an older key to lose.
+     * This is the single place the alias may ever be created; a lost alias in front of an existing
+     * vault is reported through [legacyVaultKey] returning `null`, never repaired.
+     */
+    // TODO(MR5): signup creates a DEK through VaultRepository.createVault; the legacy signup bridge and this method go with it
+    fun getOrCreateLegacyVaultKey(): SecretKey
 
     /**
      * Deletes the legacy `"symmetricDataKey"` entry if present.
      */
+    // TODO(D3): legacy vault (crypto_version = 1) only
     fun deleteLegacyVaultKey()
 }

@@ -239,6 +239,91 @@ class HomeScreenNavigationAndTimeoutE2ETest {
         }
     }
 
+    /**
+     * The HomeGraph gate. Process death keeps Home on the saved navigation state but
+     * empties the RAM-only session holder; `lockVault()` + `recreate()` reproduces exactly that
+     * pair, and the restored Home must leave for Login without ever showing the vault.
+     */
+    @Test
+    fun recreateIntoHome_whenTheVaultIsLocked_shouldLeaveForLoginWithoutShowingRecords() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider,
+            )
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
+
+            VaultSessionTestBridge.lockVault()
+            scenario.recreate()
+
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
+            composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertDoesNotExist()
+
+            // Back must not reveal a Home that was never meant to be composed.
+            scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun recreateIntoHome_whileTheSessionIsOpen_shouldStayOnHome() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider,
+            )
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+
+            scenario.recreate()
+
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.no_record)))
+            composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertDoesNotExist()
+        }
+    }
+
+    /**
+     * The same gate while Home is on screen: whoever clears the holder, Home leaves for Login on
+     * its own, with no Activity recreation and no second navigator.
+     */
+    @Test
+    fun lockVault_whileHomeIsShowing_shouldLeaveForLogin() {
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider,
+            )
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            E2ETestUtils.unlockApp(composeTestRule, context)
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
+
+            VaultSessionTestBridge.lockVault()
+
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertDoesNotExist()
+
+            scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            composeTestRule.waitForIdle()
+            composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertDoesNotExist()
+        }
+    }
+
     @Test
     fun privacyFlagEnabled_shouldSetFlagSecureOnWindow() {
         runBlocking {

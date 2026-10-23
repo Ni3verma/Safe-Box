@@ -9,7 +9,10 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.domain.models.NotificationOptions
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -23,6 +26,17 @@ object Utils {
 
     fun String?.decryptNullableString(symmetricKeyUtils: SymmetricKeyUtils): String? {
         return if (this.isNullOrBlank()) null else symmetricKeyUtils.decrypt(this)
+    }
+
+    /**
+     * The fail-closed contract of every secure-DAO `Flow`: a vault that is locked while the list
+     * is being decrypted yields an empty list instead of an exception, so a `stateIn` pipeline in
+     * a ViewModel survives a lock without crashing. Anything else still propagates; a broken row
+     * is a bug to surface, not a state to hide. The flow completes after the empty emission; the
+     * next unlock navigates to a fresh Home, whose ViewModel subscribes again.
+     */
+    fun <T> Flow<List<T>>.emptyWhenSessionLocked(): Flow<List<T>> = catch { cause ->
+        if (cause is SessionLockedException) emit(emptyList()) else throw cause
     }
 
     /**

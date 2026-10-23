@@ -43,6 +43,7 @@ Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — 
 | Build the instrumentation APK | `:app:assembleDebugAndroidTest` |
 | All instrumentation tests on a connected device | `:app:connectedDebugAndroidTest` |
 | One instrumentation class (**one only** — see Traps) | `:app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>` |
+| One instrumentation package, all its classes in one process (reproduces CI ordering; see Traps) | `:app:pixel8Api34DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=<package>` |
 | Managed device (no device needed, matches CI) | `:app:pixel8Api34DebugAndroidTest` |
 | Coverage (opt-in, slow) | add `-Pcoverage` |
 | Lint as CI runs it | `:app:lintRelease` |
@@ -261,6 +262,22 @@ WorkManager in the same process, which is exactly why the one-class invocation a
 (`TotpCodeFieldTest`, 2026-10-06). Any component test whose composable can copy must stand
 WorkManager up in `@Before` with `WorkManagerTestInitHelper.initializeTestWorkManager` and a
 `SynchronousExecutor`; `TotpBadgeTest` is the template.
+
+### WorkManager keeps the first test's Hilt component
+
+The mirror image of the trap above, visible **only in a multi-class run**. WorkManager is
+initialised once per process and keeps the `WorkerFactory` it was given; `HiltAndroidRule` builds
+a fresh `SingletonComponent` per test. Every E2E password login enqueues an auto-backup
+(`AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT = true`), so WorkManager comes up during the first E2E
+test, and a `HiltWorkerFactory` captured at that moment builds every later test's workers from the
+*first* test's singletons. That was harmless while the field key was the process-wide Keystore
+alias and broke the moment it became in-memory session state (MR 3): `CrossFeatureUserJourneysE2ETest`
+waited 15 s for a `.bak` that a worker holding another test's `SessionKeyHolder` could never write
+(CI run 39760459430, 2026-10-22), while the same class alone was green on every device.
+`BaseTestApplication` now installs a `WorkerFactory` that resolves `HiltWorkerFactory` from the
+component current at each `createWorker`. The check that proves it: the `e2e` package in one
+invocation, `-Pandroid.testInstrumentationRunnerArguments.package=com.andryoga.safebox.e2e`.
+Any new in-memory singleton that a worker reads is covered by the same fix; nothing else is needed.
 
 ### Two adb binaries kill each other's server mid-run
 

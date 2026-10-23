@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.data.db.dao.AuthenticatorDataDao
 import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
@@ -32,6 +33,7 @@ class AuthenticatorDataDaoSecure @Inject constructor(
     override fun getAllAuthenticatorData(): Flow<List<SearchAuthenticatorData>> {
         return authenticatorDataDao.getAllAuthenticatorData()
             .map { SearchAuthenticatorData.decrypt(it, symmetricKeyUtils) }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getAuthenticatorDataByKey(key: Int): AuthenticatorDataEntity {

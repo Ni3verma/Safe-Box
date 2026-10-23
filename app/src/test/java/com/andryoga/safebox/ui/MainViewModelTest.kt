@@ -9,6 +9,9 @@ import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.CryptoTestFixtures
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.loading.LoadingState
 import com.google.common.truth.Truth.assertThat
@@ -42,6 +45,7 @@ class MainViewModelTest {
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     private lateinit var viewModel: MainViewModel
+    private lateinit var sessionKeyHolder: SessionKeyHolderImpl
 
     private val isPrivacyEnabledFlow = MutableStateFlow(true)
     private val backupMetadataFlow = MutableStateFlow<BackupPathData?>(null)
@@ -54,12 +58,14 @@ class MainViewModelTest {
         every { settingsDataStore.isPrivacyEnabledFlow } returns isPrivacyEnabledFlow
         every { backupMetadataRepository.getBackupMetadata() } returns backupMetadataFlow
         every { activeSessionManager.logoutEvent } returns logoutEventFlow
+        sessionKeyHolder = SessionKeyHolderImpl()
 
         viewModel = MainViewModel(
             backupMetadataRepository,
             settingsDataStore,
             activeSessionManager,
-            encryptedPreferenceProvider
+            encryptedPreferenceProvider,
+            sessionKeyHolder,
         )
     }
 
@@ -87,6 +93,31 @@ class MainViewModelTest {
         viewModel.logoutEvent.test {
             logoutEventFlow.emit(Unit)
             assertThat(awaitItem()).isEqualTo(Unit)
+        }
+    }
+
+    @Test
+    fun isVaultUnlocked_whenNoSessionIsOpen_shouldBeFalse() {
+        assertThat(viewModel.isVaultUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun isVaultUnlocked_inALegacySession_shouldBeTrue() {
+        sessionKeyHolder.setLegacySession(CryptoTestFixtures.TEST_AES_KEY_256)
+
+        assertThat(viewModel.isVaultUnlocked.value).isTrue()
+    }
+
+    @Test
+    fun isVaultUnlocked_whenTheKeyIsClearedWhileCollected_shouldEmitFalse() = runTest {
+        sessionKeyHolder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
+
+        viewModel.isVaultUnlocked.test {
+            assertThat(awaitItem()).isTrue()
+
+            sessionKeyHolder.clearSessionKey()
+
+            assertThat(awaitItem()).isFalse()
         }
     }
 

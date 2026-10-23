@@ -8,6 +8,8 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.password.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +29,8 @@ class SignupViewModel @Inject constructor(
     private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val userDetailsRepository: UserDetailsRepository,
     private val analyticsHelper: AnalyticsHelper,
+    private val keystoreGateway: KeystoreGateway,
+    private val sessionKeyHolder: SessionKeyHolder,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupUiState())
@@ -107,7 +111,11 @@ class SignupViewModel @Inject constructor(
         analyticsHelper.logEvent(AnalyticsKey.SIGN_UP)
 
         viewModelScope.launch {
+            // TODO(MR5): VaultRepository.createVault mints a DEK and setSessionKey replaces this legacy bridge
+            // The key must exist before the user row is written: the hint is encrypted under it.
+            val legacyKey = keystoreGateway.getOrCreateLegacyVaultKey()
             userDetailsRepository.insertUserDetailsData(password, hint)
+            sessionKeyHolder.setLegacySession(legacyKey)
 
             encryptedPreferenceProvider.upsertBooleanPref(
                 CommonConstants.IS_SIGN_UP_REQUIRED,

@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.common.Utils.decryptNullableString
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.BankCardDataDao
 import com.andryoga.safebox.data.db.docs.SearchBankCardData
@@ -27,6 +28,7 @@ class BankCardDataDaoSecure @Inject constructor(
         return bankCardDataDao
             .getAllBankCardData()
             .map { SearchBankCardData.decrypt(it, symmetricKeyUtils) }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getBankCardDataByKey(key: Int): BankCardDataEntity {
