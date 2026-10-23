@@ -150,7 +150,7 @@
     <string name="micr_code">Cod MICR</string>
     <string name="welcome_back">Bine ai revenit!</string>
     <string name="welcome">Bun venit!</string>
-    <string name="login_away_banner">Ați fost plecat — deblocați din nou.</string>
+    <string name="login_away_banner">Ai lipsit o vreme — deblochează din nou.</string>
     <string name="created_on">Creat la</string>
     <string name="updated_on">Actualizat la</string>
     <string name="add_a_new_record">Adaugă o înregistrare nouă</string>

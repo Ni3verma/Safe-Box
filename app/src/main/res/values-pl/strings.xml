@@ -150,7 +150,7 @@
     <string name="micr_code">Kod MICR</string>
     <string name="welcome_back">Witamy ponownie!</string>
     <string name="welcome">Witamy!</string>
-    <string name="login_away_banner">Byłeś nieobecny — odblokuj ponownie.</string>
+    <string name="login_away_banner">Po dłuższej nieobecności — odblokuj ponownie.</string>
     <string name="created_on">Utworzono</string>
     <string name="updated_on">Zaktualizowano</string>
     <string name="add_a_new_record">Dodaj nowy wpis</string>

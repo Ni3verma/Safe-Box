@@ -102,9 +102,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Assert `<=` for authenticators, `==` for the rest.
 - Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
   `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
-  `FOLDER_INACCESSIBLE` clears the saved folder. Envelope MR 4: both end in `SESSION_LOCKED`; the backup
-  password reaches a worker via `BackupPasswordRegistry` (process memory, keyed by work id) — **never**
-  WorkManager input data — and a lock cancels unique work. Both: [doc](../docs/architecture/persistence-and-crypto.md).
+  `FOLDER_INACCESSIBLE` clears the saved folder. `feature/envelope-encryption` (MR 4, 2026-10-23): both end
+  in `SESSION_LOCKED`; the backup password reaches a worker via `BackupPasswordRegistry` (process memory,
+  keyed by work id), **never** WorkManager input data; a lock cancels unique work. [doc](../docs/architecture/persistence-and-crypto.md)
 
 ## Testing
 

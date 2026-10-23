@@ -256,6 +256,8 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.login_away_banner)))
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             composeTestRule.waitForIdle()
+            // Holds whether the Activity finished (no hierarchy) or not; fails only if back
+            // revealed Home. Nothing but assertDoesNotExist can run after this back press.
             composeTestRule.onNodeWithText(SEEDED_RECORD_TITLE).assertDoesNotExist()
         }
     }

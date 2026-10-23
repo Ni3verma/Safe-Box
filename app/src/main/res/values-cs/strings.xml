@@ -150,7 +150,7 @@
     <string name="micr_code">Kód MICR</string>
     <string name="welcome_back">Vítejte zpět!</string>
     <string name="welcome">Vítejte!</string>
-    <string name="login_away_banner">Byli jste pryč — odemkněte znovu.</string>
+    <string name="login_away_banner">Po vaší nepřítomnosti — odemkněte znovu.</string>
     <string name="created_on">Vytvořeno</string>
     <string name="updated_on">Aktualizováno</string>
     <string name="add_a_new_record">Přidat nový záznam</string>

@@ -150,7 +150,7 @@
     <string name="micr_code">MICR कोड</string>
     <string name="welcome_back">वापसी पर स्वागत है!</string>
     <string name="welcome">स्वागत है!</string>
-    <string name="login_away_banner">आप कुछ समय दूर थे — फिर से अनलॉक करें।</string>
+    <string name="login_away_banner">ऐप से कुछ समय दूर रहने के बाद — फिर से अनलॉक करें।</string>
     <string name="created_on">बनाया गया</string>
     <string name="updated_on">अपडेट किया गया</string>
     <string name="add_a_new_record">नया रिकॉर्ड जोड़ें</string>

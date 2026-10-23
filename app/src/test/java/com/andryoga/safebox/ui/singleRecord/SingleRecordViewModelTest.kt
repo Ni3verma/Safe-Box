@@ -566,7 +566,9 @@ class SingleRecordViewModelTest {
         }.exceptionOrNull()
 
         // runTest reports an exception a coroutine left uncaught, which is what would crash the app.
-        assertThat(thrown).isNotNull()
+        val saveFailure = generateSequence(thrown) { it.cause }
+            .firstOrNull { it is IllegalStateException && it.message == "db closed" }
+        assertThat(saveFailure).isNotNull()
     }
 
     private fun openSession() {

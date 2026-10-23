@@ -124,7 +124,9 @@ proves it: the `e2e` package in one invocation on the managed device.
 ### Back on the Login root finishes the Activity
 
 A back press on Login (`onBackPressedDispatcher.onBackPressed()`) finishes `MainActivity`; every
-Compose assertion after it fails with `No compose hierarchies found`. Make it the last step.
+Compose assertion after it fails with `No compose hierarchies found` except `assertDoesNotExist`,
+which is exactly the back-stack check (a back press that revealed Home instead would make the
+node exist). Make the press the last step, followed only by that assertion.
 
 ### Racing a tap against a session lock needs a raw `dispatchTouchEvent`
 
