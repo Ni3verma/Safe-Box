@@ -11,12 +11,17 @@ import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 object Utils {
 
@@ -37,6 +42,23 @@ object Utils {
      */
     fun <T> Flow<List<T>>.emptyWhenSessionLocked(): Flow<List<T>> = catch { cause ->
         if (cause is SessionLockedException) emit(emptyList()) else throw cause
+    }
+
+    /**
+     * The launch counterpart of [emptyWhenSessionLocked], for the suspend calls a ViewModel makes
+     * against the vault: a `SessionLockedException` ends the operation silently, because the lock
+     * that caused it is already taking the user to Login, and anything else propagates as before.
+     * Every `viewModelScope.launch` that reads or writes records goes through this.
+     */
+    fun CoroutineScope.launchVaultOperation(
+        context: CoroutineContext = EmptyCoroutineContext,
+        block: suspend CoroutineScope.() -> Unit,
+    ): Job = launch(context) {
+        try {
+            block()
+        } catch (_: SessionLockedException) {
+            Timber.i("vault operation abandoned: the vault is locked")
+        }
     }
 
     /**

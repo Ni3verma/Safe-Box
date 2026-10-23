@@ -24,7 +24,13 @@ class BackupFailureReasonTest {
             BackupFailureReason.FOLDER_INACCESSIBLE,
             BackupFailureReason.WRITE_FAILED,
             BackupFailureReason.UNKNOWN,
+            BackupFailureReason.SESSION_LOCKED,
         ).inOrder()
+    }
+
+    @Test
+    fun sessionLocked_shouldKeepItsAppendedOrdinal() {
+        assertThat(BackupFailureReason.SESSION_LOCKED.ordinal).isEqualTo(4)
     }
 
     @Test

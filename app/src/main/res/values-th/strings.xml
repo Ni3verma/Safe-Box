@@ -143,8 +143,7 @@
     <string name="micr_code">รหัส MICR</string>
     <string name="welcome_back">ยินดีต้อนรับกลับมา !</string>
     <string name="welcome">ยินดีต้อนรับ !</string>
-    <string name="timeout_dialog_message">คุณไม่ได้ใช้งานนานเกินไป โปรดกด ตกลง เพื่อเข้าสู่ระบบอีกครั้ง</string>
-    <string name="timeout_dialog_positive_button_text">ตกลง</string>
+    <string name="login_away_banner">คุณไม่ได้ใช้งานสักพัก — โปรดปลดล็อกอีกครั้ง</string>
     <string name="created_on">สร้างเมื่อ</string>
     <string name="updated_on">อัปเดตเมื่อ</string>
     <string name="add_a_new_record">เพิ่มรายการใหม่</string>

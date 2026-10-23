@@ -150,8 +150,7 @@
     <string name="micr_code">Código MICR</string>
     <string name="welcome_back">Bem-vindo de volta!</string>
     <string name="welcome">Bem-vindo!</string>
-    <string name="timeout_dialog_message">Esteve ausente durante demasiado tempo. Toque em OK para iniciar sessão novamente na aplicação.</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Esteve ausente — desbloqueie novamente.</string>
     <string name="created_on">Criado em</string>
     <string name="updated_on">Atualizado em</string>
     <string name="add_a_new_record">Adicionar um novo registo</string>

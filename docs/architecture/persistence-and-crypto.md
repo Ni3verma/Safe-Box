@@ -10,7 +10,7 @@ sufficient coverage.
 
 | Layer | Holds |
 |---|---|
-| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (uid and the hint — encrypted with the same key as the records while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, later the wrapped keys); `quarantined_record` (rows the crypto migration could not read, see [Room](#room)) |
+| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (`uid` in plaintext; the hint encrypted with the records' key while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, later the wrapped keys); `quarantined_record` (rows the crypto migration could not read, see [Room](#room)) |
 | `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
@@ -31,13 +31,28 @@ locked vault fails closed with `SessionLockedException` on both directions:
 
 - the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` (`common/Utils.kt`) and emit an empty list
   (any other failure still propagates: a broken row is a bug to surface, not a state to hide);
-- suspend reads and writes throw it to the caller that owns the recovery; the workers fail through
-  their existing catch-alls until MR 4 gives them `SESSION_LOCKED`;
+- suspend reads and writes throw it to the caller that owns the recovery: a ViewModel launch that
+  touches records goes through `Utils.launchVaultOperation` (since envelope MR 4), which ends the
+  operation silently on `SessionLockedException` and propagates anything else — the four
+  `SingleRecordViewModel` sites today; the workers return `SESSION_LOCKED` (below);
 - the route to Login is central: `HomeScreen` collects `MainViewModel.isVaultUnlocked`
   (`SessionKeyHolder.isUnlocked`, a `StateFlow`) and leaves for the Login graph, composing
   nothing, whenever it is `false` — on entry for a back stack restored after process death or
   a navigation that skipped Login, and the moment the holder is cleared while Home is showing.
   Whoever clears the key gets the navigation for free; nothing else navigates on a lock.
+
+**Who clears the key (since envelope MR 4).** The away timeout: `ActiveSessionManager`, after the
+delay, records `SessionLockReason.AWAY_TIMEOUT` in `SessionLockReasonStore` (`ui/core`, process
+memory, read-and-cleared once by the next `LoginViewModel`, which drives the "You were away"
+banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (read just
+before the clear) — only when the holder was open, so a timeout on the login screen records and
+logs nothing. Every clear emits `lockEvents`, which
+`SessionLockWorkCanceller` (`worker/`, started by `MainApplication`) answers by cancelling the
+backup and restore work and dropping their passwords, and which `InAppUpdateViewModel` treats as
+"locked". There is no `logoutEvent` any more and no away dialog. The start destination is Room's
+decision too: `VaultRepository.hasVault()` (a `vault_meta.crypto_version` row, or a `user_details`
+row) routes to Login, nothing routes to Signup; `IS_SIGN_UP_REQUIRED` is written but never read for
+routing.
 
 The legacy `symmetricDataKey` alias is reached only through `KeystoreGateway`:
 `legacyVaultKey()` returns the handle or `null` and **never generates**; the single creation path
@@ -203,6 +218,7 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 | `FOLDER_INACCESSIBLE` | pre-check fails (`exists() && isDirectory && canWrite()`), or `SecurityException` / `FileNotFoundException` while writing | **yes** | "Backup Failed! Please set backup path" |
 | `WRITE_FAILED` | any other `IOException` while writing, incl. a null `createFile` / file descriptor | no | check free space |
 | `UNKNOWN` | everything else: DAO, crypto, missing input | no | report via Settings > Send feedback |
+| `SESSION_LOCKED` | the vault locked before or during the run (`SessionLockedException`), or no password is registered for this work id — the process that registered it is gone | no | **none**: the auto-backup after login stays silent, and the gate has already taken the manual dialog away with HomeGraph (it maps to the generic failure state) |
 
 - **Order:** empty check, then the start notification, then the folder pre-check, then encryption.
   An empty vault never touches the folder, and a dead folder costs no crypto work.
@@ -217,6 +233,12 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
   replaced by a different one. At the per-app cap (512 in current AOSP) the system silently prunes
   the oldest grants, so this is hygiene, not a fix for a visible failure.
 - The enum is append-only; `BackupFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins it.
+- **The backup password never enters WorkManager's database** (envelope MR 4). Whoever enqueues
+  puts it in `BackupPasswordRegistry` (`worker/`, process memory, keyed by work id) *before*
+  `enqueueUniqueWork`; the worker `take`s it as its first statement using its own `id`, zeroes it
+  in a `finally`, and the request's input data carries only the notification flag. A lock clears
+  the registry together with the work. The same applies to restore (`RESTORE_PARAM_FILE_URI` is
+  the only input).
 
 ## Restore semantics
 
@@ -245,6 +267,7 @@ Failure classification is `RestoreFailureReason`:
 | `UNKNOWN_ERROR` | anything else |
 | `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
 | `BACKUP_EMPTY` | every `decrypt*Data` result in `startRestore` is null (no record payload, so nothing is decrypted); checked after the version gate, before any DB work |
+| `SESSION_LOCKED` | no password registered for this work id (process death), or `SessionLockedException` — typically at the first re-encrypted insert inside `runInTransaction`, which rolls the per-table deletes back; the vault is intact. Logged at `Timber.i`, no `RESTORE_DATA_FAILURE` |
 
 The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
 can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins

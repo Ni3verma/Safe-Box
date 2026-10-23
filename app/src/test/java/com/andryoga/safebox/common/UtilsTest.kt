@@ -5,14 +5,18 @@ import com.andryoga.safebox.common.Utils.decryptNullableString
 import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.common.Utils.isZero
+import com.andryoga.safebox.common.Utils.launchVaultOperation
 import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.util.Date
@@ -166,5 +170,49 @@ class UtilsTest {
             assertThat(awaitItem()).containsExactly(1, 2)
             awaitComplete()
         }
+    }
+
+    @Test
+    fun launchVaultOperation_whenTheBlockThrowsSessionLocked_completesWithoutFailing() = runTest {
+        val job = launchVaultOperation { throw SessionLockedException() }
+        job.join()
+
+        assertThat(job.isCompleted).isTrue()
+        assertThat(job.isCancelled).isFalse()
+    }
+
+    @Test
+    fun launchVaultOperation_whenSessionLockedSurfacesFromAnotherDispatcher_completesWithoutFailing() =
+        runTest {
+            // The share path runs its block on the IO dispatcher; the catch must still see it.
+            val io = StandardTestDispatcher(testScheduler)
+
+            val job = launchVaultOperation(io) {
+                withContext(io) { throw SessionLockedException() }
+            }
+            job.join()
+
+            assertThat(job.isCancelled).isFalse()
+        }
+
+    @Test
+    fun launchVaultOperation_whenTheBlockThrowsAnythingElse_leavesItUncaught() {
+        val thrown = runCatching {
+            runTest {
+                launchVaultOperation { throw IllegalStateException("db closed") }.join()
+            }
+        }.exceptionOrNull()
+
+        // The helper contains the lock and nothing else: any other failure still fails the scope,
+        // which in the app is the crash that surfaces a real defect.
+        assertThat(generateSequence(thrown) { it.cause }.any { it is IllegalStateException }).isTrue()
+    }
+
+    @Test
+    fun launchVaultOperation_whenCancelled_staysCancelled() = runTest {
+        val job = launchVaultOperation { throw CancellationException("stopped") }
+        job.join()
+
+        assertThat(job.isCancelled).isTrue()
     }
 }

@@ -20,4 +20,7 @@ interface UserDetailsDao {
 
     @Query("update user_details set hint = :hint, updateDate = :updateDate")
     suspend fun updateHint(hint: String, updateDate: Date)
+
+    @Query("select count(*) from user_details")
+    suspend fun getUserCount(): Int
 }

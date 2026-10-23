@@ -38,8 +38,7 @@ upgrade test must be `qa → qa`.
 
 ## Versioning
 
-- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15`. Local builds therefore get `9999999`.
-- `versionName` comes from `GITHUB_REF_NAME`; local builds are `LOCAL-build`.
+- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15` (local builds: `9999999`); `versionName` is `GITHUB_REF_NAME` (local: `LOCAL-build`).
 - Tag convention is **`vMAJOR.MINOR.DBVERSION.FIX`** — the third component is the **Room schema
   version**. Enforced on tag push by `release.yml`'s `tag_db_version` job; see the release-and-ci skill.
 
@@ -49,9 +48,8 @@ upgrade test must be `qa → qa`.
   2026-10-21: `vault_meta` + `quarantined_record`, `user_details` loses `password`, the hash is
   parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
   `app/schemas/`, also wired in as androidTest assets.
-- `Migration.ALL` in `data/db/Migration.kt` is the single source of truth for the migration list;
-  `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Add a migration there and it is
-  wired into both production and the full-chain migration test.
+- `Migration.ALL` (`data/db/Migration.kt`) is the single migration list: `CacheModule` spreads it into
+  `.addMigrations(*Migration.ALL)` and the full-chain migration test reads it too. Add migrations there only.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
 - Field encryption: AES-GCM per field, `b64(ct)|b64(iv)` (`security/AesGcmFieldCipher.kt`). **The key
   differs by branch.** `master`: a `@Singleton` Keystore key, alias **`symmetricDataKey`**
@@ -60,7 +58,11 @@ upgrade test must be `qa → qa`.
   `keystore_key_created` with `db_exists = 1`). `feature/envelope-encryption` (MR 3, 2026-10-21): no
   ambient key; `SymmetricKeyUtilsImpl` reads `SessionKeyHolder` per call, a locked vault fails closed
   (`SessionLockedException`; list Flows emit empty), and the legacy alias is created **only** by the
-  signup bridge (`getOrCreateLegacyVaultKey()`), never on a read. [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
+  signup bridge (`getOrCreateLegacyVaultKey()`), never on a read. MR 4 (2026-10-23): `clearSessionKey()`
+  is the **only** exit from the vault — `HomeScreen` leaves for Login on `isVaultUnlocked = false`; the
+  timeout records `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**. Start destination
+  is Room-first (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is written, never read.
+  [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
 - `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
   `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
   export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until
@@ -75,10 +77,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 
 ## Backup & restore
 
-- Backup file: `yyyyMMddHHmmssSSS.bak`, written into a directory the user picks **once** via
-  `OpenDocumentTree`, created as mime `application/octet-stream`.
-- Restore: `OpenDocument` with mimes `application/octet-stream`, `application/x-trash`,
-  `application/x-binary`.
+- Backup file `yyyyMMddHHmmssSSS.bak` goes into a directory picked **once** via `OpenDocumentTree`
+  (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
+  `application/x-trash`, `application/x-binary`.
 - Payload is a Java-serialized **`LinkedHashMap<String, ByteArray?>`** (Kotlin's `mutableMapOf()`),
   PBE-encrypted with a **user-supplied backup password** independent of the vault master password.
   Keys `"0"`–`"8"`: version, salt, IV, creation date, then one per record type (`4` login,
@@ -89,9 +90,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   no TOTP records as a pre-TOTP v2 file.
 - Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
   still read. Decoding it as UTF-8 prints control characters and looks like corruption.
-- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java` — it also carries the
-  PBE parameters (`PBKDF2WithHmacSHA1`, 1324 iterations, `AES/CBC/PKCS5Padding`) in executable form,
-  so read them there rather than copying them around. Verified 2026-09-21.
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`; it carries the PBE parameters
+  (`PBKDF2WithHmacSHA1`, 1324 iterations, `AES/CBC/PKCS5Padding`) in executable form. Verified 2026-09-21.
 - `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — **do not widen it**, and
   do not translate it into an `ObjectInputFilter`; the two allowlists see different class sets. Both
   forms: [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md).
@@ -102,7 +102,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Assert `<=` for authenticators, `==` for the rest.
 - Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
   `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
-  `FOLDER_INACCESSIBLE` clears the saved folder. Both: [doc](../docs/architecture/persistence-and-crypto.md).
+  `FOLDER_INACCESSIBLE` clears the saved folder. Envelope MR 4: both end in `SESSION_LOCKED`; the backup
+  password reaches a worker via `BackupPasswordRegistry` (process memory, keyed by work id) — **never**
+  WorkManager input data — and a lock cancels unique work. Both: [doc](../docs/architecture/persistence-and-crypto.md).
 
 ## Testing
 
@@ -115,10 +117,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). The `aosp-atd` CI image has
   **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock screen** (so no
   auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
-- **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and
-  restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
-  `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See
-  [upgrade-testing.md](../docs/testing/upgrade-testing.md).
+- **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and restore
+  tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
+  `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. [Doc](../docs/testing/upgrade-testing.md)
 - In-app updates are `release`-only (`IN_APP_UPDATE_ENABLED`, 2026-09-28); every androidTest gets
   Play's `FakeAppUpdateManager` via `FakeAppUpdateModule`. [Design](../docs/architecture/in-app-updates.md)
 
@@ -141,9 +142,8 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 
 ## Known traps
 
-- An authenticator record whose Base32 seed is invalid **cannot be repaired in the UI** — the seed
-  field is `visibleIn = setOf(ViewMode.NEW)`, so it is not rendered in EDIT. Delete and re-add is
-  the only recourse.
+- An authenticator record whose Base32 seed is invalid **cannot be repaired in the UI** (the seed field
+  is `visibleIn = setOf(ViewMode.NEW)`, so EDIT never renders it); delete and re-add is the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every

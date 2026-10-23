@@ -5,396 +5,188 @@ description: Exact commands, environment setup and known traps for building Safe
 
 # Building and testing Safe-Box
 
-Use this whenever you need to compile, run tests, or work with a device or emulator.
-
 ## Environment
 
-The Gradle wrapper needs a JDK on `PATH`, and a bare shell usually has none on macOS:
-
-```bash
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew <task>
-```
-
-`adb` and the emulator need **network and device access, so they must run outside the sandbox**
-(`BypassSandbox: true`). **Gradle needs it too:** inside the sandbox the client cannot reach the
-daemon it just started and fails with `Could not connect to the Gradle daemon`, even with every
-dependency cached (seen on `:app:testDebugUnitTest`, 2026-09-27). Run Gradle unsandboxed.
-
-**`git commit` inherits both constraints**, because the pre-commit hook shells out to Gradle. Run it
-as `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" git commit ...` and
-outside the sandbox. Neither failure names the hook as the cause: without `JAVA_HOME` it reports
-`Unable to locate a Java Runtime`, and inside the sandbox it reports
-`Could not connect to the Gradle daemon` followed by twenty lines of daemon log. (Verified
-2026-09-21.)
-
-**`git push` cannot be done from the agent.** Plain `git push` prompts for a username (no credential
-helper is configured), and routing it through `gh auth git-credential` fails with `403 Permission
-denied`: the `gh` token is a fine-grained PAT without *Contents: write*. That same token **can**
-create issues (`gh issue create`). Commit locally and let the user push. (Verified 2026-09-27.)
-
-Android SDK tooling lives at `~/Library/Android/sdk/build-tools/<version>/` — `aapt2`, `apksigner`,
-`dexdump` are all there. `apksigner` is a Java program, so it needs the same `JAVA_HOME`.
+- Gradle needs a JDK that a bare macOS shell lacks:
+  `JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew <task>`.
+- Gradle, `adb`, the emulator **and `git commit`** (the pre-commit hook shells out to Gradle) run
+  **outside the sandbox**; inside it Gradle fails with `Could not connect to the Gradle daemon`.
+  `git commit` also needs the `JAVA_HOME` prefix, or it fails with `Unable to locate a Java Runtime`.
+- `git push` is not possible from the agent; commit locally (github-tooling skill).
+- SDK tools (`aapt2`, `apksigner`, `dexdump`): `~/Library/Android/sdk/build-tools/<version>/`.
 
 ## Commands
 
 | Goal | Command |
 |---|---|
 | All unit tests | `:app:testDebugUnitTest` |
-| Build the instrumentation APK | `:app:assembleDebugAndroidTest` |
+| Instrumentation APK only | `:app:assembleDebugAndroidTest` |
 | All instrumentation tests on a connected device | `:app:connectedDebugAndroidTest` |
-| One instrumentation class (**one only** — see Traps) | `:app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>` |
-| One instrumentation package, all its classes in one process (reproduces CI ordering; see Traps) | `:app:pixel8Api34DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=<package>` |
-| Managed device (no device needed, matches CI) | `:app:pixel8Api34DebugAndroidTest` |
+| One instrumentation class (**one only**, see Traps) | `:app:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=<fqcn>` |
+| One package in one process on the CI image (reproduces CI ordering) | `:app:pixel8Api34DebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.package=<package>` |
+| Managed device, everything (no device needed, matches CI) | `:app:pixel8Api34DebugAndroidTest` |
 | Coverage (opt-in, slow) | add `-Pcoverage` |
 | Lint as CI runs it | `:app:lintRelease` |
 | Minified QA APK | `:app:assembleQa` |
-| Build the upgrade/restore harness (assembles only — never runs it) | `:upgrade-test:assembleDebug` |
-| Run the restore test | `./scripts/run-restore-test.sh <qa.apk>` |
-| Run the upgrade test | `./scripts/run-upgrade-test.sh <N-1 qa.apk> <N-1 seed.bak> <qa.apk>` |
+| Upgrade/restore harness, build only | `:upgrade-test:assembleDebug` |
+| Restore / upgrade test | `./scripts/run-restore-test.sh <qa.apk>` / `./scripts/run-upgrade-test.sh <N-1 qa.apk> <N-1 seed.bak> <qa.apk>` |
 | Every script test (no device) | `rc=0; for t in scripts/tests/*.sh; do bash "$t" \|\| rc=1; done; [ "$rc" = 0 ]` |
 
-Full procedures for the harness, including fetching N-1: [upgrade-harness-operations.md](../../../docs/testing/upgrade-harness-operations.md).
-
-> [!TIP]
-> **Need a `.bak` file (a seed, a repro)? Build `debug`, not QA.** The backup format does not depend
-> on the build type — the export classes are `@Keep @Serializable` and `BACKUP_VERSION` is a
-> constant — and `assembleDebug` is much faster than the minified `assembleQa`. QA is only needed
-> when the *test* must run against R8 output. User instruction, 2026-09-26.
+Harness procedures, including fetching N-1: [upgrade-harness-operations.md](../../../docs/testing/upgrade-harness-operations.md).
+A `.bak` for a seed or a repro comes from a `debug` build: the format does not depend on the build
+type and `assembleQa` is much slower (user instruction, 2026-09-26).
 
 ### Documentation checks
 
-Two checks, in two places, neither needing Gradle:
-
 | Check | Where | Command |
 |---|---|---|
-| Broken relative links | CI (`lycheeverse/lychee-action`) | `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'` |
-| Stray agent markup, Windows link targets | CI | `git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
-| Same, limited to what you staged | pre-commit hook | `git grep --cached -nE "$DOCS_POLICY_PATTERN" -- "${files[@]}"` |
+| Broken relative links | CI (lychee) | `lychee --offline '.agents/**/*.md' 'docs/**/*.md' 'upgrade-test/**/*.md'` |
+| Stray agent markup, Windows link targets | CI, and the pre-commit hook on staged files | `git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'` |
 
-`DOCS_POLICY_PATTERN` is defined in `CICD/gitHooks/pre-commit.sh`, so it is **not set in your
-shell**. Load it from there before running either command by hand — sourcing the hook is not an
-option, it would run the whole thing:
+`DOCS_POLICY_PATTERN` lives in `CICD/gitHooks/pre-commit.sh`; extract it, never paste it into a
+markdown file (the file would then match itself):
 
 ```bash
 DOCS_POLICY_PATTERN=$(sed -n "s/^DOCS_POLICY_PATTERN='\(.*\)'$/\1/p" CICD/gitHooks/pre-commit.sh)
-git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'
+git grep -nE "$DOCS_POLICY_PATTERN" -- '*.md'   # exit 1 with no output = clean
 ```
 
-Exit 1 with no output means clean. Skipping the first line does not silently pass: `git grep -nE ""`
-aborts with `fatal: command line, '': empty (sub)expression`.
-
-The hook builds `files` from `git diff --cached --name-only --diff-filter=ACMR -z -- '*.md'`, so it
-only ever sees this commit's markdown — a violation someone else left in an untouched file is CI's
-problem, not yours.
-
-> [!WARNING]
-> Never paste the literal pattern into a markdown file. It contains the very strings it searches
-> for, so the file immediately matches itself and CI fails on the documentation describing the
-> check. Refer to it by name, or extract it as above.
-
-lychee is **not installed on this machine** and there is no `brew`, `cargo` or `npm` to install it
-with. Grab the prebuilt binary if you need to check links locally:
-
-```bash
-curl -sSL -o lychee.tar.gz \
-  https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-aarch64-apple-darwin.tar.gz
-tar xzf lychee.tar.gz && ./lychee-aarch64-apple-darwin/lychee --version
-```
-
-> [!NOTE]
-> lychee treats a Windows drive-qualified target such as `C:\docs\a.md` as a `c:` **URI scheme**
-> and reports it `EXCLUDED` with exit 0 — it is skipped, not checked. `--include '.*'` does not
-> override this and there is no `--fail-on-unsupported`. That single case is why the grep exists
-> alongside lychee rather than being deleted with the rest. (Verified 2026-09-21 against v0.24.2.)
+lychee is not installed and there is no `brew`/`cargo`/`npm`; fetch the binary if needed:
+`curl -sSL -o lychee.tar.gz https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.2/lychee-aarch64-apple-darwin.tar.gz && tar xzf lychee.tar.gz`.
+It skips Windows drive-qualified targets (`C:\…`) as an unknown URI scheme, which is why the grep exists.
 
 ## Git hooks
 
-`CICD/cicd.gradle` is orphaned (`331ee64`, verified 2026-09-21): nothing applies it, so there is no
-`detekt` task, and the `copyGitHooks` / `installGitHooks` tasks do not exist. Nothing installs the
-hook for you:
+Nothing installs the hook (`CICD/cicd.gradle` is orphaned, so there is no detekt task either):
 
 ```bash
 cp CICD/gitHooks/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh   # the copy drifts silently; check before trusting it
 ```
 
-The installed copy is a snapshot and drifts silently — it was roughly eight months stale when this
-was found. Check before trusting a green local commit:
-
-```bash
-diff .git/hooks/pre-commit CICD/gitHooks/pre-commit.sh
-```
-
-> [!WARNING]
-> The hook runs **`git add -u`** during detekt auto-correction. Running `git hook run pre-commit`
-> to try it out while you have unstaged work will therefore stage that work.
-
-Expect `Detekt task is not available in this build` on every commit. That is the orphaned
-`cicd.gradle` again, and the hook continues past it. When a staged file touches the backup format
-(export classes, `CommonConstants.kt`, the lock, seed, fixtures or `InspectBackup.java`), the hook
-also runs `scripts/tests/backup-format-test.sh`.
+Every commit prints `Detekt task is not available in this build` and continues. The hook runs
+`git add -u` (so `git hook run pre-commit` stages unstaged work) and runs
+`scripts/tests/backup-format-test.sh` when a backup-format file is staged.
 
 ## Traps
 
 ### `BUILD SUCCESSFUL` does not mean your tests ran
 
-`connectedDebugAndroidTest` exits 0 when the class filter matches **nothing**, and — observed
-2026-09-21 — when it matches only *some* of the classes you asked for. A comma-separated filter:
-
-```
--Pandroid.testInstrumentationRunnerArguments.class=a.b.MigrationTest,a.b.ClipboardActionsTest
-```
-
-ran `MigrationTest` only, reported `BUILD SUCCESSFUL in 15s`, and never mentioned that the second
-class was skipped. **Run one class per invocation**, and always confirm what executed:
+A class filter that matches nothing — or, with a comma-separated list, only some classes — still
+exits 0. **One class per invocation**, results directory deleted first, XML parsed afterwards;
+never trust the exit code:
 
 ```bash
 rm -rf app/build/outputs/androidTest-results
-# ... run the single-class connectedDebugAndroidTest invocation here ...
+# ... one connectedDebugAndroidTest invocation ...
 python3 -c "
-import glob, os, time, xml.etree.ElementTree as ET
-files = glob.glob('app/build/outputs/androidTest-results/**/*.xml', recursive=True)
-if not files:
-    raise SystemExit('NO RESULTS FILE - the run produced nothing, treat as failure')
-for f in files:
-    age = time.time() - os.path.getmtime(f)
-    r = ET.parse(f).getroot()
-    print(f, f'age={age:.0f}s', 'tests=', r.get('tests'), 'failures=', r.get('failures'))
-    for ts in r.iter('testsuite'):
-        print('  ', ts.get('name'), ts.get('tests'))
+import glob, xml.etree.ElementTree as ET
+fs = glob.glob('app/build/outputs/androidTest-results/**/*.xml', recursive=True) or exit('NO RESULTS FILE')
+for f in fs:
+    for ts in ET.parse(f).getroot().iter('testsuite'): print(ts.get('name'), ts.get('tests'), ts.get('failures'))
 "
 ```
 
-> [!WARNING]
-> **Delete the results directory before the run.** Gradle does not clear it, so the recursive glob
-> will otherwise match an XML from an earlier invocation and report it as though it were this run's
-> — the exact silent-success failure this check exists to catch. The age column is the backstop: a
-> file older than the run just performed is stale, not evidence.
-
-Note the results file is `TEST-<device name>.xml` and the device name contains **spaces and
-parentheses** (`TEST-Pixel_8_API_35(AVD) - 15.xml`), so quote the path. The root element is
-`<testsuites>` with one nested `<testsuite>` per class — parsing only the root tag finds nothing.
-
-Never report a test run as passing on the strength of the Gradle exit code alone.
-
-#### `am instrument` behaves the same way, and there is a guard for it
-
-Driving instrumentation directly over adb — which the upgrade harness does, because the upgrade
-happens between two on-device runs — has the identical hazard. A method name with a typo produces
-this and exits **0** (verified on a real device, 2026-09-22):
-
-```
-INSTRUMENTATION_RESULT: stream=
-
-Time: 0.001
-
-OK (0 tests)
-
-INSTRUMENTATION_CODE: -1
-```
-
-Note `INSTRUMENTATION_CODE: -1` means *success* here — it is an `Activity.RESULT_OK`, not an error.
-
-Do not hand-roll the check. Capture the output and hand it to the shared guard, which also rejects
-crashes, startup failures and unparseable output:
-
-```bash
-adb shell am instrument -w -r -e class '<fqcn>#<method>' <pkg>/<runner> 2>&1 | tee out.txt
-./scripts/lib/instrumentation-guard.sh out.txt 1   # exit 1 unless >= 1 test ran and passed
-```
-
-The guard cannot see a crash in the *app under test*, because that is a different process. That is
-what `scripts/lib/crash-sentinel.sh` is for. Both have device-free suites in `scripts/tests/`. Run
-every suite with the loop in [Commands](#commands): a bare `for` loop exits with the *last* suite's
-status, so a failing suite followed by a passing one reads as green.
+The file is `TEST-<device>.xml` with spaces and parentheses in the name; the root is `<testsuites>`.
+`am instrument` has the same hazard (`OK (0 tests)`, `INSTRUMENTATION_CODE: -1` = success); pipe
+its output through `./scripts/lib/instrumentation-guard.sh out.txt 1`, and use
+`scripts/lib/crash-sentinel.sh` for a crash of the app under test. Run the script suites with the
+loop in [Commands](#commands): a bare `for` exits with the last suite's status.
 
 ### The emulator runs out of disk and it looks like an app bug
 
-A full instrumentation run consumes roughly **1.2 GB of `/data`**. A default AVD partition survives
-about four runs, then installs start failing with:
-
-```
-IOException: Requested internal only, but not enough space
-```
-
-The instrumentation APK silently fails to install, the app never renders, and every test times out
-in `E2ETestUtils.unlockApp` after 25 s — which is indistinguishable from a real UI regression.
-
-**Always check disk before blaming the app:**
-
-```bash
-adb shell df -h /data
-```
-
-Recreate with headroom:
-
-```bash
-emulator -avd <name> -wipe-data -partition-size 8192
-```
-
-A fresh wipe sits at ~641 MB used.
+A full run uses ~1.2 GB of `/data`; after about four, installs fail with `Requested internal only,
+but not enough space`, the app never renders, and every test times out in `unlockApp` after 25 s.
+Check `adb shell df -h /data` before blaming the app; recreate with
+`emulator -avd <name> -wipe-data -partition-size 8192`.
 
 ### A manually granted camera permission fails the scanner tests
 
-The test install is `-r`, so a runtime grant the package already holds survives it. Camera granted
-by hand to `com.andryoga.safebox.debug` makes every `AddNewRecordFlowsE2ETest` case that passes
-through `openQrScannerAndDismissRationale` time out after 25 s: `QrScannerScreen` shows the
-rationale dialog only when `checkSelfPermission` is *not* granted, so the test sees a live preview
-instead. Observed 2026-10-04 — 5 failures in a 215-test run, all green on a clean install. Revoke
-before the first run after manual testing (Gradle uninstalls at the end, so later runs are clean):
-
-```bash
-adb shell pm revoke com.andryoga.safebox.debug android.permission.CAMERA
-```
+The `-r` install keeps a runtime grant, so `QrScannerScreen` skips its rationale dialog and the
+`AddNewRecordFlowsE2ETest` scanner cases time out. Before the first run after manual testing:
+`adb shell pm revoke com.andryoga.safebox.debug android.permission.CAMERA`.
 
 ### A component test that copies to the clipboard fails when run on its own
 
-`rememberCopyToClipboardAction` schedules the clipboard wipe through `WorkManager.getInstance`,
-and the manifest removes `WorkManagerInitializer`, so the first access resolves the configuration
-from `BaseTestApplication` — which needs a Hilt component that a plain `createComposeRule()` test
-never creates:
-
-```
-IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.
-```
-
-In a full run the class passes anyway because an earlier Hilt test already initialised
-WorkManager in the same process, which is exactly why the one-class invocation above exposes it
-(`TotpCodeFieldTest`, 2026-10-06). Any component test whose composable can copy must stand
-WorkManager up in `@Before` with `WorkManagerTestInitHelper.initializeTestWorkManager` and a
-`SynchronousExecutor`; `TotpBadgeTest` is the template.
+`rememberCopyToClipboardAction` reaches `WorkManager.getInstance`, which needs a Hilt component a
+plain `createComposeRule()` test never creates (`The component was not created`). It passes in a
+full run only because an earlier Hilt test initialised WorkManager. Such tests stand WorkManager up
+in `@Before` with `WorkManagerTestInitHelper` and a `SynchronousExecutor` (`TotpBadgeTest`).
 
 ### WorkManager keeps the first test's Hilt component
 
-The mirror image of the trap above, visible **only in a multi-class run**. WorkManager is
-initialised once per process and keeps the `WorkerFactory` it was given; `HiltAndroidRule` builds
-a fresh `SingletonComponent` per test. Every E2E password login enqueues an auto-backup
-(`AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT = true`), so WorkManager comes up during the first E2E
-test, and a `HiltWorkerFactory` captured at that moment builds every later test's workers from the
-*first* test's singletons. That was harmless while the field key was the process-wide Keystore
-alias and broke the moment it became in-memory session state (MR 3): `CrossFeatureUserJourneysE2ETest`
-waited 15 s for a `.bak` that a worker holding another test's `SessionKeyHolder` could never write
-(CI run 39760459430, 2026-10-22), while the same class alone was green on every device.
-`BaseTestApplication` now installs a `WorkerFactory` that resolves `HiltWorkerFactory` from the
-component current at each `createWorker`. The check that proves it: the `e2e` package in one
-invocation, `-Pandroid.testInstrumentationRunnerArguments.package=com.andryoga.safebox.e2e`.
-Any new in-memory singleton that a worker reads is covered by the same fix; nothing else is needed.
+WorkManager is initialised once per process and keeps its `WorkerFactory`; `HiltAndroidRule` builds
+a component per test, so a factory captured once gives every later worker the first test's
+singletons — harmless with the old process-wide Keystore key, fatal once the key became session
+state (MR 3). `BaseTestApplication` resolves `HiltWorkerFactory` per `createWorker`. The check that
+proves it: the `e2e` package in one invocation on the managed device.
+
+### Back on the Login root finishes the Activity
+
+A back press on Login (`onBackPressedDispatcher.onBackPressed()`) finishes `MainActivity`; every
+Compose assertion after it fails with `No compose hierarchies found`. Make it the last step.
+
+### Racing a tap against a session lock needs a raw `dispatchTouchEvent`
+
+`performClick()` synchronises with Compose first, so a lock issued just before it has already run
+the HomeGraph gate and the tap lands on Login. Read `fetchSemanticsNode().boundsInWindow.center`,
+then in one `scenario.onActivity { }` lock and `activity.dispatchTouchEvent(DOWN/UP)` at that point.
+Keep the control test that saves with the same raw tap and no lock; without it a missed tap passes
+silently (`HomeScreenNavigationAndTimeoutE2ETest`).
+
+### On GMD `pixel8Api34`, a `waitForIdle` phase can silently cost ~7 s
+
+In the `e2e` package run the app goes quiet for 5–8 s once or twice per test, in every class, while
+the test thread waits for idle (28–48 silences per 60-test run; each ends 2.0 s after Firebase
+Analytics logs `AppMeasurementService is shutting down`; cause not identified, 2026-10-23). A
+journey chaining several waits can therefore exceed a 25 s `waitUntil` on a cold run while passing
+alone. Before calling such a failure a regression, keep the per-test
+`logcat-<class>-<method>.txt` from `app/build/outputs/androidTest-results/managedDevice/debug/pixel8Api34/`
+(the next invocation overwrites it) and look for the silences.
 
 ### Two adb binaries kill each other's server mid-run
 
-On this machine `adb` on `PATH` is `/usr/local/bin/adb` (37.0.0), while Android Studio uses
-`$ANDROID_HOME/platform-tools/adb` (37.0.1). When the two versions differ, whichever client connects
-next kills the running server and starts its own. `am instrument` runs inside an adb shell, so the
-instrumentation dies with it (2026-09-24):
+`/usr/local/bin/adb` (on `PATH`) and `$ANDROID_HOME/platform-tools/adb` differ in version; whichever
+connects next kills the other's server, and an `am instrument` running inside it dies with it.
+Before a long run with Studio open, compare `adb version` with the SDK copy and, if they differ,
+prefix `PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`. The stale copy is root-owned.
 
-- `$TMPDIR/adb.<uid>.log` showed `adb server killed by remote request`, then a 37.0.1 server
-  starting;
-- the device logcat showed `adbd: host-14: connection terminated`, then
-  `UiAutomation service owner died`;
-- the harness's own output was cut off after `INSTRUMENTATION_STATUS_CODE: 1`.
+### Image and device limits
 
-The instrumentation guard caught it correctly. **Before any long local run while Studio is open,**
-compare `adb version` with `$ANDROID_HOME/platform-tools/adb version`. If they differ, put the SDK
-copy first on `PATH`:
+- Instrumentation runs on `debug` only; `qa` gives a silent `tests=0`
+  ([ADR-0001](../../../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md)).
+- The GMD `aosp-atd` image has no secure lock screen: `locksettings set-pin` is ignored and
+  auth-bound Keystore keys cannot be generated. Anything needing a PIN or a biometric uses a
+  `google_apis` image. Never probe for a shell binary from a test through
+  `UiAutomation.executeShellCommand`; a missing one killed the instrumentation
+  ([ADR-0011](../../../docs/decisions/0011-envelope-encryption-spike-results.md) S8).
+- Fingerprints on `google_apis` emulators: enrol in Settings, then
+  `adb -s emulator-NNNN emu finger touch <id>`; the console is reachable from the guest at
+  `10.0.2.2:<console port>` after `auth <token>` (`~/.emulator_console_auth_token`).
 
-```bash
-PATH="$HOME/Library/Android/sdk/platform-tools:$PATH" ./scripts/run-restore-test.sh ...
-```
+### Build and lint quirks
 
-The permanent fix is to delete the stale copy or re-link it to the SDK. It is root-owned, so the
-user has to do that.
-
-### `apksigner --print-certs` output differs by build-tools version
-
-36.x prints `Signer #1 certificate SHA-256 digest: …`; 37.0.0 prints
-`V2 Signer: certificate SHA-256 digest: …`, one line per signature scheme. A parser anchored on
-either prefix reads nothing on the other version, so match on `certificate SHA-256 digest:` only,
-as `assert_qa_apk` in `scripts/lib/harness.sh` does. Verified 2026-09-26 on `old-apk/SafeBox-qa.apk`
-(v2.0.4.0) with both versions.
-
-### Instrumentation tests only run on `debug`
-
-Do not attempt to run the existing suite against the `qa` (minified) build. It fails with a silent
-`tests=0` / `BUILD SUCCESSFUL`. The reason is structural and is written up in
-[ADR-0001](../../../docs/decisions/0001-instrumentation-tests-run-on-debug-only.md). Read that
-before re-investigating.
-
-### The CI image cannot have a lock screen
-
-The GMD `aosp-atd` image (`pixel8Api34`, also when booted by hand) has no
-`android.software.secure_lock_screen`: `locksettings set-pin` answers *"The device does not
-support lock screen - ignoring the command"*, `isDeviceSecure` stays false, and any Keystore key
-with `setUserAuthenticationRequired(true)` fails to generate. Tests that need a PIN or a
-biometric must use a `google_apis` image; `locksettings` exists on every supported level (29+).
-Do **not** probe for a shell binary from a test: running a missing one through
-`UiAutomation.executeShellCommand` killed the whole instrumentation (`Killed` in the `am
-instrument` stream, twice, on API 24). Verified 2026-10-21, [ADR-0011](../../../docs/decisions/0011-envelope-encryption-spike-results.md) S8.
-
-### Simulated fingerprints on emulators
-
-`adb -s emulator-NNNN emu finger touch <id>` enrols and authenticates on the `google_apis`
-images (verified API 24–30) (enrol first in Settings; the finger id is whatever you touched during
-enrolment). The console is also reachable from inside the guest at `10.0.2.2:<console port>`
-after `auth <token>` with the token from `~/.emulator_console_auth_token`, which lets an
-instrumentation test trigger its own touch; the app needs `INTERNET` for that socket.
-
-### KSP ordering for androidTest
-
-`app/build.gradle` has an explicit `dependsOn("kspDebugAndroidTestKotlin")` wiring for
-`compileDebugAndroidTest*` and `dexBuilderDebugAndroidTest*`. If you add a variant or rename a
-task, that block needs updating or Hilt's generated test sources go missing.
-
-### Lint's `NewApi` only understands `Build.VERSION.SDK_INT`
-
-Guarding an API-gated call with an injected `sdkInt` parameter (the #280 pattern for
-JVM-testing a version split) fails `lintRelease` with `Call requires API level 30 (current min is
-29)` — lint resolves the guard only when it reads `Build.VERSION.SDK_INT` (or a method annotated
-`@ChecksSdkIntAtLeast`). Either keep the real constant in the guard and test the surrounding
-logic through pure functions instead, or annotate the predicate. Hit on
-`setUserAuthenticationParameters` in `AndroidKeystoreGateway`, 2026-10-21.
-
-### `unitTests.returnDefaultValues = true`
-
-Unmocked Android framework calls return defaults instead of throwing in unit tests. Convenient, but
-it means a unit test can pass while doing nothing. Prefer asserting on observable state.
-
-### `FakeAppUpdateModule` applies to every instrumentation test
-
-Every androidTest runs over Play's `FakeAppUpdateManager`, which reports no update until a test
-sets one. Driving it has three traps (main thread, a persisted prompted-version pref, and no
-consent result ever arriving); see
-[in-app-updates.md](../../../docs/architecture/in-app-updates.md#driving-the-fake-in-instrumentation-tests).
-
-### A new module's `alias(libs.plugins.android.*)` needs a root `apply false`
-
-A new Android module can only `alias(libs.plugins.android.*)` if the **root `build.gradle` also
-declares it `apply false`**; otherwise Gradle fails with "the plugin is already on the classpath
-with an unknown version", because AGP arrives a second time via the root `buildscript` classpath.
-(Hit while adding `:upgrade-test`, 2026-09-22.)
+- `app/build.gradle` wires `compileDebugAndroidTest*` / `dexBuilderDebugAndroidTest*` to depend on
+  `kspDebugAndroidTestKotlin`; a new variant or renamed task needs that block updated or Hilt's
+  generated test sources go missing.
+- Lint's `NewApi` resolves a guard only when it reads `Build.VERSION.SDK_INT` (or a
+  `@ChecksSdkIntAtLeast` method); an injected `sdkInt` parameter fails `lintRelease`.
+- `unitTests.returnDefaultValues = true`: unmocked framework calls return defaults, so a unit test
+  can pass while doing nothing. Assert on observable state.
+- Every androidTest runs over Play's `FakeAppUpdateManager`
+  ([driving it](../../../docs/architecture/in-app-updates.md#driving-the-fake-in-instrumentation-tests)).
 
 ## Selector strategy for UI tests
 
-Everything is found by text or content description, which is why the existing suite is
-449 × `onNodeWithText` and 101 × `onNodeWithContentDescription`. `Modifier.testTag`s
-(`ui/core/TestTags.kt`) exist only where a label cannot identify the element: controls with no
-text of their own (settings switches and sliders), buttons whose label equals a heading (Backup,
-Restore) and structure read as a unit (the records list and rows). In `debug` and `qa` they are
-also visible to UI Automator as resource ids (`By.res(tag)`); in `release` they are not.
-
-Useful side effect: those same selectors work from **UI Automator**, so black-box tests can drive
-even the minified QA APK. Verified with:
-
-```bash
-adb shell uiautomator dump /sdcard/ui.xml && adb shell cat /sdcard/ui.xml
-```
+Find everything by text or content description. `Modifier.testTag`s (`ui/core/TestTags.kt`) exist
+only where a label cannot identify the element (switches and sliders, buttons whose label equals a
+heading, the records list and rows); in `debug`/`qa` they are also UI Automator resource ids, so
+black-box tests can drive even the minified QA APK (`adb shell uiautomator dump /sdcard/ui.xml`).
 
 ## Inspecting a built APK
 
 ```bash
 aapt2 dump badging app.apk | head -1                  # package, versionCode, versionName
-apksigner verify --print-certs app.apk                # signing certificate
-unzip -o -q app.apk classes.dex -d out && dexdump -d out/classes.dex > dump.txt
+apksigner verify --print-certs app.apk                # match on "certificate SHA-256 digest:" only; the prefix differs by build-tools version
+unzip -o -q app.apk classes.dex -d out && dexdump -d out/classes.dex > dump.txt   # always to a file, then grep
 ```
-
-> [!WARNING]
-> `dexdump -d` output is hundreds of thousands of lines. **Always redirect it to a file** and grep
-> the file. Never let it land in the conversation.

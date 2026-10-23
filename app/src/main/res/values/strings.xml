@@ -161,8 +161,7 @@
     <string name="micr_code">MICR Code</string>
     <string name="welcome_back">Welcome Back !</string>
     <string name="welcome">Welcome !</string>
-    <string name="timeout_dialog_message">You were away for too long. Please click OK to login to app again</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">You were away — unlock again.</string>
     <string name="created_on">Created on</string>
     <string name="updated_on">Updated on</string>
     <string name="add_a_new_record">Add a new record</string>

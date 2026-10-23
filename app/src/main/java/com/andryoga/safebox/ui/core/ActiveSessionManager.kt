@@ -10,23 +10,28 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.di.ApplicationScope
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import dagger.Lazy
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * This class manages the logout flow if user is away from the app for too long.
- * It also exposes a public API so that client's can pause/unpause the timer.
+ * Locks the vault when the user has been away from the app for too long.
+ *
+ * The timeout clears the session key; everything that follows — the HomeGraph gate leaving for
+ * Login, the backup and restore work being cancelled — reacts to the holder, not to this class.
+ * It also exposes a public API so that clients can pause/unpause the timer.
  * e.g. use-case: we don't want to auto logout the user when he is busy selecting a restore file.
  */
 @Singleton
@@ -35,13 +40,12 @@ class ActiveSessionManager @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
     private val workManager: Lazy<WorkManager>,
+    private val sessionKeyHolder: SessionKeyHolder,
+    private val sessionLockReasonStore: SessionLockReasonStore,
 ) : DefaultLifecycleObserver {
     private var timeout = SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT.seconds
     private var timerJob: Job? = null
     private var isPaused = false
-
-    private val _logoutEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val logoutEvent = _logoutEvent.asSharedFlow()
 
     init {
         applicationScope.launch {
@@ -67,9 +71,26 @@ class ActiveSessionManager @Inject constructor(
         timerJob?.cancel()
         timerJob = applicationScope.launch {
             delay(timeout)
-            Timber.i("emitting logout event")
-            _logoutEvent.emit(Unit)
-            logSessionTimeout()
+            // Once the delay has elapsed the lock is owed; a return to the foreground during the
+            // short worker-state read below must not rescue the session.
+            withContext(NonCancellable) { lockOpenSession() }
+        }
+    }
+
+    /**
+     * Clears an open session; a timeout that finds the vault already locked (the login screen was
+     * showing) changes nothing, records no reason and logs nothing.
+     */
+    private suspend fun lockOpenSession() {
+        if (!sessionKeyHolder.isUnlocked.value) return
+        // Read before the clear: the clear cancels the workers, so afterwards none is ever running.
+        val workerRunning = isBackupOrRestoreRunning()
+        Timber.i("away timeout: locking the vault")
+        // Recorded before the clear: the gate navigates on the clear and Login reads it on arrival.
+        sessionLockReasonStore.record(SessionLockReason.AWAY_TIMEOUT)
+        sessionKeyHolder.clearSessionKey()
+        analyticsHelper.logEvent(AnalyticsKey.SESSION_TIMEOUT) {
+            param(AnalyticsParam.WORKER_RUNNING, workerRunning)
         }
     }
 
@@ -87,29 +108,29 @@ class ActiveSessionManager @Inject constructor(
         if (paused) stopLogoutTimer()
     }
 
-    /** Runs after the logout event has been emitted, so nothing here can delay or break a logout. */
-    private suspend fun logSessionTimeout() {
-        val workerRunning = try {
-            isBackupOrRestoreRunning()
-        } catch (e: CancellationException) {
-            throw e
+    /**
+     * Telemetry only, run under [NonCancellable] by the timer: a failed or slow read counts as
+     * idle, so it can never hold the lock back.
+     */
+    private suspend fun isBackupOrRestoreRunning(): Boolean {
+        return try {
+            withTimeoutOrNull(WORKER_STATE_READ_TIMEOUT) {
+                val manager = workManager.get()
+                listOf(
+                    CommonConstants.WORKER_NAME_BACKUP_DATA,
+                    CommonConstants.WORKER_NAME_RESTORE_DATA,
+                ).any { uniqueWorkName ->
+                    manager.getWorkInfosForUniqueWorkFlow(uniqueWorkName).first()
+                        .any { it.state == WorkInfo.State.RUNNING }
+                }
+            } ?: false
         } catch (e: Exception) {
             Timber.w(e, "could not read worker state for session timeout")
             false
         }
-        analyticsHelper.logEvent(AnalyticsKey.SESSION_TIMEOUT) {
-            param(AnalyticsParam.WORKER_RUNNING, workerRunning)
-        }
     }
 
-    private suspend fun isBackupOrRestoreRunning(): Boolean {
-        val manager = workManager.get()
-        return listOf(
-            CommonConstants.WORKER_NAME_BACKUP_DATA,
-            CommonConstants.WORKER_NAME_RESTORE_DATA,
-        ).any { uniqueWorkName ->
-            manager.getWorkInfosForUniqueWorkFlow(uniqueWorkName).first()
-                .any { it.state == WorkInfo.State.RUNNING }
-        }
+    private companion object {
+        val WORKER_STATE_READ_TIMEOUT = 500.milliseconds
     }
 }

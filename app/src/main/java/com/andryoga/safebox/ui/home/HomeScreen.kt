@@ -34,8 +34,6 @@ import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
-import com.andryoga.safebox.ui.home.components.UserAwayDialog
-import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
 import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
@@ -103,12 +101,6 @@ fun HomeScreen(
             if (screenName != null) {
                 Timber.i("Navigated to: $screenName")
             }
-        }
-    }
-
-    LaunchedEffect(mainViewModel.logoutEvent) {
-        mainViewModel.logoutEvent.collect {
-            nestedNavController.navigate(UserAwayDialogRoute)
         }
     }
 
@@ -217,9 +209,6 @@ fun HomeScreen(
                             nestedNavController.popBackStack()
                         }
                     )
-                }
-                composable<UserAwayDialogRoute> {
-                    UserAwayDialog(onExitHomeNavGraph = onExitHomeNavGraph)
                 }
             }
         }

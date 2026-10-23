@@ -9,7 +9,7 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.di.ApplicationScope
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
-import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,16 +43,16 @@ private const val NO_PROMPTED_VERSION_CODE = 0
  *   edits and forces a new login, so while unlocked it waits for the snackbar's Restart action.
  *   While locked there is nothing to lose, so the downloaded update is installed immediately.
  *
- * The vault counts as locked as soon as the away timeout fires, even though the away dialog still
- * sits inside the Home graph. The only way past that dialog is a new login, so a pending install
- * can run in the background right away instead of waiting for the user to come back.
+ * The vault counts as locked the moment the session key is cleared, before the Home gate has
+ * navigated away: the only way on from there is a new login, so a pending install can run in the
+ * background right away instead of waiting for the user to come back.
  *
  * Analytics are bounded as described in `docs/architecture/in-app-updates.md`. The controller
  * re-emits on every check, so no event is logged per emission.
  *
  * @param appUpdateController Play boundary. It is a no-op outside `release`.
  * @param sessionGuard Per-process flags that outlive this ViewModel.
- * @param activeSessionManager Source of the away-timeout event that locks the vault.
+ * @param sessionKeyHolder Lock events close the vault here, whoever locks it.
  * @param preferenceProvider Stores the last prompted version code across processes.
  * @param analyticsHelper Analytics logger.
  * @param applicationScope Process-wide scope for the prompted-version write, which must outlive
@@ -63,7 +63,7 @@ private const val NO_PROMPTED_VERSION_CODE = 0
 class InAppUpdateViewModel @Inject constructor(
     private val appUpdateController: AppUpdateController,
     private val sessionGuard: InAppUpdateSessionGuard,
-    activeSessionManager: ActiveSessionManager,
+    sessionKeyHolder: SessionKeyHolder,
     private val preferenceProvider: PreferenceProvider,
     private val analyticsHelper: AnalyticsHelper,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
@@ -73,11 +73,10 @@ class InAppUpdateViewModel @Inject constructor(
     // made before the real destination is known.
     private val isInHomeGraph = MutableStateFlow<Boolean?>(null)
 
-    // Entering the Home graph unlocks. Leaving it, or the away timeout firing inside it, locks.
-    // StateFlow only emits on change, so a lock caused by the timeout holds until the next login.
+    // Entering the Home graph unlocks; leaving it or a cleared session key locks until the next login.
     private val isVaultUnlocked: Flow<Boolean> = merge(
         isInHomeGraph.filterNotNull(),
-        activeSessionManager.logoutEvent.map { false },
+        sessionKeyHolder.lockEvents.map { false },
     ).distinctUntilChanged()
 
     private val promptedVersionCode: Flow<Int> = flow {

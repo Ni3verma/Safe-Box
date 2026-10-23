@@ -150,8 +150,7 @@
     <string name="micr_code">Kode MICR</string>
     <string name="welcome_back">Selamat Datang Kembali!</string>
     <string name="welcome">Selamat Datang!</string>
-    <string name="timeout_dialog_message">Anda meninggalkan aplikasi terlalu lama. Ketuk OKE untuk masuk kembali ke aplikasi</string>
-    <string name="timeout_dialog_positive_button_text">OKE</string>
+    <string name="login_away_banner">Anda sempat pergi — buka kunci lagi.</string>
     <string name="created_on">Dibuat pada</string>
     <string name="updated_on">Diperbarui pada</string>
     <string name="add_a_new_record">Tambah entri baru</string>

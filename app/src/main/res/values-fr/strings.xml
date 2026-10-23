@@ -143,8 +143,7 @@
     <string name="micr_code">Code MICR</string>
     <string name="welcome_back">Bon retour !</string>
     <string name="welcome">Bienvenue !</string>
-    <string name="timeout_dialog_message">Vous vous êtes absenté trop longtemps. Appuyez sur OK pour vous reconnecter à l\'application</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Vous vous êtes absenté — déverrouillez à nouveau.</string>
     <string name="created_on">Créé le</string>
     <string name="updated_on">Mis à jour le</string>
     <string name="add_a_new_record">Ajouter un enregistrement</string>

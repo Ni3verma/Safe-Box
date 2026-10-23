@@ -143,8 +143,7 @@
     <string name="micr_code">Código MICR</string>
     <string name="welcome_back">¡Bienvenido de nuevo!</string>
     <string name="welcome">¡Bienvenido!</string>
-    <string name="timeout_dialog_message">Estuviste ausente demasiado tiempo. Pulsa Aceptar para volver a iniciar sesión</string>
-    <string name="timeout_dialog_positive_button_text">Aceptar</string>
+    <string name="login_away_banner">Estuviste ausente — vuelve a desbloquear.</string>
     <string name="created_on">Creado el</string>
     <string name="updated_on">Actualizado el</string>
     <string name="add_a_new_record">Añadir nuevo registro</string>

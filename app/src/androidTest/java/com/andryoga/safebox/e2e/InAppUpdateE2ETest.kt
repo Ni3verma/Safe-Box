@@ -173,7 +173,7 @@ class InAppUpdateE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             acceptAndDownloadUpdate()
 
-            // a zero timeout fires the logout event as soon as the app stops
+            // a zero timeout clears the session key as soon as the app stops
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
             waitUntilFake { isInstallSplashScreenVisible }
