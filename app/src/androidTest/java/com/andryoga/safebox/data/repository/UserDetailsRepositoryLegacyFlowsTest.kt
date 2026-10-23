@@ -23,6 +23,7 @@ import javax.inject.Inject
  * The legacy key comes from the fake gateway bound in instrumentation ([FakeKeystoreGateway]);
  * `setUp` creates it the way the signup bridge does, and the lost-key cases take it away again.
  */
+// TODO(D3): legacy vault (crypto_version = 1) only
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
 class UserDetailsRepositoryLegacyFlowsTest {

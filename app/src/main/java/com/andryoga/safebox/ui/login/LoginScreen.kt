@@ -217,6 +217,7 @@ private fun LoginCardContent(
     var showHint by remember { mutableStateOf(false) }
     val isPasswordFieldError = uiState.userAuthState == UserAuthState.INCORRECT_PASSWORD_ENTERED
     // TODO(MR5): the designed legacy-key-lost state replaces this generic line
+    // TODO(D3): legacy vault (crypto_version = 1) only
     val isLegacyKeyLost = uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST
 
     Column(

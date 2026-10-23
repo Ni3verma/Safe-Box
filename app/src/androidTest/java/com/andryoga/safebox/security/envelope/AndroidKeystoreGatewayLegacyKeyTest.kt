@@ -19,6 +19,7 @@ import java.security.GeneralSecurityException
  * debug app's own legacy key on a shared emulator — the same way `clearAllTables()` in every
  * suite already wipes the debug app's vault.
  */
+// TODO(D3): legacy vault (crypto_version = 1) only
 @RunWith(AndroidJUnit4::class)
 class AndroidKeystoreGatewayLegacyKeyTest {
 

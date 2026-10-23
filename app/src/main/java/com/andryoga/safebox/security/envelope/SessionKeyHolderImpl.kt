@@ -28,6 +28,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
     private sealed interface State {
         data object Locked : State
         class Unlocked(val dekBytes: ByteArray) : State
+        // TODO(D3): legacy vault (crypto_version = 1) only
         class LegacyUnlocked(val legacyKey: SecretKey) : State
     }
 
@@ -46,6 +47,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
     private val _isUnlocked = MutableStateFlow(false)
     override val isUnlocked: StateFlow<Boolean> = _isUnlocked.asStateFlow()
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     override val isLegacySession: Boolean
         get() = state is State.LegacyUnlocked
 
@@ -73,6 +75,7 @@ class SessionKeyHolderImpl @Inject constructor() : SessionKeyHolder {
         }
     }
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     override fun setLegacySession(legacyKey: SecretKey) {
         synchronized(lock) {
             zeroIfUnlocked(state)

@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData

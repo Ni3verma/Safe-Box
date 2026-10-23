@@ -16,5 +16,6 @@ enum class UserAuthState {
      * Login.
      */
     // TODO(MR5): becomes the designed legacy-key-lost state with its own copy; MR 6 adds Erase and start over
+    // TODO(D3): legacy vault (crypto_version = 1) only — so is the designed state MR 5 replaces it with
     LEGACY_KEY_LOST,
 }

@@ -54,6 +54,7 @@ class UserDetailsRepositoryImpl @Inject constructor(
     }
 
     // TODO(MR5): only the legacy login path calls this; a crypto_version = 2 vault unlocks through EnvelopeEncryptionManager (design §6.3)
+    // TODO(D3): legacy vault (crypto_version = 1) only — the legacy credential check
     override suspend fun checkPassword(password: String): Boolean {
         val legacyPasswordHash = vaultMetaDao.get(VaultMetaKey.LEGACY_PASSWORD_HASH)
         if (legacyPasswordHash == null) {

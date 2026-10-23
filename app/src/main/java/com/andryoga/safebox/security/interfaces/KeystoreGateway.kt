@@ -94,6 +94,7 @@ interface KeystoreGateway {
      * never regenerates it. Keystore errors propagate so a transient failure is retried instead
      * of being reported as a lost key.
      */
+    // TODO(D3): legacy vault (crypto_version = 1) only — the handle its fields and hint are under
     fun legacyVaultKey(): SecretKey?
 
     /**
@@ -110,5 +111,6 @@ interface KeystoreGateway {
     /**
      * Deletes the legacy `"symmetricDataKey"` entry if present.
      */
+    // TODO(D3): legacy vault (crypto_version = 1) only
     fun deleteLegacyVaultKey()
 }

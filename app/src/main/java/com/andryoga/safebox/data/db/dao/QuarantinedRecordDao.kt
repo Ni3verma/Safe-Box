@@ -10,6 +10,7 @@ import com.andryoga.safebox.data.db.entity.QuarantinedRecordEntity
  * ever removed all at once by the vault erase; there is deliberately no per-row delete or update.
  */
 // TODO(MR5): insert and count are used by LegacyVaultMigrator and VaultKeyMaintenance; deleteAll by the erase flow (MR 6)
+// TODO(D3): legacy vault (crypto_version = 1) only — filled by the legacy migration, read by nothing else
 @Dao
 interface QuarantinedRecordDao {
     @Insert

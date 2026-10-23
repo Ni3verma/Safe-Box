@@ -105,6 +105,7 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
         }
     }
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     override fun legacyVaultKey(): SecretKey? =
         keyStore().getKey(LEGACY_SYMMETRIC_KEY_ALIAS, null) as? SecretKey
 
@@ -129,6 +130,7 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
         return checkNotNull(legacyVaultKey()) { "legacy vault key missing right after generation" }
     }
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     override fun deleteLegacyVaultKey() {
         deleteKey(LEGACY_SYMMETRIC_KEY_ALIAS)
     }
@@ -182,6 +184,7 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
 
     companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
+        // TODO(D3): legacy vault (crypto_version = 1) only
         const val LEGACY_SYMMETRIC_KEY_ALIAS = "symmetricDataKey"
         const val RSA_KEY_SIZE_BITS = 2048
 

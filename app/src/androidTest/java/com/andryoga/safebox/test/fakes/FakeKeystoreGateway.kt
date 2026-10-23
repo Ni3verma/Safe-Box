@@ -28,6 +28,7 @@ import javax.inject.Singleton
 class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
     var isLockScreenConfigured: Boolean = true
     var isBiometricEnrolled: Boolean = true
+    // TODO(D3): legacy vault (crypto_version = 1) only — the in-memory stand-in for the legacy alias
     var legacyKey: SecretKey? = null
 
     private val keyPairs = mutableMapOf<String, KeyPair>()

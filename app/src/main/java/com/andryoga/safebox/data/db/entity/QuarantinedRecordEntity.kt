@@ -14,6 +14,7 @@ import java.util.Date
  * alias is kept as long as this table is non-empty. Never exported, never rendered; cleared only
  * by *Erase everything and start over*.
  */
+// TODO(D3): legacy vault (crypto_version = 1) only — the table itself outlives the code until a schema bump drops it
 @Entity(tableName = "quarantined_record")
 data class QuarantinedRecordEntity(
     @PrimaryKey(autoGenerate = true)

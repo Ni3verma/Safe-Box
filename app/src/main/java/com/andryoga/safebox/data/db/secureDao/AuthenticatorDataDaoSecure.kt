@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.data.db.dao.AuthenticatorDataDao
 import com.andryoga.safebox.data.db.docs.SearchAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData

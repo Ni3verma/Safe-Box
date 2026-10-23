@@ -29,7 +29,7 @@ DAOs above it deal in plaintext. The on-disk form of every encrypted column is
 once a vault is envelope-encrypted, or the legacy Keystore handle in a legacy session — and a
 locked vault fails closed with `SessionLockedException` on both directions:
 
-- the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` and emit an empty list
+- the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` (`common/Utils.kt`) and emit an empty list
   (any other failure still propagates: a broken row is a bug to surface, not a state to hide);
 - suspend reads and writes throw it to the caller that owns the recovery; the workers fail through
   their existing catch-alls until MR 4 gives them `SESSION_LOCKED`;

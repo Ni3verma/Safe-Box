@@ -177,6 +177,7 @@ class LoginViewModel @Inject constructor(
      * @return `false` when the legacy key is gone and the unlock must not continue.
      */
     // TODO(MR5): a crypto_version = 2 vault unwraps the DEK (setSessionKey) and only the migration fallback opens a legacy session
+    // TODO(D3): legacy vault (crypto_version = 1) only — so is the fallback-session path MR 5 keeps of it
     private fun openLegacySession(): Boolean {
         val legacyKey = keystoreGateway.legacyVaultKey()
         if (legacyKey == null) {
