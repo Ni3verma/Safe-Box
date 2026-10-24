@@ -54,12 +54,12 @@ the BigQuery link they were unrecoverable, which is how the `reason` of every
 before the build reaches a testing track**, and the PR that adds it says so. The form accepts a
 parameter name GA has not seen yet.
 
-Registered on 2026-10-20 (GA Admin → Custom definitions), all **event-scoped**, dimension name =
-parameter name:
+Registered on 2026-10-20 and 2026-10-24 (GA Admin → Custom definitions), all **event-scoped**,
+dimension name = parameter name:
 
 | Parameter | Logged by | Values |
 |---|---|---|
-| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show` | `BackupFailureReason` names; `TotpUriError` snake case |
+| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show`, `vault_migration_failure`, `vault_migration_failure_show`, `vault_migration_retry_click`, `vault_migration_continue_legacy_click`, `vault_wrap_create_failure` | `BackupFailureReason` names; `TotpUriError` snake case; `MigrationFailureReason` wire names; wrap failure reasons |
 | `message` | `backup_data_failure` | exception text; free-form |
 | `result` | `backup_select_dir_result`, `clipboard_auto_cleared` | `0`/`1`; `verified`/`unverified` |
 | `version` | `restore_data_failure`, `restore_data_wrong_password`, `restore_data_backup_too_new`, `restore_data_backup_empty`; from the readiness patch also `backup_data_success`, `restore_data_success` | backup format version, `0` if unreadable |
@@ -70,52 +70,44 @@ parameter name:
 | `source` | `add_record_type_pick`, `record_open`; from the readiness patch also the `device_security_required_dialog_*` / `device_sec_dialog_*` and `update_password_dialog_*` events | `empty_vault`, `add_record_sheet`, `records_list`, `record_detail`; `login`, `settings` |
 | `record_type` | `new_*`, `record_open`, `record_delete`, `record_share`, `record_form_abandon`, `field_copy`, `authenticator_copy_click` | lower-case `RecordType` names |
 | `had_input` | `record_form_abandon` | `0`/`1` |
-| `login_method` | `login_success` | `password`, `biometric`, `password_reset` |
+| `login_method` | `login_success` | `password`, `biometric`, `password_reset`, `legacy_session` |
 | `login_count` | `login_success` | 1-based ordinal per install; a dimension, **not a metric** ([why](activation-funnel.md#before-the-release-ships-register-the-parameters)) |
 | `field` | `field_copy` | lower-case field id, never a value |
-
-Custom **metric**, event-scoped, unit *Standard*:
-
-| Parameter | Logged by | Why a metric |
-|---|---|---|
-| `count` | `restore_invalid_authenticator_skipped` | the sum is meaningful: total authenticator records silently dropped across all restores |
-
-Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 14 + 1 used.
-
-### Pending: the envelope-readiness patch
-
-Added by the readiness telemetry patch ([envelope-readiness.md](envelope-readiness.md)); **register
-before its build reaches a testing track**, then move the rows into the tables above with the date.
-Quota after: 20 dimensions, 6 metrics.
-
-Event-scoped **dimensions**, dimension name = parameter name:
-
-| Parameter | Logged by | Values |
-|---|---|---|
 | `device_secure` | `login_success` | `0`/`1` |
 | `biometric_class` | `login_success` | `strong`, `weak_only`, `none_enrolled`, `no_hardware`, `unavailable` |
 | `strongbox` | `login_success` | `0`/`1` |
-| `exception` | `record_decrypt_failure` | exception simple class name, never a message |
+| `exception` | `record_decrypt_failure`, `vault_migration_failure`, `vault_wrap_create_failure` | exception simple class name (`none` when non-exception failure), never a message |
 | `worker_running` | `session_timeout` | `0`/`1` |
+| `trigger` | `vault_migration_start` | `login`, `forgot_password` |
+| `attempt` | `vault_migration_start`, `vault_migration_success`, `vault_migration_failure`, `vault_legacy_session_start` | 1-based migration attempt ordinal (`1..n`) |
+| `wraps` | `vault_migration_success` | `none`, `device`, `biometric`, `device_biometric` |
+| `stage` | `vault_migration_failure` | `load_legacy_key`, `derive_kdf`, `decrypt_row`, `decrypt_hint`, `encrypt_row`, `verify_row`, `verify_count`, `verify_wrap`, `commit_tx` |
+| `table` | `vault_migration_failure` | `login`, `bank_account`, `bank_card`, `secure_note`, `authenticator`, `none` |
+| `wrap` | `vault_wrap_created`, `vault_wrap_create_failure` | `biometric`, `device` |
 
-`db_exists` (on `keystore_key_created`) was in this block until 2026-10-21: the event's only firing
-site — the key provider's regenerate branch — was deleted by envelope MR 3, so the build on
-`feature/envelope-encryption` never logs it again. If the dimension was already registered,
-**archive it** once the read-back ADR has its number (week 4–8 after the patch), which frees the
-slot; BigQuery keeps the rows already collected. Quota after the archive: 19 dimensions.
+`db_exists` (on `keystore_key_created`, values `0`/`1`) is also registered for the `master`
+readiness patch (`v2.3.5.0-rc2`); the event's only firing site — the key provider's regenerate
+branch — was deleted on `feature/envelope-encryption` by envelope MR 3 (2026-10-21). **Archive
+`db_exists`** once the read-back ADR has its number (week 4–8 after the patch), which frees the
+slot; BigQuery keeps the rows already collected.
 
-Event-scoped **metrics**, unit *Standard*. These are per-user snapshots, so their sums mean nothing;
-they are metrics because exact values are near-unique (a dimension would be all `(other)`) and the
-GA average per event is at least readable. The real read is the P95 in BigQuery, where registration
-is irrelevant:
+Custom **metrics**, event-scoped, unit *Standard* (`record_count`, `db_size_kb`, `free_space_mb`,
+`duration_ms`, and `size_kb` are per-user or per-run snapshots whose exact values are near-unique,
+so a dimension would collapse to `(other)`; their real P95 read is in BigQuery):
 
-| Parameter | Logged by | Unit |
+| Parameter | Logged by | Unit / Meaning |
 |---|---|---|
-| `record_count` | `vault_stats` | records |
+| `count` | `restore_invalid_authenticator_skipped` | total authenticator records silently dropped across all restores |
+| `record_count` | `vault_stats`, `vault_migration_start`, `vault_migration_success`, `vault_migration_failure` | records |
 | `db_size_kb` | `vault_stats` | KiB; `-1` when the read failed |
 | `free_space_mb` | `vault_stats` | MiB; `-1` when the read failed |
-| `duration_ms` | `backup_data_success`, `restore_data_success` | milliseconds |
+| `duration_ms` | `backup_data_success`, `restore_data_success`, `vault_migration_success`, `vault_migration_failure` | milliseconds |
 | `size_kb` | `backup_data_success` | KiB; `-1` when the provider cannot report a length |
+| `retries` | `vault_migration_success`, `vault_migration_failure` | total transient Keystore decrypt retries |
+| `legacy_decrypt_ms` | `vault_migration_success` | cumulative milliseconds spent in legacy Keystore `Cipher.doFinal` |
+| `records_done` | `vault_migration_failure` | records re-encrypted before the failure (`0..n`) |
+
+Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 26 + 9 used (25 + 9 after archiving `db_exists`).
 
 **Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
 **`0` / `1`**, not `true` / `false`; `Int` params arrive as numbers; `version` is always logged as

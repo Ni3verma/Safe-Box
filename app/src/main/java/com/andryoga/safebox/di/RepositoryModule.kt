@@ -30,6 +30,7 @@ import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import dagger.Module
 import dagger.Provides
@@ -67,10 +68,17 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideVaultRepo(
+        safeBoxDatabase: SafeBoxDatabase,
         vaultMetaDao: VaultMetaDao,
         userDetailsDao: UserDetailsDao,
+        envelopeEncryptionManager: EnvelopeEncryptionManager,
     ): VaultRepository {
-        return VaultRepositoryImpl(vaultMetaDao, userDetailsDao)
+        return VaultRepositoryImpl(
+            safeBoxDatabase,
+            vaultMetaDao,
+            userDetailsDao,
+            envelopeEncryptionManager,
+        )
     }
 
     @ExperimentalCoroutinesApi

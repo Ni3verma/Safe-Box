@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Uppdateringen har laddats ner. Starta om Safe Box för att installera den.</string>
     <string name="in_app_update_restart">Starta om</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Säkerhetsuppgradering — ange ditt huvudlösenord en gång</string>
+    <string name="vault_migration_progress_title">Uppgraderar valvsäkerhet…</string>
+    <string name="vault_migration_progress_counter">%1$d av %2$d poster</string>
+    <string name="vault_migration_failure_keystore">Den säkra hårdvaran svarade inte. Inget ändrades.</string>
+    <string name="vault_migration_failure_verify">Uppgraderingskontrollen misslyckades. Inget ändrades.</string>
+    <string name="vault_migration_failure_storage">Kunde inte spara uppgraderingen. Inget ändrades.</string>
+    <string name="vault_migration_failure_unexpected">Uppgraderingen misslyckades. Inget ändrades.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ditt huvudlösenord ändrades inte.</string>
+    <string name="vault_migration_retry">Försök igen</string>
+    <string name="vault_migration_continue_legacy">Fortsätt tills vidare</string>
+    <string name="legacy_key_lost_title">Krypteringsnyckel inte tillgänglig</string>
+    <string name="legacy_key_lost_body">Hårdvarunyckeln som krypterade detta valv är inte längre tillgänglig på den här enheten, så befintliga poster kan inte öppnas. Om du har en säkerhetskopia kan du radera valvet och återställa från säkerhetskopian.</string>
+    <string name="home_upgrade_pending_banner">Säkerhetsuppgradering väntar — den körs vid nästa inloggning</string>
+    <string name="home_upgrade_pending_retry">Försök nu</string>
 </resources>

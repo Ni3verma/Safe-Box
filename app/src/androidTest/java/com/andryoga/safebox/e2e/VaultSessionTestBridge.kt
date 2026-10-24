@@ -1,7 +1,8 @@
 package com.andryoga.safebox.e2e
 
 import androidx.test.core.app.ApplicationProvider
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
+import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -13,21 +14,21 @@ import dagger.hilt.components.SingletonComponent
  *
  * The seeds write through the repositories before the Activity is launched, and every record field
  * is encrypted under the session key, so a seed without a session fails closed with
- * `SessionLockedException`. This does exactly what the production bridges do — the signup
- * bridge's `getOrCreateLegacyVaultKey()` and the login bridge's `setLegacySession` — against the
- * same singletons the Activity will use, so the login that follows reads the seeded rows back.
+ * `SessionLockedException`. [seedVaultAndOpenSession] creates a `crypto_version = 2` vault via
+ * [VaultRepository.createVault] and opens a DEK session on the minted key; [openSessionForSeeding]
+ * ensures a DEK session is open for suites that seed records without a user account or reopen the
+ * session after an explicit [lockVault].
  *
  * Resolved through an entry point rather than injected into every test class: eleven suites call
  * the seed helpers and none of them should have to know about the session to seed a vault.
  */
-// TODO(MR5): seeds create crypto_version = 2 vaults through VaultRepository and the session becomes a DEK (setSessionKey)
 object VaultSessionTestBridge {
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface VaultSessionEntryPoint {
         fun sessionKeyHolder(): SessionKeyHolder
-        fun keystoreGateway(): KeystoreGateway
+        fun vaultRepository(): VaultRepository
     }
 
     private val entryPoint: VaultSessionEntryPoint
@@ -36,14 +37,32 @@ object VaultSessionTestBridge {
             VaultSessionEntryPoint::class.java,
         )
 
+    @Volatile
+    private var lastSeededDek: ByteArray? = null
+
+    private val defaultSeedDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
+
     /**
-     * Creates the legacy vault key if the fake Keystore has none yet and opens a legacy session on
-     * it, so repository writes and reads work before and after the UI login.
+     * Creates a `crypto_version = 2` vault with [password] and [hint] via
+     * [VaultRepository.createVault] and opens the session on the returned DEK so subsequent
+     * record seeds and the UI password login share the same key.
      */
-    fun openLegacySessionForSeeding() {
-        val entryPoint = entryPoint
-        val legacyKey = entryPoint.keystoreGateway().getOrCreateLegacyVaultKey()
-        entryPoint.sessionKeyHolder().setLegacySession(legacyKey)
+    suspend fun seedVaultAndOpenSession(password: String, hint: String) {
+        val currentEntryPoint = entryPoint
+        val dek = currentEntryPoint.vaultRepository().createVault(password.toCharArray(), hint)
+        lastSeededDek = dek.copyOf()
+        currentEntryPoint.sessionKeyHolder().setSessionKey(dek)
+    }
+
+    /**
+     * Ensures a DEK session is open for seeding records when no session is currently active,
+     * reusing the DEK from the most recent [seedVaultAndOpenSession] if available.
+     */
+    fun openSessionForSeeding() {
+        val holder = entryPoint.sessionKeyHolder()
+        if (holder.isUnlocked.value) return
+        val dek = (lastSeededDek ?: defaultSeedDek).copyOf()
+        holder.setSessionKey(dek)
     }
 
     /**

@@ -9,7 +9,6 @@ import com.andryoga.safebox.data.db.dao.BackupMetadataDao
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.dao.BankCardDataDao
 import com.andryoga.safebox.data.db.dao.LoginDataDao
-import com.andryoga.safebox.data.db.dao.QuarantinedRecordDao
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
@@ -99,14 +98,5 @@ object CacheModule {
         safeBoxDatabase: SafeBoxDatabase,
     ): VaultMetaDao {
         return safeBoxDatabase.vaultMetaDao()
-    }
-
-    // TODO(MR5): injected into LegacyVaultMigrator and VaultKeyMaintenance
-    @Singleton
-    @Provides
-    fun provideQuarantinedRecordDao(
-        safeBoxDatabase: SafeBoxDatabase,
-    ): QuarantinedRecordDao {
-        return safeBoxDatabase.quarantinedRecordDao()
     }
 }

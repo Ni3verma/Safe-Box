@@ -268,12 +268,6 @@ class MigrationTest {
         assertThat(loginCursor.getString(loginCursor.getColumnIndexOrThrow("userId"))).isEqualTo("user@netflix.com")
         loginCursor.close()
 
-        db.execSQL(
-            "INSERT INTO quarantined_record (`source_table`, `source_key`, `row_json`, `reason`, `created_at`) " +
-                    "VALUES ('login_data', 7, '{}', 'aead_bad_tag', 3000)"
-        )
-        assertThat(rowCount(db, "quarantined_record")).isEqualTo(1)
-
         db.close()
     }
 
@@ -286,7 +280,6 @@ class MigrationTest {
 
         assertThat(rowCount(db, "vault_meta")).isEqualTo(0)
         assertThat(rowCount(db, "user_details")).isEqualTo(0)
-        assertThat(rowCount(db, "quarantined_record")).isEqualTo(0)
         assertThat(columnNames(db, "user_details"))
             .containsExactly("key", "uid", "hint", "creationDate", "updateDate")
 
@@ -363,7 +356,6 @@ class MigrationTest {
                     .isEqualTo(LEGACY_HASH)
                 assertThat(database.userDetailsDao().getUid()).isEqualTo("uid-legacy")
                 assertThat(database.userDetailsDao().getHint()).isEqualTo("ENC[hint]")
-                assertThat(database.quarantinedRecordDao().count()).isEqualTo(0)
 
                 database.userDetailsDao().updateHint("ENC[new hint]", Date(5000))
                 assertThat(database.userDetailsDao().getHint()).isEqualTo("ENC[new hint]")
@@ -514,12 +506,6 @@ class MigrationTest {
             db.query("SELECT * FROM backup_metadata WHERE uriString = 'content://legacy'")
         assertThat(backupCursor.moveToFirst()).isTrue()
         backupCursor.close()
-
-        db.execSQL(
-            "INSERT INTO quarantined_record (`source_table`, `source_key`, `row_json`, `reason`, `created_at`) " +
-                    "VALUES ('login_data', 1, '{}', 'aead_bad_tag', 5000)"
-        )
-        assertThat(rowCount(db, "quarantined_record")).isEqualTo(1)
 
         db.close()
     }

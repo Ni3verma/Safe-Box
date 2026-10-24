@@ -101,7 +101,7 @@ class BackupAndRestoreWorkersTest {
     fun setup() {
         hiltRule.inject()
         // Every seed and both workers encrypt under the session key.
-        VaultSessionTestBridge.openLegacySessionForSeeding()
+        VaultSessionTestBridge.openSessionForSeeding()
     }
 
     /**
@@ -412,7 +412,7 @@ class BackupAndRestoreWorkersTest {
             // Raw row count: the secure Flows read empty while locked, the table itself must not.
             assertThat(safeBoxDatabase.loginDataDao().getAllLoginData().first()).hasSize(rowsBefore)
             // The same key reopens the untouched rows.
-            VaultSessionTestBridge.openLegacySessionForSeeding()
+            VaultSessionTestBridge.openSessionForSeeding()
             assertThat(loginDataRepository.getAllLoginData().first().any { it.title == "Apple ID Login" })
                 .isTrue()
         }
