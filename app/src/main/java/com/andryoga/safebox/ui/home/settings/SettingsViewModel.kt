@@ -55,6 +55,10 @@ class SettingsViewModel @Inject constructor(
                 analyticsHelper.logEvent(AnalyticsKey.OPEN_GITHUB)
             }
 
+            SettingsScreenAction.OpenBuyMeACoffee -> {
+                analyticsHelper.logEvent(AnalyticsKey.OPEN_BUY_ME_A_COFFEE)
+            }
+
             SettingsScreenAction.ReviewApp -> {
                 analyticsHelper.logEvent(AnalyticsKey.OPEN_PLAY_STORE)
             }

@@ -69,6 +69,8 @@ class SettingsScreenComprehensiveTest {
             .performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.settings_github_title))
             .performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_support_title))
+            .performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -208,6 +210,24 @@ class SettingsScreenComprehensiveTest {
             .performScrollTo().performClick()
         composeTestRule.waitForIdle()
         assertThat(emittedAction).isEqualTo(SettingsScreenAction.OpenGithubProject)
+    }
+
+    @Test
+    fun clickBuyMeACoffeePreference_shouldEmitOpenBuyMeACoffeeAction() {
+        var emittedAction: SettingsScreenAction? = null
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SettingsScreen(
+                    uiState = Settings(),
+                    onScreenAction = { emittedAction = it },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.settings_support_title))
+            .performScrollTo().performClick()
+        composeTestRule.waitForIdle()
+        assertThat(emittedAction).isEqualTo(SettingsScreenAction.OpenBuyMeACoffee)
     }
 
     @Test

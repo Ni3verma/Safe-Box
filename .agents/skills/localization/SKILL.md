@@ -69,6 +69,7 @@ Strings marked `translatable="false"` (`app_name`, `notification_backup_channel_
 - **`type_display_note` / `notes`**: Secure text note / memo.
 - **`type_display_login` vs `login`**: `type_display_login` is a noun (a saved login credential record); `login` is an action button ("Log in" / "Sign in").
 - **`pin`**: Numeric security/card PIN (keep `PIN` or standard local equivalent such as `Code PIN`, `PIN-код`, `Mã PIN`).
+- **`settings_support_title`**: Lower-case "Buy me a coffee" idiom — translate naturally into the local idiom (e.g. `Offre-moi un café`, `Kauf mir einen Kaffee`), not as an untranslated brand name.
 - **`cd_*` keys**: TalkBack accessibility content descriptions. Use natural platform screen-reader phrasing.
 
 ### Compact UI Length Budgets

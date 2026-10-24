@@ -58,6 +58,7 @@ object CommonConstants {
     //        Other
     const val TIME_1_SECOND = 1000L
     const val APP_GITHUB_URL = "https://github.com/Ni3verma/Safe-Box"
+    const val APP_BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/ni3verma"
 
     // use below link to directly open playstore from the app. This should not be shared with
     // anyone as it doesn't come as hyperlink on text message. Use APP_PLAYSTORE_LINK_SHARE instead

@@ -134,6 +134,9 @@
     <string name="settings_github_title">Contribute on GitHub</string>
     <string name="settings_github_body">SafeBox is open source. View the code, report issues, or contribute to the project on GitHub.</string>
 
+    <string name="settings_support_title">Buy me a coffee</string>
+    <string name="settings_support_body">Safe Box is free, open source and ad-free. If it helps you, a small tip keeps development going. A tip never unlocks anything.</string>
+
     <!--    Other-->
     <string name="app_name" translatable="false">Safe Box</string>
     <string name="blank_validation_text">Enter something !</string>
@@ -170,6 +173,7 @@
     <string name="send_feedback_email">Send feedback Email</string>
     <string name="safe_box_feedback" translatable="false">Safe Box Feedback</string>
     <string name="no_email_app_found">No email app found</string>
+    <string name="no_app_to_open_link">No app found to open this link</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Forgot Password?</string>
