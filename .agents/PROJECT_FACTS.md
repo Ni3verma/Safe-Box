@@ -103,8 +103,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
   `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
   `FOLDER_INACCESSIBLE` clears the saved folder. `feature/envelope-encryption` (MR 4, 2026-10-23): both end
-  in `SESSION_LOCKED`; the backup password reaches a worker via `BackupPasswordRegistry` (process memory,
-  keyed by work id), **never** WorkManager input data; a lock cancels unique work. [doc](../docs/architecture/persistence-and-crypto.md)
+  in `SESSION_LOCKED`; the backup password reaches a worker via `BackupPasswordRegistry` (process memory, keyed
+  by work id), **never** WorkManager input data; a lock cancels nothing — the worker fails closed at its next use of the key. [doc](../docs/architecture/persistence-and-crypto.md)
 
 ## Testing
 

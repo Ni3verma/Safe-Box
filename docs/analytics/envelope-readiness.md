@@ -42,7 +42,7 @@ the non-fatal's stack trace, which names the DAO.
 | Does StrongBox matter? | `login_success` share with `strongbox = 1` | whether StrongBox timing needs its own spike |
 | How often is forgot-password used, and on which Android versions? | `forgot_password_click` and `update_password_dialog_allow_click` with `source = login`, split by GA's *OS version* dimension (`device.operating_system_version` in BigQuery) | recovery usage on API 29 near zero drops the time-bound credential path and everything that exists only for it |
 | Which backup formats circulate; how long do backup and restore take? | `version` and `duration_ms` on both success events, `size_kb` on `backup_data_success` only | sizes the PBKDF2 budget of the next format and sets the horizon for dropping the legacy reader |
-| Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means cancel-on-lock stays but its dialog state can be a toast |
+| Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means fail-closed alone keeps being enough (envelope MR 4 ships no cancel-on-lock and no dialog state) |
 
 ## Query recipes
 

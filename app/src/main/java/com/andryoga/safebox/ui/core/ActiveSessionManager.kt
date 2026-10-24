@@ -83,7 +83,8 @@ class ActiveSessionManager @Inject constructor(
      */
     private suspend fun lockOpenSession() {
         if (!sessionKeyHolder.isUnlocked.value) return
-        // Read before the clear: the clear cancels the workers, so afterwards none is ever running.
+        // Read before the clear: a running worker fails closed at its next use of the key, so a
+        // read after it would mostly say idle.
         val workerRunning = isBackupOrRestoreRunning()
         Timber.i("away timeout: locking the vault")
         // Recorded before the clear: the gate navigates on the clear and Login reads it on arrival.

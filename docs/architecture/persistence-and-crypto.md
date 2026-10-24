@@ -46,10 +46,10 @@ delay, records `SessionLockReason.AWAY_TIMEOUT` in `SessionLockReasonStore` (`ui
 memory, read-and-cleared once by the next `LoginViewModel`, which drives the "You were away"
 banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (read just
 before the clear) — only when the holder was open, so a timeout on the login screen records and
-logs nothing. Every clear emits `lockEvents`, which
-`SessionLockWorkCanceller` (`worker/`, started by `MainApplication`) answers by cancelling the
-backup and restore work and dropping their passwords, and which `InAppUpdateViewModel` treats as
-"locked". There is no `logoutEvent` any more and no away dialog. The start destination is Room's
+logs nothing. Every clear emits `lockEvents`, which `InAppUpdateViewModel` treats as "locked".
+A running backup or restore is **not** cancelled: it fails closed (`SESSION_LOCKED`) at its next
+use of the key — a restore's transaction rolls back — or finishes if it no longer needs one (a
+backup past its read phase). There is no `logoutEvent` any more and no away dialog. The start destination is Room's
 decision too: `VaultRepository.hasVault()` (a `vault_meta.crypto_version` row, or a `user_details`
 row) routes to Login, nothing routes to Signup; `IS_SIGN_UP_REQUIRED` is written but never read for
 routing.

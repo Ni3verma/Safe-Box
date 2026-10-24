@@ -29,7 +29,6 @@ import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
-import com.andryoga.safebox.worker.SessionLockWorkCanceller
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -77,9 +76,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
     lateinit var activeSessionManager: ActiveSessionManager
 
     @Inject
-    lateinit var sessionLockWorkCanceller: SessionLockWorkCanceller
-
-    @Inject
     lateinit var loginDataRepository: LoginDataRepository
 
     @Inject
@@ -99,8 +95,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
     @Before
     fun setup() {
         hiltRule.inject()
-        // What MainApplication does; the test Application has no component to do it from.
-        sessionLockWorkCanceller.start()
     }
 
     @After

@@ -41,17 +41,4 @@ class BackupPasswordRegistryTest {
 
         assertThat(registry.take(workId)).isEqualTo("second".toCharArray())
     }
-
-    @Test
-    fun clear_shouldDropEveryEntry() {
-        val backupId = UUID.randomUUID()
-        val restoreId = UUID.randomUUID()
-        registry.put(backupId, "Qwerty@@123")
-        registry.put(restoreId, "Other#45")
-
-        registry.clear()
-
-        assertThat(registry.take(backupId)).isNull()
-        assertThat(registry.take(restoreId)).isNull()
-    }
 }

@@ -7,7 +7,6 @@ import androidx.work.Configuration
 import com.andryoga.safebox.common.CrashlyticsKeys
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
-import com.andryoga.safebox.worker.SessionLockWorkCanceller
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import org.jetbrains.annotations.NotNull
@@ -23,9 +22,6 @@ class MainApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var activeSessionManager: ActiveSessionManager
-
-    @Inject
-    lateinit var sessionLockWorkCanceller: SessionLockWorkCanceller
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -52,7 +48,6 @@ class MainApplication : Application(), Configuration.Provider {
             Timber.plant(ReleaseTree())
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(activeSessionManager)
-        sessionLockWorkCanceller.start()
         CrashlyticsKeys(this).setDefaultKeys()
     }
 }
