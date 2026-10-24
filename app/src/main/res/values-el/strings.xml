@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">Συνεισφέρετε στο GitHub</string>
     <string name="settings_github_body">Το SafeBox είναι ανοιχτού κώδικα. Δείτε τον κώδικα, αναφέρετε ζητήματα ή συνεισφέρετε στο έργο στο GitHub.</string>
+    <string name="settings_support_title">Κέρασέ με έναν καφέ</string>
+    <string name="settings_support_body">Το Safe Box είναι δωρεάν, ανοιχτού κώδικα και χωρίς διαφημίσεις — κάθε δυνατότητα παραμένει δωρεάν για όλους. Αν σας βοηθά, ένα μικρό φιλοδώρημα στηρίζει τη συνέχιση της ανάπτυξης.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Εισαγάγετε κάτι!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Αναζήτηση …</string>
     <string name="send_feedback_email">Αποστολή email σχολίων</string>
     <string name="no_email_app_found">Δεν βρέθηκε εφαρμογή email</string>
+    <string name="no_app_to_open_link">Δεν βρέθηκε εφαρμογή για το άνοιγμα αυτού του συνδέσμου</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Ξεχάσατε τον κωδικό πρόσβασης;</string>

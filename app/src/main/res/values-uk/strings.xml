@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">Долучитися на GitHub</string>
     <string name="settings_github_body">SafeBox — проєкт із відкритим вихідним кодом. Переглядайте код, повідомляйте про проблеми або долучайтеся до розробки на GitHub.</string>
+    <string name="settings_support_title">Пригостити мене кавою</string>
+    <string name="settings_support_body">Safe Box безкоштовний, з відкритим кодом і без реклами — кожна функція залишається безкоштовною для всіх. Якщо застосунок вам допомагає, невеликі чайові підтримають подальшу розробку.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Поле не може бути порожнім!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Пошук…</string>
     <string name="send_feedback_email">Надіслати відгук ел. поштою</string>
     <string name="no_email_app_found">Поштовий додаток не знайдено</string>
+    <string name="no_app_to_open_link">Не знайдено застосунку для відкриття цього посилання</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Забули пароль?</string>

@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">Bidra på GitHub</string>
     <string name="settings_github_body">SafeBox har öppen källkod. Visa koden, rapportera problem eller bidra till projektet på GitHub.</string>
+    <string name="settings_support_title">Bjud mig på en kaffe</string>
+    <string name="settings_support_body">Safe Box är gratis, öppen källkod och reklamfri — alla funktioner förblir gratis för alla. Om appen hjälper dig håller ett litet bidrag utvecklingen igång.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Ange något!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Sök…</string>
     <string name="send_feedback_email">Skicka e-post med feedback</string>
     <string name="no_email_app_found">Ingen e-postapp hittades</string>
+    <string name="no_app_to_open_link">Ingen app hittades för att öppna den här länken</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Glömt lösenordet?</string>

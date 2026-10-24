@@ -117,6 +117,8 @@
     <string name="settings_review_body">如果您喜欢这款应用，不妨花一点时间留下评价，帮助更多人发现我们！</string>
     <string name="settings_github_title">在 GitHub 上贡献</string>
     <string name="settings_github_body">SafeBox 是开源项目。您可以在 GitHub 上查看源代码、报告问题或参与贡献。</string>
+    <string name="settings_support_title">请我喝杯咖啡</string>
+    <string name="settings_support_body">Safe Box 免费、开源且无广告——所有功能对所有人永久免费。如果它对您有帮助，小额打赏将助力持续开发。</string>
 
     <!-- Other -->
     <string name="blank_validation_text">请输入内容！</string>
@@ -151,6 +153,7 @@
     <string name="search_bar_placeholder">搜索…</string>
     <string name="send_feedback_email">发送反馈邮件</string>
     <string name="no_email_app_found">未找到邮件应用</string>
+    <string name="no_app_to_open_link">未找到可打开此链接的应用</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">忘记密码？</string>

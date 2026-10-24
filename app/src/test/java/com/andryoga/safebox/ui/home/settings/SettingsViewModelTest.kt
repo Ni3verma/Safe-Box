@@ -127,6 +127,15 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `onScreenAction OpenBuyMeACoffee logs event`() = runTest {
+        val action = SettingsScreenAction.OpenBuyMeACoffee
+
+        viewModel.onScreenAction(action)
+
+        verify { analyticsHelper.logEvent(AnalyticsKey.OPEN_BUY_ME_A_COFFEE) }
+    }
+
+    @Test
     fun `onScreenAction ReviewApp logs event`() = runTest {
         val action = SettingsScreenAction.ReviewApp
 

@@ -117,6 +117,8 @@
     <string name="settings_review_body">หากคุณชื่นชอบการใช้งานแอปนี้ โปรดสละเวลาสักครู่เพื่อเขียนรีวิว ซึ่งจะช่วยให้ผู้อื่นค้นพบแอปของเราได้!</string>
     <string name="settings_github_title">ร่วมพัฒนาบน GitHub</string>
     <string name="settings_github_body">SafeBox เป็นโอเพนซอร์ส คุณสามารถดูโค้ด รายงานปัญหา หรือร่วมพัฒนาโปรเจกต์ได้บน GitHub</string>
+    <string name="settings_support_title">เลี้ยงกาแฟฉันสักแก้ว</string>
+    <string name="settings_support_body">Safe Box ฟรี โอเพนซอร์ส และไม่มีโฆษณา — ทุกฟีเจอร์ใช้งานได้ฟรีสำหรับทุกคน หากแอปนี้เป็นประโยชน์กับคุณ ทิปเล็กๆ น้อยๆ จะช่วยให้การพัฒนาเดินหน้าต่อไปได้</string>
 
     <!-- Other -->
     <string name="blank_validation_text">โปรดป้อนข้อมูล !</string>
@@ -151,6 +153,7 @@
     <string name="search_bar_placeholder">ค้นหา …</string>
     <string name="send_feedback_email">ส่งอีเมลแสดงความคิดเห็น</string>
     <string name="no_email_app_found">ไม่พบแอปอีเมล</string>
+    <string name="no_app_to_open_link">ไม่พบแอปสำหรับเปิดลิงก์นี้</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">ลืมรหัสผ่าน?</string>

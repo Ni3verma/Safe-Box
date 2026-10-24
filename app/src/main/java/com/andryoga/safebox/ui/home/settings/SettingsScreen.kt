@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
+import com.andryoga.safebox.common.CommonConstants.APP_BUY_ME_A_COFFEE_URL
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
 import com.andryoga.safebox.data.dataStore.Settings
@@ -46,6 +48,7 @@ import com.andryoga.safebox.ui.home.settings.components.SwitchPreference
 import com.andryoga.safebox.ui.home.settings.components.TextPreference
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
+import com.andryoga.safebox.ui.utils.openExternalUrl
 import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,6 +70,7 @@ fun SettingsScreenRoot() {
                 Timber.i("on screen action: ${it::class.simpleName}")
                 when (it) {
                     SettingsScreenAction.OpenGithubProject -> openGitHub(context)
+                    SettingsScreenAction.OpenBuyMeACoffee -> openBuyMeACoffee(context)
                     SettingsScreenAction.ReviewApp -> launchReview(context)
                     SettingsScreenAction.SendFeedback -> sendFeedback(context)
                     else -> Unit
@@ -190,6 +194,13 @@ fun SettingsScreen(
             body = stringResource(R.string.settings_github_body),
             onTap = { onScreenAction(SettingsScreenAction.OpenGithubProject) },
         )
+
+        TextPreference(
+            title = stringResource(R.string.settings_support_title),
+            body = stringResource(R.string.settings_support_body),
+            onTap = { onScreenAction(SettingsScreenAction.OpenBuyMeACoffee) },
+            icon = Icons.Outlined.Coffee,
+        )
     }
 
     if (showAuthForPasswordChange) {
@@ -288,16 +299,24 @@ fun sendFeedback(context: Context) {
 }
 
 fun launchReview(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW, APP_PLAYSTORE_LINK.toUri())
-    if (intent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(intent)
-    }
+    openExternalLinkOrToast(context, APP_PLAYSTORE_LINK)
 }
 
 fun openGitHub(context: Context) {
-    val intent = Intent(Intent.ACTION_VIEW, APP_GITHUB_URL.toUri())
-    if (intent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(intent)
+    openExternalLinkOrToast(context, APP_GITHUB_URL)
+}
+
+fun openBuyMeACoffee(context: Context) {
+    openExternalLinkOrToast(context, APP_BUY_ME_A_COFFEE_URL)
+}
+
+private fun openExternalLinkOrToast(context: Context, url: String) {
+    if (!context.openExternalUrl(url)) {
+        Toast.makeText(
+            context,
+            context.getString(R.string.no_app_to_open_link),
+            Toast.LENGTH_SHORT,
+        ).show()
     }
 }
 
