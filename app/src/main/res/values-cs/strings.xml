@@ -125,7 +125,7 @@
     <string name="settings_github_title">Přispět na GitHub</string>
     <string name="settings_github_body">SafeBox je open source. Prohlédněte si kód, nahlaste chyby nebo se zapojte do vývoje na platformě GitHub.</string>
     <string name="settings_support_title">Pozvěte mě na kávu</string>
-    <string name="settings_support_body">Safe Box je zdarma, s otevřeným zdrojovým kódem a bez reklam. Pokud vám pomáhá, malé spropitné podpoří další vývoj. Spropitné nikdy nic neodemyká.</string>
+    <string name="settings_support_body">Safe Box je zdarma, open source a bez reklam — všechny funkce zůstávají bezplatné pro každého. Pokud vám aplikace pomáhá, malý příspěvek podpoří další vývoj.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Zadejte hodnotu!</string>

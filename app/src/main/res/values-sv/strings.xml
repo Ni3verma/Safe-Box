@@ -125,7 +125,7 @@
     <string name="settings_github_title">Bidra på GitHub</string>
     <string name="settings_github_body">SafeBox har öppen källkod. Visa koden, rapportera problem eller bidra till projektet på GitHub.</string>
     <string name="settings_support_title">Bjud mig på en kaffe</string>
-    <string name="settings_support_body">Safe Box är gratis, har öppen källkod och är reklamfri. Om den hjälper dig håller ett litet bidrag utvecklingen igång. Ett bidrag låser aldrig upp något.</string>
+    <string name="settings_support_body">Safe Box är gratis, öppen källkod och reklamfri — alla funktioner förblir gratis för alla. Om appen hjälper dig håller ett litet bidrag utvecklingen igång.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Ange något!</string>

@@ -125,7 +125,7 @@
     <string name="settings_github_title">Berkontribusi di GitHub</string>
     <string name="settings_github_body">SafeBox bersifat sumber terbuka. Lihat kode, laporkan masalah, atau berkontribusi pada proyek di GitHub.</string>
     <string name="settings_support_title">Traktir saya kopi</string>
-    <string name="settings_support_body">Safe Box gratis, sumber terbuka, dan bebas iklan. Jika aplikasi ini membantu Anda, tip kecil akan mendukung kelanjutan pengembangannya. Tip tidak pernah membuka fitur apa pun.</string>
+    <string name="settings_support_body">Safe Box gratis, sumber terbuka, dan bebas iklan — setiap fitur tetap gratis untuk semua orang. Jika aplikasi ini membantu Anda, sedikit tip akan mendukung kelanjutan pengembangannya.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Masukkan sesuatu!</string>

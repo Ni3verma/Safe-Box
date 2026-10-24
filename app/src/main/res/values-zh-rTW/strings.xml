@@ -118,7 +118,7 @@
     <string name="settings_github_title">在 GitHub 上參與貢獻</string>
     <string name="settings_github_body">SafeBox 為開放原始碼專案。歡迎在 GitHub 上檢視原始碼、回報問題或參與專案貢獻。</string>
     <string name="settings_support_title">請我喝杯咖啡</string>
-    <string name="settings_support_body">Safe Box 免費、開源且無廣告。如果它對您有幫助，小額贊助能支持後續開發。贊助不會解鎖任何功能。</string>
+    <string name="settings_support_body">Safe Box 免費、開源且無廣告——所有功能對所有人永久免費。如果它對您有幫助，小額贊助將支持持續開發。</string>
 
     <!-- Other -->
     <string name="blank_validation_text">請輸入內容！</string>

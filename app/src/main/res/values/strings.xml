@@ -135,7 +135,7 @@
     <string name="settings_github_body">SafeBox is open source. View the code, report issues, or contribute to the project on GitHub.</string>
 
     <string name="settings_support_title">Buy me a coffee</string>
-    <string name="settings_support_body">Safe Box is free, open source and ad-free. If it helps you, a small tip keeps development going. A tip never unlocks anything.</string>
+    <string name="settings_support_body">Safe Box is free, open source, and ad-free — every feature stays free for everyone. If it helps you, a small tip keeps development going.</string>
 
     <!--    Other-->
     <string name="app_name" translatable="false">Safe Box</string>

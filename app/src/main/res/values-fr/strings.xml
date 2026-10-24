@@ -118,7 +118,7 @@
     <string name="settings_github_title">Contribuer sur GitHub</string>
     <string name="settings_github_body">SafeBox est open source. Consultez le code, signalez des problèmes ou contribuez au projet sur GitHub.</string>
     <string name="settings_support_title">Offrez-moi un café</string>
-    <string name="settings_support_body">Safe Box est gratuite, open source et sans publicité. Si elle vous est utile, un petit pourboire soutient son développement. Un pourboire ne débloque jamais rien.</string>
+    <string name="settings_support_body">Safe Box est gratuit, open source et sans publicité — chaque fonctionnalité reste gratuite pour tous. Si l\'application vous est utile, un petit pourboire soutient son développement.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Veuillez saisir quelque chose !</string>

@@ -125,7 +125,7 @@
     <string name="settings_github_title">GitHub-এ অবদান রাখুন</string>
     <string name="settings_github_body">SafeBox একটি ওপেন সোর্স প্রজেক্ট। কোড দেখুন, সমস্যার কথা জানান বা GitHub-এ প্রজেক্টে অবদান রাখুন।</string>
     <string name="settings_support_title">আমাকে এক কাপ কফি খাওয়ান</string>
-    <string name="settings_support_body">Safe Box বিনামূল্যে, ওপেন সোর্স এবং বিজ্ঞাপন-মুক্ত। এটি আপনার কাজে লাগলে একটি ছোট টিপ এর উন্নয়ন চালিয়ে যেতে সাহায্য করবে। টিপ কখনোই কিছু আনলক করে না।</string>
+    <string name="settings_support_body">Safe Box সম্পূর্ণ বিনামূল্যে, ওপেন সোর্স এবং বিজ্ঞাপন-মুক্ত — প্রতিটি ফিচার সবার জন্য বিনামূল্যেই থাকবে। এটি আপনার কাজে লাগলে, ছোট একটি অনুদান এর উন্নয়ন চালিয়ে যেতে সাহায্য করবে।</string>
 
     <!--    Other-->
     <string name="blank_validation_text">কিছু লিখুন!</string>

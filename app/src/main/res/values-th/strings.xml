@@ -118,7 +118,7 @@
     <string name="settings_github_title">ร่วมพัฒนาบน GitHub</string>
     <string name="settings_github_body">SafeBox เป็นโอเพนซอร์ส คุณสามารถดูโค้ด รายงานปัญหา หรือร่วมพัฒนาโปรเจกต์ได้บน GitHub</string>
     <string name="settings_support_title">เลี้ยงกาแฟฉันสักแก้ว</string>
-    <string name="settings_support_body">Safe Box ฟรี โอเพนซอร์ส และไม่มีโฆษณา หากแอปนี้ช่วยคุณได้ ทิปเล็กๆ น้อยๆ จะช่วยให้การพัฒนาเดินหน้าต่อไปได้ ทิปจะไม่ปลดล็อกสิ่งใดทั้งสิ้น</string>
+    <string name="settings_support_body">Safe Box ฟรี โอเพนซอร์ส และไม่มีโฆษณา — ทุกฟีเจอร์ใช้งานได้ฟรีสำหรับทุกคน หากแอปนี้เป็นประโยชน์กับคุณ ทิปเล็กๆ น้อยๆ จะช่วยให้การพัฒนาเดินหน้าต่อไปได้</string>
 
     <!-- Other -->
     <string name="blank_validation_text">โปรดป้อนข้อมูล !</string>

@@ -38,9 +38,18 @@ Three properties of the app also bear on the design:
    identical to the GitHub and Play rows.
 2. **A tip has zero effect inside the app — permanently.** The app never learns whether a tip
    occurred and never grants a badge, theme, thank-you screen, suppressed prompt, or any other
-   state. The row copy states *"A tip never unlocks anything."* The Buy Me a Coffee page keeps
-   Extras, Memberships, Wishlist and Commissions disabled (`membership_enabled = false`,
-   verified against the live page JSON on 2026-10-24).
+   state. The row copy states *"Safe Box is free, open source, and ad-free — every feature stays
+   free for everyone. If it helps you, a small tip keeps development going."* The Buy Me a Coffee
+   page keeps Extras, Memberships, Wishlist and Commissions disabled (verified 2026-10-24 against
+   the Inertia `data-page` payload on `https://buymeacoffee.com/ni3verma`):
+   ```sh
+   curl -sL https://buymeacoffee.com/ni3verma | grep -o 'data-page="[^"]*"' | python3 -c \
+     'import html,json,sys; p=json.loads(html.unescape(sys.stdin.read()[11:-1]))["props"]; \
+      print({k:p.get(k) for k in ("is_payout_connected","membership_enabled","reward_count","wishlist_count")}); \
+      print({k:p["project"].get(k) for k in ("project_enable","commission_enable")})'
+   # {'is_payout_connected': True, 'membership_enabled': False, 'reward_count': 0, 'wishlist_count': None}
+   # {'project_enable': '', 'commission_enable': ''}
+   ```
 3. **Do not pause `ActiveSessionManager`.** A browser checkout is an unbounded absence; the away
    timeout locks the vault on schedule, matching the GitHub and Play rows.
 4. **Accept the 5 % platform-fee ambiguity as a revertible testing-track canary.** Buy Me a Coffee
@@ -68,4 +77,6 @@ Three properties of the app also bear on the design:
 Each tap logs `open_buy_me_a_coffee` (`AnalyticsKey.OPEN_BUY_ME_A_COFFEE`, no parameters). Because
 Settings has no `screen_view`, compare `open_buy_me_a_coffee` event and user counts against the
 same-surface baselines `open_github` and `open_play_store`. Completed tips come from the Buy Me a
-Coffee dashboard (`supporters ÷ open_buy_me_a_coffee` is the click-through-to-tip rate).
+Coffee dashboard as an unattributed total across the Settings row, `README.md`, and `.github/FUNDING.yml`
+(comparing `supporters` against `open_buy_me_a_coffee` is an upper-bound reference, not a Settings-only
+conversion rate).

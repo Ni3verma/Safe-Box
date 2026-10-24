@@ -125,7 +125,7 @@
     <string name="settings_github_title">Współtwórz na GitHub</string>
     <string name="settings_github_body">SafeBox jest oprogramowaniem open source. Zobacz kod, zgłoś błędy lub rozwijaj projekt w serwisie GitHub.</string>
     <string name="settings_support_title">Postaw mi kawę</string>
-    <string name="settings_support_body">Safe Box jest darmowy, ma otwarty kod źródłowy i nie zawiera reklam. Jeśli Ci pomaga, niewielki napiwek wspiera dalszy rozwój. Napiwek nigdy niczego nie odblokowuje.</string>
+    <string name="settings_support_body">Safe Box jest darmowy, otwartoźródłowy i bez reklam — każda funkcja pozostaje bezpłatna dla wszystkich. Jeśli aplikacja Ci pomaga, niewielki napiwek wesprze dalszy rozwój.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Wpisz wartość!</string>

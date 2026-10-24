@@ -125,7 +125,7 @@
     <string name="settings_github_title">Contribuie pe GitHub</string>
     <string name="settings_github_body">SafeBox este open source. Vezi codul, raportează probleme sau contribuie la proiect pe GitHub.</string>
     <string name="settings_support_title">Fă-mi cinste cu o cafea</string>
-    <string name="settings_support_body">Safe Box este gratuită, open source și fără reclame. Dacă te ajută, un mic bacșiș susține dezvoltarea. Un bacșiș nu deblochează niciodată nimic.</string>
+    <string name="settings_support_body">Safe Box este gratuit, open source și fără reclame — fiecare funcție rămâne gratuită pentru toată lumea. Dacă îți este de ajutor, un mic bacșiș susține dezvoltarea în continuare.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Introdu ceva!</string>

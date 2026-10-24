@@ -118,7 +118,7 @@
     <string name="settings_github_title">GitHub에서 기여하기</string>
     <string name="settings_github_body">SafeBox는 오픈 소스입니다. GitHub에서 코드를 확인하고, 문제를 제보하거나 프로젝트에 기여해 보세요.</string>
     <string name="settings_support_title">커피 한 잔 후원하기</string>
-    <string name="settings_support_body">Safe Box는 무료 오픈소스이며 광고가 없습니다. 앱이 도움이 된다면 작은 후원이 개발을 이어가는 데 큰 힘이 됩니다. 후원으로 잠금 해제되는 기능은 없습니다.</string>
+    <string name="settings_support_body">Safe Box는 무료 오픈소스이며 광고가 없습니다 — 모든 기능은 누구에게나 무료로 제공됩니다. 앱이 도움이 되었다면 작은 후원으로 개발을 응원해 주세요.</string>
 
     <!-- Other -->
     <string name="blank_validation_text">내용을 입력해 주세요!</string>
