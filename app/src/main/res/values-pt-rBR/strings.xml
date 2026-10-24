@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">Contribuir no GitHub</string>
     <string name="settings_github_body">O SafeBox é de código aberto. Veja o código, relate problemas ou contribua com o projeto no GitHub.</string>
+    <string name="settings_support_title">Pague-me um café</string>
+    <string name="settings_support_body">O Safe Box é gratuito, de código aberto e sem anúncios. Se ele ajuda você, uma pequena gorjeta mantém o desenvolvimento ativo. Uma gorjeta nunca desbloqueia nada.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Digite algo!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Pesquisar…</string>
     <string name="send_feedback_email">Enviar e-mail de feedback</string>
     <string name="no_email_app_found">Nenhum aplicativo de e-mail encontrado</string>
+    <string name="no_app_to_open_link">Nenhum aplicativo encontrado para abrir este link</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Esqueceu a senha?</string>

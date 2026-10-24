@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">GitHub वर योगदान द्या</string>
     <string name="settings_github_body">SafeBox ओपन सोर्स आहे. GitHub वर कोड पहा, समस्या कळवा किंवा प्रकल्पात योगदान द्या.</string>
+    <string name="settings_support_title">मला एक कॉफी पाजा</string>
+    <string name="settings_support_body">Safe Box मोफत, ओपन सोर्स आणि जाहिरातमुक्त आहे. ते तुम्हाला उपयुक्त ठरत असल्यास, छोटीशी टीप त्याचा विकास सुरू ठेवण्यास मदत करते. टीपमुळे कधीही काहीही अनलॉक होत नाही.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">काहीतरी प्रविष्ट करा!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">शोधा …</string>
     <string name="send_feedback_email">अभिप्राय ईमेल पाठवा</string>
     <string name="no_email_app_found">कोणतेही ईमेल अ‍ॅप सापडले नाही</string>
+    <string name="no_app_to_open_link">ही लिंक उघडण्यासाठी कोणतेही ॲप आढळले नाही</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">पासवर्ड विसरलात?</string>

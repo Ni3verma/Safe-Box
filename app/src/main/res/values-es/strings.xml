@@ -117,6 +117,8 @@
     <string name="settings_review_body">Si te gusta la aplicación, dedica un momento a dejar una reseña. ¡Ayuda a que otros nos descubran!</string>
     <string name="settings_github_title">Colaborar en GitHub</string>
     <string name="settings_github_body">SafeBox es de código abierto. Consulta el código, informa de problemas o colabora en el proyecto en GitHub.</string>
+    <string name="settings_support_title">Invítame a un café</string>
+    <string name="settings_support_body">Safe Box es gratuita, de código abierto y sin anuncios. Si te resulta útil, una pequeña propina ayuda a mantener el desarrollo. Una propina nunca desbloquea nada.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">¡Introduce algo!</string>
@@ -151,6 +153,7 @@
     <string name="search_bar_placeholder">Buscar…</string>
     <string name="send_feedback_email">Enviar correo de comentarios</string>
     <string name="no_email_app_found">No se encontró ninguna aplicación de correo</string>
+    <string name="no_app_to_open_link">No se encontró ninguna aplicación para abrir este enlace</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>

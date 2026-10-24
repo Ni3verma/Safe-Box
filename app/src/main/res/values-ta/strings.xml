@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">GitHub இல் பங்களிக்கவும்</string>
     <string name="settings_github_body">SafeBox ஒரு திறந்த மூல (open source) செயலி. GitHub இல் குறியீட்டைப் பார்க்கவும், சிக்கல்களைப் புகாரளிக்கவும் அல்லது திட்டத்திற்குப் பங்களிக்கவும்.</string>
+    <string name="settings_support_title">எனக்கு ஒரு காபி வாங்கித் தாருங்கள்</string>
+    <string name="settings_support_body">Safe Box இலவசமானது, திறந்த மூல மற்றும் விளம்பரமற்றது. இது உங்களுக்குப் பயன்பட்டால், ஒரு சிறிய அன்பளிப்பு இதன் வளர்ச்சியைத் தொடர உதவும். அன்பளிப்பு எதையும் ஒருபோதும் திறக்காது.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">ஏதாவது உள்ளிடவும்!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">தேடு …</string>
     <string name="send_feedback_email">கருத்து மின்னஞ்சலை அனுப்பு</string>
     <string name="no_email_app_found">மின்னஞ்சல் செயலி எதுவும் கிடைக்கவில்லை</string>
+    <string name="no_app_to_open_link">இந்த இணைப்பைத் திறக்க எந்த செயலியும் கிடைக்கவில்லை</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">கடவுச்சொல்லை மறந்துவிட்டீர்களா?</string>

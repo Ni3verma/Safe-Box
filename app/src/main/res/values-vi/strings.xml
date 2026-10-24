@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">Đóng góp trên GitHub</string>
     <string name="settings_github_body">SafeBox là dự án mã nguồn mở. Xem mã nguồn, báo cáo sự cố hoặc đóng góp cho dự án trên GitHub.</string>
+    <string name="settings_support_title">Mời tôi một ly cà phê</string>
+    <string name="settings_support_body">Safe Box miễn phí, mã nguồn mở và không có quảng cáo. Nếu ứng dụng hữu ích với bạn, một khoản tiền thưởng nhỏ sẽ giúp duy trì việc phát triển. Tiền thưởng không bao giờ mở khóa bất kỳ tính năng nào.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Vui lòng nhập nội dung!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Tìm kiếm …</string>
     <string name="send_feedback_email">Gửi email phản hồi</string>
     <string name="no_email_app_found">Không tìm thấy ứng dụng email</string>
+    <string name="no_app_to_open_link">Không tìm thấy ứng dụng để mở liên kết này</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Quên mật khẩu?</string>

@@ -124,6 +124,8 @@
 
     <string name="settings_github_title">GitHub\'da katkıda bulunun</string>
     <string name="settings_github_body">SafeBox açık kaynaklıdır. GitHub üzerinde kodu inceleyin, sorun bildirin veya projeye katkıda bulunun.</string>
+    <string name="settings_support_title">Bana bir kahve ısmarla</string>
+    <string name="settings_support_body">Safe Box ücretsiz, açık kaynaklı ve reklamsızdır. İşinize yarıyorsa küçük bir bahşiş geliştirmenin sürmesine destek olur. Bahşiş hiçbir zaman ek bir özellik açmaz.</string>
 
     <!--    Other-->
     <string name="blank_validation_text">Bir şey girin!</string>
@@ -158,6 +160,7 @@
     <string name="search_bar_placeholder">Ara …</string>
     <string name="send_feedback_email">Geri bildirim e-postası gönder</string>
     <string name="no_email_app_found">E-posta uygulaması bulunamadı</string>
+    <string name="no_app_to_open_link">Bu bağlantıyı açacak bir uygulama bulunamadı</string>
 
     <!-- Password Reset & Update -->
     <string name="forgot_password">Parolanızı mı Unuttunuz?</string>
