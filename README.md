@@ -87,3 +87,9 @@ Want to contribute to Safe Box? Please read [Contribution process](https://githu
 </a>
 
 <br><br><hr>
+
+## Support
+
+<a href="https://buymeacoffee.com/ni3verma">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50">
+</a>
