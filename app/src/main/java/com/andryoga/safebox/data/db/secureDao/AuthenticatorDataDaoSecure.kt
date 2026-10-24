@@ -48,6 +48,14 @@ class AuthenticatorDataDaoSecure @Inject constructor(
         return authenticatorDataDao.exportAllData().map { decrypt(it) }
     }
 
+    override suspend fun getAllEntities(): List<AuthenticatorDataEntity> {
+        return authenticatorDataDao.getAllEntities().map { decrypt(it) }
+    }
+
+    override suspend fun count(): Int {
+        return authenticatorDataDao.count()
+    }
+
     override fun deleteAllData() {
         authenticatorDataDao.deleteAllData()
     }

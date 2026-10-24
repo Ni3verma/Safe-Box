@@ -114,7 +114,7 @@ class LoadingScreenRootTest {
         runBlocking {
             safeBoxDatabase.clearAllTables()
             safeBoxDatabase.vaultMetaDao()
-                .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.ENVELOPE))
+                .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
             encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
         }
 

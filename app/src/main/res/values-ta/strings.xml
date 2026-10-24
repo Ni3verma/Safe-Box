@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">புதுப்பிப்பு பதிவிறக்கப்பட்டது. நிறுவ Safe Box ஐ மறுதொடக்கம் செய்யவும்.</string>
     <string name="in_app_update_restart">மறுதொடக்கம் செய்</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">பாதுகாப்பு மேம்படுத்தல் — உங்கள் முதன்மை கடவுச்சொல்லை ஒருமுறை உள்ளிடவும்</string>
+    <string name="vault_migration_progress_title">பெட்டகப் பாதுகாப்பு மேம்படுத்தப்படுகிறது…</string>
+    <string name="vault_migration_progress_counter">%2$d இல் %1$d பதிவுகள்</string>
+    <string name="vault_migration_failure_keystore">பாதுகாப்பான வன்பொருள் பதிலளிக்கவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_verify">மேம்படுத்தல் சரிபார்ப்பு தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_storage">மேம்படுத்தலைச் சேமிக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_unexpected">மேம்படுத்தல் தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_forgot_password_note">உங்கள் முதன்மை கடவுச்சொல் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_retry">மீண்டும் முயல்க</string>
+    <string name="vault_migration_continue_legacy">இப்போதைக்குத் தொடரவும்</string>
+    <string name="legacy_key_lost_title">குறியாக்க விசை கிடைக்கவில்லை</string>
+    <string name="legacy_key_lost_body">இந்தப் பெட்டகத்தைக் குறியாக்கிய வன்பொருள் விசை இந்தச் சாதனத்தில் இனி கிடைக்காது என்பதால், தற்போதுள்ள பதிவுகளைத் திறக்க முடியாது. உங்களிடம் காப்புப் பிரதி கோப்பு இருந்தால், இந்தப் பெட்டகத்தை அழித்து அந்தக் காப்புப் பிரதியிலிருந்து மீட்டெடுக்கலாம்.</string>
+    <string name="home_upgrade_pending_banner">பாதுகாப்பு மேம்படுத்தல் நிலுவையில் உள்ளது — அடுத்த உள்நுழைவின்போது இது இயங்கும்</string>
+    <string name="home_upgrade_pending_retry">இப்போதே மீண்டும் முயல்க</string>
 </resources>

@@ -194,4 +194,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">ดาวน์โหลดอัปเดตแล้ว รีสตาร์ท Safe Box เพื่อติดตั้ง</string>
     <string name="in_app_update_restart">รีสตาร์ท</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">อัปเกรดความปลอดภัย — กรอกรหัสผ่านหลักของคุณหนึ่งครั้ง</string>
+    <string name="vault_migration_progress_title">กำลังอัปเกรดความปลอดภัยของตู้นิรภัย…</string>
+    <string name="vault_migration_progress_counter">%1$d จาก %2$d รายการ</string>
+    <string name="vault_migration_failure_keystore">ฮาร์ดแวร์ความปลอดภัยไม่ตอบสนอง ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="vault_migration_failure_verify">การตรวจสอบการอัปเกรดล้มเหลว ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="vault_migration_failure_storage">ไม่สามารถบันทึกการอัปเกรดได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="vault_migration_failure_unexpected">การอัปเกรดล้มเหลว ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="vault_migration_failure_forgot_password_note">รหัสผ่านหลักของคุณไม่ได้ถูกเปลี่ยน</string>
+    <string name="vault_migration_retry">ลองอีกครั้ง</string>
+    <string name="vault_migration_continue_legacy">ดำเนินการต่อในตอนนี้</string>
+    <string name="legacy_key_lost_title">คีย์การเข้ารหัสไม่พร้อมใช้งาน</string>
+    <string name="legacy_key_lost_body">คีย์ฮาร์ดแวร์ที่ใช้เข้ารหัสตู้นิรภัยนี้ไม่พร้อมใช้งานบนอุปกรณ์นี้อีกต่อไป จึงไม่สามารถเปิดรายการที่มีอยู่ได้ หากคุณมีไฟล์สำรองข้อมูล คุณสามารถล้างตู้นิรภัยนี้และกู้คืนจากข้อมูลสำรองนั้นได้</string>
+    <string name="home_upgrade_pending_banner">รอการอัปเกรดความปลอดภัย — จะทำงานในการเข้าสู่ระบบครั้งถัดไป</string>
+    <string name="home_upgrade_pending_retry">ลองใหม่ตอนนี้</string>
 </resources>

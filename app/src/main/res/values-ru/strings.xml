@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Обновление скачано. Перезапустите Safe Box для установки.</string>
     <string name="in_app_update_restart">Перезапустить</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Обновление безопасности — введите мастер-пароль один раз</string>
+    <string name="vault_migration_progress_title">Обновление защиты хранилища…</string>
+    <string name="vault_migration_progress_counter">%1$d из %2$d записей</string>
+    <string name="vault_migration_failure_keystore">Защищённый модуль не ответил. Ничего не изменено.</string>
+    <string name="vault_migration_failure_verify">Проверка обновления не пройдена. Ничего не изменено.</string>
+    <string name="vault_migration_failure_storage">Не удалось сохранить обновление. Ничего не изменено.</string>
+    <string name="vault_migration_failure_unexpected">Сбой обновления. Ничего не изменено.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ваш мастер-пароль не был изменён.</string>
+    <string name="vault_migration_retry">Повторить</string>
+    <string name="vault_migration_continue_legacy">Продолжить пока так</string>
+    <string name="legacy_key_lost_title">Ключ шифрования недоступен</string>
+    <string name="legacy_key_lost_body">Аппаратный ключ, которым было зашифровано это хранилище, больше недоступен на этом устройстве, поэтому существующие записи нельзя открыть. Если у вас есть файл резервной копии, вы можете очистить хранилище и восстановить данные из копии.</string>
+    <string name="home_upgrade_pending_banner">Ожидается обновление безопасности — оно выполнится при следующем входе</string>
+    <string name="home_upgrade_pending_retry">Повторить сейчас</string>
 </resources>

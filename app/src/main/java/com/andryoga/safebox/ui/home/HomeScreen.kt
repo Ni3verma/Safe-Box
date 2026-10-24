@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -34,6 +35,7 @@ import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
+import com.andryoga.safebox.ui.home.components.UpgradePendingBanner
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
 import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
@@ -71,6 +73,7 @@ fun HomeScreen(
     onExitHomeNavGraph: () -> Unit,
 ) {
     val mainViewModel = hiltViewModel<MainViewModel>()
+    val homeViewModel = hiltViewModel<HomeViewModel>()
 
     // Home is only ever composed with an open session. A back stack restored after process death,
     // a navigation that skipped Login, and a lock while Home is showing all leave for Login here,
@@ -81,6 +84,7 @@ fun HomeScreen(
     }
     if (!isVaultUnlocked) return
 
+    val homeUiState by homeViewModel.uiState.collectAsState()
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -125,7 +129,14 @@ fun HomeScreen(
                         shrinkTowards = Alignment.Top,
                     ),
                 ) {
-                    BottomNavBar(nestedNavController, isBackupPathSet)
+                    Column {
+                        if (homeUiState.isLegacySession) {
+                            UpgradePendingBanner(
+                                onRetryClick = homeViewModel::onRetryUpgradeClick,
+                            )
+                        }
+                        BottomNavBar(nestedNavController, isBackupPathSet)
+                    }
                 }
             },
             snackbarHost = {
@@ -158,15 +169,15 @@ fun HomeScreen(
                                 nestedNavController.navigate(route = QrScannerRoute)
                             } else {
                                 nestedNavController.navigate(
-                                    route = SingleRecordScreenRoute(recordType)
+                                    route = SingleRecordScreenRoute(recordType),
                                 )
                             }
                         },
                         onRestoreFromBackup = {
                             nestedNavController.navigate(
                                 route = HomeRouteType.BackupAndRestoreRoute(
-                                    startWithRestoreWorkflow = true
-                                )
+                                    startWithRestoreWorkflow = true,
+                                ),
                             ) {
                                 popUpTo(nestedNavController.graph.findStartDestination().id) {
                                     saveState = true
@@ -177,8 +188,8 @@ fun HomeScreen(
                             nestedNavController.navigate(
                                 route = SingleRecordScreenRoute(
                                     recordType,
-                                    id
-                                )
+                                    id,
+                                ),
                             )
                         },
                     )
@@ -207,7 +218,7 @@ fun HomeScreen(
                         onScreenClose = {
                             Timber.i("single record screen closure callback")
                             nestedNavController.popBackStack()
-                        }
+                        },
                     )
                 }
             }

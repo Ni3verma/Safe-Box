@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Pembaruan selesai diunduh. Mulai ulang Safe Box untuk memasangnya.</string>
     <string name="in_app_update_restart">Mulai Ulang</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Peningkatan keamanan — masukkan kata sandi utama Anda sekali</string>
+    <string name="vault_migration_progress_title">Meningkatkan keamanan brankas…</string>
+    <string name="vault_migration_progress_counter">%1$d dari %2$d catatan</string>
+    <string name="vault_migration_failure_keystore">Perangkat keras keamanan tidak merespons. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_verify">Pemeriksaan peningkatan gagal. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_storage">Tidak dapat menyimpan peningkatan. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_unexpected">Peningkatan gagal. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_forgot_password_note">Kata sandi utama Anda tidak diubah.</string>
+    <string name="vault_migration_retry">Coba lagi</string>
+    <string name="vault_migration_continue_legacy">Lanjutkan untuk saat ini</string>
+    <string name="legacy_key_lost_title">Kunci enkripsi tidak tersedia</string>
+    <string name="legacy_key_lost_body">Kunci perangkat keras yang mengenkripsi brankas ini tidak lagi tersedia di perangkat ini, sehingga catatan yang ada tidak dapat dibuka. Jika Anda memiliki file cadangan, Anda dapat menghapus brankas ini dan memulihkan dari cadangan tersebut.</string>
+    <string name="home_upgrade_pending_banner">Peningkatan keamanan tertunda — akan dijalankan saat masuk berikutnya</string>
+    <string name="home_upgrade_pending_retry">Coba sekarang</string>
 </resources>

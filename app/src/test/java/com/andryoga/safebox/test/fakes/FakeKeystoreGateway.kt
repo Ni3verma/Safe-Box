@@ -84,7 +84,7 @@ class FakeKeystoreGateway : KeystoreGateway {
 
     override fun legacyVaultKey(): SecretKey? = legacyKey
 
-    override fun getOrCreateLegacyVaultKey(): SecretKey {
+    fun getOrCreateLegacyVaultKey(): SecretKey {
         return legacyKey ?: KeyGenerator.getInstance("AES").apply { init(AES_KEY_SIZE_BITS) }
             .generateKey()
             .also { legacyKey = it }

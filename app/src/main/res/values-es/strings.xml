@@ -192,4 +192,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Actualización descargada. Reinicia Safe Box para instalarla.</string>
     <string name="in_app_update_restart">Reiniciar</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Actualización de seguridad — ingresa tu contraseña maestra una vez</string>
+    <string name="vault_migration_progress_title">Actualizando la seguridad de la bóveda…</string>
+    <string name="vault_migration_progress_counter">%1$d de %2$d registros</string>
+    <string name="vault_migration_failure_keystore">El hardware seguro no respondió. No se realizó ningún cambio.</string>
+    <string name="vault_migration_failure_verify">Falló la verificación de la actualización. No se realizó ningún cambio.</string>
+    <string name="vault_migration_failure_storage">No se pudo guardar la actualización. No se realizó ningún cambio.</string>
+    <string name="vault_migration_failure_unexpected">Falló la actualización. No se realizó ningún cambio.</string>
+    <string name="vault_migration_failure_forgot_password_note">Tu contraseña maestra no fue cambiada.</string>
+    <string name="vault_migration_retry">Reintentar</string>
+    <string name="vault_migration_continue_legacy">Continuar por ahora</string>
+    <string name="legacy_key_lost_title">Clave de cifrado no disponible</string>
+    <string name="legacy_key_lost_body">La clave de hardware que cifraba esta bóveda ya no está disponible en este dispositivo, por lo que no se pueden abrir los registros existentes. Si tienes un archivo de copia de seguridad, puedes borrar esta bóveda y restaurar desde esa copia.</string>
+    <string name="home_upgrade_pending_banner">Actualización de seguridad pendiente — se ejecutará en tu próximo inicio de sesión</string>
+    <string name="home_upgrade_pending_retry">Reintentar ahora</string>
 </resources>

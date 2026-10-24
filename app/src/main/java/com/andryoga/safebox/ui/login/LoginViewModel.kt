@@ -1,6 +1,5 @@
 package com.andryoga.safebox.ui.login
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
@@ -8,10 +7,20 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
+import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.di.IsDebug
+import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import com.andryoga.safebox.security.envelope.migration.MigrationOutcome
+import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
+import com.andryoga.safebox.security.envelope.migration.VaultMigrationProgress
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
+import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.KeystoreGateway
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -22,6 +31,8 @@ import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -30,6 +41,11 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
+    private val vaultRepository: VaultRepository,
+    private val envelopeEncryptionManager: EnvelopeEncryptionManager,
+    private val legacyVaultMigrator: Lazy<LegacyVaultMigrator>,
+    private val vaultMigrationProgress: VaultMigrationProgress,
+    private val vaultKeyMaintenance: VaultKeyMaintenance,
     private val workManager: Lazy<WorkManager>,
     private val backupPasswordRegistry: BackupPasswordRegistry,
     private val settingsDataStore: SettingsDataStore,
@@ -48,9 +64,25 @@ class LoginViewModel @Inject constructor(
     )
     val uiState = _uiState.asStateFlow()
 
+    // Held only in RAM while the migration failure card is showing so Try again and Continue for
+    // now do not force a second password entry or device-credential prompt.
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private var pendingMigrationPassword: String? = null
+    private var pendingMigrationHint: String? = null
+    private var pendingMigrationTrigger: MigrationTrigger = MigrationTrigger.LOGIN
+
     init {
         if (isDebug) {
             _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
+        }
+        vaultMigrationProgress.state.onEach { progress ->
+            _uiState.update { it.copy(migrationProgress = progress) }
+        }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            val state = vaultRepository.getVaultState()
+            if (state is VaultState.Legacy) {
+                _uiState.update { it.copy(isLegacyVault = true) }
+            }
         }
     }
 
@@ -90,6 +122,10 @@ class LoginViewModel @Inject constructor(
             LoginScreenAction.OnUpdatePasswordDismissClicked -> {
                 logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
             }
+
+            is LoginScreenAction.OnMigrationFailureShown -> onMigrationFailureShown(action.reason)
+            LoginScreenAction.OnMigrationRetryClicked -> onMigrationRetryClicked()
+            LoginScreenAction.OnMigrationContinueLegacyClicked -> onMigrationContinueLegacyClicked()
         }
     }
 
@@ -104,30 +140,48 @@ class LoginViewModel @Inject constructor(
         Timber.i("resetting master password and hint from login screen")
         logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         viewModelScope.launch {
-            // The device credential has already authenticated the user; the session opens first
-            // because the hint rewrite below needs the legacy key and a lost key must end in
-            // LEGACY_KEY_LOST, not in a failed write.
-            if (!openLegacySession()) return@launch
-            userDetailsRepository.updatePasswordAndHint(newPassword, hint)
-            Timber.i("master password and hint successfully updated from login screen")
-            onAuthSuccess(LoginMethod.PASSWORD_RESET)
+            when (vaultRepository.getVaultState()) {
+                is VaultState.Legacy -> {
+                    // The legacy hash is not rewritten; the new password goes straight into the
+                    // migration so a failed attempt leaves the original credential intact.
+                    runLegacyMigration(
+                        password = newPassword,
+                        newHint = hint,
+                        trigger = MigrationTrigger.FORGOT_PASSWORD,
+                    )
+                }
+
+                is VaultState.Envelope -> {
+                    // TODO(MR6): replace with KEK_Device unwrap and VaultRepository.rewrapPassword
+                    if (!openLegacySession()) return@launch
+                    userDetailsRepository.updatePasswordAndHint(newPassword, hint)
+                    Timber.i("master password and hint successfully updated from login screen")
+                    onAuthSuccess(LoginMethod.PASSWORD_RESET)
+                }
+
+                VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
+            }
         }
     }
 
     private fun onBiometricAvailable() {
-
         Timber.i("biometric capability is available")
         viewModelScope.launch {
+            val state = vaultRepository.getVaultState()
+            if (state is VaultState.Legacy) {
+                // Biometric login is suppressed while crypto_version = 1.
+                _uiState.update { it.copy(isLegacyVault = true, canUnlockWithBiometric = false) }
+                return@launch
+            }
             if (userDetailsRepository.shouldStartBiometricAuthFlow()) {
                 _uiState.update {
-                    it.copy(
-                        canUnlockWithBiometric = true
-                    )
+                    it.copy(canUnlockWithBiometric = true)
                 }
             }
         }
     }
 
+    // TODO(MR6): replace with CryptoObject unwrap of wrapped_dek_biometric
     private fun onBiometricSuccess() {
         Timber.i("device security auth success")
         viewModelScope.launch {
@@ -139,51 +193,217 @@ class LoginViewModel @Inject constructor(
     private fun onBiometricError() {
         Timber.i("biometric error or cancelled")
         _uiState.update {
-            it.copy(
-                canUnlockWithBiometric = false
-            )
+            it.copy(canUnlockWithBiometric = false)
         }
     }
 
     private fun onLoginClicked(password: String) {
         Timber.i("login clicked")
         viewModelScope.launch {
-            val isPasswordCorrect = userDetailsRepository.checkPassword(password)
-            Timber.i("is password correct: $isPasswordCorrect")
-
-            if (isPasswordCorrect) {
-                // The session must be open before the enqueue below: the worker reads every
-                // record through the holder and may start at once.
-                if (!openLegacySession()) return@launch
-                if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
-                    Timber.i("enqueuing auto backup request after login with pswrd")
-                    BackupDataWorker.enqueueRequest(
-                        password = password,
-                        showBackupStartNotification = false,
-                        workManager = workManager.get(),
-                        backupPasswordRegistry = backupPasswordRegistry,
-                    )
-                } else {
-                    Timber.i("auto backup disabled from settings")
-                }
-                onAuthSuccess(LoginMethod.PASSWORD)
-            } else {
-                onIncorrectPassword()
+            when (val state = vaultRepository.getVaultState()) {
+                is VaultState.Envelope -> unlockEnvelopeWithPassword(password, state)
+                is VaultState.Legacy -> unlockLegacyWithPassword(password)
+                VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
             }
         }
     }
 
+    private fun onCorruptedEnvelopeState() {
+        _uiState.update {
+            it.copy(
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
+                failedLoginAttempts = it.failedLoginAttempts + 1,
+            )
+        }
+        Utils.crashInDebugBuild("Corrupted envelope state on login")
+    }
+
+    private suspend fun unlockEnvelopeWithPassword(
+        password: String,
+        state: VaultState.Envelope,
+    ) {
+        val dek = envelopeEncryptionManager.unwrapWithPassword(
+            password = password.toCharArray(),
+            params = state.kdfParams,
+            blob = state.wrappedDekPassword,
+        ).getOrElse {
+            onIncorrectPassword()
+            return
+        }
+        try {
+            if (!envelopeEncryptionManager.verify(dek, state.dekVerifier)) {
+                onIncorrectPassword()
+                return
+            }
+            // The session must be open before the enqueue below: the worker reads every record
+            // through the holder and may start at once.
+            sessionKeyHolder.setSessionKey(dek)
+        } finally {
+            dek.fill(0)
+        }
+        enqueueAutoBackupIfEnabled(password)
+        vaultKeyMaintenance.scheduleAfterUnlock()
+        onAuthSuccess(LoginMethod.PASSWORD)
+    }
+
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private suspend fun unlockLegacyWithPassword(password: String) {
+        _uiState.update { it.copy(isLegacyVault = true) }
+        val isPasswordCorrect = userDetailsRepository.checkPassword(password)
+        Timber.i("is password correct: $isPasswordCorrect")
+        if (!isPasswordCorrect) {
+            onIncorrectPassword()
+            return
+        }
+        runLegacyMigration(
+            password = password,
+            newHint = null,
+            trigger = MigrationTrigger.LOGIN,
+        )
+    }
+
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private suspend fun runLegacyMigration(
+        password: String,
+        newHint: String?,
+        trigger: MigrationTrigger,
+    ) {
+        pendingMigrationPassword = password
+        pendingMigrationHint = newHint
+        pendingMigrationTrigger = trigger
+        _uiState.update { it.copy(migrationFailure = null) }
+
+        when (
+            val outcome = legacyVaultMigrator.get().migrate(
+                password = password.toCharArray(),
+                newHint = newHint,
+                trigger = trigger,
+            )
+        ) {
+            is MigrationOutcome.Success -> {
+                outcome.dek.fill(0)
+                clearPendingMigrationCredentials()
+                _uiState.update { it.copy(isLegacyVault = false, migrationFailure = null) }
+                if (trigger == MigrationTrigger.LOGIN) {
+                    enqueueAutoBackupIfEnabled(password)
+                }
+                vaultKeyMaintenance.scheduleAfterUnlock()
+                val method = if (trigger == MigrationTrigger.FORGOT_PASSWORD) {
+                    LoginMethod.PASSWORD_RESET
+                } else {
+                    LoginMethod.PASSWORD
+                }
+                onAuthSuccess(method)
+            }
+
+            MigrationOutcome.AlreadyMigrated -> {
+                clearPendingMigrationCredentials()
+                _uiState.update { it.copy(isLegacyVault = false, migrationFailure = null) }
+                val state = vaultRepository.getVaultState()
+                if (state is VaultState.Envelope) {
+                    unlockEnvelopeWithPassword(password, state)
+                }
+            }
+
+            is MigrationOutcome.Failure -> {
+                if (outcome.reason == MigrationFailureReason.LEGACY_KEY_LOST) {
+                    clearPendingMigrationCredentials()
+                    _uiState.update {
+                        it.copy(
+                            userAuthState = UserAuthState.LEGACY_KEY_LOST,
+                            migrationFailure = null,
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            migrationFailure = MigrationFailureUiState(
+                                reason = outcome.reason,
+                                trigger = outcome.trigger,
+                                attempt = outcome.attempt,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private fun onMigrationFailureShown(reason: MigrationFailureReason) {
+        analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_FAILURE_SHOW) {
+            param(AnalyticsParam.REASON, reason.wireName)
+        }
+    }
+
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private fun onMigrationRetryClicked() {
+        val failure = _uiState.value.migrationFailure ?: return
+        val password = pendingMigrationPassword ?: return
+        val hint = pendingMigrationHint
+        val trigger = pendingMigrationTrigger
+        analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_RETRY_CLICK) {
+            param(AnalyticsParam.REASON, failure.reason.wireName)
+        }
+        viewModelScope.launch {
+            runLegacyMigration(
+                password = password,
+                newHint = hint,
+                trigger = trigger,
+            )
+        }
+    }
+
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    private fun onMigrationContinueLegacyClicked() {
+        val failure = _uiState.value.migrationFailure ?: return
+        if (!failure.canContinueLegacy) return
+        analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_CONTINUE_LEGACY_CLICK) {
+            param(AnalyticsParam.REASON, failure.reason.wireName)
+        }
+        viewModelScope.launch {
+            if (!openLegacySession()) return@launch
+            analyticsHelper.logEvent(AnalyticsKey.VAULT_LEGACY_SESSION_START) {
+                param(AnalyticsParam.ATTEMPT, failure.attempt)
+            }
+            val password = pendingMigrationPassword
+            clearPendingMigrationCredentials()
+            _uiState.update { it.copy(migrationFailure = null) }
+            if (password != null) {
+                enqueueAutoBackupIfEnabled(password)
+            }
+            onAuthSuccess(LoginMethod.LEGACY_SESSION)
+        }
+    }
+
+    private fun clearPendingMigrationCredentials() {
+        pendingMigrationPassword = null
+        pendingMigrationHint = null
+    }
+
+    private suspend fun enqueueAutoBackupIfEnabled(password: String) {
+        if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
+            Timber.i("enqueuing auto backup request after login with pswrd")
+            BackupDataWorker.enqueueRequest(
+                password = password,
+                showBackupStartNotification = false,
+                workManager = workManager.get(),
+                backupPasswordRegistry = backupPasswordRegistry,
+            )
+        } else {
+            Timber.i("auto backup disabled from settings")
+        }
+    }
+
     /**
-     * Opens the vault session once a credential has been accepted.
+     * Opens a legacy vault session (`LegacyUnlocked`) using the Keystore handle of `symmetricDataKey`.
      *
-     * Every vault is still `crypto_version = 1`, so the session is the legacy Keystore handle. A
-     * missing handle is the lost-key state: the records cannot be opened by anyone, the key is
-     * never regenerated, and the screen stays on Login.
+     * Used by the migration fallback (*Continue for now*) and, until MR 6, by the unmigrated
+     * biometric/reset branches. A missing handle transitions to [UserAuthState.LEGACY_KEY_LOST].
      *
      * @return `false` when the legacy key is gone and the unlock must not continue.
      */
-    // TODO(MR5): a crypto_version = 2 vault unwraps the DEK (setSessionKey) and only the migration fallback opens a legacy session
-    // TODO(D3): legacy vault (crypto_version = 1) only — so is the fallback-session path MR 5 keeps of it
+    // TODO(D3): legacy vault (crypto_version = 1) only
     private fun openLegacySession(): Boolean {
         val legacyKey = keystoreGateway.legacyVaultKey()
         if (legacyKey == null) {
@@ -211,7 +431,7 @@ class LoginViewModel @Inject constructor(
         }
         _uiState.update {
             it.copy(
-                userAuthState = UserAuthState.VERIFIED
+                userAuthState = UserAuthState.VERIFIED,
             )
         }
     }
@@ -231,7 +451,7 @@ class LoginViewModel @Inject constructor(
             Timber.i("getting hint")
             _uiState.update {
                 it.copy(
-                    hint = userDetailsRepository.getHint() ?: ""
+                    hint = userDetailsRepository.getHint() ?: "",
                 )
             }
         }

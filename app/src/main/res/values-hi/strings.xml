@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">अपडेट डाउनलोड हो गया है। इंस्टॉल करने के लिए Safe Box रीस्टार्ट करें।</string>
     <string name="in_app_update_restart">रीस्टार्ट करें</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">सुरक्षा अपग्रेड — अपना मास्टर पासवर्ड एक बार दर्ज करें</string>
+    <string name="vault_migration_progress_title">तिजोरी की सुरक्षा अपग्रेड की जा रही है…</string>
+    <string name="vault_migration_progress_counter">%2$d में से %1$d रिकॉर्ड</string>
+    <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेयर ने कोई जवाब नहीं दिया। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_verify">अपग्रेड जांच विफल रही। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_storage">अपग्रेड सहेजा नहीं जा सका। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_unexpected">अपग्रेड विफल रहा। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_forgot_password_note">आपका मास्टर पासवर्ड नहीं बदला गया।</string>
+    <string name="vault_migration_retry">पुनः प्रयास करें</string>
+    <string name="vault_migration_continue_legacy">अभी के लिए जारी रखें</string>
+    <string name="legacy_key_lost_title">एन्क्रिप्शन कुंजी अनुपलब्ध</string>
+    <string name="legacy_key_lost_body">इस तिजोरी को एन्क्रिप्ट करने वाली हार्डवेयर कुंजी अब इस डिवाइस पर उपलब्ध नहीं है, इसलिए मौजूदा रिकॉर्ड नहीं खोले जा सकते। यदि आपके पास बैकअप फ़ाइल है, तो आप इस तिजोरी को मिटाकर उस बैकअप से रीस्टोर कर सकते हैं।</string>
+    <string name="home_upgrade_pending_banner">सुरक्षा अपग्रेड बाकी है — यह आपके अगले साइन-इन पर चलेगा</string>
+    <string name="home_upgrade_pending_retry">अभी पुनः प्रयास करें</string>
 </resources>

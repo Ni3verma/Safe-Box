@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "a77af5a307f6295cd651820348a13a9c",
+    "identityHash": "663014dc165df8888beb5e5f3d659c31",
     "entities": [
       {
         "tableName": "bank_account_data",
@@ -417,59 +417,11 @@
             "key"
           ]
         }
-      },
-      {
-        "tableName": "quarantined_record",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `source_table` TEXT NOT NULL, `source_key` INTEGER NOT NULL, `row_json` TEXT NOT NULL, `reason` TEXT NOT NULL, `created_at` INTEGER NOT NULL)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "sourceTable",
-            "columnName": "source_table",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "sourceKey",
-            "columnName": "source_key",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "rowJson",
-            "columnName": "row_json",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "reason",
-            "columnName": "reason",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "created_at",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a77af5a307f6295cd651820348a13a9c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '663014dc165df8888beb5e5f3d659c31')"
     ]
   }
 }

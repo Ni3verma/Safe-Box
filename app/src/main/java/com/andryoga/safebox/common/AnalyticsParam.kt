@@ -46,4 +46,16 @@ enum class AnalyticsParam(val paramName: String) {
     // a backup or restore worker was RUNNING when the away timeout fired
     WORKER_RUNNING("worker_running"),
     // endregion
+
+    // region envelope encryption migration & wraps
+    TRIGGER("trigger"),
+    ATTEMPT("attempt"),
+    RETRIES("retries"),
+    LEGACY_DECRYPT_MS("legacy_decrypt_ms"),
+    WRAPS("wraps"),
+    STAGE("stage"),
+    TABLE("table"),
+    RECORDS_DONE("records_done"),
+    WRAP("wrap"),
+    // endregion
 }
