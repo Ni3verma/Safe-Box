@@ -150,8 +150,7 @@
     <string name="micr_code">Код MICR</string>
     <string name="welcome_back">С возвращением!</string>
     <string name="welcome">Добро пожаловать!</string>
-    <string name="timeout_dialog_message">Вы отсутствовали слишком долго. Нажмите ОК, чтобы снова войти в приложение</string>
-    <string name="timeout_dialog_positive_button_text">ОК</string>
+    <string name="login_away_banner">Вы отсутствовали — разблокируйте снова.</string>
     <string name="created_on">Создано</string>
     <string name="updated_on">Обновлено</string>
     <string name="add_a_new_record">Добавить новую запись</string>

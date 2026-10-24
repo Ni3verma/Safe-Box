@@ -22,6 +22,7 @@ object PasswordKdf {
 
     /** Output length in bits; sized to the AES-256 key that [AesGcmWrap] accepts. */
     const val KEY_LENGTH_BITS = AesGcmWrap.KEY_SIZE_BYTES * 8
+    private const val ASCII_LIMIT = 0x80
     private val secureRandom = SecureRandom()
 
     /**
@@ -39,7 +40,9 @@ object PasswordKdf {
 
     /**
      * Derives a 256-bit key from [password] and [params] after NFKC normalization, zeroing
-     * [password] and all intermediate character buffers before returning.
+     * [password] and all intermediate character buffers before returning. A non-ASCII password
+     * also passes through the immutable `String` that `Normalizer` returns, which cannot be
+     * zeroed; an ASCII password never does.
      *
      * @param password Raw password characters; cleared to `\u0000` in `finally`.
      * @param params KDF parameters specifying algorithm, iteration count, and salt.
@@ -74,8 +77,13 @@ object PasswordKdf {
         var normalizedChars: CharArray? = null
         var keySpec: PBEKeySpec? = null
         try {
-            val normalized = Normalizer.normalize(CharBuffer.wrap(password), Normalizer.Form.NFKC)
-            normalizedChars = normalized.toCharArray()
+            // NFKC leaves ASCII unchanged, and skipping it avoids the String copy that normalize()
+            // returns, which nothing can zero.
+            normalizedChars = if (password.all { it.code < ASCII_LIMIT }) {
+                password.copyOf()
+            } else {
+                Normalizer.normalize(CharBuffer.wrap(password), Normalizer.Form.NFKC).toCharArray()
+            }
             keySpec = PBEKeySpec(normalizedChars, salt, iterations, keyLengthBits)
             val factory = SecretKeyFactory.getInstance(algorithm)
             return factory.generateSecret(keySpec).encoded

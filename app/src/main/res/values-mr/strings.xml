@@ -150,8 +150,7 @@
     <string name="micr_code">MICR कोड</string>
     <string name="welcome_back">पुन्हा स्वागत आहे!</string>
     <string name="welcome">स्वागत आहे!</string>
-    <string name="timeout_dialog_message">तुम्ही बराच वेळ अ‍ॅपपासून दूर होता. पुन्हा लॉग इन करण्यासाठी कृपया ठीक आहे वर क्लिक करा</string>
-    <string name="timeout_dialog_positive_button_text">ठीक आहे</string>
+    <string name="login_away_banner">तुम्ही काही वेळ दूर होता — पुन्हा अनलॉक करा.</string>
     <string name="created_on">तयार केल्याची तारीख</string>
     <string name="updated_on">अपडेट केल्याची तारीख</string>
     <string name="add_a_new_record">नवीन रेकॉर्ड जोडा</string>

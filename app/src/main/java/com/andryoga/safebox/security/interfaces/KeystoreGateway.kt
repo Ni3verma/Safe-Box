@@ -1,5 +1,7 @@
 package com.andryoga.safebox.security.interfaces
 
+import android.security.keystore.KeyPermanentlyInvalidatedException
+import android.security.keystore.UserNotAuthenticatedException
 import java.security.GeneralSecurityException
 import java.security.PublicKey
 import javax.crypto.Cipher
@@ -67,10 +69,10 @@ interface KeystoreGateway {
      *
      * @param alias Keystore alias whose private key initializes the cipher.
      * @return Initialized [Cipher] ready for `CryptoObject` binding or immediate unwrap.
-     * @throws android.security.keystore.KeyPermanentlyInvalidatedException When the key is gone,
-     * unrecoverable or invalidated by an enrolment change.
-     * @throws android.security.keystore.UserNotAuthenticatedException When a time-bound key is
-     * outside its validity window (API 29).
+     * @throws KeyPermanentlyInvalidatedException When the key is gone, unrecoverable or
+     * invalidated by an enrolment change.
+     * @throws UserNotAuthenticatedException When a time-bound key is outside its validity
+     * window (API 29).
      */
     fun decryptCipher(alias: String): Cipher
 

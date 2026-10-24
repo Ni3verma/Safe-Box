@@ -143,8 +143,7 @@
     <string name="micr_code">MICR 代碼</string>
     <string name="welcome_back">歡迎回來！</string>
     <string name="welcome">歡迎使用！</string>
-    <string name="timeout_dialog_message">您離開的時間過久，請點擊「確定」重新登入應用程式</string>
-    <string name="timeout_dialog_positive_button_text">確定</string>
+    <string name="login_away_banner">您已離開一段時間 — 請重新解鎖。</string>
     <string name="created_on">建立日期</string>
     <string name="updated_on">更新日期</string>
     <string name="add_a_new_record">新增記錄</string>

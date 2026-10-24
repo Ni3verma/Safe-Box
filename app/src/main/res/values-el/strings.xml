@@ -150,8 +150,7 @@
     <string name="micr_code">Κωδικός MICR</string>
     <string name="welcome_back">Καλώς ορίσατε ξανά!</string>
     <string name="welcome">Καλώς ορίσατε!</string>
-    <string name="timeout_dialog_message">Λείπατε για πολύ ώρα. Πατήστε OK για να συνδεθείτε ξανά στην εφαρμογή</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Λείπατε — ξεκλειδώστε ξανά.</string>
     <string name="created_on">Δημιουργήθηκε στις</string>
     <string name="updated_on">Ενημερώθηκε στις</string>
     <string name="add_a_new_record">Προσθήκη νέας εγγραφής</string>

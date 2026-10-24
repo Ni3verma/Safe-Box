@@ -20,9 +20,11 @@ import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.core.SessionLockReason
+import com.andryoga.safebox.ui.core.SessionLockReasonStore
+import com.andryoga.safebox.worker.BackupPasswordRegistry
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
 import io.mockk.MockKAnnotations
@@ -31,6 +33,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
+import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -50,9 +53,6 @@ class LoginViewModelTest {
     @MockK
     lateinit var lazyWorkManager: Lazy<WorkManager>
 
-    @RelaxedMockK
-    lateinit var symmetricKeyUtils: SymmetricKeyUtils
-
     @MockK
     lateinit var settingsDataStore: SettingsDataStore
 
@@ -71,7 +71,8 @@ class LoginViewModelTest {
     private lateinit var sessionKeyHolder: SessionKeyHolderImpl
     private lateinit var keystoreGateway: FakeKeystoreGateway
     private lateinit var viewModel: LoginViewModel
-
+    private val backupPasswordRegistry = BackupPasswordRegistry()
+    private val sessionLockReasonStore = SessionLockReasonStore()
 
     @Before
     fun setUp() {
@@ -88,15 +89,32 @@ class LoginViewModelTest {
     private fun createViewModel(isDebug: Boolean) = LoginViewModel(
         userDetailsRepository = userDetailsRepository,
         workManager = lazyWorkManager,
-        symmetricKeyUtils = symmetricKeyUtils,
+        backupPasswordRegistry = backupPasswordRegistry,
         settingsDataStore = settingsDataStore,
         analyticsHelper = analyticsHelper,
         activeSessionManager = activeSessionManager,
         deviceSecurityStatus = deviceSecurityStatus,
         sessionKeyHolder = sessionKeyHolder,
         keystoreGateway = keystoreGateway,
+        sessionLockReasonStore = sessionLockReasonStore,
         isDebug = isDebug,
     )
+
+    @Test
+    fun initialUiState_whenNothingClearedTheSession_shouldShowNoLockReason() {
+        assertThat(viewModel.uiState.value.lockReason).isNull()
+    }
+
+    @Test
+    fun initialUiState_afterAnAwayTimeout_shouldShowTheReasonAndConsumeIt() {
+        sessionLockReasonStore.record(SessionLockReason.AWAY_TIMEOUT)
+
+        val afterTimeout = createViewModel(isDebug = false)
+
+        assertThat(afterTimeout.uiState.value.lockReason).isEqualTo(SessionLockReason.AWAY_TIMEOUT)
+        // The next login screen (a later lock that recorded nothing) shows no banner.
+        assertThat(createViewModel(isDebug = false).uiState.value.lockReason).isNull()
+    }
 
     @Test
     fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() {
@@ -186,11 +204,9 @@ class LoginViewModelTest {
     fun `onLoginClicked with correct password and auto backup enabled starts backup work`() =
         runTest {
             val password = "password"
-            val encryptedPassword = "encryptedPassword"
 
             coEvery { userDetailsRepository.checkPassword(password) } returns true
             coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
-            every { symmetricKeyUtils.encrypt(password) } returns encryptedPassword
 
             viewModel.uiState.test {
                 awaitItem()
@@ -203,13 +219,15 @@ class LoginViewModelTest {
                     workManager.enqueueUniqueWork(
                         eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
                         eq(ExistingWorkPolicy.APPEND_OR_REPLACE),
-                        capture(requestSlot)
+                        capture(requestSlot),
                     )
                 }
-                verify { symmetricKeyUtils.encrypt(password) }
-                assertThat(
-                    requestSlot.captured.workSpec.input.getString(CommonConstants.BACKUP_PARAM_PASSWORD)
-                ).isEqualTo(encryptedPassword)
+                // The password reaches the worker through the registry, never through input data.
+                val request = requestSlot.captured
+                assertThat(backupPasswordRegistry.take(request.id)).isEqualTo(password.toCharArray())
+                assertThat(request.workSpec.input.keyValueMap.values).doesNotContain(password)
+                assertThat(request.workSpec.input.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, true))
+                    .isFalse()
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
@@ -502,19 +520,20 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun passwordLogin_withAutoBackup_shouldOpenTheSessionBeforeEncryptingTheWorkerPassword() = runTest {
+    fun passwordLogin_withAutoBackup_shouldOpenTheSessionBeforeEnqueuingTheWorker() = runTest {
+        // The worker reads every record through the holder and may start at once.
         coEvery { userDetailsRepository.checkPassword("password") } returns true
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
-        var sessionOpenAtEncrypt = false
-        every { symmetricKeyUtils.encrypt("password") } answers {
-            sessionOpenAtEncrypt = sessionKeyHolder.isUnlocked.value
-            "encrypted"
+        var sessionOpenAtEnqueue = false
+        every { workManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>()) } answers {
+            sessionOpenAtEnqueue = sessionKeyHolder.isUnlocked.value
+            mockk()
         }
 
         viewModel.onAction(LoginScreenAction.LoginClicked("password"))
         advanceUntilIdle()
 
-        assertThat(sessionOpenAtEncrypt).isTrue()
+        assertThat(sessionOpenAtEnqueue).isTrue()
     }
 
     @Test

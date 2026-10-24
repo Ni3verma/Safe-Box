@@ -14,9 +14,10 @@ import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.KeystoreGateway
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.core.SessionLockReasonStore
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.andryoga.safebox.worker.BackupPasswordRegistry
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,16 +31,21 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: Lazy<WorkManager>,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
     private val activeSessionManager: ActiveSessionManager,
     private val deviceSecurityStatus: DeviceSecurityStatus,
     private val sessionKeyHolder: SessionKeyHolder,
     private val keystoreGateway: KeystoreGateway,
+    sessionLockReasonStore: SessionLockReasonStore,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
+    private val _uiState = MutableStateFlow(
+        // One ViewModel per arrival on Login: consumed here, rotation keeps the banner, the next
+        // arrival does not see it.
+        LoginUiState(lockReason = sessionLockReasonStore.consume()),
+    )
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -146,8 +152,8 @@ class LoginViewModel @Inject constructor(
             Timber.i("is password correct: $isPasswordCorrect")
 
             if (isPasswordCorrect) {
-                // The session must be open before the enqueue below: the worker's password
-                // parameter is encrypted through SymmetricKeyUtils, which reads the holder.
+                // The session must be open before the enqueue below: the worker reads every
+                // record through the holder and may start at once.
                 if (!openLegacySession()) return@launch
                 if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
                     Timber.i("enqueuing auto backup request after login with pswrd")
@@ -155,7 +161,7 @@ class LoginViewModel @Inject constructor(
                         password = password,
                         showBackupStartNotification = false,
                         workManager = workManager.get(),
-                        symmetricKeyUtils
+                        backupPasswordRegistry = backupPasswordRegistry,
                     )
                 } else {
                     Timber.i("auto backup disabled from settings")

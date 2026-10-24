@@ -5,6 +5,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
+import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
@@ -19,6 +20,7 @@ import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
 import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
 import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
 import com.andryoga.safebox.data.repository.UserDetailsRepositoryImpl
+import com.andryoga.safebox.data.repository.VaultRepositoryImpl
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -26,6 +28,7 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import dagger.Module
@@ -59,6 +62,15 @@ object RepositoryModule {
             settingsDataStore,
             analyticsHelper,
         )
+    }
+
+    @Singleton
+    @Provides
+    fun provideVaultRepo(
+        vaultMetaDao: VaultMetaDao,
+        userDetailsDao: UserDetailsDao,
+    ): VaultRepository {
+        return VaultRepositoryImpl(vaultMetaDao, userDetailsDao)
     }
 
     @ExperimentalCoroutinesApi

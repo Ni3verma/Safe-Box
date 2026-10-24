@@ -143,8 +143,7 @@
     <string name="micr_code">MICR-Code</string>
     <string name="welcome_back">Willkommen zurück!</string>
     <string name="welcome">Willkommen!</string>
-    <string name="timeout_dialog_message">Sie waren zu lange inaktiv. Bitte tippen Sie auf OK, um sich erneut anzumelden</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Sie waren abwesend — bitte erneut entsperren.</string>
     <string name="created_on">Erstellt am</string>
     <string name="updated_on">Aktualisiert am</string>
     <string name="add_a_new_record">Neuen Eintrag hinzufügen</string>

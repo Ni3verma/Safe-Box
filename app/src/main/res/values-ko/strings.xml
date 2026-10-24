@@ -143,8 +143,7 @@
     <string name="micr_code">MICR 코드</string>
     <string name="welcome_back">다시 오신 것을 환영합니다!</string>
     <string name="welcome">환영합니다!</string>
-    <string name="timeout_dialog_message">오랫동안 자리를 비우셨습니다. 확인을 눌러 앱에 다시 로그인해 주세요</string>
-    <string name="timeout_dialog_positive_button_text">확인</string>
+    <string name="login_away_banner">자리를 비우셨습니다 — 다시 잠금을 해제하세요.</string>
     <string name="created_on">생성일</string>
     <string name="updated_on">수정일</string>
     <string name="add_a_new_record">새 항목 추가</string>

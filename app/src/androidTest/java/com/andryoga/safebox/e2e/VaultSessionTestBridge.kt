@@ -46,7 +46,11 @@ object VaultSessionTestBridge {
         entryPoint.sessionKeyHolder().setLegacySession(legacyKey)
     }
 
-    /** Locks the vault, as the session lifecycle will once MR 4 wires `clearSessionKey()`. */
+    /**
+     * Locks the vault the way an explicit lock does: the key is cleared and no reason is recorded,
+     * so the login screen that follows shows no banner. The away timeout is driven through
+     * `ActiveSessionManager` instead, which records `AWAY_TIMEOUT` first.
+     */
     fun lockVault() {
         entryPoint.sessionKeyHolder().clearSessionKey()
     }

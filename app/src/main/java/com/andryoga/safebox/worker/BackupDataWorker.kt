@@ -21,7 +21,6 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION
-import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_PASSWORD
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
@@ -38,7 +37,7 @@ import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -62,7 +61,7 @@ class BackupDataWorker
 @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
@@ -83,20 +82,35 @@ class BackupDataWorker
     private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
+        // Taken first so no early return leaves it registered; zeroed in finally.
+        val password = backupPasswordRegistry.take(id)
+        try {
+            return if (password == null) {
+                onBackupFailure(BackupFailureReason.SESSION_LOCKED, null)
+            } else {
+                backupWithPassword(password)
+            }
+        } finally {
+            password?.fill(NUL)
+        }
+    }
+
+    private suspend fun backupWithPassword(password: CharArray): Result {
         return try {
             val backupMetadata = backupMetadataRepository.getBackupMetadata().first()
             if (backupMetadata == null) {
                 Timber.i("backup metadata not found")
                 Result.success()
             } else {
-                backup(backupMetadata)
+                backup(backupMetadata, password)
             }
         } catch (exception: CancellationException) {
             // The work was stopped (constraints, cancel, system limit), not failed. WorkManager
             // catches this and reschedules the work; reporting it as UNKNOWN would notify the user.
             throw exception
+        } catch (exception: SessionLockedException) {
+            onBackupFailure(BackupFailureReason.SESSION_LOCKED, exception)
         } catch (exception: Exception) {
-            // TODO(MR4): SessionLockedException maps to BackupFailureReason.SESSION_LOCKED and the work is cancelled on lock
             onBackupFailure(BackupFailureReason.UNKNOWN, exception)
         }
     }
@@ -108,15 +122,13 @@ class BackupDataWorker
      * folder is touched, so an empty vault can never clear the folder setting. The folder
      * pre-check runs before encryption, so a dead folder costs no crypto work.
      *
+     * @param password the backup file password, registered by whoever enqueued this work.
      * @return [Result.success] only when a backup file was written, otherwise
      * [Result.failure] carrying a [BackupFailureReason].
      */
-    private suspend fun backup(backupMetadata: BackupPathData): Result {
+    private suspend fun backup(backupMetadata: BackupPathData, password: CharArray): Result {
         startTime = System.currentTimeMillis()
         val backupStartedAt = startTime
-
-        val inputPassword = inputData.getString(BACKUP_PARAM_PASSWORD)
-            ?: throw IllegalArgumentException("expected password input was not received")
 
         val loginData = loginDataDaoSecure.exportAllData()
         val bankAccountData = bankAccountDataDaoSecure.exportAllData()
@@ -168,7 +180,7 @@ class BackupDataWorker
 
         populateExportMapWithData(
             loginData,
-            inputPassword,
+            password,
             bankAccountData,
             bankCardData,
             secureNoteData,
@@ -242,7 +254,12 @@ class BackupDataWorker
         reason: BackupFailureReason,
         exception: Exception?,
     ): Result {
-        Timber.e(exception, "$localTag backup failed, reason = $reason")
+        if (reason == BackupFailureReason.SESSION_LOCKED) {
+            // An expected state, not a defect: no non-fatal for it.
+            Timber.i("$localTag backup abandoned, the vault is locked")
+        } else {
+            Timber.e(exception, "$localTag backup failed, reason = $reason")
+        }
         analyticsHelper.logEvent(AnalyticsKey.BACKUP_DATA_FAILURE) {
             param(AnalyticsParam.REASON, reason.name)
             param(AnalyticsParam.MESSAGE, exception?.message.orEmpty())
@@ -254,7 +271,10 @@ class BackupDataWorker
             BackupFailureReason.FOLDER_INACCESSIBLE -> R.string.notification_backup_failure
             BackupFailureReason.WRITE_FAILED -> R.string.backup_write_failed_message
             BackupFailureReason.UNKNOWN -> R.string.backup_unknown_error_message
-            BackupFailureReason.NOTHING_TO_BACKUP -> null
+            // Nothing to tell the user: an empty vault, or a lock already taking them to Login.
+            BackupFailureReason.NOTHING_TO_BACKUP,
+            BackupFailureReason.SESSION_LOCKED,
+            -> null
         }
         notificationRes?.let {
             sendNotification(getNotificationOptions(applicationContext.getString(it)))
@@ -264,29 +284,29 @@ class BackupDataWorker
 
     private fun populateExportMapWithData(
         loginData: List<ExportLoginData>,
-        inputPassword: String,
+        password: CharArray,
         bankAccountData: List<ExportBankAccountData>,
         bankCardData: List<ExportBankCardData>,
         secureNoteData: List<ExportSecureNoteData>,
         authenticatorData: List<ExportAuthenticatorData>,
     ) {
-        exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, inputPassword)
+        exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, password)
         recordTime("got login data byte array")
 
         exportMap[CommonConstants.BANK_ACCOUNT_DATA_KEY] =
-            encryptBankAccountData(bankAccountData, inputPassword)
+            encryptBankAccountData(bankAccountData, password)
         recordTime("got bank account data byte array")
 
         exportMap[CommonConstants.BANK_CARD_DATA_KEY] =
-            encryptBankCardData(bankCardData, inputPassword)
+            encryptBankCardData(bankCardData, password)
         recordTime("got bank card data byte array")
 
         exportMap[CommonConstants.SECURE_NOTE_DATA_KEY] =
-            encryptSecureNoteData(secureNoteData, inputPassword)
+            encryptSecureNoteData(secureNoteData, password)
         recordTime("got secure note data byte array")
 
         exportMap[CommonConstants.AUTHENTICATOR_DATA_KEY] =
-            encryptAuthenticatorData(authenticatorData, inputPassword)
+            encryptAuthenticatorData(authenticatorData, password)
         recordTime("got authenticator data byte array")
 
         exportMap[CommonConstants.CREATION_DATE_KEY] =
@@ -361,12 +381,12 @@ class BackupDataWorker
 
     private fun encryptLoginData(
         data: List<ExportLoginData>,
-        inputPassword: String
+        password: CharArray,
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportLoginData.serializer()), data)
             return passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                password,
                 json.toByteArray(),
                 salt,
                 iv,
@@ -378,12 +398,12 @@ class BackupDataWorker
 
     private fun encryptBankAccountData(
         data: List<ExportBankAccountData>,
-        inputPassword: String
+        password: CharArray,
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportBankAccountData.serializer()), data)
             return passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                password,
                 json.toByteArray(),
                 salt,
                 iv,
@@ -395,12 +415,12 @@ class BackupDataWorker
 
     private fun encryptBankCardData(
         data: List<ExportBankCardData>,
-        inputPassword: String
+        password: CharArray,
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportBankCardData.serializer()), data)
             return passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                password,
                 json.toByteArray(),
                 salt,
                 iv,
@@ -412,12 +432,12 @@ class BackupDataWorker
 
     private fun encryptSecureNoteData(
         data: List<ExportSecureNoteData>,
-        inputPassword: String
+        password: CharArray,
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json = Json.encodeToString(ListSerializer(ExportSecureNoteData.serializer()), data)
             return passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                password,
                 json.toByteArray(),
                 salt,
                 iv,
@@ -431,18 +451,18 @@ class BackupDataWorker
      * Serializes and encrypts the list of TOTP authenticators using password-based encryption.
      *
      * @param data The authenticator records to encrypt.
-     * @param inputPassword The user-supplied backup password (encrypted with symmetric key).
+     * @param password The user-supplied backup password.
      * @return Encrypted byte array payload, or null if the record list is empty.
      */
     private fun encryptAuthenticatorData(
         data: List<ExportAuthenticatorData>,
-        inputPassword: String,
+        password: CharArray,
     ): ByteArray? {
         if (data.isNotEmpty()) {
             val json =
                 Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), data)
             return passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                password,
                 json.toByteArray(),
                 salt,
                 iv,
@@ -488,27 +508,31 @@ class BackupDataWorker
         /** `size_kb` when the document provider cannot report the written file's length. */
         private const val UNKNOWN_SIZE = -1L
 
+        private const val NUL = '\u0000'
+
+        /**
+         * Registers [password] under the request id, then enqueues: the worker may start at once.
+         *
+         * @return the work id, for observing the request.
+         */
         fun enqueueRequest(
             password: String,
             showBackupStartNotification: Boolean,
             workManager: WorkManager,
-            symmetricKeyUtils: SymmetricKeyUtils
+            backupPasswordRegistry: BackupPasswordRegistry,
         ): UUID {
             val backupDataRequest = OneTimeWorkRequestBuilder<BackupDataWorker>()
                 .setInputData(
                     Data.Builder()
-                        .putString(
-                            BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(password)
-                        )
                         .putBoolean(
                             BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
-                            showBackupStartNotification
+                            showBackupStartNotification,
                         )
-                        .build()
+                        .build(),
                 )
                 .build()
 
+            backupPasswordRegistry.put(backupDataRequest.id, password)
             workManager.enqueueUniqueWork(
                 CommonConstants.WORKER_NAME_BACKUP_DATA,
                 ExistingWorkPolicy.APPEND_OR_REPLACE,

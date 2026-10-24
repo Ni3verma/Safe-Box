@@ -10,6 +10,9 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.security.CryptoTestFixtures
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.google.common.truth.Truth.assertThat
 import dagger.Lazy
@@ -18,6 +21,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -28,6 +32,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class ActiveSessionManagerTest {
@@ -43,27 +48,90 @@ class ActiveSessionManagerTest {
 
     private val analyticsHelper = FakeAnalyticsHelper()
     private val lifecycleOwner = mockk<LifecycleOwner>()
+    private val sessionKeyHolder = SessionKeyHolderImpl()
+    private val sessionLockReasonStore = SessionLockReasonStore()
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
         every { settingsDataStore.awayTimeoutSecFlow } returns flowOf(TIMEOUT_SEC)
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns flowOf(emptyList())
+        sessionKeyHolder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
     }
 
     @Test
-    fun onStop_afterTimeout_shouldEmitLogoutThenLogSessionTimeoutWithNoWorkerRunning() = runTest {
+    fun onStop_afterTimeout_shouldClearTheSessionKeyAndRecordTheAwayReason() = runTest {
         val manager = createManager()
-        val logouts = collectLogouts(manager)
+        val locks = collectLockEvents()
 
         manager.onStop(lifecycleOwner)
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        assertThat(logouts).hasSize(1)
-        val event = analyticsHelper.loggedEvents.single()
-        assertThat(event.key).isEqualTo(AnalyticsKey.SESSION_TIMEOUT)
-        assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(locks).hasSize(1)
+        assertThat(sessionLockReasonStore.consume()).isEqualTo(SessionLockReason.AWAY_TIMEOUT)
+    }
+
+    @Test
+    fun onStop_afterTimeout_shouldLogSessionTimeoutOnceWithNoWorkerRunning() = runTest {
+        val manager = createManager()
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+
+        val timeout = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
+        assertThat(timeout.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun onStop_afterTimeout_shouldRecordTheReasonBeforeClearingTheKey() = runTest {
+        // The gate navigates on the clear and Login reads the reason on arrival, so the reason
+        // must already be there when the holder reports locked.
+        var reasonAtLock: SessionLockReason? = null
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            sessionKeyHolder.lockEvents.collect { reasonAtLock = sessionLockReasonStore.consume() }
+        }
+        val manager = createManager()
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+
+        assertThat(reasonAtLock).isEqualTo(SessionLockReason.AWAY_TIMEOUT)
+    }
+
+    @Test
+    fun onStop_afterTimeoutInALegacySession_shouldClearTheSessionAndRecordTheAwayReason() = runTest {
+        sessionKeyHolder.setLegacySession(CryptoTestFixtures.TEST_AES_KEY_256)
+        val manager = createManager()
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(sessionKeyHolder.isLegacySession).isFalse()
+        assertThat(sessionLockReasonStore.consume()).isEqualTo(SessionLockReason.AWAY_TIMEOUT)
+        assertThat(analyticsHelper.count(AnalyticsKey.SESSION_TIMEOUT)).isEqualTo(1)
+    }
+
+    @Test
+    fun onStop_afterTimeoutWhileAlreadyLocked_shouldRecordNoReasonAndLogNothing() = runTest {
+        // The login screen was showing: nothing to lock, and a stale reason must not greet the
+        // login after the next session.
+        sessionKeyHolder.clearSessionKey()
+        val manager = createManager()
+        val locks = collectLockEvents()
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+
+        assertThat(locks).isEmpty()
+        assertThat(sessionLockReasonStore.consume()).isNull()
+        assertThat(analyticsHelper.loggedEvents).isEmpty()
     }
 
     @Test
@@ -78,8 +146,7 @@ class ActiveSessionManagerTest {
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        val event = analyticsHelper.loggedEvents.single()
-        assertThat(event.key).isEqualTo(AnalyticsKey.SESSION_TIMEOUT)
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
         assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(true)
     }
 
@@ -95,31 +162,62 @@ class ActiveSessionManagerTest {
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        val event = analyticsHelper.loggedEvents.single()
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
         assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
     }
 
     @Test
-    fun onStop_whenWorkManagerThrows_shouldStillLogoutAndLogSessionTimeout() = runTest {
+    fun onStop_whenWorkManagerThrows_shouldStillLockAndLogSessionTimeout() = runTest {
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } throws
             IllegalStateException("WorkManager is not initialized properly")
         val manager = createManager()
-        val logouts = collectLogouts(manager)
 
         manager.onStop(lifecycleOwner)
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        assertThat(logouts).hasSize(1)
-        val event = analyticsHelper.loggedEvents.single()
-        assertThat(event.key).isEqualTo(AnalyticsKey.SESSION_TIMEOUT)
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
         assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
     }
 
     @Test
-    fun onStart_beforeTimeout_shouldNeitherLogoutNorLogSessionTimeout() = runTest {
+    fun onStop_whenTheWorkerStateReadHangs_shouldStillLockOnceTheReadBoundElapses() = runTest {
+        every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns MutableSharedFlow()
         val manager = createManager()
-        val logouts = collectLogouts(manager)
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        advanceTimeBy(READ_BOUND)
+        runCurrent()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
+        assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
+    }
+
+    @Test
+    fun onStart_duringTheWorkerStateRead_shouldNotRescueTheSession() = runTest {
+        // The timer has elapsed: a foreground return inside the telemetry read must not undo the lock.
+        every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns MutableSharedFlow()
+        val manager = createManager()
+
+        manager.onStop(lifecycleOwner)
+        advanceTimeBy(TIMEOUT_SEC.seconds)
+        runCurrent()
+        manager.onStart(lifecycleOwner)
+        advanceTimeBy(READ_BOUND)
+        runCurrent()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(sessionLockReasonStore.consume()).isEqualTo(SessionLockReason.AWAY_TIMEOUT)
+    }
+
+    @Test
+    fun onStart_beforeTimeout_shouldNeitherLockNorLogSessionTimeout() = runTest {
+        val manager = createManager()
 
         manager.onStop(lifecycleOwner)
         advanceTimeBy((TIMEOUT_SEC - 1).seconds)
@@ -127,21 +225,21 @@ class ActiveSessionManagerTest {
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        assertThat(logouts).isEmpty()
+        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        assertThat(sessionLockReasonStore.consume()).isNull()
         assertThat(analyticsHelper.loggedEvents).isEmpty()
     }
 
     @Test
-    fun onStop_whilePaused_shouldNeitherLogoutNorLogSessionTimeout() = runTest {
+    fun onStop_whilePaused_shouldNeitherLockNorLogSessionTimeout() = runTest {
         val manager = createManager()
-        val logouts = collectLogouts(manager)
 
         manager.setPaused(true)
         manager.onStop(lifecycleOwner)
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
 
-        assertThat(logouts).isEmpty()
+        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
         assertThat(analyticsHelper.loggedEvents).isEmpty()
     }
 
@@ -152,22 +250,25 @@ class ActiveSessionManagerTest {
             settingsDataStore = settingsDataStore,
             analyticsHelper = analyticsHelper,
             workManager = Lazy { workManager },
+            sessionKeyHolder = sessionKeyHolder,
+            sessionLockReasonStore = sessionLockReasonStore,
         )
         // lets init consume the timeout setting before any test drives the lifecycle
         runCurrent()
         return manager
     }
 
-    private fun TestScope.collectLogouts(manager: ActiveSessionManager): List<Unit> {
-        val logouts = mutableListOf<Unit>()
+    private fun TestScope.collectLockEvents(): List<Unit> {
+        val locks = mutableListOf<Unit>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            manager.logoutEvent.collect { logouts.add(it) }
+            sessionKeyHolder.lockEvents.collect { locks.add(it) }
         }
         runCurrent()
-        return logouts
+        return locks
     }
 
     private companion object {
         const val TIMEOUT_SEC = 7
+        val READ_BOUND = 500.milliseconds
     }
 }

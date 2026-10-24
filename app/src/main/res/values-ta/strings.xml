@@ -150,8 +150,7 @@
     <string name="micr_code">MICR குறியீடு</string>
     <string name="welcome_back">மீண்டும் வருக!</string>
     <string name="welcome">வருக!</string>
-    <string name="timeout_dialog_message">நீங்கள் நீண்ட நேரம் செயலியை விட்டு விலகியிருந்தீர்கள். மீண்டும் உள்நுழைய சரி என்பதைக் கிளிக் செய்யவும்</string>
-    <string name="timeout_dialog_positive_button_text">சரி</string>
+    <string name="login_away_banner">நீங்கள் சிறிது நேரம் விலகியிருந்தீர்கள் — மீண்டும் திறக்கவும்.</string>
     <string name="created_on">உருவாக்கப்பட்ட தேதி</string>
     <string name="updated_on">புதுப்பிக்கப்பட்ட தேதி</string>
     <string name="add_a_new_record">புதிய பதிவைச் சேர்</string>

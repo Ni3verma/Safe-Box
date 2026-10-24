@@ -48,6 +48,10 @@ class UserDetailsDaoSecure @Inject constructor(
         userDetailsDao.updateHint(storedForm(hint), updateDate)
     }
 
+    override suspend fun getUserCount(): Int {
+        return userDetailsDao.getUserCount()
+    }
+
     /**
      * The hint's on-disk form follows `vault_meta.crypto_version`: ciphertext under
      * the legacy key for a legacy vault, plaintext for an envelope vault. Writers consult the row

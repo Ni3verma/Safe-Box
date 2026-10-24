@@ -324,30 +324,14 @@ object E2ETestUtils {
     }
 
     /**
-     * Dismisses any active timeout dialog, verifies the [LoginScreen] or unlocked [RecordsScreen],
-     * inputs the [TEST_MASTER_PASSWORD], and waits for the Home screen to render.
+     * Verifies the [LoginScreen] or unlocked [RecordsScreen], inputs the [TEST_MASTER_PASSWORD],
+     * and waits for the Home screen to render.
      */
     fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
         val welcomeBackText = context.getString(R.string.welcome_back)
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
         composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
-                val timeoutNodes = composeTestRule.onAllNodes(
-                    hasText(context.getString(R.string.timeout_dialog_message)),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes()
-                if (timeoutNodes.isNotEmpty()) {
-                    val btnNodes = composeTestRule.onAllNodes(
-                        hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes()
-                    if (btnNodes.isNotEmpty()) {
-                        composeTestRule.onAllNodes(
-                            hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
-                            useUnmergedTree = true
-                        ).onFirst().performClick()
-                    }
-                }
                 val isWelcome = composeTestRule.onAllNodes(
                     hasText(welcomeBackText),
                     useUnmergedTree = true
