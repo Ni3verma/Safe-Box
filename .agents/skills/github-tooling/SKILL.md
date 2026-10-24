@@ -18,6 +18,22 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+## Opening a PR: title only, never a body
+
+The `PR Agent (Gemini)` workflow writes the description from the diff and the commits on every PR,
+so a hand-written body is overwritten work (owner instruction after #302, 2026-10-21 — AGENTS.md
+*Pull Requests*). Create with an empty body; `gh` would otherwise open an editor or prompt:
+
+```bash
+gh pr create --base feature/envelope-encryption --head <branch> --title "<type>(<scope>): <summary>" --body ""
+```
+
+Everything a rule used to want "in the PR description" belongs in the **commit message**, which
+the bot reads: new `AnalyticsParam` names, a child MR's `TODO(MR n)` inventory, `Part of #n`.
+Human notes that must accompany the PR (manual test results, a reasoned reply to a bot finding) go
+in a PR comment. The token has `Pull requests: write`, so `gh pr create` and `gh pr comment` work;
+the push itself still has to be done by the user.
+
 ## A new `workflow_dispatch` workflow cannot be run before it merges
 
 GitHub resolves workflows from the **default branch**. A workflow file that exists only on a feature

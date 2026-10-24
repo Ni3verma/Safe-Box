@@ -150,8 +150,7 @@
     <string name="micr_code">Kod MICR</string>
     <string name="welcome_back">Witamy ponownie!</string>
     <string name="welcome">Witamy!</string>
-    <string name="timeout_dialog_message">Twoja nieaktywność trwała zbyt długo. Kliknij OK, aby ponownie zalogować się do aplikacji</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Po dłuższej nieobecności — odblokuj ponownie.</string>
     <string name="created_on">Utworzono</string>
     <string name="updated_on">Zaktualizowano</string>
     <string name="add_a_new_record">Dodaj nowy wpis</string>

@@ -15,13 +15,13 @@ results into an ADR under `docs/decisions/` so the design is planned against evi
 |---|---|---|---|
 | `login_success` (existing) | `LoginViewModel.onAuthSuccess` | adds `device_secure`, `biometric_class`, `strongbox`, read through `DeviceSecurityStatus` | per unlock; a failed read degrades the value, never the login |
 | `record_decrypt_failure` | `DecryptFailureReportingSymmetricKeyUtils.decrypt`, the decorator `SecurityModule` wraps around `SymmetricKeyUtilsImpl` | `exception` (simple class name) | once per exception class per process; the exception is rethrown unchanged. A Crashlytics non-fatal with the stack is recorded at the same time |
-| `keystore_key_created` | `SecurityModule.provideSymmetricKey`, exactly where the alias is found absent | `db_exists` | once per key generation. `db_exists = 1` is the silent-data-loss signature: a vault file exists but the key that encrypted it is gone |
+| `keystore_key_created` | `SecurityModule.provideSymmetricKey`, exactly where the alias is found absent — **on `master` only**: envelope MR 3 (2026-10-21) removed the provider and the event from `feature/envelope-encryption`, so the number this row measures is the one to quote before that branch ships | `db_exists` | once per key generation. `db_exists = 1` is the silent-data-loss signature: a vault file exists but the key that encrypted it is gone |
 | `vault_stats` | `RecordsViewModel`, on the first record list of the ViewModel | `record_count`, `db_size_kb`, `free_space_mb` (both `-1` when the storage read fails) | once per unlock session |
 | `forgot_password_click` | `LoginViewModel` | — | per tap, before any device-security check |
 | `device_security_required_dialog_show` and its `*_open_settings_click`, `*_open_settings_fail`, `*_cancel_click`; `update_password_dialog_show`, `*_allow_click`, `*_cancel_click` (all existing) | `LoginViewModel`, `SettingsViewModel` | adds `source` ∈ {`login`, `settings`} | unchanged; the param tells the forgot-password flow from a routine password change |
 | `backup_data_success` (existing) | `BackupDataWorker` | adds `version`, `duration_ms`, `size_kb` (`-1` when the document provider cannot report a length) | per completed backup |
 | `restore_data_success` (existing) | `RestoreDataWorker` | adds `version`, `duration_ms` | per completed restore |
-| `session_timeout` | `ActiveSessionManager`, after the logout event is emitted | `worker_running` | per away-timeout; a WorkManager read failure logs `0` |
+| `session_timeout` | `ActiveSessionManager`, when the away timeout locks the vault (since envelope MR 4: read just before the clear, after which a running worker fails closed at its next use of the key) | `worker_running` | per timeout that locked a session; a failed or slow (> 500 ms) WorkManager read logs `0` |
 
 Wire values: `device_secure`, `strongbox`, `db_exists`, `worker_running` arrive as `0`/`1`;
 `biometric_class` is `BiometricClass.analyticsValue` (`strong`, `weak_only`, `none_enrolled`,
@@ -40,9 +40,9 @@ the non-fatal's stack trace, which names the DAO.
 | Does the Keystore alias disappear in the field? | `keystore_key_created` with `db_exists = 1` | the real frequency of the silent-data-loss path; a number to quote, nothing to delete |
 | How big are vaults, how full are phones? | P50 / P95 of `record_count`, `db_size_kb`, `free_space_mb` from `vault_stats` | P95 `record_count` under 200 means indeterminate progress only; nobody under 100 MB free means the free-space precheck stays but its copy goes |
 | Does StrongBox matter? | `login_success` share with `strongbox = 1` | whether StrongBox timing needs its own spike |
-| How often is forgot-password used, and on which Android versions? | `forgot_password_click` and `update_password_dialog_allow_click` with `source = login`, split by GA's *OS version* dimension (`device.operating_system_version` in BigQuery) | recovery usage on API 24–29 near zero drops the time-bound credential path and everything that exists only for it |
+| How often is forgot-password used, and on which Android versions? | `forgot_password_click` and `update_password_dialog_allow_click` with `source = login`, split by GA's *OS version* dimension (`device.operating_system_version` in BigQuery) | recovery usage on API 29 near zero drops the time-bound credential path and everything that exists only for it |
 | Which backup formats circulate; how long do backup and restore take? | `version` and `duration_ms` on both success events, `size_kb` on `backup_data_success` only | sizes the PBKDF2 budget of the next format and sets the horizon for dropping the legacy reader |
-| Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means cancel-on-lock stays but its dialog state can be a toast |
+| Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means fail-closed alone keeps being enough (envelope MR 4 ships no cancel-on-lock and no dialog state) |
 
 ## Query recipes
 

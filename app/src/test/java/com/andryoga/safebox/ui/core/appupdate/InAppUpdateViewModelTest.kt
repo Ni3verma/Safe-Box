@@ -6,16 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
-import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -33,7 +32,7 @@ import org.junit.Test
 
 /**
  * Covers the in-app update policy: when the consent sheet is requested, the once-per-version and
- * once-per-process bounds, restart and silent install behaviour, the away-timeout lock, and every
+ * once-per-process bounds, restart and silent install behaviour, the session lock, and every
  * analytics key the feature logs.
  *
  * A fresh [InAppUpdateSessionGuard] stands for a new process. Reusing the guard with a new
@@ -47,9 +46,8 @@ class InAppUpdateViewModelTest {
 
     private val appUpdateController = FakeAppUpdateController()
     private var sessionGuard = InAppUpdateSessionGuard()
-    private val logoutEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    private val activeSessionManager: ActiveSessionManager = mockk {
-        every { logoutEvent } returns logoutEvents
+    private val sessionKeyHolder = SessionKeyHolderImpl().apply {
+        setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
     }
     private val preferenceProvider = FakePreferenceProvider()
     private val analyticsHelper = FakeAnalyticsHelper()
@@ -140,17 +138,6 @@ class InAppUpdateViewModelTest {
         runCurrent()
 
         assertThat(viewModel.uiState.value.promptVersionCode).isNull()
-    }
-
-    @Test
-    fun launchUpdateFlow_shouldNotPauseSessionTimer() = runTest {
-        appUpdateController.updateStates.emit(AppUpdateState.Available(42))
-        val viewModel = subscribedViewModel()
-
-        viewModel.onAction(InAppUpdateAction.OnReadyToLaunchUpdateFlow(launcher))
-        runCurrent()
-
-        verify(exactly = 0) { activeSessionManager.setPaused(any()) }
     }
 
     @Test
@@ -465,12 +452,13 @@ class InAppUpdateViewModelTest {
     }
 
     @Test
-    fun awayTimeoutInHomeGraph_shouldCompleteDownloadedUpdateSilently() = runTest {
+    fun sessionLockInHomeGraph_shouldCompleteDownloadedUpdateSilently() = runTest {
         appUpdateController.updateStates.emit(AppUpdateState.Downloaded)
         val viewModel = subscribedViewModel()
         assertThat(viewModel.uiState.value.showRestartPrompt).isTrue()
 
-        logoutEvents.emit(Unit)
+        // Whoever clears the key: the away timeout today, any other lock later.
+        sessionKeyHolder.clearSessionKey()
         runCurrent()
 
         assertThat(viewModel.uiState.value.showRestartPrompt).isFalse()
@@ -478,10 +466,10 @@ class InAppUpdateViewModelTest {
     }
 
     @Test
-    fun awayTimeoutOnLoginScreen_shouldNotBlockNextUnlock() = runTest {
+    fun sessionLockOnLoginScreen_shouldNotBlockNextUnlock() = runTest {
         appUpdateController.updateStates.emit(AppUpdateState.Available(42))
         val viewModel = subscribedViewModel(isInHomeGraph = false)
-        logoutEvents.emit(Unit)
+        sessionKeyHolder.clearSessionKey()
         runCurrent()
 
         viewModel.onAction(InAppUpdateAction.OnHomeGraphStateChanged(true))
@@ -497,7 +485,7 @@ class InAppUpdateViewModelTest {
     private fun TestScope.createViewModel() = InAppUpdateViewModel(
         appUpdateController = appUpdateController,
         sessionGuard = sessionGuard,
-        activeSessionManager = activeSessionManager,
+        sessionKeyHolder = sessionKeyHolder,
         preferenceProvider = preferenceProvider,
         analyticsHelper = analyticsHelper,
         applicationScope = backgroundScope,

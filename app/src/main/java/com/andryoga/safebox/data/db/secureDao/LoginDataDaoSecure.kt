@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.common.Utils.decryptNullableString
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.docs.SearchLoginData
@@ -26,6 +27,7 @@ class LoginDataDaoSecure @Inject constructor(
     override fun getAllLoginData(): Flow<List<SearchLoginData>> {
         return loginDataDao.getAllLoginData()
             .map { SearchLoginData.decrypt(it, symmetricKeyUtils) }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getLoginDataByKey(key: Int): LoginDataEntity {

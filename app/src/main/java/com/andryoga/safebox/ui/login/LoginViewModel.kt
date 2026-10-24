@@ -12,9 +12,12 @@ import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.ActiveSessionManager
+import com.andryoga.safebox.ui.core.SessionLockReasonStore
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.andryoga.safebox.worker.BackupPasswordRegistry
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,14 +31,21 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val workManager: Lazy<WorkManager>,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
     private val activeSessionManager: ActiveSessionManager,
     private val deviceSecurityStatus: DeviceSecurityStatus,
+    private val sessionKeyHolder: SessionKeyHolder,
+    private val keystoreGateway: KeystoreGateway,
+    sessionLockReasonStore: SessionLockReasonStore,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
+    private val _uiState = MutableStateFlow(
+        // One ViewModel per arrival on Login: consumed here, rotation keeps the banner, the next
+        // arrival does not see it.
+        LoginUiState(lockReason = sessionLockReasonStore.consume()),
+    )
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -94,6 +104,10 @@ class LoginViewModel @Inject constructor(
         Timber.i("resetting master password and hint from login screen")
         logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         viewModelScope.launch {
+            // The device credential has already authenticated the user; the session opens first
+            // because the hint rewrite below needs the legacy key and a lost key must end in
+            // LEGACY_KEY_LOST, not in a failed write.
+            if (!openLegacySession()) return@launch
             userDetailsRepository.updatePasswordAndHint(newPassword, hint)
             Timber.i("master password and hint successfully updated from login screen")
             onAuthSuccess(LoginMethod.PASSWORD_RESET)
@@ -117,6 +131,7 @@ class LoginViewModel @Inject constructor(
     private fun onBiometricSuccess() {
         Timber.i("device security auth success")
         viewModelScope.launch {
+            if (!openLegacySession()) return@launch
             onAuthSuccess(LoginMethod.BIOMETRIC)
         }
     }
@@ -137,13 +152,16 @@ class LoginViewModel @Inject constructor(
             Timber.i("is password correct: $isPasswordCorrect")
 
             if (isPasswordCorrect) {
+                // The session must be open before the enqueue below: the worker reads every
+                // record through the holder and may start at once.
+                if (!openLegacySession()) return@launch
                 if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
                     Timber.i("enqueuing auto backup request after login with pswrd")
                     BackupDataWorker.enqueueRequest(
                         password = password,
                         showBackupStartNotification = false,
                         workManager = workManager.get(),
-                        symmetricKeyUtils
+                        backupPasswordRegistry = backupPasswordRegistry,
                     )
                 } else {
                     Timber.i("auto backup disabled from settings")
@@ -153,6 +171,28 @@ class LoginViewModel @Inject constructor(
                 onIncorrectPassword()
             }
         }
+    }
+
+    /**
+     * Opens the vault session once a credential has been accepted.
+     *
+     * Every vault is still `crypto_version = 1`, so the session is the legacy Keystore handle. A
+     * missing handle is the lost-key state: the records cannot be opened by anyone, the key is
+     * never regenerated, and the screen stays on Login.
+     *
+     * @return `false` when the legacy key is gone and the unlock must not continue.
+     */
+    // TODO(MR5): a crypto_version = 2 vault unwraps the DEK (setSessionKey) and only the migration fallback opens a legacy session
+    // TODO(D3): legacy vault (crypto_version = 1) only — so is the fallback-session path MR 5 keeps of it
+    private fun openLegacySession(): Boolean {
+        val legacyKey = keystoreGateway.legacyVaultKey()
+        if (legacyKey == null) {
+            Timber.w("legacy vault key is missing; the vault cannot be opened")
+            _uiState.update { it.copy(userAuthState = UserAuthState.LEGACY_KEY_LOST) }
+            return false
+        }
+        sessionKeyHolder.setLegacySession(legacyKey)
+        return true
     }
 
     /** Single exit of every unlock path. */

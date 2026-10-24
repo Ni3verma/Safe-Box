@@ -150,8 +150,7 @@
     <string name="micr_code">MICR কোড</string>
     <string name="welcome_back">পুনরায় স্বাগতম!</string>
     <string name="welcome">স্বাগতম!</string>
-    <string name="timeout_dialog_message">আপনি অনেকক্ষণ অ্যাপ থেকে দূরে ছিলেন। আবার অ্যাপে লগ ইন করতে অনুগ্রহ করে ঠিক আছে ক্লিক করুন</string>
-    <string name="timeout_dialog_positive_button_text">ঠিক আছে</string>
+    <string name="login_away_banner">আপনি কিছুক্ষণ দূরে ছিলেন — আবার আনলক করুন।</string>
     <string name="created_on">তৈরির তারিখ</string>
     <string name="updated_on">আপডেটের তারিখ</string>
     <string name="add_a_new_record">নতুন রেকর্ড যোগ করুন</string>

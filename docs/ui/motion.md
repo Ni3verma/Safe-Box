@@ -47,9 +47,9 @@ digits, backup/restore dialog motion, QR scan line. The working prototype is the
   already 0 dp tall when the exit starts and simply vanishes. `SingleRecordScreen` therefore keeps
   drawing a row in the mode it last had content for (`rowRenderMode`) until the shrink finishes.
 - A `Dialog` is its own window: it is not faded by the `NavHost` transition of the screen that
-  hosts it and stays up, scrim included, until that screen leaves composition. `UserAwayDialog`
-  currently shows this (its scrim outlives the Home → Login hop); a dialog whose button navigates
-  away should drop itself first if that is ever addressed.
+  hosts it and stays up, scrim included, until that screen leaves composition. A dialog whose
+  button navigates away should drop itself first. (The away-timeout dialog showed this until it
+  became a banner on the login screen in envelope MR 4; nothing exhibits it today.)
 - Inside a `Box` nested in a `Column`, `AnimatedVisibility` resolves to the `ColumnScope` overload
   and fails to compile ("cannot be called in this context with an implicit receiver") because of
   the layout DSL marker. Keep the `AnimatedVisibility` directly in the column instead of wrapping

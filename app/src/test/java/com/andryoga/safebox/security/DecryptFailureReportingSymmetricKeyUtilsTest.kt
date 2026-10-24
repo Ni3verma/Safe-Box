@@ -3,6 +3,7 @@ package com.andryoga.safebox.security
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.google.common.truth.Truth.assertThat
@@ -107,5 +108,16 @@ class DecryptFailureReportingSymmetricKeyUtilsTest {
         val thrown = assertThrows(AEADBadTagException::class.java) { subject.decrypt("cipher") }
 
         assertThat(thrown).isSameInstanceAs(failure)
+    }
+
+    @Test
+    fun decrypt_whenVaultIsLocked_shouldRethrowWithoutReporting() {
+        val locked = SessionLockedException()
+        every { delegate.decrypt("cipher") } throws locked
+
+        val thrown = assertThrows(SessionLockedException::class.java) { subject.decrypt("cipher") }
+
+        assertThat(thrown).isSameInstanceAs(locked)
+        assertThat(analyticsHelper.loggedEvents).isEmpty()
     }
 }

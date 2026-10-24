@@ -150,8 +150,7 @@
     <string name="micr_code">Mã MICR</string>
     <string name="welcome_back">Chào mừng trở lại!</string>
     <string name="welcome">Chào mừng!</string>
-    <string name="timeout_dialog_message">Bạn đã rời khỏi ứng dụng quá lâu. Vui lòng nhấn OK để đăng nhập lại</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Bạn đã rời đi — hãy mở khóa lại.</string>
     <string name="created_on">Tạo vào</string>
     <string name="updated_on">Cập nhật vào</string>
     <string name="add_a_new_record">Thêm bản ghi mới</string>

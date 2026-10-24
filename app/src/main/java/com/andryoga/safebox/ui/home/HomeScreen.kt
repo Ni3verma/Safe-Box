@@ -34,8 +34,6 @@ import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
-import com.andryoga.safebox.ui.home.components.UserAwayDialog
-import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
 import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
@@ -72,10 +70,20 @@ fun HomeScreen(
     inAppUpdateViewModel: InAppUpdateViewModel,
     onExitHomeNavGraph: () -> Unit,
 ) {
+    val mainViewModel = hiltViewModel<MainViewModel>()
+
+    // Home is only ever composed with an open session. A back stack restored after process death,
+    // a navigation that skipped Login, and a lock while Home is showing all leave for Login here,
+    // before anything in the graph reads the vault.
+    val isVaultUnlocked by mainViewModel.isVaultUnlocked.collectAsState()
+    LaunchedEffect(isVaultUnlocked) {
+        if (!isVaultUnlocked) onExitHomeNavGraph()
+    }
+    if (!isVaultUnlocked) return
+
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val mainViewModel = hiltViewModel<MainViewModel>()
 
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
     val isBottomBarVisible = currentDestination.isHomeTopLevelRoute()
@@ -93,12 +101,6 @@ fun HomeScreen(
             if (screenName != null) {
                 Timber.i("Navigated to: $screenName")
             }
-        }
-    }
-
-    LaunchedEffect(mainViewModel.logoutEvent) {
-        mainViewModel.logoutEvent.collect {
-            nestedNavController.navigate(UserAwayDialogRoute)
         }
     }
 
@@ -207,9 +209,6 @@ fun HomeScreen(
                             nestedNavController.popBackStack()
                         }
                     )
-                }
-                composable<UserAwayDialogRoute> {
-                    UserAwayDialog(onExitHomeNavGraph = onExitHomeNavGraph)
                 }
             }
         }

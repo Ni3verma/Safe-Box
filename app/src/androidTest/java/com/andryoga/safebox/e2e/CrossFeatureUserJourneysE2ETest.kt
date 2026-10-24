@@ -309,28 +309,13 @@ class CrossFeatureUserJourneysE2ETest {
                 assertThat((activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) == 0).isTrue()
             }
 
-            // Step 6: Session Timeout (Trigger UserAwayDialog & verify backstack pop)
+            // Step 6: Session Timeout (lock to Login with the away banner & verify backstack pop)
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(hasText(context.getString(R.string.timeout_dialog_message)))
-                        .fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
-            composeTestRule.onNodeWithText(context.getString(R.string.timeout_dialog_message))
-                .assertIsDisplayed()
-
-            composeTestRule.onNodeWithText(context.getString(R.string.timeout_dialog_positive_button_text))
-                .performClick()
-
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(hasText(context.getString(R.string.welcome_back)))
-                        .fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner))
                 .assertIsDisplayed()
 
             // Verify Backstack Security: HomeGraph is popped completely upon logout/timeout transition

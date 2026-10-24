@@ -13,6 +13,7 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
@@ -24,8 +25,8 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
-import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fakes.LoggedAnalyticsEvent
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
@@ -35,9 +36,14 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.runs
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -56,6 +62,7 @@ import java.io.IOException
 import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.util.Locale
+import java.util.UUID
 
 class BackupDataWorkerTest {
 
@@ -81,7 +88,7 @@ class BackupDataWorkerTest {
     lateinit var authenticatorDataDaoSecure: AuthenticatorDataDaoSecure
 
     private lateinit var analyticsHelper: FakeAnalyticsHelper
-    private lateinit var fakeSymmetricKeyUtils: FakeSymmetricKeyUtils
+    private lateinit var backupPasswordRegistry: BackupPasswordRegistry
     private lateinit var fakePasswordBasedEncryption: FakePasswordBasedEncryption
     private lateinit var fakeBackupMetadataRepo: FakeBackupMetadataRepository
     private lateinit var tempDir: File
@@ -136,7 +143,7 @@ class BackupDataWorkerTest {
     fun setUp() {
         MockKAnnotations.init(this)
         analyticsHelper = FakeAnalyticsHelper()
-        fakeSymmetricKeyUtils = FakeSymmetricKeyUtils()
+        backupPasswordRegistry = BackupPasswordRegistry()
         fakePasswordBasedEncryption = FakePasswordBasedEncryption()
         fakeBackupMetadataRepo = FakeBackupMetadataRepository()
         tempDir = Files.createTempDirectory("backup_worker_unit_test").toFile()
@@ -165,10 +172,19 @@ class BackupDataWorkerTest {
     @After
     fun tearDown() {
         unmockkStatic(Uri::class)
+        unmockkObject(Utils)
         tempDir.deleteRecursively()
     }
 
-    private fun buildWorker(inputData: Data = Data.EMPTY): BackupDataWorker {
+    /**
+     * Builds the worker under a fixed work id and, unless [password] is null, registers the
+     * password for it the way the enqueuing ViewModels do.
+     */
+    private fun buildWorker(
+        inputData: Data = Data.EMPTY,
+        password: String? = TEST_PASSWORD,
+    ): BackupDataWorker {
+        password?.let { backupPasswordRegistry.put(WORK_ID, it) }
         val workerFactory = object : WorkerFactory() {
             override fun createWorker(
                 appContext: Context,
@@ -178,7 +194,7 @@ class BackupDataWorkerTest {
                 return BackupDataWorker(
                     context = appContext,
                     params = workerParameters,
-                    symmetricKeyUtils = fakeSymmetricKeyUtils,
+                    backupPasswordRegistry = backupPasswordRegistry,
                     backupMetadataRepository = fakeBackupMetadataRepo,
                     passwordBasedEncryption = fakePasswordBasedEncryption,
                     loginDataDaoSecure = loginDataDaoSecure,
@@ -193,6 +209,7 @@ class BackupDataWorkerTest {
         }
 
         return TestListenableWorkerBuilder<BackupDataWorker>(context)
+            .setId(WORK_ID)
             .setInputData(inputData)
             .setWorkerFactory(workerFactory)
             .build()
@@ -222,6 +239,8 @@ class BackupDataWorkerTest {
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+        // Taken whatever the outcome, so no password outlives the work that registered it.
+        assertThat(backupPasswordRegistry.take(WORK_ID)).isNull()
 
         val createdFiles =
             tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
@@ -253,7 +272,6 @@ class BackupDataWorkerTest {
         coEvery { authenticatorDataDaoSecure.exportAllData() } returns emptyList()
 
         val inputData = Data.Builder()
-            .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
             .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
             .build()
 
@@ -285,7 +303,7 @@ class BackupDataWorkerTest {
         assertThat(loginDataBytes).isNotNull()
         val restoredJson = String(
             fakePasswordBasedEncryption.encryptDecrypt(
-                "enc_password".toCharArray(),
+                TEST_PASSWORD.toCharArray(),
                 loginDataBytes!!,
                 ByteArray(0),
                 ByteArray(0),
@@ -326,7 +344,6 @@ class BackupDataWorkerTest {
         coEvery { authenticatorDataDaoSecure.exportAllData() } returns emptyList()
 
         val inputData = Data.Builder()
-            .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
             .build()
 
         val worker = buildWorker(inputData)
@@ -378,7 +395,6 @@ class BackupDataWorkerTest {
             )
 
             val inputData = Data.Builder()
-                .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
                 .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
                 .build()
 
@@ -404,7 +420,7 @@ class BackupDataWorkerTest {
             assertThat(authenticatorBytes).isNotNull()
             val restoredJson = String(
                 fakePasswordBasedEncryption.encryptDecrypt(
-                    "enc_password".toCharArray(),
+                    TEST_PASSWORD.toCharArray(),
                     authenticatorBytes!!,
                     ByteArray(0),
                     ByteArray(0),
@@ -463,7 +479,6 @@ class BackupDataWorkerTest {
             )
 
             val inputData = Data.Builder()
-                .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
                 .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
                 .build()
 
@@ -493,7 +508,7 @@ class BackupDataWorkerTest {
             assertThat(authenticatorBytes).isNotNull()
             val restoredAuthJson = String(
                 fakePasswordBasedEncryption.encryptDecrypt(
-                    "enc_password".toCharArray(),
+                    TEST_PASSWORD.toCharArray(),
                     authenticatorBytes!!,
                     ByteArray(0),
                     ByteArray(0),
@@ -513,7 +528,7 @@ class BackupDataWorkerTest {
             assertThat(loginBytes).isNotNull()
             val restoredLoginJson = String(
                 fakePasswordBasedEncryption.encryptDecrypt(
-                    "enc_password".toCharArray(),
+                    TEST_PASSWORD.toCharArray(),
                     loginBytes!!,
                     ByteArray(0),
                     ByteArray(0),
@@ -532,7 +547,7 @@ class BackupDataWorkerTest {
             assertThat(noteBytes).isNotNull()
             val restoredNoteJson = String(
                 fakePasswordBasedEncryption.encryptDecrypt(
-                    "enc_password".toCharArray(),
+                    TEST_PASSWORD.toCharArray(),
                     noteBytes!!,
                     ByteArray(0),
                     ByteArray(0),
@@ -569,15 +584,65 @@ class BackupDataWorkerTest {
         assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
     }
 
+    /**
+     * The process that registered the password is gone and WorkManager replayed the request: the
+     * worker cannot run and must not pretend otherwise, nor touch the folder or the user.
+     */
     @Test
-    fun doWork_whenMissingPasswordInput_failsAsUnknownAndKeepsBackupFolder() = runTest {
+    fun doWork_whenNoPasswordIsRegistered_failsAsSessionLockedAndKeepsBackupFolder() = runTest {
         fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
 
-        val result = buildWorker(Data.EMPTY).doWork()
+        val result = buildWorker(passwordInput(), password = null).doWork()
 
-        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
         assertThat(fakeBackupMetadataRepo.deleted).isFalse()
-        assertFailureLoggedWithReason(BackupFailureReason.UNKNOWN)
+        assertFailureLoggedWithReason(BackupFailureReason.SESSION_LOCKED)
+        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        coVerify(exactly = 0) { loginDataDaoSecure.exportAllData() }
+    }
+
+    @Test
+    fun doWork_whenTheVaultLocksMidRun_failsAsSessionLockedAndKeepsBackupFolder() = runTest {
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws SessionLockedException()
+
+        val result = buildWorker(passwordInput()).doWork()
+
+        assertThat(result).isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
+        assertThat(fakeBackupMetadataRepo.deleted).isFalse()
+        assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
+        assertFailureLoggedWithReason(BackupFailureReason.SESSION_LOCKED)
+        val createdFiles =
+            tempDir.listFiles { f -> f.name.startsWith("SafeBoxBackup") } ?: emptyArray()
+        assertThat(createdFiles).isEmpty()
+    }
+
+    /** The auto-backup after login runs unattended; a lock must not nag through a notification. */
+    @Test
+    fun doWork_whenSessionLocked_postsNoNotificationEvenWithPermission() = runTest {
+        grantNotificationPermission()
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws SessionLockedException()
+
+        buildWorker(passwordInput()).doWork()
+
+        verify(exactly = 0) { Utils.makeStatusNotification(any(), any()) }
+    }
+
+    @Test
+    fun doWork_whenUnknownFailure_postsANotificationWithPermission() = runTest {
+        // Control for the test above: the same path does notify for a reason that warrants it.
+        grantNotificationPermission()
+        fakeBackupMetadataRepo.metadata = backupPathInTempDir()
+        stubVaultRecords()
+        coEvery { loginDataDaoSecure.exportAllData() } throws IllegalStateException("db closed")
+
+        buildWorker(passwordInput()).doWork()
+
+        verify(exactly = 1) { Utils.makeStatusNotification(any(), any()) }
     }
 
     /**
@@ -706,9 +771,16 @@ class BackupDataWorkerTest {
     )
 
     private fun passwordInput(): Data = Data.Builder()
-        .putString(CommonConstants.BACKUP_PARAM_PASSWORD, "enc_password")
         .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
         .build()
+
+    /** Lets `sendNotification` reach [Utils.makeStatusNotification], which is stubbed and verified. */
+    private fun grantNotificationPermission() {
+        every { context.checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
+        every { context.checkCallingOrSelfPermission(any()) } returns PackageManager.PERMISSION_GRANTED
+        mockkObject(Utils)
+        every { Utils.makeStatusNotification(any(), any()) } just runs
+    }
 
     private fun stubVaultRecords(
         logins: List<ExportLoginData> = listOf(
@@ -726,5 +798,10 @@ class BackupDataWorkerTest {
         val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.BACKUP_DATA_FAILURE }
         assertThat(event.params[AnalyticsParam.REASON.paramName]).isEqualTo(reason.name)
         return event
+    }
+
+    private companion object {
+        val WORK_ID: UUID = UUID.fromString("5d1f2c3a-7b4e-4f0a-9c6d-1e2f3a4b5c6d")
+        const val TEST_PASSWORD = "enc_password"
     }
 }

@@ -9,6 +9,9 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.domain.models.record.RecordType
+import com.andryoga.safebox.security.CryptoTestFixtures
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
@@ -57,6 +60,7 @@ class SingleRecordViewModelTest {
 
     private lateinit var viewModel: SingleRecordViewModel
     private lateinit var analyticsHelper: FakeAnalyticsHelper
+    private val sessionKeyHolder = SessionKeyHolderImpl()
 
     @Before
     fun setUp() {
@@ -469,6 +473,119 @@ class SingleRecordViewModelTest {
         advanceUntilIdle()
         assertThat(analyticsHelper.count(AnalyticsKey.RECORD_DELETE)).isEqualTo(1)
     }
+
+    // region mid-session lock containment: every data-touching launch survives a clear mid-call
+
+    @Test
+    fun init_whenTheVaultLocksDuringGetLayoutPlan_shouldNotCrashAndStayLoading() = runTest {
+        openSession()
+        coEvery { layout.getLayoutPlan() } coAnswers { lockVaultMidCall() }
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN, 1)
+
+        initViewModel()
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isLoading).isTrue()
+    }
+
+    @Test
+    fun saveClicked_whenTheVaultLocksDuringSave_shouldNotCrashNorCloseTheScreen() = runTest {
+        openSession()
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
+        coEvery { layout.saveLayout(any()) } coAnswers { lockVaultMidCall() }
+        initViewModel()
+
+        viewModel.screenCloseEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun saveClicked_whenALegacySessionLocksDuringSave_shouldNotCrashNorCloseTheScreen() = runTest {
+        sessionKeyHolder.setLegacySession(CryptoTestFixtures.TEST_AES_KEY_256)
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.NOTE)
+        coEvery { layout.saveLayout(any()) } coAnswers { lockVaultMidCall() }
+        initViewModel()
+
+        viewModel.screenCloseEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+        assertThat(sessionKeyHolder.isLegacySession).isFalse()
+    }
+
+    @Test
+    fun deleteClicked_whenTheVaultLocksDuringDelete_shouldNotCrashNorLogDelete() = runTest {
+        openSession()
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.CARD, 1)
+        coEvery { layout.deleteLayout() } coAnswers { lockVaultMidCall() }
+        initViewModel()
+
+        viewModel.screenCloseEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnDeleteClicked)
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+        // The record is still in the vault, so analytics must not say otherwise.
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RECORD_DELETE)).isFalse()
+    }
+
+    @Test
+    fun shareClicked_whenTheVaultLocksDuringShare_shouldNotCrashNorEmitContent() = runTest {
+        openSession()
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN, 1)
+        coEvery { layout.getShareableFields() } coAnswers { lockVaultMidCall() }
+        initViewModel()
+
+        viewModel.shareContentEvent.test {
+            viewModel.onAction(SingleRecordScreenAction.OnShareClicked)
+            advanceUntilIdle()
+
+            expectNoEvents()
+        }
+    }
+
+    /** The containment is for the lock only; any other failure still surfaces as a crash. */
+    @Test
+    fun saveClicked_whenSaveFailsForAnotherReason_shouldStillPropagate() {
+        every { singleRecordRouteProvider.getRoute() } returns SingleRecordScreenRoute(RecordType.LOGIN)
+        coEvery { layout.saveLayout(any()) } throws IllegalStateException("db closed")
+
+        val thrown = runCatching {
+            runTest {
+                initViewModel()
+                viewModel.onAction(SingleRecordScreenAction.OnSaveClicked)
+                advanceUntilIdle()
+            }
+        }.exceptionOrNull()
+
+        // runTest reports an exception a coroutine left uncaught, which is what would crash the app.
+        val saveFailure = generateSequence(thrown) { it.cause }
+            .firstOrNull { it is IllegalStateException && it.message == "db closed" }
+        assertThat(saveFailure).isNotNull()
+    }
+
+    private fun openSession() {
+        sessionKeyHolder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
+    }
+
+    /**
+     * What the data layer does when the holder is cleared under a call in flight: the next use of
+     * the key fails closed with `SessionLockedException`.
+     */
+    private fun lockVaultMidCall(): Nothing {
+        sessionKeyHolder.clearSessionKey()
+        sessionKeyHolder.withSessionKey { }
+        error("withSessionKey must throw once the holder is cleared")
+    }
+
+    // endregion
 
     /**
      * Clears the ViewModel the way the framework does when its navigation entry is popped, so the

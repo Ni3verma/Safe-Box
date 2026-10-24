@@ -1,5 +1,8 @@
 package com.andryoga.safebox.security
 
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -7,156 +10,107 @@ import org.junit.Rule
 import org.junit.Test
 import java.security.GeneralSecurityException
 import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
 
+/**
+ * The field cipher takes its key from the session holder on every call, so a
+ * locked vault fails closed and a DEK session and a legacy session both round-trip.
+ */
 class SymmetricKeyUtilsImplTest {
 
     @get:Rule
     val base64Rule = Base64Rule()
 
-    private lateinit var secretKey: SecretKey
+    private lateinit var sessionKeyHolder: SessionKeyHolderImpl
     private lateinit var symmetricKeyUtils: SymmetricKeyUtilsImpl
 
     @Before
     fun setUp() {
-        secretKey = CryptoTestFixtures.TEST_AES_KEY_256
-        symmetricKeyUtils = SymmetricKeyUtilsImpl(secretKey)
+        sessionKeyHolder = SessionKeyHolderImpl()
+        symmetricKeyUtils = SymmetricKeyUtilsImpl(sessionKeyHolder)
     }
 
     @Test
-    fun encryptAndDecrypt_withStandardAsciiText_returnsOriginalPlaintext() {
-        val plaintext = CryptoTestFixtures.SAMPLE_PLAINTEXT
-
-        val encrypted = symmetricKeyUtils.encrypt(plaintext)
-        val decrypted = symmetricKeyUtils.decrypt(encrypted)
-
-        assertThat(decrypted).isEqualTo(plaintext)
-    }
-
-    @Test
-    fun encryptAndDecrypt_withUnicodeAndSpecialCharacters_returnsOriginalPlaintext() {
-        val plaintext = CryptoTestFixtures.UNICODE_PLAINTEXT
-
-        val encrypted = symmetricKeyUtils.encrypt(plaintext)
-        val decrypted = symmetricKeyUtils.decrypt(encrypted)
-
-        assertThat(decrypted).isEqualTo(plaintext)
-    }
-
-    @Test
-    fun encryptAndDecrypt_withEmptyString_returnsEmptyString() {
-        val plaintext = CryptoTestFixtures.EMPTY_PLAINTEXT
-
-        val encrypted = symmetricKeyUtils.encrypt(plaintext)
-        val decrypted = symmetricKeyUtils.decrypt(encrypted)
-
-        assertThat(decrypted).isEqualTo(plaintext)
-    }
-
-    @Test
-    fun encryptAndDecrypt_withLargeTextPayload_returnsOriginalPlaintext() {
-        val largePlaintext = "A".repeat(10_000)
-
-        val encrypted = symmetricKeyUtils.encrypt(largePlaintext)
-        val decrypted = symmetricKeyUtils.decrypt(encrypted)
-
-        assertThat(decrypted).isEqualTo(largePlaintext)
-    }
-
-    @Test
-    fun encrypt_returnsCiphertextContainingSingleSeparator() {
-        val plaintext = "TestPayload"
-
-        val encrypted = symmetricKeyUtils.encrypt(plaintext)
-        val parts = encrypted.split(SymmetricKeyUtilsImpl.Constants.separator)
-
-        assertThat(parts).hasSize(2)
-        assertThat(parts[0]).isNotEmpty()
-        assertThat(parts[1]).isNotEmpty()
-    }
-
-    @Test
-    fun consecutiveEncryptCalls_forSamePlaintext_produceDifferentCiphertextsDueToRandomIv() {
-        val plaintext = "ConsistentPlaintext"
-
-        val encryptedFirst = symmetricKeyUtils.encrypt(plaintext)
-        val encryptedSecond = symmetricKeyUtils.encrypt(plaintext)
-
-        assertThat(encryptedFirst).isNotEqualTo(encryptedSecond)
-        assertThat(symmetricKeyUtils.decrypt(encryptedFirst)).isEqualTo(plaintext)
-        assertThat(symmetricKeyUtils.decrypt(encryptedSecond)).isEqualTo(plaintext)
-    }
-
-    @Test
-    fun decrypt_withMissingSeparator_throwsIndexOutOfBoundsException() {
-        val malformedEncryptedString = "InvalidEncryptedPayloadWithoutSeparator"
-
-        assertThrows(IndexOutOfBoundsException::class.java) {
-            symmetricKeyUtils.decrypt(malformedEncryptedString)
+    fun encrypt_whenVaultIsLocked_throwsSessionLockedException() {
+        assertThrows(SessionLockedException::class.java) {
+            symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
         }
     }
 
     @Test
-    fun decrypt_withCorruptedBase64Ciphertext_throwsIllegalArgumentException() {
-        val validEncrypted = symmetricKeyUtils.encrypt("SampleData")
-        val parts = validEncrypted.split(SymmetricKeyUtilsImpl.Constants.separator)
-        val corruptedPayload =
-            "###NotValidBase64###" + SymmetricKeyUtilsImpl.Constants.separator + parts[1]
+    fun decrypt_whenVaultIsLocked_throwsSessionLockedException() {
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
+        val encrypted = symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+        sessionKeyHolder.clearSessionKey()
 
-        assertThrows(IllegalArgumentException::class.java) {
-            symmetricKeyUtils.decrypt(corruptedPayload)
+        assertThrows(SessionLockedException::class.java) {
+            symmetricKeyUtils.decrypt(encrypted)
         }
     }
 
     @Test
-    fun decrypt_withCorruptedBase64Iv_throwsIllegalArgumentException() {
-        val validEncrypted = symmetricKeyUtils.encrypt("SampleData")
-        val parts = validEncrypted.split(SymmetricKeyUtilsImpl.Constants.separator)
-        val corruptedPayload =
-            parts[0] + SymmetricKeyUtilsImpl.Constants.separator + "###NotValidBase64###"
+    fun encryptAndDecrypt_inDekSession_returnsOriginalPlaintext() {
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
 
-        assertThrows(IllegalArgumentException::class.java) {
-            symmetricKeyUtils.decrypt(corruptedPayload)
-        }
+        val encrypted = symmetricKeyUtils.encrypt(CryptoTestFixtures.UNICODE_PLAINTEXT)
+        val decrypted = symmetricKeyUtils.decrypt(encrypted)
+
+        assertThat(decrypted).isEqualTo(CryptoTestFixtures.UNICODE_PLAINTEXT)
     }
 
     @Test
-    fun decrypt_withTamperedCiphertext_throwsGeneralSecurityException() {
-        val validEncrypted = symmetricKeyUtils.encrypt("SensitiveData")
-        val parts = validEncrypted.split(SymmetricKeyUtilsImpl.Constants.separator)
+    fun encrypt_inDekSession_isReadableWithTheRawDekOutsideTheHolder() {
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
 
-        val ciphertextBytes = SecurityUtils.decodeBase64(parts[0])
-        ciphertextBytes[0] = (ciphertextBytes[0].toInt() xor 0xFF).toByte()
-        val tamperedCiphertext = SecurityUtils.encodeBase64(ciphertextBytes)
-        val tamperedEncryptedString =
-            tamperedCiphertext + SymmetricKeyUtilsImpl.Constants.separator + parts[1]
+        val encrypted = symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+
+        val rawDek: SecretKey = SecretKeySpec(DEK_BYTES, "AES")
+        assertThat(AesGcmFieldCipher.decrypt(encrypted, rawDek))
+            .isEqualTo(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+    }
+
+    @Test
+    fun encryptAndDecrypt_inLegacySession_useTheLegacyHandle() {
+        val legacyHandle = CryptoTestFixtures.TEST_AES_KEY_256
+        sessionKeyHolder.setLegacySession(legacyHandle)
+
+        val encrypted = symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+
+        assertThat(symmetricKeyUtils.decrypt(encrypted)).isEqualTo(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+        // The same bytes the legacy Keystore handle would read, with no session at all.
+        assertThat(AesGcmFieldCipher.decrypt(encrypted, legacyHandle))
+            .isEqualTo(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+    }
+
+    @Test
+    fun decrypt_afterTheSessionKeyChanged_failsOnTheGcmTag() {
+        sessionKeyHolder.setLegacySession(CryptoTestFixtures.TEST_AES_KEY_256)
+        val encryptedUnderLegacy = symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
 
         assertThrows(GeneralSecurityException::class.java) {
-            symmetricKeyUtils.decrypt(tamperedEncryptedString)
+            symmetricKeyUtils.decrypt(encryptedUnderLegacy)
         }
     }
 
     @Test
-    fun decrypt_withWrongSecretKey_throwsGeneralSecurityException() {
-        val plaintext = "SecretVaultInfo"
-        val encrypted = symmetricKeyUtils.encrypt(plaintext)
+    fun decrypt_afterRelockAndReopenWithTheSameKey_returnsOriginalPlaintext() {
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
+        val encrypted = symmetricKeyUtils.encrypt(CryptoTestFixtures.SAMPLE_PLAINTEXT)
+        sessionKeyHolder.clearSessionKey()
+        sessionKeyHolder.setSessionKey(DEK_BYTES)
 
-        val wrongKey = CryptoTestFixtures.TEST_SECONDARY_AES_KEY
-        val wrongKeyUtils = SymmetricKeyUtilsImpl(wrongKey)
-
-        assertThrows(GeneralSecurityException::class.java) {
-            wrongKeyUtils.decrypt(encrypted)
-        }
+        assertThat(symmetricKeyUtils.decrypt(encrypted)).isEqualTo(CryptoTestFixtures.SAMPLE_PLAINTEXT)
     }
 
     @Test
-    fun encryptAndDecrypt_withFakeSecretKeyDouble_returnsOriginalPlaintext() {
-        val fakeKey = FakeSecretKey(algorithmName = "AES", keyBytes = ByteArray(32) { 7 })
-        val utilsWithFakeKey = SymmetricKeyUtilsImpl(fakeKey)
-        val plaintext = "FakeSecretKeyTest"
+    fun constants_matchTheFieldCipherFormat() {
+        assertThat(SymmetricKeyUtilsImpl.Constants.separator).isEqualTo(AesGcmFieldCipher.SEPARATOR)
+        assertThat(SymmetricKeyUtilsImpl.Constants.gcmAuthTagLength)
+            .isEqualTo(AesGcmFieldCipher.GCM_AUTH_TAG_LENGTH_BITS)
+    }
 
-        val encrypted = utilsWithFakeKey.encrypt(plaintext)
-        val decrypted = utilsWithFakeKey.decrypt(encrypted)
-
-        assertThat(decrypted).isEqualTo(plaintext)
+    private companion object {
+        val DEK_BYTES = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { (it * 3).toByte() }
     }
 }

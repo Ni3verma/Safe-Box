@@ -2,6 +2,7 @@ package com.andryoga.safebox.security
 
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
@@ -75,7 +76,7 @@ class AndroidDeviceSecurityStatusTest {
     }
 
     @Test
-    fun snapshot_shouldReadKeyguardAndBiometricManager() {
+    fun snapshot_shouldReadKeyguardBiometricManagerAndStrongBoxFeature() {
         val keyguardManager = mockk<KeyguardManager> { every { isDeviceSecure } returns true }
         every { context.getSystemService(Context.KEYGUARD_SERVICE) } returns keyguardManager
         val biometricManager = mockk<BiometricManager> {
@@ -83,13 +84,16 @@ class AndroidDeviceSecurityStatusTest {
             every { canAuthenticate(BIOMETRIC_WEAK) } returns BIOMETRIC_SUCCESS
         }
         every { BiometricManager.from(context) } returns biometricManager
+        val packageManager = mockk<PackageManager> {
+            every { hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE) } returns true
+        }
+        every { context.packageManager } returns packageManager
 
         val snapshot = AndroidDeviceSecurityStatus(context).snapshot()
 
         assertThat(snapshot.isDeviceSecure).isTrue()
         assertThat(snapshot.biometricClass).isEqualTo(BiometricClass.WEAK_ONLY)
-        // SDK_INT is 0 on the JVM, so the StrongBox branch short-circuits before touching PackageManager
-        assertThat(snapshot.hasStrongBox).isFalse()
+        assertThat(snapshot.hasStrongBox).isTrue()
     }
 
     @Test
@@ -110,10 +114,15 @@ class AndroidDeviceSecurityStatusTest {
         val keyguardManager = mockk<KeyguardManager> { every { isDeviceSecure } returns true }
         every { context.getSystemService(Context.KEYGUARD_SERVICE) } returns keyguardManager
         every { BiometricManager.from(context) } throws IllegalStateException("no biometric service")
+        val packageManager = mockk<PackageManager> {
+            every { hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE) } returns false
+        }
+        every { context.packageManager } returns packageManager
 
         val snapshot = AndroidDeviceSecurityStatus(context).snapshot()
 
         assertThat(snapshot.isDeviceSecure).isTrue()
         assertThat(snapshot.biometricClass).isEqualTo(BiometricClass.UNAVAILABLE)
+        assertThat(snapshot.hasStrongBox).isFalse()
     }
 }

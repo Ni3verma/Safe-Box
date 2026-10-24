@@ -23,6 +23,7 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
 import com.andryoga.safebox.test.fakes.FakeHapticFeedback
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.SessionLockReason
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -60,6 +61,35 @@ class LoginScreenTest {
         ).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.show_hint)).assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsDisplayed()
+    }
+
+    @Test
+    fun awayTimeoutLockReason_shouldShowTheAwayBanner() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(lockReason = SessionLockReason.AWAY_TIMEOUT),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner)).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.login)).assertIsDisplayed()
+    }
+
+    @Test
+    fun noLockReason_shouldShowNoBanner() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner)).assertDoesNotExist()
     }
 
     @Test

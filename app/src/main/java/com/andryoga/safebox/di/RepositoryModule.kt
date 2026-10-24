@@ -3,7 +3,10 @@ package com.andryoga.safebox.di
 import android.content.Context
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
+import com.andryoga.safebox.data.db.dao.UserDetailsDao
+import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
@@ -17,6 +20,7 @@ import com.andryoga.safebox.data.repository.BankCardDataRepositoryImpl
 import com.andryoga.safebox.data.repository.LoginDataRepositoryImpl
 import com.andryoga.safebox.data.repository.SecureNoteDataRepositoryImpl
 import com.andryoga.safebox.data.repository.UserDetailsRepositoryImpl
+import com.andryoga.safebox.data.repository.VaultRepositoryImpl
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -24,7 +28,9 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.security.interfaces.HashingUtils
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,17 +45,32 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideUserDetailsRepo(
+        safeBoxDatabase: SafeBoxDatabase,
         userDetailsDaoSecure: UserDetailsDaoSecure,
+        vaultMetaDao: VaultMetaDao,
+        hashingUtils: HashingUtils,
         preferenceProvider: PreferenceProvider,
         settingsDataStore: SettingsDataStore,
         analyticsHelper: AnalyticsHelper,
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
+            safeBoxDatabase,
             userDetailsDaoSecure,
+            vaultMetaDao,
+            hashingUtils,
             preferenceProvider,
             settingsDataStore,
             analyticsHelper,
         )
+    }
+
+    @Singleton
+    @Provides
+    fun provideVaultRepo(
+        vaultMetaDao: VaultMetaDao,
+        userDetailsDao: UserDetailsDao,
+    ): VaultRepository {
+        return VaultRepositoryImpl(vaultMetaDao, userDetailsDao)
     }
 
     @ExperimentalCoroutinesApi

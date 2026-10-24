@@ -9,16 +9,20 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +46,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -51,6 +59,7 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
+import com.andryoga.safebox.ui.core.SessionLockReason
 import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
 import com.andryoga.safebox.ui.core.motion.rejectShake
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
@@ -216,6 +225,9 @@ private fun LoginCardContent(
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
     val isPasswordFieldError = uiState.userAuthState == UserAuthState.INCORRECT_PASSWORD_ENTERED
+    // TODO(MR5): the designed legacy-key-lost state replaces this generic line
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    val isLegacyKeyLost = uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST
 
     Column(
         modifier = Modifier
@@ -224,6 +236,16 @@ private fun LoginCardContent(
             .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val lockNotice = when (uiState.lockReason) {
+            SessionLockReason.AWAY_TIMEOUT -> stringResource(R.string.login_away_banner)
+            null -> null
+        }
+        if (lockNotice != null) {
+            LoginNoticeBanner(
+                text = lockNotice,
+                modifier = Modifier.padding(bottom = 16.dp),
+            )
+        }
         Icon(
             imageVector = Icons.Filled.Lock,
             contentDescription = null,
@@ -242,10 +264,12 @@ private fun LoginCardContent(
             label = { Text(stringResource(R.string.password)) },
             placeholder = { Text(stringResource(R.string.password)) },
             singleLine = true,
-            isError = isPasswordFieldError,
+            isError = isPasswordFieldError || isLegacyKeyLost,
             supportingText = {
                 if (isPasswordFieldError) {
                     Text(text = stringResource(R.string.incorrect_pswrd_message))
+                } else if (isLegacyKeyLost) {
+                    Text(text = stringResource(R.string.failed_message))
                 }
             },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -306,6 +330,38 @@ private fun LoginCardContent(
     }
 }
 
+/** One-line notice above the login form, announced to TalkBack when it appears. */
+@Composable
+private fun LoginNoticeBanner(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        color = colorScheme.tertiaryContainer,
+        contentColor = colorScheme.onTertiaryContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { liveRegion = LiveRegionMode.Polite },
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
 @LightDarkModePreview
 @Composable
 private fun LoginPreview() {
@@ -313,6 +369,17 @@ private fun LoginPreview() {
         LoginScreen(
             uiState = LoginUiState(),
             screenAction = {}
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewAfterAwayTimeout() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(lockReason = SessionLockReason.AWAY_TIMEOUT),
+            screenAction = {},
         )
     }
 }

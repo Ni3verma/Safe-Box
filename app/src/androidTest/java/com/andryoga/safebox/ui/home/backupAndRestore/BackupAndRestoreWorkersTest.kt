@@ -20,13 +20,14 @@ import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.e2e.VaultSessionTestBridge
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.andryoga.safebox.worker.BackupPasswordRegistry
 import com.andryoga.safebox.worker.RestoreDataWorker
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
 import com.google.common.truth.Truth.assertThat
@@ -47,13 +48,14 @@ import java.io.ObjectOutputStream
 import java.nio.ByteBuffer
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.random.Random
 
 /**
  * Comprehensive Hilt Instrumented Test Suite verifying BackupDataWorker and RestoreDataWorker execution,
  * encryption/decryption integrity, database restoration, wrong password handling, corrupted payload validation,
- * and automatic file rotation threshold (TC_BACKUP_01 through TC_BACKUP_05).
+ * automatic file rotation threshold, and the session-locked outcomes against real Room and a real holder.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -90,7 +92,7 @@ class BackupAndRestoreWorkersTest {
     lateinit var backupMetadataRepository: BackupMetadataRepository
 
     @Inject
-    lateinit var symmetricKeyUtils: SymmetricKeyUtils
+    lateinit var backupPasswordRegistry: BackupPasswordRegistry
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val testPassword = "Qwerty@@123"
@@ -98,6 +100,8 @@ class BackupAndRestoreWorkersTest {
     @Before
     fun setup() {
         hiltRule.inject()
+        // Every seed and both workers encrypt under the session key.
+        VaultSessionTestBridge.openLegacySessionForSeeding()
     }
 
     /**
@@ -126,16 +130,19 @@ class BackupAndRestoreWorkersTest {
         return seed
     }
 
-    private suspend fun runBackupWorker(password: String = testPassword): Result {
+    /**
+     * Runs one backup the way the app enqueues it: the password registered under the work id,
+     * input data carrying only the notification flag. A null [password] registers nothing.
+     */
+    private suspend fun runBackupWorker(password: String? = testPassword): Result {
+        val workId = UUID.randomUUID()
+        password?.let { backupPasswordRegistry.put(workId, it) }
         val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
+            .setId(workId)
             .setInputData(
                 Data.Builder()
-                    .putString(
-                        CommonConstants.BACKUP_PARAM_PASSWORD,
-                        symmetricKeyUtils.encrypt(password)
-                    )
                     .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                    .build()
+                    .build(),
             )
             .setWorkerFactory(workerFactory)
             .build()
@@ -143,23 +150,23 @@ class BackupAndRestoreWorkersTest {
     }
 
     private suspend fun runRestoreWorker(password: String = testPassword, fileUri: String): Result {
+        val workId = UUID.randomUUID()
+        backupPasswordRegistry.put(workId, password)
         val worker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
+            .setId(workId)
             .setInputData(
                 Data.Builder()
-                    .putString(
-                        CommonConstants.RESTORE_PARAM_PASSWORD,
-                        symmetricKeyUtils.encrypt(password)
-                    )
-                    .putString(
-                        CommonConstants.RESTORE_PARAM_FILE_URI,
-                        fileUri
-                    )
-                    .build()
+                    .putString(CommonConstants.RESTORE_PARAM_FILE_URI, fileUri)
+                    .build(),
             )
             .setWorkerFactory(workerFactory)
             .build()
         return worker.doWork()
     }
+
+    private fun generatedBackupFile(backupDir: File): File? = backupDir.listFiles { f ->
+        f.name.startsWith("SafeBoxBackup") && f.name.contains(".bak")
+    }?.firstOrNull()
 
     @Test
     fun exportToBackupFile_withValidPasswordAndSeededRecords_shouldCreateEncryptedBakFileAndReturnSuccess() =
@@ -267,19 +274,7 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val backupWorker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-            assertThat(backupWorker.doWork()).isEqualTo(Result.success())
+            assertThat(runBackupWorker()).isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
                 f.name.startsWith("SafeBoxBackup") && (f.name.endsWith(".bak") || f.name.endsWith(".bak.bin") || f.name.contains(
@@ -291,23 +286,7 @@ class BackupAndRestoreWorkersTest {
             safeBoxDatabase.clearAllTables()
 
             // Attempt restore using incorrect password
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt("WrongPassword999!")
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(generatedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker("WrongPassword999!", Uri.fromFile(generatedFile).toString())
             assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData()))
             assertThat(RestoreFailureReason.fromWorkData(result.outputData))
                 .isEqualTo(RestoreFailureReason.INCORRECT_PASSWORD)
@@ -354,8 +333,9 @@ class BackupAndRestoreWorkersTest {
             assertThat(backupMetadataRepository.isBackupPathSet()).isFalse()
         }
 
+    /** The process that registered the password is gone: nothing is written and the folder stays. */
     @Test
-    fun exportToBackupFile_whenFailureIsUnrelatedToFolder_shouldFailAsUnknownAndKeepFolder() =
+    fun exportToBackupFile_whenNoPasswordIsRegistered_shouldFailAsSessionLockedAndKeepFolder() =
         runBlocking {
             E2ETestUtils.setupSeededVaultRecords(
                 safeBoxDatabase,
@@ -365,20 +345,76 @@ class BackupAndRestoreWorkersTest {
                 secureNoteDataRepository,
                 authenticatorDataRepository,
             )
-            val backupDir = File(context.cacheDir, "backup_unrelated_failure")
+            val backupDir = File(context.cacheDir, "backup_no_password")
             backupDir.deleteRecursively()
             backupDir.mkdirs()
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            // A worker without its password input fails before touching the folder.
-            val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            assertThat(worker.doWork())
-                .isEqualTo(Result.failure(BackupFailureReason.UNKNOWN.toWorkData()))
+            assertThat(runBackupWorker(password = null))
+                .isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
             assertThat(backupMetadataRepository.isBackupPathSet()).isTrue()
             assertThat(backupDir.listFiles().orEmpty().toList()).isEmpty()
+        }
+
+    /** A worker started while the vault is locked: the first decrypt fails closed, nothing is written. */
+    @Test
+    fun exportToBackupFile_whileTheVaultIsLocked_shouldFailAsSessionLockedAndWriteNoFile() =
+        runBlocking {
+            E2ETestUtils.setupSeededVaultRecords(
+                safeBoxDatabase,
+                loginDataRepository,
+                bankCardDataRepository,
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                authenticatorDataRepository,
+            )
+            val backupDir = File(context.cacheDir, "backup_locked")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
+            VaultSessionTestBridge.lockVault()
+
+            assertThat(runBackupWorker())
+                .isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
+            assertThat(backupDir.listFiles().orEmpty().toList()).isEmpty()
+            assertThat(backupMetadataRepository.isBackupPathSet()).isTrue()
+        }
+
+    /**
+     * The lock surfaces inside the restore transaction, after the delete and at the first
+     * re-encrypted insert; Room rolls the whole transaction back, so the vault is untouched.
+     */
+    @Test
+    fun restoreFromBackupFile_whileTheVaultIsLocked_shouldFailAsSessionLockedAndRollBack() =
+        runBlocking {
+            E2ETestUtils.setupSeededVaultRecords(
+                safeBoxDatabase,
+                loginDataRepository,
+                bankCardDataRepository,
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                authenticatorDataRepository,
+            )
+            val backupDir = File(context.cacheDir, "restore_locked")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
+            assertThat(runBackupWorker()).isEqualTo(Result.success())
+            val generatedFile = generatedBackupFile(backupDir)
+            assertThat(generatedFile).isNotNull()
+            val rowsBefore = safeBoxDatabase.loginDataDao().getAllLoginData().first().size
+            assertThat(rowsBefore).isGreaterThan(0)
+            VaultSessionTestBridge.lockVault()
+
+            val result = runRestoreWorker(testPassword, Uri.fromFile(generatedFile).toString())
+
+            assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.SESSION_LOCKED.toWorkData()))
+            // Raw row count: the secure Flows read empty while locked, the table itself must not.
+            assertThat(safeBoxDatabase.loginDataDao().getAllLoginData().first()).hasSize(rowsBefore)
+            // The same key reopens the untouched rows.
+            VaultSessionTestBridge.openLegacySessionForSeeding()
+            assertThat(loginDataRepository.getAllLoginData().first().any { it.title == "Apple ID Login" })
+                .isTrue()
         }
 
     @Test
@@ -426,23 +462,7 @@ class BackupAndRestoreWorkersTest {
             val corruptedFile = File(backupDir, "corrupted_payload.bak")
             corruptedFile.writeText("This is not a serialized ObjectStream map!")
 
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(corruptedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker(testPassword, Uri.fromFile(corruptedFile).toString())
             assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
             assertThat(RestoreFailureReason.fromWorkData(result.outputData))
                 .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE)
@@ -481,20 +501,7 @@ class BackupAndRestoreWorkersTest {
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
             // Run worker to create a new backup when threshold is reached
-            val worker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = worker.doWork()
+            val result = runBackupWorker()
             assertThat(result).isEqualTo(Result.success())
 
             val finalFiles = backupDir.listFiles { f ->
@@ -557,20 +564,8 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val backupWorker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
             assertWithMessage("Backup failed with SEED: $seed")
-                .that(backupWorker.doWork())
+                .that(runBackupWorker())
                 .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
@@ -585,23 +580,7 @@ class BackupAndRestoreWorkersTest {
             safeBoxDatabase.clearAllTables()
             assertThat(loginDataRepository.getAllLoginData().first().isEmpty()).isTrue()
 
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(generatedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker(testPassword, Uri.fromFile(generatedFile).toString())
             assertWithMessage("Restore failed with SEED: $seed")
                 .that(result)
                 .isEqualTo(Result.success())
@@ -661,20 +640,8 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val backupWorker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
             assertWithMessage("Backup failed with SEED: $seed")
-                .that(backupWorker.doWork())
+                .that(runBackupWorker())
                 .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
@@ -688,23 +655,7 @@ class BackupAndRestoreWorkersTest {
 
             safeBoxDatabase.clearAllTables()
 
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(generatedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker(testPassword, Uri.fromFile(generatedFile).toString())
             assertWithMessage("Restore failed with SEED: $seed")
                 .that(result)
                 .isEqualTo(Result.success())
@@ -766,20 +717,8 @@ class BackupAndRestoreWorkersTest {
 
             backupMetadataRepository.insertBackupMetadata(Uri.fromFile(backupDir))
 
-            val backupWorker = TestListenableWorkerBuilder<BackupDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.BACKUP_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, false)
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
             assertWithMessage("Backup failed with SEED: $seed")
-                .that(backupWorker.doWork())
+                .that(runBackupWorker())
                 .isEqualTo(Result.success())
 
             val generatedFile = backupDir.listFiles { f ->
@@ -793,23 +732,7 @@ class BackupAndRestoreWorkersTest {
 
             safeBoxDatabase.clearAllTables()
 
-            val restoreWorker = TestListenableWorkerBuilder<RestoreDataWorker>(context)
-                .setInputData(
-                    Data.Builder()
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_PASSWORD,
-                            symmetricKeyUtils.encrypt(testPassword)
-                        )
-                        .putString(
-                            CommonConstants.RESTORE_PARAM_FILE_URI,
-                            Uri.fromFile(generatedFile).toString()
-                        )
-                        .build()
-                )
-                .setWorkerFactory(workerFactory)
-                .build()
-
-            val result = restoreWorker.doWork()
+            val result = runRestoreWorker(testPassword, Uri.fromFile(generatedFile).toString())
             assertWithMessage("Restore failed with SEED: $seed")
                 .that(result)
                 .isEqualTo(Result.success())
