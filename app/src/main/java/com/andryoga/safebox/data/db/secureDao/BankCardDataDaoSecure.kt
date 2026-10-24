@@ -43,6 +43,14 @@ class BankCardDataDaoSecure @Inject constructor(
         return bankCardDataDao.exportAllData().map { decrypt(it) }
     }
 
+    override suspend fun getAllEntities(): List<BankCardDataEntity> {
+        return bankCardDataDao.getAllEntities().map { decrypt(it) }
+    }
+
+    override suspend fun count(): Int {
+        return bankCardDataDao.count()
+    }
+
     override fun deleteAllData() {
         bankCardDataDao.deleteAllData()
     }

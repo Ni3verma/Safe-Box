@@ -192,4 +192,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Aggiornamento scaricato. Riavvia Safe Box per installarlo.</string>
     <string name="in_app_update_restart">Riavvia</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Aggiornamento di sicurezza — inserisci la password principale una volta</string>
+    <string name="vault_migration_progress_title">Aggiornamento della sicurezza della cassaforte…</string>
+    <string name="vault_migration_progress_counter">%1$d di %2$d record</string>
+    <string name="vault_migration_failure_keystore">L\'hardware sicuro non ha risposto. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_verify">Verifica dell\'aggiornamento non riuscita. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_storage">Impossibile salvare l\'aggiornamento. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_unexpected">Aggiornamento non riuscito. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_forgot_password_note">La tua password principale non è stata modificata.</string>
+    <string name="vault_migration_retry">Riprova</string>
+    <string name="vault_migration_continue_legacy">Continua per ora</string>
+    <string name="legacy_key_lost_title">Chiave di crittografia non disponibile</string>
+    <string name="legacy_key_lost_body">La chiave hardware che crittografava questa cassaforte non è più disponibile su questo dispositivo, quindi i record esistenti non possono essere aperti. Se hai un file di backup, puoi cancellare questa cassaforte e ripristinarla da quel backup.</string>
+    <string name="home_upgrade_pending_banner">Aggiornamento di sicurezza in sospeso — verrà eseguito al prossimo accesso</string>
+    <string name="home_upgrade_pending_retry">Riprova ora</string>
 </resources>

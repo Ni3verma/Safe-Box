@@ -20,4 +20,12 @@ interface VaultMetaDao {
      */
     @Query("select `value` from vault_meta where `key` = :key")
     suspend fun get(key: String): String?
+
+    /**
+     * Deletes the row for [key] if present; no-op when absent.
+     *
+     * @param key one of `VaultMetaKey`
+     */
+    @Query("delete from vault_meta where `key` = :key")
+    suspend fun delete(key: String)
 }

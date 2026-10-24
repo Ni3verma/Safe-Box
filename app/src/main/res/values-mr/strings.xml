@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">अपडेट डाउनलोड झाले. इन्स्टॉल करण्यासाठी Safe Box रीस्टार्ट करा.</string>
     <string name="in_app_update_restart">रीस्टार्ट करा</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">सुरक्षा अपग्रेड — तुमचा मास्टर पासवर्ड एकदा प्रविष्ट करा</string>
+    <string name="vault_migration_progress_title">तिजोरीची सुरक्षा अपग्रेड करत आहे…</string>
+    <string name="vault_migration_progress_counter">%2$d पैकी %1$d रेकॉर्ड</string>
+    <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेअरने प्रतिसाद दिला नाही. काहीही बदलले नाही.</string>
+    <string name="vault_migration_failure_verify">अपग्रेड तपासणी अयशस्वी झाली. काहीही बदलले नाही.</string>
+    <string name="vault_migration_failure_storage">अपग्रेड सेव्ह करता आले नाही. काहीही बदलले नाही.</string>
+    <string name="vault_migration_failure_unexpected">अपग्रेड अयशस्वी झाले. काहीही बदलले नाही.</string>
+    <string name="vault_migration_failure_forgot_password_note">तुमचा मास्टर पासवर्ड बदललेला नाही.</string>
+    <string name="vault_migration_retry">पुन्हा प्रयत्न करा</string>
+    <string name="vault_migration_continue_legacy">सध्या सुरू ठेवा</string>
+    <string name="legacy_key_lost_title">एन्क्रिप्शन की उपलब्ध नाही</string>
+    <string name="legacy_key_lost_body">या तिजोरीला एन्क्रिप्ट करणारी हार्डवेअर की आता या डिव्हाइसवर उपलब्ध नाही, त्यामुळे विद्यमान रेकॉर्ड उघडता येत नाहीत. तुमच्याकडे बॅकअप फाइल असल्यास, तुम्ही ही तिजोरी मिटवून त्या बॅकअपमधून रिस्टोअर करू शकता.</string>
+    <string name="home_upgrade_pending_banner">सुरक्षा अपग्रेड प्रलंबित — ते तुमच्या पुढील साइन-इन वेळी चालेल</string>
+    <string name="home_upgrade_pending_retry">आता पुन्हा प्रयत्न करा</string>
 </resources>

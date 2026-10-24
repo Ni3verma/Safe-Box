@@ -150,6 +150,34 @@ class EnvelopeEncryptionManagerTest {
         assertThat(fakeGateway.generationCountFor(deviceAlias)).isEqualTo(1)
     }
 
+    @Test
+    fun aliasFor_withSuffix_shouldAppendUnderscoreAndSuffix() {
+        assertThat(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC, null))
+            .isEqualTo("safebox_kek_biometric")
+        assertThat(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC, ""))
+            .isEqualTo("safebox_kek_biometric")
+        assertThat(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC, "2"))
+            .isEqualTo("safebox_kek_biometric_2")
+        assertThat(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE, "3"))
+            .isEqualTo("safebox_kek_device_3")
+    }
+
+    @Test
+    fun wrapAndDecryptCipherFor_withAliasSuffix_shouldUseSuffixedAliasInsteadOfDefault() {
+        val dek = manager.mintDek()
+        val defaultAlias = EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE)
+        val suffixedAlias = EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE, "2")
+
+        val wrappedBlob = manager.wrapWithKeystoreKey(WrapKeySpec.DEVICE, dek, aliasSuffix = "2")
+
+        assertThat(fakeGateway.probe(defaultAlias)).isEqualTo(KeyHealth.Missing)
+        assertThat(fakeGateway.probe(suffixedAlias)).isEqualTo(KeyHealth.Healthy)
+
+        val cipher = manager.decryptCipherFor(WrapKeySpec.DEVICE, aliasSuffix = "2")
+        val unwrapped = manager.unwrapWithCipher(cipher, wrappedBlob)
+        assertThat(unwrapped).isEqualTo(dek)
+    }
+
     private fun testKdfParams(saltSeed: Int): KdfParams = KdfParams(
         algorithm = KdfParams.ALGORITHM_PBKDF2_SHA256,
         iterations = 1_000,

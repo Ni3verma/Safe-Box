@@ -194,4 +194,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">アップデートをダウンロードしました。Safe Box を再起動してインストールしてください。</string>
     <string name="in_app_update_restart">再起動</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">セキュリティアップグレード — マスターパスワードを1回入力してください</string>
+    <string name="vault_migration_progress_title">保管庫のセキュリティをアップグレード中…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d 件のレコード</string>
+    <string name="vault_migration_failure_keystore">セキュアハードウェアが応答しませんでした。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_verify">アップグレードの検証に失敗しました。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_storage">アップグレードを保存できませんでした。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_unexpected">アップグレードに失敗しました。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_forgot_password_note">マスターパスワードは変更されていません。</string>
+    <string name="vault_migration_retry">再試行</string>
+    <string name="vault_migration_continue_legacy">今はこのまま続行</string>
+    <string name="legacy_key_lost_title">暗号化キーが利用できません</string>
+    <string name="legacy_key_lost_body">この保管庫を暗号化したハードウェアキーがこの端末で利用できなくなったため、既存のレコードを開けません。バックアップファイルがある場合は、この保管庫を消去してバックアップから復元できます。</string>
+    <string name="home_upgrade_pending_banner">セキュリティアップグレード保留中 — 次回のサインイン時に実行されます</string>
+    <string name="home_upgrade_pending_retry">今すぐ再試行</string>
 </resources>

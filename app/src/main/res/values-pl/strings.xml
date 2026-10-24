@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Aktualizacja pobrana. Uruchom ponownie Safe Box, aby ją zainstalować.</string>
     <string name="in_app_update_restart">Uruchom ponownie</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Aktualizacja zabezpieczeń — wprowadź jednorazowo hasło główne</string>
+    <string name="vault_migration_progress_title">Aktualizowanie zabezpieczeń sejfu…</string>
+    <string name="vault_migration_progress_counter">%1$d z %2$d wpisów</string>
+    <string name="vault_migration_failure_keystore">Bezpieczny sprzęt nie odpowiedział. Nic nie zostało zmienione.</string>
+    <string name="vault_migration_failure_verify">Weryfikacja aktualizacji nie powiodła się. Nic nie zostało zmienione.</string>
+    <string name="vault_migration_failure_storage">Nie udało się zapisać aktualizacji. Nic nie zostało zmienione.</string>
+    <string name="vault_migration_failure_unexpected">Aktualizacja nie powiodła się. Nic nie zostało zmienione.</string>
+    <string name="vault_migration_failure_forgot_password_note">Twoje hasło główne nie zostało zmienione.</string>
+    <string name="vault_migration_retry">Spróbuj ponownie</string>
+    <string name="vault_migration_continue_legacy">Kontynuuj na razie</string>
+    <string name="legacy_key_lost_title">Klucz szyfrowania niedostępny</string>
+    <string name="legacy_key_lost_body">Klucz sprzętowy szyfrujący ten sejf nie jest już dostępny na tym urządzeniu, więc istniejących wpisów nie można otworzyć. Jeśli masz plik kopii zapasowej, możesz wyczyścić ten sejf i przywrócić dane z kopii.</string>
+    <string name="home_upgrade_pending_banner">Oczekująca aktualizacja zabezpieczeń — zostanie uruchomiona przy następnym logowaniu</string>
+    <string name="home_upgrade_pending_retry">Spróbuj teraz</string>
 </resources>

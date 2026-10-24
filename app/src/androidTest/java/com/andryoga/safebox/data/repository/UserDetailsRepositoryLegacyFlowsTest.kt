@@ -1,10 +1,15 @@
 package com.andryoga.safebox.data.repository
 
+import androidx.room.withTransaction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.entity.UserDetailsEntity
+import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
+import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -14,14 +19,16 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Date
+import java.util.UUID
 import javax.inject.Inject
 
 /**
  * The legacy credential flows against the real repository, Room and hint encryption: what a user
- * who signs up on this build, or who upgraded and never ran the crypto migration, relies on.
+ * who upgraded from `crypto_version = 1` and has not yet run the crypto migration relies on.
  *
  * The legacy key comes from the fake gateway bound in instrumentation ([FakeKeystoreGateway]);
- * `setUp` creates it the way the signup bridge does, and the lost-key cases take it away again.
+ * `setUp` seeds it and the lost-key cases take it away again.
  */
 // TODO(D3): legacy vault (crypto_version = 1) only
 @HiltAndroidTest
@@ -38,19 +45,24 @@ class UserDetailsRepositoryLegacyFlowsTest {
     lateinit var database: SafeBoxDatabase
 
     @Inject
+    lateinit var userDetailsDaoSecure: UserDetailsDaoSecure
+
+    @Inject
+    lateinit var hashingUtils: HashingUtils
+
+    @Inject
     lateinit var keystoreGateway: FakeKeystoreGateway
 
     @Before
     fun setUp() {
         hiltRule.inject()
         database.clearAllTables()
-        // What SignupViewModel does before writing the user row: the hint is encrypted under it.
         keystoreGateway.getOrCreateLegacyVaultKey()
     }
 
     @Test
-    fun signup_shouldCreateLegacyVaultThatAcceptsOnlyItsPassword() = runBlocking {
-        repository.insertUserDetailsData(password = "Qwerty@@123", hint = "first hint")
+    fun legacyVault_shouldAcceptOnlyItsPasswordAndEncryptHint() = runBlocking {
+        seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
 
         assertThat(database.vaultMetaDao().get(VaultMetaKey.CRYPTO_VERSION))
             .isEqualTo(CryptoVersion.LEGACY)
@@ -63,7 +75,7 @@ class UserDetailsRepositoryLegacyFlowsTest {
 
     @Test
     fun updatePasswordAndHint_shouldReplaceCredentialAndHintForTheSameUser() = runBlocking {
-        repository.insertUserDetailsData(password = "Qwerty@@123", hint = "first hint")
+        seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
         val uid = database.userDetailsDao().getUid()
 
         repository.updatePasswordAndHint(newPassword = "Asdfgh@@456", hint = "second hint")
@@ -76,7 +88,7 @@ class UserDetailsRepositoryLegacyFlowsTest {
 
     @Test
     fun getHint_whenTheLegacyKeyIsLost_shouldReturnNullAndLeaveTheCredentialIntact() = runBlocking {
-        repository.insertUserDetailsData(password = "Qwerty@@123", hint = "first hint")
+        seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
 
         keystoreGateway.deleteLegacyVaultKey()
 
@@ -90,7 +102,7 @@ class UserDetailsRepositoryLegacyFlowsTest {
 
     @Test
     fun getHint_afterTheKeyWasLostAndReplaced_shouldFailInsteadOfReadingGarbage() = runBlocking {
-        repository.insertUserDetailsData(password = "Qwerty@@123", hint = "first hint")
+        seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
         keystoreGateway.deleteLegacyVaultKey()
         // What the pre-MR 3 provider used to do silently on a lost alias.
         keystoreGateway.getOrCreateLegacyVaultKey()
@@ -98,5 +110,24 @@ class UserDetailsRepositoryLegacyFlowsTest {
         val result = runCatching { repository.getHint() }
 
         assertThat(result.isFailure).isTrue()
+    }
+
+    private suspend fun seedLegacyVault(password: String, hint: String) {
+        val now = Date()
+        database.withTransaction {
+            database.vaultMetaDao()
+                .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
+            database.vaultMetaDao()
+                .upsert(VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, hashingUtils.hash(password)))
+            userDetailsDaoSecure.insertUserDetailsData(
+                UserDetailsEntity(
+                    key = 0,
+                    uid = UUID.randomUUID().toString(),
+                    hint = hint,
+                    creationDate = now,
+                    updateDate = now,
+                ),
+            )
+        }
     }
 }

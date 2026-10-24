@@ -90,8 +90,8 @@ class EnvelopeEncryptionManagerImpl @Inject constructor(
         }
     }
 
-    override fun decryptCipherFor(spec: WrapKeySpec): Cipher =
-        keystoreGateway.decryptCipher(aliasFor(spec))
+    override fun decryptCipherFor(spec: WrapKeySpec, aliasSuffix: String?): Cipher =
+        keystoreGateway.decryptCipher(aliasFor(spec, aliasSuffix))
 
     override fun unwrapWithCipher(cipher: Cipher, blob: String): ByteArray {
         val raw = try {
@@ -113,9 +113,13 @@ class EnvelopeEncryptionManagerImpl @Inject constructor(
     override fun verify(dek: ByteArray, verifier: String): Boolean =
         DekVerifier.verify(dek, verifier)
 
-    override fun wrapWithKeystoreKey(spec: WrapKeySpec, dek: ByteArray): String {
+    override fun wrapWithKeystoreKey(
+        spec: WrapKeySpec,
+        dek: ByteArray,
+        aliasSuffix: String?,
+    ): String {
         requireDekSize(dek)
-        val alias = aliasFor(spec)
+        val alias = aliasFor(spec, aliasSuffix)
         val publicKey = when (keystoreGateway.probe(alias)) {
             KeyHealth.Healthy ->
                 keystoreGateway.publicKey(alias) ?: keystoreGateway.generateWrapKeyPair(alias, spec)
@@ -159,12 +163,14 @@ class EnvelopeEncryptionManagerImpl @Inject constructor(
         private val PASSWORD_WRAP_AAD = "safebox.wrap.password.v1".toByteArray(Charsets.UTF_8)
 
         /**
-         * Returns the Keystore alias corresponding to [spec].
+         * Returns the Keystore alias corresponding to [spec] and optional per-generation [suffix].
          */
-        // TODO(MR5): resolve a per-generation alias suffix from vault_meta so a stuck entry (API 30, ADR-0011 S2) gets a fresh alias (design §2.2, debt D13).
-        fun aliasFor(spec: WrapKeySpec): String = when (spec) {
-            WrapKeySpec.BIOMETRIC -> BIOMETRIC_WRAP_KEY_ALIAS
-            WrapKeySpec.DEVICE -> DEVICE_WRAP_KEY_ALIAS
+        fun aliasFor(spec: WrapKeySpec, suffix: String? = null): String {
+            val base = when (spec) {
+                WrapKeySpec.BIOMETRIC -> BIOMETRIC_WRAP_KEY_ALIAS
+                WrapKeySpec.DEVICE -> DEVICE_WRAP_KEY_ALIAS
+            }
+            return if (suffix.isNullOrEmpty()) base else "${base}_$suffix"
         }
     }
 }

@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Atualização transferida. Reinicie o Safe Box para a instalar.</string>
     <string name="in_app_update_restart">Reiniciar</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Atualização de segurança — introduza a sua palavra-passe mestra uma vez</string>
+    <string name="vault_migration_progress_title">A atualizar a segurança do cofre…</string>
+    <string name="vault_migration_progress_counter">%1$d de %2$d registos</string>
+    <string name="vault_migration_failure_keystore">O hardware seguro não respondeu. Nada foi alterado.</string>
+    <string name="vault_migration_failure_verify">A verificação da atualização falhou. Nada foi alterado.</string>
+    <string name="vault_migration_failure_storage">Não foi possível guardar a atualização. Nada foi alterado.</string>
+    <string name="vault_migration_failure_unexpected">A atualização falhou. Nada foi alterado.</string>
+    <string name="vault_migration_failure_forgot_password_note">A sua palavra-passe mestra não foi alterada.</string>
+    <string name="vault_migration_retry">Tentar novamente</string>
+    <string name="vault_migration_continue_legacy">Continuar por agora</string>
+    <string name="legacy_key_lost_title">Chave de encriptação indisponível</string>
+    <string name="legacy_key_lost_body">A chave de hardware que encriptava este cofre já não está disponível neste dispositivo, pelo que os registos existentes não podem ser abertos. Se tiver um ficheiro de cópia de segurança, pode apagar este cofre e restaurar a partir dessa cópia.</string>
+    <string name="home_upgrade_pending_banner">Atualização de segurança pendente — será executada no próximo início de sessão</string>
+    <string name="home_upgrade_pending_retry">Tentar agora</string>
 </resources>

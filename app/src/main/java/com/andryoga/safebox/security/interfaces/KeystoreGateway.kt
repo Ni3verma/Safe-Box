@@ -2,6 +2,7 @@ package com.andryoga.safebox.security.interfaces
 
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
+import com.andryoga.safebox.data.db.models.VaultMetaKey
 import java.security.GeneralSecurityException
 import java.security.PublicKey
 import javax.crypto.Cipher
@@ -9,10 +10,26 @@ import javax.crypto.SecretKey
 
 /**
  * Identifies which hardware-backed RSA-2048 wrapping key pair is targeted.
+ *
+ * @property wrappedDekKey `vault_meta` key storing the wrapped DEK blob for this key pair.
+ * @property aliasSuffixKey `vault_meta` key storing the per-generation Keystore alias suffix.
+ * @property wireName Analytics wire value identifying this wrap type.
  */
-enum class WrapKeySpec {
-    BIOMETRIC,
-    DEVICE,
+enum class WrapKeySpec(
+    val wrappedDekKey: String,
+    val aliasSuffixKey: String,
+    val wireName: String,
+) {
+    BIOMETRIC(
+        wrappedDekKey = VaultMetaKey.WRAPPED_DEK_BIOMETRIC,
+        aliasSuffixKey = VaultMetaKey.BIOMETRIC_KEY_ALIAS_SUFFIX,
+        wireName = "biometric",
+    ),
+    DEVICE(
+        wrappedDekKey = VaultMetaKey.WRAPPED_DEK_DEVICE,
+        aliasSuffixKey = VaultMetaKey.DEVICE_KEY_ALIAS_SUFFIX,
+        wireName = "device",
+    ),
 }
 
 /**
@@ -98,17 +115,6 @@ interface KeystoreGateway {
      */
     // TODO(D3): legacy vault (crypto_version = 1) only — the handle its fields and hint are under
     fun legacyVaultKey(): SecretKey?
-
-    /**
-     * Returns the legacy `"symmetricDataKey"` handle, generating the alias only if it is absent and
-     * never replacing an existing entry.
-     *
-     * Signup bridge only: a vault is being created, so there is no data under an older key to lose.
-     * This is the single place the alias may ever be created; a lost alias in front of an existing
-     * vault is reported through [legacyVaultKey] returning `null`, never repaired.
-     */
-    // TODO(MR5): signup creates a DEK through VaultRepository.createVault; the legacy signup bridge and this method go with it
-    fun getOrCreateLegacyVaultKey(): SecretKey
 
     /**
      * Deletes the legacy `"symmetricDataKey"` entry if present.

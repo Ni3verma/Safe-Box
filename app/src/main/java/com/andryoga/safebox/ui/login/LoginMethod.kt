@@ -10,4 +10,5 @@ enum class LoginMethod(val analyticsValue: String) {
     PASSWORD("password"),
     BIOMETRIC("biometric"),
     PASSWORD_RESET("password_reset"),
+    LEGACY_SESSION("legacy_session"),
 }

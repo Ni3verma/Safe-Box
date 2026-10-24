@@ -1,5 +1,7 @@
 package com.andryoga.safebox.ui.login
 
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+
 sealed interface LoginScreenAction {
     // when user clicks show hint to reveal their saved password hint
     object ShowHintClicked : LoginScreenAction
@@ -41,4 +43,16 @@ sealed interface LoginScreenAction {
 
     // when user taps Forgot password, before the device security check decides which dialog opens
     object ForgotPasswordClicked : LoginScreenAction
+
+    // when the migration failure card is shown on the login screen
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    class OnMigrationFailureShown(val reason: MigrationFailureReason) : LoginScreenAction
+
+    // when the user taps Try again on the migration failure card
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    object OnMigrationRetryClicked : LoginScreenAction
+
+    // when the user taps Continue for now on the migration failure card to enter a legacy session
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    object OnMigrationContinueLegacyClicked : LoginScreenAction
 }

@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Güncelleme indirildi. Yüklemek için Safe Box\'ı yeniden başlatın.</string>
     <string name="in_app_update_restart">Yeniden Başlat</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Güvenlik yükseltmesi — ana parolanızı bir kez girin</string>
+    <string name="vault_migration_progress_title">Kasa güvenliği yükseltiliyor…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d kayıt</string>
+    <string name="vault_migration_failure_keystore">Güvenli donanım yanıt vermedi. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_verify">Yükseltme doğrulaması başarısız oldu. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_storage">Yükseltme kaydedilemedi. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_unexpected">Yükseltme başarısız oldu. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ana parolanız değiştirilmedi.</string>
+    <string name="vault_migration_retry">Tekrar dene</string>
+    <string name="vault_migration_continue_legacy">Şimdilik devam et</string>
+    <string name="legacy_key_lost_title">Şifreleme anahtarı kullanılamıyor</string>
+    <string name="legacy_key_lost_body">Bu kasayı şifreleyen donanım anahtarı artık bu cihazda kullanılamıyor, bu nedenle mevcut kayıtlar açılamıyor. Bir yedekleme dosyanız varsa bu kasayı silebilir ve yedekten geri yükleyebilirsiniz.</string>
+    <string name="home_upgrade_pending_banner">Güvenlik yükseltmesi bekliyor — bir sonraki girişinizde çalışacak</string>
+    <string name="home_upgrade_pending_retry">Şimdi dene</string>
 </resources>

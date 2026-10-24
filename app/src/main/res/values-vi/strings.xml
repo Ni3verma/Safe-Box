@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Đã tải bản cập nhật xuống. Khởi động lại Safe Box để cài đặt.</string>
     <string name="in_app_update_restart">Khởi động lại</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Nâng cấp bảo mật — nhập mật khẩu chính của bạn một lần</string>
+    <string name="vault_migration_progress_title">Đang nâng cấp bảo mật két an toàn…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d bản ghi</string>
+    <string name="vault_migration_failure_keystore">Phần cứng bảo mật không phản hồi. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_verify">Kiểm tra nâng cấp thất bại. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_storage">Không thể lưu bản nâng cấp. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_unexpected">Nâng cấp thất bại. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_forgot_password_note">Mật khẩu chính của bạn chưa bị thay đổi.</string>
+    <string name="vault_migration_retry">Thử lại</string>
+    <string name="vault_migration_continue_legacy">Tiếp tục tạm thời</string>
+    <string name="legacy_key_lost_title">Khóa mã hóa không khả dụng</string>
+    <string name="legacy_key_lost_body">Khóa phần cứng dùng để mã hóa két này không còn khả dụng trên thiết bị này, vì vậy không thể mở các bản ghi hiện có. Nếu bạn có tệp sao lưu, bạn có thể xóa két này và khôi phục từ bản sao lưu đó.</string>
+    <string name="home_upgrade_pending_banner">Đang chờ nâng cấp bảo mật — sẽ chạy vào lần đăng nhập tiếp theo</string>
+    <string name="home_upgrade_pending_retry">Thử lại ngay</string>
 </resources>

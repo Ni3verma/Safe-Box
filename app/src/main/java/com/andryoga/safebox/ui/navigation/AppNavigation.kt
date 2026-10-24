@@ -96,11 +96,9 @@ private fun NavGraphBuilder.loginGraph(
         }
 
         composable<SignupRoute> {
-            SignupScreenRoot(
-                onSignupSuccess = {
-                    navigateRoot(navController, HomeGraph)
-                }
-            )
+            SignupScreenRoot(onSignupSuccess = {
+                navigateRoot(navController, HomeGraph)
+            })
         }
     }
 }

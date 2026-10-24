@@ -30,6 +30,12 @@ interface LoginDataDao {
     @Query("select * from login_data")
     suspend fun exportAllData(): List<ExportLoginData>
 
+    @Query("select * from login_data")
+    suspend fun getAllEntities(): List<LoginDataEntity>
+
+    @Query("select count(*) from login_data")
+    suspend fun count(): Int
+
     @Query("delete from login_data")
     fun deleteAllData()
 }

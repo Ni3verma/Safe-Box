@@ -10,9 +10,7 @@ import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
-import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.entity.VaultMetaEntity
-import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.test.fakes.FakeHashingUtils
@@ -93,37 +91,6 @@ class UserDetailsRepositoryImplTest {
     fun tearDown() {
         unmockkStatic(ROOM_DATABASE_EXTENSIONS)
         FirebaseCrashlyticsTestHelper.tearDownMockCrashlytics()
-    }
-
-    @Test
-    fun insertUserDetailsData_shouldSetCrashlyticsUidAndInsertUserRowWithoutCredential() = runTest {
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDaoSecure.insertUserDetailsData(capture(slot)) } returns Unit
-
-        repository.insertUserDetailsData(password = "secretPass123", hint = "favorite color")
-
-        verify { mockCrashlytics.setUserId(any()) }
-        verify { mockCrashlytics.setCustomKey(CommonConstants.CRASHLYTICS_KEY_UID, any<String>()) }
-
-        assertThat(slot.isCaptured).isTrue()
-        assertThat(slot.captured.hint).isEqualTo("favorite color")
-        assertThat(slot.captured.uid).isNotEmpty()
-        assertThat(slot.captured.key).isEqualTo(0)
-    }
-
-    @Test
-    fun insertUserDetailsData_shouldWriteLegacyMarkerAndHashBeforeUserRowInOneTransaction() = runTest {
-        repository.insertUserDetailsData(password = "secretPass123", hint = "favorite color")
-
-        assertThat(transactionCount).isEqualTo(1)
-        // crypto_version must land before the user row: the secure DAO reads it to store the hint.
-        coVerifyOrder {
-            vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
-            vaultMetaDao.upsert(
-                VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, "HASH[secretPass123]|FAKE_SALT"),
-            )
-            userDetailsDaoSecure.insertUserDetailsData(any())
-        }
     }
 
     @Test

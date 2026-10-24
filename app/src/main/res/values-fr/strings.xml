@@ -192,4 +192,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Mise à jour téléchargée. Redémarrez Safe Box pour l\'installer.</string>
     <string name="in_app_update_restart">Redémarrer</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Mise à niveau de sécurité — saisissez votre mot de passe principal une fois</string>
+    <string name="vault_migration_progress_title">Mise à niveau de la sécurité du coffre…</string>
+    <string name="vault_migration_progress_counter">%1$d sur %2$d enregistrements</string>
+    <string name="vault_migration_failure_keystore">Le matériel sécurisé n\'a pas répondu. Aucune modification n\'a été effectuée.</string>
+    <string name="vault_migration_failure_verify">La vérification de la mise à niveau a échoué. Aucune modification n\'a été effectuée.</string>
+    <string name="vault_migration_failure_storage">Impossible d\'enregistrer la mise à niveau. Aucune modification n\'a été effectuée.</string>
+    <string name="vault_migration_failure_unexpected">La mise à niveau a échoué. Aucune modification n\'a été effectuée.</string>
+    <string name="vault_migration_failure_forgot_password_note">Votre mot de passe principal n\'a pas été modifié.</string>
+    <string name="vault_migration_retry">Réessayer</string>
+    <string name="vault_migration_continue_legacy">Continuer pour l\'instant</string>
+    <string name="legacy_key_lost_title">Clé de chiffrement indisponible</string>
+    <string name="legacy_key_lost_body">La clé matérielle qui chiffrait ce coffre n\'est plus disponible sur cet appareil, les enregistrements existants ne peuvent donc pas être ouverts. Si vous disposez d\'un fichier de sauvegarde, vous pouvez effacer ce coffre et le restaurer à partir de cette sauvegarde.</string>
+    <string name="home_upgrade_pending_banner">Mise à niveau de sécurité en attente — elle aura lieu à votre prochaine connexion</string>
+    <string name="home_upgrade_pending_retry">Réessayer maintenant</string>
 </resources>
