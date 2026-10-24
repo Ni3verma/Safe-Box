@@ -236,9 +236,9 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 - **The backup password never enters WorkManager's database** (envelope MR 4). Whoever enqueues
   puts it in `BackupPasswordRegistry` (`worker/`, process memory, keyed by work id) *before*
   `enqueueUniqueWork`; the worker `take`s it as its first statement using its own `id`, zeroes it
-  in a `finally`, and the request's input data carries only the notification flag. A lock clears
-  the registry together with the work. The same applies to restore (`RESTORE_PARAM_FILE_URI` is
-  the only input).
+  in a `finally`, and the request's input data carries only the notification flag. Every entry is
+  taken by its own worker or lost with the process. The same applies to restore
+  (`RESTORE_PARAM_FILE_URI` is the only input).
 
 ## Restore semantics
 

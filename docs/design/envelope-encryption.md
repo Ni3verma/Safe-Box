@@ -1090,7 +1090,7 @@ Entries in `enum class AnalyticsKey(val eventName: String)`, loggers in `Analyti
 | `ERASE_VAULT_DIALOG_SHOW` / `_CONFIRM_CLICK` / `_CANCEL_CLICK` | — | §6.11 |
 | `SCREEN_LOCK_NUDGE_SHOW` / `_OPEN_SETTINGS_CLICK` / `_ACCEPT_RISK_CLICK` | — | Home banner |
 | `BIOMETRIC_UNLOCK_DISABLED` / `BIOMETRIC_UNLOCK_ENABLED` | — | Settings switch |
-| `SESSION_TIMEOUT` (MR T, re-scoped by MR 4) | `worker_running` | once per away timeout that **locks** the vault; a timer that elapses with the vault already locked logs nothing. `worker_running` is read just before the clear, because the clear cancels the workers |
+| `SESSION_TIMEOUT` (MR T, re-scoped by MR 4) | `worker_running` | once per away timeout that **locks** the vault; a timer that elapses with the vault already locked logs nothing. `worker_running` is read just before the clear, because a running worker fails closed at its next use of the key |
 | `CHANGE_PASSWORD_GATE_PASSED` | `gate = device_auth \| master_password` | §6.8 |
 | existing `UPDATE_PASSWORD_DIALOG_SHOW / ALLOW_CLICK / CANCEL_CLICK` | **+ `source = login \| settings`** | both dialogs |
 | existing `DEVICE_SECURITY_REQUIRED_DIALOG_SHOW` | **+ `source`** | legacy reset only (§6.4.1) |
