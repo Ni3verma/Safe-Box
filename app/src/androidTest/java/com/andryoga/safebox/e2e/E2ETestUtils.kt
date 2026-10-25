@@ -392,6 +392,16 @@ object E2ETestUtils {
                 timeoutMillis = 20000L
             )
         }
+        // NavHost crossfades LoginRoute out over 700ms after HomeRoute enters; wait until the
+        // exiting LoginRoute leaves the semantics tree so callers never read its stale nodes.
+        composeTestRule.waitUntil(timeoutMillis = 10000L) {
+            runCatching {
+                composeTestRule.onAllNodes(
+                    hasText(welcomeBackText),
+                    useUnmergedTree = true,
+                ).fetchSemanticsNodes().isEmpty()
+            }.getOrDefault(false)
+        }
         composeTestRule.waitForIdle()
     }
 
