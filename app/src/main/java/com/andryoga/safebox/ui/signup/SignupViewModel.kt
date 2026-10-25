@@ -130,7 +130,12 @@ class SignupViewModel @Inject constructor(
                     password = password.toCharArray(),
                     hint = hint,
                 )
-                sessionKeyHolder.setSessionKey(dek)
+                try {
+                    sessionKeyHolder.setSessionKey(dek)
+                } finally {
+                    dek.fill(0)
+                }
+                // TODO(MR8): remove EncryptedPreferenceProvider and IS_SIGN_UP_REQUIRED write
                 encryptedPreferenceProvider.upsertBooleanPref(
                     CommonConstants.IS_SIGN_UP_REQUIRED,
                     false,

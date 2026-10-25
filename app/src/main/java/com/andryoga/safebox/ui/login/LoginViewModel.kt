@@ -200,13 +200,21 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    private var isUnlocking = false
+
     private fun onLoginClicked(password: String) {
+        if (isUnlocking || _uiState.value.userAuthState == UserAuthState.VERIFIED) return
         Timber.i("login clicked")
+        isUnlocking = true
         viewModelScope.launch {
-            when (val state = vaultRepository.getVaultState()) {
-                is VaultState.Envelope -> unlockEnvelopeWithPassword(password, state)
-                is VaultState.Legacy -> unlockLegacyWithPassword(password)
-                VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
+            try {
+                when (val state = vaultRepository.getVaultState()) {
+                    is VaultState.Envelope -> unlockEnvelopeWithPassword(password, state)
+                    is VaultState.Legacy -> unlockLegacyWithPassword(password)
+                    VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
+                }
+            } finally {
+                isUnlocking = false
             }
         }
     }
@@ -225,6 +233,7 @@ class LoginViewModel @Inject constructor(
         password: String,
         state: VaultState.Envelope,
     ) {
+        Timber.i("unlocking envelope vault with password")
         val verifiedDek = withContext(dispatchersProvider.default) {
             val dek = envelopeEncryptionManager.unwrapWithPassword(
                 password = password.toCharArray(),
@@ -238,6 +247,7 @@ class LoginViewModel @Inject constructor(
             dek
         }
         if (verifiedDek == null) {
+            Timber.i("envelope password verification failed")
             onIncorrectPassword()
             return
         }
@@ -248,6 +258,7 @@ class LoginViewModel @Inject constructor(
         } finally {
             verifiedDek.fill(0)
         }
+        Timber.i("envelope vault unlocked with password")
         enqueueAutoBackupIfEnabled(password)
         vaultKeyMaintenance.scheduleAfterUnlock()
         onAuthSuccess(LoginMethod.PASSWORD)
@@ -275,6 +286,7 @@ class LoginViewModel @Inject constructor(
         newHint: String?,
         trigger: MigrationTrigger,
     ) {
+        Timber.i("starting legacy vault migration: trigger=%s", trigger.wireName)
         pendingMigrationPassword = password
         pendingMigrationHint = newHint
         pendingMigrationTrigger = trigger
@@ -288,6 +300,7 @@ class LoginViewModel @Inject constructor(
             )
         ) {
             is MigrationOutcome.Success -> {
+                Timber.i("legacy vault migration succeeded")
                 outcome.dek.fill(0)
                 clearPendingMigrationCredentials()
                 _uiState.update { it.copy(isLegacyVault = false, migrationFailure = null) }
@@ -304,6 +317,7 @@ class LoginViewModel @Inject constructor(
             }
 
             MigrationOutcome.AlreadyMigrated -> {
+                Timber.i("vault already migrated; unlocking as envelope")
                 clearPendingMigrationCredentials()
                 _uiState.update { it.copy(isLegacyVault = false, migrationFailure = null) }
                 val state = vaultRepository.getVaultState()
@@ -313,6 +327,12 @@ class LoginViewModel @Inject constructor(
             }
 
             is MigrationOutcome.Failure -> {
+                Timber.w(
+                    "legacy vault migration failed: stage=%s, reason=%s, attempt=%d",
+                    outcome.stage.wireName,
+                    outcome.reason.wireName,
+                    outcome.attempt,
+                )
                 if (outcome.reason == MigrationFailureReason.LEGACY_KEY_LOST) {
                     clearPendingMigrationCredentials()
                     _uiState.update {
@@ -349,6 +369,7 @@ class LoginViewModel @Inject constructor(
         val password = pendingMigrationPassword ?: return
         val hint = pendingMigrationHint
         val trigger = pendingMigrationTrigger
+        Timber.i("migration retry clicked: reason=%s, attempt=%d", failure.reason.wireName, failure.attempt)
         analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_RETRY_CLICK) {
             param(AnalyticsParam.REASON, failure.reason.wireName)
         }
@@ -365,6 +386,7 @@ class LoginViewModel @Inject constructor(
     private fun onMigrationContinueLegacyClicked() {
         val failure = _uiState.value.migrationFailure ?: return
         if (!failure.canContinueLegacy) return
+        Timber.i("migration continue legacy clicked: reason=%s, attempt=%d", failure.reason.wireName, failure.attempt)
         analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_CONTINUE_LEGACY_CLICK) {
             param(AnalyticsParam.REASON, failure.reason.wireName)
         }

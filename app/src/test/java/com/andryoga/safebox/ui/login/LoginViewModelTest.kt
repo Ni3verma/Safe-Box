@@ -708,6 +708,18 @@ class LoginViewModelTest {
         coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
     }
 
+    @Test
+    fun loginClicked_whenCalledTwiceWhileInFlightOrAfterVerified_unwrapsOnlyOnce() = runTest {
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+
+        verify(exactly = 1) { envelopeEncryptionManager.unwrapWithPassword(any(), any(), any()) }
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(false) }
+    }
+
     /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */
     private fun capturedLoginSuccessParams(): Map<String, Any> = capturedParams(AnalyticsKey.LOGIN_SUCCESS)
 

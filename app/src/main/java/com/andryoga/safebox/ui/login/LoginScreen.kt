@@ -141,6 +141,7 @@ internal fun LoginScreen(
                 }
 
                 uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST -> {
+                    // TODO(MR6): pass onEraseVaultClick to LegacyKeyLostCardContent (VaultResetUseCase)
                     LegacyKeyLostCardContent()
                 }
 
