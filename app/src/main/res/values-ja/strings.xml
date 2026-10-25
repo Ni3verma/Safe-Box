@@ -209,4 +209,17 @@
     <string name="legacy_key_lost_body">この保管庫を暗号化したハードウェアキーがこの端末で利用できなくなったため、既存のレコードを開けません。バックアップファイルがある場合は、この保管庫を消去してバックアップから復元できます。</string>
     <string name="home_upgrade_pending_banner">セキュリティアップグレード保留中 — 次回のサインイン時に実行されます</string>
     <string name="home_upgrade_pending_retry">今すぐ再試行</string>
+    <string name="login_biometric_invalidated_banner">指紋ログインの再設定が必要です — マスターパスワードを入力してください</string>
+    <string name="recovery_not_set_up_title">復旧が設定されていません</string>
+    <string name="recovery_not_set_up_body">忘れたマスターパスワードをリセットできるのは、前回ログインした時点ですでに設定されていた画面ロックを使う場合のみです。この端末にはこの保管庫の復旧キーがないため、保管庫はマスターパスワードでしか開けません。</string>
+    <string name="recovery_not_set_up_restore_hint">バックアップファイルがある場合は、この保管庫を消去して新規登録をやり直し、「バックアップと復元」からバックアップを復元してください。</string>
+    <string name="recovery_back_to_login">ログインに戻る</string>
+    <string name="erase_vault_action">すべて消去してやり直す</string>
+    <string name="erase_vault_dialog_title">すべて消去しますか？</string>
+    <string name="erase_vault_dialog_body">この端末上のすべてのレコード、マスターパスワード、復旧キーが完全に削除されます。別の場所に保存したバックアップファイルには影響しません。</string>
+    <string name="erase_vault_dialog_confirm">消去</string>
+    <string name="recovery_failure_not_authenticated">保管庫を開く前にロック解除の有効期限が切れました。もう一度お試しください。</string>
+    <string name="recovery_failure_verifier">この端末の復旧データが破損しています。変更は行われませんでした。</string>
+    <string name="recovery_failure_keystore">セキュアハードウェアが復旧キーを開けませんでした。変更は行われませんでした。</string>
+    <string name="recovery_failure_storage">新しいパスワードを保存できませんでした。変更は行われませんでした。</string>
 </resources>

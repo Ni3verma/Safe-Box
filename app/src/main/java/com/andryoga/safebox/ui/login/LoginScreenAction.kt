@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.login
 
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import javax.crypto.Cipher
 
 sealed interface LoginScreenAction {
     // when user clicks show hint to reveal their saved password hint
@@ -9,8 +10,12 @@ sealed interface LoginScreenAction {
     // when user clicks login with entered master password
     class LoginClicked(val password: String) : LoginScreenAction
 
-    // when biometric authentication completes successfully for login unlock
-    object BiometricSuccess : LoginScreenAction
+    /**
+     * The fingerprint prompt succeeded. [cipher] is the authorised cipher of the `CryptoObject`
+     * the screen bound from [LoginUiState.biometricUnlockCipher]; `null` means the prompt was not
+     * crypto-bound, which the ViewModel refuses to unlock on.
+     */
+    class BiometricSuccess(val cipher: Cipher?) : LoginScreenAction
 
     // when biometric authentication fails or is cancelled for login unlock
     object BiometricError : LoginScreenAction
@@ -41,8 +46,33 @@ sealed interface LoginScreenAction {
     // when user dismisses/cancels update password dialog
     object OnUpdatePasswordDismissClicked : LoginScreenAction
 
-    // when user taps Forgot password, before the device security check decides which dialog opens
+    // when user taps Forgot password; the ViewModel decides which step follows from the vault state
     object ForgotPasswordClicked : LoginScreenAction
+
+    // legacy reset: today's gate (no CryptoObject) accepted the credential
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    object OnLegacyResetAuthenticated : LoginScreenAction
+
+    /**
+     * v2 recovery: the device prompt succeeded. [cipher] is the authorised cipher of the bound
+     * `CryptoObject` (API 30+), or `null` when none was bound (API 29, time-bound key).
+     */
+    class OnRecoveryAuthenticated(val cipher: Cipher?) : LoginScreenAction
+
+    // the forgot-password prompt (legacy or v2) errored or was cancelled
+    object OnForgotPasswordAuthCancelled : LoginScreenAction
+
+    // Back on the recovery-not-set-up card
+    object OnRecoveryNotSetUpDismissed : LoginScreenAction
+
+    // when the erase-vault dialog is displayed
+    object OnEraseVaultDialogShown : LoginScreenAction
+
+    // when user confirms the erase-vault dialog
+    object OnEraseVaultConfirmClicked : LoginScreenAction
+
+    // when user dismisses/cancels the erase-vault dialog
+    object OnEraseVaultCancelClicked : LoginScreenAction
 
     // when the migration failure card is shown on the login screen
     // TODO(D3): legacy vault (crypto_version = 1) only

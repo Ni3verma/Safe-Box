@@ -165,12 +165,16 @@ internal fun MigrationFailureCardContent(
 
 /**
  * Dedicated state shown when the legacy Keystore key (`symmetricDataKey`) is gone and the vault
- * cannot be opened or migrated.
+ * cannot be opened or migrated. The only way forward is *Erase everything and start over*
+ * (design §6.11).
+ *
+ * @param onEraseVaultClick Opens the erase confirmation.
  */
-// TODO(MR6): add Erase everything and start over button
 // TODO(D3): legacy vault (crypto_version = 1) only
 @Composable
-internal fun LegacyKeyLostCardContent() {
+internal fun LegacyKeyLostCardContent(
+    onEraseVaultClick: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .padding(24.dp)
@@ -197,18 +201,26 @@ internal fun LegacyKeyLostCardContent() {
             color = colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+        Spacer(modifier = Modifier.height(20.dp))
+        EraseVaultButton(onClick = onEraseVaultClick)
     }
 }
 
-/** One-line notice above the login form, announced to TalkBack when it appears. */
+/**
+ * One-line notice above the login form, announced to TalkBack when it appears.
+ *
+ * @param isError Error-container colours and a warning icon for a failure the user must act on;
+ * the default tertiary tone is informational.
+ */
 @Composable
 internal fun LoginNoticeBanner(
     text: String,
     modifier: Modifier = Modifier,
+    isError: Boolean = false,
 ) {
     Surface(
-        color = colorScheme.tertiaryContainer,
-        contentColor = colorScheme.onTertiaryContainer,
+        color = if (isError) colorScheme.errorContainer else colorScheme.tertiaryContainer,
+        contentColor = if (isError) colorScheme.onErrorContainer else colorScheme.onTertiaryContainer,
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
             .fillMaxWidth()
@@ -219,7 +231,7 @@ internal fun LoginNoticeBanner(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
         ) {
             Icon(
-                imageVector = Icons.Outlined.Info,
+                imageVector = if (isError) Icons.Outlined.Warning else Icons.Outlined.Info,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
@@ -365,7 +377,7 @@ private fun LegacyKeyLostCardPreview() {
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         ) {
-            LegacyKeyLostCardContent()
+            LegacyKeyLostCardContent(onEraseVaultClick = {})
         }
     }
 }

@@ -207,4 +207,17 @@
     <string name="legacy_key_lost_body">La clave de hardware que cifraba esta bóveda ya no está disponible en este dispositivo, por lo que no se pueden abrir los registros existentes. Si tienes un archivo de copia de seguridad, puedes borrar esta bóveda y restaurar desde esa copia.</string>
     <string name="home_upgrade_pending_banner">Actualización de seguridad pendiente — se ejecutará en tu próximo inicio de sesión</string>
     <string name="home_upgrade_pending_retry">Reintentar ahora</string>
+    <string name="login_biometric_invalidated_banner">El inicio de sesión con huella digital debe configurarse de nuevo — introduce tu contraseña maestra</string>
+    <string name="recovery_not_set_up_title">La recuperación no está configurada</string>
+    <string name="recovery_not_set_up_body">Una contraseña maestra olvidada solo se puede restablecer mediante un bloqueo de pantalla que ya estuviera configurado la última vez que iniciaste sesión. Este dispositivo no tiene ninguna clave de recuperación para esta bóveda, por lo que solo se puede abrir con su contraseña maestra.</string>
+    <string name="recovery_not_set_up_restore_hint">Si tienes un archivo de copia de seguridad, borra esta bóveda, regístrate de nuevo y restaura la copia desde Copia y restauración.</string>
+    <string name="recovery_back_to_login">Volver al inicio de sesión</string>
+    <string name="erase_vault_action">Borrar todo y empezar de nuevo</string>
+    <string name="erase_vault_dialog_title">¿Borrar todo?</string>
+    <string name="erase_vault_dialog_body">Todos los registros, la contraseña maestra y las claves de recuperación de este dispositivo se eliminarán de forma permanente. Los archivos de copia de seguridad que hayas guardado en otro lugar no se verán afectados.</string>
+    <string name="erase_vault_dialog_confirm">Borrar</string>
+    <string name="recovery_failure_not_authenticated">El desbloqueo caducó antes de que se pudiera abrir la bóveda. Inténtalo de nuevo.</string>
+    <string name="recovery_failure_verifier">Los datos de recuperación de este dispositivo están dañados. No se realizó ningún cambio.</string>
+    <string name="recovery_failure_keystore">El hardware seguro no pudo abrir la clave de recuperación. No se realizó ningún cambio.</string>
+    <string name="recovery_failure_storage">No se pudo guardar la nueva contraseña. No se realizó ningún cambio.</string>
 </resources>

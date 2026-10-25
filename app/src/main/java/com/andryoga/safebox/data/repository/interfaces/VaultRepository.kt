@@ -61,13 +61,15 @@ interface VaultRepository {
 
     /**
      * Re-derives `KEK_Password` with fresh [KdfParams] (new random salt and current iteration
-     * count), wraps [dek] under [newPassword], and atomically updates `kdf_params` and
-     * `wrapped_dek_password` in `vault_meta`.
+     * count), wraps [dek] under [newPassword], and atomically updates `kdf_params`,
+     * `wrapped_dek_password` and the plaintext `user_details.hint` in one transaction. Records,
+     * `dek_verifier` and the Keystore wraps are untouched: the DEK does not change.
      *
      * @param newPassword Master password characters; zeroed before this method returns.
      * @param dek Active 32-byte Data Encryption Key.
+     * @param hint Replacement master password hint, stored in plaintext.
      */
-    suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray)
+    suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray, hint: String)
 
     /**
      * Persists a Keystore-wrapped DEK [blob] for [spec] and optionally updates its per-generation

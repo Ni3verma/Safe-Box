@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Klucz sprzętowy szyfrujący ten sejf nie jest już dostępny na tym urządzeniu, więc istniejących wpisów nie można otworzyć. Jeśli masz plik kopii zapasowej, możesz wyczyścić ten sejf i przywrócić dane z kopii.</string>
     <string name="home_upgrade_pending_banner">Oczekująca aktualizacja zabezpieczeń — zostanie uruchomiona przy następnym logowaniu</string>
     <string name="home_upgrade_pending_retry">Spróbuj teraz</string>
+    <string name="login_biometric_invalidated_banner">Logowanie odciskiem palca wymaga ponownej konfiguracji — wprowadź hasło główne</string>
+    <string name="recovery_not_set_up_title">Odzyskiwanie nie jest skonfigurowane</string>
+    <string name="recovery_not_set_up_body">Zapomniane hasło główne można zresetować tylko za pomocą blokady ekranu, która była już ustawiona podczas ostatniego logowania. To urządzenie nie zawiera klucza odzyskiwania dla tego sejfu, więc można go otworzyć wyłącznie za pomocą hasła głównego.</string>
+    <string name="recovery_not_set_up_restore_hint">Jeśli masz plik kopii zapasowej, wymaż ten sejf, zarejestruj się ponownie i przywróć kopię w sekcji Kopia i przywracanie.</string>
+    <string name="recovery_back_to_login">Wróć do logowania</string>
+    <string name="erase_vault_action">Wymaż wszystko i zacznij od nowa</string>
+    <string name="erase_vault_dialog_title">Wymazać wszystko?</string>
+    <string name="erase_vault_dialog_body">Wszystkie wpisy, hasło główne i klucze odzyskiwania na tym urządzeniu zostaną trwale usunięte. Pliki kopii zapasowych zapisane w innym miejscu pozostaną nienaruszone.</string>
+    <string name="erase_vault_dialog_confirm">Wymaż</string>
+    <string name="recovery_failure_not_authenticated">Odblokowanie wygasło, zanim udało się otworzyć sejf. Spróbuj ponownie.</string>
+    <string name="recovery_failure_verifier">Dane odzyskiwania na tym urządzeniu są uszkodzone. Nic nie zostało zmienione.</string>
+    <string name="recovery_failure_keystore">Bezpieczny sprzęt nie mógł otworzyć klucza odzyskiwania. Nic nie zostało zmienione.</string>
+    <string name="recovery_failure_storage">Nie udało się zapisać nowego hasła. Nic nie zostało zmienione.</string>
 </resources>

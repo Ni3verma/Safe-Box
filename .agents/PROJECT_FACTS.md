@@ -57,11 +57,13 @@ upgrade test must be `qa → qa`.
   **silently regenerates** and every record becomes undecryptable (visible since 2026-10-20 as
   `keystore_key_created` with `db_exists = 1`). `feature/envelope-encryption` (MR 3, 2026-10-21): no
   ambient key; `SymmetricKeyUtilsImpl` reads `SessionKeyHolder` per call, a locked vault fails closed
-  (`SessionLockedException`; list Flows emit empty), and the legacy alias is created **only** by the
-  signup bridge (`getOrCreateLegacyVaultKey()`), never on a read. MR 4 (2026-10-23): `clearSessionKey()`
-  is the **only** exit from the vault — `HomeScreen` leaves for Login on `isVaultUnlocked = false`; the
-  timeout records `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**. Start destination
-  is Room-first (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is written, never read.
+  (`SessionLockedException`; list Flows emit empty); nothing creates the legacy alias any more (MR 5).
+  MR 4 (2026-10-23): `clearSessionKey()` is the exit from the vault — `HomeScreen` leaves for Login on
+  `isVaultUnlocked = false`; the timeout records `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing
+  navigates**. Start destination is Room-first (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is
+  written, never read. MR 6 (2026-10-25): every unlock is `LoginViewModel` → `setSessionKey` — password,
+  fingerprint (`CryptoObject` cipher prepared by the VM), forgot-password (`wrapped_dek_device`, then
+  `rewrapPassword(newPassword, dek, hint)`); `VaultResetUseCase.eraseVault()` is the second clear.
   [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
 - `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
   `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
@@ -113,10 +115,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   `com.andryoga.safebox.CustomHiltTestRunner`, test Application `BaseTestApplication`.
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
-- QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
-  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). The `aosp-atd` CI image has
-  **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock screen** (so no
-  auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
+- The `aosp-atd` CI image has **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock
+  screen** (no auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
 - **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and restore
   tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
   `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. [Doc](../docs/testing/upgrade-testing.md)

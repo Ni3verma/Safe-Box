@@ -90,9 +90,14 @@ private fun NavGraphBuilder.loginGraph(
             )
         }
         composable<LoginRoute> {
-            LoginScreenRoot(onLoginSuccess = {
-                navigateRoot(navController, HomeGraph)
-            })
+            LoginScreenRoot(
+                onLoginSuccess = {
+                    navigateRoot(navController, HomeGraph)
+                },
+                onVaultErased = {
+                    navigateRoot(navController, SignupRoute)
+                },
+            )
         }
 
         composable<SignupRoute> {

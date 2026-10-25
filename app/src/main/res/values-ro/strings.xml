@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Cheia hardware care a criptat acest seif nu mai este disponibilă pe acest dispozitiv, astfel încât înregistrările existente nu pot fi deschise. Dacă ai un fișier de rezervă, poți șterge acest seif și restaura din acea copie.</string>
     <string name="home_upgrade_pending_banner">Actualizare de securitate în așteptare — va rula la următoarea autentificare</string>
     <string name="home_upgrade_pending_retry">Reîncearcă acum</string>
+    <string name="login_biometric_invalidated_banner">Conectarea cu amprenta trebuie configurată din nou — introdu parola principală</string>
+    <string name="recovery_not_set_up_title">Recuperarea nu este configurată</string>
+    <string name="recovery_not_set_up_body">O parolă principală uitată poate fi resetată doar printr-o blocare a ecranului care era deja setată la ultima conectare. Acest dispozitiv nu deține nicio cheie de recuperare pentru acest seif, așa că poate fi deschis doar cu parola sa principală.</string>
+    <string name="recovery_not_set_up_restore_hint">Dacă ai un fișier de backup, șterge acest seif, înregistrează-te din nou și restaurează backupul din Backup și restaurare.</string>
+    <string name="recovery_back_to_login">Înapoi la conectare</string>
+    <string name="erase_vault_action">Șterge tot și începe din nou</string>
+    <string name="erase_vault_dialog_title">Ștergi tot?</string>
+    <string name="erase_vault_dialog_body">Toate înregistrările, parola principală și cheile de recuperare de pe acest dispozitiv vor fi șterse definitiv. Fișierele de backup salvate în altă parte nu sunt afectate.</string>
+    <string name="erase_vault_dialog_confirm">Șterge</string>
+    <string name="recovery_failure_not_authenticated">Deblocarea a expirat înainte ca seiful să poată fi deschis. Încearcă din nou.</string>
+    <string name="recovery_failure_verifier">Datele de recuperare de pe acest dispozitiv sunt deteriorate. Nu s-a modificat nimic.</string>
+    <string name="recovery_failure_keystore">Hardware-ul securizat nu a putut deschide cheia de recuperare. Nu s-a modificat nimic.</string>
+    <string name="recovery_failure_storage">Parola nouă nu a putut fi salvată. Nu s-a modificat nimic.</string>
 </resources>

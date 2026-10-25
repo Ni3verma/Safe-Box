@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">इस तिजोरी को एन्क्रिप्ट करने वाली हार्डवेयर कुंजी अब इस डिवाइस पर उपलब्ध नहीं है, इसलिए मौजूदा रिकॉर्ड नहीं खोले जा सकते। यदि आपके पास बैकअप फ़ाइल है, तो आप इस तिजोरी को मिटाकर उस बैकअप से रीस्टोर कर सकते हैं।</string>
     <string name="home_upgrade_pending_banner">सुरक्षा अपग्रेड बाकी है — यह आपके अगले साइन-इन पर चलेगा</string>
     <string name="home_upgrade_pending_retry">अभी पुनः प्रयास करें</string>
+    <string name="login_biometric_invalidated_banner">फ़िंगरप्रिंट लॉगिन फिर से सेट करना होगा — अपना मास्टर पासवर्ड दर्ज करें</string>
+    <string name="recovery_not_set_up_title">रिकवरी सेट नहीं है</string>
+    <string name="recovery_not_set_up_body">भूला हुआ मास्टर पासवर्ड केवल उसी स्क्रीन लॉक से रीसेट किया जा सकता है जो आपके पिछले साइन-इन के समय पहले से सेट था। इस डिवाइस पर इस तिजोरी के लिए कोई रिकवरी कुंजी नहीं है, इसलिए इसे केवल इसके मास्टर पासवर्ड से ही खोला जा सकता है।</string>
+    <string name="recovery_not_set_up_restore_hint">यदि आपके पास बैकअप फ़ाइल है, तो इस तिजोरी को मिटाएं, दोबारा साइन अप करें, फिर बैकअप और रीस्टोर में जाकर बैकअप रीस्टोर करें।</string>
+    <string name="recovery_back_to_login">लॉगिन पर वापस जाएं</string>
+    <string name="erase_vault_action">सब कुछ मिटाएं और नए सिरे से शुरू करें</string>
+    <string name="erase_vault_dialog_title">सब कुछ मिटा दें?</string>
+    <string name="erase_vault_dialog_body">इस डिवाइस पर मौजूद सभी रिकॉर्ड, मास्टर पासवर्ड और रिकवरी कुंजियां स्थायी रूप से हटा दी जाएंगी। कहीं और सहेजी गई आपकी बैकअप फ़ाइलें प्रभावित नहीं होंगी।</string>
+    <string name="erase_vault_dialog_confirm">मिटाएं</string>
+    <string name="recovery_failure_not_authenticated">तिजोरी खुलने से पहले ही अनलॉक की अवधि समाप्त हो गई। पुनः प्रयास करें।</string>
+    <string name="recovery_failure_verifier">इस डिवाइस पर मौजूद रिकवरी डेटा क्षतिग्रस्त है। कुछ भी बदला नहीं गया।</string>
+    <string name="recovery_failure_keystore">सुरक्षित हार्डवेयर रिकवरी कुंजी नहीं खोल सका। कुछ भी बदला नहीं गया।</string>
+    <string name="recovery_failure_storage">नया पासवर्ड सहेजा नहीं जा सका। कुछ भी बदला नहीं गया।</string>
 </resources>

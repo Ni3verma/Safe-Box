@@ -309,6 +309,7 @@ class LoginBiometricAndHintE2ETest {
                 encryptedPreferenceProvider,
                 preferenceProvider
             )
+            VaultSessionTestBridge.seedBiometricWrap()
             preferenceProvider.upsertIntPref(
                 CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
                 3
@@ -360,6 +361,55 @@ class LoginBiometricAndHintE2ETest {
 
             // Assert that biometric prompt/handler was invoked only once, proving no prompt loop occurs
             assertThat(fakeDeviceSecurityAuthProvider.invocationCount).isEqualTo(1)
+        }
+    }
+
+    @Test
+    fun biometricLogin_throughTheBoundCryptoObject_shouldUnlockTheVaultWithoutAPassword() {
+        fakeDeviceSecurityAuthProvider.canAuthenticateOverride = true
+        // The fake substitutes the CryptoObject the screen bound, so the ViewModel unwraps for real.
+        fakeDeviceSecurityAuthProvider.authHandlerOverride = { onSuccess, _ ->
+            LaunchedEffect(Unit) {
+                onSuccess(null)
+            }
+        }
+
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                encryptedPreferenceProvider,
+                preferenceProvider
+            )
+            VaultSessionTestBridge.seedBiometricWrap()
+            preferenceProvider.upsertIntPref(
+                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                3
+            )
+            VaultSessionTestBridge.lockVault()
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
+            composeTestRule.waitUntil(timeoutMillis = 25000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasContentDescription(addNewButtonDesc),
+                        useUnmergedTree = true
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNode(hasContentDescription(addNewButtonDesc)).assertIsDisplayed()
+            assertThat(fakeDeviceSecurityAuthProvider.lastCryptoObject?.cipher).isNotNull()
+            runBlocking {
+                val remainingCount = preferenceProvider.getIntPref(
+                    CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                    SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
+                )
+                assertThat(remainingCount).isEqualTo(2)
+            }
         }
     }
 }

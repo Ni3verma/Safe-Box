@@ -209,4 +209,17 @@
     <string name="legacy_key_lost_body">加密此保险库的硬件密钥在此设备上已不可用，因此无法打开现有记录。如果您有备份文件，可以清除此保险库并从备份恢复。</string>
     <string name="home_upgrade_pending_banner">安全升级待处理 — 将在您下次登录时运行</string>
     <string name="home_upgrade_pending_retry">立即重试</string>
+    <string name="login_biometric_invalidated_banner">指纹登录需要重新设置 — 请输入您的主密码</string>
+    <string name="recovery_not_set_up_title">未设置密码恢复</string>
+    <string name="recovery_not_set_up_body">忘记的主密码只能通过您上次登录时就已设置好的屏幕锁定来重置。此设备上没有此保险库的恢复密钥，因此该保险库只能使用其主密码打开。</string>
+    <string name="recovery_not_set_up_restore_hint">如果您有备份文件，请清除此保险库并重新注册，然后在“备份与恢复”中恢复该备份。</string>
+    <string name="recovery_back_to_login">返回登录</string>
+    <string name="erase_vault_action">清除所有数据并重新开始</string>
+    <string name="erase_vault_dialog_title">清除所有数据？</string>
+    <string name="erase_vault_dialog_body">此设备上的所有记录、主密码和恢复密钥都将被永久删除。您保存在其他位置的备份文件不受影响。</string>
+    <string name="erase_vault_dialog_confirm">清除</string>
+    <string name="recovery_failure_not_authenticated">解锁已过期，未能打开保险库。请重试。</string>
+    <string name="recovery_failure_verifier">此设备上的恢复数据已损坏。未做任何更改。</string>
+    <string name="recovery_failure_keystore">安全硬件无法打开恢复密钥。未做任何更改。</string>
+    <string name="recovery_failure_storage">无法保存新密码。未做任何更改。</string>
 </resources>

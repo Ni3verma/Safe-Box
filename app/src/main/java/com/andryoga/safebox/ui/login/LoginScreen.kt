@@ -2,6 +2,7 @@ package com.andryoga.safebox.ui.login
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.VisibleForTesting
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -34,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,22 +62,34 @@ import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
 import com.andryoga.safebox.ui.core.motion.rejectShake
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
+import com.andryoga.safebox.ui.core.vault.EraseVaultDialog
 import com.andryoga.safebox.ui.login.components.LegacyKeyLostCardContent
 import com.andryoga.safebox.ui.login.components.LoginNoticeBanner
 import com.andryoga.safebox.ui.login.components.MigrationFailureCardContent
 import com.andryoga.safebox.ui.login.components.MigrationProgressCardContent
+import com.andryoga.safebox.ui.login.components.RecoveryNotSetUpCardContent
+import com.andryoga.safebox.ui.login.components.recoveryFailureText
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import timber.log.Timber
 
 @Composable
-fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
+fun LoginScreenRoot(
+    onLoginSuccess: () -> Unit,
+    onVaultErased: () -> Unit,
+) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.userAuthState) {
         if (uiState.userAuthState == UserAuthState.VERIFIED) {
             onLoginSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.isVaultErased) {
+        if (uiState.isVaultErased) {
+            onVaultErased()
         }
     }
 
@@ -93,9 +107,7 @@ internal fun LoginScreen(
 ) {
     val context = LocalContext.current
     val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
-    var showResetPasswordAuth by remember { mutableStateOf(false) }
-    var showUpdatePasswordDialog by remember { mutableStateOf(false) }
-    var showDeviceSecurityRequiredDialog by remember { mutableStateOf(false) }
+    var showEraseVaultDialog by remember { mutableStateOf(false) }
     val migrationRunning = uiState.migrationProgress as? MigrationProgressState.Running
 
     if (migrationRunning != null) {
@@ -143,8 +155,16 @@ internal fun LoginScreen(
                 }
 
                 uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST -> {
-                    // TODO(MR6): pass onEraseVaultClick to LegacyKeyLostCardContent (VaultResetUseCase)
-                    LegacyKeyLostCardContent()
+                    LegacyKeyLostCardContent(
+                        onEraseVaultClick = { showEraseVaultDialog = true },
+                    )
+                }
+
+                uiState.isRecoveryNotSetUp -> {
+                    RecoveryNotSetUpCardContent(
+                        onEraseVaultClick = { showEraseVaultDialog = true },
+                        onBackClick = { screenAction(LoginScreenAction.OnRecoveryNotSetUpDismissed) },
+                    )
                 }
 
                 else -> {
@@ -152,19 +172,8 @@ internal fun LoginScreen(
                         uiState = uiState,
                         screenAction = screenAction,
                         onForgotPasswordClick = {
-                            Timber.i("forgot password clicked on login screen, checking device security auth availability")
+                            Timber.i("forgot password clicked on login screen")
                             screenAction(LoginScreenAction.ForgotPasswordClicked)
-                            if (
-                                canAuthenticateUsingDeviceSecurity(
-                                    context,
-                                    biometricAuthProvider,
-                                    allowDeviceCredential = true,
-                                )
-                            ) {
-                                showResetPasswordAuth = true
-                            } else {
-                                showDeviceSecurityRequiredDialog = true
-                            }
                         },
                     )
                 }
@@ -178,62 +187,107 @@ internal fun LoginScreen(
         }
     }
 
-    if (uiState.canUnlockWithBiometric && migrationRunning == null && uiState.migrationFailure == null) {
+    val biometricCipher = uiState.biometricUnlockCipher
+    val isLoginFormShowing = migrationRunning == null && uiState.migrationFailure == null
+    if (biometricCipher != null && isLoginFormShowing && uiState.forgotPasswordStep == null) {
+        // Remembered per cipher: a new CryptoObject instance would re-launch the prompt.
+        val cryptoObject = remember(biometricCipher) { BiometricPrompt.CryptoObject(biometricCipher) }
         DeviceSecurityAuthHandler(
-            onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) },
+            cryptoObject = cryptoObject,
+            onSuccess = { screenAction(LoginScreenAction.BiometricSuccess(it?.cipher)) },
             onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) },
         )
     }
 
-    if (showResetPasswordAuth) {
-        DeviceSecurityAuthHandler(
-            title = stringResource(R.string.forgot_password),
-            subtitle = stringResource(R.string.forgot_password_device_security_subtitle),
-            allowDeviceCredential = true,
-            onSuccess = {
-                showResetPasswordAuth = false
-                showUpdatePasswordDialog = true
+    ForgotPasswordFlow(
+        step = uiState.forgotPasswordStep,
+        screenAction = screenAction,
+    )
+
+    if (showEraseVaultDialog) {
+        EraseVaultDialog(
+            onDismiss = {
+                showEraseVaultDialog = false
+                screenAction(LoginScreenAction.OnEraseVaultCancelClicked)
             },
-            onErrorOrCancel = {
-                Timber.w("device security auth error or cancel for forgot password on login screen")
-                showResetPasswordAuth = false
+            onShow = {
+                screenAction(LoginScreenAction.OnEraseVaultDialogShown)
+            },
+            onConfirm = {
+                showEraseVaultDialog = false
+                screenAction(LoginScreenAction.OnEraseVaultConfirmClicked)
             },
         )
     }
+}
 
-    if (showUpdatePasswordDialog) {
-        UpdatePasswordDialog(
-            onDismiss = {
-                showUpdatePasswordDialog = false
-                screenAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
-            },
-            onShow = {
-                screenAction(LoginScreenAction.OnUpdatePasswordDialogShown)
-            },
-            onSave = { newPassword, hint ->
-                showUpdatePasswordDialog = false
-                screenAction(LoginScreenAction.OnResetPassword(newPassword, hint))
-            },
-        )
-    }
+/** The prompt or dialog of the current [ForgotPasswordStep]; nothing when the flow is idle. */
+@Composable
+private fun ForgotPasswordFlow(
+    step: ForgotPasswordStep?,
+    screenAction: (LoginScreenAction) -> Unit,
+) {
+    val context = LocalContext.current
+    val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
+    when (step) {
+        null -> Unit
 
-    if (showDeviceSecurityRequiredDialog) {
-        DeviceSecurityRequiredDialog(
-            onDismiss = {
-                showDeviceSecurityRequiredDialog = false
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
-            },
-            onShow = {
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
-            },
-            onOpenSettingsClick = {
-                showDeviceSecurityRequiredDialog = false
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-            },
-            onOpenSettingsFailure = {
-                screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-            },
-        )
+        ForgotPasswordStep.LegacyAuthentication -> {
+            // Decided once per step: the legacy gate is the only place the dialog is still honest (design §6.4.1).
+            val canAuthenticate = remember(step) {
+                canAuthenticateUsingDeviceSecurity(context, biometricAuthProvider, allowDeviceCredential = true)
+            }
+            if (canAuthenticate) {
+                DeviceSecurityAuthHandler(
+                    title = stringResource(R.string.forgot_password),
+                    subtitle = stringResource(R.string.forgot_password_device_security_subtitle),
+                    allowDeviceCredential = true,
+                    onSuccess = { screenAction(LoginScreenAction.OnLegacyResetAuthenticated) },
+                    onErrorOrCancel = {
+                        Timber.w("device security auth error or cancel for forgot password on login screen")
+                        screenAction(LoginScreenAction.OnForgotPasswordAuthCancelled)
+                    },
+                )
+            } else {
+                DeviceSecurityRequiredDialog(
+                    onDismiss = { screenAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked) },
+                    onShow = { screenAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown) },
+                    onOpenSettingsClick = {
+                        screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+                    },
+                    onOpenSettingsFailure = {
+                        screenAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+                    },
+                )
+            }
+        }
+
+        is ForgotPasswordStep.DeviceAuthentication -> key(step) {
+            // Keyed on the step instance: the API 29 re-prompt carries the same null cipher and
+            // must still open a fresh prompt.
+            val cryptoObject = remember { step.cipher?.let { BiometricPrompt.CryptoObject(it) } }
+            DeviceSecurityAuthHandler(
+                title = stringResource(R.string.forgot_password),
+                subtitle = stringResource(R.string.forgot_password_device_security_subtitle),
+                allowDeviceCredential = true,
+                cryptoObject = cryptoObject,
+                onSuccess = { screenAction(LoginScreenAction.OnRecoveryAuthenticated(it?.cipher)) },
+                onErrorOrCancel = {
+                    Timber.w("device security auth error or cancel for vault recovery on login screen")
+                    screenAction(LoginScreenAction.OnForgotPasswordAuthCancelled)
+                },
+            )
+        }
+
+        ForgotPasswordStep.NewPassword -> {
+            UpdatePasswordDialog(
+                onDismiss = { screenAction(LoginScreenAction.OnUpdatePasswordDismissClicked) },
+                onShow = { screenAction(LoginScreenAction.OnUpdatePasswordDialogShown) },
+                onSave = { newPassword, hint ->
+                    screenAction(LoginScreenAction.OnResetPassword(newPassword, hint))
+                },
+            )
+        }
     }
 }
 
@@ -271,6 +325,19 @@ private fun LoginCardContent(
             LoginNoticeBanner(
                 text = stringResource(R.string.login_security_upgrade_notice),
                 modifier = Modifier.padding(bottom = 16.dp),
+            )
+        }
+        if (uiState.isBiometricKeyInvalidated) {
+            LoginNoticeBanner(
+                text = stringResource(R.string.login_biometric_invalidated_banner),
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+        }
+        if (uiState.recoveryFailure != null) {
+            LoginNoticeBanner(
+                text = recoveryFailureText(uiState.recoveryFailure),
+                isError = true,
+                modifier = Modifier.padding(bottom = 12.dp),
             )
         }
         Icon(
@@ -456,6 +523,61 @@ private fun LoginPreviewLegacyKeyLost() {
     SafeBoxTheme {
         LoginScreen(
             uiState = LoginUiState(userAuthState = UserAuthState.LEGACY_KEY_LOST),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewBiometricKeyInvalidated() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(isBiometricKeyInvalidated = true),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewRecoveryNotSetUp() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(isRecoveryNotSetUp = true),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewRecoveryFailureVerifier() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(recoveryFailure = RecoveryFailureReason.VERIFIER),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewRecoveryFailureNotAuthenticated() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(recoveryFailure = RecoveryFailureReason.NOT_AUTHENTICATED),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewRecoveryNewPassword() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(forgotPasswordStep = ForgotPasswordStep.NewPassword),
             screenAction = {},
         )
     }

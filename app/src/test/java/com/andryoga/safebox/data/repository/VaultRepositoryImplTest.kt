@@ -173,7 +173,7 @@ class VaultRepositoryImplTest {
     }
 
     @Test
-    fun rewrapPassword_shouldDeriveFreshKdfParamsAndUpdatePasswordWrapInOneTransaction() = runTest {
+    fun rewrapPassword_shouldDeriveFreshKdfParamsAndUpdatePasswordWrapAndHintInOneTransaction() = runTest {
         val dek = ByteArray(32) { 2 }
         val freshParams = KdfParams(
             algorithm = KdfParams.ALGORITHM_PBKDF2_SHA256,
@@ -185,13 +185,17 @@ class VaultRepositoryImplTest {
             envelopeEncryptionManager.wrapWithPassword(any(), freshParams, dek)
         } returns "rewrapped-blob"
 
-        repository.rewrapPassword("NewPass#2".toCharArray(), dek)
+        repository.rewrapPassword("NewPass#2".toCharArray(), dek, hint = "new hint")
 
         assertThat(transactionCount).isEqualTo(1)
         coVerifyOrder {
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.KDF_PARAMS, freshParams.encode()))
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.WRAPPED_DEK_PASSWORD, "rewrapped-blob"))
+            userDetailsDao.updateHint("new hint", any())
         }
+        coVerify(exactly = 0) { vaultMetaDao.upsert(match { it.key == VaultMetaKey.DEK_VERIFIER }) }
+        coVerify(exactly = 0) { vaultMetaDao.upsert(match { it.key == VaultMetaKey.WRAPPED_DEK_DEVICE }) }
+        coVerify(exactly = 0) { vaultMetaDao.upsert(match { it.key == VaultMetaKey.WRAPPED_DEK_BIOMETRIC }) }
     }
 
     @Test

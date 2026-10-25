@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">A chave de hardware que criptografava este cofre não está mais disponível neste dispositivo, portanto os registros existentes não podem ser abertos. Se você tiver um arquivo de backup, poderá apagar este cofre e restaurar a partir desse backup.</string>
     <string name="home_upgrade_pending_banner">Atualização de segurança pendente — será executada no próximo login</string>
     <string name="home_upgrade_pending_retry">Tentar agora</string>
+    <string name="login_biometric_invalidated_banner">O login por impressão digital precisa ser configurado novamente — digite sua senha mestra</string>
+    <string name="recovery_not_set_up_title">A recuperação não está configurada</string>
+    <string name="recovery_not_set_up_body">Uma senha mestra esquecida só pode ser redefinida por meio de um bloqueio de tela que já estava configurado na última vez em que você entrou. Este dispositivo não possui nenhuma chave de recuperação para este cofre, portanto ele só pode ser aberto com a respectiva senha mestra.</string>
+    <string name="recovery_not_set_up_restore_hint">Se você tiver um arquivo de backup, apague este cofre, cadastre-se novamente e restaure o backup em Backup e restauração.</string>
+    <string name="recovery_back_to_login">Voltar ao login</string>
+    <string name="erase_vault_action">Apagar tudo e começar de novo</string>
+    <string name="erase_vault_dialog_title">Apagar tudo?</string>
+    <string name="erase_vault_dialog_body">Todos os registros, a senha mestra e as chaves de recuperação neste dispositivo serão excluídos permanentemente. Os arquivos de backup salvos em outro lugar não serão afetados.</string>
+    <string name="erase_vault_dialog_confirm">Apagar</string>
+    <string name="recovery_failure_not_authenticated">O desbloqueio expirou antes que o cofre pudesse ser aberto. Tente novamente.</string>
+    <string name="recovery_failure_verifier">Os dados de recuperação neste dispositivo estão danificados. Nada foi alterado.</string>
+    <string name="recovery_failure_keystore">O hardware seguro não conseguiu abrir a chave de recuperação. Nada foi alterado.</string>
+    <string name="recovery_failure_storage">Não foi possível salvar a nova senha. Nada foi alterado.</string>
 </resources>
