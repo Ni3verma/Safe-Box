@@ -59,7 +59,6 @@ object SecurityModule {
         impl: SessionKeyHolderImpl,
     ): SessionKeyHolder = impl
 
-    // TODO(MR5): wired into SignupViewModel, LoginViewModel, LegacyVaultMigrator, and VaultKeyMaintenance
     @Singleton
     @Provides
     fun provideEnvelopeEncryptionManager(
