@@ -16,6 +16,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DiagnosticsModule {
 
+    // TODO(MR5): wired into LegacyVaultMigrator
     @Singleton
     @Provides
     fun provideCrashReporter(

@@ -73,6 +73,7 @@ class UserDetailsDaoSecure @Inject constructor(
     /** A missing `crypto_version` row is read as legacy: it is the only state that predates the row. */
     // TODO(D3): legacy vault (crypto_version = 1) only — goes when one crypto_version is left
     private suspend fun isEnvelopeVault(): Boolean {
+        // TODO(MR5): crypto_version = 2 becomes reachable once signup and the migration write it
         return vaultMetaDao.get(VaultMetaKey.CRYPTO_VERSION) == CryptoVersion.ENVELOPE
     }
 }

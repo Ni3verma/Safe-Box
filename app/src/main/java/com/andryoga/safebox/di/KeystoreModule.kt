@@ -16,6 +16,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object KeystoreModule {
 
+    // TODO(MR5): wired into EnvelopeEncryptionManagerImpl, LegacyVaultMigrator, and VaultKeyMaintenance
     @Singleton
     @Provides
     fun provideKeystoreGateway(
