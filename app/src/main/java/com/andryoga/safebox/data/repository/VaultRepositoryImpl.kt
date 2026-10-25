@@ -2,6 +2,7 @@ package com.andryoga.safebox.data.repository
 
 import androidx.room.withTransaction
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
@@ -16,6 +17,7 @@ import com.andryoga.safebox.security.envelope.KdfParams
 import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.withContext
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -28,6 +30,7 @@ class VaultRepositoryImpl @Inject constructor(
     private val vaultMetaDao: VaultMetaDao,
     private val userDetailsDao: UserDetailsDao,
     private val envelopeEncryptionManager: EnvelopeEncryptionManager,
+    private val dispatchersProvider: DispatchersProvider,
 ) : VaultRepository {
 
     override suspend fun hasVault(): Boolean {
@@ -40,10 +43,13 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createVault(password: CharArray, hint: String): ByteArray {
-        val dek = envelopeEncryptionManager.mintDek()
-        val kdfParams = envelopeEncryptionManager.deriveKdfParams()
-        val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(password, kdfParams, dek)
-        val verifier = envelopeEncryptionManager.makeVerifier(dek)
+        val (dek, kdfParams, wrappedPassword, verifier) = withContext(dispatchersProvider.default) {
+            val dek = envelopeEncryptionManager.mintDek()
+            val kdfParams = envelopeEncryptionManager.deriveKdfParams()
+            val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(password, kdfParams, dek)
+            val verifier = envelopeEncryptionManager.makeVerifier(dek)
+            CreatedVaultMaterials(dek, kdfParams, wrappedPassword, verifier)
+        }
         val uid = UUID.randomUUID().toString()
         val now = Date()
 
@@ -67,12 +73,27 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray) {
-        val kdfParams = envelopeEncryptionManager.deriveKdfParams()
-        val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(newPassword, kdfParams, dek)
+        val (kdfParams, wrappedPassword) = withContext(dispatchersProvider.default) {
+            val kdfParams = envelopeEncryptionManager.deriveKdfParams()
+            val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(newPassword, kdfParams, dek)
+            kdfParams to wrappedPassword
+        }
         database.withTransaction {
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.KDF_PARAMS, kdfParams.encode()))
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.WRAPPED_DEK_PASSWORD, wrappedPassword))
         }
+    }
+
+    private class CreatedVaultMaterials(
+        val dek: ByteArray,
+        val kdfParams: KdfParams,
+        val wrappedPassword: String,
+        val verifier: String,
+    ) {
+        operator fun component1(): ByteArray = dek
+        operator fun component2(): KdfParams = kdfParams
+        operator fun component3(): String = wrappedPassword
+        operator fun component4(): String = verifier
     }
 
     override suspend fun storeWrap(spec: WrapKeySpec, blob: String, aliasSuffix: String?) {

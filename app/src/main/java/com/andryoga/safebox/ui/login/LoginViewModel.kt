@@ -7,6 +7,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -54,6 +56,7 @@ class LoginViewModel @Inject constructor(
     private val deviceSecurityStatus: DeviceSecurityStatus,
     private val sessionKeyHolder: SessionKeyHolder,
     private val keystoreGateway: KeystoreGateway,
+    private val dispatchersProvider: DispatchersProvider,
     sessionLockReasonStore: SessionLockReasonStore,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
@@ -222,24 +225,28 @@ class LoginViewModel @Inject constructor(
         password: String,
         state: VaultState.Envelope,
     ) {
-        val dek = envelopeEncryptionManager.unwrapWithPassword(
-            password = password.toCharArray(),
-            params = state.kdfParams,
-            blob = state.wrappedDekPassword,
-        ).getOrElse {
+        val verifiedDek = withContext(dispatchersProvider.default) {
+            val dek = envelopeEncryptionManager.unwrapWithPassword(
+                password = password.toCharArray(),
+                params = state.kdfParams,
+                blob = state.wrappedDekPassword,
+            ).getOrNull() ?: return@withContext null
+            if (!envelopeEncryptionManager.verify(dek, state.dekVerifier)) {
+                dek.fill(0)
+                return@withContext null
+            }
+            dek
+        }
+        if (verifiedDek == null) {
             onIncorrectPassword()
             return
         }
         try {
-            if (!envelopeEncryptionManager.verify(dek, state.dekVerifier)) {
-                onIncorrectPassword()
-                return
-            }
             // The session must be open before the enqueue below: the worker reads every record
             // through the holder and may start at once.
-            sessionKeyHolder.setSessionKey(dek)
+            sessionKeyHolder.setSessionKey(verifiedDek)
         } finally {
-            dek.fill(0)
+            verifiedDek.fill(0)
         }
         enqueueAutoBackupIfEnabled(password)
         vaultKeyMaintenance.scheduleAfterUnlock()

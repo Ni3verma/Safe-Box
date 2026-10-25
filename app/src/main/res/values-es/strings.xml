@@ -193,7 +193,7 @@
     <string name="in_app_update_downloaded">Actualización descargada. Reinicia Safe Box para instalarla.</string>
     <string name="in_app_update_restart">Reiniciar</string>
     <!-- Envelope encryption migration & fallback -->
-    <string name="login_security_upgrade_notice">Actualización de seguridad — ingresa tu contraseña maestra una vez</string>
+    <string name="login_security_upgrade_notice">Actualización de seguridad — introduce tu contraseña maestra una vez</string>
     <string name="vault_migration_progress_title">Actualizando la seguridad de la bóveda…</string>
     <string name="vault_migration_progress_counter">%1$d de %2$d registros</string>
     <string name="vault_migration_failure_keystore">El hardware seguro no respondió. No se realizó ningún cambio.</string>

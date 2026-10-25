@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.repository
 
 import androidx.room.withTransaction
+import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.db.SafeBoxDatabase
@@ -30,9 +31,13 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 class VaultRepositoryImplTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     @MockK
     lateinit var database: SafeBoxDatabase
@@ -67,6 +72,7 @@ class VaultRepositoryImplTest {
             vaultMetaDao = vaultMetaDao,
             userDetailsDao = userDetailsDao,
             envelopeEncryptionManager = envelopeEncryptionManager,
+            dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
         )
     }
 

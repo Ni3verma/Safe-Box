@@ -172,6 +172,7 @@ class LoginViewModelTest {
         deviceSecurityStatus = deviceSecurityStatus,
         sessionKeyHolder = sessionKeyHolder,
         keystoreGateway = keystoreGateway,
+        dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
         sessionLockReasonStore = sessionLockReasonStore,
         isDebug = isDebug,
     )

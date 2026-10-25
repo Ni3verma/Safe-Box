@@ -32,6 +32,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.security.KeyStoreException
+import java.security.ProviderException
 
 /**
  * Unit tests for [VaultKeyMaintenance] verifying silent wrap creation, invalidation healing,
@@ -190,6 +191,29 @@ class VaultKeyMaintenanceTest {
     }
 
     @Test
+    fun runAfterUnlock_whenStuckKeystoreAliasThrowsProviderException_shouldRotateSuffixAndRetry() = runTest {
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+        every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
+            isDeviceSecure = true,
+            biometricClass = BiometricClass.NONE_ENROLLED,
+            hasStrongBox = false,
+        )
+        coEvery { vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.DEVICE) } returns "2"
+        every {
+            envelopeEncryptionManager.wrapWithKeystoreKey(WrapKeySpec.DEVICE, any(), "2")
+        } throws ProviderException("Keystore driver stuck on safebox_kek_device_2")
+
+        maintenance.runAfterUnlock()
+
+        val rotatedAlias = EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE, "3")
+        assertThat(fakeKeystoreGateway.probe(rotatedAlias)).isEqualTo(KeyHealth.Healthy)
+        coVerify(exactly = 1) {
+            vaultRepository.storeWrap(WrapKeySpec.DEVICE, any(), "3")
+        }
+        assertThat(fakeAnalytics.hasLogged(AnalyticsKey.VAULT_WRAP_CREATED)).isTrue()
+    }
+
+    @Test
     fun runAfterUnlock_whenDeviceLockRemovedAndDeviceWrapExists_shouldDeleteDeviceWrap() = runTest {
         sessionKeyHolder.setSessionKey(testDek.copyOf())
         every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
@@ -210,6 +234,24 @@ class VaultKeyMaintenanceTest {
         sessionKeyHolder.setSessionKey(testDek.copyOf())
         coEvery { vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) } returns "1"
         coEvery { vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) } returns "disabled-bio-wrap"
+        envelopeEncryptionManager.wrapWithKeystoreKey(WrapKeySpec.DEVICE, testDek)
+        coEvery { vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_DEVICE) } returns "healthy-device-wrap"
+
+        maintenance.runAfterUnlock()
+
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC) }
+        coVerify(exactly = 0) { vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), any()) }
+    }
+
+    @Test
+    fun runAfterUnlock_whenStrongBiometricUnenrolledAndBiometricWrapExists_shouldDeleteBiometricWrap() = runTest {
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+        every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
+            isDeviceSecure = true,
+            biometricClass = BiometricClass.NONE_ENROLLED,
+            hasStrongBox = false,
+        )
+        coEvery { vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) } returns "stale-bio-wrap"
         envelopeEncryptionManager.wrapWithKeystoreKey(WrapKeySpec.DEVICE, testDek)
         coEvery { vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_DEVICE) } returns "healthy-device-wrap"
 

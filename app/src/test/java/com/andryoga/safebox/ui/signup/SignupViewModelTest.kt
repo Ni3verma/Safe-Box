@@ -232,6 +232,19 @@ class SignupViewModelTest {
     }
 
     @Test
+    fun onSignupClick_whenCalledTwiceWhileInFlight_createsVaultOnlyOnce() = runTest {
+        viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+        viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGN_UP) }
+        coVerify(exactly = 1) { vaultRepository.createVault(any(), any()) }
+    }
+
+    @Test
     fun onSignupClick_whenVaultAlreadyExists_leavesVaultAndSessionUntouched() {
         coEvery { vaultRepository.hasVault() } returns true
 

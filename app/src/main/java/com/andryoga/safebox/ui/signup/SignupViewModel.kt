@@ -41,6 +41,8 @@ class SignupViewModel @Inject constructor(
     private val _navigateToHome = MutableStateFlow(false)
     val navigateToHome: StateFlow<Boolean> = _navigateToHome
 
+    private var isSigningUp = false
+
     init {
         if (isDebug) {
             _uiState.update {
@@ -100,6 +102,7 @@ class SignupViewModel @Inject constructor(
     }
 
     private fun signup() {
+        if (isSigningUp) return
         val password = _uiState.value.password
         val hint = _uiState.value.hint
 
@@ -113,27 +116,32 @@ class SignupViewModel @Inject constructor(
             return
         }
 
+        isSigningUp = true
         analyticsHelper.logEvent(AnalyticsKey.SIGN_UP)
 
         viewModelScope.launch {
-            if (vaultRepository.hasVault()) {
-                Utils.crashInDebugBuild("Signup invoked when a vault already exists")
-                return@launch
+            try {
+                if (vaultRepository.hasVault()) {
+                    Utils.crashInDebugBuild("Signup invoked when a vault already exists")
+                    return@launch
+                }
+
+                val dek = vaultRepository.createVault(
+                    password = password.toCharArray(),
+                    hint = hint,
+                )
+                sessionKeyHolder.setSessionKey(dek)
+                encryptedPreferenceProvider.upsertBooleanPref(
+                    CommonConstants.IS_SIGN_UP_REQUIRED,
+                    false,
+                )
+                vaultKeyMaintenance.scheduleAfterUnlock()
+                Timber.i("Added pswrd in db")
+
+                _navigateToHome.emit(true)
+            } finally {
+                isSigningUp = false
             }
-
-            val dek = vaultRepository.createVault(
-                password = password.toCharArray(),
-                hint = hint,
-            )
-            sessionKeyHolder.setSessionKey(dek)
-            encryptedPreferenceProvider.upsertBooleanPref(
-                CommonConstants.IS_SIGN_UP_REQUIRED,
-                false,
-            )
-            vaultKeyMaintenance.scheduleAfterUnlock()
-            Timber.i("Added pswrd in db")
-
-            _navigateToHome.emit(true)
         }
     }
 

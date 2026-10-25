@@ -2,6 +2,7 @@ package com.andryoga.safebox.di
 
 import android.content.Context
 import com.andryoga.safebox.analytics.AnalyticsHelper
+import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.BackupMetadataDao
@@ -72,12 +73,14 @@ object RepositoryModule {
         vaultMetaDao: VaultMetaDao,
         userDetailsDao: UserDetailsDao,
         envelopeEncryptionManager: EnvelopeEncryptionManager,
+        dispatchersProvider: DispatchersProvider,
     ): VaultRepository {
         return VaultRepositoryImpl(
             safeBoxDatabase,
             vaultMetaDao,
             userDetailsDao,
             envelopeEncryptionManager,
+            dispatchersProvider,
         )
     }
 

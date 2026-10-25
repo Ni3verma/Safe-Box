@@ -100,7 +100,7 @@ class VaultKeyMaintenance @Inject constructor(
                 vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == BIOMETRIC_DISABLED_VALUE
             if (snapshot.biometricClass == BiometricClass.STRONG && !biometricDisabled) {
                 ensureWrap(spec = WrapKeySpec.BIOMETRIC, dek = dek)
-            } else if (biometricDisabled && vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) != null) {
+            } else if (vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) != null) {
                 vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC)
             }
 
@@ -165,9 +165,9 @@ class VaultKeyMaintenance @Inject constructor(
         return try {
             val blob = envelopeEncryptionManager.wrapWithKeystoreKey(spec, dek, preferredSuffix)
             blob to preferredSuffix
-        } catch (e: KeyStoreException) {
+        } catch (e: Exception) {
             // If a stuck Keystore entry on the current suffix refused generation, advance to a fresh suffix once.
-            if (preferredSuffix == currentSuffix) {
+            if ((e is KeyStoreException || e is ProviderException) && preferredSuffix == currentSuffix) {
                 val rotatedSuffix = nextAliasSuffix(currentSuffix)
                 val blob = envelopeEncryptionManager.wrapWithKeystoreKey(spec, dek, rotatedSuffix)
                 blob to rotatedSuffix
