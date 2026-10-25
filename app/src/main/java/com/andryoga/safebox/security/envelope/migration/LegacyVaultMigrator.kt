@@ -136,6 +136,7 @@ class LegacyVaultMigrator @Inject constructor(
         trigger: MigrationTrigger,
     ): MigrationOutcome {
         if (vaultMetaDao.get(VaultMetaKey.CRYPTO_VERSION) == CryptoVersion.ENVELOPE) {
+            Timber.i("legacy vault migration skipped: already at crypto_version = 2")
             return MigrationOutcome.AlreadyMigrated
         }
 
@@ -147,6 +148,12 @@ class LegacyVaultMigrator @Inject constructor(
         val totalRecords = logins.size + accounts.size + cards.size + notes.size + authenticators.size
 
         val attempt = attempts.incrementAndGet()
+        Timber.i(
+            "running legacy vault migration: trigger=%s, attempt=%d, totalRecords=%d",
+            trigger.wireName,
+            attempt,
+            totalRecords,
+        )
         val ctx = MigrationRunContext(
             startTimeMs = System.currentTimeMillis(),
             totalRecords = totalRecords,
@@ -260,6 +267,12 @@ class LegacyVaultMigrator @Inject constructor(
             val wrapsValue = buildWrapsParam(
                 hasDeviceWrap = wrappedDevice != null,
                 hasBiometricWrap = wrappedBiometric != null,
+            )
+            Timber.i(
+                "legacy vault migration completed: durationMs=%d, totalRecords=%d, wraps=%s",
+                durationMs,
+                totalRecords,
+                wrapsValue,
             )
             analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_SUCCESS) {
                 param(AnalyticsParam.DURATION_MS, durationMs)

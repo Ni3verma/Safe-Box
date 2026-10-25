@@ -249,7 +249,22 @@ private fun MigrationProgressCardPreview() {
 
 @LightDarkModePreview
 @Composable
-private fun MigrationFailureCardLoginPreview() {
+private fun MigrationProgressCardEmptyVaultPreview() {
+    SafeBoxTheme {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
+        ) {
+            MigrationProgressCardContent(
+                progress = MigrationProgressState.Running(done = 0, total = 0),
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun MigrationFailureCardLoginKeystorePreview() {
     SafeBoxTheme {
         Card(
             shape = RoundedCornerShape(20.dp),
@@ -268,7 +283,64 @@ private fun MigrationFailureCardLoginPreview() {
 
 @LightDarkModePreview
 @Composable
-private fun MigrationFailureCardForgotPasswordPreview() {
+private fun MigrationFailureCardLoginVerifyPreview() {
+    SafeBoxTheme {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
+        ) {
+            MigrationFailureCardContent(
+                failure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.VERIFY_MISMATCH,
+                    trigger = MigrationTrigger.LOGIN,
+                ),
+                screenAction = {},
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun MigrationFailureCardLoginStoragePreview() {
+    SafeBoxTheme {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
+        ) {
+            MigrationFailureCardContent(
+                failure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.DB_IO,
+                    trigger = MigrationTrigger.LOGIN,
+                ),
+                screenAction = {},
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun MigrationFailureCardLoginUnexpectedPreview() {
+    SafeBoxTheme {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
+        ) {
+            MigrationFailureCardContent(
+                failure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.UNEXPECTED,
+                    trigger = MigrationTrigger.LOGIN,
+                ),
+                screenAction = {},
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun MigrationFailureCardForgotPasswordStoragePreview() {
     SafeBoxTheme {
         Card(
             shape = RoundedCornerShape(20.dp),
@@ -300,10 +372,21 @@ private fun LegacyKeyLostCardPreview() {
 
 @LightDarkModePreview
 @Composable
-private fun LoginNoticeBannerPreview() {
+private fun LoginNoticeBannerUpgradePreview() {
     SafeBoxTheme {
         LoginNoticeBanner(
             text = stringResource(R.string.login_security_upgrade_notice),
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginNoticeBannerAwayTimeoutPreview() {
+    SafeBoxTheme {
+        LoginNoticeBanner(
+            text = stringResource(R.string.login_away_banner),
             modifier = Modifier.padding(16.dp),
         )
     }

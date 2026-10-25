@@ -18,6 +18,7 @@ import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.util.Date
 import java.util.UUID
 import javax.inject.Inject
@@ -43,6 +44,7 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createVault(password: CharArray, hint: String): ByteArray {
+        Timber.i("creating new envelope vault")
         val (dek, kdfParams, wrappedPassword, verifier) = withContext(dispatchersProvider.default) {
             val dek = envelopeEncryptionManager.mintDek()
             val kdfParams = envelopeEncryptionManager.deriveKdfParams()
@@ -69,10 +71,12 @@ class VaultRepositoryImpl @Inject constructor(
             )
         }
         setCrashlyticsUid(uid)
+        Timber.i("envelope vault created")
         return dek
     }
 
     override suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray) {
+        Timber.i("rewrapping DEK under new password")
         val (kdfParams, wrappedPassword) = withContext(dispatchersProvider.default) {
             val kdfParams = envelopeEncryptionManager.deriveKdfParams()
             val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(newPassword, kdfParams, dek)
@@ -82,6 +86,7 @@ class VaultRepositoryImpl @Inject constructor(
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.KDF_PARAMS, kdfParams.encode()))
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.WRAPPED_DEK_PASSWORD, wrappedPassword))
         }
+        Timber.i("DEK password wrap updated")
     }
 
     private class CreatedVaultMaterials(
@@ -103,10 +108,12 @@ class VaultRepositoryImpl @Inject constructor(
                 vaultMetaDao.upsert(VaultMetaEntity(spec.aliasSuffixKey, aliasSuffix))
             }
         }
+        Timber.i("stored %s wrap (suffix=%s)", spec.wireName, aliasSuffix ?: "default")
     }
 
     override suspend fun deleteWrap(spec: WrapKeySpec) {
         vaultMetaDao.delete(spec.wrappedDekKey)
+        Timber.i("deleted %s wrap", spec.wireName)
     }
 
     override suspend fun getWrapKeyAliasSuffix(spec: WrapKeySpec): String? =

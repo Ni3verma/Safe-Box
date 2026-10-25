@@ -72,7 +72,15 @@ class VaultKeyMaintenance @Inject constructor(
     suspend fun runAfterUnlock() {
         withContext(dispatchersProvider.default) {
             mutex.withLock {
-                runLocked()
+                try {
+                    runLocked()
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (_: SessionLockedException) {
+                    // Session locked mid-maintenance; abort quietly.
+                } catch (e: Exception) {
+                    Timber.w(e, "post-unlock key maintenance failed")
+                }
             }
         }
     }
@@ -93,6 +101,7 @@ class VaultKeyMaintenance @Inject constructor(
             if (snapshot.isDeviceSecure) {
                 ensureWrap(spec = WrapKeySpec.DEVICE, dek = dek)
             } else if (vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_DEVICE) != null) {
+                Timber.i("device lock screen removed; deleting device wrap")
                 vaultRepository.deleteWrap(WrapKeySpec.DEVICE)
             }
 
@@ -101,6 +110,7 @@ class VaultKeyMaintenance @Inject constructor(
             if (snapshot.biometricClass == BiometricClass.STRONG && !biometricDisabled) {
                 ensureWrap(spec = WrapKeySpec.BIOMETRIC, dek = dek)
             } else if (vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) != null) {
+                Timber.i("strong biometric unavailable or disabled; deleting biometric wrap")
                 vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC)
             }
 
@@ -122,8 +132,14 @@ class VaultKeyMaintenance @Inject constructor(
         }
 
         val initialSuffix = if (health == KeyHealth.Invalidated) {
+            val rotated = nextAliasSuffix(currentSuffix)
+            Timber.i(
+                "Keystore key %s invalidated; rotating suffix to %s",
+                currentAlias,
+                rotated,
+            )
             keystoreGateway.deleteKey(currentAlias)
-            nextAliasSuffix(currentSuffix)
+            rotated
         } else {
             currentSuffix
         }
@@ -139,6 +155,7 @@ class VaultKeyMaintenance @Inject constructor(
             // Verify the session is still open before committing the new wrap to vault_meta.
             sessionKeyHolder.withSessionKey { }
             vaultRepository.storeWrap(spec = spec, blob = blob, aliasSuffix = usedSuffix)
+            Timber.i("created %s wrap during post-unlock maintenance", wrapName)
             analyticsHelper.logEvent(AnalyticsKey.VAULT_WRAP_CREATED) {
                 param(AnalyticsParam.WRAP, wrapName)
             }
@@ -169,6 +186,12 @@ class VaultKeyMaintenance @Inject constructor(
             // If a stuck Keystore entry on the current suffix refused generation, advance to a fresh suffix once.
             if ((e is KeyStoreException || e is ProviderException) && preferredSuffix == currentSuffix) {
                 val rotatedSuffix = nextAliasSuffix(currentSuffix)
+                Timber.i(
+                    "Keystore alias for %s stuck on suffix %s; rotating to %s",
+                    spec.wireName,
+                    currentSuffix ?: "default",
+                    rotatedSuffix,
+                )
                 val blob = envelopeEncryptionManager.wrapWithKeystoreKey(spec, dek, rotatedSuffix)
                 blob to rotatedSuffix
             } else {

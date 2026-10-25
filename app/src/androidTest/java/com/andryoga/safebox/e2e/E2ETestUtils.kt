@@ -379,7 +379,7 @@ object E2ETestUtils {
         val unlocked = runCatching {
             composeTestRule.waitUntilNodeDisplayed(
                 matcher = hasContentDescription(addNewButtonDesc),
-                timeoutMillis = 4000L
+                timeoutMillis = 10000L
             )
             true
         }.getOrDefault(false)

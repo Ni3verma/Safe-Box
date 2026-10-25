@@ -49,7 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
+import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
@@ -141,6 +143,7 @@ internal fun LoginScreen(
                 }
 
                 uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST -> {
+                    // TODO(MR6): pass onEraseVaultClick to LegacyKeyLostCardContent (VaultResetUseCase)
                     LegacyKeyLostCardContent()
                 }
 
@@ -383,6 +386,76 @@ private fun LoginPreviewWrongPassword() {
                 hint = "This is hint",
                 userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
             ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewLegacyVault() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(isLegacyVault = true),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationProgress() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationProgress = MigrationProgressState.Running(done = 18, total = 42),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationFailureLogin() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationFailure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.DB_IO,
+                    trigger = MigrationTrigger.LOGIN,
+                ),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationFailureForgotPassword() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationFailure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.DB_IO,
+                    trigger = MigrationTrigger.FORGOT_PASSWORD,
+                ),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewLegacyKeyLost() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(userAuthState = UserAuthState.LEGACY_KEY_LOST),
             screenAction = {},
         )
     }

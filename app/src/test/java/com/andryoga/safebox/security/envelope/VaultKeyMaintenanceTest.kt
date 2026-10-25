@@ -283,4 +283,14 @@ class VaultKeyMaintenanceTest {
             vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), null)
         }
     }
+
+    @Test
+    fun runAfterUnlock_whenOuterMaintenanceStepThrows_shouldNotEscapeScope() = runTest {
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+        coEvery { vaultMetaDao.get(VaultMetaKey.CRYPTO_VERSION) } throws IllegalStateException("DB read failed")
+
+        maintenance.runAfterUnlock()
+
+        coVerify(exactly = 0) { vaultRepository.storeWrap(any(), any(), any()) }
+    }
 }
