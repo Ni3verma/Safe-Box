@@ -119,8 +119,11 @@ private fun NavGraphBuilder.homeGraph(
             HomeScreen(
                 inAppUpdateViewModel = inAppUpdateViewModel,
                 onExitHomeNavGraph = {
-                    navigateRoot(navController, LoginGraph)
-                }
+                    // Straight to Login: a vault exists whenever Home was reached, so the Loading
+                    // decision is known, and a second root navigation issued from Loading while
+                    // the first is still animating can leave the NavHost without a destination.
+                    navigateRoot(navController, LoginRoute)
+                },
             )
         }
     }
