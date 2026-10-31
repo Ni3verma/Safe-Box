@@ -44,8 +44,8 @@ locked vault fails closed with `SessionLockedException` on both directions:
 **Who clears the key (since envelope MR 4).** The away timeout: `ActiveSessionManager`, after the
 delay, records `SessionLockReason.AWAY_TIMEOUT` in `SessionLockReasonStore` (`ui/core`, process
 memory, read-and-cleared once by the next `LoginViewModel`, which drives the "You were away"
-banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (read just
-before the clear) — only when the holder was open, so a timeout on the login screen records and
+banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (the read is
+started before the clear and awaited after it) — only when the holder was open, so a timeout on the login screen records and
 logs nothing. Every clear emits `lockEvents`, which `InAppUpdateViewModel` treats as "locked".
 A running backup or restore is **not** cancelled: it fails closed (`SESSION_LOCKED`) at its next
 use of the key — a restore's transaction rolls back — or finishes if it no longer needs one (a

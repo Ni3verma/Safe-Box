@@ -15,6 +15,8 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -77,17 +79,18 @@ class ActiveSessionManager @Inject constructor(
      * Clears an open session; a timeout that finds the vault already locked (the login screen was
      * showing) changes nothing, records no reason and logs nothing.
      */
-    private suspend fun lockOpenSession() {
-        if (!sessionKeyHolder.isUnlocked.value) return
-        // Read before the clear: a running worker fails closed at its next use of the key, so a
-        // read after it would mostly say idle.
-        val workerRunning = isBackupOrRestoreRunning()
+    private suspend fun lockOpenSession() = coroutineScope {
+        if (!sessionKeyHolder.isUnlocked.value) return@coroutineScope
+        // Started before the clear so the snapshot still sees a running worker (it fails closed at
+        // its next use of the key), but never awaited before it: the lock does not wait on telemetry.
+        val workerRunning = async { isBackupOrRestoreRunning() }
         Timber.i("away timeout: locking the vault")
         // Recorded before the clear: the gate navigates on the clear and Login reads it on arrival.
         sessionLockReasonStore.record(SessionLockReason.AWAY_TIMEOUT)
         sessionKeyHolder.clearSessionKey()
+        val wasWorkerRunning = workerRunning.await()
         analyticsHelper.logEvent(AnalyticsKey.SESSION_TIMEOUT) {
-            param(AnalyticsParam.WORKER_RUNNING, workerRunning)
+            param(AnalyticsParam.WORKER_RUNNING, wasWorkerRunning)
         }
     }
 

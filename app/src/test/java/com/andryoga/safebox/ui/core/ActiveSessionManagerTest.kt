@@ -196,18 +196,18 @@ class ActiveSessionManagerTest {
     }
 
     @Test
-    fun onStop_whenTheWorkerStateReadHangs_shouldStillLockOnceTheReadBoundElapses() = runTest {
+    fun onStop_whenTheWorkerStateReadHangs_shouldLockAtOnceAndLogOnceTheReadBoundElapses() = runTest {
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns MutableSharedFlow()
         val manager = createManager()
 
         manager.onStop(lifecycleOwner)
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
-        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(analyticsHelper.loggedEvents.none { it.key == AnalyticsKey.SESSION_TIMEOUT }).isTrue()
         advanceTimeBy(READ_BOUND)
         runCurrent()
 
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
         val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
         assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
     }
