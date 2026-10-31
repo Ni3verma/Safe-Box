@@ -62,8 +62,8 @@ of a `crypto_version = 1` vault goes through that handle directly on read and wr
 as `null` and refuses to write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST`,
 nothing is regenerated, and the only way forward is *Erase everything and start over*.
 
-**Who opens the key (since envelope MR 5 and MR 6).** Every unlock ends in
-`SessionKeyHolder.setSessionKey(dek)` from `LoginViewModel`: the master password unwraps
+**Who opens the key (since envelope MR 5 and MR 6).** Every envelope unlock from the login screen
+ends in `SessionKeyHolder.setSessionKey(dek)` from `LoginViewModel`: the master password unwraps
 `wrapped_dek_password` (`unwrapWithPassword` + `verify`); a fingerprint unwraps
 `wrapped_dek_biometric` through the `Cipher` the ViewModel prepared and the `BiometricPrompt`
 `CryptoObject` authorised; forgot-password unwraps `wrapped_dek_device` the same way (API 30+) or

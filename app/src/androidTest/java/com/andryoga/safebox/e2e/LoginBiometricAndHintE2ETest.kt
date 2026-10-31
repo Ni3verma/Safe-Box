@@ -406,7 +406,7 @@ class LoginBiometricAndHintE2ETest {
             runBlocking {
                 val remainingCount = preferenceProvider.getIntPref(
                     CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                    SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT
+                    SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT,
                 )
                 assertThat(remainingCount).isEqualTo(2)
             }

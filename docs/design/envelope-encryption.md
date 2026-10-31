@@ -700,7 +700,7 @@ flowchart TB
 No step prompts. Key generation (RSA-2048 in the TEE, up to seconds on older hardware) runs off the main thread. Failures are logged and retried at the next unlock.
 
 ### 6.6 Biometric Login
-Pre-conditions evaluated when the login screen opens: `crypto_version = 2`, `wrapped_dek_biometric` present, `canAuthenticate(BIOMETRIC_STRONG) == SUCCESS`, `ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING > 0`, and `probe(KEK_Biometric) == Healthy`.
+Pre-conditions evaluated when the login screen opens: `crypto_version = 2`, `wrapped_dek_biometric` present, `canAuthenticate(BIOMETRIC_STRONG) == SUCCESS`, `ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING > 0`, and `WrapKeyOpener.probe(BIOMETRIC)` returning `Ready(cipher)` — the `Cipher.init` on `KEK_Biometric` is the health probe; `AwaitingAuthentication` cannot occur for a biometric-only key and `Invalidated` deletes the wrap.
 
 ```mermaid
 sequenceDiagram
@@ -787,7 +787,7 @@ Cancelling the dialog zeroes the held DEK and returns to the login screen. The "
 Gate: **device authentication first, the current master password as the alternative.** Both prove the same thing — the login-screen recovery already accepts the device credential — so the user gets the easier one.
 - `isDeviceSecure` ⇒ `BiometricPrompt` (`BIOMETRIC_STRONG or DEVICE_CREDENTIAL`, no `CryptoObject`: the DEK is already in RAM, the prompt is only a gate).
 - No lock screen, a prompt error, or *Use master password instead* ⇒ a current-password field verified with `unwrapWithPassword` (wrong ⇒ "Incorrect password", stay). `DeviceSecurityRequiredDialog` is no longer needed here.
-- Then `UpdatePasswordDialog` (`SOURCE=settings`) → `VaultRepository.rewrapPassword(newPassword, dek)`: fresh salt + current iterations, new `wrapped_dek_password`, plaintext hint — one row update, **no record re-encryption, DEK not rotated**. Biometric and device wraps are untouched.
+- Then `UpdatePasswordDialog` (`SOURCE=settings`) → `VaultRepository.rewrapPassword(newPassword, dek, hint)`: fresh salt + current iterations, new `wrapped_dek_password`, plaintext hint — one transaction, **no record re-encryption, DEK not rotated**. Biometric and device wraps are untouched.
 - In a legacy session (§6.4.2) the entry is disabled with the hint "available after the security upgrade" — there is no DEK to re-wrap and `hash()` is gone.
 
 ```mermaid
@@ -877,11 +877,11 @@ flowchart TB
     S1 --> S2["clearSessionKey()"]
     S2 --> S3["delete KEK_Biometric, KEK_Device and the legacy alias"]
     S3 --> S4["database.clearAllTables() - records, user_details, vault_meta, quarantined_record"]
-    S4 --> S5["reset prefs - IS_SIGN_UP_REQUIRED = true, biometric counter, SCREEN_LOCK_NUDGE_DISMISSED, VAULT_MIGRATION_ATTEMPTS"]
-    S5 --> S6["navigateRoot(SignupGraph)"]
+    S4 --> S5["reset the biometric login counter (SCREEN_LOCK_NUDGE_DISMISSED joins in MR 7)"]
+    S5 --> S6["LoginUiState.isVaultErased -> LoginScreenRoot(onVaultErased) -> navigateRoot(SignupRoute)"]
 ```
 
-**As delivered (MR 6, 2026-10-25).** `security/envelope/VaultResetUseCase.eraseVault()` runs S1–S5 in that order; the two wrap-key aliases are resolved from their `vault_meta` suffixes *before* the tables go, the Keystore deletes are best effort (`deleteKey` swallows a stuck entry), and `clearAllTables()` runs on `dispatchers.io` because Room refuses it on the main thread. Of the prefs in S5 only the biometric counter exists to reset: `VAULT_MIGRATION_ATTEMPTS` stayed in process memory (MR 5) and `SCREEN_LOCK_NUDGE_DISMISSED` arrives with MR 7, which adds it to the use case. **`IS_SIGN_UP_REQUIRED` is deliberately not written**: nothing reads it for routing since MR 4, MR 8 deletes it (D15), and `hasVault()` turning `false` is what routes to Signup — S6 is `LoginScreenRoot(onVaultErased)` → `navigateRoot(SignupRoute)` on `LoginUiState.isVaultErased`. The dialog is `ui/login/components/EraseVaultDialog`; its triad carries `source = recovery_not_set_up | legacy_key_lost` so the two entries are told apart. A failed erase is asserted (`crashInDebugBuild`) and the screen stays put; a second confirm while one is in flight is dropped.
+**As delivered (MR 6, 2026-10-25; flowchart updated to the delivered steps).** `security/envelope/VaultResetUseCase.eraseVault()` runs S1–S5 in that order; the two wrap-key aliases are resolved from their `vault_meta` suffixes *before* the tables go, the Keystore deletes are best effort (`deleteKey` swallows a stuck entry), and `clearAllTables()` runs on `dispatchers.io` because Room refuses it on the main thread. Of the prefs in S5 only the biometric counter exists to reset: `VAULT_MIGRATION_ATTEMPTS` stayed in process memory (MR 5) and `SCREEN_LOCK_NUDGE_DISMISSED` arrives with MR 7, which adds it to the use case. **`IS_SIGN_UP_REQUIRED` is deliberately not written**: nothing reads it for routing since MR 4, MR 8 deletes it (D15), and `hasVault()` turning `false` is what routes to Signup — S6 is `LoginScreenRoot(onVaultErased)` → `navigateRoot(SignupRoute)` on `LoginUiState.isVaultErased`. The dialog is `ui/login/components/EraseVaultDialog`; its triad carries `source = recovery_not_set_up | legacy_key_lost` so the two entries are told apart. A failed erase is asserted (`crashInDebugBuild`) and the screen stays put; a second confirm while one is in flight is dropped.
 
 ### 6.12 Fingerprint-Unlock Switch (Settings)
 
