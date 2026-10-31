@@ -43,21 +43,10 @@ class ActiveSessionManager @Inject constructor(
     private val sessionKeyHolder: SessionKeyHolder,
     private val sessionLockReasonStore: SessionLockReasonStore,
 ) : DefaultLifecycleObserver {
-    @Volatile
-    private var timeout = SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT.seconds
     private var timerJob: Job? = null
 
     @Volatile
     private var isPaused = false
-
-    init {
-        applicationScope.launch {
-            settingsDataStore.awayTimeoutSecFlow.collect {
-                Timber.i("timeout updated in active session manager to $it seconds")
-                timeout = it.seconds
-            }
-        }
-    }
 
     override fun onStop(owner: LifecycleOwner) {
         Timber.i("onStop")
@@ -73,6 +62,10 @@ class ActiveSessionManager @Inject constructor(
     private fun startLogoutTimer() {
         timerJob?.cancel()
         timerJob = applicationScope.launch {
+            // Read at stop time, not cached: the value the user just saved in Settings is the one
+            // that applies, and there is no collector whose delivery the lock could race.
+            val timeout = settingsDataStore.awayTimeoutSecFlow.first().seconds
+            Timber.i("away timeout armed for $timeout")
             delay(timeout)
             // Once the delay has elapsed the lock is owed; a return to the foreground during the
             // short worker-state read below must not rescue the session.

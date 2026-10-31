@@ -233,6 +233,9 @@ class HomeScreenNavigationAndTimeoutE2ETest {
 
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
+            // Split the two halves of the journey: a lock that never fires and a gate that never
+            // navigates both end in the same 25 s timeout on the login title otherwise.
+            waitUntilVaultLocked()
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.login_away_banner)))
             composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner))
@@ -248,6 +251,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             // A second timeout, then back: the HomeGraph was popped, so Login is the root and back
             // leaves the app instead of revealing the records.
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
+            waitUntilVaultLocked()
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.login_away_banner)))
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
             composeTestRule.waitForIdle()
@@ -514,6 +518,15 @@ class HomeScreenNavigationAndTimeoutE2ETest {
                 down.recycle()
                 up.recycle()
             }
+        }
+    }
+
+    /** The away timeout owes a lock as soon as `onStop` is delivered with a zero timeout. */
+    private fun waitUntilVaultLocked() {
+        runCatching {
+            composeTestRule.waitUntil(timeoutMillis = 10000L) { !VaultSessionTestBridge.isVaultUnlocked() }
+        }.getOrElse { cause ->
+            throw AssertionError("away timeout did not clear the session key within 10 s", cause)
         }
     }
 

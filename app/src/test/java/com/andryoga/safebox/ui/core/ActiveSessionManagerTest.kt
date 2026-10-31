@@ -22,6 +22,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -57,6 +58,19 @@ class ActiveSessionManagerTest {
         every { settingsDataStore.awayTimeoutSecFlow } returns flowOf(TIMEOUT_SEC)
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns flowOf(emptyList())
         sessionKeyHolder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
+    }
+
+    @Test
+    fun onStop_shouldArmTheTimeoutSavedAfterConstruction() = runTest {
+        val timeoutSec = MutableStateFlow(TIMEOUT_SEC)
+        every { settingsDataStore.awayTimeoutSecFlow } returns timeoutSec
+        val manager = createManager()
+        timeoutSec.value = 0
+
+        manager.onStop(lifecycleOwner)
+        runCurrent()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
     }
 
     @Test
@@ -253,7 +267,6 @@ class ActiveSessionManagerTest {
             sessionKeyHolder = sessionKeyHolder,
             sessionLockReasonStore = sessionLockReasonStore,
         )
-        // lets init consume the timeout setting before any test drives the lifecycle
         runCurrent()
         return manager
     }

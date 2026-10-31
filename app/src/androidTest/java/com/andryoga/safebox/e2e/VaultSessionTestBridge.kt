@@ -91,4 +91,7 @@ object VaultSessionTestBridge {
     fun lockVault() {
         entryPoint.sessionKeyHolder().clearSessionKey()
     }
+
+    /** Whether the current test component's session is open; lets a test tell a missed lock from a missed navigation. */
+    fun isVaultUnlocked(): Boolean = entryPoint.sessionKeyHolder().isUnlocked.value
 }
