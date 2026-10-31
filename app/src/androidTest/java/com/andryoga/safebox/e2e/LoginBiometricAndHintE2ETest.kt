@@ -379,12 +379,12 @@ class LoginBiometricAndHintE2ETest {
                 safeBoxDatabase,
                 userDetailsRepository,
                 encryptedPreferenceProvider,
-                preferenceProvider
+                preferenceProvider,
             )
             VaultSessionTestBridge.seedBiometricWrap()
             preferenceProvider.upsertIntPref(
                 CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                3
+                3,
             )
             VaultSessionTestBridge.lockVault()
         }
@@ -395,7 +395,7 @@ class LoginBiometricAndHintE2ETest {
                 runCatching {
                     composeTestRule.onAllNodes(
                         hasContentDescription(addNewButtonDesc),
-                        useUnmergedTree = true
+                        useUnmergedTree = true,
                     ).fetchSemanticsNodes().isNotEmpty()
                 }.getOrDefault(false)
             }

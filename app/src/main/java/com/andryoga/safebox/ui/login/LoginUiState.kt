@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
 import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
@@ -32,7 +33,7 @@ data class MigrationFailureUiState(
  * Why a forgot-password recovery on a `crypto_version = 2` vault ended without a new password.
  * The password wrap is never written on any of these.
  *
- * @property wireName Analytics value of [com.andryoga.safebox.common.AnalyticsParam.REASON]; append-only.
+ * @property wireName Analytics value of [AnalyticsParam.REASON]; append-only.
  */
 enum class RecoveryFailureReason(val wireName: String) {
     /** API 29: the time-bound device key refused the unwrap again after the second prompt. */
