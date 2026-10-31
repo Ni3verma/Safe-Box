@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">या तिजोरीला एन्क्रिप्ट करणारी हार्डवेअर की आता या डिव्हाइसवर उपलब्ध नाही, त्यामुळे विद्यमान रेकॉर्ड उघडता येत नाहीत. तुमच्याकडे बॅकअप फाइल असल्यास, तुम्ही ही तिजोरी मिटवून त्या बॅकअपमधून रिस्टोअर करू शकता.</string>
     <string name="home_upgrade_pending_banner">सुरक्षा अपग्रेड प्रलंबित — ते तुमच्या पुढील साइन-इन वेळी चालेल</string>
     <string name="home_upgrade_pending_retry">आता पुन्हा प्रयत्न करा</string>
+    <string name="login_biometric_invalidated_banner">फिंगरप्रिंट लॉगिन पुन्हा सेट करावे लागेल — तुमचा मास्टर पासवर्ड प्रविष्ट करा</string>
+    <string name="recovery_not_set_up_title">रिकव्हरी सेट केलेली नाही</string>
+    <string name="recovery_not_set_up_body">विसरलेला मास्टर पासवर्ड फक्त अशाच स्क्रीन लॉकद्वारे रिसेट करता येतो जो तुम्ही शेवटच्या वेळी साइन इन केले तेव्हा आधीपासूनच सेट केलेला होता. या डिव्हाइसवर या तिजोरीसाठी कोणतीही रिकव्हरी की नाही, त्यामुळे ती फक्त तिच्या मास्टर पासवर्डनेच उघडता येईल.</string>
+    <string name="recovery_not_set_up_restore_hint">तुमच्याकडे बॅकअप फाइल असल्यास, ही तिजोरी मिटवा, पुन्हा साइन अप करा, मग बॅकअप आणि रिस्टोअर मधून बॅकअप रिस्टोअर करा.</string>
+    <string name="recovery_back_to_login">लॉगिनवर परत जा</string>
+    <string name="erase_vault_action">सर्व काही मिटवा आणि नव्याने सुरुवात करा</string>
+    <string name="erase_vault_dialog_title">सर्व काही मिटवायचे का?</string>
+    <string name="erase_vault_dialog_body">या डिव्हाइसवरील सर्व रेकॉर्ड, मास्टर पासवर्ड आणि रिकव्हरी की कायमचे हटवले जातील. तुम्ही इतरत्र सेव्ह केलेल्या बॅकअप फाइल्सवर याचा परिणाम होणार नाही.</string>
+    <string name="erase_vault_dialog_confirm">मिटवा</string>
+    <string name="recovery_failure_not_authenticated">तिजोरी उघडण्यापूर्वीच अनलॉकची मुदत संपली. पुन्हा प्रयत्न करा.</string>
+    <string name="recovery_failure_verifier">या डिव्हाइसवरील रिकव्हरी डेटा खराब झाला आहे. काहीही बदलले नाही.</string>
+    <string name="recovery_failure_keystore">सुरक्षित हार्डवेअर रिकव्हरी की उघडू शकले नाही. काहीही बदलले नाही.</string>
+    <string name="recovery_failure_storage">नवीन पासवर्ड सेव्ह करता आला नाही. काहीही बदलले नाही.</string>
 </resources>

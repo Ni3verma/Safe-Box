@@ -209,4 +209,17 @@
     <string name="legacy_key_lost_body">이 보관함을 암호화한 하드웨어 키를 이 기기에서 더 이상 사용할 수 없으므로 기존 항목을 열 수 없습니다. 백업 파일이 있다면 이 보관함을 지우고 백업에서 복원할 수 있습니다.</string>
     <string name="home_upgrade_pending_banner">보안 업그레이드 대기 중 — 다음 로그인 시 실행됩니다</string>
     <string name="home_upgrade_pending_retry">지금 다시 시도</string>
+    <string name="login_biometric_invalidated_banner">지문 로그인을 다시 설정해야 합니다 — 마스터 비밀번호를 입력하세요</string>
+    <string name="recovery_not_set_up_title">복구가 설정되어 있지 않음</string>
+    <string name="recovery_not_set_up_body">잊어버린 마스터 비밀번호는 마지막으로 로그인했을 때 이미 설정되어 있던 화면 잠금을 통해서만 재설정할 수 있습니다. 이 기기에는 이 보관함의 복구 키가 없으므로 보관함은 마스터 비밀번호로만 열 수 있습니다.</string>
+    <string name="recovery_not_set_up_restore_hint">백업 파일이 있다면 이 보관함을 지우고 다시 가입한 뒤 백업 및 복원 화면에서 백업을 복원하세요.</string>
+    <string name="recovery_back_to_login">로그인으로 돌아가기</string>
+    <string name="erase_vault_action">모두 지우고 처음부터 시작</string>
+    <string name="erase_vault_dialog_title">모두 지우시겠습니까?</string>
+    <string name="erase_vault_dialog_body">이 기기에 있는 모든 항목, 마스터 비밀번호, 복구 키가 영구적으로 삭제됩니다. 다른 곳에 저장한 백업 파일은 영향을 받지 않습니다.</string>
+    <string name="erase_vault_dialog_confirm">지우기</string>
+    <string name="recovery_failure_not_authenticated">보관함을 열기 전에 잠금 해제 인증이 만료되었습니다. 다시 시도하세요.</string>
+    <string name="recovery_failure_verifier">이 기기의 복구 데이터가 손상되었습니다. 변경된 사항이 없습니다.</string>
+    <string name="recovery_failure_keystore">보안 하드웨어에서 복구 키를 열 수 없었습니다. 변경된 사항이 없습니다.</string>
+    <string name="recovery_failure_storage">새 비밀번호를 저장할 수 없었습니다. 변경된 사항이 없습니다.</string>
 </resources>

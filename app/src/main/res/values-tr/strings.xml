@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Bu kasayı şifreleyen donanım anahtarı artık bu cihazda kullanılamıyor, bu nedenle mevcut kayıtlar açılamıyor. Bir yedekleme dosyanız varsa bu kasayı silebilir ve yedekten geri yükleyebilirsiniz.</string>
     <string name="home_upgrade_pending_banner">Güvenlik yükseltmesi bekliyor — bir sonraki girişinizde çalışacak</string>
     <string name="home_upgrade_pending_retry">Şimdi dene</string>
+    <string name="login_biometric_invalidated_banner">Parmak izi girişi yeniden ayarlanmalı — ana parolanızı girin</string>
+    <string name="recovery_not_set_up_title">Kurtarma ayarlanmamış</string>
+    <string name="recovery_not_set_up_body">Unutulan bir ana parola, yalnızca son girişinizde zaten ayarlanmış olan bir ekran kilidiyle sıfırlanabilir. Bu cihazda bu kasa için bir kurtarma anahtarı bulunmuyor; bu nedenle kasa yalnızca ana parolasıyla açılabilir.</string>
+    <string name="recovery_not_set_up_restore_hint">Bir yedekleme dosyanız varsa bu kasayı silin, yeniden kayıt olun ve yedeği Yedekle ve Geri Yükle bölümünden geri yükleyin.</string>
+    <string name="recovery_back_to_login">Girişe dön</string>
+    <string name="erase_vault_action">Her şeyi sil ve baştan başla</string>
+    <string name="erase_vault_dialog_title">Her şey silinsin mi?</string>
+    <string name="erase_vault_dialog_body">Bu cihazdaki tüm kayıtlar, ana parola ve kurtarma anahtarları kalıcı olarak silinecek. Başka bir yere kaydettiğiniz yedekleme dosyaları bundan etkilenmez.</string>
+    <string name="erase_vault_dialog_confirm">Sil</string>
+    <string name="recovery_failure_not_authenticated">Kasa açılamadan kilit açma işleminin süresi doldu. Tekrar deneyin.</string>
+    <string name="recovery_failure_verifier">Bu cihazdaki kurtarma verileri hasarlı. Hiçbir şey değiştirilmedi.</string>
+    <string name="recovery_failure_keystore">Güvenli donanım kurtarma anahtarını açamadı. Hiçbir şey değiştirilmedi.</string>
+    <string name="recovery_failure_storage">Yeni parola kaydedilemedi. Hiçbir şey değiştirilmedi.</string>
 </resources>

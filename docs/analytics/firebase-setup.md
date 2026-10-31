@@ -59,7 +59,7 @@ dimension name = parameter name:
 
 | Parameter | Logged by | Values |
 |---|---|---|
-| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show`, `vault_migration_failure`, `vault_migration_failure_show`, `vault_migration_retry_click`, `vault_migration_continue_legacy_click`, `vault_wrap_create_failure` | `BackupFailureReason` names; `TotpUriError` snake case; `MigrationFailureReason` wire names; wrap failure reasons |
+| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show`, `vault_migration_failure`, `vault_migration_failure_show`, `vault_migration_retry_click`, `vault_migration_continue_legacy_click`, `vault_wrap_create_failure`, `vault_recovery_failure` | `BackupFailureReason` names; `TotpUriError` snake case; `MigrationFailureReason` wire names; wrap failure reasons; `RecoveryFailureReason` wire names (`not_authenticated`, `verifier`, `keystore`, `storage`) |
 | `message` | `backup_data_failure` | exception text; free-form |
 | `result` | `backup_select_dir_result`, `clipboard_auto_cleared` | `0`/`1`; `verified`/`unverified` |
 | `version` | `restore_data_failure`, `restore_data_wrong_password`, `restore_data_backup_too_new`, `restore_data_backup_empty`; from the readiness patch also `backup_data_success`, `restore_data_success` | backup format version, `0` if unreadable |
@@ -67,7 +67,7 @@ dimension name = parameter name:
 | `do_not_ask_again` | `notification_permission_rationale_dialog_cancel_click` | `0`/`1` |
 | `permission_asked_before` | `notification_permission_rationale_dialog_allow_click` | `0`/`1` |
 | `redirect_to_settings` | `notification_permission_rationale_dialog_allow_click` | `0`/`1` |
-| `source` | `add_record_type_pick`, `record_open`; from the readiness patch also the `device_security_required_dialog_*` / `device_sec_dialog_*` and `update_password_dialog_*` events | `empty_vault`, `add_record_sheet`, `records_list`, `record_detail`; `login`, `settings` |
+| `source` | `add_record_type_pick`, `record_open`; from the readiness patch also the `device_security_required_dialog_*` / `device_sec_dialog_*` and `update_password_dialog_*` events; since envelope MR 6 the `erase_vault_dialog_*` triad | `empty_vault`, `add_record_sheet`, `records_list`, `record_detail`; `login`, `settings`; `recovery_not_set_up`, `legacy_key_lost` |
 | `record_type` | `new_*`, `record_open`, `record_delete`, `record_share`, `record_form_abandon`, `field_copy`, `authenticator_copy_click` | lower-case `RecordType` names |
 | `had_input` | `record_form_abandon` | `0`/`1` |
 | `login_method` | `login_success` | `password`, `biometric`, `password_reset`, `legacy_session` |
@@ -76,7 +76,7 @@ dimension name = parameter name:
 | `device_secure` | `login_success` | `0`/`1` |
 | `biometric_class` | `login_success` | `strong`, `weak_only`, `none_enrolled`, `no_hardware`, `unavailable` |
 | `strongbox` | `login_success` | `0`/`1` |
-| `exception` | `record_decrypt_failure`, `vault_migration_failure`, `vault_wrap_create_failure` | exception simple class name (`none` when non-exception failure), never a message |
+| `exception` | `record_decrypt_failure`, `vault_migration_failure`, `vault_wrap_create_failure`, `vault_recovery_failure` | exception simple class name (`none` when non-exception failure), never a message |
 | `worker_running` | `session_timeout` | `0`/`1` |
 | `trigger` | `vault_migration_start` | `login`, `forgot_password` |
 | `attempt` | `vault_migration_start`, `vault_migration_success`, `vault_migration_failure`, `vault_legacy_session_start` | 1-based migration attempt ordinal (`1..n`) |

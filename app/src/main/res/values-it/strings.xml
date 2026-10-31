@@ -207,4 +207,17 @@
     <string name="legacy_key_lost_body">La chiave hardware che crittografava questa cassaforte non è più disponibile su questo dispositivo, quindi i record esistenti non possono essere aperti. Se hai un file di backup, puoi cancellare questa cassaforte e ripristinarla da quel backup.</string>
     <string name="home_upgrade_pending_banner">Aggiornamento di sicurezza in sospeso — verrà eseguito al prossimo accesso</string>
     <string name="home_upgrade_pending_retry">Riprova ora</string>
+    <string name="login_biometric_invalidated_banner">L\'accesso con impronta digitale deve essere configurato di nuovo — inserisci la password principale</string>
+    <string name="recovery_not_set_up_title">Recupero non configurato</string>
+    <string name="recovery_not_set_up_body">Una password principale dimenticata può essere reimpostata solo tramite un blocco schermo che era già impostato al momento del tuo ultimo accesso. Questo dispositivo non contiene alcuna chiave di recupero per questa cassaforte, che quindi può essere aperta solo con la sua password principale.</string>
+    <string name="recovery_not_set_up_restore_hint">Se hai un file di backup, cancella questa cassaforte, registrati di nuovo e ripristina il backup da Backup e ripristino.</string>
+    <string name="recovery_back_to_login">Torna all\'accesso</string>
+    <string name="erase_vault_action">Cancella tutto e ricomincia</string>
+    <string name="erase_vault_dialog_title">Cancellare tutto?</string>
+    <string name="erase_vault_dialog_body">Tutte le voci, la password principale e le chiavi di recupero su questo dispositivo verranno eliminate definitivamente. I file di backup salvati altrove non saranno interessati.</string>
+    <string name="erase_vault_dialog_confirm">Cancella</string>
+    <string name="recovery_failure_not_authenticated">Lo sblocco è scaduto prima che la cassaforte potesse essere aperta. Riprova.</string>
+    <string name="recovery_failure_verifier">I dati di recupero su questo dispositivo sono danneggiati. Non è stata apportata alcuna modifica.</string>
+    <string name="recovery_failure_keystore">L\'hardware sicuro non è riuscito ad aprire la chiave di recupero. Non è stata apportata alcuna modifica.</string>
+    <string name="recovery_failure_storage">Impossibile salvare la nuova password. Non è stata apportata alcuna modifica.</string>
 </resources>

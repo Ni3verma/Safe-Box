@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Аппаратный ключ, которым было зашифровано это хранилище, больше недоступен на этом устройстве, поэтому существующие записи нельзя открыть. Если у вас есть файл резервной копии, вы можете очистить хранилище и восстановить данные из копии.</string>
     <string name="home_upgrade_pending_banner">Ожидается обновление безопасности — оно выполнится при следующем входе</string>
     <string name="home_upgrade_pending_retry">Повторить сейчас</string>
+    <string name="login_biometric_invalidated_banner">Вход по отпечатку пальца нужно настроить заново — введите мастер-пароль</string>
+    <string name="recovery_not_set_up_title">Восстановление доступа не настроено</string>
+    <string name="recovery_not_set_up_body">Забытый мастер-пароль можно сбросить только с помощью блокировки экрана, которая уже была установлена при последнем входе. На этом устройстве нет ключа восстановления для этого хранилища, поэтому открыть его можно только с помощью мастер-пароля.</string>
+    <string name="recovery_not_set_up_restore_hint">Если у вас есть файл резервной копии, очистите это хранилище, зарегистрируйтесь заново и восстановите копию в разделе «Копия и восстановление».</string>
+    <string name="recovery_back_to_login">Вернуться ко входу</string>
+    <string name="erase_vault_action">Удалить всё и начать заново</string>
+    <string name="erase_vault_dialog_title">Удалить всё?</string>
+    <string name="erase_vault_dialog_body">Все записи, мастер-пароль и ключи восстановления на этом устройстве будут безвозвратно удалены. Файлы резервных копий, сохранённые в другом месте, останутся нетронутыми.</string>
+    <string name="erase_vault_dialog_confirm">Удалить</string>
+    <string name="recovery_failure_not_authenticated">Время разблокировки истекло до того, как удалось открыть хранилище. Попробуйте ещё раз.</string>
+    <string name="recovery_failure_verifier">Данные восстановления на этом устройстве повреждены. Ничего не изменено.</string>
+    <string name="recovery_failure_keystore">Защищённый модуль не смог открыть ключ восстановления. Ничего не изменено.</string>
+    <string name="recovery_failure_storage">Не удалось сохранить новый пароль. Ничего не изменено.</string>
 </resources>

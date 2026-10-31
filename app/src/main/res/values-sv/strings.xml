@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Hårdvarunyckeln som krypterade detta valv är inte längre tillgänglig på den här enheten, så befintliga poster kan inte öppnas. Om du har en säkerhetskopia kan du radera valvet och återställa från säkerhetskopian.</string>
     <string name="home_upgrade_pending_banner">Säkerhetsuppgradering väntar — den körs vid nästa inloggning</string>
     <string name="home_upgrade_pending_retry">Försök nu</string>
+    <string name="login_biometric_invalidated_banner">Inloggning med fingeravtryck måste ställas in igen — ange ditt huvudlösenord</string>
+    <string name="recovery_not_set_up_title">Återställning har inte ställts in</string>
+    <string name="recovery_not_set_up_body">Ett glömt huvudlösenord kan bara återställas via ett skärmlås som redan var inställt när du senast loggade in. Den här enheten har ingen återställningsnyckel för det här valvet, så det kan bara öppnas med sitt huvudlösenord.</string>
+    <string name="recovery_not_set_up_restore_hint">Om du har en säkerhetskopia kan du radera det här valvet, registrera dig igen och återställa säkerhetskopian från Backup &amp; återställning.</string>
+    <string name="recovery_back_to_login">Tillbaka till inloggning</string>
+    <string name="erase_vault_action">Radera allt och börja om</string>
+    <string name="erase_vault_dialog_title">Radera allt?</string>
+    <string name="erase_vault_dialog_body">Alla poster, huvudlösenordet och återställningsnycklarna på den här enheten raderas permanent. Säkerhetskopior som du har sparat någon annanstans påverkas inte.</string>
+    <string name="erase_vault_dialog_confirm">Radera</string>
+    <string name="recovery_failure_not_authenticated">Upplåsningen gick ut innan valvet hann öppnas. Försök igen.</string>
+    <string name="recovery_failure_verifier">Återställningsdata på den här enheten är skadade. Inget ändrades.</string>
+    <string name="recovery_failure_keystore">Den säkra hårdvaran kunde inte öppna återställningsnyckeln. Inget ändrades.</string>
+    <string name="recovery_failure_storage">Det nya lösenordet kunde inte sparas. Inget ändrades.</string>
 </resources>

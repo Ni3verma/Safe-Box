@@ -3,7 +3,9 @@ package com.andryoga.safebox.e2e
 import androidx.test.core.app.ApplicationProvider
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -17,7 +19,8 @@ import dagger.hilt.components.SingletonComponent
  * `SessionLockedException`. [seedVaultAndOpenSession] creates a `crypto_version = 2` vault via
  * [VaultRepository.createVault] and opens a DEK session on the minted key; [openSessionForSeeding]
  * ensures a DEK session is open for suites that seed records without a user account or reopen the
- * session after an explicit [lockVault].
+ * session after an explicit [lockVault]; [seedBiometricWrap] adds the wrap the fingerprint login
+ * needs.
  *
  * Resolved through an entry point rather than injected into every test class: eleven suites call
  * the seed helpers and none of them should have to know about the session to seed a vault.
@@ -29,6 +32,7 @@ object VaultSessionTestBridge {
     interface VaultSessionEntryPoint {
         fun sessionKeyHolder(): SessionKeyHolder
         fun vaultRepository(): VaultRepository
+        fun envelopeEncryptionManager(): EnvelopeEncryptionManager
     }
 
     private val entryPoint: VaultSessionEntryPoint
@@ -55,6 +59,20 @@ object VaultSessionTestBridge {
     }
 
     /**
+     * Wraps the DEK of the most recent [seedVaultAndOpenSession] under a fresh `KEK_Biometric`
+     * (a JCE pair through the test `FakeKeystoreGateway`, so no enrolled fingerprint is needed)
+     * and stores `wrapped_dek_biometric`, which is what makes the login screen offer the
+     * fingerprint path.
+     */
+    suspend fun seedBiometricWrap() {
+        val dek = requireNotNull(lastSeededDek) { "seedVaultAndOpenSession must run first" }
+        val currentEntryPoint = entryPoint
+        val blob = currentEntryPoint.envelopeEncryptionManager()
+            .wrapWithKeystoreKey(WrapKeySpec.BIOMETRIC, dek.copyOf())
+        currentEntryPoint.vaultRepository().storeWrap(WrapKeySpec.BIOMETRIC, blob)
+    }
+
+    /**
      * Ensures a DEK session is open for seeding records when no session is currently active,
      * reusing the DEK from the most recent [seedVaultAndOpenSession] if available.
      */
@@ -73,4 +91,7 @@ object VaultSessionTestBridge {
     fun lockVault() {
         entryPoint.sessionKeyHolder().clearSessionKey()
     }
+
+    /** Whether the current test component's session is open; lets a test tell a missed lock from a missed navigation. */
+    fun isVaultUnlocked(): Boolean = entryPoint.sessionKeyHolder().isUnlocked.value
 }

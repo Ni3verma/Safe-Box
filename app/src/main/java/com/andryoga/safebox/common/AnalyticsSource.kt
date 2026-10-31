@@ -18,4 +18,7 @@ enum class AnalyticsSource(val value: String) {
     // the device-security-required and update-password dialogs open from both of these
     LOGIN("login"),
     SETTINGS("settings"),
+    // the erase-vault dialog opens from both of these login-screen states
+    RECOVERY_NOT_SET_UP("recovery_not_set_up"),
+    LEGACY_KEY_LOST("legacy_key_lost"),
 }

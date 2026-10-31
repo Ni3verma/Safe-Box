@@ -21,7 +21,7 @@ results into an ADR under `docs/decisions/` so the design is planned against evi
 | `device_security_required_dialog_show` and its `*_open_settings_click`, `*_open_settings_fail`, `*_cancel_click`; `update_password_dialog_show`, `*_allow_click`, `*_cancel_click` (all existing) | `LoginViewModel`, `SettingsViewModel` | adds `source` ∈ {`login`, `settings`} | unchanged; the param tells the forgot-password flow from a routine password change |
 | `backup_data_success` (existing) | `BackupDataWorker` | adds `version`, `duration_ms`, `size_kb` (`-1` when the document provider cannot report a length) | per completed backup |
 | `restore_data_success` (existing) | `RestoreDataWorker` | adds `version`, `duration_ms` | per completed restore |
-| `session_timeout` | `ActiveSessionManager`, when the away timeout locks the vault (since envelope MR 4: read just before the clear, after which a running worker fails closed at its next use of the key) | `worker_running` | per timeout that locked a session; a failed or slow (> 500 ms) WorkManager read logs `0` |
+| `session_timeout` | `ActiveSessionManager`, when the away timeout locks the vault (since envelope MR 4: the read is started just before the clear and awaited after it, so the snapshot still sees a worker that will fail closed at its next use of the key while the lock never waits on it) | `worker_running` | per timeout that locked a session; a failed or slow (> 500 ms) WorkManager read logs `0` |
 
 Wire values: `device_secure`, `strongbox`, `db_exists`, `worker_running` arrive as `0`/`1`;
 `biometric_class` is `BiometricClass.analyticsValue` (`strong`, `weak_only`, `none_enrolled`,

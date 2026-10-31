@@ -15,6 +15,10 @@ import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.VaultResetUseCase
+import com.andryoga.safebox.security.envelope.WrapKeyOpener
+import com.andryoga.safebox.security.envelope.WrapKeyProbe
+import com.andryoga.safebox.security.envelope.WrapOpenOutcome
 import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationOutcome
@@ -24,12 +28,14 @@ import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.KeystoreGateway
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.core.SessionLockReasonStore
 import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.BackupPasswordRegistry
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
@@ -38,6 +44,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import javax.crypto.Cipher
 import javax.inject.Inject
 
 @HiltViewModel
@@ -45,9 +52,11 @@ class LoginViewModel @Inject constructor(
     private val userDetailsRepository: UserDetailsRepository,
     private val vaultRepository: VaultRepository,
     private val envelopeEncryptionManager: EnvelopeEncryptionManager,
+    private val wrapKeyOpener: WrapKeyOpener,
     private val legacyVaultMigrator: Lazy<LegacyVaultMigrator>,
     private val vaultMigrationProgress: VaultMigrationProgress,
     private val vaultKeyMaintenance: VaultKeyMaintenance,
+    private val vaultResetUseCase: Lazy<VaultResetUseCase>,
     private val workManager: Lazy<WorkManager>,
     private val backupPasswordRegistry: BackupPasswordRegistry,
     private val settingsDataStore: SettingsDataStore,
@@ -74,6 +83,16 @@ class LoginViewModel @Inject constructor(
     private var pendingMigrationHint: String? = null
     private var pendingMigrationTrigger: MigrationTrigger = MigrationTrigger.LOGIN
 
+    // The DEK recovered through the device wrap, held between the device prompt and the new
+    // password; it becomes the session only once the new password wrap is on disk.
+    private var pendingRecoveryDek: ByteArray? = null
+
+    // One automatic re-prompt when a time-bound device key refuses the unwrap after the prompt.
+    private var recoveryRepromptUsed = false
+
+    private var isUnlocking = false
+    private var isErasing = false
+
     init {
         if (isDebug) {
             _uiState.update { it.copy(defaultPassword = "Qwerty@@135") }
@@ -93,12 +112,22 @@ class LoginViewModel @Inject constructor(
         when (action) {
             is LoginScreenAction.LoginClicked -> onLoginClicked(action.password)
             LoginScreenAction.ShowHintClicked -> getHintFromDb()
-            LoginScreenAction.BiometricSuccess -> onBiometricSuccess()
+            is LoginScreenAction.BiometricSuccess -> onBiometricSuccess(action.cipher)
             LoginScreenAction.BiometricAvailable -> onBiometricAvailable()
             LoginScreenAction.BiometricError -> onBiometricError()
             is LoginScreenAction.OnResetPassword -> onResetPassword(action.newPassword, action.hint)
-            LoginScreenAction.ForgotPasswordClicked -> {
-                analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK)
+            LoginScreenAction.ForgotPasswordClicked -> onForgotPasswordClicked()
+            LoginScreenAction.OnLegacyResetAuthenticated -> {
+                _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.NewPassword) }
+            }
+
+            is LoginScreenAction.OnRecoveryAuthenticated -> onRecoveryAuthenticated(action.cipher)
+            LoginScreenAction.OnForgotPasswordAuthCancelled -> {
+                _uiState.update { it.copy(forgotPasswordStep = null) }
+            }
+
+            LoginScreenAction.OnRecoveryNotSetUpDismissed -> {
+                _uiState.update { it.copy(isRecoveryNotSetUp = false) }
             }
 
             LoginScreenAction.OnDeviceSecurityRequiredDialogShown -> {
@@ -107,6 +136,7 @@ class LoginViewModel @Inject constructor(
 
             LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked -> {
                 activeSessionManager.setPaused(true)
+                _uiState.update { it.copy(forgotPasswordStep = null) }
                 logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
             }
 
@@ -115,6 +145,7 @@ class LoginViewModel @Inject constructor(
             }
 
             LoginScreenAction.OnDeviceSecurityRequiredDismissClicked -> {
+                _uiState.update { it.copy(forgotPasswordStep = null) }
                 logFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
             }
 
@@ -123,9 +154,15 @@ class LoginViewModel @Inject constructor(
             }
 
             LoginScreenAction.OnUpdatePasswordDismissClicked -> {
+                // Cancelling the dialog drops the recovered DEK; the wraps on disk are untouched.
+                clearPendingRecoveryDek()
+                _uiState.update { it.copy(forgotPasswordStep = null) }
                 logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
             }
 
+            LoginScreenAction.OnEraseVaultDialogShown -> logFromEraseState(AnalyticsKey.ERASE_VAULT_DIALOG_SHOW)
+            LoginScreenAction.OnEraseVaultCancelClicked -> logFromEraseState(AnalyticsKey.ERASE_VAULT_DIALOG_CANCEL_CLICK)
+            LoginScreenAction.OnEraseVaultConfirmClicked -> onEraseVaultConfirmClicked()
             is LoginScreenAction.OnMigrationFailureShown -> onMigrationFailureShown(action.reason)
             LoginScreenAction.OnMigrationRetryClicked -> onMigrationRetryClicked()
             LoginScreenAction.OnMigrationContinueLegacyClicked -> onMigrationContinueLegacyClicked()
@@ -139,83 +176,42 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun onResetPassword(newPassword: String, hint: String) {
-        Timber.i("resetting master password and hint from login screen")
-        logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
-        viewModelScope.launch {
-            when (vaultRepository.getVaultState()) {
-                is VaultState.Legacy -> {
-                    // The legacy hash is not rewritten; the new password goes straight into the
-                    // migration so a failed attempt leaves the original credential intact.
-                    runLegacyMigration(
-                        password = newPassword,
-                        newHint = hint,
-                        trigger = MigrationTrigger.FORGOT_PASSWORD,
-                    )
-                }
-
-                is VaultState.Envelope -> {
-                    // TODO(MR6): replace with KEK_Device unwrap and VaultRepository.rewrapPassword
-                    if (!openLegacySession()) return@launch
-                    userDetailsRepository.updatePasswordAndHint(newPassword, hint)
-                    Timber.i("master password and hint successfully updated from login screen")
-                    onAuthSuccess(LoginMethod.PASSWORD_RESET)
-                }
-
-                VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
-            }
+    /** The erase dialog opens from two login-screen states; `source` says which one offered it. */
+    private fun logFromEraseState(key: AnalyticsKey) {
+        val source = if (_uiState.value.userAuthState == UserAuthState.LEGACY_KEY_LOST) {
+            AnalyticsSource.LEGACY_KEY_LOST
+        } else {
+            AnalyticsSource.RECOVERY_NOT_SET_UP
+        }
+        analyticsHelper.logEvent(key) {
+            param(AnalyticsParam.SOURCE, source.value)
         }
     }
 
-    private fun onBiometricAvailable() {
-        Timber.i("biometric capability is available")
-        viewModelScope.launch {
-            val state = vaultRepository.getVaultState()
-            if (state is VaultState.Legacy) {
-                // Biometric login is suppressed while crypto_version = 1.
-                _uiState.update { it.copy(isLegacyVault = true, canUnlockWithBiometric = false) }
-                return@launch
-            }
-            if (userDetailsRepository.shouldStartBiometricAuthFlow()) {
-                _uiState.update {
-                    it.copy(canUnlockWithBiometric = true)
-                }
-            }
-        }
-    }
+    // region password login
 
-    // TODO(MR6): replace with CryptoObject unwrap of wrapped_dek_biometric
-    private fun onBiometricSuccess() {
-        Timber.i("device security auth success")
-        viewModelScope.launch {
-            if (!openLegacySession()) return@launch
-            onAuthSuccess(LoginMethod.BIOMETRIC)
-        }
-    }
-
-    private fun onBiometricError() {
-        Timber.i("biometric error or cancelled")
-        _uiState.update {
-            it.copy(canUnlockWithBiometric = false)
-        }
-    }
-
-    private var isUnlocking = false
-
-    private fun onLoginClicked(password: String) {
+    /**
+     * Serialises the unlock paths: a credential arriving while another is being verified is
+     * dropped, as is anything after [UserAuthState.VERIFIED].
+     */
+    private fun launchUnlock(block: suspend () -> Unit) {
         if (isUnlocking || _uiState.value.userAuthState == UserAuthState.VERIFIED) return
-        Timber.i("login clicked")
         isUnlocking = true
         viewModelScope.launch {
             try {
-                when (val state = vaultRepository.getVaultState()) {
-                    is VaultState.Envelope -> unlockEnvelopeWithPassword(password, state)
-                    is VaultState.Legacy -> unlockLegacyWithPassword(password)
-                    VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
-                }
+                block()
             } finally {
                 isUnlocking = false
             }
+        }
+    }
+
+    private fun onLoginClicked(password: String) = launchUnlock {
+        Timber.i("login clicked")
+        when (val state = vaultRepository.getVaultState()) {
+            is VaultState.Envelope -> unlockEnvelopeWithPassword(password, state)
+            is VaultState.Legacy -> unlockLegacyWithPassword(password)
+            VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
         }
     }
 
@@ -263,6 +259,310 @@ class LoginViewModel @Inject constructor(
         vaultKeyMaintenance.scheduleAfterUnlock()
         onAuthSuccess(LoginMethod.PASSWORD)
     }
+
+    private fun onIncorrectPassword() {
+        analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED)
+        _uiState.update {
+            it.copy(
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
+                failedLoginAttempts = it.failedLoginAttempts + 1,
+            )
+        }
+    }
+
+    // endregion
+
+    // region biometric login
+
+    private fun onBiometricAvailable() {
+        Timber.i("biometric capability is available")
+        viewModelScope.launch {
+            val state = vaultRepository.getVaultState()
+            if (state is VaultState.Legacy) {
+                // Biometric login is suppressed while crypto_version = 1.
+                _uiState.update { it.copy(isLegacyVault = true, biometricUnlockCipher = null) }
+                return@launch
+            }
+            if (state !is VaultState.Envelope) return@launch
+            if (state.wrappedDekBiometric == null || state.isBiometricUnlockDisabled) return@launch
+            if (!userDetailsRepository.shouldStartBiometricAuthFlow()) return@launch
+            val probe = withContext(dispatchersProvider.default) {
+                wrapKeyOpener.probe(WrapKeySpec.BIOMETRIC, state.biometricKeyAliasSuffix)
+            }
+            when (probe) {
+                is WrapKeyProbe.Ready -> _uiState.update { it.copy(biometricUnlockCipher = probe.cipher) }
+                WrapKeyProbe.AwaitingAuthentication -> {
+                    // The biometric key is per-operation on every supported API; a time-bound one is a keygen defect.
+                    Utils.crashInDebugBuild("biometric wrap key is time-bound")
+                    onBiometricKeyInvalidated()
+                }
+
+                WrapKeyProbe.Invalidated -> onBiometricKeyInvalidated()
+            }
+        }
+    }
+
+    /**
+     * Deletes the biometric wrap and asks for the password; `VaultKeyMaintenance` rotates the
+     * alias and recreates the wrap after that login.
+     */
+    private suspend fun onBiometricKeyInvalidated() {
+        Timber.w("biometric wrap key invalidated; deleting the biometric wrap")
+        vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC)
+        analyticsHelper.logEvent(AnalyticsKey.BIOMETRIC_KEY_INVALIDATED)
+        _uiState.update { it.copy(isBiometricKeyInvalidated = true, biometricUnlockCipher = null) }
+    }
+
+    private fun onBiometricSuccess(cipher: Cipher?) {
+        Timber.i("device security auth success")
+        if (cipher == null) {
+            // The prompt is always crypto-bound for login; a success without the cipher unlocks nothing.
+            Utils.crashInDebugBuild("biometric prompt succeeded without the bound cipher")
+            onBiometricError()
+            return
+        }
+        launchUnlock {
+            // The cipher is single-use; the prompt must not be re-launched with it.
+            _uiState.update { it.copy(biometricUnlockCipher = null) }
+            val state = vaultRepository.getVaultState() as? VaultState.Envelope
+            val wrappedBiometric = state?.wrappedDekBiometric
+            if (wrappedBiometric == null) {
+                Utils.crashInDebugBuild("biometric prompt succeeded but the biometric wrap is gone")
+                return@launchUnlock
+            }
+            val openOutcome = withContext(dispatchersProvider.default) {
+                wrapKeyOpener.open(
+                    cipher = cipher,
+                    spec = WrapKeySpec.BIOMETRIC,
+                    aliasSuffix = state.biometricKeyAliasSuffix,
+                    blob = wrappedBiometric,
+                    verifier = state.dekVerifier,
+                )
+            }
+            if (openOutcome !is WrapOpenOutcome.Opened) {
+                // Any failure right after a successful prompt means the key is no good any more.
+                Timber.w("biometric unwrap failed after a successful prompt: %s", openOutcome.javaClass.simpleName)
+                onBiometricKeyInvalidated()
+                return@launchUnlock
+            }
+            try {
+                sessionKeyHolder.setSessionKey(openOutcome.dek)
+            } finally {
+                openOutcome.dek.fill(0)
+            }
+            Timber.i("envelope vault unlocked with biometric")
+            vaultKeyMaintenance.scheduleAfterUnlock()
+            onAuthSuccess(LoginMethod.BIOMETRIC)
+        }
+    }
+
+    private fun onBiometricError() {
+        Timber.i("biometric error or cancelled")
+        _uiState.update { it.copy(biometricUnlockCipher = null) }
+    }
+
+    // endregion
+
+    // region forgot password
+
+    private fun onForgotPasswordClicked() {
+        analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK)
+        recoveryRepromptUsed = false
+        _uiState.update { it.copy(recoveryFailure = null) }
+        viewModelScope.launch {
+            when (val state = vaultRepository.getVaultState()) {
+                is VaultState.Legacy -> {
+                    // Nothing is tied to a credential yet: today's gate, then the migration.
+                    _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.LegacyAuthentication) }
+                }
+
+                is VaultState.Envelope -> startDeviceRecovery(state)
+                VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
+            }
+        }
+    }
+
+    /** A usable device wrap opens the prompt; anything else is the recovery-not-set-up state. */
+    private suspend fun startDeviceRecovery(state: VaultState.Envelope) {
+        if (state.wrappedDekDevice == null) {
+            showRecoveryNotSetUp()
+            return
+        }
+        val probe = withContext(dispatchersProvider.default) {
+            wrapKeyOpener.probe(WrapKeySpec.DEVICE, state.deviceKeyAliasSuffix)
+        }
+        when (probe) {
+            is WrapKeyProbe.Ready -> {
+                _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.DeviceAuthentication(probe.cipher)) }
+            }
+
+            WrapKeyProbe.AwaitingAuthentication -> {
+                // A time-bound key (API 29) cannot initialise a cipher before the user authenticates,
+                // so the prompt is shown without a CryptoObject; onRecoveryAuthenticated then
+                // initialises the cipher inside the key's post-authentication window.
+                _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.DeviceAuthentication(cipher = null)) }
+            }
+
+            WrapKeyProbe.Invalidated -> {
+                onDeviceKeyInvalidated()
+                showRecoveryNotSetUp()
+            }
+        }
+    }
+
+    private fun showRecoveryNotSetUp() {
+        Timber.i("forgot password on an envelope vault without a usable device wrap")
+        analyticsHelper.logEvent(AnalyticsKey.RECOVERY_NOT_SET_UP_SHOW)
+        _uiState.update { it.copy(isRecoveryNotSetUp = true, forgotPasswordStep = null) }
+    }
+
+    private suspend fun onDeviceKeyInvalidated() {
+        Timber.w("device wrap key invalidated; deleting the device wrap")
+        vaultRepository.deleteWrap(WrapKeySpec.DEVICE)
+        analyticsHelper.logEvent(AnalyticsKey.DEVICE_KEY_INVALIDATED)
+    }
+
+    private fun onRecoveryAuthenticated(cipher: Cipher?) = launchUnlock {
+        _uiState.update { it.copy(forgotPasswordStep = null) }
+        val state = vaultRepository.getVaultState() as? VaultState.Envelope
+        val wrappedDevice = state?.wrappedDekDevice
+        if (wrappedDevice == null) {
+            // The wrap was there when the prompt opened; losing it in between is a defect.
+            Utils.crashInDebugBuild("device prompt succeeded but the device wrap is gone")
+            showRecoveryNotSetUp()
+            return@launchUnlock
+        }
+        val recoveryOutcome = withContext(dispatchersProvider.default) {
+            wrapKeyOpener.open(
+                cipher = cipher,
+                spec = WrapKeySpec.DEVICE,
+                aliasSuffix = state.deviceKeyAliasSuffix,
+                blob = wrappedDevice,
+                verifier = state.dekVerifier,
+            )
+        }
+        when (recoveryOutcome) {
+            is WrapOpenOutcome.Opened -> {
+                clearPendingRecoveryDek()
+                pendingRecoveryDek = recoveryOutcome.dek
+                _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.NewPassword) }
+            }
+
+            WrapOpenOutcome.NotAuthenticated -> {
+                if (!recoveryRepromptUsed) {
+                    recoveryRepromptUsed = true
+                    Timber.i("time-bound device key refused the unwrap; prompting again")
+                    _uiState.update { it.copy(forgotPasswordStep = ForgotPasswordStep.DeviceAuthentication(cipher = null)) }
+                } else {
+                    onRecoveryFailed(RecoveryFailureReason.NOT_AUTHENTICATED, cause = null)
+                }
+            }
+
+            WrapOpenOutcome.WrongDek -> {
+                // The wrap can never recover anything; drop it so the next unlock recreates it from the real DEK.
+                vaultRepository.deleteWrap(WrapKeySpec.DEVICE)
+                onRecoveryFailed(RecoveryFailureReason.VERIFIER, cause = null)
+            }
+
+            is WrapOpenOutcome.KeystoreFailure -> {
+                onDeviceKeyInvalidated()
+                onRecoveryFailed(RecoveryFailureReason.KEYSTORE, cause = recoveryOutcome.cause)
+            }
+        }
+    }
+
+    private fun onRecoveryFailed(reason: RecoveryFailureReason, cause: Throwable?) {
+        Timber.w(cause, "vault recovery failed: reason=%s", reason.wireName)
+        analyticsHelper.logEvent(AnalyticsKey.VAULT_RECOVERY_FAILURE) {
+            param(AnalyticsParam.REASON, reason.wireName)
+            param(AnalyticsParam.EXCEPTION, cause?.javaClass?.simpleName ?: NO_EXCEPTION)
+        }
+        _uiState.update { it.copy(recoveryFailure = reason, forgotPasswordStep = null) }
+    }
+
+    private fun onResetPassword(newPassword: String, hint: String) = launchUnlock {
+        Timber.i("resetting master password and hint from login screen")
+        logFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
+        _uiState.update { it.copy(forgotPasswordStep = null) }
+        when (vaultRepository.getVaultState()) {
+            is VaultState.Legacy -> {
+                // The legacy hash is not rewritten; the new password goes straight into the
+                // migration so a failed attempt leaves the original credential intact.
+                runLegacyMigration(
+                    password = newPassword,
+                    newHint = hint,
+                    trigger = MigrationTrigger.FORGOT_PASSWORD,
+                )
+            }
+
+            is VaultState.Envelope -> completeRecovery(newPassword, hint)
+            VaultState.CorruptedEnvelope -> onCorruptedEnvelopeState()
+        }
+    }
+
+    /** Re-wraps the recovered DEK under the new password; only then does it become the session. */
+    private suspend fun completeRecovery(newPassword: String, hint: String) {
+        val dek = pendingRecoveryDek
+        pendingRecoveryDek = null
+        if (dek == null) {
+            // The dialog is only reachable through a verified recovery; reaching it without the DEK is a defect.
+            Utils.crashInDebugBuild("password reset on an envelope vault without a recovered DEK")
+            return
+        }
+        try {
+            try {
+                vaultRepository.rewrapPassword(newPassword.toCharArray(), dek, hint)
+            } catch (c: CancellationException) {
+                throw c
+            } catch (e: Exception) {
+                onRecoveryFailed(RecoveryFailureReason.STORAGE, cause = e)
+                return
+            }
+            sessionKeyHolder.setSessionKey(dek)
+        } finally {
+            dek.fill(0)
+        }
+        Timber.i("master password reset through the device wrap")
+        vaultKeyMaintenance.scheduleAfterUnlock()
+        analyticsHelper.logEvent(AnalyticsKey.VAULT_RECOVERY_SUCCESS)
+        onAuthSuccess(LoginMethod.PASSWORD_RESET)
+    }
+
+    private fun clearPendingRecoveryDek() {
+        pendingRecoveryDek?.fill(0)
+        pendingRecoveryDek = null
+    }
+
+    override fun onCleared() {
+        clearPendingRecoveryDek()
+    }
+
+    // endregion
+
+    // region erase
+
+    private fun onEraseVaultConfirmClicked() {
+        logFromEraseState(AnalyticsKey.ERASE_VAULT_DIALOG_CONFIRM_CLICK)
+        if (isErasing) return
+        isErasing = true
+        viewModelScope.launch {
+            try {
+                vaultResetUseCase.get().eraseVault()
+                _uiState.update { it.copy(isVaultErased = true) }
+            } catch (c: CancellationException) {
+                throw c
+            } catch (e: Exception) {
+                // A half-done erase is a defect to see, not a state to hide; the screen stays put.
+                Utils.crashInDebugBuild("vault erase failed", e)
+            } finally {
+                isErasing = false
+            }
+        }
+    }
+
+    // endregion
+
+    // region legacy vault migration
 
     // TODO(D3): legacy vault (crypto_version = 1) only
     private suspend fun unlockLegacyWithPassword(password: String) {
@@ -405,30 +705,15 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     private fun clearPendingMigrationCredentials() {
         pendingMigrationPassword = null
         pendingMigrationHint = null
     }
 
-    private suspend fun enqueueAutoBackupIfEnabled(password: String) {
-        if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
-            Timber.i("enqueuing auto backup request after login with pswrd")
-            BackupDataWorker.enqueueRequest(
-                password = password,
-                showBackupStartNotification = false,
-                workManager = workManager.get(),
-                backupPasswordRegistry = backupPasswordRegistry,
-            )
-        } else {
-            Timber.i("auto backup disabled from settings")
-        }
-    }
-
     /**
      * Opens a legacy vault session (`LegacyUnlocked`) using the Keystore handle of `symmetricDataKey`.
-     *
-     * Used by the migration fallback (*Continue for now*) and, until MR 6, by the unmigrated
-     * biometric/reset branches. A missing handle transitions to [UserAuthState.LEGACY_KEY_LOST].
+     * A missing handle transitions to [UserAuthState.LEGACY_KEY_LOST].
      *
      * @return `false` when the legacy key is gone and the unlock must not continue.
      */
@@ -442,6 +727,22 @@ class LoginViewModel @Inject constructor(
         }
         sessionKeyHolder.setLegacySession(legacyKey)
         return true
+    }
+
+    // endregion
+
+    private suspend fun enqueueAutoBackupIfEnabled(password: String) {
+        if (settingsDataStore.getAutoBackupAfterPasswordLogin()) {
+            Timber.i("enqueuing auto backup request after login with pswrd")
+            BackupDataWorker.enqueueRequest(
+                password = password,
+                showBackupStartNotification = false,
+                workManager = workManager.get(),
+                backupPasswordRegistry = backupPasswordRegistry,
+            )
+        } else {
+            Timber.i("auto backup disabled from settings")
+        }
     }
 
     /** Single exit of every unlock path. */
@@ -465,16 +766,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun onIncorrectPassword() {
-        analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED)
-        _uiState.update {
-            it.copy(
-                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
-                failedLoginAttempts = it.failedLoginAttempts + 1,
-            )
-        }
-    }
-
     private fun getHintFromDb() {
         viewModelScope.launch {
             Timber.i("getting hint")
@@ -484,5 +775,10 @@ class LoginViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private companion object {
+        /** `exception` value when a recovery failed without an exception (verifier mismatch, missed window). */
+        const val NO_EXCEPTION = "none"
     }
 }

@@ -44,8 +44,8 @@ locked vault fails closed with `SessionLockedException` on both directions:
 **Who clears the key (since envelope MR 4).** The away timeout: `ActiveSessionManager`, after the
 delay, records `SessionLockReason.AWAY_TIMEOUT` in `SessionLockReasonStore` (`ui/core`, process
 memory, read-and-cleared once by the next `LoginViewModel`, which drives the "You were away"
-banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (read just
-before the clear) — only when the holder was open, so a timeout on the login screen records and
+banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT{worker_running}` (the read is
+started before the clear and awaited after it) — only when the holder was open, so a timeout on the login screen records and
 logs nothing. Every clear emits `lockEvents`, which `InAppUpdateViewModel` treats as "locked".
 A running backup or restore is **not** cancelled: it fails closed (`SESSION_LOCKED`) at its next
 use of the key — a restore's transaction rolls back — or finishes if it no longer needs one (a
@@ -55,16 +55,26 @@ row) routes to Login, nothing routes to Signup; `IS_SIGN_UP_REQUIRED` is written
 routing.
 
 The legacy `symmetricDataKey` alias is reached only through `KeystoreGateway`:
-`legacyVaultKey()` returns the handle or `null` and **never generates**; the single creation path
-is `getOrCreateLegacyVaultKey()`, called by the signup bridge while a vault is being created
-(alias-guarded, so an existing entry is never replaced). The hint of a `crypto_version = 1` vault
-goes through that handle directly on read and write (`UserDetailsDaoSecure`), because it is the
-one field touched outside a session: the login screen reads it, signup writes it before a session
-exists, the login-screen reset rewrites it while locked. A lost key reads as `null` and refuses to
-write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST` and nothing is regenerated.
-Until MR 5, `LoginViewModel` and `SignupViewModel` open the legacy session (`setLegacySession`)
-on every accepted credential; the E2E seeds do the same through `VaultSessionTestBridge`. Design:
-[envelope-encryption.md](../design/envelope-encryption.md) §3.1, §4.3, §6.9.
+`legacyVaultKey()` returns the handle or `null` and **never generates** (the signup bridge that
+created it went with envelope MR 5; a fresh vault is `crypto_version = 2` from the start). The hint
+of a `crypto_version = 1` vault goes through that handle directly on read and write
+(`UserDetailsDaoSecure`), because it is the one field touched outside a session. A lost key reads
+as `null` and refuses to write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST`,
+nothing is regenerated, and the only way forward is *Erase everything and start over*.
+
+**Who opens the key (since envelope MR 5 and MR 6).** Every envelope unlock from the login screen
+ends in `SessionKeyHolder.setSessionKey(dek)` from `LoginViewModel`: the master password unwraps
+`wrapped_dek_password` (`unwrapWithPassword` + `verify`); a fingerprint unwraps
+`wrapped_dek_biometric` through the `Cipher` the ViewModel prepared and the `BiometricPrompt`
+`CryptoObject` authorised; forgot-password unwraps `wrapped_dek_device` the same way (API 30+) or
+inside the time-bound key's 5 s window right after the prompt (API 29), holds the DEK in the
+ViewModel until `VaultRepository.rewrapPassword(newPassword, dek, hint)` has committed, and only
+then opens the session. The legacy session (`setLegacySession`) is opened by *Continue for now*
+alone. A key that fails to unwrap or verify after a successful prompt is treated as invalidated:
+the wrap row is deleted and `VaultKeyMaintenance` recreates it at the next password login. A
+second clear exists since MR 6: `VaultResetUseCase.eraseVault()` locks the session before it
+clears every Room table and deletes the Keystore aliases. Design:
+[envelope-encryption.md](../design/envelope-encryption.md) §3.1, §4.3, §6.6, §6.7, §6.9, §6.11.
 
 ### What `master` still does, and why the branch is shaped like this
 

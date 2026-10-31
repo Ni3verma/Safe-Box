@@ -17,6 +17,11 @@
   belongs in `docs/` with a pointer at most. If a longer explanatory comment is useful for the
   owner's first read of a change, mark it `// TODO(review): remove before merge` so it is stripped
   before the PR lands. (Review feedback on #294, 2026-10-19.)
+- **No design-document references in code comments.** Never cite design sections (`design §6.7`),
+  debt-register rows (`D4`, `D13`) or MR numbers in a code comment or KDoc; the exception is the
+  `TODO(MRn)` / `TODO(Dn)` bridge markers of the envelope effort, which are greps, not prose. Code
+  describes what it does; the design doc links to the code, not the other way round. (Owner
+  feedback, repeated, last on MR 6 review 2026-10-31.)
 
 ## Interaction Style & Tone
 

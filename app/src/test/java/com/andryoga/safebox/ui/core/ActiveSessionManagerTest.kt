@@ -22,6 +22,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -57,6 +58,19 @@ class ActiveSessionManagerTest {
         every { settingsDataStore.awayTimeoutSecFlow } returns flowOf(TIMEOUT_SEC)
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns flowOf(emptyList())
         sessionKeyHolder.setSessionKey(ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 1 })
+    }
+
+    @Test
+    fun onStop_shouldArmTheTimeoutSavedAfterConstruction() = runTest {
+        val timeoutSec = MutableStateFlow(TIMEOUT_SEC)
+        every { settingsDataStore.awayTimeoutSecFlow } returns timeoutSec
+        val manager = createManager()
+        timeoutSec.value = 0
+
+        manager.onStop(lifecycleOwner)
+        runCurrent()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
     }
 
     @Test
@@ -182,18 +196,18 @@ class ActiveSessionManagerTest {
     }
 
     @Test
-    fun onStop_whenTheWorkerStateReadHangs_shouldStillLockOnceTheReadBoundElapses() = runTest {
+    fun onStop_whenTheWorkerStateReadHangs_shouldLockAtOnceAndLogOnceTheReadBoundElapses() = runTest {
         every { workManager.getWorkInfosForUniqueWorkFlow(any()) } returns MutableSharedFlow()
         val manager = createManager()
 
         manager.onStop(lifecycleOwner)
         advanceTimeBy(TIMEOUT_SEC.seconds)
         runCurrent()
-        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(analyticsHelper.loggedEvents.none { it.key == AnalyticsKey.SESSION_TIMEOUT }).isTrue()
         advanceTimeBy(READ_BOUND)
         runCurrent()
 
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
         val event = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.SESSION_TIMEOUT }
         assertThat(event.params[AnalyticsParam.WORKER_RUNNING.paramName]).isEqualTo(false)
     }
@@ -253,7 +267,6 @@ class ActiveSessionManagerTest {
             sessionKeyHolder = sessionKeyHolder,
             sessionLockReasonStore = sessionLockReasonStore,
         )
-        // lets init consume the timeout setting before any test drives the lifecycle
         runCurrent()
         return manager
     }
