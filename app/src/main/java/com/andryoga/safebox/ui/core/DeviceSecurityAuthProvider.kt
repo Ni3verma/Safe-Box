@@ -153,6 +153,7 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
                     }
 
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        Timber.w("device security prompt error %d: %s", errorCode, errString)
                         currentOnErrorOrCancel()
                     }
                 }

@@ -165,6 +165,21 @@ prefix `PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`. The stale copy i
 - Fingerprints on `google_apis` emulators: enrol in Settings, then
   `adb -s emulator-NNNN emu finger touch <id>`; the console is reachable from the guest at
   `10.0.2.2:<console port>` after `auth <token>` (`~/.emulator_console_auth_token`).
+  Scripted: `adb shell am start -a android.settings.FINGERPRINT_ENROLL`, type the PIN, tap
+  *Next*, then ~8 `emu finger touch` 1.5 s apart (used for the MR 6 manual pass, 2026-10-31).
+- `adb shell locksettings clear --old <pin>` on an emulator removes the credential but **leaves the
+  fingerprint templates enrolled** (a real device deletes them), so `BiometricManager` still
+  reports a strong biometric and `VaultKeyMaintenance` attempts a biometric wrap that fails with
+  `User authentication required` (`VAULT_WRAP_CREATE_FAILURE`). Harmless, emulator-only
+  (API 30 `google_apis`, 2026-10-31).
+- API 29 `google_apis` image (r13), AVD `API_29`: `BiometricManager.canAuthenticate(BIOMETRIC_STRONG)`
+  returns `-1` (`STATUS_UNKNOWN`) with a fingerprint enrolled, so no biometric wrap is created and
+  biometric login is never offered — fingerprint *recovery* through the credential prompt works.
+  Tapping **Use PIN** on that prompt makes `BiometricService` log `Cancel received while
+  ConfirmDeviceCredential showing` and deliver `ERROR_CANCELED (5)` to the app before the PIN
+  screen is used; androidx 1.1.0 issues no cancel on API 29, so this is the platform/image
+  (2026-10-31, see design §9.3 MR 6). Verify on a physical Android 10 device before treating it
+  as an app bug.
 
 ### Build and lint quirks
 
