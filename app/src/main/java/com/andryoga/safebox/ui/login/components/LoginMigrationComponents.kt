@@ -165,8 +165,7 @@ internal fun MigrationFailureCardContent(
 
 /**
  * Dedicated state shown when the legacy Keystore key (`symmetricDataKey`) is gone and the vault
- * cannot be opened or migrated. The only way forward is *Erase everything and start over*
- * (design §6.11).
+ * cannot be opened or migrated. The only way forward is *Erase everything and start over*.
  *
  * @param onEraseVaultClick Opens the erase confirmation.
  */

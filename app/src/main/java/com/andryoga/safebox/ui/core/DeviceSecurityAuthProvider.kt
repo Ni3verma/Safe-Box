@@ -56,8 +56,8 @@ internal fun getAllowedAuthenticators(
  * Whether a [BiometricPrompt.CryptoObject] may accompany a prompt that allows the device
  * credential. androidx.biometric rejects crypto-based authentication with `DEVICE_CREDENTIAL`
  * below API 30 (`BiometricPrompt.authenticate` throws), which is why the API 29 recovery path
- * authenticates without a `CryptoObject` and unwraps inside the time-bound key's window instead
- * (design §2.3, §6.7). Biometric-only prompts carry a `CryptoObject` on every supported API.
+ * authenticates without a `CryptoObject` and unwraps inside the time-bound key's window
+ * instead. Biometric-only prompts carry a `CryptoObject` on every supported API.
  *
  * @param allowDeviceCredential Whether the prompt allows PIN/pattern/password.
  * @param sdkInt The running API level; injectable only so the rule is unit-testable on the JVM.
@@ -165,7 +165,7 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
         val promptSubtitle = subtitle ?: defaultSubtitle
         val negativeButtonText = stringResource(R.string.biometric_negative_button_text)
         // A credential prompt below API 30 cannot carry a cipher; the caller unwraps right after
-        // the callback instead (time-bound KEK_Device, design §2.3).
+        // the callback instead (time-bound KEK_Device).
         val boundCryptoObject = cryptoObject?.takeIf { supportsCryptoObject(allowDeviceCredential) }
         LaunchedEffect(
             biometricPrompt,

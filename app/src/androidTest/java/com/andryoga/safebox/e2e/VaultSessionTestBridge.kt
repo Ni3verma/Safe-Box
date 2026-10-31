@@ -62,7 +62,7 @@ object VaultSessionTestBridge {
      * Wraps the DEK of the most recent [seedVaultAndOpenSession] under a fresh `KEK_Biometric`
      * (a JCE pair through the test `FakeKeystoreGateway`, so no enrolled fingerprint is needed)
      * and stores `wrapped_dek_biometric`, which is what makes the login screen offer the
-     * fingerprint path (design §6.6).
+     * fingerprint path.
      */
     suspend fun seedBiometricWrap() {
         val dek = requireNotNull(lastSeededDek) { "seedVaultAndOpenSession must run first" }

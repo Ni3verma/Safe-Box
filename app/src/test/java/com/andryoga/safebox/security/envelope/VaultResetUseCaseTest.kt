@@ -28,7 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Unit tests for [VaultResetUseCase]: the erase sequence of design §6.11 and its ordering.
+ * Unit tests for [VaultResetUseCase]: the erase sequence and its ordering.
  */
 class VaultResetUseCaseTest {
 

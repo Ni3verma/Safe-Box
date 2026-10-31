@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.vault
+package com.andryoga.safebox.ui.login.components
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule

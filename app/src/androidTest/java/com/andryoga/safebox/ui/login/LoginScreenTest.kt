@@ -478,7 +478,7 @@ class LoginScreenTest {
 
     @Test
     fun forgotPasswordClick_shouldOnlyEmitTheClickAndNeverShowTheDeviceSecurityDialog() {
-        // A v2 vault must never see DeviceSecurityRequiredDialog (design §6.7); the ViewModel routes.
+        // A v2 vault must never see DeviceSecurityRequiredDialog; the ViewModel routes.
         val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
             canAuthenticateOverride = false
         }

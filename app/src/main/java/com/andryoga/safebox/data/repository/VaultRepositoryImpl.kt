@@ -85,7 +85,7 @@ class VaultRepositoryImpl @Inject constructor(
         database.withTransaction {
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.KDF_PARAMS, kdfParams.encode()))
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.WRAPPED_DEK_PASSWORD, wrappedPassword))
-            // crypto_version = 2: the hint is plaintext (design §4.3).
+            // crypto_version = 2: the hint is plaintext.
             userDetailsDao.updateHint(hint, Date())
         }
         Timber.i("DEK password wrap and hint updated")

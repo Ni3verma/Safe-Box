@@ -15,7 +15,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * *Erase everything and start over* (design §6.11): the one path that destroys a vault on purpose.
+ * *Erase everything and start over*: the one path that destroys a vault on purpose.
  *
  * Reachable only from the two login-screen states that have no other way forward — recovery not
  * set up on a v2 vault, and a legacy vault whose Keystore key is gone. Manual `.bak` files on

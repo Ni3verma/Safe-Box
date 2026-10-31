@@ -29,8 +29,8 @@ data class MigrationFailureUiState(
 }
 
 /**
- * Why a forgot-password recovery on a `crypto_version = 2` vault ended without a new password
- * (design §6.7). The password wrap is never written on any of these.
+ * Why a forgot-password recovery on a `crypto_version = 2` vault ended without a new password.
+ * The password wrap is never written on any of these.
  *
  * @property wireName Analytics value of [com.andryoga.safebox.common.AnalyticsParam.REASON]; append-only.
  */
@@ -55,13 +55,13 @@ enum class RecoveryFailureReason(val wireName: String) {
 sealed interface ForgotPasswordStep {
     /**
      * Legacy vault: today's gate. The screen prompts without a `CryptoObject`, or shows
-     * `DeviceSecurityRequiredDialog` when the device cannot authenticate (design §6.4.1).
+     * `DeviceSecurityRequiredDialog` when the device cannot authenticate.
      */
     // TODO(D3): legacy vault (crypto_version = 1) only
     data object LegacyAuthentication : ForgotPasswordStep
 
     /**
-     * `crypto_version = 2` vault: the device prompt of design §6.7.
+     * `crypto_version = 2` vault: the device prompt.
      *
      * Deliberately not a data class: every instance is a distinct prompt, including the API 29
      * re-prompt that carries the same `null` cipher, which a value-equal state would de-duplicate.
@@ -80,7 +80,7 @@ data class LoginUiState(
     val hint: String = "",
     /**
      * Single-use `DECRYPT` cipher over `wrapped_dek_biometric`, prepared by the ViewModel; non-null
-     * exactly while the fingerprint prompt should be showing (design §6.6). The screen binds it as
+     * exactly while the fingerprint prompt should be showing. The screen binds it as
      * the `CryptoObject` and hands back the authorised cipher in [LoginScreenAction.BiometricSuccess].
      */
     val biometricUnlockCipher: Cipher? = null,
@@ -107,11 +107,11 @@ data class LoginUiState(
     val migrationFailure: MigrationFailureUiState? = null,
     /** Non-null while a forgot-password flow is in progress. */
     val forgotPasswordStep: ForgotPasswordStep? = null,
-    /** Forgot password on a `crypto_version = 2` vault with no usable device wrap: the card replaces the login form (design §6.7). */
+    /** Forgot password on a `crypto_version = 2` vault with no usable device wrap: the card replaces the login form. */
     val isRecoveryNotSetUp: Boolean = false,
     /** Non-null after a recovery attempt failed; cleared by the next *Forgot password?* tap. */
     val recoveryFailure: RecoveryFailureReason? = null,
-    /** The vault was erased (design §6.11); the screen leaves for Signup. */
+    /** The vault was erased; the screen leaves for Signup. */
     val isVaultErased: Boolean = false,
 ) {
     val canUnlockWithBiometric: Boolean

@@ -25,6 +25,7 @@ import com.andryoga.safebox.security.envelope.PasswordKdf
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
 import com.andryoga.safebox.security.envelope.VaultResetUseCase
+import com.andryoga.safebox.security.envelope.WrapKeyOpener
 import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationOutcome
@@ -168,6 +169,7 @@ class LoginViewModelTest {
         userDetailsRepository = userDetailsRepository,
         vaultRepository = vaultRepository,
         envelopeEncryptionManager = envelopeEncryptionManager,
+        wrapKeyOpener = WrapKeyOpener(envelopeEncryptionManager),
         legacyVaultMigrator = Lazy { legacyVaultMigrator },
         vaultMigrationProgress = vaultMigrationProgress,
         vaultKeyMaintenance = vaultKeyMaintenance,
@@ -261,7 +263,7 @@ class LoginViewModelTest {
         assertThat(legacyVm.uiState.value.isLegacyVault).isTrue()
     }
 
-    // region biometric login (design §6.6)
+    // region biometric login
 
     @Test
     fun onBiometricAvailable_whenWrapPresentAndCounterAllows_shouldPrepareTheCipher() = runTest {
@@ -612,7 +614,7 @@ class LoginViewModelTest {
 
     // endregion
 
-    // region forgot password: legacy gate (design §6.4.1)
+    // region forgot password: legacy gate
 
     @Test
     fun forgotPassword_onLegacyVault_shouldStartTheLegacyGateAndLogTheClick() = runTest {
@@ -725,7 +727,7 @@ class LoginViewModelTest {
 
     // endregion
 
-    // region forgot password: envelope recovery (design §6.7)
+    // region forgot password: envelope recovery
 
     @Test
     fun forgotPassword_onEnvelopeVaultWithoutDeviceWrap_shouldShowRecoveryNotSetUp() = runTest {
@@ -963,7 +965,7 @@ class LoginViewModelTest {
 
     // endregion
 
-    // region erase (design §6.11)
+    // region erase
 
     @Test
     fun eraseVaultDialog_fromRecoveryNotSetUp_shouldLogTheTriadWithItsSource() = runTest {

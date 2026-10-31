@@ -14,7 +14,7 @@ import javax.inject.Singleton
 /**
  * Stands in for the system prompt only. A scripted success hands back the very [BiometricPrompt.CryptoObject]
  * the screen bound, so the unwrap behind it runs for real against the JCE keys of
- * `FakeKeystoreGateway` — the crypto is faked at the Keystore seam, never here (design D4).
+ * `FakeKeystoreGateway` — the crypto is faked at the Keystore seam, never here.
  */
 @Singleton
 class FakeDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAuthProvider {

@@ -134,7 +134,7 @@ enum class AnalyticsKey(val eventName: String) {
     VAULT_WRAP_CREATED("vault_wrap_created"),
     VAULT_WRAP_CREATE_FAILURE("vault_wrap_create_failure"),
 
-    // Biometric login, forgot-password recovery and erase (design §6.6, §6.7, §6.11)
+    // Biometric login, forgot-password recovery and erase
     // the login-screen probe found KEK_Biometric invalidated; the wrap is deleted and the banner shown
     BIOMETRIC_KEY_INVALIDATED("biometric_key_invalidated"),
     // the forgot-password probe found KEK_Device invalidated, or its unwrap failed after a

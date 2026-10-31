@@ -1,4 +1,4 @@
-package com.andryoga.safebox.ui.core.vault
+package com.andryoga.safebox.ui.login.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -11,11 +11,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
-import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 /**
- * Confirmation for *Erase everything and start over* (design §6.11): the vault, its master password
+ * Confirmation for *Erase everything and start over*: the vault, its master password
  * and its recovery keys on this device are deleted and the app returns to signup. Backup files on
  * external storage are not touched, which the copy says so a user with one knows the way back.
  *
@@ -60,15 +58,4 @@ fun EraseVaultDialog(
         },
         modifier = modifier,
     )
-}
-
-@LightDarkModePreview
-@Composable
-private fun EraseVaultDialogPreview() {
-    SafeBoxTheme {
-        EraseVaultDialog(
-            onDismiss = {},
-            onConfirm = {},
-        )
-    }
 }

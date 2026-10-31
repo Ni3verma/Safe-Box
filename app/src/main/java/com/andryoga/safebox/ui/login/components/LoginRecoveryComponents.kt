@@ -32,7 +32,7 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 /**
  * Login-card state for *Forgot password?* on a `crypto_version = 2` vault that has no usable
- * device wrap (design §6.7): says why nothing can be reset, points at the backup route, and
+ * device wrap: says why nothing can be reset, points at the backup route, and
  * offers *Erase everything and start over*. Setting a lock screen now cannot help — a wrap is
  * only ever created while the vault is open — so no settings shortcut is offered here.
  *
