@@ -194,4 +194,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">更新已下载。请重启 Safe Box 以完成安装。</string>
     <string name="in_app_update_restart">重启</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">安全升级 — 请先输入一次主密码</string>
+    <string name="vault_migration_progress_title">正在升级保险库安全性…</string>
+    <string name="vault_migration_progress_counter">第 %1$d / %2$d 条记录</string>
+    <string name="vault_migration_failure_keystore">安全硬件未响应。未做任何更改。</string>
+    <string name="vault_migration_failure_verify">升级校验失败。未做任何更改。</string>
+    <string name="vault_migration_failure_storage">无法保存升级。未做任何更改。</string>
+    <string name="vault_migration_failure_unexpected">升级失败。未做任何更改。</string>
+    <string name="vault_migration_failure_forgot_password_note">您的主密码未更改。</string>
+    <string name="vault_migration_retry">重试</string>
+    <string name="vault_migration_continue_legacy">暂时继续</string>
+    <string name="legacy_key_lost_title">加密密钥不可用</string>
+    <string name="legacy_key_lost_body">加密此保险库的硬件密钥在此设备上已不可用，因此无法打开现有记录。如果您有备份文件，可以清除此保险库并从备份恢复。</string>
+    <string name="home_upgrade_pending_banner">安全升级待处理 — 将在您下次登录时运行</string>
+    <string name="home_upgrade_pending_retry">立即重试</string>
 </resources>

@@ -43,8 +43,11 @@ class ActiveSessionManager @Inject constructor(
     private val sessionKeyHolder: SessionKeyHolder,
     private val sessionLockReasonStore: SessionLockReasonStore,
 ) : DefaultLifecycleObserver {
+    @Volatile
     private var timeout = SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT.seconds
     private var timerJob: Job? = null
+
+    @Volatile
     private var isPaused = false
 
     init {

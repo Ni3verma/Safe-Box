@@ -192,4 +192,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Update heruntergeladen. Starten Sie Safe Box neu, um es zu installieren.</string>
     <string name="in_app_update_restart">Neu starten</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Sicherheits-Upgrade — geben Sie Ihr Master-Passwort einmalig ein</string>
+    <string name="vault_migration_progress_title">Tresorsicherheit wird aktualisiert…</string>
+    <string name="vault_migration_progress_counter">%1$d von %2$d Einträgen</string>
+    <string name="vault_migration_failure_keystore">Die sichere Hardware hat nicht reagiert. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_verify">Upgrade-Prüfung fehlgeschlagen. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_storage">Das Upgrade konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_unexpected">Upgrade fehlgeschlagen. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ihr Master-Passwort wurde nicht geändert.</string>
+    <string name="vault_migration_retry">Erneut versuchen</string>
+    <string name="vault_migration_continue_legacy">Vorerst fortfahren</string>
+    <string name="legacy_key_lost_title">Verschlüsselungsschlüssel nicht verfügbar</string>
+    <string name="legacy_key_lost_body">Der Hardwareschlüssel, mit dem dieser Tresor verschlüsselt wurde, ist auf diesem Gerät nicht mehr verfügbar, sodass vorhandene Einträge nicht geöffnet werden können. Wenn Sie eine Sicherungsdatei haben, können Sie diesen Tresor löschen und aus der Sicherung wiederherstellen.</string>
+    <string name="home_upgrade_pending_banner">Sicherheits-Upgrade ausstehend — wird bei der nächsten Anmeldung ausgeführt</string>
+    <string name="home_upgrade_pending_retry">Jetzt erneut versuchen</string>
 </resources>

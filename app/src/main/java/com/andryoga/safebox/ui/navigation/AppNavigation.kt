@@ -99,7 +99,7 @@ private fun NavGraphBuilder.loginGraph(
             SignupScreenRoot(
                 onSignupSuccess = {
                     navigateRoot(navController, HomeGraph)
-                }
+                },
             )
         }
     }

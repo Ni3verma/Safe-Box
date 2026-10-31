@@ -194,4 +194,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">已下載更新。請重新啟動 Safe Box 以進行安裝。</string>
     <string name="in_app_update_restart">重新啟動</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">安全升級 — 請輸入一次主密碼</string>
+    <string name="vault_migration_progress_title">正在升級保險庫安全性…</string>
+    <string name="vault_migration_progress_counter">第 %1$d / %2$d 筆記錄</string>
+    <string name="vault_migration_failure_keystore">安全硬體未回應。未進行任何變更。</string>
+    <string name="vault_migration_failure_verify">升級驗證失敗。未進行任何變更。</string>
+    <string name="vault_migration_failure_storage">無法儲存升級。未進行任何變更。</string>
+    <string name="vault_migration_failure_unexpected">升級失敗。未進行任何變更。</string>
+    <string name="vault_migration_failure_forgot_password_note">您的主密碼並未變更。</string>
+    <string name="vault_migration_retry">重試</string>
+    <string name="vault_migration_continue_legacy">暫時繼續</string>
+    <string name="legacy_key_lost_title">加密金鑰無法使用</string>
+    <string name="legacy_key_lost_body">加密此保險庫的硬體金鑰在此裝置上已無法使用，因此無法開啟現有記錄。如果您有備份檔案，可以清除此保險庫並從備份還原。</string>
+    <string name="home_upgrade_pending_banner">安全升級待處理 — 將於下次登入時執行</string>
+    <string name="home_upgrade_pending_retry">立即重試</string>
 </resources>

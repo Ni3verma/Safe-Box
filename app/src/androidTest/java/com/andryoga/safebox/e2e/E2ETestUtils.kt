@@ -69,9 +69,10 @@ object E2ETestUtils {
     /**
      * Pre-seeds the database and encrypted preferences so the app boots directly onto the LoginScreen.
      *
-     * Opens the legacy vault session first ([VaultSessionTestBridge]): the hint and every record
-     * seeded afterwards are encrypted under it, and the UI login reopens the same key.
+     * Creates a `crypto_version = 2` vault and opens its DEK session ([VaultSessionTestBridge]):
+     * every record seeded afterwards is encrypted under it, and the UI login unwraps the same DEK.
      */
+    @Suppress("UnusedParameter")
     suspend fun setupUnlockedHomeState(
         safeBoxDatabase: SafeBoxDatabase,
         userDetailsRepository: UserDetailsRepository,
@@ -80,8 +81,7 @@ object E2ETestUtils {
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
-        VaultSessionTestBridge.openLegacySessionForSeeding()
-        userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
+        VaultSessionTestBridge.seedVaultAndOpenSession(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
         preferenceProvider.upsertIntPref(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING, 0)
         settingsDataStore?.let {
@@ -119,6 +119,7 @@ object E2ETestUtils {
     /**
      * Pre-seeds credentials with biometric login count enabled (`remainingCount` > 0).
      */
+    @Suppress("UnusedParameter")
     suspend fun setupBiometricAvailableState(
         safeBoxDatabase: SafeBoxDatabase,
         userDetailsRepository: UserDetailsRepository,
@@ -128,8 +129,7 @@ object E2ETestUtils {
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
-        VaultSessionTestBridge.openLegacySessionForSeeding()
-        userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
+        VaultSessionTestBridge.seedVaultAndOpenSession(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
         preferenceProvider.upsertIntPref(
             CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
@@ -150,8 +150,8 @@ object E2ETestUtils {
      * Pre-seeds the database with comprehensive sample records across all 5 vault item types
      * to guarantee deterministic testing for search, filter, and detail screens without UI interaction.
      *
-     * Opens the legacy vault session itself, since suites call this without a preceding user seed;
-     * reopening an already open session is harmless.
+     * Ensures a DEK session is open, since worker suites call this without a preceding user seed;
+     * when called after [setupUnlockedHomeState], the already-open vault DEK session is kept.
      */
     suspend fun setupSeededVaultRecords(
         safeBoxDatabase: SafeBoxDatabase,
@@ -161,7 +161,7 @@ object E2ETestUtils {
         secureNoteDataRepository: SecureNoteDataRepository,
         authenticatorDataRepository: AuthenticatorDataRepository
     ) {
-        VaultSessionTestBridge.openLegacySessionForSeeding()
+        VaultSessionTestBridge.openSessionForSeeding()
         safeBoxDatabase.loginDataDao().deleteAllData()
         safeBoxDatabase.bankCardDataDao().deleteAllData()
         safeBoxDatabase.bankAccountDataDao().deleteAllData()
@@ -379,7 +379,7 @@ object E2ETestUtils {
         val unlocked = runCatching {
             composeTestRule.waitUntilNodeDisplayed(
                 matcher = hasContentDescription(addNewButtonDesc),
-                timeoutMillis = 4000L
+                timeoutMillis = 10000L
             )
             true
         }.getOrDefault(false)
@@ -391,6 +391,16 @@ object E2ETestUtils {
                 matcher = hasContentDescription(addNewButtonDesc),
                 timeoutMillis = 20000L
             )
+        }
+        // NavHost crossfades LoginRoute out over 700ms after HomeRoute enters; wait until the
+        // exiting LoginRoute leaves the semantics tree so callers never read its stale nodes.
+        composeTestRule.waitUntil(timeoutMillis = 10000L) {
+            runCatching {
+                composeTestRule.onAllNodes(
+                    hasText(welcomeBackText),
+                    useUnmergedTree = true,
+                ).fetchSemanticsNodes().isEmpty()
+            }.getOrDefault(false)
         }
         composeTestRule.waitForIdle()
     }

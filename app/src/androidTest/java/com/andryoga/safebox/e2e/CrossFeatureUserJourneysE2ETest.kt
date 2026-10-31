@@ -313,6 +313,7 @@ class CrossFeatureUserJourneysE2ETest {
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.login_away_banner)))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
                 .assertIsDisplayed()
             composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner))

@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Η ενημέρωση ολοκληρώθηκε. Επανεκκινήστε το Safe Box για εγκατάσταση.</string>
     <string name="in_app_update_restart">Επανεκκίνηση</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Αναβάθμιση ασφαλείας — εισαγάγετε τον κύριο κωδικό σας μία φορά</string>
+    <string name="vault_migration_progress_title">Αναβάθμιση ασφάλειας θησαυροφυλακίου…</string>
+    <string name="vault_migration_progress_counter">%1$d από %2$d εγγραφές</string>
+    <string name="vault_migration_failure_keystore">Το ασφαλές υλικό δεν αποκρίθηκε. Δεν έγινε καμία αλλαγή.</string>
+    <string name="vault_migration_failure_verify">Ο έλεγχος αναβάθμισης απέτυχε. Δεν έγινε καμία αλλαγή.</string>
+    <string name="vault_migration_failure_storage">Δεν ήταν δυνατή η αποθήκευση της αναβάθμισης. Δεν έγινε καμία αλλαγή.</string>
+    <string name="vault_migration_failure_unexpected">Η αναβάθμιση απέτυχε. Δεν έγινε καμία αλλαγή.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ο κύριος κωδικός σας δεν άλλαξε.</string>
+    <string name="vault_migration_retry">Δοκιμάστε ξανά</string>
+    <string name="vault_migration_continue_legacy">Συνέχεια προς το παρόν</string>
+    <string name="legacy_key_lost_title">Το κλειδί κρυπτογράφησης δεν είναι διαθέσιμο</string>
+    <string name="legacy_key_lost_body">Το κλειδί υλικού που κρυπτογράφησε αυτό το θησαυροφυλάκιο δεν είναι πλέον διαθέσιμο σε αυτήν τη συσκευή, επομένως οι υπάρχουσες εγγραφές δεν μπορούν να ανοιχτούν. Αν έχετε αρχείο αντιγράφου ασφαλείας, μπορείτε να διαγράψετε αυτό το θησαυροφυλάκιο και να κάνετε επαναφορά από το αντίγραφο.</string>
+    <string name="home_upgrade_pending_banner">Εκκρεμεί αναβάθμιση ασφαλείας — θα εκτελεστεί στην επόμενη σύνδεσή σας</string>
+    <string name="home_upgrade_pending_retry">Δοκιμή τώρα</string>
 </resources>

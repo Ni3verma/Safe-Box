@@ -7,9 +7,7 @@ import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
-import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.entity.VaultMetaEntity
-import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -18,7 +16,6 @@ import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import timber.log.Timber
 import java.util.Date
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -31,29 +28,6 @@ class UserDetailsRepositoryImpl @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val analyticsHelper: AnalyticsHelper,
 ) : UserDetailsRepository {
-    // TODO(MR5): signup creates a crypto_version = 2 vault through VaultRepository.createVault; until then every new vault is legacy
-    override suspend fun insertUserDetailsData(password: String, hint: String) {
-        val uid = UUID.randomUUID().toString()
-        setCrashlyticsUid(uid)
-
-        val entity = UserDetailsEntity(
-            key = 0,
-            uid = uid,
-            hint = hint,
-            creationDate = Date(),
-            updateDate = Date(),
-        )
-        database.withTransaction {
-            // crypto_version first: UserDetailsDaoSecure reads it to pick the hint's stored form.
-            vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
-            vaultMetaDao.upsert(
-                VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, hashingUtils.hash(password)),
-            )
-            userDetailsDaoSecure.insertUserDetailsData(entity)
-        }
-    }
-
-    // TODO(MR5): only the legacy login path calls this; a crypto_version = 2 vault unlocks through EnvelopeEncryptionManager (design §6.3)
     // TODO(D3): legacy vault (crypto_version = 1) only — the legacy credential check
     override suspend fun checkPassword(password: String): Boolean {
         val legacyPasswordHash = vaultMetaDao.get(VaultMetaKey.LEGACY_PASSWORD_HASH)

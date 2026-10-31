@@ -112,13 +112,15 @@
     * **Analytics Unit Verification Rule:** Always write unit tests in the corresponding ViewModel
       test suites asserting that each UI event action correctly invokes
       `analyticsHelper.logEvent(AnalyticsKey.X)`.
-    * **Param Registration Rule:** GA discards a new `AnalyticsParam` from every report until it is
-      registered as a custom definition, with no backfill. A change that adds a param must name it
-      in the commit message (the PR description is bot-generated, see *Pull Requests*) and add it
-      to the register in
+    * **Param Registration Rule & End-of-MR GA Summary:** GA discards a new `AnalyticsParam` from
+      every report until it is registered as a custom definition, with no backfill. A change that
+      adds a param must name it in the commit message (the PR description is bot-generated, see
+      *Pull Requests*) and add it to the register in
       [docs/analytics/firebase-setup.md](../docs/analytics/firebase-setup.md#custom-definitions),
       so the owner registers it before the build reaches a testing track. (2026-10-20: the `reason`
-      of every earlier `backup_failure_dialog_show` was lost this way.)
+      of every earlier `backup_failure_dialog_show` was lost this way.) **At the end of every MR**,
+      always explicitly list any new or updated GA custom definitions (dimensions/metrics) and
+      analytics changes in the final response to the user (or explicitly state that there are none).
 
 ## Code Formatting & Style Rules
 

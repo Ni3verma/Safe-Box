@@ -21,6 +21,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
+import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.test.fakes.FakeHapticFeedback
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.core.SessionLockReason
@@ -469,5 +472,125 @@ class LoginScreenTest {
             .assertIsDisplayed()
         composeTestRule.onNodeWithText(context.getString(R.string.open_settings))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun legacyVaultState_shouldShowSecurityUpgradeNotice() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(isLegacyVault = true),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.login_security_upgrade_notice))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun migrationRunningState_shouldShowProgressCardWithDeterminateCount() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            context.getString(R.string.vault_migration_progress_counter, 3, 10),
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun migrationFailureForgotPasswordState_shouldShowForgotPasswordNoteAndHideContinueLegacyButton() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationFailure = MigrationFailureUiState(
+                            reason = MigrationFailureReason.DB_IO,
+                            trigger = MigrationTrigger.FORGOT_PASSWORD,
+                        ),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(
+            context.getString(R.string.vault_migration_failure_storage),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            context.getString(R.string.vault_migration_failure_forgot_password_note),
+        ).assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_retry))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_continue_legacy))
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun migrationFailureKeystoreState_shouldShowBothActionsAndEmitRetryAndContinueEvents() {
+        val actions = mutableListOf<LoginScreenAction>()
+
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationFailure = MigrationFailureUiState(
+                            reason = MigrationFailureReason.KEYSTORE_TRANSIENT,
+                            trigger = MigrationTrigger.LOGIN,
+                        ),
+                    ),
+                    screenAction = { actions += it },
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        assertThat(
+            actions.filterIsInstance<LoginScreenAction.OnMigrationFailureShown>().map { it.reason },
+        ).contains(MigrationFailureReason.KEYSTORE_TRANSIENT)
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_failure_keystore))
+            .assertIsDisplayed()
+
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_retry))
+            .performClick()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_continue_legacy))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertThat(actions).contains(LoginScreenAction.OnMigrationRetryClicked)
+        assertThat(actions).contains(LoginScreenAction.OnMigrationContinueLegacyClicked)
+    }
+
+    @Test
+    fun legacyKeyLostState_shouldShowLegacyKeyLostCardInsteadOfLoginForm() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(userAuthState = UserAuthState.LEGACY_KEY_LOST),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.legacy_key_lost_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.legacy_key_lost_body))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.login))
+            .assertDoesNotExist()
     }
 }

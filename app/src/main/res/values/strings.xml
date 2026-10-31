@@ -211,4 +211,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Update downloaded. Restart Safe Box to install it.</string>
     <string name="in_app_update_restart">Restart</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Security upgrade — enter your master password once</string>
+    <string name="vault_migration_progress_title">Upgrading vault security…</string>
+    <string name="vault_migration_progress_counter">%1$d of %2$d records</string>
+    <string name="vault_migration_failure_keystore">The secure hardware did not respond. Nothing was changed.</string>
+    <string name="vault_migration_failure_verify">Upgrade check failed. Nothing was changed.</string>
+    <string name="vault_migration_failure_storage">Could not save the upgrade. Nothing was changed.</string>
+    <string name="vault_migration_failure_unexpected">Upgrade failed. Nothing was changed.</string>
+    <string name="vault_migration_failure_forgot_password_note">Your master password was not changed.</string>
+    <string name="vault_migration_retry">Try again</string>
+    <string name="vault_migration_continue_legacy">Continue for now</string>
+    <string name="legacy_key_lost_title">Encryption key unavailable</string>
+    <string name="legacy_key_lost_body">The hardware key that encrypted this vault is no longer available on this device, so existing records cannot be opened. If you have a backup file, you can erase this vault and restore from that backup.</string>
+    <string name="home_upgrade_pending_banner">Security upgrade pending — it runs at your next sign-in</string>
+    <string name="home_upgrade_pending_retry">Retry now</string>
 </resources>

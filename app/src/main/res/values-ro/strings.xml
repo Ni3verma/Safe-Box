@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Actualizarea a fost descărcată. Repornește Safe Box pentru a o instala.</string>
     <string name="in_app_update_restart">Repornește</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Actualizare de securitate — introdu parola principală o singură dată</string>
+    <string name="vault_migration_progress_title">Se actualizează securitatea seifului…</string>
+    <string name="vault_migration_progress_counter">%1$d din %2$d înregistrări</string>
+    <string name="vault_migration_failure_keystore">Hardware-ul securizat nu a răspuns. Nu s-a modificat nimic.</string>
+    <string name="vault_migration_failure_verify">Verificarea actualizării a eșuat. Nu s-a modificat nimic.</string>
+    <string name="vault_migration_failure_storage">Actualizarea nu a putut fi salvată. Nu s-a modificat nimic.</string>
+    <string name="vault_migration_failure_unexpected">Actualizarea a eșuat. Nu s-a modificat nimic.</string>
+    <string name="vault_migration_failure_forgot_password_note">Parola ta principală nu a fost schimbată.</string>
+    <string name="vault_migration_retry">Încearcă din nou</string>
+    <string name="vault_migration_continue_legacy">Continuă deocamdată</string>
+    <string name="legacy_key_lost_title">Cheie de criptare indisponibilă</string>
+    <string name="legacy_key_lost_body">Cheia hardware care a criptat acest seif nu mai este disponibilă pe acest dispozitiv, astfel încât înregistrările existente nu pot fi deschise. Dacă ai un fișier de rezervă, poți șterge acest seif și restaura din acea copie.</string>
+    <string name="home_upgrade_pending_banner">Actualizare de securitate în așteptare — va rula la următoarea autentificare</string>
+    <string name="home_upgrade_pending_retry">Reîncearcă acum</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -9,20 +10,16 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,7 +28,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,9 +42,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -56,6 +49,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.andryoga.safebox.R
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
+import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.ui.core.AnimatedCurveBackground
 import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
@@ -64,12 +60,15 @@ import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
 import com.andryoga.safebox.ui.core.motion.rejectShake
 import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
 import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
+import com.andryoga.safebox.ui.login.components.LegacyKeyLostCardContent
+import com.andryoga.safebox.ui.login.components.LoginNoticeBanner
+import com.andryoga.safebox.ui.login.components.MigrationFailureCardContent
+import com.andryoga.safebox.ui.login.components.MigrationProgressCardContent
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 import timber.log.Timber
 
 @Composable
-
 fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
     val viewModel = hiltViewModel<LoginViewModel>()
     val uiState by viewModel.uiState.collectAsState()
@@ -82,7 +81,7 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
 
     LoginScreen(
         uiState = uiState,
-        screenAction = viewModel::onAction
+        screenAction = viewModel::onAction,
     )
 }
 
@@ -90,17 +89,24 @@ fun LoginScreenRoot(onLoginSuccess: () -> Unit) {
 @Composable
 internal fun LoginScreen(
     uiState: LoginUiState,
-    screenAction: (LoginScreenAction) -> Unit
+    screenAction: (LoginScreenAction) -> Unit,
 ) {
     val context = LocalContext.current
     val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
     var showResetPasswordAuth by remember { mutableStateOf(false) }
     var showUpdatePasswordDialog by remember { mutableStateOf(false) }
     var showDeviceSecurityRequiredDialog by remember { mutableStateOf(false) }
+    val migrationRunning = uiState.migrationProgress as? MigrationProgressState.Running
+
+    if (migrationRunning != null) {
+        BackHandler(enabled = true) {
+            // Non-dismissable while the vault migration is in flight.
+        }
+    }
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxSize(),
     ) {
         AnimatedCurveBackground()
 
@@ -111,39 +117,58 @@ internal fun LoginScreen(
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 90.dp)
+                .padding(top = 90.dp),
         )
 
         Card(
             shape = RoundedCornerShape(20.dp),
             elevation = CardDefaults.cardElevation(8.dp),
             colors = CardDefaults.cardColors(
-                containerColor = colorScheme.surfaceContainerLow
+                containerColor = colorScheme.surfaceContainerLow,
             ),
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(24.dp)
+                .padding(24.dp),
         ) {
-            LoginCardContent(
-                uiState = uiState,
-                screenAction = screenAction,
-                onForgotPasswordClick = {
-                    Timber.i("forgot password clicked on login screen, checking device security auth availability")
-                    screenAction(LoginScreenAction.ForgotPasswordClicked)
-                    if (
-                        canAuthenticateUsingDeviceSecurity(
-                            context,
-                            biometricAuthProvider,
-                            allowDeviceCredential = true,
-                        )
-                    ) {
-                        showResetPasswordAuth = true
-                    } else {
-                        showDeviceSecurityRequiredDialog = true
-                    }
+            when {
+                migrationRunning != null -> {
+                    MigrationProgressCardContent(progress = migrationRunning)
                 }
-            )
 
+                uiState.migrationFailure != null -> {
+                    MigrationFailureCardContent(
+                        failure = uiState.migrationFailure,
+                        screenAction = screenAction,
+                    )
+                }
+
+                uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST -> {
+                    // TODO(MR6): pass onEraseVaultClick to LegacyKeyLostCardContent (VaultResetUseCase)
+                    LegacyKeyLostCardContent()
+                }
+
+                else -> {
+                    LoginCardContent(
+                        uiState = uiState,
+                        screenAction = screenAction,
+                        onForgotPasswordClick = {
+                            Timber.i("forgot password clicked on login screen, checking device security auth availability")
+                            screenAction(LoginScreenAction.ForgotPasswordClicked)
+                            if (
+                                canAuthenticateUsingDeviceSecurity(
+                                    context,
+                                    biometricAuthProvider,
+                                    allowDeviceCredential = true,
+                                )
+                            ) {
+                                showResetPasswordAuth = true
+                            } else {
+                                showDeviceSecurityRequiredDialog = true
+                            }
+                        },
+                    )
+                }
+            }
         }
     }
 
@@ -153,10 +178,10 @@ internal fun LoginScreen(
         }
     }
 
-    if (uiState.canUnlockWithBiometric) {
+    if (uiState.canUnlockWithBiometric && migrationRunning == null && uiState.migrationFailure == null) {
         DeviceSecurityAuthHandler(
             onSuccess = { screenAction(LoginScreenAction.BiometricSuccess) },
-            onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) }
+            onErrorOrCancel = { screenAction(LoginScreenAction.BiometricError) },
         )
     }
 
@@ -172,7 +197,7 @@ internal fun LoginScreen(
             onErrorOrCancel = {
                 Timber.w("device security auth error or cancel for forgot password on login screen")
                 showResetPasswordAuth = false
-            }
+            },
         )
     }
 
@@ -188,7 +213,7 @@ internal fun LoginScreen(
             onSave = { newPassword, hint ->
                 showUpdatePasswordDialog = false
                 screenAction(LoginScreenAction.OnResetPassword(newPassword, hint))
-            }
+            },
         )
     }
 
@@ -213,11 +238,10 @@ internal fun LoginScreen(
 }
 
 @Composable
-
 private fun LoginCardContent(
     uiState: LoginUiState,
     screenAction: (LoginScreenAction) -> Unit,
-    onForgotPasswordClick: () -> Unit = {}
+    onForgotPasswordClick: () -> Unit = {},
 ) {
     var password by remember(uiState.defaultPassword) {
         mutableStateOf(uiState.defaultPassword)
@@ -225,16 +249,13 @@ private fun LoginCardContent(
     var passwordVisible by remember { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(false) }
     val isPasswordFieldError = uiState.userAuthState == UserAuthState.INCORRECT_PASSWORD_ENTERED
-    // TODO(MR5): the designed legacy-key-lost state replaces this generic line
-    // TODO(D3): legacy vault (crypto_version = 1) only
-    val isLegacyKeyLost = uiState.userAuthState == UserAuthState.LEGACY_KEY_LOST
 
     Column(
         modifier = Modifier
             .padding(20.dp)
             .fillMaxWidth()
             .imePadding(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val lockNotice = when (uiState.lockReason) {
             SessionLockReason.AWAY_TIMEOUT -> stringResource(R.string.login_away_banner)
@@ -243,6 +264,12 @@ private fun LoginCardContent(
         if (lockNotice != null) {
             LoginNoticeBanner(
                 text = lockNotice,
+                modifier = Modifier.padding(bottom = 12.dp),
+            )
+        }
+        if (uiState.isLegacyVault) {
+            LoginNoticeBanner(
+                text = stringResource(R.string.login_security_upgrade_notice),
                 modifier = Modifier.padding(bottom = 16.dp),
             )
         }
@@ -253,10 +280,10 @@ private fun LoginCardContent(
                 .size(80.dp)
                 .background(
                     color = colorScheme.primary.copy(0.8f),
-                    shape = RoundedCornerShape(percent = 50)
+                    shape = RoundedCornerShape(percent = 50),
                 )
                 .padding(16.dp),
-            tint = Color.White
+            tint = Color.White,
         )
         OutlinedTextField(
             value = password,
@@ -264,12 +291,10 @@ private fun LoginCardContent(
             label = { Text(stringResource(R.string.password)) },
             placeholder = { Text(stringResource(R.string.password)) },
             singleLine = true,
-            isError = isPasswordFieldError || isLegacyKeyLost,
+            isError = isPasswordFieldError,
             supportingText = {
                 if (isPasswordFieldError) {
                     Text(text = stringResource(R.string.incorrect_pswrd_message))
-                } else if (isLegacyKeyLost) {
-                    Text(text = stringResource(R.string.failed_message))
                 }
             },
             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -279,14 +304,14 @@ private fun LoginCardContent(
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
                         image,
-                        contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility)
+                        contentDescription = stringResource(R.string.cd_toggle_sensitive_data_visibility),
                     )
                 }
             },
             modifier = Modifier
                 .padding(top = 16.dp)
                 .fillMaxWidth()
-                .rejectShake(uiState.failedLoginAttempts)
+                .rejectShake(uiState.failedLoginAttempts),
         )
 
         TextButton(onClick = {
@@ -308,7 +333,7 @@ private fun LoginCardContent(
             Text(
                 text = uiState.hint,
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
 
@@ -316,48 +341,16 @@ private fun LoginCardContent(
             onClick = { screenAction(LoginScreenAction.LoginClicked(password = password)) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(10.dp),
-            enabled = password.isBlank().not()
+            enabled = password.isBlank().not(),
         ) {
             Text(stringResource(R.string.login))
         }
 
         TextButton(
             onClick = onForgotPasswordClick,
-            modifier = Modifier.padding(top = 4.dp)
+            modifier = Modifier.padding(top = 4.dp),
         ) {
             Text(stringResource(R.string.forgot_password))
-        }
-    }
-}
-
-/** One-line notice above the login form, announced to TalkBack when it appears. */
-@Composable
-private fun LoginNoticeBanner(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        color = colorScheme.tertiaryContainer,
-        contentColor = colorScheme.onTertiaryContainer,
-        shape = RoundedCornerShape(12.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .semantics { liveRegion = LiveRegionMode.Polite },
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyMedium,
-            )
         }
     }
 }
@@ -368,7 +361,7 @@ private fun LoginPreview() {
     SafeBoxTheme {
         LoginScreen(
             uiState = LoginUiState(),
-            screenAction = {}
+            screenAction = {},
         )
     }
 }
@@ -391,9 +384,79 @@ private fun LoginPreviewWrongPassword() {
         LoginScreen(
             uiState = LoginUiState(
                 hint = "This is hint",
-                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED
+                userAuthState = UserAuthState.INCORRECT_PASSWORD_ENTERED,
             ),
-            screenAction = {}
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewLegacyVault() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(isLegacyVault = true),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationProgress() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationProgress = MigrationProgressState.Running(done = 18, total = 42),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationFailureLogin() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationFailure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.DB_IO,
+                    trigger = MigrationTrigger.LOGIN,
+                ),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewMigrationFailureForgotPassword() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(
+                isLegacyVault = true,
+                migrationFailure = MigrationFailureUiState(
+                    reason = MigrationFailureReason.DB_IO,
+                    trigger = MigrationTrigger.FORGOT_PASSWORD,
+                ),
+            ),
+            screenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun LoginPreviewLegacyKeyLost() {
+    SafeBoxTheme {
+        LoginScreen(
+            uiState = LoginUiState(userAuthState = UserAuthState.LEGACY_KEY_LOST),
+            screenAction = {},
         )
     }
 }

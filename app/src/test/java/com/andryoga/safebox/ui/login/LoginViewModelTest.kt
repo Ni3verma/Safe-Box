@@ -15,11 +15,25 @@ import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
+import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.security.CryptoTestFixtures
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.EnvelopeEncryptionManagerImpl
+import com.andryoga.safebox.security.envelope.KdfParams
+import com.andryoga.safebox.security.envelope.PasswordKdf
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
+import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
+import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import com.andryoga.safebox.security.envelope.migration.MigrationOutcome
+import com.andryoga.safebox.security.envelope.migration.MigrationStage
+import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
+import com.andryoga.safebox.security.envelope.migration.VaultMigrationProgress
 import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
+import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.core.SessionLockReason
@@ -35,6 +49,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.spyk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -47,13 +62,22 @@ class LoginViewModelTest {
     @MockK(relaxUnitFun = true)
     lateinit var userDetailsRepository: UserDetailsRepository
 
+    @MockK(relaxUnitFun = true)
+    lateinit var vaultRepository: VaultRepository
+
+    @MockK
+    lateinit var legacyVaultMigrator: LegacyVaultMigrator
+
+    @MockK(relaxUnitFun = true)
+    lateinit var vaultKeyMaintenance: VaultKeyMaintenance
+
     @RelaxedMockK
     lateinit var workManager: WorkManager
 
     @MockK
     lateinit var lazyWorkManager: Lazy<WorkManager>
 
-    @MockK
+    @MockK(relaxUnitFun = true)
     lateinit var settingsDataStore: SettingsDataStore
 
     @MockK(relaxUnitFun = true)
@@ -70,9 +94,14 @@ class LoginViewModelTest {
 
     private lateinit var sessionKeyHolder: SessionKeyHolderImpl
     private lateinit var keystoreGateway: FakeKeystoreGateway
+    private lateinit var envelopeEncryptionManager: EnvelopeEncryptionManager
+    private lateinit var vaultMigrationProgress: VaultMigrationProgress
     private lateinit var viewModel: LoginViewModel
     private val backupPasswordRegistry = BackupPasswordRegistry()
     private val sessionLockReasonStore = SessionLockReasonStore()
+
+    private val testDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
+    private lateinit var defaultEnvelopeState: VaultState.Envelope
 
     @Before
     fun setUp() {
@@ -81,13 +110,60 @@ class LoginViewModelTest {
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns false
         coEvery { userDetailsRepository.onAuthSuccess(any()) } returns FIRST_LOGIN_ORDINAL
         every { deviceSecurityStatus.snapshot() } returns SECURE_WITH_STRONG_BIOMETRIC
+
         sessionKeyHolder = SessionKeyHolderImpl()
         keystoreGateway = FakeKeystoreGateway().apply { legacyKey = CryptoTestFixtures.TEST_AES_KEY_256 }
+        envelopeEncryptionManager = spyk(EnvelopeEncryptionManagerImpl(keystoreGateway))
+        vaultMigrationProgress = VaultMigrationProgress()
+
+        val fastKdfParams = KdfParams(
+            algorithm = KdfParams.ALGORITHM_PBKDF2_SHA256,
+            iterations = 2_000,
+            salt = ByteArray(16) { 0x11 },
+        )
+        val wrappedPassword = envelopeEncryptionManager.wrapWithPassword(
+            password = DEFAULT_PASSWORD.toCharArray(),
+            dek = testDek,
+            params = fastKdfParams,
+        )
+        val verifier = envelopeEncryptionManager.makeVerifier(testDek)
+        defaultEnvelopeState = VaultState.Envelope(
+            kdfParams = KdfParams(
+                algorithm = KdfParams.ALGORITHM_PBKDF2_SHA256,
+                iterations = PasswordKdf.PBKDF2_ITERATIONS,
+                salt = ByteArray(16) { 0x11 },
+            ),
+            wrappedDekPassword = wrappedPassword,
+            dekVerifier = verifier,
+            wrappedDekDevice = null,
+            wrappedDekBiometric = null,
+            isBiometricUnlockDisabled = false,
+            biometricKeyAliasSuffix = null,
+            deviceKeyAliasSuffix = null,
+        )
+        // Stub unwrapWithPassword for the default password so unit tests don't pay 600k PBKDF2 cost.
+        every {
+            envelopeEncryptionManager.unwrapWithPassword(
+                match { it.contentEquals(DEFAULT_PASSWORD.toCharArray()) },
+                any(),
+                eq(wrappedPassword),
+            )
+        } answers {
+            firstArg<CharArray>().fill('\u0000')
+            Result.success(testDek.copyOf())
+        }
+
+        coEvery { vaultRepository.getVaultState() } returns defaultEnvelopeState
         viewModel = createViewModel(isDebug = true)
     }
 
     private fun createViewModel(isDebug: Boolean) = LoginViewModel(
         userDetailsRepository = userDetailsRepository,
+        vaultRepository = vaultRepository,
+        envelopeEncryptionManager = envelopeEncryptionManager,
+        legacyVaultMigrator = Lazy { legacyVaultMigrator },
+        vaultMigrationProgress = vaultMigrationProgress,
+        vaultKeyMaintenance = vaultKeyMaintenance,
         workManager = lazyWorkManager,
         backupPasswordRegistry = backupPasswordRegistry,
         settingsDataStore = settingsDataStore,
@@ -96,6 +172,7 @@ class LoginViewModelTest {
         deviceSecurityStatus = deviceSecurityStatus,
         sessionKeyHolder = sessionKeyHolder,
         keystoreGateway = keystoreGateway,
+        dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
         sessionLockReasonStore = sessionLockReasonStore,
         isDebug = isDebug,
     )
@@ -117,7 +194,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `initialUiState_whenIsDebugTrue_prefillsDebugPassword`() {
+    fun initialUiState_whenIsDebugTrue_prefillsDebugPassword() {
         val uiState = viewModel.uiState.value
 
         assertThat(uiState.userAuthState).isEqualTo(UserAuthState.INITIAL)
@@ -127,7 +204,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty`() {
+    fun initialUiState_whenIsDebugFalse_defaultPasswordShouldBeEmpty() {
         val prodViewModel = createViewModel(isDebug = false)
 
         val uiState = prodViewModel.uiState.value
@@ -136,7 +213,17 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onBiometricAvailable updates state when biometric auth should start`() = runTest {
+    fun initialUiState_whenVaultIsLegacy_setsIsLegacyVaultTrue() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+
+        val legacyVm = createViewModel(isDebug = false)
+        advanceUntilIdle()
+
+        assertThat(legacyVm.uiState.value.isLegacyVault).isTrue()
+    }
+
+    @Test
+    fun onBiometricAvailable_whenEnvelopeVaultAndBiometricAllowed_updatesState() = runTest {
         coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
 
         viewModel.uiState.test {
@@ -151,25 +238,39 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onBiometricAvailable does not update state when biometric auth should not start`() =
-        runTest {
-            coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns false
+    fun onBiometricAvailable_whenLegacyVault_suppressesBiometricPrompt() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        val legacyVm = createViewModel(isDebug = false)
+        advanceUntilIdle()
 
-            viewModel.uiState.test {
-                val initial = awaitItem()
-                assertThat(initial.canUnlockWithBiometric).isFalse()
+        legacyVm.onAction(LoginScreenAction.BiometricAvailable)
+        advanceUntilIdle()
 
-                viewModel.onAction(LoginScreenAction.BiometricAvailable)
-                advanceUntilIdle()
-
-                coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
-                expectNoEvents()
-                assertThat(initial.canUnlockWithBiometric).isFalse()
-            }
-        }
+        assertThat(legacyVm.uiState.value.isLegacyVault).isTrue()
+        assertThat(legacyVm.uiState.value.canUnlockWithBiometric).isFalse()
+        coVerify(exactly = 0) { userDetailsRepository.shouldStartBiometricAuthFlow() }
+    }
 
     @Test
-    fun `onBiometricSuccess updates auth state and calls repository`() = runTest {
+    fun onBiometricAvailable_doesNotUpdateStateWhenBiometricAuthShouldNotStart() = runTest {
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns false
+
+        viewModel.uiState.test {
+            val initial = awaitItem()
+            assertThat(initial.canUnlockWithBiometric).isFalse()
+
+            viewModel.onAction(LoginScreenAction.BiometricAvailable)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
+            expectNoEvents()
+            assertThat(initial.canUnlockWithBiometric).isFalse()
+        }
+    }
+
+    @Test
+    fun onBiometricSuccess_updatesAuthStateAndCallsRepository() = runTest {
         viewModel.uiState.test {
             awaitItem()
             viewModel.onAction(LoginScreenAction.BiometricSuccess)
@@ -182,38 +283,32 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with correct password verifies user auth state`() =
+    fun onLoginClicked_onEnvelopeVaultWithCorrectPassword_unwrapsDekOpensSessionAndSchedulesMaintenance() =
         runTest {
-            val password = "password"
-
-            coEvery { userDetailsRepository.checkPassword(password) } returns true
-
             viewModel.uiState.test {
                 awaitItem()
-                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
                 advanceUntilIdle()
 
-                coVerify { userDetailsRepository.checkPassword(password) }
-                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+                assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+                assertThat(sessionKeyHolder.isLegacySession).isFalse()
+                verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
+                coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(withBiometric = false) }
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
         }
 
     @Test
-    fun `onLoginClicked with correct password and auto backup enabled starts backup work`() =
+    fun onLoginClicked_onEnvelopeVaultWithCorrectPasswordAndAutoBackupEnabled_startsBackupWork() =
         runTest {
-            val password = "password"
-
-            coEvery { userDetailsRepository.checkPassword(password) } returns true
             coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
 
             viewModel.uiState.test {
                 awaitItem()
-                viewModel.onAction(LoginScreenAction.LoginClicked(password))
+                viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
                 advanceUntilIdle()
 
-                coVerify { userDetailsRepository.checkPassword(password) }
                 val requestSlot = slot<OneTimeWorkRequest>()
                 verify(exactly = 1) {
                     workManager.enqueueUniqueWork(
@@ -222,99 +317,184 @@ class LoginViewModelTest {
                         capture(requestSlot),
                     )
                 }
-                // The password reaches the worker through the registry, never through input data.
                 val request = requestSlot.captured
-                assertThat(backupPasswordRegistry.take(request.id)).isEqualTo(password.toCharArray())
-                assertThat(request.workSpec.input.keyValueMap.values).doesNotContain(password)
-                assertThat(request.workSpec.input.getBoolean(CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION, true))
-                    .isFalse()
+                assertThat(backupPasswordRegistry.take(request.id))
+                    .isEqualTo(DEFAULT_PASSWORD.toCharArray())
+                assertThat(request.workSpec.input.keyValueMap.values)
+                    .doesNotContain(DEFAULT_PASSWORD)
+                assertThat(
+                    request.workSpec.input.getBoolean(
+                        CommonConstants.BACKUP_PARAM_IS_SHOW_START_NOTIFICATION,
+                        true,
+                    ),
+                ).isFalse()
                 val updated = expectMostRecentItem()
                 assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
             }
         }
 
     @Test
-    fun `onLoginClicked with correct password and auto backup disabled does not trigger backup`() =
-        runTest {
-            val password = "password"
-            coEvery { userDetailsRepository.checkPassword(password) } returns true
+    fun onLoginClicked_onEnvelopeVaultWithAutoBackupDisabled_doesNotTriggerBackup() = runTest {
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+            advanceUntilIdle()
 
-            viewModel.uiState.test {
-                awaitItem()
-                viewModel.onAction(LoginScreenAction.LoginClicked(password))
-                advanceUntilIdle()
-
-                coVerify(exactly = 1) { userDetailsRepository.checkPassword(password) }
-                verify(exactly = 0) {
-                    workManager.enqueueUniqueWork(
-                        eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
-                        any(),
-                        any<OneTimeWorkRequest>()
-                    )
-                }
-                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-                val updated = expectMostRecentItem()
-                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            verify(exactly = 0) {
+                workManager.enqueueUniqueWork(
+                    eq(CommonConstants.WORKER_NAME_BACKUP_DATA),
+                    any(),
+                    any<OneTimeWorkRequest>(),
+                )
             }
+            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+            val updated = expectMostRecentItem()
+            assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
         }
+    }
 
     @Test
-    fun `onLoginClicked with incorrect password updates state and logs event`() = runTest {
-        val password = "wrong_password"
-        coEvery { userDetailsRepository.checkPassword(password) } returns false
+    fun onLoginClicked_onEnvelopeVaultWithIncorrectPassword_updatesStateAndLogsEvent() = runTest {
+        val wrongPassword = "wrong_password"
+        every {
+            envelopeEncryptionManager.unwrapWithPassword(any(), any(), any())
+        } returns Result.failure(IllegalArgumentException("bad password"))
 
         viewModel.uiState.test {
             awaitItem()
-            viewModel.onAction(LoginScreenAction.LoginClicked(password))
+            viewModel.onAction(LoginScreenAction.LoginClicked(wrongPassword))
             advanceUntilIdle()
 
-            coVerify { userDetailsRepository.checkPassword(password) }
             verify { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
             val updated = expectMostRecentItem()
             assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
             assertThat(updated.failedLoginAttempts).isEqualTo(1)
+            assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
             coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
         }
     }
 
     @Test
-    fun `onLoginClicked with consecutive incorrect passwords increments failedLoginAttempts`() =
-        runTest {
-            val password = "wrong_password"
-            coEvery { userDetailsRepository.checkPassword(password) } returns false
+    fun onLoginClicked_withConsecutiveIncorrectPasswords_incrementsFailedLoginAttempts() = runTest {
+        every {
+            envelopeEncryptionManager.unwrapWithPassword(any(), any(), any())
+        } returns Result.failure(IllegalArgumentException("bad password"))
 
-            viewModel.uiState.test {
-                awaitItem()
-                viewModel.onAction(LoginScreenAction.LoginClicked(password))
-                advanceUntilIdle()
-                assertThat(expectMostRecentItem().failedLoginAttempts).isEqualTo(1)
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
+            advanceUntilIdle()
+            assertThat(expectMostRecentItem().failedLoginAttempts).isEqualTo(1)
 
-                viewModel.onAction(LoginScreenAction.LoginClicked(password))
-                advanceUntilIdle()
+            viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
+            advanceUntilIdle()
 
-                val updated = expectMostRecentItem()
-                assertThat(updated.failedLoginAttempts).isEqualTo(2)
-                assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
-                verify(exactly = 2) { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
-            }
-        }
-
-    @Test
-    fun `onLoginClicked with incorrect password does not trigger backup work`() = runTest {
-        val password = "wrong_password"
-        coEvery { userDetailsRepository.checkPassword(password) } returns false
-
-        viewModel.onAction(LoginScreenAction.LoginClicked(password))
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
-        verify(exactly = 0) {
-            workManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>())
+            val updated = expectMostRecentItem()
+            assertThat(updated.failedLoginAttempts).isEqualTo(2)
+            assertThat(updated.userAuthState).isEqualTo(UserAuthState.INCORRECT_PASSWORD_ENTERED)
+            verify(exactly = 2) { analyticsHelper.logEvent(AnalyticsKey.LOGIN_FAILED) }
         }
     }
 
     @Test
-    fun `onShowHintClicked fetches and displays hint`() = runTest {
+    fun onLoginClicked_onLegacyVaultWithCorrectPassword_runsMigrationAndVerifiesOnSuccess() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        coEvery { userDetailsRepository.checkPassword(DEFAULT_PASSWORD) } returns true
+        coEvery {
+            legacyVaultMigrator.migrate(any(), isNull(), MigrationTrigger.LOGIN)
+        } returns MigrationOutcome.Success(dek = testDek.copyOf())
+
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userDetailsRepository.checkPassword(DEFAULT_PASSWORD) }
+        coVerify(exactly = 1) {
+            legacyVaultMigrator.migrate(
+                match { it.contentEquals(DEFAULT_PASSWORD.toCharArray()) },
+                null,
+                MigrationTrigger.LOGIN,
+            )
+        }
+        verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
+        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+    }
+
+    @Test
+    fun onMigrationRetryAndContinueLegacy_whenMigrationFailsWithKeystoreTransient_logsEventsAndOpensLegacySession() =
+        runTest {
+            coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+            coEvery { userDetailsRepository.checkPassword(DEFAULT_PASSWORD) } returns true
+            coEvery {
+                legacyVaultMigrator.migrate(any(), any(), any())
+            } returns MigrationOutcome.Failure(
+                stage = MigrationStage.DECRYPT_ROW,
+                reason = MigrationFailureReason.KEYSTORE_TRANSIENT,
+                attempt = 2,
+                trigger = MigrationTrigger.LOGIN,
+            )
+
+            viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+            advanceUntilIdle()
+
+            val failure = viewModel.uiState.value.migrationFailure
+            assertThat(failure).isNotNull()
+            assertThat(failure!!.canContinueLegacy).isTrue()
+
+            viewModel.onAction(LoginScreenAction.OnMigrationFailureShown(MigrationFailureReason.KEYSTORE_TRANSIENT))
+            assertThat(capturedParams(AnalyticsKey.VAULT_MIGRATION_FAILURE_SHOW)[AnalyticsParam.REASON.paramName])
+                .isEqualTo("keystore_transient")
+
+            viewModel.onAction(LoginScreenAction.OnMigrationRetryClicked)
+            advanceUntilIdle()
+            assertThat(capturedParams(AnalyticsKey.VAULT_MIGRATION_RETRY_CLICK)[AnalyticsParam.REASON.paramName])
+                .isEqualTo("keystore_transient")
+            coVerify(exactly = 2) { legacyVaultMigrator.migrate(any(), null, MigrationTrigger.LOGIN) }
+
+            viewModel.onAction(LoginScreenAction.OnMigrationContinueLegacyClicked)
+            advanceUntilIdle()
+            assertThat(
+                capturedParams(AnalyticsKey.VAULT_MIGRATION_CONTINUE_LEGACY_CLICK)[AnalyticsParam.REASON.paramName],
+            ).isEqualTo("keystore_transient")
+            assertThat(
+                capturedParams(AnalyticsKey.VAULT_LEGACY_SESSION_START)[AnalyticsParam.ATTEMPT.paramName],
+            ).isEqualTo(2)
+            assertThat(sessionKeyHolder.isLegacySession).isTrue()
+            val loginParams = capturedLoginSuccessParams()
+            assertThat(loginParams[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("legacy_session")
+            assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+        }
+
+    @Test
+    fun onResetPassword_onLegacyVault_runsForgotPasswordMigrationDirectlyWithoutUpdatingLegacyHash() =
+        runTest {
+            coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+            coEvery {
+                legacyVaultMigrator.migrate(any(), eq("new hint"), MigrationTrigger.FORGOT_PASSWORD)
+            } returns MigrationOutcome.Success(dek = testDek.copyOf())
+
+            viewModel.onAction(
+                LoginScreenAction.OnResetPassword(
+                    newPassword = "NewPassword@@123",
+                    hint = "new hint",
+                ),
+            )
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { userDetailsRepository.updatePasswordAndHint(any(), any()) }
+            coVerify(exactly = 1) {
+                legacyVaultMigrator.migrate(
+                    match { it.contentEquals("NewPassword@@123".toCharArray()) },
+                    "new hint",
+                    MigrationTrigger.FORGOT_PASSWORD,
+                )
+            }
+            val loginParams = capturedLoginSuccessParams()
+            assertThat(loginParams[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password_reset")
+            assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+        }
+
+    @Test
+    fun onShowHintClicked_fetchesAndDisplaysHint() = runTest {
         val hint = "this is a hint"
         coEvery { userDetailsRepository.getHint() } returns hint
 
@@ -330,7 +510,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onShowHintClicked with null hint keeps hint empty`() = runTest {
+    fun onShowHintClicked_withNullHintKeepsHintEmpty() = runTest {
         coEvery { userDetailsRepository.getHint() } returns null
 
         viewModel.uiState.test {
@@ -346,72 +526,65 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onResetPassword updates repository and verifies user auth state`() =
-        runTest {
-            coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
+    fun onResetPassword_onEnvelopeVault_updatesRepositoryAndVerifiesUserAuthState() = runTest {
+        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
 
-            viewModel.uiState.test {
-                awaitItem()
-                viewModel.onAction(
-                    LoginScreenAction.OnResetPassword(
-                        newPassword = "NewPassword@@123",
-                        hint = "new hint"
-                    )
-                )
-                advanceUntilIdle()
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(
+                LoginScreenAction.OnResetPassword(
+                    newPassword = "NewPassword@@123",
+                    hint = "new hint",
+                ),
+            )
+            advanceUntilIdle()
 
-                coVerify {
-                    userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
-                }
-                coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-                assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
-                val updated = expectMostRecentItem()
-                assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            coVerify {
+                userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
             }
+            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
+            val updated = expectMostRecentItem()
+            assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
         }
+    }
 
     @Test
-    fun `OnDeviceSecurityRequiredDialogShown logs DEVICE_SECURITY_REQUIRED_DIALOG_SHOW event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
-            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
-        }
+    fun onDeviceSecurityRequiredDialogShown_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
+    }
 
     @Test
-    fun `OnDeviceSecurityRequiredOpenSettingsClicked pauses activeSessionManager and logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-            verify { activeSessionManager.setPaused(true) }
-            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
-        }
+    fun onDeviceSecurityRequiredOpenSettingsClicked_pausesActiveSessionManagerAndLogsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+        verify { activeSessionManager.setPaused(true) }
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+    }
 
     @Test
-    fun `OnDeviceSecurityRequiredOpenSettingsFailed logs DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
-        }
+    fun onDeviceSecurityRequiredOpenSettingsFailed_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+    }
 
     @Test
-    fun `OnDeviceSecurityRequiredDismissClicked logs DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
-            assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
-        }
+    fun onDeviceSecurityRequiredDismissClicked_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+    }
 
     @Test
-    fun `OnUpdatePasswordDialogShown logs UPDATE_PASSWORD_DIALOG_SHOW event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
-            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
-        }
+    fun onUpdatePasswordDialogShown_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
+        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
+    }
 
     @Test
-    fun `OnUpdatePasswordDismissClicked logs UPDATE_PASSWORD_DIALOG_CANCEL_CLICK event`() =
-        runTest {
-            viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
-            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
-        }
+    fun onUpdatePasswordDismissClicked_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
+        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
+    }
 
     @Test
     fun forgotPasswordClicked_shouldLogForgotPasswordClickWithoutParams() = runTest {
@@ -423,10 +596,9 @@ class LoginViewModelTest {
 
     @Test
     fun passwordLogin_shouldLogLoginSuccessWithPasswordMethodAndOrdinal() = runTest {
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
         coEvery { userDetailsRepository.onAuthSuccess(withBiometric = false) } returns 7
 
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
         advanceUntilIdle()
 
         val params = capturedLoginSuccessParams()
@@ -443,21 +615,6 @@ class LoginViewModelTest {
         assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("biometric")
         assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(FIRST_LOGIN_ORDINAL)
         coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
-    }
-
-    @Test
-    fun passwordReset_shouldLogLoginSuccessWithPasswordResetMethod() = runTest {
-        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
-
-        viewModel.onAction(
-            LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "hint")
-        )
-        advanceUntilIdle()
-
-        val params = capturedLoginSuccessParams()
-        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password_reset")
-        // a reset is not a biometric unlock, so the biometric allowance is reset, not spent
-        coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
     }
 
     @Test
@@ -481,11 +638,10 @@ class LoginViewModelTest {
     fun loginSuccess_whenDeviceSecurityReadThrows_shouldStillVerifyAndLogWithoutDeviceParams() =
         runTest {
             every { deviceSecurityStatus.snapshot() } throws IllegalStateException("keyguard gone")
-            coEvery { userDetailsRepository.checkPassword("password") } returns true
 
             viewModel.uiState.test {
                 awaitItem()
-                viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+                viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
                 advanceUntilIdle()
 
                 assertThat(expectMostRecentItem().userAuthState).isEqualTo(UserAuthState.VERIFIED)
@@ -498,31 +654,7 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun incorrectPassword_shouldNotLogLoginSuccess() = runTest {
-        coEvery { userDetailsRepository.checkPassword("wrong") } returns false
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
-        advanceUntilIdle()
-
-        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
-    }
-
-    @Test
-    fun passwordLogin_shouldOpenALegacySessionBeforeVerifying() = runTest {
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
-        advanceUntilIdle()
-
-        assertThat(sessionKeyHolder.isLegacySession).isTrue()
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-    }
-
-    @Test
     fun passwordLogin_withAutoBackup_shouldOpenTheSessionBeforeEnqueuingTheWorker() = runTest {
-        // The worker reads every record through the holder and may start at once.
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
         var sessionOpenAtEnqueue = false
         every { workManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>()) } answers {
@@ -530,55 +662,34 @@ class LoginViewModelTest {
             mockk()
         }
 
-        viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
         advanceUntilIdle()
 
         assertThat(sessionOpenAtEnqueue).isTrue()
     }
 
     @Test
-    fun biometricLogin_shouldOpenALegacySession() = runTest {
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
-
-        assertThat(sessionKeyHolder.isLegacySession).isTrue()
-    }
-
-    @Test
-    fun passwordReset_shouldOpenALegacySessionAfterTheCredentialIsRewritten() = runTest {
-        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
-
-        viewModel.onAction(LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "hint"))
-        advanceUntilIdle()
-
-        assertThat(sessionKeyHolder.isLegacySession).isTrue()
-    }
-
-    @Test
-    fun incorrectPassword_shouldLeaveTheVaultLocked() = runTest {
-        coEvery { userDetailsRepository.checkPassword("wrong") } returns false
-
-        viewModel.onAction(LoginScreenAction.LoginClicked("wrong"))
-        advanceUntilIdle()
-
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
-    }
-
-    @Test
-    fun passwordLogin_whenLegacyKeyIsLost_shouldReportLostKeyAndNeverVerify() = runTest {
-        coEvery { userDetailsRepository.checkPassword("password") } returns true
+    fun passwordLogin_onLegacyVaultWhenKeyIsLost_shouldReportLostKeyAndNeverVerify() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        coEvery { userDetailsRepository.checkPassword(DEFAULT_PASSWORD) } returns true
         coEvery { settingsDataStore.getAutoBackupAfterPasswordLogin() } returns true
         keystoreGateway.legacyKey = null
+        coEvery {
+            legacyVaultMigrator.migrate(any(), any(), any())
+        } returns MigrationOutcome.Failure(
+            stage = MigrationStage.LOAD_LEGACY_KEY,
+            reason = MigrationFailureReason.LEGACY_KEY_LOST,
+            trigger = MigrationTrigger.LOGIN,
+        )
 
         viewModel.uiState.test {
             awaitItem()
-            viewModel.onAction(LoginScreenAction.LoginClicked("password"))
+            viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
             advanceUntilIdle()
 
             assertThat(expectMostRecentItem().userAuthState).isEqualTo(UserAuthState.LEGACY_KEY_LOST)
         }
         assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
-        // Never regenerated: the gateway still has no key after the attempt.
         assertThat(keystoreGateway.legacyVaultKey()).isNull()
         coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
         verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
@@ -598,18 +709,15 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun passwordReset_whenLegacyKeyIsLost_shouldReportLostKeyAndNeverVerify() = runTest {
-        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
-        keystoreGateway.legacyKey = null
-
-        viewModel.onAction(LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "hint"))
+    fun loginClicked_whenCalledTwiceWhileInFlightOrAfterVerified_unwrapsOnlyOnce() = runTest {
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
         advanceUntilIdle()
 
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.LEGACY_KEY_LOST)
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
-        // The hint of a legacy vault cannot be rewritten without its key, so nothing is written.
-        coVerify(exactly = 0) { userDetailsRepository.updatePasswordAndHint(any(), any()) }
-        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
+        verify(exactly = 1) { envelopeEncryptionManager.unwrapWithPassword(any(), any(), any()) }
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(false) }
     }
 
     /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */
@@ -630,6 +738,7 @@ class LoginViewModelTest {
 
     companion object {
         private const val FIRST_LOGIN_ORDINAL = 1
+        private const val DEFAULT_PASSWORD = "password"
         private val SECURE_WITH_STRONG_BIOMETRIC = DeviceSecuritySnapshot(
             isDeviceSecure = true,
             biometricClass = BiometricClass.STRONG,

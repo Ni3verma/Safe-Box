@@ -122,4 +122,15 @@ enum class AnalyticsKey(val eventName: String) {
     // the away timeout locked the vault (a timer that elapses with the vault already locked logs
     // nothing); AnalyticsParam.WORKER_RUNNING says whether a backup or restore was running
     SESSION_TIMEOUT("session_timeout"),
+
+    // Envelope encryption migration and Keystore wraps
+    VAULT_MIGRATION_START("vault_migration_start"),
+    VAULT_MIGRATION_SUCCESS("vault_migration_success"),
+    VAULT_MIGRATION_FAILURE("vault_migration_failure"),
+    VAULT_MIGRATION_FAILURE_SHOW("vault_migration_failure_show"),
+    VAULT_MIGRATION_RETRY_CLICK("vault_migration_retry_click"),
+    VAULT_MIGRATION_CONTINUE_LEGACY_CLICK("vault_migration_continue_legacy_click"),
+    VAULT_LEGACY_SESSION_START("vault_legacy_session_start"),
+    VAULT_WRAP_CREATED("vault_wrap_created"),
+    VAULT_WRAP_CREATE_FAILURE("vault_wrap_create_failure"),
 }

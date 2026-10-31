@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Aktualizace byla stažena. Pro instalaci restartujte aplikaci Safe Box.</string>
     <string name="in_app_update_restart">Restartovat</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Bezpečnostní aktualizace — zadejte jednou své hlavní heslo</string>
+    <string name="vault_migration_progress_title">Aktualizace zabezpečení trezoru…</string>
+    <string name="vault_migration_progress_counter">%1$d z %2$d záznamů</string>
+    <string name="vault_migration_failure_keystore">Bezpečný hardware neodpověděl. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_verify">Kontrola aktualizace selhala. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_storage">Aktualizaci se nepodařilo uložit. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_unexpected">Aktualizace selhala. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_forgot_password_note">Vaše hlavní heslo nebylo změněno.</string>
+    <string name="vault_migration_retry">Zkusit znovu</string>
+    <string name="vault_migration_continue_legacy">Zatím pokračovat</string>
+    <string name="legacy_key_lost_title">Šifrovací klíč není k dispozici</string>
+    <string name="legacy_key_lost_body">Hardwarový klíč, kterým byl tento trezor zašifrován, již není v tomto zařízení k dispozici, takže stávající záznamy nelze otevřít. Pokud máte záložní soubor, můžete tento trezor vymazat a obnovit jej ze zálohy.</string>
+    <string name="home_upgrade_pending_banner">Čeká bezpečnostní aktualizace — proběhne při příštím přihlášení</string>
+    <string name="home_upgrade_pending_retry">Zkusit nyní</string>
 </resources>

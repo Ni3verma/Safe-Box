@@ -42,6 +42,14 @@ class LoginDataDaoSecure @Inject constructor(
         return loginDataDao.exportAllData().map { decrypt(it) }
     }
 
+    override suspend fun getAllEntities(): List<LoginDataEntity> {
+        return loginDataDao.getAllEntities().map { decrypt(it) }
+    }
+
+    override suspend fun count(): Int {
+        return loginDataDao.count()
+    }
+
     override fun deleteAllData() {
         loginDataDao.deleteAllData()
     }

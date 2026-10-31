@@ -134,7 +134,7 @@ object Migration {
     }
 
     /**
-     * Schema v6 (envelope encryption, design §4.2): the two crypto tables, and `user_details`
+     * Schema v6 (envelope encryption, design §4.2): `vault_meta`, and `user_details`
      * without the `password` column.
      *
      * The legacy credential state is parked in `vault_meta` first - `crypto_version = 1` for any
@@ -157,15 +157,6 @@ object Migration {
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS `vault_meta` " +
                         "(`key` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`key`))"
-            )
-            db.execSQL(
-                "CREATE TABLE IF NOT EXISTS `quarantined_record` (" +
-                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
-                        "`source_table` TEXT NOT NULL, " +
-                        "`source_key` INTEGER NOT NULL, " +
-                        "`row_json` TEXT NOT NULL, " +
-                        "`reason` TEXT NOT NULL, " +
-                        "`created_at` INTEGER NOT NULL)"
             )
 
             val userRows = db.countRows("SELECT COUNT(*) FROM `user_details`")

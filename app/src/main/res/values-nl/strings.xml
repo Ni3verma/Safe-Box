@@ -199,4 +199,19 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Update gedownload. Start Safe Box opnieuw op om deze te installeren.</string>
     <string name="in_app_update_restart">Opnieuw starten</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Beveiligingsupgrade — voer je hoofdwachtwoord één keer in</string>
+    <string name="vault_migration_progress_title">Kluisbeveiliging upgraden…</string>
+    <string name="vault_migration_progress_counter">%1$d van %2$d items</string>
+    <string name="vault_migration_failure_keystore">De beveiligde hardware reageerde niet. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_verify">Upgradecontrole mislukt. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_storage">Kan de upgrade niet opslaan. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_unexpected">Upgrade mislukt. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_forgot_password_note">Je hoofdwachtwoord is niet gewijzigd.</string>
+    <string name="vault_migration_retry">Opnieuw proberen</string>
+    <string name="vault_migration_continue_legacy">Voorlopig doorgaan</string>
+    <string name="legacy_key_lost_title">Versleutelingssleutel niet beschikbaar</string>
+    <string name="legacy_key_lost_body">De hardwaresleutel waarmee deze kluis is versleuteld, is niet meer beschikbaar op dit apparaat, waardoor bestaande items niet kunnen worden geopend. Als je een back-upbestand hebt, kun je deze kluis wissen en vanuit die back-up herstellen.</string>
+    <string name="home_upgrade_pending_banner">Beveiligingsupgrade in behandeling — wordt uitgevoerd bij je volgende aanmelding</string>
+    <string name="home_upgrade_pending_retry">Nu opnieuw proberen</string>
 </resources>
