@@ -178,8 +178,9 @@ prefix `PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"`. The stale copy i
   Tapping **Use PIN** on that prompt makes `BiometricService` log `Cancel received while
   ConfirmDeviceCredential showing` and deliver `ERROR_CANCELED (5)` to the app before the PIN
   screen is used; androidx 1.1.0 issues no cancel on API 29, so this is the platform/image
-  (2026-10-31, see design §9.3 MR 6). Verify on a physical Android 10 device before treating it
-  as an app bug.
+  (2026-10-31, see design §9.3 MR 6). No physical API 29 exists in Test Lab or Device Streaming
+  either, so this is the shipped Android 10 behaviour; the design's §8.2 GA trigger decides what
+  happens to the API 29 recovery path.
 
 ### Build and lint quirks
 
