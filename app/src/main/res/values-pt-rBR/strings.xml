@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Os dados de recuperação neste dispositivo estão danificados. Nada foi alterado.</string>
     <string name="recovery_failure_keystore">O hardware seguro não conseguiu abrir a chave de recuperação. Nada foi alterado.</string>
     <string name="recovery_failure_storage">Não foi possível salvar a nova senha. Nada foi alterado.</string>
+    <string name="settings_change_password_legacy_body">Disponível após a atualização de segurança</string>
+    <string name="settings_current_password_title">Confirme que é você</string>
+    <string name="settings_current_password_label">Senha mestra atual</string>
+    <string name="password_update_failed">Não foi possível salvar a nova senha mestra. Sua senha atual continua funcionando.</string>
+    <string name="settings_biometric_unlock_title">Desbloqueio por digital</string>
+    <string name="settings_biometric_unlock_body">Desbloqueie com sua digital em vez de digitar a senha mestra</string>
+    <string name="settings_biometric_unlock_unavailable_body">Nenhuma digital está configurada neste dispositivo. Cadastre uma nas configurações do telefone para usar este recurso.</string>
+    <string name="home_screen_lock_nudge_banner">Configure um bloqueio de tela para que uma senha mestra esquecida possa ser recuperada</string>
+    <string name="home_screen_lock_nudge_set_up">Configurar</string>
+    <string name="home_screen_lock_nudge_accept_risk">Aceito o risco</string>
 </resources>

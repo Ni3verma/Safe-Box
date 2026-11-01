@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">या डिव्हाइसवरील रिकव्हरी डेटा खराब झाला आहे. काहीही बदलले नाही.</string>
     <string name="recovery_failure_keystore">सुरक्षित हार्डवेअर रिकव्हरी की उघडू शकले नाही. काहीही बदलले नाही.</string>
     <string name="recovery_failure_storage">नवीन पासवर्ड सेव्ह करता आला नाही. काहीही बदलले नाही.</string>
+    <string name="settings_change_password_legacy_body">सुरक्षा अपग्रेडनंतर उपलब्ध</string>
+    <string name="settings_current_password_title">हे तुम्हीच आहात याची पुष्टी करा</string>
+    <string name="settings_current_password_label">सध्याचा मास्टर पासवर्ड</string>
+    <string name="password_update_failed">नवीन मास्टर पासवर्ड सेव्ह करता आला नाही. तुमचा सध्याचा पासवर्ड अजूनही काम करतो.</string>
+    <string name="settings_biometric_unlock_title">फिंगरप्रिंटने अनलॉक</string>
+    <string name="settings_biometric_unlock_body">मास्टर पासवर्ड टाइप करण्याऐवजी तुमच्या फिंगरप्रिंटने अनलॉक करा</string>
+    <string name="settings_biometric_unlock_unavailable_body">या डिव्हाइसवर कोणताही फिंगरप्रिंट सेट केलेला नाही. हे वापरण्यासाठी फोनच्या सेटिंग्जमध्ये फिंगरप्रिंट नोंदवा.</string>
+    <string name="home_screen_lock_nudge_banner">स्क्रीन लॉक सेट करा जेणेकरून विसरलेला मास्टर पासवर्ड रिकव्हर करता येईल</string>
+    <string name="home_screen_lock_nudge_set_up">सेट करा</string>
+    <string name="home_screen_lock_nudge_accept_risk">मी धोका स्वीकारतो</string>
 </resources>

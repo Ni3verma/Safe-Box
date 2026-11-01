@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Данные восстановления на этом устройстве повреждены. Ничего не изменено.</string>
     <string name="recovery_failure_keystore">Защищённый модуль не смог открыть ключ восстановления. Ничего не изменено.</string>
     <string name="recovery_failure_storage">Не удалось сохранить новый пароль. Ничего не изменено.</string>
+    <string name="settings_change_password_legacy_body">Доступно после обновления безопасности</string>
+    <string name="settings_current_password_title">Подтвердите, что это вы</string>
+    <string name="settings_current_password_label">Текущий мастер-пароль</string>
+    <string name="password_update_failed">Не удалось сохранить новый мастер-пароль. Текущий пароль по-прежнему действует.</string>
+    <string name="settings_biometric_unlock_title">Разблокировка отпечатком</string>
+    <string name="settings_biometric_unlock_body">Разблокируйте отпечатком пальца вместо ввода мастер-пароля</string>
+    <string name="settings_biometric_unlock_unavailable_body">На этом устройстве не настроен отпечаток пальца. Добавьте его в настройках телефона, чтобы использовать эту функцию.</string>
+    <string name="home_screen_lock_nudge_banner">Настройте блокировку экрана, чтобы забытый мастер-пароль можно было восстановить</string>
+    <string name="home_screen_lock_nudge_set_up">Настроить</string>
+    <string name="home_screen_lock_nudge_accept_risk">Я принимаю риск</string>
 </resources>

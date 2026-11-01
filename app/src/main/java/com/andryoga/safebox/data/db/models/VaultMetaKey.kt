@@ -32,8 +32,11 @@ object VaultMetaKey {
     /** Per-generation suffix appended to `safebox_kek_device` so a stuck Keystore entry can be bypassed. */
     const val DEVICE_KEY_ALIAS_SUFFIX = "device_key_alias_suffix"
 
-    /** Set to `"1"` when the user disables biometric unlock in Settings. */
+    /** Set to [BIOMETRIC_UNLOCK_DISABLED_VALUE] when the user disables biometric unlock in Settings; absent otherwise. */
     const val BIOMETRIC_UNLOCK_DISABLED = "biometric_unlock_disabled"
+
+    /** The only value [BIOMETRIC_UNLOCK_DISABLED] is written with. */
+    const val BIOMETRIC_UNLOCK_DISABLED_VALUE = "1"
 
     /**
      * The master-password hash in today's `b64(hash)|b64(salt)` format, parked here by

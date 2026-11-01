@@ -2,15 +2,12 @@
 
 package com.andryoga.safebox.data.repository
 
-import androidx.room.withTransaction
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
-import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
-import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.test.fakes.FakeHashingUtils
@@ -20,12 +17,8 @@ import com.google.common.truth.Truth.assertThat
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.coVerifyOrder
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.mockkStatic
-import io.mockk.slot
-import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -38,9 +31,6 @@ class UserDetailsRepositoryImplTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
-
-    @MockK
-    lateinit var database: SafeBoxDatabase
 
     @MockK(relaxUnitFun = true)
     lateinit var userDetailsDaoSecure: UserDetailsDaoSecure
@@ -59,9 +49,6 @@ class UserDetailsRepositoryImplTest {
     private lateinit var mockCrashlytics: FirebaseCrashlytics
     private lateinit var repository: UserDetailsRepositoryImpl
 
-    /** Every `withTransaction` call on the mocked database runs its block inline and is counted. */
-    private var transactionCount = 0
-
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
@@ -69,15 +56,7 @@ class UserDetailsRepositoryImplTest {
         hashingUtils = FakeHashingUtils()
         preferenceProvider = FakePreferenceProvider()
 
-        mockkStatic(ROOM_DATABASE_EXTENSIONS)
-        val transaction = slot<suspend () -> Unit>()
-        coEvery { database.withTransaction(capture(transaction)) } coAnswers {
-            transactionCount++
-            transaction.captured.invoke()
-        }
-
         repository = UserDetailsRepositoryImpl(
-            database = database,
             userDetailsDaoSecure = userDetailsDaoSecure,
             vaultMetaDao = vaultMetaDao,
             hashingUtils = hashingUtils,
@@ -89,7 +68,6 @@ class UserDetailsRepositoryImplTest {
 
     @After
     fun tearDown() {
-        unmockkStatic(ROOM_DATABASE_EXTENSIONS)
         FirebaseCrashlyticsTestHelper.tearDownMockCrashlytics()
     }
 
@@ -218,35 +196,4 @@ class UserDetailsRepositoryImplTest {
 
             assertThat(result).isFalse()
         }
-
-    @Test
-    fun updatePasswordAndHint_shouldWriteNewHashAndHintInOneTransactionAndResetBiometricCount() =
-        runTest {
-            coEvery { settingsDataStore.getPasswordAfterXBiometricLogins() } returns 10
-            preferenceProvider.upsertIntPref(
-                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                1
-            )
-
-            repository.updatePasswordAndHint("NewPassword@@123", "new hint")
-
-            assertThat(transactionCount).isEqualTo(1)
-            coVerifyOrder {
-                vaultMetaDao.upsert(
-                    VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, "HASH[NewPassword@@123]|FAKE_SALT"),
-                )
-                userDetailsDaoSecure.updateHint("new hint", any())
-            }
-            val remaining = preferenceProvider.getIntPref(
-                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                -1
-            )
-
-            assertThat(remaining).isEqualTo(10)
-        }
-
-    private companion object {
-        /** File facade that hosts the `RoomDatabase.withTransaction` extension. */
-        const val ROOM_DATABASE_EXTENSIONS = "androidx.room.RoomDatabaseKt"
-    }
 }

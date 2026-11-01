@@ -225,4 +225,14 @@
     <string name="recovery_failure_verifier">ข้อมูลการกู้คืนบนอุปกรณ์นี้เสียหาย ไม่มีการเปลี่ยนแปลงใดๆ</string>
     <string name="recovery_failure_keystore">ฮาร์ดแวร์ความปลอดภัยไม่สามารถเปิดคีย์กู้คืนได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>
     <string name="recovery_failure_storage">ไม่สามารถบันทึกรหัสผ่านใหม่ได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="settings_change_password_legacy_body">ใช้ได้หลังการอัปเกรดความปลอดภัย</string>
+    <string name="settings_current_password_title">ยืนยันว่าเป็นคุณ</string>
+    <string name="settings_current_password_label">รหัสผ่านหลักปัจจุบัน</string>
+    <string name="password_update_failed">ไม่สามารถบันทึกรหัสผ่านหลักใหม่ได้ รหัสผ่านปัจจุบันของคุณยังใช้งานได้</string>
+    <string name="settings_biometric_unlock_title">ปลดล็อกด้วยลายนิ้วมือ</string>
+    <string name="settings_biometric_unlock_body">ปลดล็อกด้วยลายนิ้วมือแทนการพิมพ์รหัสผ่านหลัก</string>
+    <string name="settings_biometric_unlock_unavailable_body">ยังไม่มีลายนิ้วมือในอุปกรณ์นี้ ลงทะเบียนลายนิ้วมือในการตั้งค่าโทรศัพท์เพื่อใช้ฟีเจอร์นี้</string>
+    <string name="home_screen_lock_nudge_banner">ตั้งค่าการล็อกหน้าจอเพื่อให้กู้คืนรหัสผ่านหลักที่ลืมได้</string>
+    <string name="home_screen_lock_nudge_set_up">ตั้งค่า</string>
+    <string name="home_screen_lock_nudge_accept_risk">ฉันยอมรับความเสี่ยง</string>
 </resources>

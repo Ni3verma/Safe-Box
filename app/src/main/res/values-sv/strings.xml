@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Återställningsdata på den här enheten är skadade. Inget ändrades.</string>
     <string name="recovery_failure_keystore">Den säkra hårdvaran kunde inte öppna återställningsnyckeln. Inget ändrades.</string>
     <string name="recovery_failure_storage">Det nya lösenordet kunde inte sparas. Inget ändrades.</string>
+    <string name="settings_change_password_legacy_body">Tillgängligt efter säkerhetsuppgraderingen</string>
+    <string name="settings_current_password_title">Bekräfta att det är du</string>
+    <string name="settings_current_password_label">Nuvarande huvudlösenord</string>
+    <string name="password_update_failed">Det nya huvudlösenordet kunde inte sparas. Ditt nuvarande lösenord fungerar fortfarande.</string>
+    <string name="settings_biometric_unlock_title">Upplåsning med fingeravtryck</string>
+    <string name="settings_biometric_unlock_body">Lås upp med ditt fingeravtryck i stället för att skriva ditt huvudlösenord</string>
+    <string name="settings_biometric_unlock_unavailable_body">Inget fingeravtryck är registrerat på den här enheten. Registrera ett i telefonens inställningar för att använda detta.</string>
+    <string name="home_screen_lock_nudge_banner">Ställ in ett skärmlås så att ett glömt huvudlösenord kan återställas</string>
+    <string name="home_screen_lock_nudge_set_up">Ställ in</string>
+    <string name="home_screen_lock_nudge_accept_risk">Jag accepterar risken</string>
 </resources>

@@ -45,6 +45,7 @@ class SettingsDataStore @Inject constructor(
             booleanPreferencesKey("auto_backup_after_password_login")
         val AWAY_TIMEOUT = intPreferencesKey("away_timeout")
         val PASSWORD_AFTER_X_BIOMETRIC_LOGIN = intPreferencesKey("password_after_x_biometric_login")
+        val SCREEN_LOCK_NUDGE_DISMISSED = booleanPreferencesKey("screen_lock_nudge_dismissed")
     }
 
     object DefaultValues {
@@ -71,6 +72,7 @@ class SettingsDataStore @Inject constructor(
 
     val isPrivacyEnabledFlow = getSetting(Keys.PRIVACY_ENABLED, PRIVACY_ENABLED_DEFAULT)
     val awayTimeoutSecFlow = getSetting(Keys.AWAY_TIMEOUT, AWAY_TIMEOUT_DEFAULT)
+    val isScreenLockNudgeDismissedFlow = getSetting(Keys.SCREEN_LOCK_NUDGE_DISMISSED, false)
 
     suspend fun getPasswordAfterXBiometricLogins(): Int {
         return getSetting(
@@ -101,6 +103,16 @@ class SettingsDataStore @Inject constructor(
         preferenceProvider.get()
             .upsertIntPref(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING, value)
         context.dataStore.edit { it[Keys.PASSWORD_AFTER_X_BIOMETRIC_LOGIN] = value }
+    }
+
+    /** Set by *I accept the risk* on the Home screen-lock nudge. */
+    suspend fun dismissScreenLockNudge() {
+        context.dataStore.edit { it[Keys.SCREEN_LOCK_NUDGE_DISMISSED] = true }
+    }
+
+    /** Erase starts a new vault, which gets the nudge again. */
+    suspend fun clearScreenLockNudgeDismissed() {
+        context.dataStore.edit { it.remove(Keys.SCREEN_LOCK_NUDGE_DISMISSED) }
     }
 
     private fun <T> getSetting(key: Preferences.Key<T>, defaultValue: T): Flow<T> {

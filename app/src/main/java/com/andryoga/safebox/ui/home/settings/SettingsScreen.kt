@@ -19,11 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -31,18 +29,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants.APP_BUY_ME_A_COFFEE_URL
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
 import com.andryoga.safebox.common.CommonConstants.APP_PLAYSTORE_LINK
-import com.andryoga.safebox.data.dataStore.Settings
-import com.andryoga.safebox.ui.core.DeviceSecurityAuthHandler
 import com.andryoga.safebox.ui.core.LocalDeviceSecurityAuthProvider
 import com.andryoga.safebox.ui.core.MyAppTopAppBar
 import com.andryoga.safebox.ui.core.TestTags
 import com.andryoga.safebox.ui.core.canAuthenticateUsingDeviceSecurity
-import com.andryoga.safebox.ui.core.password.DeviceSecurityRequiredDialog
-import com.andryoga.safebox.ui.core.password.UpdatePasswordDialog
+import com.andryoga.safebox.ui.home.settings.components.BiometricUnlockPreference
+import com.andryoga.safebox.ui.home.settings.components.ChangePasswordFlow
 import com.andryoga.safebox.ui.home.settings.components.SliderPreference
 import com.andryoga.safebox.ui.home.settings.components.SwitchPreference
 import com.andryoga.safebox.ui.home.settings.components.TextPreference
@@ -57,6 +54,12 @@ fun SettingsScreenRoot() {
     val viewModel = hiltViewModel<SettingsViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    // Enrolment can change while the user is in the system settings.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onScreenAction(SettingsScreenAction.OnScreenResumed)
+        onPauseOrDispose { }
+    }
 
     Scaffold(
         topBar = {
@@ -88,16 +91,14 @@ fun SettingsScreenRoot() {
 
 @Composable
 fun SettingsScreen(
-    uiState: Settings,
+    uiState: SettingsUiState,
     onScreenAction: (SettingsScreenAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
     val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
-    var showAuthForPasswordChange by remember { mutableStateOf(false) }
-    var showUpdatePasswordDialog by remember { mutableStateOf(false) }
-    var showDeviceSecurityRequiredDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val settings = uiState.settings
 
     Column(
         modifier = modifier
@@ -115,7 +116,7 @@ fun SettingsScreen(
         SwitchPreference(
 
             title = stringResource(R.string.settings_privacy_enabled_title),
-            checked = uiState.isPrivacyEnabled,
+            checked = settings.isPrivacyEnabled,
             onCheckedChange = { onScreenAction(SettingsScreenAction.UpdatePrivacy(it)) },
             body = stringResource(R.string.settings_privacy_enabled_body),
             controlModifier = Modifier.testTag(TestTags.SETTINGS_PRIVACY_SWITCH),
@@ -123,14 +124,19 @@ fun SettingsScreen(
 
         SwitchPreference(
             title = stringResource(R.string.settings_auto_backup_title),
-            checked = uiState.autoBackupAfterPasswordLogin,
+            checked = settings.autoBackupAfterPasswordLogin,
             onCheckedChange = { onScreenAction(SettingsScreenAction.UpdateAutoBackupAfterLogin(it)) },
             body = stringResource(R.string.settings_auto_backup_body),
             controlModifier = Modifier.testTag(TestTags.SETTINGS_AUTO_BACKUP_SWITCH),
         )
 
+        BiometricUnlockPreference(
+            switch = uiState.biometricUnlock,
+            onCheckedChange = { onScreenAction(SettingsScreenAction.UpdateBiometricUnlock(it)) },
+        )
+
         SliderPreference(
-            value = uiState.passwordAfterXBiometricLogins,
+            value = settings.passwordAfterXBiometricLogins,
             title = stringResource(R.string.settings_ask_for_pswrd_after_biometric_title),
             valueRange = 5f..15f,
             onValueChanged = { onScreenAction(SettingsScreenAction.UpdatePasswordAfterXBiometric(it)) },
@@ -139,7 +145,7 @@ fun SettingsScreen(
         )
 
         SliderPreference(
-            value = uiState.awayTimeoutSec,
+            value = settings.awayTimeoutSec,
             title = stringResource(R.string.settings_away_timeout_title),
             valueRange = 5f..20f,
             onValueChanged = { onScreenAction(SettingsScreenAction.UpdateAwayTimeout(it)) },
@@ -149,21 +155,24 @@ fun SettingsScreen(
 
         TextPreference(
             title = stringResource(R.string.change_master_password),
-            body = stringResource(R.string.change_master_password_body),
+            body = if (uiState.isLegacySession) {
+                stringResource(R.string.settings_change_password_legacy_body)
+            } else {
+                stringResource(R.string.change_master_password_body)
+            },
             onTap = {
                 Timber.i("change master password clicked on settings screen, checking device security auth availability")
-                if (
-                    canAuthenticateUsingDeviceSecurity(
-                        context,
-                        biometricAuthProvider,
-                        allowDeviceCredential = true,
-                    )
-                ) {
-                    showAuthForPasswordChange = true
-                } else {
-                    showDeviceSecurityRequiredDialog = true
-                }
+                onScreenAction(
+                    SettingsScreenAction.ChangePasswordClicked(
+                        canUseDeviceAuth = canAuthenticateUsingDeviceSecurity(
+                            context,
+                            biometricAuthProvider,
+                            allowDeviceCredential = true,
+                        ),
+                    ),
+                )
             },
+            enabled = !uiState.isLegacySession,
         )
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -203,64 +212,23 @@ fun SettingsScreen(
         )
     }
 
-    if (showAuthForPasswordChange) {
-        DeviceSecurityAuthHandler(
-            title = stringResource(R.string.change_master_password),
-            subtitle = stringResource(R.string.change_master_password_body),
-            allowDeviceCredential = true,
-            onSuccess = {
-                showAuthForPasswordChange = false
-                showUpdatePasswordDialog = true
-            },
-            onErrorOrCancel = {
-                Timber.w("device security auth error or cancel for change master password on settings screen")
-                showAuthForPasswordChange = false
-            }
-        )
+    uiState.changePasswordStep?.let { step ->
+        ChangePasswordFlow(step = step, onScreenAction = onScreenAction)
     }
 
-    if (showUpdatePasswordDialog) {
-        val successMessage = stringResource(R.string.password_updated_success)
-        UpdatePasswordDialog(
-            onDismiss = {
-                showUpdatePasswordDialog = false
-                onScreenAction(SettingsScreenAction.OnUpdatePasswordDismissClicked)
-            },
-            onShow = {
-                onScreenAction(SettingsScreenAction.OnUpdatePasswordDialogShown)
-            },
-            onSave = { newPassword, hint ->
-                showUpdatePasswordDialog = false
-                onScreenAction(SettingsScreenAction.OnUpdateMasterPassword(newPassword, hint))
-                Toast.makeText(
-                    context,
-                    successMessage,
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-        )
-    }
-
-    if (showDeviceSecurityRequiredDialog) {
-        DeviceSecurityRequiredDialog(
-            onDismiss = {
-                showDeviceSecurityRequiredDialog = false
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDismissClicked)
-            },
-            onShow = {
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredDialogShown)
-            },
-            onOpenSettingsClick = {
-                showDeviceSecurityRequiredDialog = false
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-            },
-            onOpenSettingsFailure = {
-                onScreenAction(SettingsScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-            },
-        )
+    val passwordChangeResult = uiState.passwordChangeResult
+    val successMessage = stringResource(R.string.password_updated_success)
+    val failureMessage = stringResource(R.string.password_update_failed)
+    LaunchedEffect(passwordChangeResult) {
+        if (passwordChangeResult == null) return@LaunchedEffect
+        val message = when (passwordChangeResult) {
+            PasswordChangeResult.SUCCESS -> successMessage
+            PasswordChangeResult.FAILURE -> failureMessage
+        }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        onScreenAction(SettingsScreenAction.OnPasswordChangeResultShown)
     }
 }
-
 
 fun sendFeedback(context: Context) {
     val deviceModel = android.os.Build.MODEL
@@ -324,6 +292,31 @@ private fun openExternalLinkOrToast(context: Context, url: String) {
 @Composable
 private fun SettingsScreenPreview() {
     SafeBoxTheme {
-        SettingsScreen(Settings(), {})
+        SettingsScreen(
+            uiState = SettingsUiState(biometricUnlock = BiometricUnlockSwitch.Available(isOn = true)),
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SettingsScreenFingerprintUnavailablePreview() {
+    SafeBoxTheme {
+        SettingsScreen(
+            uiState = SettingsUiState(biometricUnlock = BiometricUnlockSwitch.Unavailable),
+            onScreenAction = {},
+        )
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun SettingsScreenLegacySessionPreview() {
+    SafeBoxTheme {
+        SettingsScreen(
+            uiState = SettingsUiState(isLegacySession = true),
+            onScreenAction = {},
+        )
     }
 }

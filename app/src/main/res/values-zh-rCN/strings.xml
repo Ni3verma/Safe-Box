@@ -225,4 +225,14 @@
     <string name="recovery_failure_verifier">此设备上的恢复数据已损坏。未做任何更改。</string>
     <string name="recovery_failure_keystore">安全硬件无法打开恢复密钥。未做任何更改。</string>
     <string name="recovery_failure_storage">无法保存新密码。未做任何更改。</string>
+    <string name="settings_change_password_legacy_body">安全升级后可用</string>
+    <string name="settings_current_password_title">确认是您本人</string>
+    <string name="settings_current_password_label">当前主密码</string>
+    <string name="password_update_failed">无法保存新主密码。您当前的密码仍然有效。</string>
+    <string name="settings_biometric_unlock_title">指纹解锁</string>
+    <string name="settings_biometric_unlock_body">使用指纹解锁，无需输入主密码</string>
+    <string name="settings_biometric_unlock_unavailable_body">此设备上没有可用的指纹。请在手机设置中录入指纹以使用此功能。</string>
+    <string name="home_screen_lock_nudge_banner">设置屏幕锁定，以便在忘记主密码时可以恢复</string>
+    <string name="home_screen_lock_nudge_set_up">设置</string>
+    <string name="home_screen_lock_nudge_accept_risk">我接受风险</string>
 </resources>

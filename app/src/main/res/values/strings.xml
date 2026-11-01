@@ -244,4 +244,15 @@
     <string name="recovery_failure_verifier">The recovery data on this device is damaged. Nothing was changed.</string>
     <string name="recovery_failure_keystore">The secure hardware could not open the recovery key. Nothing was changed.</string>
     <string name="recovery_failure_storage">The new password could not be saved. Nothing was changed.</string>
+    <!-- Settings & Home: change password, fingerprint unlock, screen-lock nudge -->
+    <string name="settings_change_password_legacy_body">Available after the security upgrade</string>
+    <string name="settings_current_password_title">Confirm it\'s you</string>
+    <string name="settings_current_password_label">Current master password</string>
+    <string name="password_update_failed">Could not save the new master password. Your current password still works.</string>
+    <string name="settings_biometric_unlock_title">Fingerprint unlock</string>
+    <string name="settings_biometric_unlock_body">Unlock with your fingerprint instead of typing your master password</string>
+    <string name="settings_biometric_unlock_unavailable_body">No fingerprint is ready on this device. Enrol one in your phone\'s settings to use this.</string>
+    <string name="home_screen_lock_nudge_banner">Set a screen lock so a forgotten master password can be recovered</string>
+    <string name="home_screen_lock_nudge_set_up">Set up</string>
+    <string name="home_screen_lock_nudge_accept_risk">I accept the risk</string>
 </resources>

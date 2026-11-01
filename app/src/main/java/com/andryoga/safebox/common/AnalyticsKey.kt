@@ -149,4 +149,14 @@ enum class AnalyticsKey(val eventName: String) {
     ERASE_VAULT_DIALOG_SHOW("erase_vault_dialog_show"),
     ERASE_VAULT_DIALOG_CONFIRM_CLICK("erase_vault_dialog_confirm_click"),
     ERASE_VAULT_DIALOG_CANCEL_CLICK("erase_vault_dialog_cancel_click"),
+
+    // Settings and Home
+    // the change-password gate was passed; AnalyticsParam.GATE (ChangePasswordGate wire name)
+    CHANGE_PASSWORD_GATE_PASSED("change_password_gate_passed"),
+    BIOMETRIC_UNLOCK_DISABLED("biometric_unlock_disabled"),
+    BIOMETRIC_UNLOCK_ENABLED("biometric_unlock_enabled"),
+    // Home banner shown while the device has no lock screen and the user has not accepted the risk
+    SCREEN_LOCK_NUDGE_SHOW("screen_lock_nudge_show"),
+    SCREEN_LOCK_NUDGE_OPEN_SETTINGS_CLICK("screen_lock_nudge_open_settings_click"),
+    SCREEN_LOCK_NUDGE_ACCEPT_RISK_CLICK("screen_lock_nudge_accept_risk_click"),
 }

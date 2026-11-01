@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -23,20 +24,27 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
+/**
+ * A tappable settings row with a trailing icon.
+ *
+ * @param enabled `false` greys the row out and ignores taps.
+ */
 @Composable
 fun TextPreference(
     title: String,
     body: String,
     onTap: () -> Unit,
     icon: ImageVector? = null,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)
-            .clickable {
+            .clickable(enabled = enabled) {
                 onTap()
-            },
+            }
+            .alpha(if (enabled) 1f else DISABLED_ALPHA),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -58,6 +66,22 @@ fun TextPreference(
             imageVector = icon ?: Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = title,
             modifier = Modifier.size(32.dp)
+        )
+    }
+}
+
+/** Material's alpha for disabled content, applied to a whole preference row. */
+internal const val DISABLED_ALPHA = 0.38f
+
+@LightDarkModePreview
+@Composable
+private fun TextPreferenceDisabledPreview() {
+    SafeBoxTheme {
+        TextPreference(
+            title = stringResource(R.string.change_master_password),
+            body = stringResource(R.string.settings_change_password_legacy_body),
+            onTap = {},
+            enabled = false,
         )
     }
 }

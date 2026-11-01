@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">இந்தச் சாதனத்தில் உள்ள மீட்புத் தரவு சேதமடைந்துள்ளது. எதுவும் மாற்றப்படவில்லை.</string>
     <string name="recovery_failure_keystore">பாதுகாப்பான வன்பொருளால் மீட்பு விசையைத் திறக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
     <string name="recovery_failure_storage">புதிய கடவுச்சொல்லைச் சேமிக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="settings_change_password_legacy_body">பாதுகாப்பு மேம்படுத்தலுக்குப் பிறகு கிடைக்கும்</string>
+    <string name="settings_current_password_title">இது நீங்கள்தான் என உறுதிப்படுத்தவும்</string>
+    <string name="settings_current_password_label">தற்போதைய முதன்மைக் கடவுச்சொல்</string>
+    <string name="password_update_failed">புதிய முதன்மைக் கடவுச்சொல்லைச் சேமிக்க முடியவில்லை. உங்கள் தற்போதைய கடவுச்சொல் இன்னும் செயல்படும்.</string>
+    <string name="settings_biometric_unlock_title">கைரேகை மூலம் திறத்தல்</string>
+    <string name="settings_biometric_unlock_body">முதன்மைக் கடவுச்சொல்லைத் தட்டச்சு செய்வதற்குப் பதிலாக உங்கள் கைரேகை மூலம் திறக்கவும்</string>
+    <string name="settings_biometric_unlock_unavailable_body">இந்தச் சாதனத்தில் கைரேகை எதுவும் அமைக்கப்படவில்லை. இதைப் பயன்படுத்த, ஃபோன் அமைப்புகளில் ஒரு கைரேகையைப் பதிவுசெய்யவும்.</string>
+    <string name="home_screen_lock_nudge_banner">மறந்துபோன முதன்மைக் கடவுச்சொல்லை மீட்டெடுக்க திரைப் பூட்டை அமைக்கவும்</string>
+    <string name="home_screen_lock_nudge_set_up">அமை</string>
+    <string name="home_screen_lock_nudge_accept_risk">அபாயத்தை ஏற்கிறேன்</string>
 </resources>

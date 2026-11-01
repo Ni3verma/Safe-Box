@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Datele de recuperare de pe acest dispozitiv sunt deteriorate. Nu s-a modificat nimic.</string>
     <string name="recovery_failure_keystore">Hardware-ul securizat nu a putut deschide cheia de recuperare. Nu s-a modificat nimic.</string>
     <string name="recovery_failure_storage">Parola nouă nu a putut fi salvată. Nu s-a modificat nimic.</string>
+    <string name="settings_change_password_legacy_body">Disponibil după actualizarea de securitate</string>
+    <string name="settings_current_password_title">Confirmă că ești tu</string>
+    <string name="settings_current_password_label">Parola principală actuală</string>
+    <string name="password_update_failed">Noua parolă principală nu a putut fi salvată. Parola actuală funcționează în continuare.</string>
+    <string name="settings_biometric_unlock_title">Deblocare cu amprenta</string>
+    <string name="settings_biometric_unlock_body">Deblochează cu amprenta în loc să introduci parola principală</string>
+    <string name="settings_biometric_unlock_unavailable_body">Nu există nicio amprentă configurată pe acest dispozitiv. Adaugă una în setările telefonului pentru a folosi această funcție.</string>
+    <string name="home_screen_lock_nudge_banner">Setează o blocare a ecranului pentru ca o parolă principală uitată să poată fi recuperată</string>
+    <string name="home_screen_lock_nudge_set_up">Configurează</string>
+    <string name="home_screen_lock_nudge_accept_risk">Accept riscul</string>
 </resources>

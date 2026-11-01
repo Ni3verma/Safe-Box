@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Τα δεδομένα ανάκτησης σε αυτήν τη συσκευή είναι κατεστραμμένα. Δεν έγινε καμία αλλαγή.</string>
     <string name="recovery_failure_keystore">Το ασφαλές υλικό δεν μπόρεσε να ανοίξει το κλειδί ανάκτησης. Δεν έγινε καμία αλλαγή.</string>
     <string name="recovery_failure_storage">Δεν ήταν δυνατή η αποθήκευση του νέου κωδικού πρόσβασης. Δεν έγινε καμία αλλαγή.</string>
+    <string name="settings_change_password_legacy_body">Διαθέσιμο μετά την αναβάθμιση ασφαλείας</string>
+    <string name="settings_current_password_title">Επιβεβαιώστε ότι είστε εσείς</string>
+    <string name="settings_current_password_label">Τρέχων κύριος κωδικός πρόσβασης</string>
+    <string name="password_update_failed">Δεν ήταν δυνατή η αποθήκευση του νέου κύριου κωδικού πρόσβασης. Ο τρέχων κωδικός σας εξακολουθεί να λειτουργεί.</string>
+    <string name="settings_biometric_unlock_title">Ξεκλείδωμα με δακτυλικό αποτύπωμα</string>
+    <string name="settings_biometric_unlock_body">Ξεκλειδώστε με το δακτυλικό σας αποτύπωμα αντί να πληκτρολογείτε τον κύριο κωδικό πρόσβασης</string>
+    <string name="settings_biometric_unlock_unavailable_body">Δεν υπάρχει καταχωρισμένο δακτυλικό αποτύπωμα σε αυτήν τη συσκευή. Καταχωρίστε ένα στις ρυθμίσεις του τηλεφώνου για να το χρησιμοποιήσετε.</string>
+    <string name="home_screen_lock_nudge_banner">Ορίστε κλείδωμα οθόνης ώστε να μπορεί να ανακτηθεί ένας ξεχασμένος κύριος κωδικός πρόσβασης</string>
+    <string name="home_screen_lock_nudge_set_up">Ρύθμιση</string>
+    <string name="home_screen_lock_nudge_accept_risk">Αποδέχομαι τον κίνδυνο</string>
 </resources>

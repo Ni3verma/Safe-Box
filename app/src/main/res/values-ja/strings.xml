@@ -225,4 +225,14 @@
     <string name="recovery_failure_verifier">この端末の復旧データが破損しています。変更は行われませんでした。</string>
     <string name="recovery_failure_keystore">セキュアハードウェアが復旧キーを開けませんでした。変更は行われませんでした。</string>
     <string name="recovery_failure_storage">新しいパスワードを保存できませんでした。変更は行われませんでした。</string>
+    <string name="settings_change_password_legacy_body">セキュリティアップグレード後に利用可能</string>
+    <string name="settings_current_password_title">本人確認</string>
+    <string name="settings_current_password_label">現在のマスターパスワード</string>
+    <string name="password_update_failed">新しいマスターパスワードを保存できませんでした。現在のパスワードは引き続き使用できます。</string>
+    <string name="settings_biometric_unlock_title">指紋でロック解除</string>
+    <string name="settings_biometric_unlock_body">マスターパスワードを入力する代わりに指紋でロックを解除します</string>
+    <string name="settings_biometric_unlock_unavailable_body">このデバイスには指紋が登録されていません。この機能を使うには、端末の設定で指紋を登録してください。</string>
+    <string name="home_screen_lock_nudge_banner">マスターパスワードを忘れた場合に復旧できるよう、画面ロックを設定してください</string>
+    <string name="home_screen_lock_nudge_set_up">設定する</string>
+    <string name="home_screen_lock_nudge_accept_risk">リスクを受け入れる</string>
 </resources>

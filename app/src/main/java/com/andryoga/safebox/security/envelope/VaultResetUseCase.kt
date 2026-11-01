@@ -3,6 +3,7 @@ package com.andryoga.safebox.security.envelope
 import androidx.work.WorkManager
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
+import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
@@ -28,13 +29,14 @@ class VaultResetUseCase @Inject constructor(
     private val keystoreGateway: KeystoreGateway,
     private val workManager: Lazy<WorkManager>,
     private val preferenceProvider: PreferenceProvider,
+    private val settingsDataStore: SettingsDataStore,
     private val dispatchersProvider: DispatchersProvider,
 ) {
     /**
      * Cancels pending backup/restore work, locks the session, deletes every Keystore key of the
-     * vault (both wrap-key generations in use and the legacy alias), clears every Room table and
-     * resets the biometric login counter. After it returns `VaultRepository.hasVault()` is `false`,
-     * so the Room-first start routing lands on Signup.
+     * vault (both wrap-key generations in use and the legacy alias), clears every Room table,
+     * resets the biometric login counter and brings back the screen-lock nudge. After it returns
+     * `VaultRepository.hasVault()` is `false`, so the Room-first start routing lands on Signup.
      *
      * The wrap-key aliases are resolved from `vault_meta` before the tables go; the Keystore
      * deletes are best effort (a stuck entry is harmless without its wrap).
@@ -57,6 +59,7 @@ class VaultResetUseCase @Inject constructor(
             database.get().clearAllTables()
         }
         preferenceProvider.removePrefByKey(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING)
+        settingsDataStore.clearScreenLockNudgeDismissed()
         Timber.w("vault erased")
     }
 }

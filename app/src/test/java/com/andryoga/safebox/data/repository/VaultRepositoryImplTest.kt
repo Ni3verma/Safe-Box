@@ -288,6 +288,33 @@ class VaultRepositoryImplTest {
         assertThat(outcome.exceptionOrNull()).isInstanceOf(Exceptions.DebugFatalException::class.java)
     }
 
+    @Test
+    fun setBiometricUnlockDisabled_whenDisabling_shouldWriteTheFlagAndDropTheBiometricWrapInOneTransaction() =
+        runTest {
+            repository.setBiometricUnlockDisabled(true)
+
+            assertThat(transactionCount).isEqualTo(1)
+            coVerifyOrder {
+                vaultMetaDao.upsert(
+                    VaultMetaEntity(
+                        VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED,
+                        VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED_VALUE,
+                    ),
+                )
+                vaultMetaDao.delete(VaultMetaKey.WRAPPED_DEK_BIOMETRIC)
+            }
+            coVerify(exactly = 0) { vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_KEY_ALIAS_SUFFIX) }
+        }
+
+    @Test
+    fun setBiometricUnlockDisabled_whenEnabling_shouldOnlyRemoveTheFlag() = runTest {
+        repository.setBiometricUnlockDisabled(false)
+
+        coVerify(exactly = 1) { vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) }
+        coVerify(exactly = 0) { vaultMetaDao.upsert(any()) }
+        coVerify(exactly = 0) { vaultMetaDao.delete(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) }
+    }
+
     private companion object {
         const val ROOM_DATABASE_EXTENSIONS = "androidx.room.RoomDatabaseKt"
     }

@@ -311,7 +311,7 @@ class LegacyVaultMigrator @Inject constructor(
     private suspend fun createOptionalKeystoreWraps(dek: ByteArray): Pair<String?, String?> {
         val securitySnapshot = runCatching { deviceSecurityStatus.snapshot() }.getOrNull()
         val biometricDisabled =
-            vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == BIOMETRIC_DISABLED_VALUE
+            vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED_VALUE
         val deviceSuffix = vaultMetaDao.get(VaultMetaKey.DEVICE_KEY_ALIAS_SUFFIX)
         val biometricSuffix = vaultMetaDao.get(VaultMetaKey.BIOMETRIC_KEY_ALIAS_SUFFIX)
 
@@ -936,7 +936,6 @@ class LegacyVaultMigrator @Inject constructor(
 
         private const val EXCEPTION_NONE = "none"
         private const val AES_ALGORITHM = "AES"
-        private const val BIOMETRIC_DISABLED_VALUE = "1"
         private const val GCM_TAG_SIZE_BYTES = 16
         private const val NANOS_PER_MILLI = 1_000_000L
 

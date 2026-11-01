@@ -656,7 +656,6 @@ class LoginViewModelTest {
             )
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { userDetailsRepository.updatePasswordAndHint(any(), any()) }
             coVerify(exactly = 1) {
                 legacyVaultMigrator.migrate(
                     match { it.contentEquals("NewPassword@@123".toCharArray()) },
@@ -817,7 +816,6 @@ class LoginViewModelTest {
         assertThat(rewrappedPassword).isEqualTo("NewPassword@@123".toCharArray())
         assertThat(rewrappedDek).isEqualTo(testDek)
         assertThat(rewrappedHint).isEqualTo("new hint")
-        coVerify(exactly = 0) { userDetailsRepository.updatePasswordAndHint(any(), any()) }
         assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
         assertThat(sessionKeyHolder.withSessionKey { it.encoded }).isEqualTo(testDek)
         verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
