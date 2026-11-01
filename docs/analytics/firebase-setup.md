@@ -77,7 +77,7 @@ dimension name = parameter name:
 | `biometric_class` | `login_success` | `strong`, `weak_only`, `none_enrolled`, `no_hardware`, `unavailable` |
 | `strongbox` | `login_success` | `0`/`1` |
 | `exception` | `record_decrypt_failure`, `vault_migration_failure`, `vault_wrap_create_failure`, `vault_recovery_failure` | exception simple class name (`none` when non-exception failure), never a message |
-| `worker_running` | `session_timeout` | `0`/`1` |
+| `worker_running` | `session_timeout` | **removed in envelope MR 6** (2026-11-01): the dimension can be archived; no event has sent it since |
 | `trigger` | `vault_migration_start` | `login`, `forgot_password` |
 | `attempt` | `vault_migration_start`, `vault_migration_success`, `vault_migration_failure`, `vault_legacy_session_start` | 1-based migration attempt ordinal (`1..n`) |
 | `wraps` | `vault_migration_success` | `none`, `device`, `biometric`, `device_biometric` |

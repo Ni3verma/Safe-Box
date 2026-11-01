@@ -21,9 +21,9 @@ results into an ADR under `docs/decisions/` so the design is planned against evi
 | `device_security_required_dialog_show` and its `*_open_settings_click`, `*_open_settings_fail`, `*_cancel_click`; `update_password_dialog_show`, `*_allow_click`, `*_cancel_click` (all existing) | `LoginViewModel`, `SettingsViewModel` | adds `source` ∈ {`login`, `settings`} | unchanged; the param tells the forgot-password flow from a routine password change |
 | `backup_data_success` (existing) | `BackupDataWorker` | adds `version`, `duration_ms`, `size_kb` (`-1` when the document provider cannot report a length) | per completed backup |
 | `restore_data_success` (existing) | `RestoreDataWorker` | adds `version`, `duration_ms` | per completed restore |
-| `session_timeout` | `ActiveSessionManager`, when the away timeout locks the vault (since envelope MR 4: the read is started just before the clear and awaited after it, so the snapshot still sees a worker that will fail closed at its next use of the key while the lock never waits on it) | `worker_running` | per timeout that locked a session; a failed or slow (> 500 ms) WorkManager read logs `0` |
+| `session_timeout` | `ActiveSessionManager`, when the away timeout locks the vault | — (`worker_running` removed in envelope MR 6; the fail-closed design needs no interruption telemetry) | per timeout that locked a session |
 
-Wire values: `device_secure`, `strongbox`, `db_exists`, `worker_running` arrive as `0`/`1`;
+Wire values: `device_secure`, `strongbox`, `db_exists` arrive as `0`/`1`;
 `biometric_class` is `BiometricClass.analyticsValue` (`strong`, `weak_only`, `none_enrolled`,
 `no_hardware`, `unavailable`); `version` is a `Double`; the five sizes and durations are integers.
 
@@ -42,7 +42,7 @@ the non-fatal's stack trace, which names the DAO.
 | Does StrongBox matter? | `login_success` share with `strongbox = 1` | whether StrongBox timing needs its own spike |
 | How often is forgot-password used, and on which Android versions? | `forgot_password_click` and `update_password_dialog_allow_click` with `source = login`, split by GA's *OS version* dimension (`device.operating_system_version` in BigQuery) | recovery usage on API 29 near zero drops the time-bound credential path and everything that exists only for it |
 | Which backup formats circulate; how long do backup and restore take? | `version` and `duration_ms` on both success events, `size_kb` on `backup_data_success` only | sizes the PBKDF2 budget of the next format and sets the horizon for dropping the legacy reader |
-| Does the away timeout ever hit a running backup? | `session_timeout` with `worker_running = 1` | never means fail-closed alone keeps being enough (envelope MR 4 ships no cancel-on-lock and no dialog state) |
+| Does the away timeout ever hit a running backup? | *dropped in envelope MR 6*: fail-closed alone is the design (no cancel-on-lock, no dialog state), so the answer changes nothing | — |
 
 ## Query recipes
 
@@ -148,13 +148,11 @@ ORDER BY event_name, version;
 ```
 
 ```sql
--- 7. Away timeouts, and how many caught a running backup or restore.
-SELECT (SELECT value.int_value FROM UNNEST(event_params) WHERE key = 'worker_running') AS worker_running,
-       COUNT(*) AS events,
+-- 7. Away timeouts (worker_running was removed in envelope MR 6; rows before then still carry it).
+SELECT COUNT(*) AS events,
        COUNT(DISTINCT user_pseudo_id) AS users
 FROM `andryoga-safe-box.analytics_286937401.events_*`
-WHERE event_name = 'session_timeout'
-GROUP BY worker_running;
+WHERE event_name = 'session_timeout';
 ```
 
 `-1` means "could not be read" for `db_size_kb` and `free_space_mb`, and "the document provider did

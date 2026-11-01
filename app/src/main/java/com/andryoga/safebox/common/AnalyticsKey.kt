@@ -119,8 +119,7 @@ enum class AnalyticsKey(val eventName: String) {
     // the Forgot password button on the login screen, before any device-security check
     FORGOT_PASSWORD_CLICK("forgot_password_click"),
 
-    // the away timeout locked the vault (a timer that elapses with the vault already locked logs
-    // nothing); AnalyticsParam.WORKER_RUNNING says whether a backup or restore was running
+    // the away timeout locked the vault (a timer that elapses with the vault already locked logs nothing)
     SESSION_TIMEOUT("session_timeout"),
 
     // Envelope encryption migration and Keystore wraps
