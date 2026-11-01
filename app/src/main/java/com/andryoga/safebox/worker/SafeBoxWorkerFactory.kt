@@ -14,7 +14,6 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import javax.inject.Inject
 
@@ -22,7 +21,7 @@ import javax.inject.Inject
  * investigate why @HiltWorker is not working. if it starts to work, then below boiler plate code is not required
  */
 class SafeBoxWorkerFactory @Inject constructor(
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val backupMetadataRepository: BackupMetadataRepository,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
@@ -45,7 +44,7 @@ class SafeBoxWorkerFactory @Inject constructor(
                 BackupDataWorker(
                     appContext,
                     workerParameters,
-                    symmetricKeyUtils,
+                    backupPasswordRegistry,
                     backupMetadataRepository,
                     passwordBasedEncryption,
                     loginDataDaoSecure,
@@ -62,7 +61,7 @@ class SafeBoxWorkerFactory @Inject constructor(
                 RestoreDataWorker(
                     appContext,
                     workerParameters,
-                    symmetricKeyUtils,
+                    backupPasswordRegistry,
                     passwordBasedEncryption,
                     safeBoxDatabase,
                     loginDataDaoSecure,

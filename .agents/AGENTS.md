@@ -17,6 +17,11 @@
   belongs in `docs/` with a pointer at most. If a longer explanatory comment is useful for the
   owner's first read of a change, mark it `// TODO(review): remove before merge` so it is stripped
   before the PR lands. (Review feedback on #294, 2026-10-19.)
+- **No design-document references in code comments.** Never cite design sections (`design §6.7`),
+  debt-register rows (`D4`, `D13`) or MR numbers in a code comment or KDoc; the exception is the
+  `TODO(MRn)` / `TODO(Dn)` bridge markers of the envelope effort, which are greps, not prose. Code
+  describes what it does; the design doc links to the code, not the other way round. (Owner
+  feedback, repeated, last on MR 6 review 2026-10-31.)
 
 ## Interaction Style & Tone
 
@@ -38,6 +43,16 @@
   patterns. If there is a compelling reason to deviate from the
   established app architecture or standard, proactively push back and inform the user upfront in the
   chat before making changes.
+
+## Pull Requests
+
+* **Never write a PR description.** The PR Agent bot generates it from the diff and the commits, so
+  a hand-written body is wasted work that the bot overwrites. Open PRs with
+  `gh pr create --title "..." --body ""` (github-tooling skill) and put anything a rule wants "in
+  the PR" into the **commit message** instead: new `AnalyticsParam` names, a child MR's
+  `TODO(MR n)` inventory, `Part of #n` / `Closes #n`. Human-written notes that must accompany a PR
+  (manual test results, a reply to a bot finding) go in a PR comment, never the body. (Owner
+  instruction after #302, 2026-10-21.)
 
 ## Technical Stack Boundaries
 
@@ -72,6 +87,23 @@
 * **Dispatcher Abstraction:** Never hardcode `Dispatchers.IO` or `Dispatchers.Default` inside
   ViewModels or Repositories. Inject a `DispatchersProvider` interface to guarantee predictable,
   synchronized virtual-time execution during unit testing via a `TestDispatcher`.
+* **Should-not-happen branches assert, they do not log.** A `catch` or `else` that handles a state
+  the design says cannot occur calls `Utils.crashInDebugBuild(message, cause)` instead of only
+  logging or silently degrading: debug builds (and every test built on them) crash so the gap is
+  found while developing; release and QA builds record a Crashlytics non-fatal with the stack and
+  continue on the fail-safe path. Where the catch goes follows from the method's contract: a
+  **defensive** method whose contract is a safe answer catches `Exception`, never a hand-picked
+  list, so an unforeseen class cannot crash a release build — it degrades, and classes outside the
+  documented set are asserted as above; an **operational** method whose caller owns the recovery
+  maps only the failures it understands to typed exceptions and lets the rest propagate, because
+  swallowing there turns a failure into a silent no-op or a wrong answer. The catch-all for
+  operational calls lives at the boundary that owns the recovery (a ViewModel, a worker, a
+  maintenance job), never inside the primitive. Exemption: code that *is* the crash-reporting path
+  (`CrashlyticsCrashReporter`, `ReleaseTree`) stays silent, because `Timber.e` routes through the
+  same `FirebaseCrashlytics.getInstance()`. Call `crashInDebugBuild` from a `catch` block or after
+  the `try`, never inside a `try` whose handler catches `Exception`: `DebugFatalException` is an
+  `Exception`, so the handler would swallow the assertion into the fail-safe result (CodeRabbit on
+  #302). (Owner review of envelope MR 1, 2026-10-21.)
 * **No Fully Qualified Names in Code:** Never inline fully qualified package names in code (e.g.,
   `java.nio.ByteBuffer.allocate` or `com.andryoga.safebox...`). Always add an `import` statement at
   the top of the file and use clean, short type names.
@@ -85,12 +117,15 @@
     * **Analytics Unit Verification Rule:** Always write unit tests in the corresponding ViewModel
       test suites asserting that each UI event action correctly invokes
       `analyticsHelper.logEvent(AnalyticsKey.X)`.
-    * **Param Registration Rule:** GA discards a new `AnalyticsParam` from every report until it is
-      registered as a custom definition, with no backfill. A change that adds a param must name it
-      in the PR description and add it to the register in
+    * **Param Registration Rule & End-of-MR GA Summary:** GA discards a new `AnalyticsParam` from
+      every report until it is registered as a custom definition, with no backfill. A change that
+      adds a param must name it in the commit message (the PR description is bot-generated, see
+      *Pull Requests*) and add it to the register in
       [docs/analytics/firebase-setup.md](../docs/analytics/firebase-setup.md#custom-definitions),
       so the owner registers it before the build reaches a testing track. (2026-10-20: the `reason`
-      of every earlier `backup_failure_dialog_show` was lost this way.)
+      of every earlier `backup_failure_dialog_show` was lost this way.) **At the end of every MR**,
+      always explicitly list any new or updated GA custom definitions (dimensions/metrics) and
+      analytics changes in the final response to the user (or explicitly state that there are none).
 
 ## Code Formatting & Style Rules
 

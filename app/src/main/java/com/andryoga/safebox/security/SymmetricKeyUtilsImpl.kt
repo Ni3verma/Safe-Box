@@ -1,44 +1,30 @@
 package com.andryoga.safebox.security
 
+import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
-import javax.crypto.Cipher
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 
+/**
+ * Field encryption for the record tables under whatever key the current session holds.
+ *
+ * The key is never stored here: every call asks [SessionKeyHolder] for it, so a locked vault fails
+ * closed with [SessionLockedException] on both directions. The data layer does not know whether
+ * it received the DEK or the legacy Keystore handle of a fallback session; both go through
+ * [AesGcmFieldCipher].
+ */
 class SymmetricKeyUtilsImpl
 @Inject constructor(
-    private val secretKey: SecretKey
+    private val sessionKeyHolder: SessionKeyHolder,
 ) : SymmetricKeyUtils {
     object Constants {
-        const val separator = "|"
-        const val gcmAuthTagLength = 128
+        const val separator = AesGcmFieldCipher.SEPARATOR
+        const val gcmAuthTagLength = AesGcmFieldCipher.GCM_AUTH_TAG_LENGTH_BITS
     }
 
-    override fun encrypt(data: String): String {
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-        val ivBytes = cipher.iv
-        val encryptedBytes = cipher.doFinal(data.toByteArray())
+    override fun encrypt(data: String): String =
+        sessionKeyHolder.withSessionKey { key -> AesGcmFieldCipher.encrypt(data, key) }
 
-        val base64EncodedData = SecurityUtils.encodeBase64(encryptedBytes)
-        val base64EncodedIvData = SecurityUtils.encodeBase64(ivBytes)
-
-        return base64EncodedData + Constants.separator + base64EncodedIvData
-    }
-
-    override fun decrypt(data: String): String {
-        val dataArray = data.split(Constants.separator, limit = 2)
-        val base64EncodedEncryptedString = dataArray[0]
-        val base64EncodedInitVector = dataArray[1]
-
-        val encryptedByteArray = SecurityUtils.decodeBase64(base64EncodedEncryptedString)
-        val initVectorByteArray = SecurityUtils.decodeBase64(base64EncodedInitVector)
-
-        val spec = GCMParameterSpec(Constants.gcmAuthTagLength, initVectorByteArray)
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)
-        val decryptedBytes = cipher.doFinal(encryptedByteArray)
-        return decryptedBytes.toString(Charsets.UTF_8)
-    }
+    override fun decrypt(data: String): String =
+        sessionKeyHolder.withSessionKey { key -> AesGcmFieldCipher.decrypt(data, key) }
 }

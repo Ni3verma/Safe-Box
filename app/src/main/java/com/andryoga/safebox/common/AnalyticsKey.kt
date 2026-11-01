@@ -113,11 +113,6 @@ enum class AnalyticsKey(val eventName: String) {
     // exception class per process, so a broken list of many rows is one event, not many.
     RECORD_DECRYPT_FAILURE("record_decrypt_failure"),
 
-    // the Keystore alias was absent and a fresh key was generated; AnalyticsParam.DB_EXISTS tells
-    // a first launch (0) from the silent-data-loss case where a vault already existed (1).
-    // TODO(MR3): delete with the regenerate branch in SecurityModule; its only firing site.
-    KEYSTORE_KEY_CREATED("keystore_key_created"),
-
     // vault size and storage headroom; RECORD_COUNT, DB_SIZE_KB, FREE_SPACE_MB. Once per records
     // ViewModel, i.e. per unlock session.
     VAULT_STATS("vault_stats"),
@@ -125,7 +120,33 @@ enum class AnalyticsKey(val eventName: String) {
     // the Forgot password button on the login screen, before any device-security check
     FORGOT_PASSWORD_CLICK("forgot_password_click"),
 
-    // the away timeout fired; AnalyticsParam.WORKER_RUNNING says whether a backup or restore was
-    // in progress at that moment
+    // the away timeout locked the vault (a timer that elapses with the vault already locked logs nothing)
     SESSION_TIMEOUT("session_timeout"),
+
+    // Envelope encryption migration and Keystore wraps
+    VAULT_MIGRATION_START("vault_migration_start"),
+    VAULT_MIGRATION_SUCCESS("vault_migration_success"),
+    VAULT_MIGRATION_FAILURE("vault_migration_failure"),
+    VAULT_MIGRATION_FAILURE_SHOW("vault_migration_failure_show"),
+    VAULT_MIGRATION_RETRY_CLICK("vault_migration_retry_click"),
+    VAULT_MIGRATION_CONTINUE_LEGACY_CLICK("vault_migration_continue_legacy_click"),
+    VAULT_LEGACY_SESSION_START("vault_legacy_session_start"),
+    VAULT_WRAP_CREATED("vault_wrap_created"),
+    VAULT_WRAP_CREATE_FAILURE("vault_wrap_create_failure"),
+
+    // Biometric login, forgot-password recovery and erase
+    // the login-screen probe found KEK_Biometric invalidated; the wrap is deleted and the banner shown
+    BIOMETRIC_KEY_INVALIDATED("biometric_key_invalidated"),
+    // the forgot-password probe found KEK_Device invalidated, or its unwrap failed after a
+    // successful prompt; the wrap is deleted
+    DEVICE_KEY_INVALIDATED("device_key_invalidated"),
+    // Forgot password tapped on a v2 vault that has no usable device wrap
+    RECOVERY_NOT_SET_UP_SHOW("recovery_not_set_up_show"),
+    VAULT_RECOVERY_SUCCESS("vault_recovery_success"),
+    // AnalyticsParam.REASON (RecoveryFailureReason wire name) and AnalyticsParam.EXCEPTION
+    VAULT_RECOVERY_FAILURE("vault_recovery_failure"),
+    // AnalyticsParam.SOURCE says which login-screen state offered the erase
+    ERASE_VAULT_DIALOG_SHOW("erase_vault_dialog_show"),
+    ERASE_VAULT_DIALOG_CONFIRM_CLICK("erase_vault_dialog_confirm_click"),
+    ERASE_VAULT_DIALOG_CANCEL_CLICK("erase_vault_dialog_cancel_click"),
 }

@@ -15,5 +15,6 @@ interface HashingUtils {
      * @param toCompareWithHash : it the hash that will be compared with.
      * It must be of this format : {base64 encoded hash(password+salt)}+someSeparator+{base64 encoded salt}
      * @return true if text and its hash matches, false otherwise*/
+    // TODO(D3): legacy vault (crypto_version = 1) only — its single caller is the legacy credential check (D1 removes the rest of this interface in MR 9)
     fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean
 }

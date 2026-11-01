@@ -17,6 +17,8 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.models.CryptoVersion
+import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
@@ -144,9 +146,9 @@ class SignupAndLoginE2ETest {
                 )
                 assertThat(isSignupStillRequired).isFalse()
 
-                val isPasswordCorrect =
-                    userDetailsRepository.checkPassword(E2ETestUtils.TEST_MASTER_PASSWORD)
-                assertThat(isPasswordCorrect).isTrue()
+                assertThat(safeBoxDatabase.vaultMetaDao().get(VaultMetaKey.CRYPTO_VERSION))
+                    .isEqualTo(CryptoVersion.ENVELOPE)
+                assertThat(userDetailsRepository.getHint()).isEqualTo(E2ETestUtils.TEST_MASTER_HINT)
             }
         }
     }

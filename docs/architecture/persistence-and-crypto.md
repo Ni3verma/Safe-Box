@@ -10,7 +10,7 @@ sufficient coverage.
 
 | Layer | Holds |
 |---|---|
-| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (password hash, and the hint encrypted with the same key as the records — `UserDetailsDaoSecure.getHint`) |
+| Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (`uid` in plaintext; the hint encrypted with the records' key while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, and wrapped keys) |
 | `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
@@ -19,7 +19,65 @@ sufficient coverage.
 
 ## Field encryption
 
-`di/SecurityModule.kt`:
+Encryption is per-field, applied in the `secureDao` layer (`data/db/secureDao/*DaoSecure.kt`), so
+DAOs above it deal in plaintext. The on-disk form of every encrypted column is
+`b64(ciphertext)|b64(iv)`, AES-256-GCM with a 128-bit tag, produced by the pure codec
+`security/AesGcmFieldCipher.kt` over an explicit `SecretKey`.
+
+**On `feature/envelope-encryption` (since envelope MR 3, 2026-10-21) there is no ambient key.**
+`SymmetricKeyUtilsImpl` asks `SessionKeyHolder.withSessionKey` for the key on every call — the DEK
+once a vault is envelope-encrypted, or the legacy Keystore handle in a legacy session — and a
+locked vault fails closed with `SessionLockedException` on both directions:
+
+- the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` (`common/Utils.kt`) and emit an empty list
+  (any other failure still propagates: a broken row is a bug to surface, not a state to hide);
+- suspend reads and writes throw it to the caller that owns the recovery: a ViewModel launch that
+  touches records goes through `Utils.launchVaultOperation` (since envelope MR 4), which ends the
+  operation silently on `SessionLockedException` and propagates anything else — the four
+  `SingleRecordViewModel` sites today; the workers return `SESSION_LOCKED` (below);
+- the route to Login is central: `HomeScreen` collects `MainViewModel.isVaultUnlocked`
+  (`SessionKeyHolder.isUnlocked`, a `StateFlow`) and leaves for the Login graph, composing
+  nothing, whenever it is `false` — on entry for a back stack restored after process death or
+  a navigation that skipped Login, and the moment the holder is cleared while Home is showing.
+  Whoever clears the key gets the navigation for free; nothing else navigates on a lock.
+
+**Who clears the key (since envelope MR 4).** The away timeout: `ActiveSessionManager`, after the
+delay, records `SessionLockReason.AWAY_TIMEOUT` in `SessionLockReasonStore` (`ui/core`, process
+memory, read-and-cleared once by the next `LoginViewModel`, which drives the "You were away"
+banner), then calls `clearSessionKey()`, then logs `SESSION_TIMEOUT` — only when the holder was open, so a timeout on the login screen records and
+logs nothing. Every clear emits `lockEvents`, which `InAppUpdateViewModel` treats as "locked".
+A running backup or restore is **not** cancelled: it fails closed (`SESSION_LOCKED`) at its next
+use of the key — a restore's transaction rolls back — or finishes if it no longer needs one (a
+backup past its read phase). There is no `logoutEvent` any more and no away dialog. The start destination is Room's
+decision too: `VaultRepository.hasVault()` (a `vault_meta.crypto_version` row, or a `user_details`
+row) routes to Login, nothing routes to Signup; `IS_SIGN_UP_REQUIRED` is written but never read for
+routing.
+
+The legacy `symmetricDataKey` alias is reached only through `KeystoreGateway`:
+`legacyVaultKey()` returns the handle or `null` and **never generates** (the signup bridge that
+created it went with envelope MR 5; a fresh vault is `crypto_version = 2` from the start). The hint
+of a `crypto_version = 1` vault goes through that handle directly on read and write
+(`UserDetailsDaoSecure`), because it is the one field touched outside a session. A lost key reads
+as `null` and refuses to write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST`,
+nothing is regenerated, and the only way forward is *Erase everything and start over*.
+
+**Who opens the key (since envelope MR 5 and MR 6).** Every envelope unlock from the login screen
+ends in `SessionKeyHolder.setSessionKey(dek)` from `LoginViewModel`: the master password unwraps
+`wrapped_dek_password` (`unwrapWithPassword` + `verify`); a fingerprint unwraps
+`wrapped_dek_biometric` through the `Cipher` the ViewModel prepared and the `BiometricPrompt`
+`CryptoObject` authorised; forgot-password unwraps `wrapped_dek_device` the same way (API 30+) or
+inside the time-bound key's 5 s window right after the prompt (API 29), holds the DEK in the
+ViewModel until `VaultRepository.rewrapPassword(newPassword, dek, hint)` has committed, and only
+then opens the session. The legacy session (`setLegacySession`) is opened by *Continue for now*
+alone. A key that fails to unwrap or verify after a successful prompt is treated as invalidated:
+the wrap row is deleted and `VaultKeyMaintenance` recreates it at the next password login. A
+second clear exists since MR 6: `VaultResetUseCase.eraseVault()` locks the session before it
+clears every Room table and deletes the Keystore aliases. Design:
+[envelope-encryption.md](../design/envelope-encryption.md) §3.1, §4.3, §6.6, §6.7, §6.9, §6.11.
+
+### What `master` still does, and why the branch is shaped like this
+
+`di/SecurityModule.kt` on `master`:
 
 ```kotlin
 private fun getSymmetricKey(): SecretKey {
@@ -35,21 +93,22 @@ private fun getSymmetricKey(): SecretKey {
 ```
 
 > [!CAUTION]
-> **The highest-severity failure mode in the app.** If the alias is ever lost, this silently
-> creates a *new* key. Nothing throws *at key creation*. Every existing record becomes permanently
-> undecryptable. Observed with the alias deliberately deleted (2026-09-24, upgrade harness): the
-> app launched normally and then crashed with `javax.crypto.AEADBadTagException` from
+> **The highest-severity failure mode in the app, on `master`.** If the alias is ever lost, this
+> silently creates a *new* key. Nothing throws *at key creation*. Every existing record becomes
+> permanently undecryptable. Observed with the alias deliberately deleted (2026-09-24, upgrade
+> harness): the app launched normally and then crashed with `javax.crypto.AEADBadTagException` from
 > `AndroidKeyStoreCipherSpiBase.engineDoFinal` at the first decrypt, which was the unlock screen's
-> Show Hint, since the hint is encrypted under the same key.
+> Show Hint, since the hint is encrypted under the same key. Since 2026-10-20 it is at least
+> visible there: `keystore_key_created` with `db_exists = 1`
+> ([envelope-readiness.md](../analytics/envelope-readiness.md)). On the feature branch the path
+> does not exist; `AndroidKeystoreGatewayLegacyKeyTest` pins that a regenerated key fails the GCM
+> tag instead of reading garbage.
 >
 > Because the key lives in the Keystore and not in `/data/data`, it is invisible to Room migration
 > tests, to backup/restore tests, and to any `/data` snapshot. The only thing that can catch a
 > regression here is an **upgrade test that installs an old build, writes records, upgrades in
 > place, and compares decrypted field values**. See
 > [docs/testing/upgrade-testing.md](../testing/upgrade-testing.md).
-
-Encryption is per-field, applied in the `secureDao` layer
-(`data/db/secureDao/*DaoSecure.kt`), so DAOs above it deal in plaintext.
 
 ## Backup file format
 
@@ -168,6 +227,7 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 | `FOLDER_INACCESSIBLE` | pre-check fails (`exists() && isDirectory && canWrite()`), or `SecurityException` / `FileNotFoundException` while writing | **yes** | "Backup Failed! Please set backup path" |
 | `WRITE_FAILED` | any other `IOException` while writing, incl. a null `createFile` / file descriptor | no | check free space |
 | `UNKNOWN` | everything else: DAO, crypto, missing input | no | report via Settings > Send feedback |
+| `SESSION_LOCKED` | the vault locked before or during the run (`SessionLockedException`), or no password is registered for this work id — the process that registered it is gone | no | **none**: the auto-backup after login stays silent, and the gate has already taken the manual dialog away with HomeGraph (it maps to the generic failure state) |
 
 - **Order:** empty check, then the start notification, then the folder pre-check, then encryption.
   An empty vault never touches the folder, and a dead folder costs no crypto work.
@@ -182,6 +242,12 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
   replaced by a different one. At the per-app cap (512 in current AOSP) the system silently prunes
   the oldest grants, so this is hygiene, not a fix for a visible failure.
 - The enum is append-only; `BackupFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins it.
+- **The backup password never enters WorkManager's database** (envelope MR 4). Whoever enqueues
+  puts it in `BackupPasswordRegistry` (`worker/`, process memory, keyed by work id) *before*
+  `enqueueUniqueWork`; the worker `take`s it as its first statement using its own `id`, zeroes it
+  in a `finally`, and the request's input data carries only the notification flag. Every entry is
+  taken by its own worker or lost with the process. The same applies to restore
+  (`RESTORE_PARAM_FILE_URI` is the only input).
 
 ## Restore semantics
 
@@ -210,6 +276,7 @@ Failure classification is `RestoreFailureReason`:
 | `UNKNOWN_ERROR` | anything else |
 | `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
 | `BACKUP_EMPTY` | every `decrypt*Data` result in `startRestore` is null (no record payload, so nothing is decrypted); checked after the version gate, before any DB work |
+| `SESSION_LOCKED` | no password registered for this work id (process death), or `SessionLockedException` — typically at the first re-encrypted insert inside `runInTransaction`, which rolls the per-table deletes back; the vault is intact. Logged at `Timber.i`, no `RESTORE_DATA_FAILURE` |
 
 The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
 can outlive an app upgrade. `RestoreFailureReasonTest.entries_shouldKeepPersistedOrdinalOrder` pins
@@ -231,8 +298,9 @@ backup. A skipped count is surfaced to the UI.
 
 ## Room
 
-- Current version **5**; exported schemas live in `app/schemas/` and are also mounted as androidTest
-  assets so migration tests can read them.
+- Current version **6** on `feature/envelope-encryption` (**5** on `master` until the final merge);
+  exported schemas live in `app/schemas/` and are also mounted as androidTest assets so migration
+  tests can read them.
 - `Migration.ALL` in `data/db/Migration.kt` is the canonical list; `CacheModule` does
   `.addMigrations(*Migration.ALL)`. `MigrationTest` asserts
   `Migration.ALL.maxOf { it.endVersion } == currentSchemaVersion()`, so bumping the DB without
@@ -241,6 +309,21 @@ backup. A skipped count is surfaced to the UI.
   total, silent data loss.
 - `MIGRATION_4_5` only **adds** the authenticator table. It does not `ALTER` any encrypted table,
   which is why it is low risk.
+- `MIGRATION_5_6` (envelope encryption, [design §4.2](../design/envelope-encryption.md#42-migration_5_6-runs-when-room-opens-before-any-login))
+  creates `vault_meta` (`key TEXT PRIMARY KEY, value TEXT`), parks
+  `crypto_version = 1` (only when a `user_details` row exists) and the master-password hash as
+  `legacy_password_hash` in `vault_meta`, then rebuilds `user_details` **without** the `password`
+  column. The rebuild is create-copy-drop-rename, not `DROP COLUMN`: that needs SQLite 3.35 and
+  API 29–33 ship 3.28–3.32. It touches no encrypted record column. Each destructive step is
+  preceded by a row-count `check`; a failed check throws, Room rolls the transaction back and the
+  database stays at version 5 (the app fails to open rather than opening without its credential).
+  Key names and values are SQL literals in the migration and constants in
+  `data/db/models/VaultMetaKey.kt`; `MigrationTest` asserts through the constants so the two
+  cannot drift apart, and also opens the migrated file through Room to drive the production DAOs.
+  Until MR 5 lands, signup still creates a legacy vault (`crypto_version = 1` + hash, written by
+  `UserDetailsRepositoryImpl` in one `withTransaction`, `crypto_version` first because
+  `UserDetailsDaoSecure` reads it to pick the hint's stored form), so a vault made by an interim
+  branch build is migrated like any other.
 
 ## Related
 

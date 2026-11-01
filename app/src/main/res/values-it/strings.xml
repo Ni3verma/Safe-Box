@@ -145,8 +145,7 @@
     <string name="micr_code">Codice MICR</string>
     <string name="welcome_back">Bentornato!</string>
     <string name="welcome">Benvenuto!</string>
-    <string name="timeout_dialog_message">Sei rimasto assente troppo a lungo. Tocca OK per accedere nuovamente all\'app</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Dopo la tua assenza — sblocca di nuovo.</string>
     <string name="created_on">Creato il</string>
     <string name="updated_on">Aggiornato il</string>
     <string name="add_a_new_record">Aggiungi una nuova voce</string>
@@ -196,4 +195,32 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Aggiornamento scaricato. Riavvia Safe Box per installarlo.</string>
     <string name="in_app_update_restart">Riavvia</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Aggiornamento di sicurezza — inserisci la password principale una volta</string>
+    <string name="vault_migration_progress_title">Aggiornamento della sicurezza della cassaforte…</string>
+    <string name="vault_migration_progress_counter">%1$d di %2$d record</string>
+    <string name="vault_migration_failure_keystore">L\'hardware sicuro non ha risposto. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_verify">Verifica dell\'aggiornamento non riuscita. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_storage">Impossibile salvare l\'aggiornamento. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_unexpected">Aggiornamento non riuscito. Non è stata apportata alcuna modifica.</string>
+    <string name="vault_migration_failure_forgot_password_note">La tua password principale non è stata modificata.</string>
+    <string name="vault_migration_retry">Riprova</string>
+    <string name="vault_migration_continue_legacy">Continua per ora</string>
+    <string name="legacy_key_lost_title">Chiave di crittografia non disponibile</string>
+    <string name="legacy_key_lost_body">La chiave hardware che crittografava questa cassaforte non è più disponibile su questo dispositivo, quindi i record esistenti non possono essere aperti. Se hai un file di backup, puoi cancellare questa cassaforte e ripristinarla da quel backup.</string>
+    <string name="home_upgrade_pending_banner">Aggiornamento di sicurezza in sospeso — verrà eseguito al prossimo accesso</string>
+    <string name="home_upgrade_pending_retry">Riprova ora</string>
+    <string name="login_biometric_invalidated_banner">L\'accesso con impronta digitale deve essere configurato di nuovo — inserisci la password principale</string>
+    <string name="recovery_not_set_up_title">Recupero non configurato</string>
+    <string name="recovery_not_set_up_body">Una password principale dimenticata può essere reimpostata solo tramite un blocco schermo che era già impostato al momento del tuo ultimo accesso. Questo dispositivo non contiene alcuna chiave di recupero per questa cassaforte, che quindi può essere aperta solo con la sua password principale.</string>
+    <string name="recovery_not_set_up_restore_hint">Se hai un file di backup, cancella questa cassaforte, registrati di nuovo e ripristina il backup da Backup e ripristino.</string>
+    <string name="recovery_back_to_login">Torna all\'accesso</string>
+    <string name="erase_vault_action">Cancella tutto e ricomincia</string>
+    <string name="erase_vault_dialog_title">Cancellare tutto?</string>
+    <string name="erase_vault_dialog_body">Tutte le voci, la password principale e le chiavi di recupero su questo dispositivo verranno eliminate definitivamente. I file di backup salvati altrove non saranno interessati.</string>
+    <string name="erase_vault_dialog_confirm">Cancella</string>
+    <string name="recovery_failure_not_authenticated">Lo sblocco è scaduto prima che la cassaforte potesse essere aperta. Riprova.</string>
+    <string name="recovery_failure_verifier">I dati di recupero su questo dispositivo sono danneggiati. Non è stata apportata alcuna modifica.</string>
+    <string name="recovery_failure_keystore">L\'hardware sicuro non è riuscito ad aprire la chiave di recupero. Non è stata apportata alcuna modifica.</string>
+    <string name="recovery_failure_storage">Impossibile salvare la nuova password. Non è stata apportata alcuna modifica.</string>
 </resources>

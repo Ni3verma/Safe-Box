@@ -1,6 +1,7 @@
 package com.andryoga.safebox.data.db.secureDao
 
 import com.andryoga.safebox.common.Utils.decryptNullableString
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.docs.SearchBankAccountData
@@ -32,6 +33,7 @@ class BankAccountDataDaoSecure @Inject constructor(
             .map {
                 SearchBankAccountData.Companion.decrypt(it, symmetricKeyUtils)
             }
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun deleteBankAccountDataByKey(key: Int) {
@@ -40,6 +42,14 @@ class BankAccountDataDaoSecure @Inject constructor(
 
     override suspend fun exportAllData(): List<ExportBankAccountData> {
         return bankAccountDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override suspend fun getAllEntities(): List<BankAccountDataEntity> {
+        return bankAccountDataDao.getAllEntities().map { decrypt(it) }
+    }
+
+    override suspend fun count(): Int {
+        return bankAccountDataDao.count()
     }
 
     override fun deleteAllData() {

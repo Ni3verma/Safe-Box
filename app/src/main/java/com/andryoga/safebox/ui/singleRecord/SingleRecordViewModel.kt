@@ -10,6 +10,7 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
+import com.andryoga.safebox.common.Utils.launchVaultOperation
 import com.andryoga.safebox.domain.models.record.RecordType
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.singleRecord.dynamicLayout.LayoutFactory
@@ -26,7 +27,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -63,7 +63,7 @@ class SingleRecordViewModel @Inject constructor(
         layout = layoutFactory.getLayout(args.id, args.recordType)
         Timber.i("got layout of type : ${args.recordType}, is id null : ${args.id == null}")
 
-        viewModelScope.launch {
+        viewModelScope.launchVaultOperation {
             val layoutPlan = layout.getLayoutPlan()
             initialFieldData = layoutPlan.fieldUiState.mapValues { it.value.data }
             _uiState.update {
@@ -121,7 +121,7 @@ class SingleRecordViewModel @Inject constructor(
 
             is SingleRecordScreenAction.OnSaveClicked -> {
                 Timber.i("save clicked")
-                viewModelScope.launch {
+                viewModelScope.launchVaultOperation {
                     layout.saveLayout(
                         _uiState.value.layoutPlan.fieldUiState.mapValues { it.value.data }
                     )
@@ -132,7 +132,7 @@ class SingleRecordViewModel @Inject constructor(
 
             SingleRecordScreenAction.OnDeleteClicked -> {
                 Timber.i("delete clicked")
-                viewModelScope.launch {
+                viewModelScope.launchVaultOperation {
                     layout.deleteLayout()
                     analyticsHelper.logEvent(AnalyticsKey.RECORD_DELETE) {
                         param(AnalyticsParam.RECORD_TYPE, recordType.toAnalyticsValue())
@@ -177,7 +177,7 @@ class SingleRecordViewModel @Inject constructor(
 
     private fun handleShareRecord() {
         Timber.i("on share clicked")
-        viewModelScope.launch(dispatchersProvider.io) {
+        viewModelScope.launchVaultOperation(dispatchersProvider.io) {
             Timber.i("making copyable content")
             val dataStringBuffer = StringBuffer()
 

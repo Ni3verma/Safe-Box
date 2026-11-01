@@ -2,7 +2,9 @@
 
 Date: 2026-10-21
 
-Status: Accepted — evidence record for [docs/design/envelope-encryption.md](../design/envelope-encryption.md) §10
+Status: Accepted — evidence record for [docs/design/envelope-encryption.md](../design/envelope-encryption.md) §10.
+The API 24 and 28 rows are historical since [ADR-0012](0012-min-sdk-29.md) (`minSdk` 29 on
+`feature/envelope-encryption`); the decisions below that say "API 24–29" read "API 29" there.
 
 ## Context
 

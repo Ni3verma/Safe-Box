@@ -3,7 +3,6 @@ package com.andryoga.safebox.security
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
@@ -34,8 +33,7 @@ class AndroidDeviceSecurityStatus(
             )
         },
         hasStrongBox = readOrDefault(false) {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
         },
     )
 

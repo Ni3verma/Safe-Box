@@ -32,16 +32,14 @@ object CommonConstants {
     const val AUTHENTICATOR_DATA_KEY = "8"
     const val BACKUP_VERSION = 3
 
-    // Backup params
-    const val BACKUP_PARAM_PASSWORD = "0"
+    // Backup params. The password is not one: it travels through BackupPasswordRegistry.
     const val BACKUP_PARAM_IS_SHOW_START_NOTIFICATION = "1"
 
     // Backup metadata
     const val WORKER_NAME_BACKUP_DATA = "BACKUP_SAFE_BOX_DATA_WORK"
     const val MAX_BACKUP_FILES = 5
 
-    // Restore params
-    const val RESTORE_PARAM_PASSWORD = "0"
+    // Restore params. The password is not one: it travels through BackupPasswordRegistry.
     const val RESTORE_PARAM_FILE_URI = "1"
 
     // Backup metadata

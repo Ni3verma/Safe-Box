@@ -1,9 +1,7 @@
 package com.andryoga.safebox.worker
 
-import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Build
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -56,13 +54,7 @@ class ClipboardClearWorker
         }
 
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                clipboardManager.clearPrimaryClip()
-            } else {
-                // clearPrimaryClip only arrived in Pie, so below it the secret can only be
-                // displaced by overwriting the clipboard with an empty clip.
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""))
-            }
+            clipboardManager.clearPrimaryClip()
             Timber.i("cleared the copied credential from the clipboard")
             analyticsHelper.logEvent(AnalyticsKey.CLIPBOARD_AUTO_CLEARED) {
                 param(AnalyticsParam.RESULT, if (description != null) "verified" else "unverified")

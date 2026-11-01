@@ -7,10 +7,15 @@ import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.common.Exceptions
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
+import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.verify
@@ -26,27 +31,39 @@ class SignupViewModelTest {
     @MockK(relaxUnitFun = true)
     lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
-    @MockK(relaxUnitFun = true)
-    lateinit var userDetailsRepository: UserDetailsRepository
+    @MockK
+    lateinit var vaultRepository: VaultRepository
 
     @MockK(relaxUnitFun = true)
     lateinit var analyticsHelper: AnalyticsHelper
 
+    @MockK(relaxUnitFun = true)
+    lateinit var vaultKeyMaintenance: VaultKeyMaintenance
+
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private lateinit var sessionKeyHolder: SessionKeyHolderImpl
     private lateinit var viewModel: SignupViewModel
+    private val testDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
 
     @Before
     fun setUp() {
         MockKAnnotations.init(this)
-        viewModel = SignupViewModel(
-            encryptedPreferenceProvider = encryptedPreferenceProvider,
-            userDetailsRepository = userDetailsRepository,
-            analyticsHelper = analyticsHelper,
-            isDebug = false
-        )
+        sessionKeyHolder = SessionKeyHolderImpl()
+        coEvery { vaultRepository.hasVault() } returns false
+        coEvery { vaultRepository.createVault(any(), any()) } answers { testDek.copyOf() }
+        viewModel = createViewModel(isDebug = false)
     }
+
+    private fun createViewModel(isDebug: Boolean) = SignupViewModel(
+        encryptedPreferenceProvider = encryptedPreferenceProvider,
+        vaultRepository = vaultRepository,
+        analyticsHelper = analyticsHelper,
+        sessionKeyHolder = sessionKeyHolder,
+        vaultKeyMaintenance = vaultKeyMaintenance,
+        isDebug = isDebug,
+    )
 
     @Test
     fun initialUiState_matchesDefaultSignupUiState() = runTest {
@@ -69,12 +86,7 @@ class SignupViewModelTest {
 
     @Test
     fun initialUiState_whenIsDebugTrue_prefillsDebugPasswordAndHint() = runTest {
-        viewModel = SignupViewModel(
-            encryptedPreferenceProvider = encryptedPreferenceProvider,
-            userDetailsRepository = userDetailsRepository,
-            analyticsHelper = analyticsHelper,
-            isDebug = true
-        )
+        viewModel = createViewModel(isDebug = true)
         advanceUntilIdle()
         val uiState = viewModel.uiState.value
 
@@ -186,7 +198,7 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onSignupClick_withValidPasswordAndHint_insertsUserDetailsAndNavigatesHome() = runTest {
+    fun onSignupClick_withValidPasswordAndHint_createsEnvelopeVaultOpensDekSessionAndNavigatesHome() = runTest {
         val password = "Password@123"
         val hint = "favorite pet"
 
@@ -199,11 +211,20 @@ class SignupViewModelTest {
             advanceUntilIdle()
 
             verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGN_UP) }
-            coVerify(exactly = 1) { userDetailsRepository.insertUserDetailsData(password, hint) }
+            coVerify(exactly = 1) { vaultRepository.hasVault() }
+            coVerify(exactly = 1) {
+                vaultRepository.createVault(
+                    match { it.contentEquals(password.toCharArray()) },
+                    hint,
+                )
+            }
+            assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+            assertThat(sessionKeyHolder.isLegacySession).isFalse()
+            verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
             coVerify(exactly = 1) {
                 encryptedPreferenceProvider.upsertBooleanPref(
                     CommonConstants.IS_SIGN_UP_REQUIRED,
-                    false
+                    false,
                 )
             }
             assertThat(expectMostRecentItem()).isTrue()
@@ -211,7 +232,51 @@ class SignupViewModelTest {
     }
 
     @Test
-    fun onSignupClick_withInvalidPassword_logsSignupBlockedAndDoesNotCallDb() = runTest {
+    fun onSignupClick_whenCalledTwiceWhileInFlight_createsVaultOnlyOnce() = runTest {
+        viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+        viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGN_UP) }
+        coVerify(exactly = 1) { vaultRepository.createVault(any(), any()) }
+    }
+
+    @Test
+    fun onSignupClick_whenVaultAlreadyExists_leavesVaultAndSessionUntouched() {
+        coEvery { vaultRepository.hasVault() } returns true
+
+        val thrown = runCatching {
+            runTest {
+                viewModel.onAction(SignupScreenAction.OnPasswordUpdate(password = "Password@123"))
+                viewModel.onAction(SignupScreenAction.OnHintUpdate(hint = "favorite pet"))
+                viewModel.onAction(SignupScreenAction.OnSignupClick)
+                advanceUntilIdle()
+            }
+        }.exceptionOrNull()
+
+        val debugFatal = generateSequence(thrown) { it.cause }
+            .firstOrNull { it is Exceptions.DebugFatalException }
+        assertThat(debugFatal).isNotNull()
+        coVerify(exactly = 0) { vaultRepository.createVault(any(), any()) }
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        verify(exactly = 0) { vaultKeyMaintenance.scheduleAfterUnlock() }
+        assertThat(viewModel.navigateToHome.value).isFalse()
+    }
+
+    @Test
+    fun onSignupClick_whenBlocked_leavesVaultAndSessionUntouched() = runTest {
+        viewModel.onAction(SignupScreenAction.OnSignupClick)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { vaultRepository.createVault(any(), any()) }
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun onSignupClick_withInvalidPassword_logsSignupBlockedAndDoesNotCreateVault() = runTest {
         viewModel.navigateToHome.test {
             assertThat(awaitItem()).isFalse()
 
@@ -219,13 +284,13 @@ class SignupViewModelTest {
             advanceUntilIdle()
 
             verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED) }
-            coVerify(exactly = 0) { userDetailsRepository.insertUserDetailsData(any(), any()) }
+            coVerify(exactly = 0) { vaultRepository.createVault(any(), any()) }
             expectNoEvents()
         }
     }
 
     @Test
-    fun onSignupClick_withEmptyHint_logsSignupBlockedAndDoesNotCallDb() = runTest {
+    fun onSignupClick_withEmptyHint_logsSignupBlockedAndDoesNotCreateVault() = runTest {
         viewModel.navigateToHome.test {
             assertThat(awaitItem()).isFalse()
 
@@ -235,7 +300,7 @@ class SignupViewModelTest {
             advanceUntilIdle()
 
             verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.SIGNUP_BLOCKED) }
-            coVerify(exactly = 0) { userDetailsRepository.insertUserDetailsData(any(), any()) }
+            coVerify(exactly = 0) { vaultRepository.createVault(any(), any()) }
             expectNoEvents()
         }
     }

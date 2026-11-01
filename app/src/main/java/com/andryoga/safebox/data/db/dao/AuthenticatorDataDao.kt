@@ -35,6 +35,12 @@ interface AuthenticatorDataDao {
     @Query("select * from authenticator_data")
     suspend fun exportAllData(): List<ExportAuthenticatorData>
 
+    @Query("select * from authenticator_data")
+    suspend fun getAllEntities(): List<AuthenticatorDataEntity>
+
+    @Query("select count(*) from authenticator_data")
+    suspend fun count(): Int
+
     // https://github.com/Ni3verma/Safe-Box/issues/236
     // TODO: Migrate to suspend function alongside other DAOs
     @Query("delete from authenticator_data")

@@ -11,6 +11,7 @@ import com.andryoga.safebox.data.db.dao.BankCardDataDao
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
+import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -89,5 +90,13 @@ object CacheModule {
         safeBoxDatabase: SafeBoxDatabase,
     ): AuthenticatorDataDao {
         return safeBoxDatabase.authenticatorDataDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideVaultMetaDao(
+        safeBoxDatabase: SafeBoxDatabase,
+    ): VaultMetaDao {
+        return safeBoxDatabase.vaultMetaDao()
     }
 }

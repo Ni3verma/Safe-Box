@@ -27,7 +27,7 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
@@ -58,7 +58,7 @@ class RestoreDataWorker
 @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val passwordBasedEncryption: PasswordBasedEncryption,
     private val safeBoxDatabase: SafeBoxDatabase,
     private val loginDataDaoSecure: LoginDataDaoSecure,
@@ -80,18 +80,31 @@ class RestoreDataWorker
     private lateinit var importMap: Map<String, ByteArray?>
     private lateinit var salt: ByteArray
     private lateinit var iv: ByteArray
-    private lateinit var inputPassword: String
+    private lateinit var inputPassword: CharArray
 
     override suspend fun doWork(): Result {
         startTime = System.currentTimeMillis()
         restoreStartedAt = startTime
+        // Taken first so no early return leaves it registered; zeroed in finally.
+        val password = backupPasswordRegistry.take(id)
+        try {
+            if (password == null) {
+                Timber.i("$localTag restore abandoned, no password for this work in this process")
+                return Result.failure(RestoreFailureReason.SESSION_LOCKED.toWorkData())
+            }
+            inputPassword = password
+            return restore()
+        } finally {
+            password?.fill(NUL)
+        }
+    }
+
+    private suspend fun restore(): Result {
         return try {
-            inputPassword = inputData.getString(CommonConstants.RESTORE_PARAM_PASSWORD)
-                ?: throw IllegalArgumentException("expected password input was not received")
             val fileUri = inputData.getString(CommonConstants.RESTORE_PARAM_FILE_URI)
                 ?: throw IllegalArgumentException("expected file uri input was not received")
 
-            recordTime("got input pswrd and file uri")
+            recordTime("got file uri")
 
             val uri = fileUri.toUri()
             val inputStream =
@@ -182,6 +195,10 @@ class RestoreDataWorker
                 param(AnalyticsParam.VERSION, version)
             }
             Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData())
+        } catch (exception: SessionLockedException) {
+            // An expected state, not a defect: the transaction, if reached, has rolled back.
+            Timber.i("$localTag restore abandoned, the vault is locked")
+            Result.failure(RestoreFailureReason.SESSION_LOCKED.toWorkData())
         } catch (exception: Exception) {
             onRestoreError(exception)
             val failureReason = mapExceptionToFailureReason(exception)
@@ -343,7 +360,7 @@ class RestoreDataWorker
         return if (loginDataByteArray != null) {
             val json = String(
                 passwordBasedEncryption.encryptDecrypt(
-                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    inputPassword,
                     loginDataByteArray,
                     salt,
                     iv,
@@ -360,7 +377,7 @@ class RestoreDataWorker
         return if (bankAccountDataByteArray != null) {
             val json = String(
                 passwordBasedEncryption.encryptDecrypt(
-                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    inputPassword,
                     bankAccountDataByteArray,
                     salt,
                     iv,
@@ -377,7 +394,7 @@ class RestoreDataWorker
         return if (bankCardDataByteArray != null) {
             val json = String(
                 passwordBasedEncryption.encryptDecrypt(
-                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    inputPassword,
                     bankCardDataByteArray,
                     salt,
                     iv,
@@ -394,7 +411,7 @@ class RestoreDataWorker
         return if (secureNoteDataByteArray != null) {
             val json = String(
                 passwordBasedEncryption.encryptDecrypt(
-                    symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                    inputPassword,
                     secureNoteDataByteArray,
                     salt,
                     iv,
@@ -440,7 +457,7 @@ class RestoreDataWorker
 
         val json = String(
             passwordBasedEncryption.encryptDecrypt(
-                symmetricKeyUtils.decrypt(inputPassword).toCharArray(),
+                inputPassword,
                 authenticatorDataByteArray,
                 salt,
                 iv,
@@ -560,5 +577,9 @@ class RestoreDataWorker
         val sec = CommonConstants.TIME_1_SECOND
         Timber.i("$localTag  $message : time took = $timeTook millis, ${timeTook / sec} sec")
         startTime = System.currentTimeMillis()
+    }
+
+    private companion object {
+        const val NUL = '\u0000'
     }
 }

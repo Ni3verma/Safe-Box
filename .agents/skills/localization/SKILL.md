@@ -17,7 +17,7 @@ English [`app/src/main/res/values/strings.xml`](../../../app/src/main/res/values
 | Indic | `hi`, `bn`, `ta`, `mr` |
 
 > [!NOTE]
-> Indonesian uses `values-in` so Android `Resources` resolves it across the full `minSdk 24`–`targetSdk 37` range (`Locale("id").language` returns `"in"` on legacy Android runtimes).
+> Indonesian uses `values-in` so Android `Resources` resolves it across the full `minSdk 29`–`targetSdk 37` range (`Locale("id").language` returns `"in"` on legacy Android runtimes).
 
 ## Commands
 

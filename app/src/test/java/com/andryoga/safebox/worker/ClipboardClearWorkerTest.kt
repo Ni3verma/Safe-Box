@@ -1,10 +1,8 @@
 package com.andryoga.safebox.worker
 
-import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
-import android.os.Build
 import android.os.PersistableBundle
 import androidx.work.Data
 import androidx.work.ListenableWorker
@@ -19,11 +17,8 @@ import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -39,18 +34,11 @@ class ClipboardClearWorkerTest {
 
     @Before
     fun setUp() {
-        mockkStatic(ClipData::class)
-        every { ClipData.newPlainText(any(), any()) } returns mockk(relaxed = true)
         context = mockk(relaxed = true)
         clipboardManager = mockk(relaxed = true)
         analyticsHelper = FakeAnalyticsHelper()
         every { context.applicationContext } returns context
         every { context.getSystemService(ClipboardManager::class.java) } returns clipboardManager
-    }
-
-    @After
-    fun tearDown() {
-        unmockkStatic(ClipData::class)
     }
 
     private fun buildWorker(clipId: String? = "expected-clip-id"): ClipboardClearWorker {
@@ -119,7 +107,6 @@ class ClipboardClearWorkerTest {
 
         assertThat(result).isEqualTo(Result.success())
         verify(exactly = 0) { clipboardManager.clearPrimaryClip() }
-        verify(exactly = 0) { clipboardManager.setPrimaryClip(any()) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.CLIPBOARD_AUTO_CLEAR_SKIPPED)).isTrue()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.CLIPBOARD_AUTO_CLEARED)).isFalse()
     }
@@ -161,11 +148,7 @@ class ClipboardClearWorkerTest {
     @Test
     fun doWork_whenClearingTheClipboardThrows_returnsFailureSoTheWipeIsRetried() = runTest {
         every { clipboardManager.primaryClipDescription } returns null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            every { clipboardManager.clearPrimaryClip() } throws SecurityException("clear denied")
-        } else {
-            every { clipboardManager.setPrimaryClip(any()) } throws SecurityException("clear denied")
-        }
+        every { clipboardManager.clearPrimaryClip() } throws SecurityException("clear denied")
 
         val result = buildWorker("expected-clip-id").doWork()
 
@@ -174,10 +157,6 @@ class ClipboardClearWorkerTest {
     }
 
     private fun verifyClipboardCleared() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            verify(exactly = 1) { clipboardManager.clearPrimaryClip() }
-        } else {
-            verify(exactly = 1) { clipboardManager.setPrimaryClip(any()) }
-        }
+        verify(exactly = 1) { clipboardManager.clearPrimaryClip() }
     }
 }

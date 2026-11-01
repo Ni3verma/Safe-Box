@@ -25,6 +25,11 @@ enum class BackupFailureReason {
 
     // An unclassified or unexpected error, e.g. while reading the DB or encrypting.
     UNKNOWN,
+
+    // The vault locked before or during the backup, or the process that registered the password
+    // is gone. Not user-facing: the auto-backup stays silent and the gate has already left for
+    // Login, so the manual dialog only maps it to the generic failure state.
+    SESSION_LOCKED,
     ;
 
     fun toWorkData(): Data = workDataOf(KEY_BACKUP_FAILURE_REASON to ordinal)

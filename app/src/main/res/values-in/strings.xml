@@ -152,8 +152,7 @@
     <string name="micr_code">Kode MICR</string>
     <string name="welcome_back">Selamat Datang Kembali!</string>
     <string name="welcome">Selamat Datang!</string>
-    <string name="timeout_dialog_message">Anda meninggalkan aplikasi terlalu lama. Ketuk OKE untuk masuk kembali ke aplikasi</string>
-    <string name="timeout_dialog_positive_button_text">OKE</string>
+    <string name="login_away_banner">Anda sempat pergi — buka kunci lagi.</string>
     <string name="created_on">Dibuat pada</string>
     <string name="updated_on">Diperbarui pada</string>
     <string name="add_a_new_record">Tambah entri baru</string>
@@ -203,4 +202,32 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Pembaruan selesai diunduh. Mulai ulang Safe Box untuk memasangnya.</string>
     <string name="in_app_update_restart">Mulai Ulang</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Peningkatan keamanan — masukkan kata sandi utama Anda sekali</string>
+    <string name="vault_migration_progress_title">Meningkatkan keamanan brankas…</string>
+    <string name="vault_migration_progress_counter">%1$d dari %2$d catatan</string>
+    <string name="vault_migration_failure_keystore">Perangkat keras keamanan tidak merespons. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_verify">Pemeriksaan peningkatan gagal. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_storage">Tidak dapat menyimpan peningkatan. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_unexpected">Peningkatan gagal. Tidak ada yang diubah.</string>
+    <string name="vault_migration_failure_forgot_password_note">Kata sandi utama Anda tidak diubah.</string>
+    <string name="vault_migration_retry">Coba lagi</string>
+    <string name="vault_migration_continue_legacy">Lanjutkan untuk saat ini</string>
+    <string name="legacy_key_lost_title">Kunci enkripsi tidak tersedia</string>
+    <string name="legacy_key_lost_body">Kunci perangkat keras yang mengenkripsi brankas ini tidak lagi tersedia di perangkat ini, sehingga catatan yang ada tidak dapat dibuka. Jika Anda memiliki file cadangan, Anda dapat menghapus brankas ini dan memulihkan dari cadangan tersebut.</string>
+    <string name="home_upgrade_pending_banner">Peningkatan keamanan tertunda — akan dijalankan saat masuk berikutnya</string>
+    <string name="home_upgrade_pending_retry">Coba sekarang</string>
+    <string name="login_biometric_invalidated_banner">Masuk dengan sidik jari perlu disiapkan ulang — masukkan kata sandi utama Anda</string>
+    <string name="recovery_not_set_up_title">Pemulihan belum disiapkan</string>
+    <string name="recovery_not_set_up_body">Kata sandi utama yang terlupa hanya dapat diatur ulang melalui kunci layar yang sudah disetel saat Anda terakhir kali masuk. Perangkat ini tidak menyimpan kunci pemulihan untuk brankas ini, sehingga brankas hanya dapat dibuka dengan kata sandi utamanya.</string>
+    <string name="recovery_not_set_up_restore_hint">Jika Anda memiliki file cadangan, hapus brankas ini, daftar lagi, lalu pulihkan cadangan tersebut dari Cadangkan &amp; Pulihkan.</string>
+    <string name="recovery_back_to_login">Kembali ke halaman masuk</string>
+    <string name="erase_vault_action">Hapus semua dan mulai dari awal</string>
+    <string name="erase_vault_dialog_title">Hapus semua?</string>
+    <string name="erase_vault_dialog_body">Semua entri, kata sandi utama, dan kunci pemulihan di perangkat ini akan dihapus secara permanen. File cadangan yang Anda simpan di tempat lain tidak terpengaruh.</string>
+    <string name="erase_vault_dialog_confirm">Hapus</string>
+    <string name="recovery_failure_not_authenticated">Sesi buka kunci kedaluwarsa sebelum brankas sempat dibuka. Coba lagi.</string>
+    <string name="recovery_failure_verifier">Data pemulihan di perangkat ini rusak. Tidak ada yang diubah.</string>
+    <string name="recovery_failure_keystore">Perangkat keras keamanan tidak dapat membuka kunci pemulihan. Tidak ada yang diubah.</string>
+    <string name="recovery_failure_storage">Kata sandi baru tidak dapat disimpan. Tidak ada yang diubah.</string>
 </resources>

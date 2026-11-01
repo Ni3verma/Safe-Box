@@ -152,8 +152,7 @@
     <string name="micr_code">MICR Kodu</string>
     <string name="welcome_back">Tekrar Hoş Geldiniz!</string>
     <string name="welcome">Hoş Geldiniz!</string>
-    <string name="timeout_dialog_message">Çok uzun süre işlem yapmadınız. Uygulamaya yeniden giriş yapmak için lütfen Tamam\'a dokunun</string>
-    <string name="timeout_dialog_positive_button_text">Tamam</string>
+    <string name="login_away_banner">Uzaktaydınız — yeniden kilidi açın.</string>
     <string name="created_on">Oluşturulma tarihi:</string>
     <string name="updated_on">Güncellenme tarihi:</string>
     <string name="add_a_new_record">Yeni kayıt ekle</string>
@@ -203,4 +202,32 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Güncelleme indirildi. Yüklemek için Safe Box\'ı yeniden başlatın.</string>
     <string name="in_app_update_restart">Yeniden Başlat</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Güvenlik yükseltmesi — ana parolanızı bir kez girin</string>
+    <string name="vault_migration_progress_title">Kasa güvenliği yükseltiliyor…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d kayıt</string>
+    <string name="vault_migration_failure_keystore">Güvenli donanım yanıt vermedi. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_verify">Yükseltme doğrulaması başarısız oldu. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_storage">Yükseltme kaydedilemedi. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_unexpected">Yükseltme başarısız oldu. Hiçbir şey değiştirilmedi.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ana parolanız değiştirilmedi.</string>
+    <string name="vault_migration_retry">Tekrar dene</string>
+    <string name="vault_migration_continue_legacy">Şimdilik devam et</string>
+    <string name="legacy_key_lost_title">Şifreleme anahtarı kullanılamıyor</string>
+    <string name="legacy_key_lost_body">Bu kasayı şifreleyen donanım anahtarı artık bu cihazda kullanılamıyor, bu nedenle mevcut kayıtlar açılamıyor. Bir yedekleme dosyanız varsa bu kasayı silebilir ve yedekten geri yükleyebilirsiniz.</string>
+    <string name="home_upgrade_pending_banner">Güvenlik yükseltmesi bekliyor — bir sonraki girişinizde çalışacak</string>
+    <string name="home_upgrade_pending_retry">Şimdi dene</string>
+    <string name="login_biometric_invalidated_banner">Parmak izi girişi yeniden ayarlanmalı — ana parolanızı girin</string>
+    <string name="recovery_not_set_up_title">Kurtarma ayarlanmamış</string>
+    <string name="recovery_not_set_up_body">Unutulan bir ana parola, yalnızca son girişinizde zaten ayarlanmış olan bir ekran kilidiyle sıfırlanabilir. Bu cihazda bu kasa için bir kurtarma anahtarı bulunmuyor; bu nedenle kasa yalnızca ana parolasıyla açılabilir.</string>
+    <string name="recovery_not_set_up_restore_hint">Bir yedekleme dosyanız varsa bu kasayı silin, yeniden kayıt olun ve yedeği Yedekle ve Geri Yükle bölümünden geri yükleyin.</string>
+    <string name="recovery_back_to_login">Girişe dön</string>
+    <string name="erase_vault_action">Her şeyi sil ve baştan başla</string>
+    <string name="erase_vault_dialog_title">Her şey silinsin mi?</string>
+    <string name="erase_vault_dialog_body">Bu cihazdaki tüm kayıtlar, ana parola ve kurtarma anahtarları kalıcı olarak silinecek. Başka bir yere kaydettiğiniz yedekleme dosyaları bundan etkilenmez.</string>
+    <string name="erase_vault_dialog_confirm">Sil</string>
+    <string name="recovery_failure_not_authenticated">Kasa açılamadan kilit açma işleminin süresi doldu. Tekrar deneyin.</string>
+    <string name="recovery_failure_verifier">Bu cihazdaki kurtarma verileri hasarlı. Hiçbir şey değiştirilmedi.</string>
+    <string name="recovery_failure_keystore">Güvenli donanım kurtarma anahtarını açamadı. Hiçbir şey değiştirilmedi.</string>
+    <string name="recovery_failure_storage">Yeni parola kaydedilemedi. Hiçbir şey değiştirilmedi.</string>
 </resources>

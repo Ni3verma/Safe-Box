@@ -27,7 +27,7 @@ android {
 
     defaultConfig {
         applicationId "com.andryoga.safebox"
-        minSdk 24
+        minSdk 29 // raised from 24 with the envelope-encryption release: docs/decisions/0012-min-sdk-29.md
         targetSdk 37
         versionCode version_code
 

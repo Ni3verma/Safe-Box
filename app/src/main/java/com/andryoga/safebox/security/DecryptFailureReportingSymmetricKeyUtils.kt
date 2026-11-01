@@ -3,6 +3,7 @@ package com.andryoga.safebox.security
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
+import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
@@ -30,6 +31,10 @@ class DecryptFailureReportingSymmetricKeyUtils(
 
     override fun decrypt(data: String): String = try {
         delegate.decrypt(data)
+    } catch (e: SessionLockedException) {
+        // A locked vault is a session state, not an unreadable row: the data layer fails closed
+        // on it by design and it must not count as a decrypt failure.
+        throw e
     } catch (e: Exception) {
         report(e)
         throw e
