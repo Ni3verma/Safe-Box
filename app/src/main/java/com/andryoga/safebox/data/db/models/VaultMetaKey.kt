@@ -11,7 +11,7 @@ object VaultMetaKey {
     /** Which key the record tables and the hint are under; one of [CryptoVersion]. */
     const val CRYPTO_VERSION = "crypto_version"
 
-    /** JSON-encoded [KdfParams] (`algorithm`, `iterations`, `salt_b64`). */
+    /** [KdfParams.encode] wire string: `v1|<algorithm>|<iterations>|<salt_b64>`. */
     const val KDF_PARAMS = "kdf_params"
 
     /** Base64-encoded AES-256-GCM wrap of the DEK under `KEK_Password`. */

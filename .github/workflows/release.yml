@@ -72,6 +72,7 @@ jobs:
           path: |
             app/build/reports/tests/testDebugUnitTest/
             app/build/reports/androidTests/managedDevice/
+            app/build/outputs/androidTest-results/managedDevice/**/logcat-*.txt
 
       - name: Verify NDK Gatekeeper
         run: |

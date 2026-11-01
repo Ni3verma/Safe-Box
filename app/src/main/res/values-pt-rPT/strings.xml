@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">A chave de hardware que encriptava este cofre já não está disponível neste dispositivo, pelo que os registos existentes não podem ser abertos. Se tiver um ficheiro de cópia de segurança, pode apagar este cofre e restaurar a partir dessa cópia.</string>
     <string name="home_upgrade_pending_banner">Atualização de segurança pendente — será executada no próximo início de sessão</string>
     <string name="home_upgrade_pending_retry">Tentar agora</string>
+    <string name="login_biometric_invalidated_banner">O início de sessão por impressão digital tem de ser configurado novamente — introduza a sua palavra-passe mestra</string>
+    <string name="recovery_not_set_up_title">A recuperação não está configurada</string>
+    <string name="recovery_not_set_up_body">Uma palavra-passe mestra esquecida só pode ser redefinida através de um bloqueio de ecrã que já estivesse configurado na última vez que iniciou sessão. Este dispositivo não contém nenhuma chave de recuperação para este cofre, pelo que só pode ser aberto com a respetiva palavra-passe mestra.</string>
+    <string name="recovery_not_set_up_restore_hint">Se tiver um ficheiro de cópia de segurança, apague este cofre, registe-se novamente e restaure a cópia a partir de Cópia e restauro.</string>
+    <string name="recovery_back_to_login">Voltar ao início de sessão</string>
+    <string name="erase_vault_action">Apagar tudo e recomeçar</string>
+    <string name="erase_vault_dialog_title">Apagar tudo?</string>
+    <string name="erase_vault_dialog_body">Todos os registos, a palavra-passe mestra e as chaves de recuperação neste dispositivo serão eliminados permanentemente. Os ficheiros de cópia de segurança guardados noutro local não são afetados.</string>
+    <string name="erase_vault_dialog_confirm">Apagar</string>
+    <string name="recovery_failure_not_authenticated">O desbloqueio expirou antes de o cofre poder ser aberto. Tente novamente.</string>
+    <string name="recovery_failure_verifier">Os dados de recuperação neste dispositivo estão danificados. Nada foi alterado.</string>
+    <string name="recovery_failure_keystore">O hardware seguro não conseguiu abrir a chave de recuperação. Nada foi alterado.</string>
+    <string name="recovery_failure_storage">Não foi possível guardar a nova palavra-passe. Nada foi alterado.</string>
 </resources>

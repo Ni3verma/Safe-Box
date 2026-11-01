@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">De hardwaresleutel waarmee deze kluis is versleuteld, is niet meer beschikbaar op dit apparaat, waardoor bestaande items niet kunnen worden geopend. Als je een back-upbestand hebt, kun je deze kluis wissen en vanuit die back-up herstellen.</string>
     <string name="home_upgrade_pending_banner">Beveiligingsupgrade in behandeling — wordt uitgevoerd bij je volgende aanmelding</string>
     <string name="home_upgrade_pending_retry">Nu opnieuw proberen</string>
+    <string name="login_biometric_invalidated_banner">Inloggen met vingerafdruk moet opnieuw worden ingesteld — voer je hoofdwachtwoord in</string>
+    <string name="recovery_not_set_up_title">Wachtwoordherstel is niet ingesteld</string>
+    <string name="recovery_not_set_up_body">Een vergeten hoofdwachtwoord kan alleen opnieuw worden ingesteld via een schermvergrendeling die al was ingesteld toen je voor het laatst inlogde. Dit apparaat bevat geen herstelsleutel voor deze kluis, dus deze kan alleen met het bijbehorende hoofdwachtwoord worden geopend.</string>
+    <string name="recovery_not_set_up_restore_hint">Als je een back-upbestand hebt, wis dan deze kluis, registreer je opnieuw en herstel de back-up via Back-up &amp; herstel.</string>
+    <string name="recovery_back_to_login">Terug naar inloggen</string>
+    <string name="erase_vault_action">Alles wissen en opnieuw beginnen</string>
+    <string name="erase_vault_dialog_title">Alles wissen?</string>
+    <string name="erase_vault_dialog_body">Alle items, het hoofdwachtwoord en de herstelsleutels op dit apparaat worden definitief verwijderd. Back-upbestanden die je elders hebt opgeslagen, blijven onaangetast.</string>
+    <string name="erase_vault_dialog_confirm">Wissen</string>
+    <string name="recovery_failure_not_authenticated">De ontgrendeling is verlopen voordat de kluis kon worden geopend. Probeer het opnieuw.</string>
+    <string name="recovery_failure_verifier">De herstelgegevens op dit apparaat zijn beschadigd. Er is niets gewijzigd.</string>
+    <string name="recovery_failure_keystore">De beveiligde hardware kon de herstelsleutel niet openen. Er is niets gewijzigd.</string>
+    <string name="recovery_failure_storage">Het nieuwe wachtwoord kon niet worden opgeslagen. Er is niets gewijzigd.</string>
 </resources>

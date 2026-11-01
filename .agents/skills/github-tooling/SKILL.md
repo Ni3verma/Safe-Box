@@ -45,6 +45,19 @@ PR's **merge commit** (`refs/pull/N/merge`). So what runs is the merged result, 
 merge conflict fires no `pull_request` run at all**. `upgrade-test.yml` gates it on the
 `run-upgrade-test` label so ordinary pushes cost nothing; remove and re-add the label to run again.
 
+## CodeRabbit: the 100-file limit and how to get under it
+
+The free plan refuses a review whose **delta** (files changed since the last reviewed commit, or
+the whole PR on `@coderabbitai full review`) exceeds 100 files, and allows one review per hour.
+Verified on #303, 2026-10-31: a 102-file delta was skipped; excluding the 26 translated
+`app/src/main/res/values-*/strings.xml` through **`reviews.path_filters`** (`!` globs, in the
+repository UI or `.coderabbit.yaml` on the PR's *head* branch) brought it under and the review ran —
+filtered files are subtracted before the limit check. `path_instructions` does **not** help: it is
+prompt text for files that are still reviewed and counted. Re-trigger with `@coderabbitai review`
+(incremental) or `@coderabbitai full review`; `@coderabbitai configuration` prints the effective
+config with each value's source. The owner wants the locale filter removed again once the big PRs
+are through, because the bot has caught real `strings.xml` problems before.
+
 ## Current authentication state
 
 Verified 2026-09-21. `gh` **is** authenticated on this machine with a fine-grained token scoped to

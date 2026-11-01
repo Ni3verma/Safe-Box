@@ -215,7 +215,7 @@ class SettingsScreenComprehensiveTest {
         val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply {
             canAuthenticateOverride = true
             authHandlerOverride = { onSuccess, _ ->
-                onSuccess()
+                onSuccess(null)
             }
         }
         var emittedAction: SettingsScreenAction? = null

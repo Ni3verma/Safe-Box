@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Khóa phần cứng dùng để mã hóa két này không còn khả dụng trên thiết bị này, vì vậy không thể mở các bản ghi hiện có. Nếu bạn có tệp sao lưu, bạn có thể xóa két này và khôi phục từ bản sao lưu đó.</string>
     <string name="home_upgrade_pending_banner">Đang chờ nâng cấp bảo mật — sẽ chạy vào lần đăng nhập tiếp theo</string>
     <string name="home_upgrade_pending_retry">Thử lại ngay</string>
+    <string name="login_biometric_invalidated_banner">Cần thiết lập lại đăng nhập bằng vân tay — hãy nhập mật khẩu chính của bạn</string>
+    <string name="recovery_not_set_up_title">Chưa thiết lập khôi phục</string>
+    <string name="recovery_not_set_up_body">Mật khẩu chính bị quên chỉ có thể được đặt lại thông qua khóa màn hình đã được thiết lập từ trước tại lần đăng nhập gần nhất của bạn. Thiết bị này không có khóa khôi phục cho két này, vì vậy két chỉ có thể được mở bằng mật khẩu chính của nó.</string>
+    <string name="recovery_not_set_up_restore_hint">Nếu bạn có tệp sao lưu, hãy xóa két này, đăng ký lại rồi khôi phục bản sao lưu từ mục Sao lưu &amp; Khôi phục.</string>
+    <string name="recovery_back_to_login">Quay lại đăng nhập</string>
+    <string name="erase_vault_action">Xóa tất cả và bắt đầu lại</string>
+    <string name="erase_vault_dialog_title">Xóa tất cả?</string>
+    <string name="erase_vault_dialog_body">Tất cả bản ghi, mật khẩu chính và các khóa khôi phục trên thiết bị này sẽ bị xóa vĩnh viễn. Các tệp sao lưu bạn đã lưu ở nơi khác không bị ảnh hưởng.</string>
+    <string name="erase_vault_dialog_confirm">Xóa</string>
+    <string name="recovery_failure_not_authenticated">Phiên mở khóa đã hết hạn trước khi két kịp mở. Hãy thử lại.</string>
+    <string name="recovery_failure_verifier">Dữ liệu khôi phục trên thiết bị này đã bị hỏng. Không có gì thay đổi.</string>
+    <string name="recovery_failure_keystore">Phần cứng bảo mật không thể truy cập khóa khôi phục. Không có gì thay đổi.</string>
+    <string name="recovery_failure_storage">Không thể lưu mật khẩu mới. Không có gì thay đổi.</string>
 </resources>

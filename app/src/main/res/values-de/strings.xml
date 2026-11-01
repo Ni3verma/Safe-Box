@@ -207,4 +207,17 @@
     <string name="legacy_key_lost_body">Der Hardwareschlüssel, mit dem dieser Tresor verschlüsselt wurde, ist auf diesem Gerät nicht mehr verfügbar, sodass vorhandene Einträge nicht geöffnet werden können. Wenn Sie eine Sicherungsdatei haben, können Sie diesen Tresor löschen und aus der Sicherung wiederherstellen.</string>
     <string name="home_upgrade_pending_banner">Sicherheits-Upgrade ausstehend — wird bei der nächsten Anmeldung ausgeführt</string>
     <string name="home_upgrade_pending_retry">Jetzt erneut versuchen</string>
+    <string name="login_biometric_invalidated_banner">Die Anmeldung per Fingerabdruck muss neu eingerichtet werden — geben Sie Ihr Master-Passwort ein</string>
+    <string name="recovery_not_set_up_title">Wiederherstellung nicht eingerichtet</string>
+    <string name="recovery_not_set_up_body">Ein vergessenes Master-Passwort kann nur über eine Displaysperre zurückgesetzt werden, die bei Ihrer letzten Anmeldung bereits eingerichtet war. Auf diesem Gerät ist kein Wiederherstellungsschlüssel für diesen Tresor vorhanden, daher lässt er sich nur mit seinem Master-Passwort öffnen.</string>
+    <string name="recovery_not_set_up_restore_hint">Wenn Sie eine Sicherungsdatei haben, löschen Sie diesen Tresor, registrieren Sie sich erneut und stellen Sie die Sicherung unter Sichern &amp; Wiederherstellen wieder her.</string>
+    <string name="recovery_back_to_login">Zurück zur Anmeldung</string>
+    <string name="erase_vault_action">Alles löschen und neu beginnen</string>
+    <string name="erase_vault_dialog_title">Alles löschen?</string>
+    <string name="erase_vault_dialog_body">Alle Einträge, das Master-Passwort und die Wiederherstellungsschlüssel auf diesem Gerät werden dauerhaft gelöscht. Sicherungsdateien, die Sie an anderer Stelle gespeichert haben, sind nicht betroffen.</string>
+    <string name="erase_vault_dialog_confirm">Löschen</string>
+    <string name="recovery_failure_not_authenticated">Die Entsperrung ist abgelaufen, bevor der Tresor geöffnet werden konnte. Versuchen Sie es erneut.</string>
+    <string name="recovery_failure_verifier">Die Wiederherstellungsdaten auf diesem Gerät sind beschädigt. Es wurde nichts geändert.</string>
+    <string name="recovery_failure_keystore">Die sichere Hardware konnte den Wiederherstellungsschlüssel nicht öffnen. Es wurde nichts geändert.</string>
+    <string name="recovery_failure_storage">Das neue Passwort konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
 </resources>

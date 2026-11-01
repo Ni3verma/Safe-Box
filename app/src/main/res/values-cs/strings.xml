@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Hardwarový klíč, kterým byl tento trezor zašifrován, již není v tomto zařízení k dispozici, takže stávající záznamy nelze otevřít. Pokud máte záložní soubor, můžete tento trezor vymazat a obnovit jej ze zálohy.</string>
     <string name="home_upgrade_pending_banner">Čeká bezpečnostní aktualizace — proběhne při příštím přihlášení</string>
     <string name="home_upgrade_pending_retry">Zkusit nyní</string>
+    <string name="login_biometric_invalidated_banner">Přihlášení otiskem prstu je třeba znovu nastavit — zadejte své hlavní heslo</string>
+    <string name="recovery_not_set_up_title">Obnovení hesla není nastaveno</string>
+    <string name="recovery_not_set_up_body">Zapomenuté hlavní heslo lze obnovit pouze pomocí zámku obrazovky, který byl nastaven už při vašem posledním přihlášení. Toto zařízení neobsahuje žádný klíč pro obnovení tohoto trezoru, takže jej lze otevřít pouze jeho hlavním heslem.</string>
+    <string name="recovery_not_set_up_restore_hint">Pokud máte záložní soubor, vymažte tento trezor, znovu se zaregistrujte a obnovte zálohu v části Záloha a obnovení.</string>
+    <string name="recovery_back_to_login">Zpět na přihlášení</string>
+    <string name="erase_vault_action">Vymazat vše a začít znovu</string>
+    <string name="erase_vault_dialog_title">Vymazat vše?</string>
+    <string name="erase_vault_dialog_body">Všechny záznamy, hlavní heslo i klíče pro obnovení v tomto zařízení budou trvale odstraněny. Záložní soubory uložené jinde zůstanou nedotčeny.</string>
+    <string name="erase_vault_dialog_confirm">Vymazat</string>
+    <string name="recovery_failure_not_authenticated">Platnost odemknutí vypršela dříve, než se podařilo trezor otevřít. Zkuste to znovu.</string>
+    <string name="recovery_failure_verifier">Data pro obnovení v tomto zařízení jsou poškozená. Nic nebylo změněno.</string>
+    <string name="recovery_failure_keystore">Bezpečný hardware nedokázal otevřít klíč pro obnovení. Nic nebylo změněno.</string>
+    <string name="recovery_failure_storage">Nové heslo se nepodařilo uložit. Nic nebylo změněno.</string>
 </resources>

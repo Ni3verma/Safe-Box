@@ -119,8 +119,7 @@ enum class AnalyticsKey(val eventName: String) {
     // the Forgot password button on the login screen, before any device-security check
     FORGOT_PASSWORD_CLICK("forgot_password_click"),
 
-    // the away timeout locked the vault (a timer that elapses with the vault already locked logs
-    // nothing); AnalyticsParam.WORKER_RUNNING says whether a backup or restore was running
+    // the away timeout locked the vault (a timer that elapses with the vault already locked logs nothing)
     SESSION_TIMEOUT("session_timeout"),
 
     // Envelope encryption migration and Keystore wraps
@@ -133,4 +132,20 @@ enum class AnalyticsKey(val eventName: String) {
     VAULT_LEGACY_SESSION_START("vault_legacy_session_start"),
     VAULT_WRAP_CREATED("vault_wrap_created"),
     VAULT_WRAP_CREATE_FAILURE("vault_wrap_create_failure"),
+
+    // Biometric login, forgot-password recovery and erase
+    // the login-screen probe found KEK_Biometric invalidated; the wrap is deleted and the banner shown
+    BIOMETRIC_KEY_INVALIDATED("biometric_key_invalidated"),
+    // the forgot-password probe found KEK_Device invalidated, or its unwrap failed after a
+    // successful prompt; the wrap is deleted
+    DEVICE_KEY_INVALIDATED("device_key_invalidated"),
+    // Forgot password tapped on a v2 vault that has no usable device wrap
+    RECOVERY_NOT_SET_UP_SHOW("recovery_not_set_up_show"),
+    VAULT_RECOVERY_SUCCESS("vault_recovery_success"),
+    // AnalyticsParam.REASON (RecoveryFailureReason wire name) and AnalyticsParam.EXCEPTION
+    VAULT_RECOVERY_FAILURE("vault_recovery_failure"),
+    // AnalyticsParam.SOURCE says which login-screen state offered the erase
+    ERASE_VAULT_DIALOG_SHOW("erase_vault_dialog_show"),
+    ERASE_VAULT_DIALOG_CONFIRM_CLICK("erase_vault_dialog_confirm_click"),
+    ERASE_VAULT_DIALOG_CANCEL_CLICK("erase_vault_dialog_cancel_click"),
 }

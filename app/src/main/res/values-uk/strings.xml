@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Апаратний ключ, яким було зашифровано це сховище, більше недоступний на цьому пристрої, тому наявні записи неможливо відкрити. Якщо у вас є файл резервної копії, ви можете очистити це сховище та відновити дані з резервної копії.</string>
     <string name="home_upgrade_pending_banner">Очікується оновлення безпеки — воно запуститься під час наступного входу</string>
     <string name="home_upgrade_pending_retry">Спробувати зараз</string>
+    <string name="login_biometric_invalidated_banner">Вхід за відбитком пальця потрібно налаштувати знову — введіть майстер-пароль</string>
+    <string name="recovery_not_set_up_title">Відновлення доступу не налаштовано</string>
+    <string name="recovery_not_set_up_body">Забутий майстер-пароль можна скинути лише за допомогою блокування екрана, яке вже було встановлено під час останнього входу. На цьому пристрої немає ключа відновлення для цього сховища, тому відкрити його можна лише за допомогою майстер-пароля.</string>
+    <string name="recovery_not_set_up_restore_hint">Якщо у вас є файл резервної копії, очистіть це сховище, зареєструйтеся знову та відновіть копію в розділі «Копія та відновлення».</string>
+    <string name="recovery_back_to_login">Повернутися до входу</string>
+    <string name="erase_vault_action">Видалити все й почати заново</string>
+    <string name="erase_vault_dialog_title">Видалити все?</string>
+    <string name="erase_vault_dialog_body">Усі записи, майстер-пароль і ключі відновлення на цьому пристрої буде безповоротно видалено. Файли резервних копій, збережені в іншому місці, залишаться без змін.</string>
+    <string name="erase_vault_dialog_confirm">Видалити</string>
+    <string name="recovery_failure_not_authenticated">Час розблокування минув до того, як вдалося відкрити сховище. Спробуйте ще раз.</string>
+    <string name="recovery_failure_verifier">Дані відновлення на цьому пристрої пошкоджено. Нічого не змінено.</string>
+    <string name="recovery_failure_keystore">Захищений апаратний модуль не зміг відкрити ключ відновлення. Нічого не змінено.</string>
+    <string name="recovery_failure_storage">Не вдалося зберегти новий пароль. Нічого не змінено.</string>
 </resources>

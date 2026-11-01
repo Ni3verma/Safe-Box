@@ -209,4 +209,17 @@
     <string name="legacy_key_lost_body">คีย์ฮาร์ดแวร์ที่ใช้เข้ารหัสตู้นิรภัยนี้ไม่พร้อมใช้งานบนอุปกรณ์นี้อีกต่อไป จึงไม่สามารถเปิดรายการที่มีอยู่ได้ หากคุณมีไฟล์สำรองข้อมูล คุณสามารถล้างตู้นิรภัยนี้และกู้คืนจากข้อมูลสำรองนั้นได้</string>
     <string name="home_upgrade_pending_banner">รอการอัปเกรดความปลอดภัย — จะทำงานในการเข้าสู่ระบบครั้งถัดไป</string>
     <string name="home_upgrade_pending_retry">ลองใหม่ตอนนี้</string>
+    <string name="login_biometric_invalidated_banner">ต้องตั้งค่าการเข้าสู่ระบบด้วยลายนิ้วมือใหม่ — กรอกรหัสผ่านหลักของคุณ</string>
+    <string name="recovery_not_set_up_title">ยังไม่ได้ตั้งค่าการกู้คืนรหัสผ่าน</string>
+    <string name="recovery_not_set_up_body">หากลืมรหัสผ่านหลัก จะรีเซ็ตได้ผ่านการล็อกหน้าจอที่ตั้งค่าไว้แล้วตั้งแต่ตอนที่คุณเข้าสู่ระบบครั้งล่าสุดเท่านั้น อุปกรณ์นี้ไม่มีคีย์กู้คืนสำหรับตู้นิรภัยนี้ ตู้นิรภัยจึงเปิดได้ด้วยรหัสผ่านหลักเท่านั้น</string>
+    <string name="recovery_not_set_up_restore_hint">หากคุณมีไฟล์สำรองข้อมูล ให้ล้างตู้นิรภัยนี้ สมัครใช้งานใหม่ แล้วกู้คืนข้อมูลสำรองจากหน้า สำรองและกู้คืน</string>
+    <string name="recovery_back_to_login">กลับไปหน้าเข้าสู่ระบบ</string>
+    <string name="erase_vault_action">ล้างข้อมูลทั้งหมดแล้วเริ่มใหม่</string>
+    <string name="erase_vault_dialog_title">ล้างข้อมูลทั้งหมดหรือไม่?</string>
+    <string name="erase_vault_dialog_body">รายการทั้งหมด รหัสผ่านหลัก และคีย์กู้คืนบนอุปกรณ์นี้จะถูกลบอย่างถาวร ไฟล์สำรองข้อมูลที่คุณบันทึกไว้ที่อื่นจะไม่ได้รับผลกระทบ</string>
+    <string name="erase_vault_dialog_confirm">ล้างข้อมูล</string>
+    <string name="recovery_failure_not_authenticated">การปลดล็อกหมดอายุก่อนที่จะเปิดตู้นิรภัยได้ โปรดลองอีกครั้ง</string>
+    <string name="recovery_failure_verifier">ข้อมูลการกู้คืนบนอุปกรณ์นี้เสียหาย ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="recovery_failure_keystore">ฮาร์ดแวร์ความปลอดภัยไม่สามารถเปิดคีย์กู้คืนได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>
+    <string name="recovery_failure_storage">ไม่สามารถบันทึกรหัสผ่านใหม่ได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>
 </resources>

@@ -24,6 +24,8 @@ import com.andryoga.safebox.security.envelope.KdfParams
 import com.andryoga.safebox.security.envelope.PasswordKdf
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.VaultResetUseCase
+import com.andryoga.safebox.security.envelope.WrapKeyOpener
 import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationOutcome
@@ -34,6 +36,7 @@ import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.andryoga.safebox.ui.core.SessionLockReason
@@ -57,6 +60,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.util.Base64
+import javax.crypto.Cipher
 
 class LoginViewModelTest {
     @MockK(relaxUnitFun = true)
@@ -70,6 +75,9 @@ class LoginViewModelTest {
 
     @MockK(relaxUnitFun = true)
     lateinit var vaultKeyMaintenance: VaultKeyMaintenance
+
+    @MockK(relaxUnitFun = true)
+    lateinit var vaultResetUseCase: VaultResetUseCase
 
     @RelaxedMockK
     lateinit var workManager: WorkManager
@@ -161,9 +169,11 @@ class LoginViewModelTest {
         userDetailsRepository = userDetailsRepository,
         vaultRepository = vaultRepository,
         envelopeEncryptionManager = envelopeEncryptionManager,
+        wrapKeyOpener = WrapKeyOpener(envelopeEncryptionManager),
         legacyVaultMigrator = Lazy { legacyVaultMigrator },
         vaultMigrationProgress = vaultMigrationProgress,
         vaultKeyMaintenance = vaultKeyMaintenance,
+        vaultResetUseCase = Lazy { vaultResetUseCase },
         workManager = lazyWorkManager,
         backupPasswordRegistry = backupPasswordRegistry,
         settingsDataStore = settingsDataStore,
@@ -176,6 +186,37 @@ class LoginViewModelTest {
         sessionLockReasonStore = sessionLockReasonStore,
         isDebug = isDebug,
     )
+
+    /** Wraps [dek] under a fresh JCE `KEK_Biometric` and serves a vault state that carries the wrap. */
+    private fun givenBiometricWrap(dek: ByteArray = testDek, isBiometricUnlockDisabled: Boolean = false): String {
+        val blob = envelopeEncryptionManager.wrapWithKeystoreKey(WrapKeySpec.BIOMETRIC, dek)
+        coEvery { vaultRepository.getVaultState() } returns defaultEnvelopeState.copy(
+            wrappedDekBiometric = blob,
+            isBiometricUnlockDisabled = isBiometricUnlockDisabled,
+        )
+        return blob
+    }
+
+    /** Wraps [dek] under a fresh JCE `KEK_Device` and serves a vault state that carries the wrap. */
+    private fun givenDeviceWrap(dek: ByteArray = testDek): String {
+        val blob = envelopeEncryptionManager.wrapWithKeystoreKey(WrapKeySpec.DEVICE, dek)
+        coEvery { vaultRepository.getVaultState() } returns defaultEnvelopeState.copy(wrappedDekDevice = blob)
+        return blob
+    }
+
+    /** Runs the pre-conditions check and returns the cipher the screen would bind, if any. */
+    private fun prepareBiometricPrompt(): Cipher? {
+        viewModel.onAction(LoginScreenAction.BiometricAvailable)
+        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
+        return viewModel.uiState.value.biometricUnlockCipher
+    }
+
+    /** Taps Forgot password and returns the device step the screen would prompt with. */
+    private fun startDeviceRecovery(): ForgotPasswordStep.DeviceAuthentication {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
+        return viewModel.uiState.value.forgotPasswordStep as ForgotPasswordStep.DeviceAuthentication
+    }
 
     @Test
     fun initialUiState_whenNothingClearedTheSession_shouldShowNoLockReason() {
@@ -222,8 +263,11 @@ class LoginViewModelTest {
         assertThat(legacyVm.uiState.value.isLegacyVault).isTrue()
     }
 
+    // region biometric login
+
     @Test
-    fun onBiometricAvailable_whenEnvelopeVaultAndBiometricAllowed_updatesState() = runTest {
+    fun onBiometricAvailable_whenWrapPresentAndCounterAllows_shouldPrepareTheCipher() = runTest {
+        givenBiometricWrap()
         coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
 
         viewModel.uiState.test {
@@ -234,7 +278,32 @@ class LoginViewModelTest {
             coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
             val updated = expectMostRecentItem()
             assertThat(updated.canUnlockWithBiometric).isTrue()
+            assertThat(updated.biometricUnlockCipher).isNotNull()
+            assertThat(updated.isBiometricKeyInvalidated).isFalse()
         }
+    }
+
+    @Test
+    fun onBiometricAvailable_whenNoBiometricWrapExists_shouldNotOfferBiometricLogin() = runTest {
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+
+        viewModel.uiState.test {
+            awaitItem()
+            viewModel.onAction(LoginScreenAction.BiometricAvailable)
+            advanceUntilIdle()
+
+            expectNoEvents()
+            coVerify(exactly = 0) { userDetailsRepository.shouldStartBiometricAuthFlow() }
+        }
+    }
+
+    @Test
+    fun onBiometricAvailable_whenBiometricUnlockDisabled_shouldNotOfferBiometricLogin() = runTest {
+        givenBiometricWrap(isBiometricUnlockDisabled = true)
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+
+        assertThat(prepareBiometricPrompt()).isNull()
+        coVerify(exactly = 0) { userDetailsRepository.shouldStartBiometricAuthFlow() }
     }
 
     @Test
@@ -254,6 +323,7 @@ class LoginViewModelTest {
 
     @Test
     fun onBiometricAvailable_doesNotUpdateStateWhenBiometricAuthShouldNotStart() = runTest {
+        givenBiometricWrap()
         coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns false
 
         viewModel.uiState.test {
@@ -265,22 +335,100 @@ class LoginViewModelTest {
 
             coVerify(exactly = 1) { userDetailsRepository.shouldStartBiometricAuthFlow() }
             expectNoEvents()
-            assertThat(initial.canUnlockWithBiometric).isFalse()
         }
     }
 
     @Test
-    fun onBiometricSuccess_updatesAuthStateAndCallsRepository() = runTest {
-        viewModel.uiState.test {
-            awaitItem()
-            viewModel.onAction(LoginScreenAction.BiometricSuccess)
-            advanceUntilIdle()
+    fun onBiometricAvailable_whenKeyInvalidated_shouldDeleteWrapLogEventAndShowBanner() = runTest {
+        givenBiometricWrap()
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        keystoreGateway.invalidateKey(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC))
 
-            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
-            val updated = expectMostRecentItem()
-            assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-        }
+        val cipher = prepareBiometricPrompt()
+
+        assertThat(cipher).isNull()
+        assertThat(viewModel.uiState.value.isBiometricKeyInvalidated).isTrue()
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC) }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.BIOMETRIC_KEY_INVALIDATED) }
+        // The alias is rotated by VaultKeyMaintenance at the next unlock, not here.
+        assertThat(keystoreGateway.generationCountFor(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC)))
+            .isEqualTo(1)
     }
+
+    @Test
+    fun onBiometricSuccess_withTheBoundCipher_shouldUnwrapVerifyOpenSessionAndLogBiometricLogin() = runTest {
+        givenBiometricWrap()
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        val cipher = prepareBiometricPrompt()!!
+
+        viewModel.onAction(LoginScreenAction.BiometricSuccess(cipher))
+        advanceUntilIdle()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        assertThat(sessionKeyHolder.isLegacySession).isFalse()
+        assertThat(sessionKeyHolder.withSessionKey { it.encoded }).isEqualTo(testDek)
+        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+        assertThat(viewModel.uiState.value.biometricUnlockCipher).isNull()
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(withBiometric = true) }
+        verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
+        val params = capturedLoginSuccessParams()
+        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("biometric")
+        assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(FIRST_LOGIN_ORDINAL)
+        // A biometric login never writes a backup (the master password is not in hand).
+        verify(exactly = 0) { workManager.enqueueUniqueWork(any(), any(), any<OneTimeWorkRequest>()) }
+    }
+
+    @Test
+    fun onBiometricSuccess_withoutACipher_shouldUnlockNothing() = runTest {
+        givenBiometricWrap()
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        prepareBiometricPrompt()
+
+        val outcome = runCatching {
+            viewModel.onAction(LoginScreenAction.BiometricSuccess(cipher = null))
+            advanceUntilIdle()
+        }
+
+        // Debug builds assert; whatever the build, the vault stays locked.
+        assertThat(outcome.exceptionOrNull()?.javaClass?.simpleName ?: "none")
+            .isAnyOf("DebugFatalException", "none")
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(viewModel.uiState.value.userAuthState).isNotEqualTo(UserAuthState.VERIFIED)
+        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
+    }
+
+    @Test
+    fun onBiometricSuccess_whenWrapHoldsAnotherDek_shouldTreatAsInvalidatedAndStayLocked() = runTest {
+        val otherDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x7f }
+        givenBiometricWrap(dek = otherDek)
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        val cipher = prepareBiometricPrompt()!!
+
+        viewModel.onAction(LoginScreenAction.BiometricSuccess(cipher))
+        advanceUntilIdle()
+
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        assertThat(viewModel.uiState.value.isBiometricKeyInvalidated).isTrue()
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.BIOMETRIC) }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.BIOMETRIC_KEY_INVALIDATED) }
+        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
+    }
+
+    @Test
+    fun onBiometricError_shouldDropThePreparedCipher() = runTest {
+        givenBiometricWrap()
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        prepareBiometricPrompt()
+
+        viewModel.onAction(LoginScreenAction.BiometricError)
+
+        assertThat(viewModel.uiState.value.canUnlockWithBiometric).isFalse()
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+    }
+
+    // endregion
+
+    // region password login
 
     @Test
     fun onLoginClicked_onEnvelopeVaultWithCorrectPassword_unwrapsDekOpensSessionAndSchedulesMaintenance() =
@@ -464,6 +612,34 @@ class LoginViewModelTest {
             assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
         }
 
+    // endregion
+
+    // region forgot password: legacy gate
+
+    @Test
+    fun forgotPassword_onLegacyVault_shouldStartTheLegacyGateAndLogTheClick() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK) }
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.FORGOT_PASSWORD_CLICK), any()) }
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isEqualTo(ForgotPasswordStep.LegacyAuthentication)
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.RECOVERY_NOT_SET_UP_SHOW) }
+    }
+
+    @Test
+    fun legacyResetAuthenticated_shouldAskForTheNewPassword() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnLegacyResetAuthenticated)
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isEqualTo(ForgotPasswordStep.NewPassword)
+    }
+
     @Test
     fun onResetPassword_onLegacyVault_runsForgotPasswordMigrationDirectlyWithoutUpdatingLegacyHash() =
         runTest {
@@ -488,10 +664,379 @@ class LoginViewModelTest {
                     MigrationTrigger.FORGOT_PASSWORD,
                 )
             }
+            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
             val loginParams = capturedLoginSuccessParams()
             assertThat(loginParams[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password_reset")
             assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+            assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
         }
+
+    @Test
+    fun deviceSecurityRequiredDismissed_shouldCloseTheLegacyGateAndLogEvent() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
+    }
+
+    @Test
+    fun onDeviceSecurityRequiredOpenSettingsClicked_pausesSessionManagerClosesTheGateAndLogsEvent() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
+
+        verify { activeSessionManager.setPaused(true) }
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
+    }
+
+    @Test
+    fun onDeviceSecurityRequiredDialogShown_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
+    }
+
+    @Test
+    fun onDeviceSecurityRequiredOpenSettingsFailed_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
+        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
+    }
+
+    @Test
+    fun onUpdatePasswordDialogShown_logsEvent() = runTest {
+        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
+        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
+    }
+
+    @Test
+    fun forgotPasswordAuthCancelled_shouldCloseTheStep() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnForgotPasswordAuthCancelled)
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+    }
+
+    // endregion
+
+    // region forgot password: envelope recovery
+
+    @Test
+    fun forgotPassword_onEnvelopeVaultWithoutDeviceWrap_shouldShowRecoveryNotSetUp() = runTest {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.isRecoveryNotSetUp).isTrue()
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.RECOVERY_NOT_SET_UP_SHOW) }
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.DEVICE_KEY_INVALIDATED) }
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryNotSetUpDismissed)
+
+        assertThat(viewModel.uiState.value.isRecoveryNotSetUp).isFalse()
+    }
+
+    @Test
+    fun forgotPassword_whenDeviceKeyInvalidated_shouldDeleteWrapLogEventAndShowRecoveryNotSetUp() = runTest {
+        givenDeviceWrap()
+        keystoreGateway.invalidateKey(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE))
+
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.DEVICE) }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.DEVICE_KEY_INVALIDATED) }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.RECOVERY_NOT_SET_UP_SHOW) }
+        assertThat(viewModel.uiState.value.isRecoveryNotSetUp).isTrue()
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+    }
+
+    @Test
+    fun forgotPassword_withHealthyDeviceKey_shouldOpenThePromptWithTheCipher() = runTest {
+        givenDeviceWrap()
+
+        val step = startDeviceRecovery()
+
+        assertThat(step.cipher).isNotNull()
+        assertThat(viewModel.uiState.value.isRecoveryNotSetUp).isFalse()
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK) }
+    }
+
+    @Test
+    fun forgotPassword_withTimeBoundDeviceKeyOutsideItsWindow_shouldOpenThePromptWithoutCipher() = runTest {
+        givenDeviceWrap()
+        keystoreGateway.setRequireAuthOnInit(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE))
+
+        val step = startDeviceRecovery()
+
+        assertThat(step.cipher).isNull()
+        coVerify(exactly = 0) { vaultRepository.deleteWrap(any()) }
+    }
+
+    @Test
+    fun recoveryAuthenticated_withTheBoundCipher_shouldHoldTheDekAndAskForTheNewPassword() = runTest {
+        givenDeviceWrap()
+        val step = startDeviceRecovery()
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isEqualTo(ForgotPasswordStep.NewPassword)
+        // Not the session yet: the new wrap must be on disk first.
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.VAULT_RECOVERY_FAILURE), any()) }
+    }
+
+    @Test
+    fun onResetPassword_afterRecovery_shouldRewrapWithHintOpenSessionAndLogRecoveryAndPasswordReset() = runTest {
+        givenDeviceWrap()
+        var rewrappedPassword: CharArray? = null
+        var rewrappedDek: ByteArray? = null
+        var rewrappedHint: String? = null
+        // Copied at call time: the ViewModel zeroes the DEK the moment the wrap is on disk.
+        coEvery { vaultRepository.rewrapPassword(any(), any(), any()) } coAnswers {
+            rewrappedPassword = firstArg<CharArray>().copyOf()
+            rewrappedDek = secondArg<ByteArray>().copyOf()
+            rewrappedHint = thirdArg()
+        }
+        val step = startDeviceRecovery()
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "new hint"))
+        advanceUntilIdle()
+
+        assertThat(rewrappedPassword).isEqualTo("NewPassword@@123".toCharArray())
+        assertThat(rewrappedDek).isEqualTo(testDek)
+        assertThat(rewrappedHint).isEqualTo("new hint")
+        coVerify(exactly = 0) { userDetailsRepository.updatePasswordAndHint(any(), any()) }
+        assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
+        assertThat(sessionKeyHolder.withSessionKey { it.encoded }).isEqualTo(testDek)
+        verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.VAULT_RECOVERY_SUCCESS) }
+        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(withBiometric = false) }
+        assertThat(capturedLoginSuccessParams()[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("password_reset")
+        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.VERIFIED)
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+    }
+
+    @Test
+    fun recoveryAuthenticated_withoutCipher_shouldUnwrapInsideTheTimeBoundWindow() = runTest {
+        givenDeviceWrap()
+        val deviceAlias = EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE)
+        keystoreGateway.setRequireAuthOnInit(deviceAlias)
+        val step = startDeviceRecovery()
+        assertThat(step.cipher).isNull()
+        // The prompt just succeeded: the key is inside its 5 s window.
+        keystoreGateway.setRequireAuthOnInit(deviceAlias, required = false)
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(cipher = null))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isEqualTo(ForgotPasswordStep.NewPassword)
+        assertThat(viewModel.uiState.value.recoveryFailure).isNull()
+    }
+
+    @Test
+    fun recoveryAuthenticated_whenTheWindowIsMissed_shouldRepromptOnceThenFailWithNotAuthenticated() = runTest {
+        givenDeviceWrap()
+        keystoreGateway.setRequireAuthOnInit(EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.DEVICE))
+        val firstStep = startDeviceRecovery()
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(cipher = null))
+        advanceUntilIdle()
+
+        val secondStep = viewModel.uiState.value.forgotPasswordStep
+        assertThat(secondStep).isInstanceOf(ForgotPasswordStep.DeviceAuthentication::class.java)
+        assertThat(secondStep).isNotSameInstanceAs(firstStep)
+        assertThat((secondStep as ForgotPasswordStep.DeviceAuthentication).cipher).isNull()
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(cipher = null))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        assertThat(viewModel.uiState.value.recoveryFailure).isEqualTo(RecoveryFailureReason.NOT_AUTHENTICATED)
+        val params = capturedParams(AnalyticsKey.VAULT_RECOVERY_FAILURE)
+        assertThat(params[AnalyticsParam.REASON.paramName]).isEqualTo("not_authenticated")
+        assertThat(params[AnalyticsParam.EXCEPTION.paramName]).isEqualTo("none")
+        // The key is healthy; the wrap stays for the next attempt.
+        coVerify(exactly = 0) { vaultRepository.deleteWrap(any()) }
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun recoveryAuthenticated_whenWrapHoldsAnotherDek_shouldDeleteWrapFailWithVerifierAndWriteNothing() = runTest {
+        val otherDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x7f }
+        givenDeviceWrap(dek = otherDek)
+        val step = startDeviceRecovery()
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.recoveryFailure).isEqualTo(RecoveryFailureReason.VERIFIER)
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.DEVICE) }
+        coVerify(exactly = 0) { vaultRepository.rewrapPassword(any(), any(), any()) }
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.DEVICE_KEY_INVALIDATED) }
+        assertThat(capturedParams(AnalyticsKey.VAULT_RECOVERY_FAILURE)[AnalyticsParam.REASON.paramName])
+            .isEqualTo("verifier")
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun recoveryAuthenticated_whenTheUnwrapFails_shouldInvalidateTheDeviceKeyAndFailWithKeystore() = runTest {
+        val blob = givenDeviceWrap()
+        val tampered = Base64.getDecoder().decode(blob).also { it[10] = (it[10].toInt() xor 0x55).toByte() }
+        coEvery { vaultRepository.getVaultState() } returns defaultEnvelopeState.copy(
+            wrappedDekDevice = Base64.getEncoder().encodeToString(tampered),
+        )
+        val step = startDeviceRecovery()
+
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.recoveryFailure).isEqualTo(RecoveryFailureReason.KEYSTORE)
+        coVerify(exactly = 1) { vaultRepository.deleteWrap(WrapKeySpec.DEVICE) }
+        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.DEVICE_KEY_INVALIDATED) }
+        val params = capturedParams(AnalyticsKey.VAULT_RECOVERY_FAILURE)
+        assertThat(params[AnalyticsParam.REASON.paramName]).isEqualTo("keystore")
+        assertThat(params[AnalyticsParam.EXCEPTION.paramName]).isEqualTo("BadPaddingException")
+        coVerify(exactly = 0) { vaultRepository.rewrapPassword(any(), any(), any()) }
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+    }
+
+    @Test
+    fun onResetPassword_whenTheRewrapCannotBeSaved_shouldFailWithStorageAndStayLocked() = runTest {
+        givenDeviceWrap()
+        coEvery { vaultRepository.rewrapPassword(any(), any(), any()) } throws IllegalStateException("disk full")
+        val step = startDeviceRecovery()
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnResetPassword(newPassword = "NewPassword@@123", hint = "new hint"))
+        advanceUntilIdle()
+
+        assertThat(viewModel.uiState.value.recoveryFailure).isEqualTo(RecoveryFailureReason.STORAGE)
+        val params = capturedParams(AnalyticsKey.VAULT_RECOVERY_FAILURE)
+        assertThat(params[AnalyticsParam.REASON.paramName]).isEqualTo("storage")
+        assertThat(params[AnalyticsParam.EXCEPTION.paramName]).isEqualTo("IllegalStateException")
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        verify(exactly = 0) { analyticsHelper.logEvent(AnalyticsKey.VAULT_RECOVERY_SUCCESS) }
+        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.LOGIN_SUCCESS), any()) }
+    }
+
+    @Test
+    fun updatePasswordDismissed_afterRecovery_shouldCloseTheDialogLogEventAndKeepTheVaultLocked() = runTest {
+        givenDeviceWrap()
+        val step = startDeviceRecovery()
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
+
+        assertThat(viewModel.uiState.value.forgotPasswordStep).isNull()
+        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
+        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
+        coVerify(exactly = 0) { vaultRepository.rewrapPassword(any(), any(), any()) }
+    }
+
+    @Test
+    fun recoveryFailureBanner_shouldBeClearedByTheNextForgotPasswordTap() = runTest {
+        val otherDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x7f }
+        givenDeviceWrap(dek = otherDek)
+        val step = startDeviceRecovery()
+        viewModel.onAction(LoginScreenAction.OnRecoveryAuthenticated(step.cipher))
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.recoveryFailure).isEqualTo(RecoveryFailureReason.VERIFIER)
+
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+
+        assertThat(viewModel.uiState.value.recoveryFailure).isNull()
+    }
+
+    // endregion
+
+    // region erase
+
+    @Test
+    fun eraseVaultDialog_fromRecoveryNotSetUp_shouldLogTheTriadWithItsSource() = runTest {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.isRecoveryNotSetUp).isTrue()
+
+        viewModel.onAction(LoginScreenAction.OnEraseVaultDialogShown)
+        viewModel.onAction(LoginScreenAction.OnEraseVaultCancelClicked)
+        viewModel.onAction(LoginScreenAction.OnEraseVaultConfirmClicked)
+        advanceUntilIdle()
+
+        assertThat(capturedParams(AnalyticsKey.ERASE_VAULT_DIALOG_SHOW)[AnalyticsParam.SOURCE.paramName])
+            .isEqualTo(AnalyticsSource.RECOVERY_NOT_SET_UP.value)
+        assertThat(capturedParams(AnalyticsKey.ERASE_VAULT_DIALOG_CANCEL_CLICK)[AnalyticsParam.SOURCE.paramName])
+            .isEqualTo(AnalyticsSource.RECOVERY_NOT_SET_UP.value)
+        assertThat(capturedParams(AnalyticsKey.ERASE_VAULT_DIALOG_CONFIRM_CLICK)[AnalyticsParam.SOURCE.paramName])
+            .isEqualTo(AnalyticsSource.RECOVERY_NOT_SET_UP.value)
+    }
+
+    @Test
+    fun eraseVaultConfirmed_shouldEraseTheVaultAndLeaveForSignup() = runTest {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnEraseVaultConfirmClicked)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { vaultResetUseCase.eraseVault() }
+        assertThat(viewModel.uiState.value.isVaultErased).isTrue()
+    }
+
+    @Test
+    fun eraseVaultConfirmed_twiceWhileInFlight_shouldEraseOnce() = runTest {
+        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.OnEraseVaultConfirmClicked)
+        viewModel.onAction(LoginScreenAction.OnEraseVaultConfirmClicked)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { vaultResetUseCase.eraseVault() }
+    }
+
+    @Test
+    fun eraseVaultDialog_fromLegacyKeyLost_shouldLogTheSourceAsLegacyKeyLost() = runTest {
+        coEvery { vaultRepository.getVaultState() } returns VaultState.Legacy
+        coEvery { userDetailsRepository.checkPassword(DEFAULT_PASSWORD) } returns true
+        keystoreGateway.legacyKey = null
+        coEvery {
+            legacyVaultMigrator.migrate(any(), any(), any())
+        } returns MigrationOutcome.Failure(
+            stage = MigrationStage.LOAD_LEGACY_KEY,
+            reason = MigrationFailureReason.LEGACY_KEY_LOST,
+            trigger = MigrationTrigger.LOGIN,
+        )
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.LEGACY_KEY_LOST)
+
+        viewModel.onAction(LoginScreenAction.OnEraseVaultDialogShown)
+        viewModel.onAction(LoginScreenAction.OnEraseVaultConfirmClicked)
+        advanceUntilIdle()
+
+        assertThat(capturedParams(AnalyticsKey.ERASE_VAULT_DIALOG_SHOW)[AnalyticsParam.SOURCE.paramName])
+            .isEqualTo(AnalyticsSource.LEGACY_KEY_LOST.value)
+        coVerify(exactly = 1) { vaultResetUseCase.eraseVault() }
+        assertThat(viewModel.uiState.value.isVaultErased).isTrue()
+    }
+
+    // endregion
 
     @Test
     fun onShowHintClicked_fetchesAndDisplaysHint() = runTest {
@@ -526,75 +1071,6 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun onResetPassword_onEnvelopeVault_updatesRepositoryAndVerifiesUserAuthState() = runTest {
-        coEvery { userDetailsRepository.updatePasswordAndHint(any(), any()) } returns Unit
-
-        viewModel.uiState.test {
-            awaitItem()
-            viewModel.onAction(
-                LoginScreenAction.OnResetPassword(
-                    newPassword = "NewPassword@@123",
-                    hint = "new hint",
-                ),
-            )
-            advanceUntilIdle()
-
-            coVerify {
-                userDetailsRepository.updatePasswordAndHint("NewPassword@@123", "new hint")
-            }
-            coVerify { userDetailsRepository.onAuthSuccess(withBiometric = false) }
-            assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
-            val updated = expectMostRecentItem()
-            assertThat(updated.userAuthState).isEqualTo(UserAuthState.VERIFIED)
-        }
-    }
-
-    @Test
-    fun onDeviceSecurityRequiredDialogShown_logsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDialogShown)
-        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_SHOW)
-    }
-
-    @Test
-    fun onDeviceSecurityRequiredOpenSettingsClicked_pausesActiveSessionManagerAndLogsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsClicked)
-        verify { activeSessionManager.setPaused(true) }
-        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_CLICK)
-    }
-
-    @Test
-    fun onDeviceSecurityRequiredOpenSettingsFailed_logsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredOpenSettingsFailed)
-        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_OPEN_SETTINGS_FAILURE)
-    }
-
-    @Test
-    fun onDeviceSecurityRequiredDismissClicked_logsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnDeviceSecurityRequiredDismissClicked)
-        assertLoggedFromLoginScreen(AnalyticsKey.DEVICE_SECURITY_REQUIRED_DIALOG_CANCEL_CLICK)
-    }
-
-    @Test
-    fun onUpdatePasswordDialogShown_logsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDialogShown)
-        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_SHOW)
-    }
-
-    @Test
-    fun onUpdatePasswordDismissClicked_logsEvent() = runTest {
-        viewModel.onAction(LoginScreenAction.OnUpdatePasswordDismissClicked)
-        assertLoggedFromLoginScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_CANCEL_CLICK)
-    }
-
-    @Test
-    fun forgotPasswordClicked_shouldLogForgotPasswordClickWithoutParams() = runTest {
-        viewModel.onAction(LoginScreenAction.ForgotPasswordClicked)
-
-        verify(exactly = 1) { analyticsHelper.logEvent(AnalyticsKey.FORGOT_PASSWORD_CLICK) }
-        verify(exactly = 0) { analyticsHelper.logEvent(eq(AnalyticsKey.FORGOT_PASSWORD_CLICK), any()) }
-    }
-
-    @Test
     fun passwordLogin_shouldLogLoginSuccessWithPasswordMethodAndOrdinal() = runTest {
         coEvery { userDetailsRepository.onAuthSuccess(withBiometric = false) } returns 7
 
@@ -607,17 +1083,6 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun biometricLogin_shouldLogLoginSuccessWithBiometricMethod() = runTest {
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
-
-        val params = capturedLoginSuccessParams()
-        assertThat(params[AnalyticsParam.LOGIN_METHOD.paramName]).isEqualTo("biometric")
-        assertThat(params[AnalyticsParam.LOGIN_COUNT.paramName]).isEqualTo(FIRST_LOGIN_ORDINAL)
-        coVerify { userDetailsRepository.onAuthSuccess(withBiometric = true) }
-    }
-
-    @Test
     fun loginSuccess_shouldCarryDeviceSecurityParamsFromTheSnapshot() = runTest {
         every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
             isDeviceSecure = false,
@@ -625,7 +1090,7 @@ class LoginViewModelTest {
             hasStrongBox = true,
         )
 
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
         advanceUntilIdle()
 
         val params = capturedLoginSuccessParams()
@@ -697,18 +1162,6 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun biometricLogin_whenLegacyKeyIsLost_shouldReportLostKeyAndNeverVerify() = runTest {
-        keystoreGateway.legacyKey = null
-
-        viewModel.onAction(LoginScreenAction.BiometricSuccess)
-        advanceUntilIdle()
-
-        assertThat(viewModel.uiState.value.userAuthState).isEqualTo(UserAuthState.LEGACY_KEY_LOST)
-        assertThat(sessionKeyHolder.isUnlocked.value).isFalse()
-        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(any()) }
-    }
-
-    @Test
     fun loginClicked_whenCalledTwiceWhileInFlightOrAfterVerified_unwrapsOnlyOnce() = runTest {
         viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
         viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
@@ -718,6 +1171,21 @@ class LoginViewModelTest {
 
         verify(exactly = 1) { envelopeEncryptionManager.unwrapWithPassword(any(), any(), any()) }
         coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(false) }
+    }
+
+    @Test
+    fun biometricSuccess_arrivingAfterAPasswordLogin_shouldNotUnlockTwice() = runTest {
+        givenBiometricWrap()
+        coEvery { userDetailsRepository.shouldStartBiometricAuthFlow() } returns true
+        val cipher = prepareBiometricPrompt()!!
+        viewModel.onAction(LoginScreenAction.LoginClicked(DEFAULT_PASSWORD))
+        advanceUntilIdle()
+
+        viewModel.onAction(LoginScreenAction.BiometricSuccess(cipher))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { userDetailsRepository.onAuthSuccess(any()) }
+        coVerify(exactly = 0) { userDetailsRepository.onAuthSuccess(withBiometric = true) }
     }
 
     /** Runs the captured param block of the single LOGIN_SUCCESS event and returns what it set. */

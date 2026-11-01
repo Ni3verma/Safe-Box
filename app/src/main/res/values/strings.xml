@@ -226,4 +226,18 @@
     <string name="legacy_key_lost_body">The hardware key that encrypted this vault is no longer available on this device, so existing records cannot be opened. If you have a backup file, you can erase this vault and restore from that backup.</string>
     <string name="home_upgrade_pending_banner">Security upgrade pending — it runs at your next sign-in</string>
     <string name="home_upgrade_pending_retry">Retry now</string>
+    <!-- Biometric login, forgot-password recovery & erase -->
+    <string name="login_biometric_invalidated_banner">Fingerprint login needs to be set up again — enter your master password</string>
+    <string name="recovery_not_set_up_title">Recovery isn\'t set up</string>
+    <string name="recovery_not_set_up_body">A forgotten master password can only be reset through a screen lock that was already set the last time you signed in. This device holds no recovery key for this vault, so it can be opened only with its master password.</string>
+    <string name="recovery_not_set_up_restore_hint">If you have a backup file, erase this vault, sign up again, and restore the backup from Backup &amp; Restore.</string>
+    <string name="recovery_back_to_login">Back to login</string>
+    <string name="erase_vault_action">Erase everything and start over</string>
+    <string name="erase_vault_dialog_title">Erase everything?</string>
+    <string name="erase_vault_dialog_body">All records, the master password and the recovery keys on this device will be deleted permanently. Backup files you saved elsewhere are not affected.</string>
+    <string name="erase_vault_dialog_confirm">Erase</string>
+    <string name="recovery_failure_not_authenticated">The unlock expired before the vault could be opened. Try again.</string>
+    <string name="recovery_failure_verifier">The recovery data on this device is damaged. Nothing was changed.</string>
+    <string name="recovery_failure_keystore">The secure hardware could not open the recovery key. Nothing was changed.</string>
+    <string name="recovery_failure_storage">The new password could not be saved. Nothing was changed.</string>
 </resources>

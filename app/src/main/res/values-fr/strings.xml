@@ -207,4 +207,17 @@
     <string name="legacy_key_lost_body">La clé matérielle qui chiffrait ce coffre n\'est plus disponible sur cet appareil, les enregistrements existants ne peuvent donc pas être ouverts. Si vous disposez d\'un fichier de sauvegarde, vous pouvez effacer ce coffre et le restaurer à partir de cette sauvegarde.</string>
     <string name="home_upgrade_pending_banner">Mise à niveau de sécurité en attente — elle aura lieu à votre prochaine connexion</string>
     <string name="home_upgrade_pending_retry">Réessayer maintenant</string>
+    <string name="login_biometric_invalidated_banner">La connexion par empreinte digitale doit être reconfigurée — saisissez votre mot de passe principal</string>
+    <string name="recovery_not_set_up_title">La récupération n\'est pas configurée</string>
+    <string name="recovery_not_set_up_body">Un mot de passe principal oublié ne peut être réinitialisé que par un verrouillage de l\'écran qui était déjà configuré lors de votre dernière connexion. Cet appareil ne détient aucune clé de récupération pour ce coffre, qui ne peut donc être ouvert qu\'avec son mot de passe principal.</string>
+    <string name="recovery_not_set_up_restore_hint">Si vous disposez d\'un fichier de sauvegarde, effacez ce coffre, inscrivez-vous à nouveau, puis restaurez la sauvegarde depuis Sauvegarde et restauration.</string>
+    <string name="recovery_back_to_login">Retour à la connexion</string>
+    <string name="erase_vault_action">Tout effacer et recommencer</string>
+    <string name="erase_vault_dialog_title">Tout effacer ?</string>
+    <string name="erase_vault_dialog_body">Tous les enregistrements, le mot de passe principal et les clés de récupération présents sur cet appareil seront définitivement supprimés. Les fichiers de sauvegarde enregistrés ailleurs ne sont pas concernés.</string>
+    <string name="erase_vault_dialog_confirm">Effacer</string>
+    <string name="recovery_failure_not_authenticated">Le déverrouillage a expiré avant que le coffre n\'ait pu être ouvert. Réessayez.</string>
+    <string name="recovery_failure_verifier">Les données de récupération sur cet appareil sont endommagées. Aucune modification n\'a été effectuée.</string>
+    <string name="recovery_failure_keystore">Le matériel sécurisé n\'a pas pu ouvrir la clé de récupération. Aucune modification n\'a été effectuée.</string>
+    <string name="recovery_failure_storage">Le nouveau mot de passe n\'a pas pu être enregistré. Aucune modification n\'a été effectuée.</string>
 </resources>

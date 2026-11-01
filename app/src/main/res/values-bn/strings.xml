@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">এই ভল্টটি এনক্রিপ্ট করা হার্ডওয়্যার কী আর এই ডিভাইসে উপলব্ধ নেই, তাই বিদ্যমান রেকর্ডগুলো খোলা যাবে না। আপনার কাছে ব্যাকআপ ফাইল থাকলে আপনি এই ভল্টটি মুছে সেই ব্যাকআপ থেকে পুনরুদ্ধার করতে পারেন।</string>
     <string name="home_upgrade_pending_banner">নিরাপত্তা আপগ্রেড বাকি — পরবর্তী সাইন-ইনে এটি চলবে</string>
     <string name="home_upgrade_pending_retry">এখনই আবার চেষ্টা করুন</string>
+    <string name="login_biometric_invalidated_banner">ফিঙ্গারপ্রিন্ট লগইন আবার সেট আপ করতে হবে — আপনার মাস্টার পাসওয়ার্ড লিখুন</string>
+    <string name="recovery_not_set_up_title">রিকভারি সেট আপ করা নেই</string>
+    <string name="recovery_not_set_up_body">ভুলে যাওয়া মাস্টার পাসওয়ার্ড শুধুমাত্র এমন একটি স্ক্রিন লকের মাধ্যমে রিসেট করা যায়, যা আপনার শেষবার সাইন ইন করার সময় আগে থেকেই সেট করা ছিল। এই ডিভাইসে এই ভল্টের জন্য কোনো রিকভারি কী নেই, তাই এটি শুধুমাত্র এর মাস্টার পাসওয়ার্ড দিয়েই খোলা যাবে।</string>
+    <string name="recovery_not_set_up_restore_hint">আপনার কাছে ব্যাকআপ ফাইল থাকলে এই ভল্টটি মুছে ফেলুন, আবার সাইন আপ করুন, তারপর ব্যাকআপ ও রিস্টোর থেকে ব্যাকআপটি রিস্টোর করুন।</string>
+    <string name="recovery_back_to_login">লগইনে ফিরে যান</string>
+    <string name="erase_vault_action">সবকিছু মুছে নতুন করে শুরু করুন</string>
+    <string name="erase_vault_dialog_title">সবকিছু মুছে ফেলবেন?</string>
+    <string name="erase_vault_dialog_body">এই ডিভাইসে থাকা সব রেকর্ড, মাস্টার পাসওয়ার্ড এবং রিকভারি কীগুলো স্থায়ীভাবে মুছে ফেলা হবে। অন্য কোথাও সংরক্ষিত আপনার ব্যাকআপ ফাইলগুলো প্রভাবিত হবে না।</string>
+    <string name="erase_vault_dialog_confirm">মুছে ফেলুন</string>
+    <string name="recovery_failure_not_authenticated">ভল্ট খোলার আগেই আনলকের মেয়াদ শেষ হয়ে গেছে। আবার চেষ্টা করুন।</string>
+    <string name="recovery_failure_verifier">এই ডিভাইসের রিকভারি ডেটা ক্ষতিগ্রস্ত। কিছুই পরিবর্তন করা হয়নি।</string>
+    <string name="recovery_failure_keystore">সুরক্ষিত হার্ডওয়্যার রিকভারি কী খুলতে পারেনি। কিছুই পরিবর্তন করা হয়নি।</string>
+    <string name="recovery_failure_storage">নতুন পাসওয়ার্ড সংরক্ষণ করা যায়নি। কিছুই পরিবর্তন করা হয়নি।</string>
 </resources>

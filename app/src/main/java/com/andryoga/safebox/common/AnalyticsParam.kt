@@ -43,8 +43,6 @@ enum class AnalyticsParam(val paramName: String) {
     DURATION_MS("duration_ms"),
     // size of the backup file just written, in KiB
     SIZE_KB("size_kb"),
-    // a backup or restore worker was RUNNING when the away timeout fired
-    WORKER_RUNNING("worker_running"),
     // endregion
 
     // region envelope encryption migration & wraps

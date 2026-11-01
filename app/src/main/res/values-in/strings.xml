@@ -214,4 +214,17 @@
     <string name="legacy_key_lost_body">Kunci perangkat keras yang mengenkripsi brankas ini tidak lagi tersedia di perangkat ini, sehingga catatan yang ada tidak dapat dibuka. Jika Anda memiliki file cadangan, Anda dapat menghapus brankas ini dan memulihkan dari cadangan tersebut.</string>
     <string name="home_upgrade_pending_banner">Peningkatan keamanan tertunda — akan dijalankan saat masuk berikutnya</string>
     <string name="home_upgrade_pending_retry">Coba sekarang</string>
+    <string name="login_biometric_invalidated_banner">Masuk dengan sidik jari perlu disiapkan ulang — masukkan kata sandi utama Anda</string>
+    <string name="recovery_not_set_up_title">Pemulihan belum disiapkan</string>
+    <string name="recovery_not_set_up_body">Kata sandi utama yang terlupa hanya dapat diatur ulang melalui kunci layar yang sudah disetel saat Anda terakhir kali masuk. Perangkat ini tidak menyimpan kunci pemulihan untuk brankas ini, sehingga brankas hanya dapat dibuka dengan kata sandi utamanya.</string>
+    <string name="recovery_not_set_up_restore_hint">Jika Anda memiliki file cadangan, hapus brankas ini, daftar lagi, lalu pulihkan cadangan tersebut dari Cadangkan &amp; Pulihkan.</string>
+    <string name="recovery_back_to_login">Kembali ke halaman masuk</string>
+    <string name="erase_vault_action">Hapus semua dan mulai dari awal</string>
+    <string name="erase_vault_dialog_title">Hapus semua?</string>
+    <string name="erase_vault_dialog_body">Semua entri, kata sandi utama, dan kunci pemulihan di perangkat ini akan dihapus secara permanen. File cadangan yang Anda simpan di tempat lain tidak terpengaruh.</string>
+    <string name="erase_vault_dialog_confirm">Hapus</string>
+    <string name="recovery_failure_not_authenticated">Sesi buka kunci kedaluwarsa sebelum brankas sempat dibuka. Coba lagi.</string>
+    <string name="recovery_failure_verifier">Data pemulihan di perangkat ini rusak. Tidak ada yang diubah.</string>
+    <string name="recovery_failure_keystore">Perangkat keras keamanan tidak dapat membuka kunci pemulihan. Tidak ada yang diubah.</string>
+    <string name="recovery_failure_storage">Kata sandi baru tidak dapat disimpan. Tidak ada yang diubah.</string>
 </resources>

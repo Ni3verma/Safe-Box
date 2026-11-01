@@ -75,7 +75,7 @@ class VaultRepositoryImpl @Inject constructor(
         return dek
     }
 
-    override suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray) {
+    override suspend fun rewrapPassword(newPassword: CharArray, dek: ByteArray, hint: String) {
         Timber.i("rewrapping DEK under new password")
         val (kdfParams, wrappedPassword) = withContext(dispatchersProvider.default) {
             val kdfParams = envelopeEncryptionManager.deriveKdfParams()
@@ -85,8 +85,10 @@ class VaultRepositoryImpl @Inject constructor(
         database.withTransaction {
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.KDF_PARAMS, kdfParams.encode()))
             vaultMetaDao.upsert(VaultMetaEntity(VaultMetaKey.WRAPPED_DEK_PASSWORD, wrappedPassword))
+            // crypto_version = 2: the hint is plaintext.
+            userDetailsDao.updateHint(hint, Date())
         }
-        Timber.i("DEK password wrap updated")
+        Timber.i("DEK password wrap and hint updated")
     }
 
     private class CreatedVaultMaterials(
