@@ -127,8 +127,22 @@
       always explicitly list any new or updated GA custom definitions (dimensions/metrics) and
       analytics changes in the final response to the user (or explicitly state that there are none).
 
+* **Keep ViewModels and screens small.** A probe / step machine / use case that a ViewModel merely
+  drives lives in its own class with a one-line KDoc per sealed case (`WrapKeyOpener`,
+  `VaultResetUseCase`); a screen file keeps the root, the card switch and the previews, and moves
+  everything else to `components/`. Split when the owner would have to scroll to review it, not
+  when asked. (MR 6 review, 2026-10-31.)
+* **Previews:** every new card, banner and screen state gets `@LightDarkModePreview`. Dialogs and
+  prompt wrappers get none — `AlertDialog` and `BiometricPrompt` open their own window, which the
+  static preview does not render — and the MR summary says so instead of leaving the gap unexplained.
+
 ## Code Formatting & Style Rules
 
+* **Parameter order:** required parameters first, defaulted ones after them; never insert a new
+  defaulted parameter between required ones. Call sites use named arguments, so reordering an
+  existing signature to meet this is cheap. (MR 6 review.)
+* **File order:** the type a file is named after comes first; supporting types (`sealed interface`
+  steps, failure enums, UI sub-states) follow it. (MR 6 review.)
 * **No Extra Empty/Blank Lines:** Never introduce unnecessary empty or blank lines within import
   blocks, in-between code blocks, or multiple trailing empty lines at the end of files.
 * **Trailing Commas:** Always include a trailing comma (`,`) for multi-line parameters, arguments,
