@@ -8,6 +8,7 @@ enum class AnalyticsKey(val eventName: String) {
     NOTIFICATION_PERMISSION_RATIONALE_DIALOG_CANCEL_CLICK("notif_perm_dialog_cancel_click"),
     OPEN_GITHUB("open_github"),
     OPEN_PLAY_STORE("open_play_store"),
+    OPEN_BUY_ME_A_COFFEE("open_buy_me_a_coffee"),
     EMAIL_FEEDBACK("email_feedback"),
     BACKUP_STARTED("backup_started"),
     BACKUP_SELECT_DIR_RESULT("backup_select_dir_result"),

@@ -22,6 +22,9 @@ sealed interface SettingsScreenAction {
     // when user clicks contribute on github
     object OpenGithubProject : SettingsScreenAction
 
+    // when user clicks buy me a coffee
+    object OpenBuyMeACoffee : SettingsScreenAction
+
     // when user submits new master password and hint after device security auth
     class OnUpdateMasterPassword(val newPassword: String, val hint: String) : SettingsScreenAction
 
