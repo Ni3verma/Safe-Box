@@ -7,6 +7,48 @@ import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.ui.core.SessionLockReason
 import javax.crypto.Cipher
 
+data class LoginUiState(
+    val hint: String = "",
+    /**
+     * Single-use `DECRYPT` cipher over `wrapped_dek_biometric`, prepared by the ViewModel; non-null
+     * exactly while the fingerprint prompt should be showing. The screen binds it as
+     * the `CryptoObject` and hands back the authorised cipher in [LoginScreenAction.BiometricSuccess].
+     */
+    val biometricUnlockCipher: Cipher? = null,
+    /** `KEK_Biometric` was found invalidated by this login screen; the banner asks for the password. */
+    val isBiometricKeyInvalidated: Boolean = false,
+    val userAuthState: UserAuthState = UserAuthState.INITIAL,
+    val defaultPassword: String = "",
+    /** Why the previous session ended, when whoever ended it said so; drives the banner. */
+    val lockReason: SessionLockReason? = null,
+    /**
+     * Number of password attempts rejected so far. [userAuthState] stays at
+     * [UserAuthState.INCORRECT_PASSWORD_ENTERED] across consecutive failures, so the UI keys its
+     * per-rejection feedback (shake and haptic) on this counter instead.
+     */
+    val failedLoginAttempts: Int = 0,
+    /** True while the vault on disk is still at `crypto_version = 1`; shows the upgrade notice and suppresses biometric login. */
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    val isLegacyVault: Boolean = false,
+    /** Non-dismissable determinate progress state while a legacy vault is being migrated. */
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    val migrationProgress: MigrationProgressState = MigrationProgressState.Idle,
+    /** Non-null when the most recent legacy migration attempt failed. */
+    // TODO(D3): legacy vault (crypto_version = 1) only
+    val migrationFailure: MigrationFailureUiState? = null,
+    /** Non-null while a forgot-password flow is in progress. */
+    val forgotPasswordStep: ForgotPasswordStep? = null,
+    /** Forgot password on a `crypto_version = 2` vault with no usable device wrap: the card replaces the login form. */
+    val isRecoveryNotSetUp: Boolean = false,
+    /** Non-null after a recovery attempt failed; cleared by the next *Forgot password?* tap. */
+    val recoveryFailure: RecoveryFailureReason? = null,
+    /** The vault was erased; the screen leaves for Signup. */
+    val isVaultErased: Boolean = false,
+) {
+    val canUnlockWithBiometric: Boolean
+        get() = biometricUnlockCipher != null
+}
+
 /**
  * Describes a failed legacy-to-envelope vault migration displayed on the Login screen.
  *
@@ -75,46 +117,4 @@ sealed interface ForgotPasswordStep {
 
     /** The credential was accepted (legacy) or the DEK recovered and verified (v2): collect the new password and hint. */
     data object NewPassword : ForgotPasswordStep
-}
-
-data class LoginUiState(
-    val hint: String = "",
-    /**
-     * Single-use `DECRYPT` cipher over `wrapped_dek_biometric`, prepared by the ViewModel; non-null
-     * exactly while the fingerprint prompt should be showing. The screen binds it as
-     * the `CryptoObject` and hands back the authorised cipher in [LoginScreenAction.BiometricSuccess].
-     */
-    val biometricUnlockCipher: Cipher? = null,
-    /** `KEK_Biometric` was found invalidated by this login screen; the banner asks for the password. */
-    val isBiometricKeyInvalidated: Boolean = false,
-    val userAuthState: UserAuthState = UserAuthState.INITIAL,
-    val defaultPassword: String = "",
-    /** Why the previous session ended, when whoever ended it said so; drives the banner. */
-    val lockReason: SessionLockReason? = null,
-    /**
-     * Number of password attempts rejected so far. [userAuthState] stays at
-     * [UserAuthState.INCORRECT_PASSWORD_ENTERED] across consecutive failures, so the UI keys its
-     * per-rejection feedback (shake and haptic) on this counter instead.
-     */
-    val failedLoginAttempts: Int = 0,
-    /** True while the vault on disk is still at `crypto_version = 1`; shows the upgrade notice and suppresses biometric login. */
-    // TODO(D3): legacy vault (crypto_version = 1) only
-    val isLegacyVault: Boolean = false,
-    /** Non-dismissable determinate progress state while a legacy vault is being migrated. */
-    // TODO(D3): legacy vault (crypto_version = 1) only
-    val migrationProgress: MigrationProgressState = MigrationProgressState.Idle,
-    /** Non-null when the most recent legacy migration attempt failed. */
-    // TODO(D3): legacy vault (crypto_version = 1) only
-    val migrationFailure: MigrationFailureUiState? = null,
-    /** Non-null while a forgot-password flow is in progress. */
-    val forgotPasswordStep: ForgotPasswordStep? = null,
-    /** Forgot password on a `crypto_version = 2` vault with no usable device wrap: the card replaces the login form. */
-    val isRecoveryNotSetUp: Boolean = false,
-    /** Non-null after a recovery attempt failed; cleared by the next *Forgot password?* tap. */
-    val recoveryFailure: RecoveryFailureReason? = null,
-    /** The vault was erased; the screen leaves for Signup. */
-    val isVaultErased: Boolean = false,
-) {
-    val canUnlockWithBiometric: Boolean
-        get() = biometricUnlockCipher != null
 }

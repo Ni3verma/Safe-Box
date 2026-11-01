@@ -66,7 +66,7 @@ class WrapKeyOpener @Inject constructor(
     } catch (_: KeyPermanentlyInvalidatedException) {
         WrapKeyProbe.Invalidated
     } catch (e: Exception) {
-        flagIfOutsideCryptoApi("wrap key probe failed outside the crypto API", e)
+        crashInDebugBuildIfOutsideCryptoApi("wrap key probe failed outside the crypto API", e)
         Timber.w(e, "%s wrap key unusable", spec.wireName)
         WrapKeyProbe.Invalidated
     }
@@ -95,7 +95,7 @@ class WrapKeyOpener @Inject constructor(
         } catch (_: UserNotAuthenticatedException) {
             return WrapOpenOutcome.NotAuthenticated
         } catch (e: Exception) {
-            flagIfOutsideCryptoApi("wrap unwrap failed outside the crypto contract", e)
+            crashInDebugBuildIfOutsideCryptoApi("wrap unwrap failed outside the crypto contract", e)
             return WrapOpenOutcome.KeystoreFailure(e)
         }
         if (!envelopeEncryptionManager.verify(dek, verifier)) {
@@ -106,7 +106,7 @@ class WrapKeyOpener @Inject constructor(
     }
 
     /** Crypto-API failures vary by OEM and are expected; any other class is a programming error. */
-    private fun flagIfOutsideCryptoApi(message: String, error: Exception) {
+    private fun crashInDebugBuildIfOutsideCryptoApi(message: String, error: Exception) {
         if (error !is GeneralSecurityException && error !is ProviderException && error !is IllegalArgumentException) {
             Utils.crashInDebugBuild(message, error)
         }

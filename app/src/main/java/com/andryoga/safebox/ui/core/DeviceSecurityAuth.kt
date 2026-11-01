@@ -30,20 +30,20 @@ fun canAuthenticateUsingDeviceSecurity(
  */
 @Composable
 fun DeviceSecurityAuthHandler(
+    onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+    onErrorOrCancel: () -> Unit = {},
     title: String? = null,
     subtitle: String? = null,
     allowDeviceCredential: Boolean = false,
     cryptoObject: BiometricPrompt.CryptoObject? = null,
-    onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
-    onErrorOrCancel: () -> Unit = {},
     biometricAuthProvider: DeviceSecurityAuthProvider = LocalDeviceSecurityAuthProvider.current,
 ) {
     biometricAuthProvider.Authenticate(
+        onSuccess = onSuccess,
+        onErrorOrCancel = onErrorOrCancel,
         title = title,
         subtitle = subtitle,
         allowDeviceCredential = allowDeviceCredential,
         cryptoObject = cryptoObject,
-        onSuccess = onSuccess,
-        onErrorOrCancel = onErrorOrCancel,
     )
 }

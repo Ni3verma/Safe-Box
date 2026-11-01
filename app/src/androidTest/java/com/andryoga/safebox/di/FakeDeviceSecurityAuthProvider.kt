@@ -45,12 +45,12 @@ class FakeDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAuthP
 
     @Composable
     override fun Authenticate(
+        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+        onErrorOrCancel: () -> Unit,
         title: String?,
         subtitle: String?,
         allowDeviceCredential: Boolean,
         cryptoObject: BiometricPrompt.CryptoObject?,
-        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
-        onErrorOrCancel: () -> Unit,
     ) {
         invocationCount++
         lastCryptoObject = cryptoObject

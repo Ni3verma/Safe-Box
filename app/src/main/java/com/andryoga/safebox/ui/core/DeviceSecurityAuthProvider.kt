@@ -89,6 +89,9 @@ interface DeviceSecurityAuthProvider {
     /**
      * Triggers the platform BiometricPrompt authentication flow.
      *
+     * @param onSuccess Callback invoked upon successful authentication with the authorised
+     *                  [BiometricPrompt.CryptoObject], or `null` when none was bound.
+     * @param onErrorOrCancel Callback invoked upon cancellation or authentication error.
      * @param title Custom prompt title, or defaults to app login title.
      * @param subtitle Custom prompt subtitle, or defaults to app verify identity subtitle.
      * @param allowDeviceCredential When true, enables PIN/Pattern/Password device credential fallback.
@@ -97,18 +100,15 @@ interface DeviceSecurityAuthProvider {
      *                     only by a successful prompt, so the caller unwraps with the object handed
      *                     back by [onSuccess], never with the one it passed in. Dropped (and
      *                     [onSuccess] receives `null`) where [supportsCryptoObject] is false.
-     * @param onSuccess Callback invoked upon successful authentication with the authorised
-     *                  [BiometricPrompt.CryptoObject], or `null` when none was bound.
-     * @param onErrorOrCancel Callback invoked upon cancellation or authentication error.
      */
     @Composable
     fun Authenticate(
+        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+        onErrorOrCancel: () -> Unit,
         title: String? = null,
         subtitle: String? = null,
         allowDeviceCredential: Boolean = false,
         cryptoObject: BiometricPrompt.CryptoObject? = null,
-        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
-        onErrorOrCancel: () -> Unit,
     )
 }
 
@@ -129,12 +129,12 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
 
     @Composable
     override fun Authenticate(
+        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+        onErrorOrCancel: () -> Unit,
         title: String?,
         subtitle: String?,
         allowDeviceCredential: Boolean,
         cryptoObject: BiometricPrompt.CryptoObject?,
-        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
-        onErrorOrCancel: () -> Unit,
     ) {
         val context = LocalContext.current
         val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
