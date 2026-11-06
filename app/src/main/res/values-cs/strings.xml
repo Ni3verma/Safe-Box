@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Data pro obnovení v tomto zařízení jsou poškozená. Nic nebylo změněno.</string>
     <string name="recovery_failure_keystore">Bezpečný hardware nedokázal otevřít klíč pro obnovení. Nic nebylo změněno.</string>
     <string name="recovery_failure_storage">Nové heslo se nepodařilo uložit. Nic nebylo změněno.</string>
+    <string name="settings_change_password_legacy_body">K dispozici po bezpečnostní aktualizaci</string>
+    <string name="settings_current_password_title">Potvrďte, že jste to vy</string>
+    <string name="settings_current_password_label">Aktuální hlavní heslo</string>
+    <string name="password_update_failed">Nové hlavní heslo se nepodařilo uložit. Vaše současné heslo stále funguje.</string>
+    <string name="settings_biometric_unlock_title">Odemknutí otiskem prstu</string>
+    <string name="settings_biometric_unlock_body">Odemykejte otiskem prstu místo zadávání hlavního hesla</string>
+    <string name="settings_biometric_unlock_unavailable_body">Vyžaduje otisk prstu přidaný v nastavení telefonu. Ne každý telefon to podporuje.</string>
+    <string name="home_screen_lock_nudge_banner">Nastavte zámek obrazovky, aby bylo možné obnovit zapomenuté hlavní heslo</string>
+    <string name="home_screen_lock_nudge_set_up">Nastavit</string>
+    <string name="home_screen_lock_nudge_accept_risk">Přijímám riziko</string>
 </resources>

@@ -223,4 +223,14 @@
     <string name="recovery_failure_verifier">I dati di recupero su questo dispositivo sono danneggiati. Non è stata apportata alcuna modifica.</string>
     <string name="recovery_failure_keystore">L\'hardware sicuro non è riuscito ad aprire la chiave di recupero. Non è stata apportata alcuna modifica.</string>
     <string name="recovery_failure_storage">Impossibile salvare la nuova password. Non è stata apportata alcuna modifica.</string>
+    <string name="settings_change_password_legacy_body">Disponibile dopo l\'aggiornamento di sicurezza</string>
+    <string name="settings_current_password_title">Conferma la tua identità</string>
+    <string name="settings_current_password_label">Password principale attuale</string>
+    <string name="password_update_failed">Impossibile salvare la nuova password principale. La password attuale funziona ancora.</string>
+    <string name="settings_biometric_unlock_title">Sblocco con impronta</string>
+    <string name="settings_biometric_unlock_body">Sblocca con l\'impronta invece di digitare la password principale</string>
+    <string name="settings_biometric_unlock_unavailable_body">Richiede un\'impronta registrata nelle impostazioni del telefono. Non tutti i telefoni la supportano.</string>
+    <string name="home_screen_lock_nudge_banner">Imposta un blocco schermo per poter recuperare una password principale dimenticata</string>
+    <string name="home_screen_lock_nudge_set_up">Configura</string>
+    <string name="home_screen_lock_nudge_accept_risk">Accetto il rischio</string>
 </resources>

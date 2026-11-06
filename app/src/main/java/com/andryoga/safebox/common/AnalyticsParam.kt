@@ -56,4 +56,7 @@ enum class AnalyticsParam(val paramName: String) {
     RECORDS_DONE("records_done"),
     WRAP("wrap"),
     // endregion
+
+    // how the Settings change-password gate was passed; ChangePasswordGate wire name
+    GATE("gate"),
 }

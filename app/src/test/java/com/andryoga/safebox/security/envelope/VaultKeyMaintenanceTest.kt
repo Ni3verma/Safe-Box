@@ -293,4 +293,48 @@ class VaultKeyMaintenanceTest {
 
         coVerify(exactly = 0) { vaultRepository.storeWrap(any(), any(), any()) }
     }
+
+    @Test
+    fun setBiometricUnlockEnabledFalse_shouldWriteTheFlagAndDeleteTheAliasUnderItsStoredSuffix() = runTest {
+        coEvery { vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC) } returns "2"
+        val alias = EnvelopeEncryptionManagerImpl.aliasFor(WrapKeySpec.BIOMETRIC, "2")
+        fakeKeystoreGateway.generateWrapKeyPair(alias, WrapKeySpec.BIOMETRIC)
+
+        maintenance.setBiometricUnlockEnabled(false)
+
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(true) }
+        assertThat(fakeKeystoreGateway.probe(alias)).isEqualTo(KeyHealth.Missing)
+    }
+
+    @Test
+    fun setBiometricUnlockEnabledFalse_whenSessionIsLocked_shouldStillDisable() = runTest {
+        maintenance.setBiometricUnlockEnabled(false)
+
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(true) }
+    }
+
+    @Test
+    fun setBiometricUnlockEnabledTrue_shouldClearTheFlagAndCreateTheBiometricWrapWithoutAPrompt() = runTest {
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+
+        maintenance.setBiometricUnlockEnabled(true)
+
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(false) }
+        coVerify(exactly = 1) { vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), null) }
+    }
+
+    @Test
+    fun setBiometricUnlockEnabledTrue_whenNoStrongBiometric_shouldClearTheFlagAndCreateNoBiometricWrap() = runTest {
+        every { deviceSecurityStatus.snapshot() } returns DeviceSecuritySnapshot(
+            isDeviceSecure = true,
+            biometricClass = BiometricClass.NONE_ENROLLED,
+            hasStrongBox = false,
+        )
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+
+        maintenance.setBiometricUnlockEnabled(true)
+
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(false) }
+        coVerify(exactly = 0) { vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), any()) }
+    }
 }

@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Дані відновлення на цьому пристрої пошкоджено. Нічого не змінено.</string>
     <string name="recovery_failure_keystore">Захищений апаратний модуль не зміг відкрити ключ відновлення. Нічого не змінено.</string>
     <string name="recovery_failure_storage">Не вдалося зберегти новий пароль. Нічого не змінено.</string>
+    <string name="settings_change_password_legacy_body">Доступно після оновлення безпеки</string>
+    <string name="settings_current_password_title">Підтвердьте, що це ви</string>
+    <string name="settings_current_password_label">Поточний майстер-пароль</string>
+    <string name="password_update_failed">Не вдалося зберегти новий майстер-пароль. Поточний пароль і далі працює.</string>
+    <string name="settings_biometric_unlock_title">Розблокування відбитком</string>
+    <string name="settings_biometric_unlock_body">Розблоковуйте відбитком пальця замість введення майстер-пароля</string>
+    <string name="settings_biometric_unlock_unavailable_body">Потрібен відбиток пальця, доданий у налаштуваннях телефона. Підтримується не на всіх телефонах.</string>
+    <string name="home_screen_lock_nudge_banner">Налаштуйте блокування екрана, щоб забутий майстер-пароль можна було відновити</string>
+    <string name="home_screen_lock_nudge_set_up">Налаштувати</string>
+    <string name="home_screen_lock_nudge_accept_risk">Я приймаю ризик</string>
 </resources>

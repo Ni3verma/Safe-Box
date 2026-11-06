@@ -223,4 +223,14 @@
     <string name="recovery_failure_verifier">Les données de récupération sur cet appareil sont endommagées. Aucune modification n\'a été effectuée.</string>
     <string name="recovery_failure_keystore">Le matériel sécurisé n\'a pas pu ouvrir la clé de récupération. Aucune modification n\'a été effectuée.</string>
     <string name="recovery_failure_storage">Le nouveau mot de passe n\'a pas pu être enregistré. Aucune modification n\'a été effectuée.</string>
+    <string name="settings_change_password_legacy_body">Disponible après la mise à niveau de sécurité</string>
+    <string name="settings_current_password_title">Confirmez votre identité</string>
+    <string name="settings_current_password_label">Mot de passe principal actuel</string>
+    <string name="password_update_failed">Impossible d\'enregistrer le nouveau mot de passe principal. Votre mot de passe actuel fonctionne toujours.</string>
+    <string name="settings_biometric_unlock_title">Déverrouillage par empreinte</string>
+    <string name="settings_biometric_unlock_body">Déverrouillez avec votre empreinte au lieu de saisir votre mot de passe principal</string>
+    <string name="settings_biometric_unlock_unavailable_body">Nécessite une empreinte enregistrée dans les paramètres du téléphone. Tous les téléphones ne le prennent pas en charge.</string>
+    <string name="home_screen_lock_nudge_banner">Définissez un verrouillage d\'écran pour pouvoir récupérer un mot de passe principal oublié</string>
+    <string name="home_screen_lock_nudge_set_up">Configurer</string>
+    <string name="home_screen_lock_nudge_accept_risk">J\'accepte le risque</string>
 </resources>

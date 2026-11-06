@@ -86,6 +86,13 @@ class VaultResetUseCaseTest {
     }
 
     @Test
+    fun eraseVault_shouldBringBackTheScreenLockNudgeForTheNextVault() = runTest {
+        useCase.eraseVault()
+
+        coVerify(exactly = 1) { preferenceProvider.removePrefByKey(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED) }
+    }
+
+    @Test
     fun eraseVault_shouldLockTheSessionBeforeTheTablesGo() = runTest {
         sessionKeyHolder.setSessionKey(testDek.copyOf())
         var unlockedWhenTablesCleared: Boolean? = null

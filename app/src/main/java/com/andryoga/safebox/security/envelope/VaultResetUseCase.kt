@@ -32,9 +32,9 @@ class VaultResetUseCase @Inject constructor(
 ) {
     /**
      * Cancels pending backup/restore work, locks the session, deletes every Keystore key of the
-     * vault (both wrap-key generations in use and the legacy alias), clears every Room table and
-     * resets the biometric login counter. After it returns `VaultRepository.hasVault()` is `false`,
-     * so the Room-first start routing lands on Signup.
+     * vault (both wrap-key generations in use and the legacy alias), clears every Room table,
+     * resets the biometric login counter and brings back the screen-lock nudge. After it returns
+     * `VaultRepository.hasVault()` is `false`, so the Room-first start routing lands on Signup.
      *
      * The wrap-key aliases are resolved from `vault_meta` before the tables go; the Keystore
      * deletes are best effort (a stuck entry is harmless without its wrap).
@@ -57,6 +57,7 @@ class VaultResetUseCase @Inject constructor(
             database.get().clearAllTables()
         }
         preferenceProvider.removePrefByKey(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING)
+        preferenceProvider.removePrefByKey(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED)
         Timber.w("vault erased")
     }
 }

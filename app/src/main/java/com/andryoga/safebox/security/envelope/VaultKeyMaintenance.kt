@@ -85,6 +85,35 @@ class VaultKeyMaintenance @Inject constructor(
         }
     }
 
+    /**
+     * The fingerprint-unlock opt-out. Off: writes `biometric_unlock_disabled` and drops
+     * `wrapped_dek_biometric` in one transaction, then deletes the `KEK_Biometric` alias (best
+     * effort; a stuck entry is harmless without its wrap). On: clears the flag, then runs a
+     * maintenance pass, which wraps the DEK under `KEK_Biometric` without a prompt when a strong
+     * biometric is enrolled. Serialised with [runAfterUnlock], so a pass already in flight cannot
+     * store a new wrap after the flag is written.
+     *
+     * @param enabled The switch's new position.
+     */
+    suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
+        withContext(dispatchersProvider.default) {
+            mutex.withLock {
+                if (enabled) {
+                    vaultRepository.setBiometricUnlockDisabled(false)
+                } else {
+                    val alias = EnvelopeEncryptionManagerImpl.aliasFor(
+                        WrapKeySpec.BIOMETRIC,
+                        vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC),
+                    )
+                    vaultRepository.setBiometricUnlockDisabled(true)
+                    keystoreGateway.deleteKey(alias)
+                }
+            }
+        }
+        // Outside the lock: runAfterUnlock takes it itself.
+        if (enabled) runAfterUnlock()
+    }
+
     private suspend fun runLocked() {
         if (sessionKeyHolder.isLegacySession) return
         if (vaultMetaDao.get(VaultMetaKey.CRYPTO_VERSION) != CryptoVersion.ENVELOPE) return
@@ -106,7 +135,7 @@ class VaultKeyMaintenance @Inject constructor(
             }
 
             val biometricDisabled =
-                vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == BIOMETRIC_DISABLED_VALUE
+                vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED_VALUE
             if (snapshot.biometricClass == BiometricClass.STRONG && !biometricDisabled) {
                 ensureWrap(spec = WrapKeySpec.BIOMETRIC, dek = dek)
             } else if (vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_BIOMETRIC) != null) {
@@ -201,8 +230,6 @@ class VaultKeyMaintenance @Inject constructor(
     }
 
     companion object {
-        private const val BIOMETRIC_DISABLED_VALUE = "1"
-
         /**
          * Returns the next monotonic generation suffix (`"1"`, `"2"`, ...) after [currentSuffix].
          */

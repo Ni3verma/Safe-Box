@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Os dados de recuperação neste dispositivo estão danificados. Nada foi alterado.</string>
     <string name="recovery_failure_keystore">O hardware seguro não conseguiu abrir a chave de recuperação. Nada foi alterado.</string>
     <string name="recovery_failure_storage">Não foi possível guardar a nova palavra-passe. Nada foi alterado.</string>
+    <string name="settings_change_password_legacy_body">Disponível após a atualização de segurança</string>
+    <string name="settings_current_password_title">Confirme a sua identidade</string>
+    <string name="settings_current_password_label">Palavra-passe mestra atual</string>
+    <string name="password_update_failed">Não foi possível guardar a nova palavra-passe mestra. A sua palavra-passe atual continua a funcionar.</string>
+    <string name="settings_biometric_unlock_title">Desbloqueio por impressão digital</string>
+    <string name="settings_biometric_unlock_body">Desbloqueie com a impressão digital em vez de escrever a palavra-passe mestra</string>
+    <string name="settings_biometric_unlock_unavailable_body">Requer uma impressão digital registada nas definições do telemóvel. Nem todos os telemóveis o suportam.</string>
+    <string name="home_screen_lock_nudge_banner">Defina um bloqueio de ecrã para que uma palavra-passe mestra esquecida possa ser recuperada</string>
+    <string name="home_screen_lock_nudge_set_up">Configurar</string>
+    <string name="home_screen_lock_nudge_accept_risk">Aceito o risco</string>
 </resources>
