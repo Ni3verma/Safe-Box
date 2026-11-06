@@ -229,7 +229,7 @@
     <string name="password_update_failed">Das neue Master-Passwort konnte nicht gespeichert werden. Dein aktuelles Passwort funktioniert weiterhin.</string>
     <string name="settings_biometric_unlock_title">Entsperren per Fingerabdruck</string>
     <string name="settings_biometric_unlock_body">Mit deinem Fingerabdruck entsperren, statt das Master-Passwort einzugeben</string>
-    <string name="settings_biometric_unlock_unavailable_body">Auf diesem Gerät ist kein Fingerabdruck eingerichtet. Richte einen in den Telefoneinstellungen ein, um diese Funktion zu nutzen.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Erfordert einen in den Telefoneinstellungen eingerichteten Fingerabdruck. Nicht jedes Telefon unterstützt das.</string>
     <string name="home_screen_lock_nudge_banner">Richte eine Displaysperre ein, damit ein vergessenes Master-Passwort wiederhergestellt werden kann</string>
     <string name="home_screen_lock_nudge_set_up">Einrichten</string>
     <string name="home_screen_lock_nudge_accept_risk">Risiko akzeptieren</string>

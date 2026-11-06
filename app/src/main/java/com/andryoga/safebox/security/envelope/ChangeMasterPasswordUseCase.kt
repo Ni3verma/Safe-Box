@@ -16,7 +16,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 /**
- * Change master password from Settings on an open envelope vault: the current-password gate and
+ * Change master password on an open envelope vault: the current-password gate and
  * the re-wrap. The DEK does not change, so no record is re-encrypted and the Keystore wraps stay.
  * Not offered in a legacy session (there is no DEK to re-wrap).
  */
@@ -48,7 +48,7 @@ class ChangeMasterPasswordUseCase @Inject constructor(
         }
         if (state !is VaultState.Envelope) {
             password.fill(Char.MIN_VALUE)
-            // Settings disables the entry in a legacy session; a corrupted envelope cannot be open.
+            // Callers offer the change only on an open envelope vault; a corrupted one cannot be open.
             Utils.crashInDebugBuild("change-password gate reached on a non-envelope vault: $state")
             return false
         }
@@ -93,6 +93,6 @@ class ChangeMasterPasswordUseCase @Inject constructor(
             CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
             settingsDataStore.getPasswordAfterXBiometricLogins(),
         )
-        Timber.i("master password changed from settings")
+        Timber.i("master password changed")
     }
 }

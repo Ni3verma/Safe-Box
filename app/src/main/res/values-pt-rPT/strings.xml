@@ -236,7 +236,7 @@
     <string name="password_update_failed">Não foi possível guardar a nova palavra-passe mestra. A sua palavra-passe atual continua a funcionar.</string>
     <string name="settings_biometric_unlock_title">Desbloqueio por impressão digital</string>
     <string name="settings_biometric_unlock_body">Desbloqueie com a impressão digital em vez de escrever a palavra-passe mestra</string>
-    <string name="settings_biometric_unlock_unavailable_body">Não existe nenhuma impressão digital configurada neste dispositivo. Registe uma nas definições do telemóvel para usar esta funcionalidade.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Requer uma impressão digital registada nas definições do telemóvel. Nem todos os telemóveis o suportam.</string>
     <string name="home_screen_lock_nudge_banner">Defina um bloqueio de ecrã para que uma palavra-passe mestra esquecida possa ser recuperada</string>
     <string name="home_screen_lock_nudge_set_up">Configurar</string>
     <string name="home_screen_lock_nudge_accept_risk">Aceito o risco</string>

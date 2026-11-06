@@ -236,7 +236,7 @@
     <string name="password_update_failed">Yeni ana parola kaydedilemedi. Mevcut parolanız çalışmaya devam ediyor.</string>
     <string name="settings_biometric_unlock_title">Parmak izi ile kilit açma</string>
     <string name="settings_biometric_unlock_body">Ana parolanızı yazmak yerine parmak izinizle kilidi açın</string>
-    <string name="settings_biometric_unlock_unavailable_body">Bu cihazda hazır bir parmak izi yok. Bunu kullanmak için telefon ayarlarından bir parmak izi kaydedin.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Telefon ayarlarında kayıtlı bir parmak izi gerekir. Her telefon bunu desteklemez.</string>
     <string name="home_screen_lock_nudge_banner">Unutulan bir ana parolanın kurtarılabilmesi için ekran kilidi ayarlayın</string>
     <string name="home_screen_lock_nudge_set_up">Ayarla</string>
     <string name="home_screen_lock_nudge_accept_risk">Riski kabul ediyorum</string>

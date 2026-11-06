@@ -231,7 +231,7 @@
     <string name="password_update_failed">無法儲存新的主密碼。您目前的密碼仍可使用。</string>
     <string name="settings_biometric_unlock_title">指紋解鎖</string>
     <string name="settings_biometric_unlock_body">使用指紋解鎖，不必輸入主密碼</string>
-    <string name="settings_biometric_unlock_unavailable_body">此裝置上沒有可用的指紋。請在手機設定中註冊指紋以使用此功能。</string>
+    <string name="settings_biometric_unlock_unavailable_body">需要在手機設定中註冊指紋。並非所有手機都支援此功能。</string>
     <string name="home_screen_lock_nudge_banner">設定螢幕鎖定，以便在忘記主密碼時可以復原</string>
     <string name="home_screen_lock_nudge_set_up">設定</string>
     <string name="home_screen_lock_nudge_accept_risk">我接受風險</string>

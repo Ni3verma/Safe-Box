@@ -86,33 +86,32 @@ class VaultKeyMaintenance @Inject constructor(
     }
 
     /**
-     * Fingerprint unlock switched off in Settings: writes `biometric_unlock_disabled` and drops
+     * The fingerprint-unlock opt-out. Off: writes `biometric_unlock_disabled` and drops
      * `wrapped_dek_biometric` in one transaction, then deletes the `KEK_Biometric` alias (best
-     * effort; a stuck entry is harmless without its wrap). Serialised with [runAfterUnlock] so a
-     * pass already in flight cannot store a new wrap after the flag is written.
+     * effort; a stuck entry is harmless without its wrap). On: clears the flag, then runs a
+     * maintenance pass, which wraps the DEK under `KEK_Biometric` without a prompt when a strong
+     * biometric is enrolled. Serialised with [runAfterUnlock], so a pass already in flight cannot
+     * store a new wrap after the flag is written.
+     *
+     * @param enabled The switch's new position.
      */
-    suspend fun disableBiometricUnlock() {
+    suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
         withContext(dispatchersProvider.default) {
             mutex.withLock {
-                val alias = EnvelopeEncryptionManagerImpl.aliasFor(
-                    WrapKeySpec.BIOMETRIC,
-                    vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC),
-                )
-                vaultRepository.setBiometricUnlockDisabled(true)
-                keystoreGateway.deleteKey(alias)
+                if (enabled) {
+                    vaultRepository.setBiometricUnlockDisabled(false)
+                } else {
+                    val alias = EnvelopeEncryptionManagerImpl.aliasFor(
+                        WrapKeySpec.BIOMETRIC,
+                        vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC),
+                    )
+                    vaultRepository.setBiometricUnlockDisabled(true)
+                    keystoreGateway.deleteKey(alias)
+                }
             }
         }
-    }
-
-    /**
-     * Fingerprint unlock switched back on: clears the flag, then runs a maintenance pass, which
-     * wraps the DEK under `KEK_Biometric` without a prompt when a strong biometric is enrolled.
-     */
-    suspend fun enableBiometricUnlock() {
-        withContext(dispatchersProvider.default) {
-            mutex.withLock { vaultRepository.setBiometricUnlockDisabled(false) }
-        }
-        runAfterUnlock()
+        // Outside the lock: runAfterUnlock takes it itself.
+        if (enabled) runAfterUnlock()
     }
 
     private suspend fun runLocked() {

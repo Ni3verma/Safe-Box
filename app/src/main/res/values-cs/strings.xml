@@ -236,7 +236,7 @@
     <string name="password_update_failed">Nové hlavní heslo se nepodařilo uložit. Vaše současné heslo stále funguje.</string>
     <string name="settings_biometric_unlock_title">Odemknutí otiskem prstu</string>
     <string name="settings_biometric_unlock_body">Odemykejte otiskem prstu místo zadávání hlavního hesla</string>
-    <string name="settings_biometric_unlock_unavailable_body">V tomto zařízení není nastaven žádný otisk prstu. Přidejte ho v nastavení telefonu, abyste mohli tuto funkci používat.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Vyžaduje otisk prstu přidaný v nastavení telefonu. Ne každý telefon to podporuje.</string>
     <string name="home_screen_lock_nudge_banner">Nastavte zámek obrazovky, aby bylo možné obnovit zapomenuté hlavní heslo</string>
     <string name="home_screen_lock_nudge_set_up">Nastavit</string>
     <string name="home_screen_lock_nudge_accept_risk">Přijímám riziko</string>

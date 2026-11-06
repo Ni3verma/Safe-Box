@@ -5,7 +5,7 @@ package com.andryoga.safebox.ui.home
 import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.security.CryptoTestFixtures
 import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
@@ -13,16 +13,15 @@ import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
+import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -40,9 +39,6 @@ class HomeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    @RelaxedMockK
-    lateinit var settingsDataStore: SettingsDataStore
-
     @MockK
     lateinit var deviceSecurityStatus: DeviceSecurityStatus
 
@@ -53,7 +49,7 @@ class HomeViewModelTest {
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var viewModel: HomeViewModel
 
-    private val isNudgeDismissed = MutableStateFlow(false)
+    private val preferenceProvider = FakePreferenceProvider()
     private val testDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { 0x33 }
 
     @Before
@@ -61,11 +57,10 @@ class HomeViewModelTest {
         MockKAnnotations.init(this)
         sessionKeyHolder = SessionKeyHolderImpl()
         analyticsHelper = FakeAnalyticsHelper()
-        every { settingsDataStore.isScreenLockNudgeDismissedFlow } returns isNudgeDismissed
         givenDeviceSecure(false)
         viewModel = HomeViewModel(
             sessionKeyHolder = sessionKeyHolder,
-            settingsDataStore = settingsDataStore,
+            preferenceProvider = preferenceProvider,
             deviceSecurityStatus = deviceSecurityStatus,
             activeSessionManager = activeSessionManager,
             analyticsHelper = analyticsHelper,
@@ -140,7 +135,7 @@ class HomeViewModelTest {
 
     @Test
     fun nudge_afterTheRiskWasAccepted_shouldStayHidden() = runTest {
-        isNudgeDismissed.value = true
+        preferenceProvider.upsertBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, true)
         sessionKeyHolder.setSessionKey(testDek.copyOf())
         collectUiState()
 
@@ -186,11 +181,18 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun nudgeAcceptRiskClick_shouldLogAndPersistTheDismissal() = runTest {
+    fun nudgeAcceptRiskClick_shouldLogPersistTheDismissalAndHideTheBannerAtOnce() = runTest {
+        sessionKeyHolder.setSessionKey(testDek.copyOf())
+        collectUiState()
+        viewModel.onScreenResumed()
+        advanceUntilIdle()
+        assertThat(viewModel.uiState.value.isScreenLockNudgeVisible).isTrue()
+
         viewModel.onScreenLockNudgeAcceptRiskClick()
         advanceUntilIdle()
 
         assertThat(analyticsHelper.count(AnalyticsKey.SCREEN_LOCK_NUDGE_ACCEPT_RISK_CLICK)).isEqualTo(1)
-        coVerify(exactly = 1) { settingsDataStore.dismissScreenLockNudge() }
+        assertThat(preferenceProvider.getBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, false)).isTrue()
+        assertThat(viewModel.uiState.value.isScreenLockNudgeVisible).isFalse()
     }
 }

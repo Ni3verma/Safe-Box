@@ -164,13 +164,10 @@ class SettingsViewModel @Inject constructor(
         screenState.update { it.copy(biometricUnlock = BiometricUnlockSwitch.Available(isOn = enabled)) }
         viewModelScope.launch {
             try {
-                if (enabled) {
-                    vaultKeyMaintenance.enableBiometricUnlock()
-                    analyticsHelper.logEvent(AnalyticsKey.BIOMETRIC_UNLOCK_ENABLED)
-                } else {
-                    vaultKeyMaintenance.disableBiometricUnlock()
-                    analyticsHelper.logEvent(AnalyticsKey.BIOMETRIC_UNLOCK_DISABLED)
-                }
+                vaultKeyMaintenance.setBiometricUnlockEnabled(enabled)
+                analyticsHelper.logEvent(
+                    if (enabled) AnalyticsKey.BIOMETRIC_UNLOCK_ENABLED else AnalyticsKey.BIOMETRIC_UNLOCK_DISABLED,
+                )
             } catch (c: CancellationException) {
                 throw c
             } catch (e: Exception) {

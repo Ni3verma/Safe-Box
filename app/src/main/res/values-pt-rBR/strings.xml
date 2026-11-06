@@ -236,7 +236,7 @@
     <string name="password_update_failed">Não foi possível salvar a nova senha mestra. Sua senha atual continua funcionando.</string>
     <string name="settings_biometric_unlock_title">Desbloqueio por digital</string>
     <string name="settings_biometric_unlock_body">Desbloqueie com sua digital em vez de digitar a senha mestra</string>
-    <string name="settings_biometric_unlock_unavailable_body">Nenhuma digital está configurada neste dispositivo. Cadastre uma nas configurações do telefone para usar este recurso.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Requer uma digital cadastrada nas configurações do telefone. Nem todo telefone oferece suporte.</string>
     <string name="home_screen_lock_nudge_banner">Configure um bloqueio de tela para que uma senha mestra esquecida possa ser recuperada</string>
     <string name="home_screen_lock_nudge_set_up">Configurar</string>
     <string name="home_screen_lock_nudge_accept_risk">Aceito o risco</string>

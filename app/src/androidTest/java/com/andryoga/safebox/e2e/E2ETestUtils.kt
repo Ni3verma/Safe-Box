@@ -272,7 +272,6 @@ object E2ETestUtils {
         settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
         settingsDataStore.updateAutoBackupAfterPasswordLogin(SettingsDataStore.DefaultValues.AUTO_BACKUP_AFTER_PASSWORD_LOGIN_DEFAULT)
         settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
-        settingsDataStore.clearScreenLockNudgeDismissed()
         activeSessionManager.setPaused(true)
         safeBoxDatabase.clearAllTables()
         encryptedPreferenceProvider?.upsertBooleanPref(

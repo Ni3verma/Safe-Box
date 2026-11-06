@@ -5,7 +5,6 @@ package com.andryoga.safebox.security.envelope
 import androidx.work.WorkManager
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
@@ -48,9 +47,6 @@ class VaultResetUseCaseTest {
     @MockK(relaxUnitFun = true)
     lateinit var preferenceProvider: PreferenceProvider
 
-    @MockK(relaxUnitFun = true)
-    lateinit var settingsDataStore: SettingsDataStore
-
     private lateinit var sessionKeyHolder: SessionKeyHolderImpl
     private lateinit var keystoreGateway: FakeKeystoreGateway
     private lateinit var useCase: VaultResetUseCase
@@ -70,7 +66,6 @@ class VaultResetUseCaseTest {
             keystoreGateway = keystoreGateway,
             workManager = Lazy { workManager },
             preferenceProvider = preferenceProvider,
-            settingsDataStore = settingsDataStore,
             dispatchersProvider = mainDispatcherRule.testDispatcherProvider,
         )
     }
@@ -94,7 +89,7 @@ class VaultResetUseCaseTest {
     fun eraseVault_shouldBringBackTheScreenLockNudgeForTheNextVault() = runTest {
         useCase.eraseVault()
 
-        coVerify(exactly = 1) { settingsDataStore.clearScreenLockNudgeDismissed() }
+        coVerify(exactly = 1) { preferenceProvider.removePrefByKey(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED) }
     }
 
     @Test

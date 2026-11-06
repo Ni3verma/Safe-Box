@@ -4,7 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.data.dataStore.SettingsDataStore
+import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
 import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -18,44 +19,33 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * UI state for Home-level banners.
- *
- * @property isLegacySession True when the vault is open in a temporary legacy session (*Continue for now*).
- * @property isScreenLockNudgeVisible The device has no lock screen and the user has not accepted
- * the risk; without one a forgotten master password cannot be recovered.
- */
-data class HomeUiState(
-    // TODO(D3): legacy vault (crypto_version = 1) only
-    val isLegacySession: Boolean = false,
-    val isScreenLockNudgeVisible: Boolean = false,
-)
-
-/**
  * Owns the Home-level banners: upgrade-pending in a legacy session, the screen-lock nudge otherwise.
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sessionKeyHolder: SessionKeyHolder,
-    private val settingsDataStore: SettingsDataStore,
+    private val preferenceProvider: PreferenceProvider,
     private val deviceSecurityStatus: DeviceSecurityStatus,
     private val activeSessionManager: ActiveSessionManager,
     private val analyticsHelper: AnalyticsHelper,
 ) : ViewModel() {
 
-    // Driving state: re-read on every resume, because the user sets the lock screen elsewhere.
-    // `null` until the first read, so the nudge never flashes before it is known.
+    // Driving state, read on every resume (the user sets the lock screen elsewhere). `null` until
+    // the first read, so the nudge never flashes before both are known.
     private val isDeviceSecure = MutableStateFlow<Boolean?>(null)
+    private val isNudgeDismissed = MutableStateFlow<Boolean?>(null)
 
     val uiState: StateFlow<HomeUiState> = combine(
         sessionKeyHolder.isUnlocked,
         isDeviceSecure,
-        settingsDataStore.isScreenLockNudgeDismissedFlow,
+        isNudgeDismissed,
     ) { isUnlocked, isDeviceSecure, isNudgeDismissed ->
         val isLegacySession = isUnlocked && sessionKeyHolder.isLegacySession
         HomeUiState(
             isLegacySession = isLegacySession,
             // One banner at a time: a legacy session shows the upgrade banner instead.
-            isScreenLockNudgeVisible = isUnlocked && !isLegacySession && isDeviceSecure == false && !isNudgeDismissed,
+            isScreenLockNudgeVisible = isUnlocked && !isLegacySession &&
+                isDeviceSecure == false && isNudgeDismissed == false,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -68,6 +58,10 @@ class HomeViewModel @Inject constructor(
     /** Home resumed: the lock screen may have been set or removed meanwhile. */
     fun onScreenResumed() {
         isDeviceSecure.value = deviceSecurityStatus.snapshot().isDeviceSecure
+        viewModelScope.launch {
+            isNudgeDismissed.value =
+                preferenceProvider.getBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, false)
+        }
     }
 
     /**
@@ -96,6 +90,9 @@ class HomeViewModel @Inject constructor(
 
     fun onScreenLockNudgeAcceptRiskClick() {
         analyticsHelper.logEvent(AnalyticsKey.SCREEN_LOCK_NUDGE_ACCEPT_RISK_CLICK)
-        viewModelScope.launch { settingsDataStore.dismissScreenLockNudge() }
+        isNudgeDismissed.value = true
+        viewModelScope.launch {
+            preferenceProvider.upsertBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, true)
+        }
     }
 }

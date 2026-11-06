@@ -236,7 +236,7 @@
     <string name="password_update_failed">Не удалось сохранить новый мастер-пароль. Текущий пароль по-прежнему действует.</string>
     <string name="settings_biometric_unlock_title">Разблокировка отпечатком</string>
     <string name="settings_biometric_unlock_body">Разблокируйте отпечатком пальца вместо ввода мастер-пароля</string>
-    <string name="settings_biometric_unlock_unavailable_body">На этом устройстве не настроен отпечаток пальца. Добавьте его в настройках телефона, чтобы использовать эту функцию.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Требуется отпечаток пальца, добавленный в настройках телефона. Поддерживается не на всех телефонах.</string>
     <string name="home_screen_lock_nudge_banner">Настройте блокировку экрана, чтобы забытый мастер-пароль можно было восстановить</string>
     <string name="home_screen_lock_nudge_set_up">Настроить</string>
     <string name="home_screen_lock_nudge_accept_risk">Я принимаю риск</string>

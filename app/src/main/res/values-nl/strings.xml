@@ -236,7 +236,7 @@
     <string name="password_update_failed">Het nieuwe hoofdwachtwoord kon niet worden opgeslagen. Je huidige wachtwoord werkt nog steeds.</string>
     <string name="settings_biometric_unlock_title">Ontgrendelen met vingerafdruk</string>
     <string name="settings_biometric_unlock_body">Ontgrendel met je vingerafdruk in plaats van je hoofdwachtwoord te typen</string>
-    <string name="settings_biometric_unlock_unavailable_body">Er is geen vingerafdruk ingesteld op dit apparaat. Registreer er een in de instellingen van je telefoon om dit te gebruiken.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Vereist een vingerafdruk die is geregistreerd in de instellingen van je telefoon. Niet elke telefoon ondersteunt dit.</string>
     <string name="home_screen_lock_nudge_banner">Stel een schermvergrendeling in zodat een vergeten hoofdwachtwoord kan worden hersteld</string>
     <string name="home_screen_lock_nudge_set_up">Instellen</string>
     <string name="home_screen_lock_nudge_accept_risk">Ik accepteer het risico</string>

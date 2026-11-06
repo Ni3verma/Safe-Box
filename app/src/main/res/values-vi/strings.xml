@@ -236,7 +236,7 @@
     <string name="password_update_failed">Không thể lưu mật khẩu chính mới. Mật khẩu hiện tại của bạn vẫn hoạt động.</string>
     <string name="settings_biometric_unlock_title">Mở khóa bằng vân tay</string>
     <string name="settings_biometric_unlock_body">Mở khóa bằng vân tay thay vì nhập mật khẩu chính</string>
-    <string name="settings_biometric_unlock_unavailable_body">Chưa có vân tay nào trên thiết bị này. Hãy đăng ký vân tay trong phần cài đặt điện thoại để dùng tính năng này.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Cần đăng ký vân tay trong phần cài đặt điện thoại. Không phải điện thoại nào cũng hỗ trợ.</string>
     <string name="home_screen_lock_nudge_banner">Đặt khóa màn hình để có thể khôi phục mật khẩu chính khi bị quên</string>
     <string name="home_screen_lock_nudge_set_up">Thiết lập</string>
     <string name="home_screen_lock_nudge_accept_risk">Tôi chấp nhận rủi ro</string>

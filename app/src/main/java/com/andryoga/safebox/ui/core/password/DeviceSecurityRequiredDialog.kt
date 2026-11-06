@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.andryoga.safebox.R
-import com.andryoga.safebox.ui.core.openSecuritySettings
+import com.andryoga.safebox.ui.utils.openSecuritySettings
 import timber.log.Timber
 
 /**

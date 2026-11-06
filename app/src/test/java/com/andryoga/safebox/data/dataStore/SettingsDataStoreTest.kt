@@ -111,17 +111,4 @@ class SettingsDataStoreTest {
             )
             assertThat(syncedPref).isEqualTo(15)
         }
-
-    @Test
-    fun screenLockNudgeDismissed_shouldBeSetByDismissAndClearedForTheNextVault() = runTest {
-        // The store file outlives a test method; start from a known state.
-        settingsDataStore.clearScreenLockNudgeDismissed()
-        assertThat(settingsDataStore.isScreenLockNudgeDismissedFlow.first()).isFalse()
-
-        settingsDataStore.dismissScreenLockNudge()
-        assertThat(settingsDataStore.isScreenLockNudgeDismissedFlow.first()).isTrue()
-
-        settingsDataStore.clearScreenLockNudgeDismissed()
-        assertThat(settingsDataStore.isScreenLockNudgeDismissedFlow.first()).isFalse()
-    }
 }

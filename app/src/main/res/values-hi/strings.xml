@@ -236,7 +236,7 @@
     <string name="password_update_failed">नया मास्टर पासवर्ड सेव नहीं हो सका। आपका वर्तमान पासवर्ड अब भी काम करता है।</string>
     <string name="settings_biometric_unlock_title">फ़िंगरप्रिंट से अनलॉक</string>
     <string name="settings_biometric_unlock_body">मास्टर पासवर्ड टाइप करने के बजाय अपने फ़िंगरप्रिंट से अनलॉक करें</string>
-    <string name="settings_biometric_unlock_unavailable_body">इस डिवाइस पर कोई फ़िंगरप्रिंट सेट नहीं है। इसका उपयोग करने के लिए फ़ोन की सेटिंग में एक फ़िंगरप्रिंट जोड़ें।</string>
+    <string name="settings_biometric_unlock_unavailable_body">फ़ोन की सेटिंग में फ़िंगरप्रिंट जोड़ा होना ज़रूरी है। हर फ़ोन इसे सपोर्ट नहीं करता।</string>
     <string name="home_screen_lock_nudge_banner">स्क्रीन लॉक सेट करें ताकि भूला हुआ मास्टर पासवर्ड रिकवर किया जा सके</string>
     <string name="home_screen_lock_nudge_set_up">सेट करें</string>
     <string name="home_screen_lock_nudge_accept_risk">मैं जोखिम स्वीकार करता हूँ</string>

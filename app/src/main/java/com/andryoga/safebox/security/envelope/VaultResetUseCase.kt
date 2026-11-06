@@ -3,7 +3,6 @@ package com.andryoga.safebox.security.envelope
 import androidx.work.WorkManager
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.DispatchersProvider
-import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
@@ -29,7 +28,6 @@ class VaultResetUseCase @Inject constructor(
     private val keystoreGateway: KeystoreGateway,
     private val workManager: Lazy<WorkManager>,
     private val preferenceProvider: PreferenceProvider,
-    private val settingsDataStore: SettingsDataStore,
     private val dispatchersProvider: DispatchersProvider,
 ) {
     /**
@@ -59,7 +57,7 @@ class VaultResetUseCase @Inject constructor(
             database.get().clearAllTables()
         }
         preferenceProvider.removePrefByKey(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING)
-        settingsDataStore.clearScreenLockNudgeDismissed()
+        preferenceProvider.removePrefByKey(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED)
         Timber.w("vault erased")
     }
 }

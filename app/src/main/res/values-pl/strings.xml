@@ -236,7 +236,7 @@
     <string name="password_update_failed">Nie udało się zapisać nowego hasła głównego. Obecne hasło nadal działa.</string>
     <string name="settings_biometric_unlock_title">Odblokowanie odciskiem palca</string>
     <string name="settings_biometric_unlock_body">Odblokowuj odciskiem palca zamiast wpisywać hasło główne</string>
-    <string name="settings_biometric_unlock_unavailable_body">Na tym urządzeniu nie skonfigurowano odcisku palca. Dodaj go w ustawieniach telefonu, aby korzystać z tej funkcji.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Wymaga odcisku palca dodanego w ustawieniach telefonu. Nie każdy telefon to obsługuje.</string>
     <string name="home_screen_lock_nudge_banner">Ustaw blokadę ekranu, aby można było odzyskać zapomniane hasło główne</string>
     <string name="home_screen_lock_nudge_set_up">Skonfiguruj</string>
     <string name="home_screen_lock_nudge_accept_risk">Akceptuję ryzyko</string>

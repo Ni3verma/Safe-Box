@@ -236,7 +236,7 @@
     <string name="password_update_failed">নতুন মাস্টার পাসওয়ার্ড সেভ করা যায়নি। আপনার বর্তমান পাসওয়ার্ড এখনও কাজ করে।</string>
     <string name="settings_biometric_unlock_title">ফিঙ্গারপ্রিন্ট দিয়ে আনলক</string>
     <string name="settings_biometric_unlock_body">মাস্টার পাসওয়ার্ড টাইপ করার বদলে ফিঙ্গারপ্রিন্ট দিয়ে আনলক করুন</string>
-    <string name="settings_biometric_unlock_unavailable_body">এই ডিভাইসে কোনো ফিঙ্গারপ্রিন্ট সেট করা নেই। এটি ব্যবহার করতে ফোনের সেটিংসে একটি ফিঙ্গারপ্রিন্ট যোগ করুন।</string>
+    <string name="settings_biometric_unlock_unavailable_body">ফোনের সেটিংসে একটি ফিঙ্গারপ্রিন্ট যোগ করা থাকতে হবে। সব ফোন এটি সমর্থন করে না।</string>
     <string name="home_screen_lock_nudge_banner">স্ক্রিন লক সেট করুন যাতে ভুলে যাওয়া মাস্টার পাসওয়ার্ড পুনরুদ্ধার করা যায়</string>
     <string name="home_screen_lock_nudge_set_up">সেট করুন</string>
     <string name="home_screen_lock_nudge_accept_risk">আমি ঝুঁকি গ্রহণ করছি</string>

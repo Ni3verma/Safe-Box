@@ -153,6 +153,7 @@ class VaultRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setBiometricUnlockDisabled(disabled: Boolean) {
+        Timber.i("setting biometric unlock disabled = %s", disabled)
         if (disabled) {
             database.withTransaction {
                 vaultMetaDao.upsert(
@@ -166,7 +167,6 @@ class VaultRepositoryImpl @Inject constructor(
         } else {
             vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED)
         }
-        Timber.i("biometric unlock disabled = %s", disabled)
     }
 
     private fun setCrashlyticsUid(uid: String) {

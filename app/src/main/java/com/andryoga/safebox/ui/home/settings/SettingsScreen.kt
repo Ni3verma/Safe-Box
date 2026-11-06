@@ -29,7 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants.APP_BUY_ME_A_COFFEE_URL
 import com.andryoga.safebox.common.CommonConstants.APP_GITHUB_URL
@@ -56,9 +57,8 @@ fun SettingsScreenRoot() {
     val context = LocalContext.current
 
     // Enrolment can change while the user is in the system settings.
-    LifecycleResumeEffect(viewModel) {
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.onScreenAction(SettingsScreenAction.OnScreenResumed)
-        onPauseOrDispose { }
     }
 
     Scaffold(

@@ -412,7 +412,7 @@ class SettingsViewModelTest {
 
         act(SettingsScreenAction.UpdateBiometricUnlock(enabled = false))
 
-        coVerify(exactly = 1) { vaultKeyMaintenance.disableBiometricUnlock() }
+        coVerify(exactly = 1) { vaultKeyMaintenance.setBiometricUnlockEnabled(false) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BIOMETRIC_UNLOCK_DISABLED)).isTrue()
         assertThat(viewModel.uiState.value.biometricUnlock).isEqualTo(BiometricUnlockSwitch.Available(isOn = false))
     }
@@ -426,7 +426,7 @@ class SettingsViewModelTest {
 
         act(SettingsScreenAction.UpdateBiometricUnlock(enabled = true))
 
-        coVerify(exactly = 1) { vaultKeyMaintenance.enableBiometricUnlock() }
+        coVerify(exactly = 1) { vaultKeyMaintenance.setBiometricUnlockEnabled(true) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BIOMETRIC_UNLOCK_ENABLED)).isTrue()
         assertThat(viewModel.uiState.value.biometricUnlock).isEqualTo(BiometricUnlockSwitch.Available(isOn = true))
     }
@@ -439,13 +439,13 @@ class SettingsViewModelTest {
 
         act(SettingsScreenAction.UpdateBiometricUnlock(enabled = true))
 
-        coVerify(exactly = 0) { vaultKeyMaintenance.enableBiometricUnlock() }
+        coVerify(exactly = 0) { vaultKeyMaintenance.setBiometricUnlockEnabled(true) }
         assertThat(analyticsHelper.loggedEvents).isEmpty()
     }
 
     @Test
     fun switchTurnedOff_whenTheWriteFails_shouldShowTheStoredStateAndLogNothing() = runTest {
-        coEvery { vaultKeyMaintenance.disableBiometricUnlock() } throws IOException("disk full")
+        coEvery { vaultKeyMaintenance.setBiometricUnlockEnabled(false) } throws IOException("disk full")
         collectUiState()
         act(SettingsScreenAction.OnScreenResumed)
 

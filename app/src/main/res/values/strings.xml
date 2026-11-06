@@ -251,7 +251,7 @@
     <string name="password_update_failed">Could not save the new master password. Your current password still works.</string>
     <string name="settings_biometric_unlock_title">Fingerprint unlock</string>
     <string name="settings_biometric_unlock_body">Unlock with your fingerprint instead of typing your master password</string>
-    <string name="settings_biometric_unlock_unavailable_body">No fingerprint is ready on this device. Enrol one in your phone\'s settings to use this.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Needs a fingerprint enrolled in your phone\'s settings. Not every phone supports it.</string>
     <string name="home_screen_lock_nudge_banner">Set a screen lock so a forgotten master password can be recovered</string>
     <string name="home_screen_lock_nudge_set_up">Set up</string>
     <string name="home_screen_lock_nudge_accept_risk">I accept the risk</string>

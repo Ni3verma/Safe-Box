@@ -229,7 +229,7 @@
     <string name="password_update_failed">Impossible d\'enregistrer le nouveau mot de passe principal. Votre mot de passe actuel fonctionne toujours.</string>
     <string name="settings_biometric_unlock_title">Déverrouillage par empreinte</string>
     <string name="settings_biometric_unlock_body">Déverrouillez avec votre empreinte au lieu de saisir votre mot de passe principal</string>
-    <string name="settings_biometric_unlock_unavailable_body">Aucune empreinte n\'est configurée sur cet appareil. Enregistrez-en une dans les paramètres du téléphone pour utiliser cette option.</string>
+    <string name="settings_biometric_unlock_unavailable_body">Nécessite une empreinte enregistrée dans les paramètres du téléphone. Tous les téléphones ne le prennent pas en charge.</string>
     <string name="home_screen_lock_nudge_banner">Définissez un verrouillage d\'écran pour pouvoir récupérer un mot de passe principal oublié</string>
     <string name="home_screen_lock_nudge_set_up">Configurer</string>
     <string name="home_screen_lock_nudge_accept_risk">J\'accepte le risque</string>
