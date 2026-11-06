@@ -13,6 +13,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import com.andryoga.safebox.R
  * @param isVerifying A check is in flight; submit is disabled meanwhile.
  * @param onSubmit Invoked with the entered password.
  * @param onDismiss Invoked on Cancel or a dismissal outside the dialog.
+ * @param onShow Invoked once when the dialog enters the composition, for analytics.
  */
 @Composable
 internal fun CurrentPasswordDialog(
@@ -40,7 +42,9 @@ internal fun CurrentPasswordDialog(
     isVerifying: Boolean,
     onSubmit: (String) -> Unit,
     onDismiss: () -> Unit,
+    onShow: () -> Unit,
 ) {
+    LaunchedEffect(Unit) { onShow() }
     // Kept out of saved state: a password must not be written to the saved-instance bundle.
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }

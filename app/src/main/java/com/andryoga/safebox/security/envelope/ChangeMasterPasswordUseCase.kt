@@ -68,8 +68,9 @@ class ChangeMasterPasswordUseCase @Inject constructor(
 
     /**
      * Re-wraps the session DEK under [newPassword] and stores [hint], in one transaction, then
-     * resets the password-after-biometric counter as a password login would. Operational: storage
-     * failures propagate to the caller, which owns the user-facing recovery.
+     * resets the password-after-biometric counter as a password login would. Operational: a failed
+     * re-wrap propagates to the caller, which owns the user-facing recovery; once it has committed,
+     * the counter reset is best effort and never turns the change into a reported failure.
      *
      * @param newPassword New master password; zeroed before this returns.
      * @param hint New hint, stored in plaintext.
@@ -89,10 +90,24 @@ class ChangeMasterPasswordUseCase @Inject constructor(
             dek.fill(0)
             newPassword.fill(Char.MIN_VALUE)
         }
-        preferenceProvider.upsertIntPref(
-            CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-            settingsDataStore.getPasswordAfterXBiometricLogins(),
-        )
         Timber.i("master password changed")
+        val counterResetFailure = try {
+            preferenceProvider.upsertIntPref(
+                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                settingsDataStore.getPasswordAfterXBiometricLogins(),
+            )
+            null
+        } catch (c: CancellationException) {
+            throw c
+        } catch (e: Exception) {
+            e
+        }
+        // Outside the catch: the debug assertion must not be swallowed by it.
+        if (counterResetFailure != null) {
+            Utils.crashInDebugBuild(
+                "biometric allowance reset failed after a committed password change",
+                counterResetFailure,
+            )
+        }
     }
 }

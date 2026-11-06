@@ -239,5 +239,5 @@
     <string name="settings_biometric_unlock_unavailable_body">फ़ोन की सेटिंग में फ़िंगरप्रिंट जोड़ा होना ज़रूरी है। हर फ़ोन इसे सपोर्ट नहीं करता।</string>
     <string name="home_screen_lock_nudge_banner">स्क्रीन लॉक सेट करें ताकि भूला हुआ मास्टर पासवर्ड रिकवर किया जा सके</string>
     <string name="home_screen_lock_nudge_set_up">सेट करें</string>
-    <string name="home_screen_lock_nudge_accept_risk">मैं जोखिम स्वीकार करता हूँ</string>
+    <string name="home_screen_lock_nudge_accept_risk">मैं जोखिम स्वीकार करता/करती हूँ</string>
 </resources>

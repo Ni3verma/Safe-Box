@@ -153,6 +153,10 @@ enum class AnalyticsKey(val eventName: String) {
     // Settings and Home
     // the change-password gate was passed; AnalyticsParam.GATE (ChangePasswordGate wire name)
     CHANGE_PASSWORD_GATE_PASSED("change_password_gate_passed"),
+    // the current-master-password dialog of the change-password gate
+    CURRENT_PASSWORD_DIALOG_SHOW("current_password_dialog_show"),
+    CURRENT_PASSWORD_DIALOG_CONFIRM_CLICK("current_password_dialog_confirm_click"),
+    CURRENT_PASSWORD_DIALOG_CANCEL_CLICK("current_password_dialog_cancel_click"),
     BIOMETRIC_UNLOCK_DISABLED("biometric_unlock_disabled"),
     BIOMETRIC_UNLOCK_ENABLED("biometric_unlock_enabled"),
     // Home banner shown while the device has no lock screen and the user has not accepted the risk

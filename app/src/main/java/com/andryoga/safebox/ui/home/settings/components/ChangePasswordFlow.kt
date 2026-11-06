@@ -34,6 +34,7 @@ internal fun ChangePasswordFlow(
             isVerifying = step.isVerifying,
             onSubmit = { onScreenAction(SettingsScreenAction.OnCurrentPasswordSubmitted(it)) },
             onDismiss = { onScreenAction(SettingsScreenAction.OnCurrentPasswordDismissed) },
+            onShow = { onScreenAction(SettingsScreenAction.OnCurrentPasswordDialogShown) },
         )
 
         ChangePasswordStep.NewPassword -> UpdatePasswordDialog(

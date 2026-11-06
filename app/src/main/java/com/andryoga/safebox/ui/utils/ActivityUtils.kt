@@ -40,17 +40,17 @@ fun Context.openSecuritySettings(): Boolean = runCatching {
     startActivity(
         Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        },
     )
 }.recoverCatching { securitySettingsError ->
     Timber.w(
         securitySettingsError,
-        "Failed to open ACTION_SECURITY_SETTINGS, attempting fallback to ACTION_SETTINGS"
+        "Failed to open ACTION_SECURITY_SETTINGS, attempting fallback to ACTION_SETTINGS",
     )
     startActivity(
         Intent(Settings.ACTION_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
+        },
     )
 }.onFailure { fallbackError ->
     Timber.e(fallbackError, "Failed to launch the system security settings")

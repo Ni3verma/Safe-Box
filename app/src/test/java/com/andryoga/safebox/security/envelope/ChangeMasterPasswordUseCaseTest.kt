@@ -165,6 +165,19 @@ class ChangeMasterPasswordUseCaseTest {
     }
 
     @Test
+    fun changePassword_whenTheCounterResetFailsAfterTheCommit_shouldAssertNotReportAFailedChange() = runTest {
+        sessionKeyHolder.setSessionKey(sessionDek.copyOf())
+        coEvery { settingsDataStore.getPasswordAfterXBiometricLogins() } throws IOException("datastore")
+
+        val outcome = runCatching { useCase.changePassword("NewPass@@123".toCharArray(), "new hint") }
+
+        // Debug builds crash on the should-not-happen branch; release continues as a success.
+        coVerify(exactly = 1) { vaultRepository.rewrapPassword(any(), any(), "new hint") }
+        assertThat(outcome.exceptionOrNull()).isInstanceOf(Exceptions.DebugFatalException::class.java)
+        assertThat(outcome.exceptionOrNull()?.cause).isInstanceOf(IOException::class.java)
+    }
+
+    @Test
     fun changePassword_whenSessionIsLocked_shouldThrowAndWriteNothing() = runTest {
         val outcome = runCatching { useCase.changePassword("NewPass@@123".toCharArray(), "new hint") }
 

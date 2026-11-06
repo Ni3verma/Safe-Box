@@ -43,6 +43,9 @@ sealed interface SettingsScreenAction {
     // when user submits the current master password in the change-password gate
     class OnCurrentPasswordSubmitted(val password: String) : SettingsScreenAction
 
+    // when the current master password dialog is displayed
+    object OnCurrentPasswordDialogShown : SettingsScreenAction
+
     // when user cancels the current master password dialog
     object OnCurrentPasswordDismissed : SettingsScreenAction
 

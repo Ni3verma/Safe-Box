@@ -6,6 +6,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
+import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.common.Utils.launchVaultOperation
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
@@ -77,7 +78,10 @@ class SettingsViewModel @Inject constructor(
             SettingsScreenAction.OnDeviceAuthSucceeded -> onGatePassed(ChangePasswordGate.DEVICE_AUTH)
             SettingsScreenAction.OnDeviceAuthFailedOrCancelled -> setStep(ChangePasswordStep.CurrentPassword())
             is SettingsScreenAction.OnCurrentPasswordSubmitted -> onCurrentPasswordSubmitted(action.password)
-            SettingsScreenAction.OnCurrentPasswordDismissed -> setStep(null)
+            SettingsScreenAction.OnCurrentPasswordDialogShown -> {
+                analyticsHelper.logEvent(AnalyticsKey.CURRENT_PASSWORD_DIALOG_SHOW)
+            }
+            SettingsScreenAction.OnCurrentPasswordDismissed -> onCurrentPasswordDismissed()
 
             is SettingsScreenAction.OnUpdateMasterPassword -> updateMasterPassword(
                 action.newPassword,
@@ -190,21 +194,30 @@ class SettingsViewModel @Inject constructor(
         // The entry is disabled in a legacy session; a step already on screen owns the flow.
         if (sessionKeyHolder.isLegacySession || screenState.value.changePasswordStep != null) return
         setStep(
-            if (canUseDeviceAuth) ChangePasswordStep.DeviceAuthentication else ChangePasswordStep.CurrentPassword()
+            if (canUseDeviceAuth) ChangePasswordStep.DeviceAuthentication else ChangePasswordStep.CurrentPassword(),
         )
     }
 
     private fun onCurrentPasswordSubmitted(password: String) {
         val step = screenState.value.changePasswordStep as? ChangePasswordStep.CurrentPassword ?: return
         if (step.isVerifying) return
+        analyticsHelper.logEvent(AnalyticsKey.CURRENT_PASSWORD_DIALOG_CONFIRM_CLICK)
         setStep(ChangePasswordStep.CurrentPassword(isVerifying = true))
         viewModelScope.launch {
-            if (changeMasterPasswordUseCase.verifyCurrentPassword(password.toCharArray())) {
+            val isVerified = changeMasterPasswordUseCase.verifyCurrentPassword(password.toCharArray())
+            // Cancel may have closed the dialog while the check ran; its answer is then moot.
+            if (screenState.value.changePasswordStep !is ChangePasswordStep.CurrentPassword) return@launch
+            if (isVerified) {
                 onGatePassed(ChangePasswordGate.MASTER_PASSWORD)
             } else {
                 setStep(ChangePasswordStep.CurrentPassword(isIncorrect = true))
             }
         }
+    }
+
+    private fun onCurrentPasswordDismissed() {
+        analyticsHelper.logEvent(AnalyticsKey.CURRENT_PASSWORD_DIALOG_CANCEL_CLICK)
+        setStep(null)
     }
 
     private fun onGatePassed(gate: ChangePasswordGate) {
@@ -215,6 +228,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun updateMasterPassword(newPassword: String, hint: String) {
+        // Only the gate leads here; this also drops a second Save tap once the step is cleared.
+        if (screenState.value.changePasswordStep != ChangePasswordStep.NewPassword) return
         Timber.i("updating master password and hint from settings screen")
         logFromSettingsScreen(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)
         setStep(null)
@@ -226,6 +241,9 @@ class SettingsViewModel @Inject constructor(
             } catch (c: CancellationException) {
                 throw c
             } catch (e: SessionLockedException) {
+                throw e
+            } catch (e: Exceptions.DebugFatalException) {
+                // A debug-build assertion from below; reporting it as a failed change would hide it.
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "master password change failed")

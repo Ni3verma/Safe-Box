@@ -285,18 +285,58 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun currentPasswordDismissed_shouldCloseTheFlow() = runTest {
+    fun currentPasswordDismissed_shouldLogTheCancelAndCloseTheFlow() = runTest {
         collectUiState()
         act(SettingsScreenAction.ChangePasswordClicked(canUseDeviceAuth = false))
 
         act(SettingsScreenAction.OnCurrentPasswordDismissed)
 
+        assertThat(analyticsHelper.count(AnalyticsKey.CURRENT_PASSWORD_DIALOG_CANCEL_CLICK)).isEqualTo(1)
         assertThat(viewModel.uiState.value.changePasswordStep).isNull()
+    }
+
+    @Test
+    fun currentPasswordDialog_shownAndSubmitted_shouldLogShowAndConfirmOncePerAcceptedSubmit() = runTest {
+        coEvery { changeMasterPasswordUseCase.verifyCurrentPassword(any()) } returns false
+        collectUiState()
+        act(SettingsScreenAction.ChangePasswordClicked(canUseDeviceAuth = false))
+
+        act(SettingsScreenAction.OnCurrentPasswordDialogShown)
+        viewModel.onScreenAction(SettingsScreenAction.OnCurrentPasswordSubmitted("Wrong@@123"))
+        viewModel.onScreenAction(SettingsScreenAction.OnCurrentPasswordSubmitted("Wrong@@123"))
+        advanceUntilIdle()
+
+        assertThat(analyticsHelper.count(AnalyticsKey.CURRENT_PASSWORD_DIALOG_SHOW)).isEqualTo(1)
+        // The second tap lands while the first check is in flight and is dropped.
+        assertThat(analyticsHelper.count(AnalyticsKey.CURRENT_PASSWORD_DIALOG_CONFIRM_CLICK)).isEqualTo(1)
+    }
+
+    @Test
+    fun currentPasswordCheck_finishingAfterTheDialogWasCancelled_shouldNotReopenTheFlow() = runTest {
+        coEvery { changeMasterPasswordUseCase.verifyCurrentPassword(any()) } coAnswers {
+            // The user taps Cancel while PBKDF2 runs.
+            viewModel.onScreenAction(SettingsScreenAction.OnCurrentPasswordDismissed)
+            true
+        }
+        collectUiState()
+        act(SettingsScreenAction.ChangePasswordClicked(canUseDeviceAuth = false))
+
+        act(SettingsScreenAction.OnCurrentPasswordSubmitted("Current@@123"))
+
+        assertThat(viewModel.uiState.value.changePasswordStep).isNull()
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.CHANGE_PASSWORD_GATE_PASSED)).isFalse()
+    }
+
+    /** Puts the flow on the new-password dialog the way the device prompt does. */
+    private fun TestScope.passTheGate() {
+        act(SettingsScreenAction.ChangePasswordClicked(canUseDeviceAuth = true))
+        act(SettingsScreenAction.OnDeviceAuthSucceeded)
     }
 
     @Test
     fun updateMasterPassword_shouldRewrapLogTheAllowClickAndReportSuccess() = runTest {
         collectUiState()
+        passTheGate()
 
         act(SettingsScreenAction.OnUpdateMasterPassword(newPassword = "UpdatedPass@@123", hint = "updated hint"))
 
@@ -313,9 +353,32 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun updateMasterPassword_withoutPassingTheGate_shouldWriteNothing() = runTest {
+        collectUiState()
+
+        act(SettingsScreenAction.OnUpdateMasterPassword(newPassword = "UpdatedPass@@123", hint = "updated hint"))
+
+        coVerify(exactly = 0) { changeMasterPasswordUseCase.changePassword(any(), any()) }
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.UPDATE_PASSWORD_DIALOG_ALLOW_CLICK)).isFalse()
+    }
+
+    @Test
+    fun updateMasterPassword_whenSaveIsTappedTwice_shouldRewrapOnce() = runTest {
+        collectUiState()
+        passTheGate()
+
+        viewModel.onScreenAction(SettingsScreenAction.OnUpdateMasterPassword("UpdatedPass@@123", "updated hint"))
+        viewModel.onScreenAction(SettingsScreenAction.OnUpdateMasterPassword("UpdatedPass@@123", "updated hint"))
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { changeMasterPasswordUseCase.changePassword(any(), any()) }
+    }
+
+    @Test
     fun updateMasterPassword_whenTheRewrapFails_shouldReportFailure() = runTest {
         coEvery { changeMasterPasswordUseCase.changePassword(any(), any()) } throws IOException("disk full")
         collectUiState()
+        passTheGate()
 
         act(SettingsScreenAction.OnUpdateMasterPassword(newPassword = "UpdatedPass@@123", hint = "updated hint"))
 
@@ -329,6 +392,7 @@ class SettingsViewModelTest {
             throw SessionLockedException()
         }
         collectUiState()
+        passTheGate()
 
         act(SettingsScreenAction.OnUpdateMasterPassword(newPassword = "UpdatedPass@@123", hint = "updated hint"))
 
