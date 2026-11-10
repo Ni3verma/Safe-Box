@@ -30,7 +30,7 @@ import javax.crypto.spec.SecretKeySpec;
  *
  * Formats 1-3 are a Java-serialised map; it mirrors PasswordBasedEncryptionImpl exactly:
  * PBKDF2WithHmacSHA1, 1324 iterations, 256-bit key, AES/CBC/PKCS5Padding, raw password.
- * Format 4 starts with "SBOX" and mirrors BackupCodecV4: a plaintext JSON header naming the KDF,
+ * Formats 4 and later start with "SBOX" and mirror BackupCodec: a plaintext JSON header naming the KDF,
  * NFKC-normalised password, PBKDF2 key, an AES-GCM key check and one AES-GCM body, both bound to
  * the header as AAD.
  *
@@ -104,15 +104,15 @@ public class InspectBackup {
         DATA_KEYS.put("8", "AUTHENTICATOR");
     }
 
-    /** First bytes of a format-4 file; formats 1-3 start with Java serialisation's AC ED 00 05. */
-    private static final byte[] V4_MAGIC = "SBOX".getBytes(StandardCharsets.US_ASCII);
-    private static final int V4_VERSION = 4;
-    private static final int V4_HEADER_OFFSET = 7;
+    /** First bytes of formats 4 and later; formats 1-3 start with Java serialisation's AC ED 00 05. */
+    private static final byte[] SBOX_MAGIC = "SBOX".getBytes(StandardCharsets.US_ASCII);
+    private static final int SBOX_FIRST_VERSION = 4;
+    private static final int SBOX_HEADER_OFFSET = 7;
     private static final int GCM_IV_BYTES = 12;
     private static final int GCM_TAG_BITS = 128;
     private static final int GCM_TAG_BYTES = GCM_TAG_BITS / 8;
 
-    // Payload fields of format 4, as named by ExportBackupPayload.
+    // Payload fields of the SBOX formats, as named by ExportBackupPayload.
     private static final Map<String, String> PAYLOAD_FIELDS = new TreeMap<>();
 
     static {
@@ -147,8 +147,8 @@ public class InspectBackup {
         char[] password = args[1].toCharArray();
 
         byte[] bytes = readFile(path);
-        if (isV4(bytes)) {
-            printV4Dump(bytes, password);
+        if (isSbox(bytes)) {
+            printSboxDump(bytes, password);
             return;
         }
         Map<String, byte[]> map = readContainer(bytes);
@@ -294,9 +294,9 @@ public class InspectBackup {
         return Files.readAllBytes(Path.of(path));
     }
 
-    static boolean isV4(byte[] bytes) {
-        return bytes.length >= V4_MAGIC.length
-            && Arrays.equals(Arrays.copyOf(bytes, V4_MAGIC.length), V4_MAGIC);
+    static boolean isSbox(byte[] bytes) {
+        return bytes.length >= SBOX_MAGIC.length
+            && Arrays.equals(Arrays.copyOf(bytes, SBOX_MAGIC.length), SBOX_MAGIC);
     }
 
     /**
@@ -308,7 +308,7 @@ public class InspectBackup {
      */
     static List<Map.Entry<String, Map<String, String>>> decodeFile(byte[] bytes, char[] password)
             throws Exception {
-        return isV4(bytes) ? decodeV4Records(bytes, password) : decodeRecords(readContainer(bytes), password);
+        return isSbox(bytes) ? decodeSboxRecords(bytes, password) : decodeRecords(readContainer(bytes), password);
     }
 
     /**
@@ -320,11 +320,11 @@ public class InspectBackup {
      * @param bytes the whole .bak file
      */
     private static void printHeaderVersion(byte[] bytes) throws Exception {
-        if (isV4(bytes)) {
-            if (bytes.length <= V4_MAGIC.length) {
-                fail("the format-4 file has no version byte");
+        if (isSbox(bytes)) {
+            if (bytes.length <= SBOX_MAGIC.length) {
+                fail("the SBOX file has no version byte");
             }
-            System.out.println(bytes[V4_MAGIC.length] & 0xFF);
+            System.out.println(bytes[SBOX_MAGIC.length] & 0xFF);
             return;
         }
         Map<String, byte[]> map = readContainer(bytes);
@@ -448,29 +448,29 @@ public class InspectBackup {
     }
 
     /**
-     * Decrypts and parses a format-4 file.
+     * Decrypts and parses an SBOX file (format 4 or later).
      *
      * @param bytes the whole .bak file, starting with the magic
      * @param password the backup password; NFKC-normalised here, as the app does
      * @return (type, record) pairs; the record maps field name to JSON literal
      */
-    static List<Map.Entry<String, Map<String, String>>> decodeV4Records(byte[] bytes, char[] password)
+    static List<Map.Entry<String, Map<String, String>>> decodeSboxRecords(byte[] bytes, char[] password)
             throws Exception {
-        V4File file = parseV4(bytes);
-        byte[] key = deriveV4Key(password, file.kdf);
+        SboxFile file = parseSbox(bytes);
+        byte[] key = deriveSboxKey(password, file.kdf);
         // A wrong password fails here, before the body is touched.
         gcmOpen(key, bytes, file.keyCheckOffset, GCM_IV_BYTES + GCM_TAG_BYTES, file.prefix);
         byte[] body = gcmOpen(key, bytes, file.bodyOffset, bytes.length - file.bodyOffset, file.prefix);
-        return parseV4Payload(new String(body, StandardCharsets.UTF_8));
+        return parseSboxPayload(new String(body, StandardCharsets.UTF_8));
     }
 
     /**
-     * Parses the decrypted format-4 payload: one object holding an array per record type.
+     * Parses the decrypted SBOX payload: one object holding an array per record type.
      *
      * @param json the decrypted body
      * @return (type, record) pairs
      */
-    static List<Map.Entry<String, Map<String, String>>> parseV4Payload(String json) {
+    static List<Map.Entry<String, Map<String, String>>> parseSboxPayload(String json) {
         JsonCursor cursor = new JsonCursor(json);
         List<Map.Entry<String, Map<String, String>>> records = new ArrayList<>();
         cursor.expect('{');
@@ -509,8 +509,8 @@ public class InspectBackup {
         return records;
     }
 
-    /** The unencrypted parts of a format-4 file, located and bounds-checked. */
-    private static final class V4File {
+    /** The unencrypted parts of an SBOX file, located and bounds-checked. */
+    private static final class SboxFile {
         Map<String, String> header;
         String kdf;
         byte[] prefix;
@@ -518,23 +518,24 @@ public class InspectBackup {
         int bodyOffset;
     }
 
-    private static V4File parseV4(byte[] bytes) {
-        if (bytes.length < V4_HEADER_OFFSET) {
-            fail("format-4 file truncated before its header");
+    private static SboxFile parseSbox(byte[] bytes) {
+        if (bytes.length < SBOX_HEADER_OFFSET) {
+            fail("SBOX file truncated before its header");
         }
-        int version = bytes[V4_MAGIC.length] & 0xFF;
-        if (version != V4_VERSION) {
-            fail("format-4 container with version " + version + "; this tool reads " + V4_VERSION);
+        int version = bytes[SBOX_MAGIC.length] & 0xFF;
+        // Every format from 4 on shares this container; a newer one only changes the payload.
+        if (version < SBOX_FIRST_VERSION) {
+            fail("SBOX container with version " + version + ", before its first format " + SBOX_FIRST_VERSION);
         }
         int headerLength = ((bytes[5] & 0xFF) << 8) | (bytes[6] & 0xFF);
-        V4File file = new V4File();
-        file.keyCheckOffset = V4_HEADER_OFFSET + headerLength;
+        SboxFile file = new SboxFile();
+        file.keyCheckOffset = SBOX_HEADER_OFFSET + headerLength;
         file.bodyOffset = file.keyCheckOffset + GCM_IV_BYTES + GCM_TAG_BYTES;
         if (bytes.length < file.bodyOffset + GCM_IV_BYTES + GCM_TAG_BYTES) {
-            fail("format-4 file truncated before its body");
+            fail("SBOX file truncated before its body");
         }
         file.prefix = Arrays.copyOf(bytes, file.keyCheckOffset);
-        String headerJson = new String(bytes, V4_HEADER_OFFSET, headerLength, StandardCharsets.UTF_8);
+        String headerJson = new String(bytes, SBOX_HEADER_OFFSET, headerLength, StandardCharsets.UTF_8);
         file.header = new JsonCursor(headerJson).readFlatObject();
         String kdfLiteral = file.header.get("kdf");
         if (kdfLiteral == null || !kdfLiteral.startsWith("\"")) {
@@ -545,9 +546,9 @@ public class InspectBackup {
     }
 
     /**
-     * Derives the format-4 key from {@code v1|<algorithm>|<iterations>|<base64 salt>}.
+     * Derives the SBOX key from {@code v1|<algorithm>|<iterations>|<base64 salt>}.
      */
-    private static byte[] deriveV4Key(char[] password, String kdf) throws Exception {
+    private static byte[] deriveSboxKey(char[] password, String kdf) throws Exception {
         String[] parts = kdf.split("\\|");
         if (parts.length != 4 || !parts[0].equals("v1") || !parts[1].equals("PBKDF2WithHmacSHA256")) {
             fail("unsupported KDF parameters '" + kdf + "'");
@@ -570,17 +571,17 @@ public class InspectBackup {
         return cipher.doFinal(source, offset + GCM_IV_BYTES, length - GCM_IV_BYTES);
     }
 
-    /** Human-readable dump of a format-4 file: the header, then each type's records. */
-    private static void printV4Dump(byte[] bytes, char[] password) throws Exception {
-        V4File file = parseV4(bytes);
-        System.out.println("format          : 4 (SBOX container)");
+    /** Human-readable dump of an SBOX file: the header, then each type's records. */
+    private static void printSboxDump(byte[] bytes, char[] password) throws Exception {
+        SboxFile file = parseSbox(bytes);
+        System.out.println("format          : " + (bytes[SBOX_MAGIC.length] & 0xFF) + " (SBOX container)");
         System.out.println("createdAt       : " + file.header.get("createdAt"));
         System.out.println("appVersionCode  : " + file.header.get("appVersionCode"));
         String[] kdf = file.kdf.split("\\|");
         System.out.println("kdf             : " + kdf[1] + ", " + kdf[2] + " iterations");
         System.out.println();
         Map<String, List<Map<String, String>>> byType = new TreeMap<>();
-        for (Map.Entry<String, Map<String, String>> record : decodeV4Records(bytes, password)) {
+        for (Map.Entry<String, Map<String, String>> record : decodeSboxRecords(bytes, password)) {
             byType.computeIfAbsent(record.getKey(), k -> new ArrayList<>()).add(record.getValue());
         }
         for (String type : new TreeMap<>(PAYLOAD_FIELDS).values()) {
@@ -638,7 +639,7 @@ public class InspectBackup {
         return records;
     }
 
-    /** Minimal cursor over a JSON string, sufficient for the record arrays and the v4 payload. */
+    /** Minimal cursor over a JSON string, sufficient for the record arrays and the SBOX payload. */
     private static final class JsonCursor {
         private final String text;
         private int position;

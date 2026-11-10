@@ -3,7 +3,7 @@ package com.andryoga.safebox.worker
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
 import com.andryoga.safebox.security.envelope.PasswordKdf
-import com.andryoga.safebox.worker.backup.BackupCodecV4
+import com.andryoga.safebox.worker.backup.BackupCodec
 import java.io.File
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
@@ -63,7 +63,7 @@ object WorkerTestFixtures {
         payload: ExportBackupPayload,
         createdAt: Long = System.currentTimeMillis(),
     ): ByteArray {
-        val bytes = BackupCodecV4.encode(
+        val bytes = BackupCodec.encode(
             password = password.toCharArray(),
             payload = payload,
             createdAt = createdAt,

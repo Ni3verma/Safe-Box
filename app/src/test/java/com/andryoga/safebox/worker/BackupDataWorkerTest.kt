@@ -28,7 +28,7 @@ import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.LoggedAnalyticsEvent
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
-import com.andryoga.safebox.worker.backup.BackupCodecV4
+import com.andryoga.safebox.worker.backup.BackupCodec
 import com.andryoga.safebox.worker.backup.DecodedBackup
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
@@ -121,7 +121,7 @@ class BackupDataWorkerTest {
         fakeBackupMetadataRepo = FakeBackupMetadataRepository()
         tempDir = Files.createTempDirectory("backup_worker_unit_test").toFile()
         // A spy: the real codec runs, and tests can count or fail its calls.
-        mockkObject(BackupCodecV4)
+        mockkObject(BackupCodec)
 
         every { context.applicationContext } returns context
         every { context.getString(any()) } returns "Backup Notification"
@@ -148,7 +148,7 @@ class BackupDataWorkerTest {
     fun tearDown() {
         unmockkStatic(Uri::class)
         unmockkObject(Utils)
-        unmockkObject(BackupCodecV4)
+        unmockkObject(BackupCodec)
         tempDir.deleteRecursively()
     }
 
@@ -210,7 +210,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { BackupCodec.encode(any(), any(), any(), any(), any()) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
@@ -254,7 +254,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+        verify(exactly = 1) { BackupCodec.encode(any(), any(), any(), any(), any()) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -357,7 +357,7 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
-            verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+            verify(exactly = 1) { BackupCodec.encode(any(), any(), any(), any(), any()) }
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -366,8 +366,8 @@ class BackupDataWorkerTest {
             assertThat(createdFiles!!.isNotEmpty()).isTrue()
 
             val backupBytes = createdFiles.first().readBytes()
-            assertThat(BackupCodecV4.hasMagic(backupBytes)).isTrue()
-            assertThat(BackupCodecV4.open(backupBytes).version).isEqualTo(4)
+            assertThat(BackupCodec.hasMagic(backupBytes)).isTrue()
+            assertThat(BackupCodec.open(backupBytes).version).isEqualTo(4)
             val restoredList = decodeBackup(createdFiles.first()).authenticators!!
             assertThat(restoredList).hasSize(1)
             assertThat(restoredList[0].title).isEqualTo("GitHub 2FA")
@@ -423,7 +423,7 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
-            verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+            verify(exactly = 1) { BackupCodec.encode(any(), any(), any(), any(), any()) }
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -457,7 +457,7 @@ class BackupDataWorkerTest {
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         assertThat(fakeBackupMetadataRepo.deleted).isFalse()
-        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { BackupCodec.encode(any(), any(), any(), any(), any()) }
     }
 
     /**
@@ -474,7 +474,7 @@ class BackupDataWorkerTest {
         assertThat(result).isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
         assertThat(fakeBackupMetadataRepo.deleted).isFalse()
         assertFailureLoggedWithReason(BackupFailureReason.SESSION_LOCKED)
-        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { BackupCodec.encode(any(), any(), any(), any(), any()) }
         coVerify(exactly = 0) { loginDataDaoSecure.exportAllData() }
     }
 
@@ -544,7 +544,7 @@ class BackupDataWorkerTest {
         assertFailureLoggedWithReason(BackupFailureReason.FOLDER_INACCESSIBLE)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         // The pre-check fails before any crypto work is done.
-        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { BackupCodec.encode(any(), any(), any(), any(), any()) }
         // A run that never wrote a file must not move the "last backed up" timestamp forward.
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
     }
@@ -586,7 +586,7 @@ class BackupDataWorkerTest {
     fun doWork_whenEncryptionThrows_failsAsUnknownAndKeepsBackupFolder() = runTest {
         fakeBackupMetadataRepo.metadata = backupPathInTempDir()
         stubVaultRecords()
-        every { BackupCodecV4.encode(any(), any(), any(), any(), any()) } throws IllegalStateException("cipher failure")
+        every { BackupCodec.encode(any(), any(), any(), any(), any()) } throws IllegalStateException("cipher failure")
 
         val result = buildWorker(passwordInput()).doWork()
 
@@ -678,7 +678,7 @@ class BackupDataWorkerTest {
 
     /** Reads a file the worker wrote back through the format-4 codec, with the test password. */
     private fun decodeBackup(file: File): DecodedBackup =
-        BackupCodecV4.open(file.readBytes()).decode(TEST_PASSWORD.toCharArray())
+        BackupCodec.open(file.readBytes()).decode(TEST_PASSWORD.toCharArray())
 
     private companion object {
         val WORK_ID: UUID = UUID.fromString("5d1f2c3a-7b4e-4f0a-9c6d-1e2f3a4b5c6d")

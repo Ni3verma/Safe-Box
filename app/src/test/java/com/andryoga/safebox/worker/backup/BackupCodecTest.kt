@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
 import javax.crypto.AEADBadTagException
 import javax.crypto.BadPaddingException
 
-class BackupCodecV4Test {
+class BackupCodecTest {
 
     private val payload = ExportBackupPayload(
         logins = listOf(ExportLoginData("Login", "https://a.example", "pwd", "multi\nline \"note\" \\", "user", 1L, 2L)),
@@ -32,7 +32,7 @@ class BackupCodecV4Test {
     fun encodeThenDecode_returnsEveryRecordAndTheHeaderTime() {
         val bytes = encode(payload, createdAt = 1_700_000_000_000L)
 
-        val decoded = BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+        val decoded = BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
 
         assertThat(decoded.createdAt).isEqualTo(1_700_000_000_000L)
         assertThat(decoded.logins).isEqualTo(payload.logins)
@@ -49,7 +49,7 @@ class BackupCodecV4Test {
         val bytes = encode(payload, kdfParams = kdfParams)
 
         assertThat(String(bytes, 0, 4, Charsets.US_ASCII)).isEqualTo("SBOX")
-        assertThat(bytes[4]).isEqualTo(4.toByte())
+        assertThat(bytes[4]).isEqualTo(CommonConstants.BACKUP_VERSION.toByte())
         val headerLength = ByteBuffer.wrap(bytes, 5, 2).short.toInt()
         val header = String(bytes, 7, headerLength, Charsets.UTF_8)
         assertThat(header).contains("\"kdf\":\"${kdfParams.encode()}\"")
@@ -72,7 +72,7 @@ class BackupCodecV4Test {
     fun encode_doesNotModifyThePassword() {
         val password = PASSWORD.toCharArray()
 
-        BackupCodecV4.encode(password, payload, 0L, APP_VERSION_CODE, PasswordKdf.newParams(iterations = TEST_ITERATIONS))
+        BackupCodec.encode(password, payload, 0L, APP_VERSION_CODE, PasswordKdf.newParams(iterations = TEST_ITERATIONS))
 
         assertThat(String(password)).isEqualTo(PASSWORD)
     }
@@ -82,7 +82,7 @@ class BackupCodecV4Test {
         val bytes = encode(payload)
         val password = PASSWORD.toCharArray()
 
-        BackupCodecV4.open(bytes).decode(password)
+        BackupCodec.open(bytes).decode(password)
 
         assertThat(String(password)).isEqualTo(PASSWORD)
     }
@@ -90,7 +90,7 @@ class BackupCodecV4Test {
     @Test
     fun decode_passwordInADifferentUnicodeForm_unlocksTheFile() {
         // "é" precomposed when written, "e" + combining acute when typed again: NFKC makes them one.
-        val bytes = BackupCodecV4.encode(
+        val bytes = BackupCodec.encode(
             "caf\u00e9".toCharArray(),
             payload,
             0L,
@@ -98,7 +98,7 @@ class BackupCodecV4Test {
             PasswordKdf.newParams(iterations = TEST_ITERATIONS),
         )
 
-        val decoded = BackupCodecV4.open(bytes).decode("cafe\u0301".toCharArray())
+        val decoded = BackupCodec.open(bytes).decode("cafe\u0301".toCharArray())
 
         assertThat(decoded.logins).isEqualTo(payload.logins)
     }
@@ -108,7 +108,7 @@ class BackupCodecV4Test {
         val bytes = encode(payload)
 
         val thrown = assertThrows(BadPaddingException::class.java) {
-            BackupCodecV4.open(bytes).decode("wrong".toCharArray())
+            BackupCodec.open(bytes).decode("wrong".toCharArray())
         }
 
         assertThat(thrown).isInstanceOf(AEADBadTagException::class.java)
@@ -120,7 +120,7 @@ class BackupCodecV4Test {
         bytes[bytes.size - 1] = (bytes[bytes.size - 1].toInt() xor 0x01).toByte()
 
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
         }
     }
 
@@ -133,7 +133,7 @@ class BackupCodecV4Test {
         bytes[index] = '2'.code.toByte()
 
         assertThrows(BadPaddingException::class.java) {
-            BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
         }
     }
 
@@ -141,23 +141,23 @@ class BackupCodecV4Test {
     fun open_newerVersion_reportsItWithoutParsingTheRest() {
         val bytes = "SBOX".toByteArray() + 5.toByte() + byteArrayOf(0x7F, 0x7F)
 
-        assertThat(BackupCodecV4.open(bytes).version).isEqualTo(5)
+        assertThat(BackupCodec.open(bytes).version).isEqualTo(5)
     }
 
     @Test
     fun open_versionByteWithHighBitSet_isReadUnsigned() {
         val bytes = "SBOX".toByteArray() + 0x80.toByte()
 
-        assertThat(BackupCodecV4.open(bytes).version).isEqualTo(128)
+        assertThat(BackupCodec.open(bytes).version).isEqualTo(128)
     }
 
     @Test
-    fun decode_olderVersionInsideTheNewContainer_throwsCorrupt() {
+    fun decode_versionBeforeTheContainersFirstFormat_throwsCorrupt() {
         val bytes = encode(payload)
         bytes[4] = 3
 
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
         }
     }
 
@@ -167,7 +167,7 @@ class BackupCodecV4Test {
         ByteBuffer.wrap(bytes, 5, 2).putShort(0xFFFF.toShort())
 
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
         }
     }
 
@@ -176,7 +176,7 @@ class BackupCodecV4Test {
         val bytes = encode(payload)
 
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open(bytes.copyOf(40)).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes.copyOf(40)).decode(PASSWORD.toCharArray())
         }
     }
 
@@ -187,29 +187,29 @@ class BackupCodecV4Test {
         bytes[text.indexOf("v1|")] = 'x'.code.toByte()
 
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
         }
     }
 
     @Test
     fun open_withoutMagic_throwsCorrupt() {
         assertThrows(CorruptBackupException::class.java) {
-            BackupCodecV4.open("SBO".toByteArray())
+            BackupCodec.open("SBO".toByteArray())
         }
     }
 
     @Test
     fun hasMagic_onlyForTheFormatFourPrefix() {
-        assertThat(BackupCodecV4.hasMagic("SBOX".toByteArray())).isTrue()
-        assertThat(BackupCodecV4.hasMagic(byteArrayOf(0xAC.toByte(), 0xED.toByte(), 0, 5))).isFalse()
-        assertThat(BackupCodecV4.hasMagic("SB".toByteArray())).isFalse()
+        assertThat(BackupCodec.hasMagic("SBOX".toByteArray())).isTrue()
+        assertThat(BackupCodec.hasMagic(byteArrayOf(0xAC.toByte(), 0xED.toByte(), 0, 5))).isFalse()
+        assertThat(BackupCodec.hasMagic("SB".toByteArray())).isFalse()
     }
 
     @Test
     fun decode_payloadWithoutATypeField_returnsNullForThatType() {
         val bytes = encode(ExportBackupPayload(logins = payload.logins))
 
-        val decoded = BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
+        val decoded = BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
 
         assertThat(decoded.logins).isEqualTo(payload.logins)
         assertThat(decoded.authenticators).isNull()
@@ -219,20 +219,23 @@ class BackupCodecV4Test {
 
     @Test
     fun decode_emptyPayload_hasNoRecordPayload() {
-        val decoded = BackupCodecV4.open(encode(ExportBackupPayload())).decode(PASSWORD.toCharArray())
+        val decoded = BackupCodec.open(encode(ExportBackupPayload())).decode(PASSWORD.toCharArray())
 
         assertThat(decoded.hasNoRecordPayload).isTrue()
     }
 
     /** The worker reports and gates on BACKUP_VERSION; the file must carry the same number. */
     @Test
-    fun version_isTheFormatTheAppDeclares() {
-        assertThat(BackupCodecV4.VERSION).isEqualTo(CommonConstants.BACKUP_VERSION)
+    fun encode_writesTheFormatTheAppDeclares() {
+        val bytes = encode(payload)
+
+        assertThat(bytes[4].toInt()).isEqualTo(CommonConstants.BACKUP_VERSION)
+        assertThat(BackupCodec.open(bytes).version).isEqualTo(CommonConstants.BACKUP_VERSION)
     }
 
     @Test
     fun kdfParams_fromTheDefaultEncode_useProductionStrength() {
-        val bytes = BackupCodecV4.encode(PASSWORD.toCharArray(), ExportBackupPayload(), 0L, APP_VERSION_CODE)
+        val bytes = BackupCodec.encode(PASSWORD.toCharArray(), ExportBackupPayload(), 0L, APP_VERSION_CODE)
         val headerLength = ByteBuffer.wrap(bytes, 5, 2).short.toInt()
         val kdf = Regex("\"kdf\":\"([^\"]+)\"").find(String(bytes, 7, headerLength, Charsets.UTF_8))!!.groupValues[1]
 
@@ -243,7 +246,7 @@ class BackupCodecV4Test {
         payload: ExportBackupPayload,
         createdAt: Long = 0L,
         kdfParams: KdfParams = PasswordKdf.newParams(iterations = TEST_ITERATIONS),
-    ): ByteArray = BackupCodecV4.encode(PASSWORD.toCharArray(), payload, createdAt, APP_VERSION_CODE, kdfParams)
+    ): ByteArray = BackupCodec.encode(PASSWORD.toCharArray(), payload, createdAt, APP_VERSION_CODE, kdfParams)
 
     private companion object {
         const val PASSWORD = "Backup@Password1"

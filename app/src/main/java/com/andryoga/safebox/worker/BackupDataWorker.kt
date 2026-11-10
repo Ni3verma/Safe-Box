@@ -40,7 +40,7 @@ import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
-import com.andryoga.safebox.worker.backup.BackupCodecV4
+import com.andryoga.safebox.worker.backup.BackupCodec
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
@@ -157,7 +157,7 @@ class BackupDataWorker
         val pickedDir = resolveWritableDir(backupMetadata.uriString)
             ?: return onBackupFailure(BackupFailureReason.FOLDER_INACCESSIBLE, null)
 
-        val backupBytes = BackupCodecV4.encode(
+        val backupBytes = BackupCodec.encode(
             password = password,
             payload = ExportBackupPayload(
                 logins = loginData,

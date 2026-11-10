@@ -113,7 +113,7 @@ private fun getSymmetricKey(): SecretKey {
 ## Backup file format
 
 Written by `BackupDataWorker`, read by `RestoreDataWorker`, which routes on the first four bytes:
-`SBOX` is format 4 (`worker/backup/BackupCodecV4`), `AC ED 00 05` (Java serialisation) is formats
+`SBOX` is format 4 or later (`worker/backup/BackupCodec`), `AC ED 00 05` (Java serialisation) is formats
 1–3 (`worker/backup/legacy/LegacyBackupReader`), anything else is `CORRUPT_OR_INVALID_FILE`. Both produce
 a `DecodedBackup`, so the DB replace below is format-blind. Every format is encrypted with a
 **backup password supplied by the user** (the master password for the auto-backup after login),
@@ -130,7 +130,7 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
 | Offset | Size | Field |
 |---|---|---|
 | 0 | 4 | magic `SBOX` |
-| 4 | 1 | version `0x04`, read unsigned |
+| 4 | 1 | version (`0x04` today), read unsigned |
 | 5 | 2 | header length `n`, big-endian |
 | 7 | `n` | header, UTF-8 JSON `{"createdAt", "appVersionCode", "kdf"}`; `kdf` is the `KdfParams` wire string `v1\|PBKDF2WithHmacSHA256\|<iterations>\|<b64 salt>` |
 | 7+`n` | 28 | key check: `iv(12) ‖ AES-256-GCM tag` over an empty plaintext |
@@ -147,11 +147,14 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
   `secureNotes`, `authenticators`. The writer always fills every list, empty when the vault has
   none; a missing field means the writer predates the type. It lives with the `Export*` classes so
   `app/backup-format.lock` hashes it too.
-- **Limit:** the restore reads at most `BackupCodecV4.MAX_FILE_BYTES` (64 MB) into memory, so a
+- **Limit:** the restore reads at most `BackupCodec.MAX_FILE_BYTES` (64 MB) into memory, so a
   picked file that is not a backup cannot exhaust the heap; every other length is checked against
   the file itself (a header or body running past its end is `CORRUPT_OR_INVALID_FILE`).
 - **Version byte:** read before anything else is parsed, so a newer layout reports
-  `BACKUP_TOO_NEW` rather than corrupt.
+  `BACKUP_TOO_NEW` rather than corrupt. `BackupCodec` reads **every version from 4 up to
+  `BACKUP_VERSION`**: a payload change (say a new optional field) bumps `BACKUP_VERSION` and the lock
+  but needs no new codec, the way one reader served formats 1–3. Only a different container (new
+  crypto, new layout) needs a new reader.
 
 ### Formats 1–3 (read only)
 

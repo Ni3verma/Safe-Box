@@ -1,6 +1,7 @@
 package com.andryoga.safebox.worker.backup
 
 import androidx.annotation.Keep
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
 import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.PasswordKdf
@@ -20,17 +21,21 @@ import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * Writes and reads backup format 4.
+ * Writes backup format [CommonConstants.BACKUP_VERSION] and reads every format from
+ * [FIRST_VERSION] on: they share this container, so a format bump for a payload change (a new
+ * optional field) needs no new codec. Only a different container gets its own reader, as formats
+ * 1–3 have `LegacyBackupReader`. A version newer than the build is refused by the restore before
+ * [OpenedBackup.decode].
  *
- * Layout: magic `SBOX` | version `0x04` | header length `n` (2 bytes, big-endian) | header JSON
+ * Layout: magic `SBOX` | version | header length `n` (2 bytes, big-endian) | header JSON
  * (`n` bytes, readable without the password) | key check | body. The key check is
  * `iv ‖ AES-256-GCM tag over an empty plaintext` and the body is `iv ‖ AES-256-GCM(payload JSON)`;
  * both bind bytes `0 until 7 + n` as AAD, so the header cannot be edited unnoticed. The key comes
  * from [PasswordKdf] with the parameters the header names, so the file is self-describing.
  */
-object BackupCodecV4 {
-    /** Container version this codec writes and the only one it decodes. */
-    const val VERSION = 4
+object BackupCodec {
+    /** First format written in this container. */
+    const val FIRST_VERSION = 4
 
     /**
      * Largest file a restore reads into memory; a 2 000-record vault is about 2 MB. Stops a picked
@@ -57,13 +62,13 @@ object BackupCodecV4 {
 
     /**
      * @param bytes The start of a file.
-     * @return True when [bytes] start with the format-4 magic.
+     * @return True when [bytes] start with the container's magic.
      */
     fun hasMagic(bytes: ByteArray): Boolean =
         bytes.size >= MAGIC.size && bytes.copyOfRange(0, MAGIC.size).contentEquals(MAGIC)
 
     /**
-     * Encrypts [payload] into a complete format-4 file.
+     * Encrypts [payload] into a complete file of format [CommonConstants.BACKUP_VERSION].
      *
      * @param password Backup password; not modified, the caller zeroes it.
      * @param payload Every record type, each list filled (empty when the vault has none).
@@ -87,7 +92,7 @@ object BackupCodecV4 {
         check(headerBytes.size <= UNSIGNED_SHORT_MASK) { "backup header too large: ${headerBytes.size}" }
         val prefix = ByteBuffer.allocate(HEADER_OFFSET + headerBytes.size)
             .put(MAGIC)
-            .put(VERSION.toByte())
+            .put(CommonConstants.BACKUP_VERSION.toByte())
             .putShort(headerBytes.size.toShort())
             .put(headerBytes)
             .array()
@@ -112,17 +117,17 @@ object BackupCodecV4 {
      */
     fun open(bytes: ByteArray): OpenedBackup {
         if (!hasMagic(bytes) || bytes.size <= VERSION_OFFSET) {
-            throw CorruptBackupException("not a format-4 backup")
+            throw CorruptBackupException("not an SBOX backup")
         }
-        return V4Backup(bytes, bytes[VERSION_OFFSET].toUByte().toInt())
+        return ContainerBackup(bytes, bytes[VERSION_OFFSET].toUByte().toInt())
     }
 
-    private class V4Backup(
+    private class ContainerBackup(
         private val bytes: ByteArray,
         override val version: Int,
     ) : OpenedBackup {
         override fun decode(password: CharArray): DecodedBackup {
-            if (version != VERSION) throw CorruptBackupException("unsupported container version $version")
+            if (version < FIRST_VERSION) throw CorruptBackupException("version $version predates this container")
             if (bytes.size < HEADER_OFFSET) throw CorruptBackupException("truncated before the header")
             val headerLength =
                 ByteBuffer.wrap(bytes, HEADER_LENGTH_OFFSET, 2).short.toInt() and UNSIGNED_SHORT_MASK

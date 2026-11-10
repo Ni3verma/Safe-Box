@@ -84,7 +84,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
   `application/x-trash`, `application/x-binary`.
 - Encrypted with a **user-supplied backup password** (the master password for the auto-backup after
-  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodecV4`: magic `SBOX`,
+  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
   plaintext JSON header, NFKC + PBKDF2-SHA256, AES-GCM key check and body); `RestoreDataWorker`
   routes on the first four bytes and reads formats 1–3 (Java-serialised map, PBKDF2-SHA1 + AES-CBC,
   raw password) through `LegacyBackupReader`. Their traps (absent key vs null value, 1-byte v1 date,

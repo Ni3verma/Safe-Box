@@ -30,7 +30,7 @@ import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
-import com.andryoga.safebox.worker.backup.BackupCodecV4
+import com.andryoga.safebox.worker.backup.BackupCodec
 import com.andryoga.safebox.worker.backup.CorruptBackupException
 import com.andryoga.safebox.worker.backup.OpenedBackup
 import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
@@ -145,7 +145,7 @@ class RestoreDataWorker
             }
             Result.success()
         } catch (badPaddingException: BadPaddingException) {
-            // A format-4 key check failure is an AEADBadTagException, a BadPaddingException too.
+            // An SBOX key check failure is an AEADBadTagException, a BadPaddingException too.
             Timber.e(badPaddingException, "wrong password entered for restore")
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD) {
                 param(AnalyticsParam.VERSION, version.toDouble())
@@ -177,7 +177,7 @@ class RestoreDataWorker
      * Reads the whole file, refusing one longer than any well-formed backup before it is
      * buffered in full.
      *
-     * @throws CorruptBackupException When the file exceeds [BackupCodecV4.MAX_FILE_BYTES].
+     * @throws CorruptBackupException When the file exceeds [BackupCodec.MAX_FILE_BYTES].
      */
     private fun readWithinLimit(input: InputStream): ByteArray {
         val output = ByteArrayOutputStream()
@@ -186,15 +186,15 @@ class RestoreDataWorker
             val read = input.read(buffer)
             if (read < 0) return output.toByteArray()
             output.write(buffer, 0, read)
-            if (output.size() > BackupCodecV4.MAX_FILE_BYTES) {
+            if (output.size() > BackupCodec.MAX_FILE_BYTES) {
                 throw CorruptBackupException("file larger than any backup")
             }
         }
     }
 
-    /** Routes on the first bytes: format 4 has its magic, formats 1–3 are a Java serialisation stream. */
+    /** Routes on the first bytes: formats 4+ start with the SBOX magic, 1–3 with a Java serialisation header. */
     private fun openBackup(bytes: ByteArray): OpenedBackup = when {
-        BackupCodecV4.hasMagic(bytes) -> BackupCodecV4.open(bytes)
+        BackupCodec.hasMagic(bytes) -> BackupCodec.open(bytes)
         LegacyBackupReader.hasStreamHeader(bytes) -> legacyBackupReader.open(bytes)
         else -> throw CorruptBackupException("not a Safe-Box backup")
     }
