@@ -1,45 +1,29 @@
 package com.andryoga.safebox.worker
 
 import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
+import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
+import com.andryoga.safebox.security.envelope.PasswordKdf
+import com.andryoga.safebox.worker.backup.BackupCodecV4
 import java.io.File
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
 import java.nio.ByteBuffer
 
 /**
- * Reusable test doubles and fixture builders for Background Worker unit tests.
+ * Fixture builders for the backup worker unit tests.
  */
-
-class FakePasswordBasedEncryption(
-    var saltToReturn: ByteArray = ByteArray(16) { 1 },
-    var ivToReturn: ByteArray = ByteArray(16) { 2 },
-    var shouldThrowBadPadding: Boolean = false
-) : PasswordBasedEncryption {
-
-    override fun encryptDecrypt(
-        password: CharArray,
-        data: ByteArray,
-        salt: ByteArray,
-        iv: ByteArray,
-        encrypt: Boolean
-    ): ByteArray {
-        if (shouldThrowBadPadding) {
-            throw javax.crypto.BadPaddingException("Given final block not properly padded")
-        }
-        return data.copyOf()
-    }
-
-    override fun getRandomSalt(): ByteArray = saltToReturn.copyOf()
-    override fun getRandomIV(): ByteArray = ivToReturn.copyOf()
-}
-
 object WorkerTestFixtures {
+
+    /** Last format of the Java-serialised map container. */
+    const val LAST_LEGACY_VERSION: Byte = 3
+
+    /** Iterations for test-written format-4 files; production strength only slows the suite. */
+    private const val TEST_KDF_ITERATIONS = 1_000
 
     fun createBackupMap(
         salt: ByteArray = ByteArray(16) { 1 },
         iv: ByteArray = ByteArray(16) { 2 },
-        version: Byte = CommonConstants.BACKUP_VERSION.toByte(),
+        version: Byte = LAST_LEGACY_VERSION,
         creationDate: Long = System.currentTimeMillis(),
         loginData: ByteArray? = null,
         bankAccountData: ByteArray? = null,
@@ -66,5 +50,28 @@ object WorkerTestFixtures {
         ObjectOutputStream(FileOutputStream(file)).use {
             it.writeObject(map)
         }
+    }
+
+    /**
+     * Writes a real format-4 file, at test-only KDF strength.
+     *
+     * @return The file's bytes, for tests that tamper with them.
+     */
+    fun writeFormatFourBackup(
+        file: File,
+        password: String,
+        payload: ExportBackupPayload,
+        createdAt: Long = System.currentTimeMillis(),
+    ): ByteArray {
+        val bytes = BackupCodecV4.encode(
+            password = password.toCharArray(),
+            payload = payload,
+            createdAt = createdAt,
+            appVersionCode = 1,
+            kdfParams = PasswordKdf.newParams(iterations = TEST_KDF_ITERATIONS),
+        )
+        file.parentFile?.mkdirs()
+        file.writeBytes(bytes)
+        return bytes
     }
 }

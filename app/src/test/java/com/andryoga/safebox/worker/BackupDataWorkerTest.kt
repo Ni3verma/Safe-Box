@@ -14,7 +14,6 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
 import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
@@ -25,11 +24,12 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.backup.BackupPathData
 import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.LoggedAnalyticsEvent
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
+import com.andryoga.safebox.worker.backup.BackupCodecV4
+import com.andryoga.safebox.worker.backup.DecodedBackup
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
@@ -48,18 +48,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import org.junit.After
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.ObjectInputStream
 import java.nio.file.Files
 import java.util.Locale
 import java.util.UUID
@@ -89,31 +85,9 @@ class BackupDataWorkerTest {
 
     private lateinit var analyticsHelper: FakeAnalyticsHelper
     private lateinit var backupPasswordRegistry: BackupPasswordRegistry
-    private lateinit var fakePasswordBasedEncryption: FakePasswordBasedEncryption
     private lateinit var fakeBackupMetadataRepo: FakeBackupMetadataRepository
     private lateinit var tempDir: File
     private lateinit var mockFileUri: Uri
-
-    private class FakePasswordBasedEncryption : PasswordBasedEncryption {
-        val encryptionCallModes = mutableListOf<Boolean>()
-        var failure: Exception? = null
-
-        override fun encryptDecrypt(
-            password: CharArray,
-            data: ByteArray,
-            salt: ByteArray,
-            iv: ByteArray,
-            encrypt: Boolean,
-        ): ByteArray {
-            failure?.let { throw it }
-            encryptionCallModes.add(encrypt)
-            val delta = if (encrypt) 1 else -1
-            return ByteArray(data.size) { i -> (data[i] + delta).toByte() }
-        }
-
-        override fun getRandomSalt(): ByteArray = ByteArray(16) { 1 }
-        override fun getRandomIV(): ByteArray = ByteArray(16) { 2 }
-    }
 
     private class FakeBackupMetadataRepository : BackupMetadataRepository {
         var metadata: BackupPathData? = null
@@ -144,9 +118,10 @@ class BackupDataWorkerTest {
         MockKAnnotations.init(this)
         analyticsHelper = FakeAnalyticsHelper()
         backupPasswordRegistry = BackupPasswordRegistry()
-        fakePasswordBasedEncryption = FakePasswordBasedEncryption()
         fakeBackupMetadataRepo = FakeBackupMetadataRepository()
         tempDir = Files.createTempDirectory("backup_worker_unit_test").toFile()
+        // A spy: the real codec runs, and tests can count or fail its calls.
+        mockkObject(BackupCodecV4)
 
         every { context.applicationContext } returns context
         every { context.getString(any()) } returns "Backup Notification"
@@ -173,6 +148,7 @@ class BackupDataWorkerTest {
     fun tearDown() {
         unmockkStatic(Uri::class)
         unmockkObject(Utils)
+        unmockkObject(BackupCodecV4)
         tempDir.deleteRecursively()
     }
 
@@ -196,7 +172,6 @@ class BackupDataWorkerTest {
                     params = workerParameters,
                     backupPasswordRegistry = backupPasswordRegistry,
                     backupMetadataRepository = fakeBackupMetadataRepo,
-                    passwordBasedEncryption = fakePasswordBasedEncryption,
                     loginDataDaoSecure = loginDataDaoSecure,
                     bankAccountDataDaoSecure = bankAccountDataDaoSecure,
                     bankCardDataDaoSecure = bankCardDataDaoSecure,
@@ -235,7 +210,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
@@ -279,7 +254,7 @@ class BackupDataWorkerTest {
         val result = worker.doWork()
 
         assertThat(result).isEqualTo(Result.success())
-        assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(true)
+        verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
         assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -294,27 +269,7 @@ class BackupDataWorkerTest {
         assertThat(successEvent.params[AnalyticsParam.SIZE_KB.paramName])
             .isEqualTo(createdFiles.first().length() / 1024)
 
-        val backupFile = createdFiles.first()
-        val backupMap = ObjectInputStream(FileInputStream(backupFile)).use {
-            @Suppress("UNCHECKED_CAST")
-            it.readObject() as Map<String, ByteArray?>
-        }
-        val loginDataBytes = backupMap[CommonConstants.LOGIN_DATA_KEY]
-        assertThat(loginDataBytes).isNotNull()
-        val restoredJson = String(
-            fakePasswordBasedEncryption.encryptDecrypt(
-                TEST_PASSWORD.toCharArray(),
-                loginDataBytes!!,
-                ByteArray(0),
-                ByteArray(0),
-                false
-            ),
-            Charsets.UTF_8
-        )
-        val restoredList = Json.decodeFromString(
-            ListSerializer(ExportLoginData.serializer()),
-            restoredJson
-        )
+        val restoredList = decodeBackup(createdFiles.first()).logins!!
         assertThat(restoredList).hasSize(1)
         assertThat(restoredList[0].title).isEqualTo("GitHub")
         assertThat(restoredList[0].url).isEqualTo("https://github.com")
@@ -402,7 +357,7 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
-            assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(true)
+            verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -410,28 +365,10 @@ class BackupDataWorkerTest {
             assertThat(createdFiles).isNotNull()
             assertThat(createdFiles!!.isNotEmpty()).isTrue()
 
-            val backupFile = createdFiles.first()
-            val backupMap = ObjectInputStream(FileInputStream(backupFile)).use {
-                @Suppress("UNCHECKED_CAST")
-                it.readObject() as Map<String, ByteArray?>
-            }
-            assertThat(backupMap[CommonConstants.VERSION_KEY]?.single()).isEqualTo(3.toByte())
-            val authenticatorBytes = backupMap[CommonConstants.AUTHENTICATOR_DATA_KEY]
-            assertThat(authenticatorBytes).isNotNull()
-            val restoredJson = String(
-                fakePasswordBasedEncryption.encryptDecrypt(
-                    TEST_PASSWORD.toCharArray(),
-                    authenticatorBytes!!,
-                    ByteArray(0),
-                    ByteArray(0),
-                    false,
-                ),
-                Charsets.UTF_8,
-            )
-            val restoredList = Json.decodeFromString(
-                ListSerializer(ExportAuthenticatorData.serializer()),
-                restoredJson,
-            )
+            val backupBytes = createdFiles.first().readBytes()
+            assertThat(BackupCodecV4.hasMagic(backupBytes)).isTrue()
+            assertThat(BackupCodecV4.open(backupBytes).version).isEqualTo(4)
+            val restoredList = decodeBackup(createdFiles.first()).authenticators!!
             assertThat(restoredList).hasSize(1)
             assertThat(restoredList[0].title).isEqualTo("GitHub 2FA")
             assertThat(restoredList[0].secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
@@ -486,11 +423,7 @@ class BackupDataWorkerTest {
             val result = worker.doWork()
 
             assertThat(result).isEqualTo(Result.success())
-            assertThat(fakePasswordBasedEncryption.encryptionCallModes).containsExactly(
-                true,
-                true,
-                true
-            )
+            verify(exactly = 1) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isTrue()
             assertThat(fakeBackupMetadataRepo.updatedDate).isNotNull()
 
@@ -498,72 +431,15 @@ class BackupDataWorkerTest {
             assertThat(createdFiles).isNotNull()
             assertThat(createdFiles!!.isNotEmpty()).isTrue()
 
-            val backupFile = createdFiles.first()
-            val backupMap = ObjectInputStream(FileInputStream(backupFile)).use {
-                @Suppress("UNCHECKED_CAST")
-                it.readObject() as Map<String, ByteArray?>
-            }
-
-            val authenticatorBytes = backupMap[CommonConstants.AUTHENTICATOR_DATA_KEY]
-            assertThat(authenticatorBytes).isNotNull()
-            val restoredAuthJson = String(
-                fakePasswordBasedEncryption.encryptDecrypt(
-                    TEST_PASSWORD.toCharArray(),
-                    authenticatorBytes!!,
-                    ByteArray(0),
-                    ByteArray(0),
-                    false,
-                ),
-                Charsets.UTF_8,
-            )
-            val restoredAuthList = Json.decodeFromString(
-                ListSerializer(ExportAuthenticatorData.serializer()),
-                restoredAuthJson,
-            )
-            assertThat(restoredAuthList).hasSize(1)
-            assertThat(restoredAuthList[0].title).isEqualTo("Google 2FA")
-            assertThat(restoredAuthList[0].secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
-
-            val loginBytes = backupMap[CommonConstants.LOGIN_DATA_KEY]
-            assertThat(loginBytes).isNotNull()
-            val restoredLoginJson = String(
-                fakePasswordBasedEncryption.encryptDecrypt(
-                    TEST_PASSWORD.toCharArray(),
-                    loginBytes!!,
-                    ByteArray(0),
-                    ByteArray(0),
-                    false,
-                ),
-                Charsets.UTF_8,
-            )
-            val restoredLoginList = Json.decodeFromString(
-                ListSerializer(ExportLoginData.serializer()),
-                restoredLoginJson,
-            )
-            assertThat(restoredLoginList).hasSize(1)
-            assertThat(restoredLoginList[0].title).isEqualTo("GitHub")
-
-            val noteBytes = backupMap[CommonConstants.SECURE_NOTE_DATA_KEY]
-            assertThat(noteBytes).isNotNull()
-            val restoredNoteJson = String(
-                fakePasswordBasedEncryption.encryptDecrypt(
-                    TEST_PASSWORD.toCharArray(),
-                    noteBytes!!,
-                    ByteArray(0),
-                    ByteArray(0),
-                    false,
-                ),
-                Charsets.UTF_8,
-            )
-            val restoredNoteList = Json.decodeFromString(
-                ListSerializer(ExportSecureNoteData.serializer()),
-                restoredNoteJson,
-            )
-            assertThat(restoredNoteList).hasSize(1)
-            assertThat(restoredNoteList[0].title).isEqualTo("Secret Note")
-
-            assertThat(backupMap[CommonConstants.BANK_ACCOUNT_DATA_KEY]).isNull()
-            assertThat(backupMap[CommonConstants.BANK_CARD_DATA_KEY]).isNull()
+            val decoded = decodeBackup(createdFiles.first())
+            assertThat(decoded.authenticators!!.single().title).isEqualTo("Google 2FA")
+            assertThat(decoded.authenticators!!.single().secretKey).isEqualTo("JBSWY3DPEHPK3PXP")
+            assertThat(decoded.logins!!.single().title).isEqualTo("GitHub")
+            assertThat(decoded.secureNotes!!.single().title).isEqualTo("Secret Note")
+            // An empty type is written as an empty list, so a reader can tell it from a type
+            // the writer did not know.
+            assertThat(decoded.bankAccounts).isEmpty()
+            assertThat(decoded.bankCards).isEmpty()
         }
 
     @Test
@@ -581,7 +457,7 @@ class BackupDataWorkerTest {
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_FAILURE)).isFalse()
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         assertThat(fakeBackupMetadataRepo.deleted).isFalse()
-        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
     }
 
     /**
@@ -598,7 +474,7 @@ class BackupDataWorkerTest {
         assertThat(result).isEqualTo(Result.failure(BackupFailureReason.SESSION_LOCKED.toWorkData()))
         assertThat(fakeBackupMetadataRepo.deleted).isFalse()
         assertFailureLoggedWithReason(BackupFailureReason.SESSION_LOCKED)
-        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
         coVerify(exactly = 0) { loginDataDaoSecure.exportAllData() }
     }
 
@@ -668,7 +544,7 @@ class BackupDataWorkerTest {
         assertFailureLoggedWithReason(BackupFailureReason.FOLDER_INACCESSIBLE)
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.BACKUP_DATA_SUCCESS)).isFalse()
         // The pre-check fails before any crypto work is done.
-        assertThat(fakePasswordBasedEncryption.encryptionCallModes).isEmpty()
+        verify(exactly = 0) { BackupCodecV4.encode(any(), any(), any(), any(), any()) }
         // A run that never wrote a file must not move the "last backed up" timestamp forward.
         assertThat(fakeBackupMetadataRepo.updatedDate).isNull()
     }
@@ -710,7 +586,7 @@ class BackupDataWorkerTest {
     fun doWork_whenEncryptionThrows_failsAsUnknownAndKeepsBackupFolder() = runTest {
         fakeBackupMetadataRepo.metadata = backupPathInTempDir()
         stubVaultRecords()
-        fakePasswordBasedEncryption.failure = IllegalStateException("cipher failure")
+        every { BackupCodecV4.encode(any(), any(), any(), any(), any()) } throws IllegalStateException("cipher failure")
 
         val result = buildWorker(passwordInput()).doWork()
 
@@ -799,6 +675,10 @@ class BackupDataWorkerTest {
         assertThat(event.params[AnalyticsParam.REASON.paramName]).isEqualTo(reason.name)
         return event
     }
+
+    /** Reads a file the worker wrote back through the format-4 codec, with the test password. */
+    private fun decodeBackup(file: File): DecodedBackup =
+        BackupCodecV4.open(file.readBytes()).decode(TEST_PASSWORD.toCharArray())
 
     private companion object {
         val WORK_ID: UUID = UUID.fromString("5d1f2c3a-7b4e-4f0a-9c6d-1e2f3a4b5c6d")

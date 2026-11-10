@@ -61,17 +61,17 @@ upgrade test must be `qa → qa`.
   MR 4 (2026-10-23, `ActiveSessionManagerTest`): `clearSessionKey()` is the exit from the vault —
   `HomeScreen` leaves for Login on `isVaultUnlocked = false`; the timeout records
   `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**. Start destination is Room-first
-  (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is written, never read. MR 6 (2026-10-31,
+  (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is not written since MR 8. MR 6 (2026-10-31,
   `git grep 'setSessionKey(' -- app/src/main`; `LoginViewModelTest`, `VaultResetUseCaseTest`): every
   envelope unlock on the login screen is `LoginViewModel` → `setSessionKey` — password, fingerprint
   (`WrapKeyOpener` cipher bound as the `CryptoObject`), forgot-password (`wrapped_dek_device`, then
   `rewrapPassword(newPassword, dek, hint)`); *Continue for now* opens `setLegacySession`; signup and
   the migrator call `setSessionKey` too. `VaultResetUseCase.eraseVault()` is the second clear.
   [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
-- `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
-  `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
-  export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until
-  `BACKUP_VERSION` is bumped, `app/backup-format.lock` gains a line and a new seed is captured.
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4** (envelope MR 8, 2026-11-10). Changing the
+  export classes (`data/db/docs/export/`, incl. `ExportBackupPayload`) fails
+  `scripts/tests/backup-format-test.sh` until `BACKUP_VERSION` is bumped, `app/backup-format.lock`
+  gains a line and a new seed is captured.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
   mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**, plus a non-blank hint at signup.
   Any vault password in a test or fixture must pass all five; backup-file passwords are unconstrained.
@@ -83,21 +83,15 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
 - Backup file `yyyyMMddHHmmssSSS.bak` goes into a directory picked **once** via `OpenDocumentTree`
   (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
   `application/x-trash`, `application/x-binary`.
-- Payload is a Java-serialized **`LinkedHashMap<String, ByteArray?>`** (Kotlin's `mutableMapOf()`),
-  PBE-encrypted with a **user-supplied backup password** independent of the vault master password.
-  Keys `"0"`–`"8"`: version, salt, IV, creation date, then one per record type (`4` login,
-  `5` bank account, `6` bank card, `7` secure note, `8` authenticator).
-- **Absent key and null value are different signals.** `encrypt*Data` returns `null` for a record
-  type with no rows, so the key is present holding null. Absent means the file predates the key;
-  null means the type is supported and the vault had none. Conflating them reads a v3 backup with
-  no TOTP records as a pre-TOTP v2 file.
-- Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
-  still read. Decoding it as UTF-8 prints control characters and looks like corruption.
-- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`; it carries the PBE parameters
-  (`PBKDF2WithHmacSHA1`, 1324 iterations, `AES/CBC/PKCS5Padding`) in executable form. Verified 2026-09-21.
-- `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — **do not widen it**, and
-  do not translate it into an `ObjectInputFilter`; the two allowlists see different class sets. Both
-  forms: [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md).
+- Encrypted with a **user-supplied backup password** (the master password for the auto-backup after
+  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodecV4`: magic `SBOX`,
+  plaintext JSON header, NFKC + PBKDF2-SHA256, AES-GCM key check and body); `RestoreDataWorker`
+  routes on the first four bytes and reads formats 1–3 (Java-serialised map, PBKDF2-SHA1 + AES-CBC,
+  raw password) through `LegacyBackupReader`. Their traps (absent key vs null value, 1-byte v1 date,
+  the `resolveClass` allow-list that must not be widened or turned into an `ObjectInputFilter`):
+  [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md#formats-13-read-only).
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`; it reads every format
+  with its own crypto, not the app's. Verified on the format-4 seed 2026-11-10.
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
   table inside `runInTransaction`. Post-restore counts equal the file's counts exactly **for every
   type except authenticator**: `filterDecodableAuthenticatorData` **silently drops** records failing

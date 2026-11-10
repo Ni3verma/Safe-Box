@@ -59,7 +59,7 @@ dimension name = parameter name:
 
 | Parameter | Logged by | Values |
 |---|---|---|
-| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `qr_scanner_unsupported_dialog_show`, `vault_migration_failure`, `vault_migration_failure_show`, `vault_migration_retry_click`, `vault_migration_continue_legacy_click`, `vault_wrap_create_failure`, `vault_recovery_failure` | `BackupFailureReason` names; `TotpUriError` snake case; `MigrationFailureReason` wire names; wrap failure reasons; `RecoveryFailureReason` wire names (`not_authenticated`, `verifier`, `keystore`, `storage`) |
+| `reason` | `backup_failure_dialog_show`, `backup_data_failure`, `restore_data_failure`, `qr_scanner_unsupported_dialog_show`, `vault_migration_failure`, `vault_migration_failure_show`, `vault_migration_retry_click`, `vault_migration_continue_legacy_click`, `vault_wrap_create_failure`, `vault_recovery_failure` | `BackupFailureReason` names; `RestoreFailureReason` names (`restore_data_failure`, since envelope MR 8); `TotpUriError` snake case; `MigrationFailureReason` wire names; wrap failure reasons; `RecoveryFailureReason` wire names (`not_authenticated`, `verifier`, `keystore`, `storage`) |
 | `message` | `backup_data_failure` | exception text; free-form |
 | `result` | `backup_select_dir_result`, `clipboard_auto_cleared` | `0`/`1`; `verified`/`unverified` |
 | `version` | `restore_data_failure`, `restore_data_wrong_password`, `restore_data_backup_too_new`, `restore_data_backup_empty`; from the readiness patch also `backup_data_success`, `restore_data_success` | backup format version, `0` if unreadable |

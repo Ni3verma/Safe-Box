@@ -23,7 +23,7 @@ object CommonConstants {
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
 
-    // Backup file data
+    // Map keys of backup formats 1–3, read only by LegacyBackupReader
     const val VERSION_KEY = "0"
     const val SALT_KEY = "1"
     const val IV_KEY = "2"
@@ -33,7 +33,9 @@ object CommonConstants {
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
     const val AUTHENTICATOR_DATA_KEY = "8"
-    const val BACKUP_VERSION = 3
+
+    // Format written by BackupDataWorker; 1–3 are still restored
+    const val BACKUP_VERSION = 4
 
     // Backup params. The password is not one: it travels through BackupPasswordRegistry.
     const val BACKUP_PARAM_IS_SHOW_START_NOTIFICATION = "1"

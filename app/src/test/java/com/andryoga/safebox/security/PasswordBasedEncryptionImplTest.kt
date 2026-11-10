@@ -1,169 +1,89 @@
 package com.andryoga.safebox.security
 
+import com.andryoga.safebox.test.fixtures.LegacyBackupCipher
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
-import org.junit.Before
 import org.junit.Test
 import java.security.GeneralSecurityException
 import java.security.InvalidAlgorithmParameterException
 
+/**
+ * Inputs are the fixed salt and IV of [LegacyBackupCipher]: AES-CBC has no MAC, so a wrong key
+ * fails only when the scrambled last block is not valid padding, and fixed inputs make each
+ * outcome below a known answer rather than a probability.
+ */
 class PasswordBasedEncryptionImplTest {
 
-    private lateinit var pbe: PasswordBasedEncryptionImpl
-
-    @Before
-    fun setUp() {
-        pbe = PasswordBasedEncryptionImpl()
-    }
+    private val pbe = PasswordBasedEncryptionImpl()
 
     @Test
-    fun getRandomSalt_returnsByteArrayOfConfiguredSaltSize() {
-        val salt = pbe.getRandomSalt()
-
-        assertThat(salt).hasLength(PasswordBasedEncryptionImpl.Constants.SALT_SIZE)
-        assertThat(salt.any { it != 0.toByte() }).isTrue()
-    }
-
-    @Test
-    fun consecutiveGetRandomSaltCalls_returnDistinctByteArrays() {
-        val salt1 = pbe.getRandomSalt()
-        val salt2 = pbe.getRandomSalt()
-
-        assertThat(salt1).isNotEqualTo(salt2)
-    }
-
-    @Test
-    fun getRandomIV_returnsByteArrayOfConfiguredIvSize() {
-        val iv = pbe.getRandomIV()
-
-        assertThat(iv).hasLength(PasswordBasedEncryptionImpl.Constants.IV_SIZE)
-        assertThat(iv.any { it != 0.toByte() }).isTrue()
-    }
-
-    @Test
-    fun consecutiveGetRandomIVCalls_returnDistinctByteArrays() {
-        val iv1 = pbe.getRandomIV()
-        val iv2 = pbe.getRandomIV()
-
-        assertThat(iv1).isNotEqualTo(iv2)
-    }
-
-    @Test
-    fun encryptDecrypt_roundtripWithValidInputs_returnsOriginalData() {
+    fun decrypt_payloadEncryptedWithTheLegacyScheme_returnsOriginalData() {
         val password = "StrongMasterPassword123".toCharArray()
         val data = "SensitiveDatabasePayloadToEncrypt".toByteArray(Charsets.UTF_8)
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
+        val encrypted = LegacyBackupCipher.encrypt(password, data)
 
-        val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
-        val decrypted = pbe.encryptDecrypt(password, encrypted, salt, iv, encrypt = false)
+        val decrypted = pbe.decrypt(password, encrypted, LegacyBackupCipher.FIXED_SALT, LegacyBackupCipher.FIXED_IV)
 
         assertThat(decrypted).isEqualTo(data)
     }
 
     @Test
-    fun encryptDecrypt_roundtripWithEmptyByteArray_returnsEmptyByteArray() {
-        val password = "EmptyDataPassword".toCharArray()
-        val data = ByteArray(0)
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
-
-        val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
-        val decrypted = pbe.encryptDecrypt(password, encrypted, salt, iv, encrypt = false)
-
-        assertThat(decrypted).isEqualTo(data)
-    }
-
-    @Test
-    fun encryptDecrypt_roundtripWithLargeByteArray_returnsOriginalData() {
+    fun decrypt_largePayload_returnsOriginalData() {
         val password = "LargeDataPassword".toCharArray()
         val data = ByteArray(50_000) { (it % 256).toByte() }
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
+        val encrypted = LegacyBackupCipher.encrypt(password, data)
 
-        val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
-        val decrypted = pbe.encryptDecrypt(password, encrypted, salt, iv, encrypt = false)
+        val decrypted = pbe.decrypt(password, encrypted, LegacyBackupCipher.FIXED_SALT, LegacyBackupCipher.FIXED_IV)
 
         assertThat(decrypted).isEqualTo(data)
+    }
+
+    @Test
+    fun decrypt_doesNotModifyThePassword() {
+        val password = "KeepMe123".toCharArray()
+        val encrypted = LegacyBackupCipher.encrypt(password.copyOf(), "x".toByteArray())
+
+        pbe.decrypt(password, encrypted, LegacyBackupCipher.FIXED_SALT, LegacyBackupCipher.FIXED_IV)
+
+        assertThat(String(password)).isEqualTo("KeepMe123")
     }
 
     @Test
     fun decrypt_withIncorrectPassword_throwsGeneralSecurityException() {
-        val correctPassword = "CorrectPassword123".toCharArray()
-        val wrongPassword = "WrongPassword123".toCharArray()
-        val data = "SecretPayload".toByteArray(Charsets.UTF_8)
-        // fixed for the same determinism reason documented in the tampered padding test below.
-        val salt = ByteArray(PasswordBasedEncryptionImpl.Constants.SALT_SIZE) { it.toByte() }
-        val iv = ByteArray(PasswordBasedEncryptionImpl.Constants.IV_SIZE) { it.toByte() }
-
-        val encrypted = pbe.encryptDecrypt(correctPassword, data, salt, iv, encrypt = true)
+        val encrypted = LegacyBackupCipher.encrypt("CorrectPassword123".toCharArray(), "SecretPayload".toByteArray())
 
         assertThrows(GeneralSecurityException::class.java) {
-            pbe.encryptDecrypt(wrongPassword, encrypted, salt, iv, encrypt = false)
+            pbe.decrypt(
+                "WrongPassword123".toCharArray(),
+                encrypted,
+                LegacyBackupCipher.FIXED_SALT,
+                LegacyBackupCipher.FIXED_IV,
+            )
         }
     }
 
     @Test
     fun decrypt_withTamperedPaddingBlock_throwsGeneralSecurityException() {
         val password = "PasswordForTamperTest".toCharArray()
-        val data = "UncorruptedPlaintextData".toByteArray(Charsets.UTF_8)
-
-        /*
-         * Deliberately fixed salt and IV instead of the random ones used by the other tests.
-         *
-         * AES/CBC/PKCS5Padding carries no MAC, so corrupting the final ciphertext block simply
-         * scrambles the final plaintext block. Decryption then fails only when the scrambled
-         * trailing bytes do not happen to form valid PKCS#5 padding, which is roughly a 1 in 256
-         * chance. With a random salt and IV the ciphertext differed on every run, so this test
-         * failed intermittently. Pinning both inputs makes key derivation and encryption fully
-         * deterministic, which makes the outcome stable.
-         *
-         * Do not switch these back to getRandomSalt()/getRandomIV().
-         */
-        val salt = ByteArray(PasswordBasedEncryptionImpl.Constants.SALT_SIZE) { it.toByte() }
-        val iv = ByteArray(PasswordBasedEncryptionImpl.Constants.IV_SIZE) { it.toByte() }
-
-        val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
+        val encrypted = LegacyBackupCipher.encrypt(password, "UncorruptedPlaintextData".toByteArray())
         encrypted[encrypted.size - 1] = (encrypted[encrypted.size - 1].toInt() xor 0xFF).toByte()
 
         assertThrows(GeneralSecurityException::class.java) {
-            pbe.encryptDecrypt(password, encrypted, salt, iv, encrypt = false)
-        }
-    }
-
-    @Test
-    fun decrypt_withTamperedIntermediateBlock_producesCorruptedPlaintext() {
-        val password = "PasswordForTamperTest".toCharArray()
-        val data = "UncorruptedPlaintextDataLongEnoughForMultipleBlocks".toByteArray(Charsets.UTF_8)
-        val salt = pbe.getRandomSalt()
-        val iv = pbe.getRandomIV()
-
-        val encrypted = pbe.encryptDecrypt(password, data, salt, iv, encrypt = true)
-        encrypted[0] = (encrypted[0].toInt() xor 0xFF).toByte()
-
-        val result =
-            runCatching { pbe.encryptDecrypt(password, encrypted, salt, iv, encrypt = false) }
-        if (result.isSuccess) {
-            assertThat(result.getOrThrow()).isNotEqualTo(data)
-        } else {
-            assertThat(result.exceptionOrNull()).isInstanceOf(GeneralSecurityException::class.java)
+            pbe.decrypt(password, encrypted, LegacyBackupCipher.FIXED_SALT, LegacyBackupCipher.FIXED_IV)
         }
     }
 
     @Test
     fun decrypt_withInvalidIvSize_throwsInvalidAlgorithmParameterException() {
-        val password = "PasswordForIvSizeTest".toCharArray()
-        val data = "ValidPayload".toByteArray(Charsets.UTF_8)
-        val salt = pbe.getRandomSalt()
-        val invalidIv = ByteArray(8) // Invalid IV size (AES requires 16 bytes)
+        val invalidIv = ByteArray(8) // AES-CBC needs 16 bytes
 
         assertThrows(InvalidAlgorithmParameterException::class.java) {
-            pbe.encryptDecrypt(password, data, salt, invalidIv, encrypt = true)
+            pbe.decrypt("PasswordForIvSizeTest".toCharArray(), ByteArray(16), LegacyBackupCipher.FIXED_SALT, invalidIv)
         }
     }
 
     @Test
-    fun verifyPbeConstants_matchSecuritySpecifications() {
+    fun verifyPbeConstants_matchTheFrozenLegacyFormat() {
         assertThat(PasswordBasedEncryptionImpl.Constants.SALT_SIZE).isEqualTo(256)
         assertThat(PasswordBasedEncryptionImpl.Constants.KEY_ITERATION_COUNT).isEqualTo(1324)
         assertThat(PasswordBasedEncryptionImpl.Constants.KEY_LENGTH).isEqualTo(256)

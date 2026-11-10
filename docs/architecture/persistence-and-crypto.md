@@ -112,15 +112,55 @@ private fun getSymmetricKey(): SecretKey {
 
 ## Backup file format
 
-Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
+Written by `BackupDataWorker`, read by `RestoreDataWorker`, which routes on the first four bytes:
+`SBOX` is format 4 (`worker/backup/BackupCodecV4`), `AC ED 00 05` (Java serialisation) is formats
+1–3 (`worker/backup/LegacyBackupReader`), anything else is `CORRUPT_OR_INVALID_FILE`. Both produce
+a `DecodedBackup`, so the DB replace below is format-blind. Every format is encrypted with a
+**backup password supplied by the user** (the master password for the auto-backup after login),
+never the Keystore key, which is why a `.bak` stays restorable when the Keystore key is lost.
 
-- **Container:** a Java-serialized `LinkedHashMap<String, ByteArray?>`. `BackupDataWorker` builds it
+- **File name:** `SafeBoxBackup<yyyyMMddHHmmssSSS>.bak`, mime `application/octet-stream`.
+- **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
+  directory.
+- **Reading one without an emulator:** `scripts/InspectBackup.java` reads every format with its own
+  crypto (not the app's), so a bug in the app cannot cancel out in the upgrade and restore tests.
+
+### Format 4 (written since envelope MR 8, #242)
+
+| Offset | Size | Field |
+|---|---|---|
+| 0 | 4 | magic `SBOX` |
+| 4 | 1 | version `0x04`, read unsigned |
+| 5 | 2 | header length `n`, big-endian, at most 4096 |
+| 7 | `n` | header, UTF-8 JSON `{"createdAt", "appVersionCode", "kdf"}`; `kdf` is the `KdfParams` wire string `v1\|PBKDF2WithHmacSHA256\|<iterations>\|<b64 salt>` |
+| 7+`n` | 28 | key check: `iv(12) ‖ AES-256-GCM tag` over an empty plaintext |
+| 35+`n` | 12+`m`+16 | body: `iv ‖ AES-256-GCM(payload JSON)` |
+
+- **Key:** `PasswordKdf` (NFKC, then PBKDF2 with the header's parameters), derived once per file.
+  The file is self-describing, so raising `PBKDF2_ITERATIONS` never breaks an old file.
+- **AAD:** bytes `0 until 7+n` for both GCM sections, so the version, `createdAt`,
+  `appVersionCode` and KDF parameters cannot be edited unnoticed.
+- **Wrong password vs damaged file:** a failed key check is an `AEADBadTagException` (a
+  `BadPaddingException`) → `INCORRECT_PASSWORD`; a failed body tag after a good key check is a
+  `CorruptBackupException` → `CORRUPT_OR_INVALID_FILE`.
+- **Payload:** `ExportBackupPayload`, one object with `logins`, `bankAccounts`, `bankCards`,
+  `secureNotes`, `authenticators`. The writer always fills every list, empty when the vault has
+  none; a missing field means the writer predates the type. It lives with the `Export*` classes so
+  `app/backup-format.lock` hashes it too.
+- **Limits:** header ≤ 4 KB, body ≤ 64 MB, file ≤ `BackupCodecV4.MAX_FILE_BYTES`; the restore
+  refuses a longer file before buffering it.
+- **Version byte:** read before anything else is parsed, so a newer layout reports
+  `BACKUP_TOO_NEW` rather than corrupt.
+
+### Formats 1–3 (read only)
+
+- **Container:** a Java-serialized `LinkedHashMap<String, ByteArray?>`. `BackupDataWorker` built it
   with Kotlin's `mutableMapOf()`, so `java.util.LinkedHashMap` — not `HashMap` — is the class
   actually written to the file.
 
   > [!IMPORTANT]
-  > The value type is **nullable, and the null is meaningful.** Each `encrypt*Data` helper returns
-  > `null` when that record type has no rows, so the key is written **present with a null value**.
+  > The value type is **nullable, and the null is meaningful.** Each `encrypt*Data` helper returned
+  > `null` when that record type had no rows, so the key is written **present with a null value**.
   > An *absent* key means the file predates that key; a *null* value means the type is supported and
   > the vault simply had none. Conflating them misreads a v3 backup with no TOTP records as a
   > pre-TOTP v2 file — exactly the distinction `upgrade-test/fixtures/format-2.bak` exists to capture.
@@ -128,20 +168,15 @@ Produced by `BackupDataWorker`, consumed by `RestoreDataWorker`.
 
   | Key | Contents |
   |---|---|
-  | `"0"` | `BACKUP_VERSION` (currently **3**) |
+  | `"0"` | format version (1–3) |
   | `"1"` | PBE salt |
   | `"2"` | cipher IV |
   | `"3"` | creation date |
   | `"4"`–`"8"` | login / bank account / bank card / secure note / authenticator payloads |
 
-- **Encryption:** payloads are PBE-encrypted with a **backup password supplied by the user at
-  export time**. This is *not* the vault master password and *not* the Keystore key — which is why
-  a `.bak` remains restorable even if the Keystore key is lost.
-- **File name:** `yyyyMMddHHmmssSSS.bak`, mime `application/octet-stream`.
-- **Rotation:** `MAX_BACKUP_FILES = 5` — the worker prunes older `.bak` files in the target
-  directory.
-- **Parameters** (`security/PasswordBasedEncryptionImpl.kt`): `PBKDF2WithHmacSHA1`, **1324**
-  iterations, 256-bit key, `AES/CBC/PKCS5Padding`, a **256-byte salt** and a **16-byte IV**. The
+- **Parameters** (`security/PasswordBasedEncryptionImpl.kt`, decrypt-only since MR 8):
+  `PBKDF2WithHmacSHA1`, **1324** iterations, 256-bit key, `AES/CBC/PKCS5Padding`, a **256-byte
+  salt** and a **16-byte IV**, raw password (no NFKC: these files were written without it). The
   same constants are implemented in `scripts/InspectBackup.java`; change one and the other stops
   reading real backups.
 
@@ -170,9 +205,10 @@ exited `0`, i.e. a corrupt backup looked like an empty one. (Verified 2026-09-21
 | 1 | original; `creationDate` stored as a **1-byte** value |
 | 2 | `creationDate` widened to an **8-byte** `Long` |
 | 3 | adds `AUTHENTICATOR_DATA_KEY` (TOTP records) |
+| 4 | new container (above): magic, plaintext JSON header, NFKC + PBKDF2-SHA256, one AES-GCM body, key check |
 
-**Encoding of key `"0"`.** One byte, written with `BACKUP_VERSION.toByte()` and read as
-**unsigned** (`RestoreDataWorker.readBackupVersion`). **`0xFF` is reserved**: single-byte versions
+**Encoding of the version.** One byte (key `"0"` in formats 1–3, offset 4 in format 4), written
+with `BACKUP_VERSION.toByte()` and read as **unsigned** by both readers. **`0xFF` is reserved**: single-byte versions
 are capped at 254, enforced by `BackupDataWorkerTest.backupVersion_shouldFitInOneHeaderByteBelowReservedMarker`.
 When a version ≥ 255 is needed, write `[0xFF, <4-byte big-endian int>]`. Every build from #249 on
 reads one unsigned byte, sees 255 and rejects the file as too new (`BACKUP_TOO_NEW`). A plain wide int
@@ -192,12 +228,12 @@ val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
 }
 ```
 
-Older files simply have no entry for newer keys, and the reader uses `importMap[KEY]` without `!!`,
-so absence is safe. **Preserve that property when adding a key.**
+Older files simply have no entry for newer keys, and `LegacyBackupReader` reads `map[KEY]` without
+`!!`, so absence is safe.
 
 ### Deserialization hardening
 
-`RestoreDataWorker` subclasses `ObjectInputStream` and overrides `resolveClass` with an allowlist:
+`LegacyBackupReader` subclasses `ObjectInputStream` and overrides `resolveClass` with an allowlist:
 `java.util.HashMap`, `LinkedHashMap`, `Map`, `String`, `[B`, `Number`, `Integer`, `Long`. Anything
 else throws `InvalidClassException`. **Do not widen this** — a password manager deserializing
 arbitrary classes from a user-supplied file is a remote-code-execution primitive.
@@ -259,9 +295,11 @@ arbitrary classes from a user-supplied file is a remote-code-execution primitive
 > file's count exactly. Any test asserting additive behaviour is wrong.
 
 > [!WARNING]
-> The password is only verified by decrypting a record payload. A backup with **no payloads** has
-> nothing to verify, so any password would pass and the replace would wipe the vault. Since #272
-> such a file is rejected as `BACKUP_EMPTY` **before** decryption or any DB work. No genuine backup
+> In formats 1–3 the password is only verified by decrypting a record payload. A backup with **no
+> payloads** has nothing to verify, so any password would pass and the replace would wipe the vault.
+> Since #272 such a file is rejected as `BACKUP_EMPTY` **before** decryption or any DB work; a
+> format-4 file whose payload holds no list at all gets the same answer
+> (`DecodedBackup.hasNoRecordPayload`). No genuine backup
 > is affected: `BackupDataWorker.hasAnyRecord` (formerly `shouldExport`) has skipped writing a file
 > for an empty vault since backups were introduced (#111), pinned by
 > `BackupAndRestoreWorkersTest.exportToBackupFile_withEmptyVault_shouldFailAsNothingToBackupAndWriteNoFile`.
@@ -271,11 +309,11 @@ Failure classification is `RestoreFailureReason`:
 
 | Value | Trigger |
 |---|---|
-| `INCORRECT_PASSWORD` | `BadPaddingException` during decrypt |
-| `CORRUPT_OR_INVALID_FILE` | `IOException`, `IllegalArgumentException` (incl. `SerializationException`), bad structure |
+| `INCORRECT_PASSWORD` | `BadPaddingException` during decrypt (format 4: the key check's `AEADBadTagException`) |
+| `CORRUPT_OR_INVALID_FILE` | `IOException` (incl. `CorruptBackupException`), `IllegalArgumentException` (incl. `SerializationException`), bad structure |
 | `UNKNOWN_ERROR` | anything else |
 | `BACKUP_TOO_NEW` | header version `> BACKUP_VERSION`; checked right after the version is read, before date parsing, decryption or any DB work |
-| `BACKUP_EMPTY` | every `decrypt*Data` result in `startRestore` is null (no record payload, so nothing is decrypted); checked after the version gate, before any DB work |
+| `BACKUP_EMPTY` | `DecodedBackup.hasNoRecordPayload`: no type has a payload (formats 1–3 then decrypt nothing); checked after the version gate, before any DB work |
 | `SESSION_LOCKED` | no password registered for this work id (process death), or `SessionLockedException` — typically at the first re-encrypted insert inside `runInTransaction`, which rolls the per-table deletes back; the vault is intact. Logged at `Timber.i`, no `RESTORE_DATA_FAILURE` |
 
 The enum is **append-only**: `toWorkData()` persists the ordinal in WorkManager output data, which
