@@ -140,11 +140,12 @@ class SignupAndLoginE2ETest {
                 .assertIsDisplayed()
 
             // 4b. Without a lock screen (the CI image has none) Home nudges the user to set one.
-            val nudge = composeTestRule.onNodeWithText(context.getString(R.string.home_screen_lock_nudge_banner))
+            val nudgeText = context.getString(R.string.home_screen_lock_nudge_banner)
             if (context.getSystemService(KeyguardManager::class.java).isDeviceSecure) {
-                nudge.assertDoesNotExist()
+                composeTestRule.onNodeWithText(nudgeText).assertDoesNotExist()
             } else {
-                nudge.assertIsDisplayed()
+                // The banner follows an async preference read that waitForIdle does not cover.
+                E2ETestUtils.waitForText(composeTestRule, nudgeText)
             }
 
             // 5. Verify database and preference persistence directly from injected singletons
