@@ -100,11 +100,11 @@ interface VaultRepository {
     suspend fun getVaultState(): VaultState
 
     /**
-     * Writes the fingerprint-unlock opt-out. Disabling sets `biometric_unlock_disabled` and deletes
+     * Writes the fingerprint-unlock opt-out. Off sets `biometric_unlock_disabled` and deletes
      * `wrapped_dek_biometric` in one transaction, so no biometric wrap can exist while the flag is
-     * set; enabling only removes the flag (the wrap is recreated by key maintenance).
+     * set; on only removes the flag (the wrap is recreated by key maintenance).
      *
-     * @param disabled `true` when the user switched fingerprint unlock off.
+     * @param enabled `false` when the user switched fingerprint unlock off.
      */
-    suspend fun setBiometricUnlockDisabled(disabled: Boolean)
+    suspend fun setBiometricUnlockEnabled(enabled: Boolean)
 }

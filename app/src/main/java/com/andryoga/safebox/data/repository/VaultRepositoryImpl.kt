@@ -152,9 +152,11 @@ class VaultRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun setBiometricUnlockDisabled(disabled: Boolean) {
-        Timber.i("setting biometric unlock disabled = %s", disabled)
-        if (disabled) {
+    override suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
+        Timber.i("setting biometric unlock enabled = %s", enabled)
+        if (enabled) {
+            vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED)
+        } else {
             database.withTransaction {
                 vaultMetaDao.upsert(
                     VaultMetaEntity(
@@ -164,8 +166,6 @@ class VaultRepositoryImpl @Inject constructor(
                 )
                 vaultMetaDao.delete(VaultMetaKey.WRAPPED_DEK_BIOMETRIC)
             }
-        } else {
-            vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED)
         }
     }
 

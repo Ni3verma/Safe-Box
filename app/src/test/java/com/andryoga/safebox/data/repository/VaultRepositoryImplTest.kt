@@ -289,9 +289,9 @@ class VaultRepositoryImplTest {
     }
 
     @Test
-    fun setBiometricUnlockDisabled_whenDisabling_shouldWriteTheFlagAndDropTheBiometricWrapInOneTransaction() =
+    fun setBiometricUnlockEnabled_whenTurnedOff_shouldWriteTheFlagAndDropTheBiometricWrapInOneTransaction() =
         runTest {
-            repository.setBiometricUnlockDisabled(true)
+            repository.setBiometricUnlockEnabled(false)
 
             assertThat(transactionCount).isEqualTo(1)
             coVerifyOrder {
@@ -307,8 +307,8 @@ class VaultRepositoryImplTest {
         }
 
     @Test
-    fun setBiometricUnlockDisabled_whenEnabling_shouldOnlyRemoveTheFlag() = runTest {
-        repository.setBiometricUnlockDisabled(false)
+    fun setBiometricUnlockEnabled_whenTurnedOn_shouldOnlyRemoveTheFlag() = runTest {
+        repository.setBiometricUnlockEnabled(true)
 
         coVerify(exactly = 1) { vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) }
         coVerify(exactly = 0) { vaultMetaDao.upsert(any()) }

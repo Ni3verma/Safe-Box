@@ -6,7 +6,6 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.AnalyticsSource
-import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.common.Utils.launchVaultOperation
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
@@ -241,9 +240,6 @@ class SettingsViewModel @Inject constructor(
             } catch (c: CancellationException) {
                 throw c
             } catch (e: SessionLockedException) {
-                throw e
-            } catch (e: Exceptions.DebugFatalException) {
-                // A debug-build assertion from below; reporting it as a failed change would hide it.
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "master password change failed")

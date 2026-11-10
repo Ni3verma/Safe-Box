@@ -98,15 +98,14 @@ class VaultKeyMaintenance @Inject constructor(
     suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
         withContext(dispatchersProvider.default) {
             mutex.withLock {
-                if (enabled) {
-                    vaultRepository.setBiometricUnlockDisabled(false)
-                } else {
-                    val alias = EnvelopeEncryptionManagerImpl.aliasFor(
-                        WrapKeySpec.BIOMETRIC,
-                        vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC),
+                vaultRepository.setBiometricUnlockEnabled(enabled)
+                if (!enabled) {
+                    keystoreGateway.deleteKey(
+                        EnvelopeEncryptionManagerImpl.aliasFor(
+                            WrapKeySpec.BIOMETRIC,
+                            vaultRepository.getWrapKeyAliasSuffix(WrapKeySpec.BIOMETRIC),
+                        ),
                     )
-                    vaultRepository.setBiometricUnlockDisabled(true)
-                    keystoreGateway.deleteKey(alias)
                 }
             }
         }

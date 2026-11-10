@@ -302,7 +302,7 @@ class VaultKeyMaintenanceTest {
 
         maintenance.setBiometricUnlockEnabled(false)
 
-        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(true) }
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockEnabled(false) }
         assertThat(fakeKeystoreGateway.probe(alias)).isEqualTo(KeyHealth.Missing)
     }
 
@@ -310,7 +310,7 @@ class VaultKeyMaintenanceTest {
     fun setBiometricUnlockEnabledFalse_whenSessionIsLocked_shouldStillDisable() = runTest {
         maintenance.setBiometricUnlockEnabled(false)
 
-        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(true) }
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockEnabled(false) }
     }
 
     @Test
@@ -319,7 +319,7 @@ class VaultKeyMaintenanceTest {
 
         maintenance.setBiometricUnlockEnabled(true)
 
-        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(false) }
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockEnabled(true) }
         coVerify(exactly = 1) { vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), null) }
     }
 
@@ -334,7 +334,7 @@ class VaultKeyMaintenanceTest {
 
         maintenance.setBiometricUnlockEnabled(true)
 
-        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockDisabled(false) }
+        coVerify(exactly = 1) { vaultRepository.setBiometricUnlockEnabled(true) }
         coVerify(exactly = 0) { vaultRepository.storeWrap(WrapKeySpec.BIOMETRIC, any(), any()) }
     }
 }
