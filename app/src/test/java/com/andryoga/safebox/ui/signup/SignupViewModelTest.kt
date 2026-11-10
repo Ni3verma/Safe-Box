@@ -6,10 +6,8 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
@@ -27,9 +25,6 @@ import org.junit.Rule
 import org.junit.Test
 
 class SignupViewModelTest {
-
-    @MockK(relaxUnitFun = true)
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @MockK
     lateinit var vaultRepository: VaultRepository
@@ -57,7 +52,6 @@ class SignupViewModelTest {
     }
 
     private fun createViewModel(isDebug: Boolean) = SignupViewModel(
-        encryptedPreferenceProvider = encryptedPreferenceProvider,
         vaultRepository = vaultRepository,
         analyticsHelper = analyticsHelper,
         sessionKeyHolder = sessionKeyHolder,
@@ -221,12 +215,6 @@ class SignupViewModelTest {
             assertThat(sessionKeyHolder.isUnlocked.value).isTrue()
             assertThat(sessionKeyHolder.isLegacySession).isFalse()
             verify(exactly = 1) { vaultKeyMaintenance.scheduleAfterUnlock() }
-            coVerify(exactly = 1) {
-                encryptedPreferenceProvider.upsertBooleanPref(
-                    CommonConstants.IS_SIGN_UP_REQUIRED,
-                    false,
-                )
-            }
             assertThat(expectMostRecentItem()).isTrue()
         }
     }
