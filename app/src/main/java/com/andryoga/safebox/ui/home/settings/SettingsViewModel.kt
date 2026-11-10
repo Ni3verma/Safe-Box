@@ -209,6 +209,7 @@ class SettingsViewModel @Inject constructor(
             if (isVerified) {
                 onGatePassed(ChangePasswordGate.MASTER_PASSWORD)
             } else {
+                Timber.i("current password rejected at the change-password gate")
                 setStep(ChangePasswordStep.CurrentPassword(isIncorrect = true))
             }
         }
