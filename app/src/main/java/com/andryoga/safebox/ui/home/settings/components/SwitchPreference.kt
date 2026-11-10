@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
@@ -28,6 +29,7 @@ import com.andryoga.safebox.ui.theme.SafeBoxTheme
  * @param controlModifier applied to the [Switch] alone, not the row. The switch has no text of
  * its own, so this is where a `Modifier.testTag` belongs if a test needs to find it (see
  * `TestTags`).
+ * @param enabled `false` greys the row out and disables the switch.
  */
 @Composable
 fun SwitchPreference(
@@ -36,6 +38,7 @@ fun SwitchPreference(
     onCheckedChange: (Boolean) -> Unit,
     body: String? = null,
     controlModifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Row(
         modifier = Modifier
@@ -48,6 +51,8 @@ fun SwitchPreference(
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 12.dp)
+                // The Switch dims itself when disabled; only the text needs it.
+                .alpha(if (enabled) 1f else DISABLED_ALPHA)
         ) {
             Text(
                 title,
@@ -64,6 +69,7 @@ fun SwitchPreference(
             checked = checked,
             onCheckedChange = onCheckedChange,
             modifier = controlModifier,
+            enabled = enabled,
             thumbContent = if (checked) {
                 {
                     Icon(

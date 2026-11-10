@@ -1,7 +1,5 @@
 package com.andryoga.safebox.ui.core.password
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -12,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.andryoga.safebox.R
+import com.andryoga.safebox.ui.utils.openSecuritySettings
 import timber.log.Timber
 
 /**
@@ -48,30 +47,7 @@ fun DeviceSecurityRequiredDialog(
             Button(
                 onClick = {
                     Timber.i("opening security settings from DeviceSecurityRequiredDialog")
-                    val isLaunched = runCatching {
-                        context.startActivity(
-                            Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                        )
-                    }.recoverCatching { securitySettingsError ->
-                        Timber.w(
-                            securitySettingsError,
-                            "Failed to open ACTION_SECURITY_SETTINGS, attempting fallback to ACTION_SETTINGS"
-                        )
-                        context.startActivity(
-                            Intent(Settings.ACTION_SETTINGS).apply {
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            }
-                        )
-                    }.onFailure { fallbackError ->
-                        Timber.e(
-                            fallbackError,
-                            "Failed to launch Settings activity from DeviceSecurityRequiredDialog"
-                        )
-                    }.isSuccess
-
-                    if (isLaunched) {
+                    if (context.openSecuritySettings()) {
                         onOpenSettingsClick()
                     } else {
                         onOpenSettingsFailure()

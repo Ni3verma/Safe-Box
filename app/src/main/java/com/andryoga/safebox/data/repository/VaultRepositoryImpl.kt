@@ -147,9 +147,26 @@ class VaultRepositoryImpl @Inject constructor(
             biometricKeyAliasSuffix = vaultMetaDao.get(VaultMetaKey.BIOMETRIC_KEY_ALIAS_SUFFIX),
             wrappedDekDevice = vaultMetaDao.get(VaultMetaKey.WRAPPED_DEK_DEVICE),
             deviceKeyAliasSuffix = vaultMetaDao.get(VaultMetaKey.DEVICE_KEY_ALIAS_SUFFIX),
-            isBiometricUnlockDisabled =
-                vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) == BIOMETRIC_DISABLED_VALUE,
+            isBiometricUnlockDisabled = vaultMetaDao.get(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED) ==
+                VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED_VALUE,
         )
+    }
+
+    override suspend fun setBiometricUnlockEnabled(enabled: Boolean) {
+        Timber.i("setting biometric unlock enabled = %s", enabled)
+        if (enabled) {
+            vaultMetaDao.delete(VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED)
+        } else {
+            database.withTransaction {
+                vaultMetaDao.upsert(
+                    VaultMetaEntity(
+                        VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED,
+                        VaultMetaKey.BIOMETRIC_UNLOCK_DISABLED_VALUE,
+                    ),
+                )
+                vaultMetaDao.delete(VaultMetaKey.WRAPPED_DEK_BIOMETRIC)
+            }
+        }
     }
 
     private fun setCrashlyticsUid(uid: String) {
@@ -157,9 +174,5 @@ class VaultRepositoryImpl @Inject constructor(
             setUserId(uid)
             setCustomKey(CommonConstants.CRASHLYTICS_KEY_UID, uid)
         }
-    }
-
-    private companion object {
-        const val BIOMETRIC_DISABLED_VALUE = "1"
     }
 }

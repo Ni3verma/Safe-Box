@@ -223,4 +223,14 @@
     <string name="recovery_failure_verifier">Die Wiederherstellungsdaten auf diesem Gerät sind beschädigt. Es wurde nichts geändert.</string>
     <string name="recovery_failure_keystore">Die sichere Hardware konnte den Wiederherstellungsschlüssel nicht öffnen. Es wurde nichts geändert.</string>
     <string name="recovery_failure_storage">Das neue Passwort konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
+    <string name="settings_change_password_legacy_body">Verfügbar nach dem Sicherheitsupgrade</string>
+    <string name="settings_current_password_title">Bestätigen Sie, dass Sie es sind</string>
+    <string name="settings_current_password_label">Aktuelles Master-Passwort</string>
+    <string name="password_update_failed">Das neue Master-Passwort konnte nicht gespeichert werden. Ihr aktuelles Passwort funktioniert weiterhin.</string>
+    <string name="settings_biometric_unlock_title">Entsperren per Fingerabdruck</string>
+    <string name="settings_biometric_unlock_body">Mit Ihrem Fingerabdruck entsperren, statt das Master-Passwort einzugeben</string>
+    <string name="settings_biometric_unlock_unavailable_body">Erfordert einen in den Telefoneinstellungen eingerichteten Fingerabdruck. Nicht jedes Telefon unterstützt das.</string>
+    <string name="home_screen_lock_nudge_banner">Richten Sie eine Displaysperre ein, damit ein vergessenes Master-Passwort wiederhergestellt werden kann</string>
+    <string name="home_screen_lock_nudge_set_up">Einrichten</string>
+    <string name="home_screen_lock_nudge_accept_risk">Risiko akzeptieren</string>
 </resources>

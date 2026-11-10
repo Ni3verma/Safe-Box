@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Dữ liệu khôi phục trên thiết bị này đã bị hỏng. Không có gì thay đổi.</string>
     <string name="recovery_failure_keystore">Phần cứng bảo mật không thể truy cập khóa khôi phục. Không có gì thay đổi.</string>
     <string name="recovery_failure_storage">Không thể lưu mật khẩu mới. Không có gì thay đổi.</string>
+    <string name="settings_change_password_legacy_body">Có sẵn sau khi nâng cấp bảo mật</string>
+    <string name="settings_current_password_title">Xác nhận đó là bạn</string>
+    <string name="settings_current_password_label">Mật khẩu chính hiện tại</string>
+    <string name="password_update_failed">Không thể lưu mật khẩu chính mới. Mật khẩu hiện tại của bạn vẫn hoạt động.</string>
+    <string name="settings_biometric_unlock_title">Mở khóa bằng vân tay</string>
+    <string name="settings_biometric_unlock_body">Mở khóa bằng vân tay thay vì nhập mật khẩu chính</string>
+    <string name="settings_biometric_unlock_unavailable_body">Cần đăng ký vân tay trong phần cài đặt điện thoại. Không phải điện thoại nào cũng hỗ trợ.</string>
+    <string name="home_screen_lock_nudge_banner">Đặt khóa màn hình để có thể khôi phục mật khẩu chính khi bị quên</string>
+    <string name="home_screen_lock_nudge_set_up">Thiết lập</string>
+    <string name="home_screen_lock_nudge_accept_risk">Tôi chấp nhận rủi ro</string>
 </resources>

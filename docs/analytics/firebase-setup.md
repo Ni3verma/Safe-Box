@@ -84,6 +84,7 @@ dimension name = parameter name:
 | `stage` | `vault_migration_failure` | `load_legacy_key`, `derive_kdf`, `decrypt_row`, `decrypt_hint`, `encrypt_row`, `verify_row`, `verify_count`, `verify_wrap`, `commit_tx` |
 | `table` | `vault_migration_failure` | `login`, `bank_account`, `bank_card`, `secure_note`, `authenticator`, `none` |
 | `wrap` | `vault_wrap_created`, `vault_wrap_create_failure` | `biometric`, `device` |
+| `gate` | `change_password_gate_passed` (registered 2026-11-10, envelope MR 7) | `device_auth`, `master_password` |
 
 `db_exists` (on `keystore_key_created`, values `0`/`1`) is also registered for the `master`
 readiness patch (`v2.3.5.0-rc2`); the event's only firing site — the key provider's regenerate
@@ -107,7 +108,7 @@ so a dimension would collapse to `(other)`; their real P95 read is in BigQuery):
 | `legacy_decrypt_ms` | `vault_migration_success` | cumulative milliseconds spent in legacy Keystore `Cipher.doFinal` |
 | `records_done` | `vault_migration_failure` | records re-encrypted before the failure (`0..n`) |
 
-Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 26 + 9 used (25 + 9 after archiving `db_exists`).
+Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 27 + 9 used (26 + 9 after archiving `db_exists`).
 
 **Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
 **`0` / `1`**, not `true` / `false`; `Int` params arrive as numbers; `version` is always logged as

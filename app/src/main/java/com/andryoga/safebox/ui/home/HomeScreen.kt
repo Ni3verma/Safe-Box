@@ -20,7 +20,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -35,6 +38,7 @@ import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
+import com.andryoga.safebox.ui.home.components.ScreenLockNudgeBanner
 import com.andryoga.safebox.ui.home.components.UpgradePendingBanner
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
@@ -45,6 +49,7 @@ import com.andryoga.safebox.ui.qrScanner.QrScannerRoute
 import com.andryoga.safebox.ui.qrScanner.QrScannerScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
+import com.andryoga.safebox.ui.utils.openSecuritySettings
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -85,6 +90,10 @@ fun HomeScreen(
     if (!isVaultUnlocked) return
 
     val homeUiState by homeViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        homeViewModel.onScreenResumed()
+    }
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -133,6 +142,17 @@ fun HomeScreen(
                         if (homeUiState.isLegacySession) {
                             UpgradePendingBanner(
                                 onRetryClick = homeViewModel::onRetryUpgradeClick,
+                            )
+                        }
+                        if (homeUiState.isScreenLockNudgeVisible) {
+                            ScreenLockNudgeBanner(
+                                onSetUpClick = {
+                                    homeViewModel.onScreenLockNudgeSetUpClick(
+                                        isSettingsOpened = context.openSecuritySettings(),
+                                    )
+                                },
+                                onAcceptRiskClick = homeViewModel::onScreenLockNudgeAcceptRiskClick,
+                                onShow = homeViewModel::onScreenLockNudgeShown,
                             )
                         }
                         BottomNavBar(nestedNavController, isBackupPathSet)

@@ -2,6 +2,7 @@
 
 package com.andryoga.safebox.e2e
 
+import android.app.KeyguardManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -137,6 +138,15 @@ class SignupAndLoginE2ETest {
             composeTestRule.waitForIdle()
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()
+
+            // 4b. Without a lock screen (the CI image has none) Home nudges the user to set one.
+            val nudgeText = context.getString(R.string.home_screen_lock_nudge_banner)
+            if (context.getSystemService(KeyguardManager::class.java).isDeviceSecure) {
+                composeTestRule.onNodeWithText(nudgeText).assertDoesNotExist()
+            } else {
+                // The banner follows an async preference read that waitForIdle does not cover.
+                E2ETestUtils.waitForText(composeTestRule, nudgeText)
+            }
 
             // 5. Verify database and preference persistence directly from injected singletons
             runBlocking {

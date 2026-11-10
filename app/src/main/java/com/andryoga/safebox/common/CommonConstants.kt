@@ -10,6 +10,9 @@ object CommonConstants {
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
     const val IS_CAMERA_PERMISSION_ASKED_BEFORE = "is_camera_permission_asked_before"
 
+    // the user chose "I accept the risk" on the Home screen-lock nudge; cleared by erase
+    const val IS_SCREEN_LOCK_NUDGE_DISMISSED = "is_screen_lock_nudge_dismissed"
+
     // Play version code the user was last asked to update to. The user is asked again only for a
     // higher one. See InAppUpdateViewModel.
     const val IN_APP_UPDATE_PROMPTED_VERSION_CODE = "in_app_update_prompted_version_code"

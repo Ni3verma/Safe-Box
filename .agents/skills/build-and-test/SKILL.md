@@ -68,6 +68,17 @@ Every commit prints `Detekt task is not available in this build` and continues. 
 `git add -u` (so `git hook run pre-commit` stages unstaged work) and runs
 `scripts/tests/backup-format-test.sh` when a backup-format file is staged.
 
+## What "verified" means before an MR is reported
+
+1. `:app:testDebugUnitTest`, `:app:lintRelease`, `:app:compileDebugAndroidTestKotlin`.
+2. Every touched instrumented class on the local GMD `pixel8Api34`, **one class per invocation**,
+   XML parsed — then the `e2e` package in one invocation. That is the CI image and ordering; a
+   pass on a plain emulator proved nothing about CI twice in MR 5/6 (2026-10-31).
+3. Flows that touch `BiometricPrompt` or the Keystore for real: a manual pass on the API 30
+   `google_apis` AVD (`API_30`; `API_29` for the time-bound path). The GMD and the fakes cannot
+   exercise them. The adb/uiautomator driver used for MR 6 is the pattern: `uiautomator dump`,
+   find by text, `input tap`, per-step `logcat` grep.
+
 ## Traps
 
 ### `BUILD SUCCESSFUL` does not mean your tests ran

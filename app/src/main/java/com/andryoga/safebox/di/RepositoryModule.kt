@@ -47,7 +47,6 @@ object RepositoryModule {
     @Singleton
     @Provides
     fun provideUserDetailsRepo(
-        safeBoxDatabase: SafeBoxDatabase,
         userDetailsDaoSecure: UserDetailsDaoSecure,
         vaultMetaDao: VaultMetaDao,
         hashingUtils: HashingUtils,
@@ -56,7 +55,6 @@ object RepositoryModule {
         analyticsHelper: AnalyticsHelper,
     ): UserDetailsRepository {
         return UserDetailsRepositoryImpl(
-            safeBoxDatabase,
             userDetailsDaoSecure,
             vaultMetaDao,
             hashingUtils,

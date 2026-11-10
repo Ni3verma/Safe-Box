@@ -7,8 +7,8 @@ import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
-import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.security.AesGcmFieldCipher
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
@@ -45,9 +45,6 @@ class UserDetailsRepositoryLegacyFlowsTest {
     lateinit var database: SafeBoxDatabase
 
     @Inject
-    lateinit var userDetailsDaoSecure: UserDetailsDaoSecure
-
-    @Inject
     lateinit var hashingUtils: HashingUtils
 
     @Inject
@@ -71,19 +68,6 @@ class UserDetailsRepositoryLegacyFlowsTest {
         assertThat(repository.getHint()).isEqualTo("first hint")
         // A legacy vault keeps the hint as ciphertext on disk.
         assertThat(database.userDetailsDao().getHint()).isNotEqualTo("first hint")
-    }
-
-    @Test
-    fun updatePasswordAndHint_shouldReplaceCredentialAndHintForTheSameUser() = runBlocking {
-        seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
-        val uid = database.userDetailsDao().getUid()
-
-        repository.updatePasswordAndHint(newPassword = "Asdfgh@@456", hint = "second hint")
-
-        assertThat(repository.checkPassword("Asdfgh@@456")).isTrue()
-        assertThat(repository.checkPassword("Qwerty@@123")).isFalse()
-        assertThat(repository.getHint()).isEqualTo("second hint")
-        assertThat(database.userDetailsDao().getUid()).isEqualTo(uid)
     }
 
     @Test
@@ -112,18 +96,20 @@ class UserDetailsRepositoryLegacyFlowsTest {
         assertThat(result.isFailure).isTrue()
     }
 
+    /** A vault as a pre-envelope build left it: hash parked by `MIGRATION_5_6`, hint under the legacy key. */
     private suspend fun seedLegacyVault(password: String, hint: String) {
         val now = Date()
+        val legacyKey = checkNotNull(keystoreGateway.legacyVaultKey())
         database.withTransaction {
             database.vaultMetaDao()
                 .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
             database.vaultMetaDao()
                 .upsert(VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, hashingUtils.hash(password)))
-            userDetailsDaoSecure.insertUserDetailsData(
+            database.userDetailsDao().insertUserDetailsData(
                 UserDetailsEntity(
                     key = 0,
                     uid = UUID.randomUUID().toString(),
-                    hint = hint,
+                    hint = AesGcmFieldCipher.encrypt(hint, legacyKey),
                     creationDate = now,
                     updateDate = now,
                 ),

@@ -1,13 +1,10 @@
 package com.andryoga.safebox.data.repository
 
-import androidx.room.withTransaction
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
-import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
-import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
@@ -15,12 +12,10 @@ import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import timber.log.Timber
-import java.util.Date
 import javax.inject.Inject
 import kotlin.math.max
 
 class UserDetailsRepositoryImpl @Inject constructor(
-    private val database: SafeBoxDatabase,
     private val userDetailsDaoSecure: UserDetailsDaoSecure,
     private val vaultMetaDao: VaultMetaDao,
     private val hashingUtils: HashingUtils,
@@ -89,23 +84,6 @@ class UserDetailsRepositoryImpl @Inject constructor(
         val result = biometricLoginCountRemaining > 0
         Timber.i("should start biometric auth flow: $result")
         return result
-    }
-
-    // TODO(MR7): a crypto_version = 2 vault re-wraps the DEK through VaultRepository.rewrapPassword (design §6.7, §6.8) and never writes a legacy hash
-    override suspend fun updatePasswordAndHint(newPassword: String, hint: String) {
-        Timber.i("updating master password and hint")
-        database.withTransaction {
-            vaultMetaDao.upsert(
-                VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, hashingUtils.hash(newPassword)),
-            )
-            userDetailsDaoSecure.updateHint(hint, Date())
-        }
-
-        val newBiometricLoginCountRemaining = settingsDataStore.getPasswordAfterXBiometricLogins()
-        preferenceProvider.upsertIntPref(
-            CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-            newBiometricLoginCountRemaining
-        )
     }
 
     private fun setCrashlyticsUid(uid: String) {

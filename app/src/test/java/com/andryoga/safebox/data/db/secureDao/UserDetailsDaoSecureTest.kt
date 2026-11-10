@@ -5,27 +5,23 @@ package com.andryoga.safebox.data.db.secureDao
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
 import com.andryoga.safebox.data.db.dao.VaultMetaDao
-import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.security.AesGcmFieldCipher
 import com.andryoga.safebox.security.Base64Rule
 import com.andryoga.safebox.security.CryptoTestFixtures
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
-import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
-import io.mockk.slot
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.security.GeneralSecurityException
-import java.util.Date
 
 /**
  * The hint path: a legacy vault's hint goes through the legacy Keystore handle from
@@ -65,72 +61,6 @@ class UserDetailsDaoSecureTest {
 
     private fun legacyCiphertextOf(plaintext: String): String =
         AesGcmFieldCipher.encrypt(plaintext, CryptoTestFixtures.TEST_AES_KEY_256)
-
-    private fun decryptWithLegacyKey(stored: String): String =
-        AesGcmFieldCipher.decrypt(stored, CryptoTestFixtures.TEST_AES_KEY_256)
-
-    @Test
-    fun insertUserDetailsData_whenVaultIsLegacy_shouldEncryptHintUnderTheLegacyKey() = runTest {
-        givenCryptoVersion(CryptoVersion.LEGACY)
-        val inputEntity = TestFixtures.createTestUserDetailsEntity(hint = "myHint")
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
-
-        userDetailsDaoSecure.insertUserDetailsData(inputEntity)
-
-        assertThat(slot.isCaptured).isTrue()
-        assertThat(slot.captured.hint).isNotEqualTo("myHint")
-        assertThat(decryptWithLegacyKey(slot.captured.hint!!)).isEqualTo("myHint")
-        assertThat(slot.captured.uid).isEqualTo(inputEntity.uid)
-        assertThat(slot.captured.key).isEqualTo(inputEntity.key)
-    }
-
-    @Test
-    fun insertUserDetailsData_whenCryptoVersionRowIsAbsent_shouldEncryptHintAsLegacy() = runTest {
-        givenCryptoVersion(null)
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
-
-        userDetailsDaoSecure.insertUserDetailsData(TestFixtures.createTestUserDetailsEntity(hint = "myHint"))
-
-        assertThat(decryptWithLegacyKey(slot.captured.hint!!)).isEqualTo("myHint")
-    }
-
-    @Test
-    fun insertUserDetailsData_whenVaultIsEnvelope_shouldStoreHintAsPlaintext() = runTest {
-        givenCryptoVersion(CryptoVersion.ENVELOPE)
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
-
-        userDetailsDaoSecure.insertUserDetailsData(TestFixtures.createTestUserDetailsEntity(hint = "myHint"))
-
-        assertThat(slot.captured.hint).isEqualTo("myHint")
-    }
-
-    @Test
-    fun insertUserDetailsData_whenVaultIsLegacyAndKeyIsMissing_shouldFailInsteadOfWritingPlaintext() = runTest {
-        givenCryptoVersion(CryptoVersion.LEGACY)
-        keystoreGateway.legacyKey = null
-
-        val thrown = runCatching {
-            userDetailsDaoSecure.insertUserDetailsData(TestFixtures.createTestUserDetailsEntity(hint = "myHint"))
-        }.exceptionOrNull()
-
-        assertThat(thrown).isInstanceOf(IllegalStateException::class.java)
-        coVerify(exactly = 0) { userDetailsDao.insertUserDetailsData(any()) }
-    }
-
-    @Test
-    fun insertUserDetailsData_whenHintIsNull_shouldKeepNullHintWithoutReadingCryptoVersion() = runTest {
-        val inputEntity = TestFixtures.createTestUserDetailsEntity(hint = null)
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDao.insertUserDetailsData(capture(slot)) } returns Unit
-
-        userDetailsDaoSecure.insertUserDetailsData(inputEntity)
-
-        assertThat(slot.captured.hint).isNull()
-        coVerify(exactly = 0) { vaultMetaDao.get(any()) }
-    }
 
     @Test
     fun getHint_whenVaultIsLegacy_shouldDecryptHintWithTheLegacyKey() = runTest {
@@ -202,28 +132,5 @@ class UserDetailsDaoSecureTest {
         val uid = userDetailsDaoSecure.getUid()
 
         assertThat(uid).isEqualTo("unique-user-id")
-    }
-
-    @Test
-    fun updateHint_whenVaultIsLegacy_shouldEncryptHintUnderTheLegacyKey() = runTest {
-        givenCryptoVersion(CryptoVersion.LEGACY)
-        val updateDate = Date(1700000000000L)
-        val slot = slot<String>()
-        coEvery { userDetailsDao.updateHint(capture(slot), updateDate) } returns Unit
-
-        userDetailsDaoSecure.updateHint("new hint", updateDate)
-
-        assertThat(slot.captured).isNotEqualTo("new hint")
-        assertThat(decryptWithLegacyKey(slot.captured)).isEqualTo("new hint")
-    }
-
-    @Test
-    fun updateHint_whenVaultIsEnvelope_shouldStoreHintAsPlaintext() = runTest {
-        givenCryptoVersion(CryptoVersion.ENVELOPE)
-        val updateDate = Date(1700000000000L)
-
-        userDetailsDaoSecure.updateHint("new hint", updateDate)
-
-        coVerify { userDetailsDao.updateHint("new hint", updateDate) }
     }
 }

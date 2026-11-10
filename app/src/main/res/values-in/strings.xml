@@ -230,4 +230,14 @@
     <string name="recovery_failure_verifier">Data pemulihan di perangkat ini rusak. Tidak ada yang diubah.</string>
     <string name="recovery_failure_keystore">Perangkat keras keamanan tidak dapat membuka kunci pemulihan. Tidak ada yang diubah.</string>
     <string name="recovery_failure_storage">Kata sandi baru tidak dapat disimpan. Tidak ada yang diubah.</string>
+    <string name="settings_change_password_legacy_body">Tersedia setelah peningkatan keamanan</string>
+    <string name="settings_current_password_title">Konfirmasi bahwa ini Anda</string>
+    <string name="settings_current_password_label">Kata sandi utama saat ini</string>
+    <string name="password_update_failed">Tidak dapat menyimpan kata sandi utama baru. Kata sandi Anda saat ini masih berfungsi.</string>
+    <string name="settings_biometric_unlock_title">Buka kunci dengan sidik jari</string>
+    <string name="settings_biometric_unlock_body">Buka kunci dengan sidik jari, bukan dengan mengetik kata sandi utama</string>
+    <string name="settings_biometric_unlock_unavailable_body">Memerlukan sidik jari yang terdaftar di setelan ponsel. Tidak semua ponsel mendukungnya.</string>
+    <string name="home_screen_lock_nudge_banner">Atur kunci layar agar kata sandi utama yang terlupa dapat dipulihkan</string>
+    <string name="home_screen_lock_nudge_set_up">Atur</string>
+    <string name="home_screen_lock_nudge_accept_risk">Saya terima risikonya</string>
 </resources>
