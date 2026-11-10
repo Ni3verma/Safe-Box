@@ -1,6 +1,6 @@
 package com.andryoga.safebox.security.envelope
 
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before

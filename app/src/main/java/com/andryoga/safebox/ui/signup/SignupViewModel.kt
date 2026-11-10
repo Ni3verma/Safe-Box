@@ -11,7 +11,7 @@ import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.di.IsDebug
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.password.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

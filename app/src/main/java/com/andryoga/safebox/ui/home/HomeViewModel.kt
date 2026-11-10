@@ -6,8 +6,8 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.ActiveSessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

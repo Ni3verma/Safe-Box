@@ -1,6 +1,6 @@
 package com.andryoga.safebox.data.db.models
 
-import com.andryoga.safebox.security.envelope.KdfParams
+import com.andryoga.safebox.security.envelope.models.KdfParams
 
 /**
  * Keys of the `vault_meta` table. Every key is a frozen wire value: it is written by

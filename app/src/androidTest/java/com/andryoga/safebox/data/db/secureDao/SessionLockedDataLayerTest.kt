@@ -12,8 +12,8 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.google.common.truth.Truth.assertThat

@@ -11,10 +11,10 @@ import com.andryoga.safebox.data.db.entity.UserDetailsEntity
 import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
-import com.andryoga.safebox.data.repository.interfaces.VaultState
-import com.andryoga.safebox.security.envelope.KdfParams
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.models.KdfParams
+import com.andryoga.safebox.security.envelope.models.VaultState
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import com.andryoga.safebox.test.fakes.FirebaseCrashlyticsTestHelper
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.crashlytics.FirebaseCrashlytics

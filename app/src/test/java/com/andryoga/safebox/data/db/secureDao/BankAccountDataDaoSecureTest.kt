@@ -6,7 +6,7 @@ import app.cash.turbine.test
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.data.db.dao.BankAccountDataDao
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeSymmetricKeyUtils
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.google.common.truth.Truth.assertThat

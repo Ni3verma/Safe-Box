@@ -20,8 +20,8 @@ import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl

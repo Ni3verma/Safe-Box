@@ -3,8 +3,8 @@ package com.andryoga.safebox.security.envelope
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import timber.log.Timber
 import java.security.GeneralSecurityException
 import java.security.ProviderException

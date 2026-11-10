@@ -1,7 +1,7 @@
 package com.andryoga.safebox.di
 
 import com.andryoga.safebox.security.envelope.AndroidKeystoreGateway
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.loading.LoadingState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

@@ -4,11 +4,11 @@ import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
 import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.AndroidKeystoreGateway
-import com.andryoga.safebox.security.interfaces.BiometricNotEnrolledException
-import com.andryoga.safebox.security.interfaces.KeyHealth
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
-import com.andryoga.safebox.security.interfaces.LockScreenRequiredException
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.BiometricNotEnrolledException
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.LockScreenRequiredException
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PublicKey

@@ -7,10 +7,10 @@ import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
 import com.andryoga.safebox.security.envelope.EnvelopeEncryptionManagerImpl
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import dagger.Module
 import dagger.Provides

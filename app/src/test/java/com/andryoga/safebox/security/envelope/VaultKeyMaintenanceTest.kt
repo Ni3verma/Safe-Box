@@ -9,13 +9,13 @@ import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.LockScreenRequiredException
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.KeyHealth
-import com.andryoga.safebox.security.interfaces.LockScreenRequiredException
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat

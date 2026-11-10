@@ -7,11 +7,12 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
-import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.security.CryptoTestFixtures
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.SessionLockedException
-import com.andryoga.safebox.security.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.models.KdfParams
+import com.andryoga.safebox.security.envelope.models.VaultState
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations

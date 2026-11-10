@@ -1,11 +1,12 @@
 package com.andryoga.safebox.security.envelope
 
 import com.andryoga.safebox.common.Utils
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.KeyHealth
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
-import com.andryoga.safebox.security.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.models.KdfParams
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
 import java.security.PublicKey

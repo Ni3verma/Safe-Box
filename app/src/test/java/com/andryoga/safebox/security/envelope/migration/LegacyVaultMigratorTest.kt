@@ -28,10 +28,10 @@ import com.andryoga.safebox.security.AesGcmFieldCipher
 import com.andryoga.safebox.security.Base64Rule
 import com.andryoga.safebox.security.envelope.EnvelopeEncryptionManagerImpl
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecuritySnapshot
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fakes.FakeCrashReporter
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway

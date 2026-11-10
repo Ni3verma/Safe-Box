@@ -1,45 +1,13 @@
-package com.andryoga.safebox.security.interfaces
+package com.andryoga.safebox.security.envelope.interfaces
 
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.UserNotAuthenticatedException
-import com.andryoga.safebox.data.db.models.VaultMetaKey
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import java.security.GeneralSecurityException
 import java.security.PublicKey
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
-
-/**
- * Identifies which hardware-backed RSA-2048 wrapping key pair is targeted.
- *
- * @property wrappedDekKey `vault_meta` key storing the wrapped DEK blob for this key pair.
- * @property aliasSuffixKey `vault_meta` key storing the per-generation Keystore alias suffix.
- * @property wireName Analytics wire value identifying this wrap type.
- */
-enum class WrapKeySpec(
-    val wrappedDekKey: String,
-    val aliasSuffixKey: String,
-    val wireName: String,
-) {
-    BIOMETRIC(
-        wrappedDekKey = VaultMetaKey.WRAPPED_DEK_BIOMETRIC,
-        aliasSuffixKey = VaultMetaKey.BIOMETRIC_KEY_ALIAS_SUFFIX,
-        wireName = "biometric",
-    ),
-    DEVICE(
-        wrappedDekKey = VaultMetaKey.WRAPPED_DEK_DEVICE,
-        aliasSuffixKey = VaultMetaKey.DEVICE_KEY_ALIAS_SUFFIX,
-        wireName = "device",
-    ),
-}
-
-/**
- * Non-interactive health status of a Keystore wrapping key pair.
- */
-sealed interface KeyHealth {
-    data object Healthy : KeyHealth
-    data object Missing : KeyHealth
-    data object Invalidated : KeyHealth
-}
 
 /**
  * Thrown when generating an authentication-bound Keystore key fails because no secure lock screen

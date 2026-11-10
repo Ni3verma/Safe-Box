@@ -5,7 +5,7 @@ import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.security.AesGcmFieldCipher
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
 import javax.inject.Inject
 
 /**

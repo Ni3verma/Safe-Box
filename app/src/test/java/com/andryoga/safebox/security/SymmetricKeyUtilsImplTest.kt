@@ -2,7 +2,7 @@ package com.andryoga.safebox.security
 
 import com.andryoga.safebox.security.envelope.AesGcmWrap
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
 import org.junit.Before

@@ -6,9 +6,9 @@ import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import dagger.Lazy
 import kotlinx.coroutines.withContext
 import timber.log.Timber

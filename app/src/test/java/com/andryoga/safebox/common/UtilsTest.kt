@@ -6,7 +6,7 @@ import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.common.Utils.encryptNullableString
 import com.andryoga.safebox.common.Utils.isZero
 import com.andryoga.safebox.common.Utils.launchVaultOperation
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every

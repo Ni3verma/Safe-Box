@@ -36,8 +36,8 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.domain.models.backup.BackupPathData
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionLockedException
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

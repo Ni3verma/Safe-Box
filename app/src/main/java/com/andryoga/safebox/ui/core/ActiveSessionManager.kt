@@ -6,7 +6,7 @@ import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.di.ApplicationScope
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
