@@ -1,4 +1,4 @@
-package com.andryoga.safebox.security
+package com.andryoga.safebox.worker.backup.legacy
 
 import com.andryoga.safebox.test.fixtures.LegacyBackupCipher
 import com.google.common.truth.Truth.assertThat

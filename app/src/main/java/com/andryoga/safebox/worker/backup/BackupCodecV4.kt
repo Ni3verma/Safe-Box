@@ -32,11 +32,11 @@ object BackupCodecV4 {
     /** Container version this codec writes and the only one it decodes. */
     const val VERSION = 4
 
-    /** Largest header accepted; a real one is about 100 bytes. */
-    const val MAX_HEADER_BYTES = 4096
-
-    /** Largest body plaintext accepted; a 2 000-record vault is about 2 MB of JSON. */
-    const val MAX_BODY_BYTES = 64 * 1024 * 1024
+    /**
+     * Largest file a restore reads into memory; a 2 000-record vault is about 2 MB. Stops a picked
+     * file that is not a backup (a video, say) from exhausting the heap before it can be rejected.
+     */
+    const val MAX_FILE_BYTES = 64 * 1024 * 1024
 
     private val MAGIC = "SBOX".toByteArray(Charsets.US_ASCII)
     private const val VERSION_OFFSET = 4
@@ -49,10 +49,6 @@ object BackupCodecV4 {
     private const val KEY_ALGORITHM_AES = "AES"
     private const val CIPHER_TRANSFORMATION = "AES/GCM/NoPadding"
     private const val AUTHENTICATORS_FIELD = "authenticators"
-
-    /** Largest well-formed file; a restore refuses anything longer before reading it in full. */
-    const val MAX_FILE_BYTES =
-        HEADER_OFFSET + MAX_HEADER_BYTES + KEY_CHECK_BYTES + IV_BYTES + MAX_BODY_BYTES + TAG_BYTES
 
     private val headerJson = Json { ignoreUnknownKeys = true }
 
@@ -88,7 +84,7 @@ object BackupCodecV4 {
             Header.serializer(),
             Header(createdAt = createdAt, appVersionCode = appVersionCode, kdf = kdfParams.encode()),
         ).toByteArray(Charsets.UTF_8)
-        check(headerBytes.size <= MAX_HEADER_BYTES) { "backup header too large: ${headerBytes.size}" }
+        check(headerBytes.size <= UNSIGNED_SHORT_MASK) { "backup header too large: ${headerBytes.size}" }
         val prefix = ByteBuffer.allocate(HEADER_OFFSET + headerBytes.size)
             .put(MAGIC)
             .put(VERSION.toByte())
@@ -130,16 +126,10 @@ object BackupCodecV4 {
             if (bytes.size < HEADER_OFFSET) throw CorruptBackupException("truncated before the header")
             val headerLength =
                 ByteBuffer.wrap(bytes, HEADER_LENGTH_OFFSET, 2).short.toInt() and UNSIGNED_SHORT_MASK
-            if (headerLength > MAX_HEADER_BYTES) {
-                throw CorruptBackupException("header length $headerLength over the limit")
-            }
             val keyCheckOffset = HEADER_OFFSET + headerLength
             val bodyOffset = keyCheckOffset + KEY_CHECK_BYTES
             val bodyLength = bytes.size - bodyOffset
             if (bodyLength < IV_BYTES + TAG_BYTES) throw CorruptBackupException("truncated before the body")
-            if (bodyLength - IV_BYTES - TAG_BYTES > MAX_BODY_BYTES) {
-                throw CorruptBackupException("body over the limit")
-            }
             val prefix = bytes.copyOfRange(0, keyCheckOffset)
             val header = parseHeader(prefix)
             val kdfParams = try {

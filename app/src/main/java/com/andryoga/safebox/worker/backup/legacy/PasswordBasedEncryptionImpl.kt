@@ -1,6 +1,5 @@
-package com.andryoga.safebox.security
+package com.andryoga.safebox.worker.backup.legacy
 
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec

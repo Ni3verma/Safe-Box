@@ -14,7 +14,7 @@ import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
-import com.andryoga.safebox.worker.backup.LegacyBackupReader
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
 import javax.inject.Inject
 
 /**

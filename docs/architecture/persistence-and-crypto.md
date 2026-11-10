@@ -114,7 +114,7 @@ private fun getSymmetricKey(): SecretKey {
 
 Written by `BackupDataWorker`, read by `RestoreDataWorker`, which routes on the first four bytes:
 `SBOX` is format 4 (`worker/backup/BackupCodecV4`), `AC ED 00 05` (Java serialisation) is formats
-1–3 (`worker/backup/LegacyBackupReader`), anything else is `CORRUPT_OR_INVALID_FILE`. Both produce
+1–3 (`worker/backup/legacy/LegacyBackupReader`), anything else is `CORRUPT_OR_INVALID_FILE`. Both produce
 a `DecodedBackup`, so the DB replace below is format-blind. Every format is encrypted with a
 **backup password supplied by the user** (the master password for the auto-backup after login),
 never the Keystore key, which is why a `.bak` stays restorable when the Keystore key is lost.
@@ -131,7 +131,7 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
 |---|---|---|
 | 0 | 4 | magic `SBOX` |
 | 4 | 1 | version `0x04`, read unsigned |
-| 5 | 2 | header length `n`, big-endian, at most 4096 |
+| 5 | 2 | header length `n`, big-endian |
 | 7 | `n` | header, UTF-8 JSON `{"createdAt", "appVersionCode", "kdf"}`; `kdf` is the `KdfParams` wire string `v1\|PBKDF2WithHmacSHA256\|<iterations>\|<b64 salt>` |
 | 7+`n` | 28 | key check: `iv(12) ‖ AES-256-GCM tag` over an empty plaintext |
 | 35+`n` | 12+`m`+16 | body: `iv ‖ AES-256-GCM(payload JSON)` |
@@ -147,8 +147,9 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
   `secureNotes`, `authenticators`. The writer always fills every list, empty when the vault has
   none; a missing field means the writer predates the type. It lives with the `Export*` classes so
   `app/backup-format.lock` hashes it too.
-- **Limits:** header ≤ 4 KB, body ≤ 64 MB, file ≤ `BackupCodecV4.MAX_FILE_BYTES`; the restore
-  refuses a longer file before buffering it.
+- **Limit:** the restore reads at most `BackupCodecV4.MAX_FILE_BYTES` (64 MB) into memory, so a
+  picked file that is not a backup cannot exhaust the heap; every other length is checked against
+  the file itself (a header or body running past its end is `CORRUPT_OR_INVALID_FILE`).
 - **Version byte:** read before anything else is parsed, so a newer layout reports
   `BACKUP_TOO_NEW` rather than corrupt.
 
@@ -174,7 +175,7 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
   | `"3"` | creation date |
   | `"4"`–`"8"` | login / bank account / bank card / secure note / authenticator payloads |
 
-- **Parameters** (`security/PasswordBasedEncryptionImpl.kt`, decrypt-only since MR 8):
+- **Parameters** (`worker/backup/legacy/PasswordBasedEncryptionImpl.kt`, decrypt-only and moved there in MR 8 so nothing else picks it up):
   `PBKDF2WithHmacSHA1`, **1324** iterations, 256-bit key, `AES/CBC/PKCS5Padding`, a **256-byte
   salt** and a **16-byte IV**, raw password (no NFKC: these files were written without it). The
   same constants are implemented in `scripts/InspectBackup.java`; change one and the other stops

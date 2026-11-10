@@ -148,14 +148,8 @@ class SignupAndLoginE2ETest {
                 E2ETestUtils.waitForText(composeTestRule, nudgeText)
             }
 
-            // 5. Verify database and preference persistence directly from injected singletons
+            // 5. The vault in Room is what routes the next launch; signup no longer writes IS_SIGN_UP_REQUIRED.
             runBlocking {
-                val isSignupStillRequired = encryptedPreferenceProvider.getBooleanPref(
-                    CommonConstants.IS_SIGN_UP_REQUIRED,
-                    true
-                )
-                assertThat(isSignupStillRequired).isFalse()
-
                 assertThat(safeBoxDatabase.vaultMetaDao().get(VaultMetaKey.CRYPTO_VERSION))
                     .isEqualTo(CryptoVersion.ENVELOPE)
                 assertThat(userDetailsRepository.getHint()).isEqualTo(E2ETestUtils.TEST_MASTER_HINT)

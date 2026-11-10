@@ -1,4 +1,4 @@
-package com.andryoga.safebox.security.interfaces
+package com.andryoga.safebox.worker.backup.legacy
 
 /**
  * Decrypts the record payloads of backup formats 1–3. Nothing encrypts with it any more.

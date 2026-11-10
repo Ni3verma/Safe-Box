@@ -3,15 +3,15 @@ package com.andryoga.safebox.di
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.security.DecryptFailureReportingSymmetricKeyUtils
 import com.andryoga.safebox.security.HashingUtilsImpl
-import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.security.SymmetricKeyUtilsImpl
 import com.andryoga.safebox.security.envelope.EnvelopeEncryptionManagerImpl
 import com.andryoga.safebox.security.envelope.SessionKeyHolderImpl
 import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
 import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.security.interfaces.HashingUtils
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryption
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryptionImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

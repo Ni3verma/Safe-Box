@@ -22,13 +22,13 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
-import com.andryoga.safebox.worker.backup.LegacyBackupReader
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryption
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.every

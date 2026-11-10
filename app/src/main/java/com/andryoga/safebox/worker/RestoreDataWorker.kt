@@ -32,8 +32,8 @@ import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
 import com.andryoga.safebox.worker.backup.BackupCodecV4
 import com.andryoga.safebox.worker.backup.CorruptBackupException
-import com.andryoga.safebox.worker.backup.LegacyBackupReader
 import com.andryoga.safebox.worker.backup.OpenedBackup
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import timber.log.Timber
@@ -115,7 +115,7 @@ class RestoreDataWorker
             val decoded = backup.decode(inputPassword)
             Timber.i(
                 "$localTag version = $version, " +
-                        "created on : ${Utils.getFormattedDate(Date(decoded.createdAt))}"
+                    "created on : ${Utils.getFormattedDate(Date(decoded.createdAt))}",
             )
             recordTime("file read and decrypted")
             // Only an encrypted payload can prove a format-1–3 password: a file without one

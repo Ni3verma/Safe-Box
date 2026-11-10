@@ -1,6 +1,6 @@
 package com.andryoga.safebox.test.fixtures
 
-import com.andryoga.safebox.security.PasswordBasedEncryptionImpl.Constants
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryptionImpl.Constants
 import javax.crypto.Cipher
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec

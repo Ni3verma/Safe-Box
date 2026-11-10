@@ -1,8 +1,7 @@
-package com.andryoga.safebox.worker.backup
+package com.andryoga.safebox.worker.backup.legacy
 
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
-import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.test.fixtures.LegacyBackupCipher
 import com.google.common.truth.Truth.assertThat
 import kotlinx.serialization.builtins.ListSerializer

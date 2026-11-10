@@ -1,5 +1,6 @@
 package com.andryoga.safebox.worker.backup
 
+import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
@@ -161,9 +162,9 @@ class BackupCodecV4Test {
     }
 
     @Test
-    fun decode_headerLengthOverTheLimit_throwsCorruptBeforeKeyDerivation() {
+    fun decode_headerLengthPastTheEndOfTheFile_throwsCorruptBeforeKeyDerivation() {
         val bytes = encode(payload)
-        ByteBuffer.wrap(bytes, 5, 2).putShort((BackupCodecV4.MAX_HEADER_BYTES + 1).toShort())
+        ByteBuffer.wrap(bytes, 5, 2).putShort(0xFFFF.toShort())
 
         assertThrows(CorruptBackupException::class.java) {
             BackupCodecV4.open(bytes).decode(PASSWORD.toCharArray())
@@ -223,10 +224,10 @@ class BackupCodecV4Test {
         assertThat(decoded.hasNoRecordPayload).isTrue()
     }
 
+    /** The worker reports and gates on BACKUP_VERSION; the file must carry the same number. */
     @Test
-    fun maxFileBytes_coversTheLargestHeaderAndBody() {
-        assertThat(BackupCodecV4.MAX_FILE_BYTES.toLong())
-            .isAtLeast(BackupCodecV4.MAX_HEADER_BYTES.toLong() + BackupCodecV4.MAX_BODY_BYTES)
+    fun version_isTheFormatTheAppDeclares() {
+        assertThat(BackupCodecV4.VERSION).isEqualTo(CommonConstants.BACKUP_VERSION)
     }
 
     @Test

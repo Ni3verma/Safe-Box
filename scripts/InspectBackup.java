@@ -108,7 +108,6 @@ public class InspectBackup {
     private static final byte[] V4_MAGIC = "SBOX".getBytes(StandardCharsets.US_ASCII);
     private static final int V4_VERSION = 4;
     private static final int V4_HEADER_OFFSET = 7;
-    private static final int V4_MAX_HEADER_BYTES = 4096;
     private static final int GCM_IV_BYTES = 12;
     private static final int GCM_TAG_BITS = 128;
     private static final int GCM_TAG_BYTES = GCM_TAG_BITS / 8;
@@ -528,9 +527,6 @@ public class InspectBackup {
             fail("format-4 container with version " + version + "; this tool reads " + V4_VERSION);
         }
         int headerLength = ((bytes[5] & 0xFF) << 8) | (bytes[6] & 0xFF);
-        if (headerLength > V4_MAX_HEADER_BYTES) {
-            fail("header length " + headerLength + " over the " + V4_MAX_HEADER_BYTES + "-byte limit");
-        }
         V4File file = new V4File();
         file.keyCheckOffset = V4_HEADER_OFFSET + headerLength;
         file.bodyOffset = file.keyCheckOffset + GCM_IV_BYTES + GCM_TAG_BYTES;

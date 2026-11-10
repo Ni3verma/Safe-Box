@@ -22,7 +22,6 @@ import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils
 import com.andryoga.safebox.e2e.VaultSessionTestBridge
-import com.andryoga.safebox.security.PasswordBasedEncryptionImpl
 import com.andryoga.safebox.totp.TotpDefaults
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
@@ -32,6 +31,7 @@ import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.BackupPasswordRegistry
 import com.andryoga.safebox.worker.RestoreDataWorker
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryptionImpl
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -464,7 +464,7 @@ class BackupAndRestoreWorkersTest {
     /** Files users already hold keep restoring into an envelope vault through the real factory. */
     @Test
     fun restoreFromBackupFile_withFormatThreeFile_shouldRestoreItsRecords() =
-        runBlocking {
+        runBlocking<Unit> {
             val backupDir = File(context.cacheDir, "backup_format_three")
             backupDir.deleteRecursively()
             backupDir.mkdirs()
