@@ -174,13 +174,22 @@ class RestoreDataWorker
     }
 
     /**
-     * Reads the whole file, refusing one longer than any well-formed backup before it is
-     * buffered in full.
+     * Reads the whole file, refusing one that does not start like a backup after its first four
+     * bytes and one longer than [BackupCodec.MAX_FILE_BYTES] before it is buffered in full.
      *
-     * @throws CorruptBackupException When the file exceeds [BackupCodec.MAX_FILE_BYTES].
+     * @throws CorruptBackupException When the file is not a backup or is too large.
      */
     private fun readWithinLimit(input: InputStream): ByteArray {
         val output = ByteArrayOutputStream()
+        repeat(BACKUP_HEADER_BYTES) {
+            val byte = input.read()
+            if (byte < 0) throw CorruptBackupException("file shorter than any backup")
+            output.write(byte)
+        }
+        val head = output.toByteArray()
+        if (!BackupCodec.hasMagic(head) && !LegacyBackupReader.hasStreamHeader(head)) {
+            throw CorruptBackupException("not a Safe-Box backup")
+        }
         val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
         while (true) {
             val read = input.read(buffer)
@@ -380,5 +389,8 @@ class RestoreDataWorker
 
     private companion object {
         const val NUL = '\u0000'
+
+        /** Bytes that tell the formats apart: the SBOX magic or the Java serialisation header. */
+        const val BACKUP_HEADER_BYTES = 4
     }
 }

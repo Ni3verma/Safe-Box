@@ -192,6 +192,15 @@ class BackupCodecTest {
     }
 
     @Test
+    fun decode_iterationsOverTheLimit_throwsCorruptWithoutDerivingTheKey() {
+        val bytes = encode(payload, kdfParams = PasswordKdf.newParams(iterations = BackupCodec.MAX_KDF_ITERATIONS + 1))
+
+        assertThrows(CorruptBackupException::class.java) {
+            BackupCodec.open(bytes).decode(PASSWORD.toCharArray())
+        }
+    }
+
+    @Test
     fun open_withoutMagic_throwsCorrupt() {
         assertThrows(CorruptBackupException::class.java) {
             BackupCodec.open("SBO".toByteArray())

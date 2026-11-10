@@ -149,7 +149,9 @@ never the Keystore key, which is why a `.bak` stays restorable when the Keystore
   `app/backup-format.lock` hashes it too.
 - **Limit:** the restore reads at most `BackupCodec.MAX_FILE_BYTES` (64 MB) into memory, so a
   picked file that is not a backup cannot exhaust the heap; every other length is checked against
-  the file itself (a header or body running past its end is `CORRUPT_OR_INVALID_FILE`).
+  the file itself (a header or body running past its end is `CORRUPT_OR_INVALID_FILE`). The
+  restore also stops after four bytes when the file starts like neither format, and refuses a
+  header asking for more than `BackupCodec.MAX_KDF_ITERATIONS` (10 × today's) before deriving a key.
 - **Version byte:** read before anything else is parsed, so a newer layout reports
   `BACKUP_TOO_NEW` rather than corrupt. `BackupCodec` reads **every version from 4 up to
   `BACKUP_VERSION`**: a payload change (say a new optional field) bumps `BACKUP_VERSION` and the lock

@@ -43,6 +43,12 @@ object BackupCodec {
      */
     const val MAX_FILE_BYTES = 64 * 1024 * 1024
 
+    /**
+     * Most PBKDF2 iterations a header may ask for: ten times today's setting leaves room to raise it
+     * while a crafted header cannot stall the restore for minutes before the key check rejects it.
+     */
+    const val MAX_KDF_ITERATIONS = 10 * PasswordKdf.PBKDF2_ITERATIONS
+
     private val MAGIC = "SBOX".toByteArray(Charsets.US_ASCII)
     private const val VERSION_OFFSET = 4
     private const val HEADER_LENGTH_OFFSET = 5
@@ -141,6 +147,10 @@ object BackupCodec {
                 KdfParams.decode(header.kdf)
             } catch (e: IllegalArgumentException) {
                 throw CorruptBackupException("unreadable KDF parameters", e)
+            }
+            // The header is checked only after the key exists, so bound the work it can ask for.
+            if (kdfParams.iterations > MAX_KDF_ITERATIONS) {
+                throw CorruptBackupException("KDF iterations ${kdfParams.iterations} over the limit")
             }
             val key = PasswordKdf.deriveKey(password.copyOf(), kdfParams)
             try {

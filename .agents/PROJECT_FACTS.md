@@ -68,7 +68,8 @@ upgrade test must be `qa → qa`.
   `rewrapPassword(newPassword, dek, hint)`); *Continue for now* opens `setLegacySession`; signup and
   the migrator call `setSessionKey` too. `VaultResetUseCase.eraseVault()` is the second clear.
   [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
-- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4** (envelope MR 8, 2026-11-10). Changing the
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4** on `feature/envelope-encryption` (MR 8,
+  2026-11-10), **3** on `master` until that merges. Changing the
   export classes (`data/db/docs/export/`, incl. `ExportBackupPayload`) fails
   `scripts/tests/backup-format-test.sh` until `BACKUP_VERSION` is bumped, `app/backup-format.lock`
   gains a line and a new seed is captured.
@@ -84,7 +85,8 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
   `application/x-trash`, `application/x-binary`.
 - Encrypted with a **user-supplied backup password** (the master password for the auto-backup after
-  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
+  login). On `feature/envelope-encryption` (MR 8; `master` still writes format 3 until the merge)
+  `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
   plaintext JSON header, NFKC + PBKDF2-SHA256, AES-GCM key check and body); `RestoreDataWorker`
   routes on the first four bytes and reads formats 1–3 (Java-serialised map, PBKDF2-SHA1 + AES-CBC,
   raw password) through `LegacyBackupReader`. Their traps (absent key vs null value, 1-byte v1 date,
