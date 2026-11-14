@@ -197,6 +197,7 @@
   "vault_migration_failure_storage": "6b592e5ae6ee08e0",
   "vault_migration_failure_unexpected": "d10dc0381392a507",
   "vault_migration_failure_verify": "a27c2488a5c9596d",
+  "vault_migration_phase_preparing": "0ea81d79f25dfcf9",
   "vault_migration_phase_reading": "2c9a5106d6c57a10",
   "vault_migration_phase_saving": "23e39291d6135814",
   "vault_migration_progress_counter": "ff7cfdd26192a28c",

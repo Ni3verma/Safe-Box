@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Atualizando a segurança do cofre…</string>
     <string name="vault_migration_progress_counter">%1$d de %2$d registros</string>
     <string name="vault_migration_phase_reading">Lendo seus registros…</string>
+    <string name="vault_migration_phase_preparing">Configurando chaves seguras… Isso pode levar até um minuto.</string>
     <string name="vault_migration_phase_saving">Salvando…</string>
     <string name="vault_migration_failure_keystore">O hardware seguro não respondeu. Nada foi alterado.</string>
     <string name="vault_migration_failure_verify">A verificação da atualização falhou. Nada foi alterado.</string>

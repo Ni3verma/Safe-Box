@@ -201,6 +201,7 @@
     <string name="vault_migration_progress_title">Tresorsicherheit wird aktualisiert…</string>
     <string name="vault_migration_progress_counter">%1$d von %2$d Einträgen</string>
     <string name="vault_migration_phase_reading">Ihre Einträge werden gelesen…</string>
+    <string name="vault_migration_phase_preparing">Sichere Schlüssel werden eingerichtet… Das kann bis zu einer Minute dauern.</string>
     <string name="vault_migration_phase_saving">Wird gespeichert…</string>
     <string name="vault_migration_failure_keystore">Die sichere Hardware hat nicht reagiert. Es wurde nichts geändert.</string>
     <string name="vault_migration_failure_verify">Upgrade-Prüfung fehlgeschlagen. Es wurde nichts geändert.</string>

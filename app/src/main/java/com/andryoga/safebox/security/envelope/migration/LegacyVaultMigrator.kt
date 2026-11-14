@@ -198,6 +198,7 @@ class LegacyVaultMigrator @Inject constructor(
             val (wrappedDevice, wrappedBiometric) = createOptionalKeystoreWraps(mintedDek)
 
             // Stage 3: Decrypt all record tables and legacy hint into memory before opening the DB transaction.
+            progress.update(MigrationPhase.DECRYPTING, 0, totalRecords)
             val decryptedLogins = decryptLogins(ctx, legacyKey, logins)
             val decryptedAccounts = decryptBankAccounts(ctx, legacyKey, accounts)
             val decryptedCards = decryptBankCards(ctx, legacyKey, cards)

@@ -203,6 +203,7 @@
     <string name="vault_migration_progress_title">กำลังอัปเกรดความปลอดภัยของตู้นิรภัย…</string>
     <string name="vault_migration_progress_counter">%1$d จาก %2$d รายการ</string>
     <string name="vault_migration_phase_reading">กำลังอ่านรายการของคุณ…</string>
+    <string name="vault_migration_phase_preparing">กำลังตั้งค่าคีย์ที่ปลอดภัย… อาจใช้เวลาถึงหนึ่งนาที</string>
     <string name="vault_migration_phase_saving">กำลังบันทึก…</string>
     <string name="vault_migration_failure_keystore">ฮาร์ดแวร์ความปลอดภัยไม่ตอบสนอง ไม่มีการเปลี่ยนแปลงใดๆ</string>
     <string name="vault_migration_failure_verify">การตรวจสอบการอัปเกรดล้มเหลว ไม่มีการเปลี่ยนแปลงใดๆ</string>

@@ -203,6 +203,7 @@
     <string name="vault_migration_progress_title">正在升级保险库安全性…</string>
     <string name="vault_migration_progress_counter">第 %1$d / %2$d 条记录</string>
     <string name="vault_migration_phase_reading">正在读取您的记录…</string>
+    <string name="vault_migration_phase_preparing">正在设置安全密钥… 这可能需要最多一分钟。</string>
     <string name="vault_migration_phase_saving">正在保存…</string>
     <string name="vault_migration_failure_keystore">安全硬件未响应。未做任何更改。</string>
     <string name="vault_migration_failure_verify">升级校验失败。未做任何更改。</string>

@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Aktualizace zabezpečení trezoru…</string>
     <string name="vault_migration_progress_counter">%1$d z %2$d záznamů</string>
     <string name="vault_migration_phase_reading">Načítání vašich záznamů…</string>
+    <string name="vault_migration_phase_preparing">Nastavování zabezpečených klíčů… Může to trvat až minutu.</string>
     <string name="vault_migration_phase_saving">Ukládání…</string>
     <string name="vault_migration_failure_keystore">Bezpečný hardware neodpověděl. Nic nebylo změněno.</string>
     <string name="vault_migration_failure_verify">Kontrola aktualizace selhala. Nic nebylo změněno.</string>

@@ -45,7 +45,8 @@ import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 /**
- * Non-dismissable determinate progress card shown while [LegacyVaultMigrator] re-encrypts records.
+ * Non-dismissable progress card shown while [LegacyVaultMigrator] runs: indeterminate while keys are
+ * prepared, determinate with a record counter once records are read and saved.
  */
 // TODO(D3): legacy vault (crypto_version = 1) only
 @Composable
@@ -68,6 +69,7 @@ internal fun MigrationProgressCardContent(
         Text(
             text = stringResource(
                 when (progress.phase) {
+                    MigrationPhase.PREPARING -> R.string.vault_migration_phase_preparing
                     MigrationPhase.DECRYPTING -> R.string.vault_migration_phase_reading
                     MigrationPhase.SAVING -> R.string.vault_migration_phase_saving
                 },
@@ -77,21 +79,25 @@ internal fun MigrationProgressCardContent(
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(16.dp))
-        LinearProgressIndicator(
-            progress = { progress.fraction },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = stringResource(
-                R.string.vault_migration_progress_counter,
-                progress.done,
-                progress.total,
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        if (progress.phase == MigrationPhase.PREPARING) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        } else {
+            LinearProgressIndicator(
+                progress = { progress.fraction },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(
+                    R.string.vault_migration_progress_counter,
+                    progress.done,
+                    progress.total,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -246,6 +252,21 @@ internal fun LoginNoticeBanner(
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@LightDarkModePreview
+@Composable
+private fun MigrationProgressCardPreparingPreview() {
+    SafeBoxTheme {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
+        ) {
+            MigrationProgressCardContent(
+                progress = MigrationProgressState.Running(done = 0, total = 42, phase = MigrationPhase.PREPARING),
             )
         }
     }

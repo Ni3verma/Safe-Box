@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Uppgraderar valvsäkerhet…</string>
     <string name="vault_migration_progress_counter">%1$d av %2$d poster</string>
     <string name="vault_migration_phase_reading">Läser dina poster…</string>
+    <string name="vault_migration_phase_preparing">Konfigurerar säkra nycklar… Det kan ta upp till en minut.</string>
     <string name="vault_migration_phase_saving">Sparar…</string>
     <string name="vault_migration_failure_keystore">Den säkra hårdvaran svarade inte. Inget ändrades.</string>
     <string name="vault_migration_failure_verify">Uppgraderingskontrollen misslyckades. Inget ändrades.</string>

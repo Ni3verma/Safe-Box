@@ -201,6 +201,7 @@
     <string name="vault_migration_progress_title">Actualizando la seguridad de la bóveda…</string>
     <string name="vault_migration_progress_counter">%1$d de %2$d registros</string>
     <string name="vault_migration_phase_reading">Leyendo tus registros…</string>
+    <string name="vault_migration_phase_preparing">Configurando claves seguras… Puede tardar hasta un minuto.</string>
     <string name="vault_migration_phase_saving">Guardando…</string>
     <string name="vault_migration_failure_keystore">El hardware seguro no respondió. No se realizó ningún cambio.</string>
     <string name="vault_migration_failure_verify">Falló la verificación de la actualización. No se realizó ningún cambio.</string>

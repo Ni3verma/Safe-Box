@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">ভল্টের নিরাপত্তা আপগ্রেড করা হচ্ছে…</string>
     <string name="vault_migration_progress_counter">%2$dটির মধ্যে %1$dটি রেকর্ড</string>
     <string name="vault_migration_phase_reading">আপনার রেকর্ড পড়া হচ্ছে…</string>
+    <string name="vault_migration_phase_preparing">নিরাপদ কী সেট আপ করা হচ্ছে… এতে এক মিনিট পর্যন্ত সময় লাগতে পারে।</string>
     <string name="vault_migration_phase_saving">সংরক্ষণ করা হচ্ছে…</string>
     <string name="vault_migration_failure_keystore">সুরক্ষিত হার্ডওয়্যার সাড়া দেয়নি। কিছুই পরিবর্তন করা হয়নি।</string>
     <string name="vault_migration_failure_verify">আপগ্রেড যাচাই ব্যর্থ হয়েছে। কিছুই পরিবর্তন করা হয়নি।</string>

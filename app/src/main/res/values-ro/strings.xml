@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Se actualizează securitatea seifului…</string>
     <string name="vault_migration_progress_counter">%1$d din %2$d înregistrări</string>
     <string name="vault_migration_phase_reading">Se citesc înregistrările tale…</string>
+    <string name="vault_migration_phase_preparing">Se configurează cheile securizate… Poate dura până la un minut.</string>
     <string name="vault_migration_phase_saving">Se salvează…</string>
     <string name="vault_migration_failure_keystore">Hardware-ul securizat nu a răspuns. Nu s-a modificat nimic.</string>
     <string name="vault_migration_failure_verify">Verificarea actualizării a eșuat. Nu s-a modificat nimic.</string>

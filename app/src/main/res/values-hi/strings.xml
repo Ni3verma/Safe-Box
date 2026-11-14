@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">तिजोरी की सुरक्षा अपग्रेड की जा रही है…</string>
     <string name="vault_migration_progress_counter">%2$d में से %1$d रिकॉर्ड</string>
     <string name="vault_migration_phase_reading">आपके रिकॉर्ड पढ़े जा रहे हैं…</string>
+    <string name="vault_migration_phase_preparing">सुरक्षित कुंजियाँ सेट की जा रही हैं… इसमें एक मिनट तक लग सकता है।</string>
     <string name="vault_migration_phase_saving">सहेजा जा रहा है…</string>
     <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेयर ने कोई जवाब नहीं दिया। कुछ भी बदला नहीं गया।</string>
     <string name="vault_migration_failure_verify">अपग्रेड जांच विफल रही। कुछ भी बदला नहीं गया।</string>

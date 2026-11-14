@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Kluisbeveiliging upgraden…</string>
     <string name="vault_migration_progress_counter">%1$d van %2$d items</string>
     <string name="vault_migration_phase_reading">Je items worden gelezen…</string>
+    <string name="vault_migration_phase_preparing">Beveiligde sleutels instellen… Dit kan tot een minuut duren.</string>
     <string name="vault_migration_phase_saving">Opslaan…</string>
     <string name="vault_migration_failure_keystore">De beveiligde hardware reageerde niet. Er is niets gewijzigd.</string>
     <string name="vault_migration_failure_verify">Upgradecontrole mislukt. Er is niets gewijzigd.</string>

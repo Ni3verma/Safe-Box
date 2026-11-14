@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Meningkatkan keamanan brankas…</string>
     <string name="vault_migration_progress_counter">%1$d dari %2$d catatan</string>
     <string name="vault_migration_phase_reading">Membaca catatan Anda…</string>
+    <string name="vault_migration_phase_preparing">Menyiapkan kunci aman… Ini dapat memakan waktu hingga satu menit.</string>
     <string name="vault_migration_phase_saving">Menyimpan…</string>
     <string name="vault_migration_failure_keystore">Perangkat keras keamanan tidak merespons. Tidak ada yang diubah.</string>
     <string name="vault_migration_failure_verify">Pemeriksaan peningkatan gagal. Tidak ada yang diubah.</string>

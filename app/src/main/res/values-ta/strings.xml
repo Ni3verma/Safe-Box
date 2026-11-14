@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">பெட்டகப் பாதுகாப்பு மேம்படுத்தப்படுகிறது…</string>
     <string name="vault_migration_progress_counter">%2$d இல் %1$d பதிவுகள்</string>
     <string name="vault_migration_phase_reading">உங்கள் பதிவுகள் படிக்கப்படுகின்றன…</string>
+    <string name="vault_migration_phase_preparing">பாதுகாப்பான விசைகள் அமைக்கப்படுகின்றன… இதற்கு ஒரு நிமிடம் வரை ஆகலாம்.</string>
     <string name="vault_migration_phase_saving">சேமிக்கப்படுகிறது…</string>
     <string name="vault_migration_failure_keystore">பாதுகாப்பான வன்பொருள் பதிலளிக்கவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
     <string name="vault_migration_failure_verify">மேம்படுத்தல் சரிபார்ப்பு தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>

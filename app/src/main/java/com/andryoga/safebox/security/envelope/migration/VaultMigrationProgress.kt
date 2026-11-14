@@ -7,7 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Determinate progress snapshot of an in-flight legacy-to-envelope vault migration.
+ * Progress snapshot of an in-flight legacy-to-envelope vault migration.
  */
 sealed interface MigrationProgressState {
     /** No migration is currently running. */
@@ -18,7 +18,7 @@ sealed interface MigrationProgressState {
      *
      * @property done Number of records handled in [phase] so far (`0..total`).
      * @property total Total number of records across all five record tables.
-     * @property phase Which of the two passes over the records is running.
+     * @property phase Which phase of the migration is running.
      */
     data class Running(
         val done: Int,
@@ -33,6 +33,7 @@ sealed interface MigrationProgressState {
             get() {
                 val phaseFraction = if (total > 0) (done.toFloat() / total).coerceIn(0f, 1f) else 1f
                 return when (phase) {
+                    MigrationPhase.PREPARING -> 0f
                     MigrationPhase.DECRYPTING -> DECRYPT_SHARE * phaseFraction
                     MigrationPhase.SAVING -> DECRYPT_SHARE + (1f - DECRYPT_SHARE) * phaseFraction
                 }
@@ -45,8 +46,11 @@ sealed interface MigrationProgressState {
     }
 }
 
-/** The two passes of a migration, in order. */
+/** The phases of a migration, in order. */
 enum class MigrationPhase {
+    /** Key setup before any record is read; Keystore key generation has no measurable progress. */
+    PREPARING,
+
     /** Every record decrypted under the legacy Keystore key, outside the transaction. */
     DECRYPTING,
 
@@ -65,12 +69,12 @@ class VaultMigrationProgress @Inject constructor() {
 
     private val _state = MutableStateFlow<MigrationProgressState>(MigrationProgressState.Idle)
 
-    /** Current determinate progress state observed by the login screen. */
+    /** Current progress state observed by the login screen. */
     val state: StateFlow<MigrationProgressState> = _state.asStateFlow()
 
-    /** Marks the start of a migration over [total] records, in the decrypt pass. */
+    /** Marks the start of a migration over [total] records, in the preparing phase. */
     fun start(total: Int) {
-        _state.value = MigrationProgressState.Running(done = 0, total = total)
+        _state.value = MigrationProgressState.Running(done = 0, total = total, phase = MigrationPhase.PREPARING)
     }
 
     /** Updates the counter to [done] of [total] records in [phase]. */

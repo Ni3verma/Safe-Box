@@ -266,13 +266,14 @@ class LegacyVaultMigratorTest {
     }
 
     @Test
-    fun migrate_shouldReportProgressThroughTheDecryptPassThenTheSavePass() = runTest {
+    fun migrate_shouldReportProgressFromPreparingThroughTheDecryptPassThenTheSavePass() = runTest {
         seedOneRecordPerTable()
 
         migrator.migrate("MasterPassword#1".toCharArray())
 
         verifyOrder {
             progress.start(5)
+            progress.update(MigrationPhase.DECRYPTING, 0, 5)
             (1..5).forEach { progress.update(MigrationPhase.DECRYPTING, it, 5) }
             (1..5).forEach { progress.update(MigrationPhase.SAVING, it, 5) }
             progress.reset()

@@ -208,6 +208,7 @@
     <string name="vault_migration_progress_title">Обновление защиты хранилища…</string>
     <string name="vault_migration_progress_counter">%1$d из %2$d записей</string>
     <string name="vault_migration_phase_reading">Чтение ваших записей…</string>
+    <string name="vault_migration_phase_preparing">Настройка защищённых ключей… Это может занять до минуты.</string>
     <string name="vault_migration_phase_saving">Сохранение…</string>
     <string name="vault_migration_failure_keystore">Защищённый модуль не ответил. Ничего не изменено.</string>
     <string name="vault_migration_failure_verify">Проверка обновления не пройдена. Ничего не изменено.</string>

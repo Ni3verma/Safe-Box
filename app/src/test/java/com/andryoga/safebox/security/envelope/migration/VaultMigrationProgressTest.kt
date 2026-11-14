@@ -33,12 +33,19 @@ class VaultMigrationProgressTest {
     }
 
     @Test
+    fun fraction_whilePreparing_shouldBeZero() {
+        val preparing = MigrationProgressState.Running(done = 0, total = 10, phase = MigrationPhase.PREPARING)
+
+        assertThat(preparing.fraction).isEqualTo(0f)
+    }
+
+    @Test
     fun update_shouldPublishThePhaseAndCounts() {
         val progress = VaultMigrationProgress()
 
         progress.start(4)
         assertThat(progress.state.value)
-            .isEqualTo(MigrationProgressState.Running(done = 0, total = 4, phase = MigrationPhase.DECRYPTING))
+            .isEqualTo(MigrationProgressState.Running(done = 0, total = 4, phase = MigrationPhase.PREPARING))
 
         progress.update(MigrationPhase.SAVING, 2, 4)
         assertThat(progress.state.value)

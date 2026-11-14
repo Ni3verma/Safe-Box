@@ -776,6 +776,30 @@ class LoginScreenTest {
     }
 
     @Test
+    fun migrationPreparingPhase_shouldShowPreparingTextWithoutTheRecordCounter() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(
+                            done = 0,
+                            total = 10,
+                            phase = MigrationPhase.PREPARING,
+                        ),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_preparing))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_counter, 0, 10))
+            .assertDoesNotExist()
+    }
+
+    @Test
     fun migrationRunningState_shouldOfferNoInputAndSwallowBack() {
         var backReachedHost = false
         lateinit var dispatcher: OnBackPressedDispatcher
