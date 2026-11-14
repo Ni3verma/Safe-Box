@@ -21,7 +21,7 @@ task so you do not re-derive things that are already known.
 | | |
 |---|---|
 | Namespace | `com.andryoga.safebox` |
-| `minSdk` / `targetSdk` / `compileSdk` | **29** / 37 / 37 on `feature/envelope-encryption` ([ADR-0012](../docs/decisions/0012-min-sdk-29.md), 2026-10-21); `master` stays 24 until the final merge |
+| `minSdk` / `targetSdk` / `compileSdk` | **29** / 37 / 37 ([ADR-0012](../docs/decisions/0012-min-sdk-29.md); 24 before the envelope release) |
 | JDK / Kotlin toolchain | 17 |
 | NDK | `29.0.14206865` (CI has a gatekeeper step that fails if missing) |
 | Build system | Groovy `build.gradle` — **never** Kotlin DSL |
@@ -44,32 +44,24 @@ upgrade test must be `qa → qa`.
 
 ## Persistence & crypto
 
-- Room DB version: **5** on `master`; **6** on `feature/envelope-encryption` (`MIGRATION_5_6`,
-  2026-10-21: `vault_meta`, `user_details` loses `password`, the hash is
-  parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
+- Room DB version: **6** (`MIGRATION_5_6`: `vault_meta`, `user_details` loses `password`, the
+  hash is parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
   `app/schemas/`, also wired in as androidTest assets.
 - `Migration.ALL` (`data/db/Migration.kt`) is the single migration list: `CacheModule` spreads it into
   `.addMigrations(*Migration.ALL)` and the full-chain migration test reads it too. Add migrations there only.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
-- Field encryption: AES-GCM per field, `b64(ct)|b64(iv)` (`security/AesGcmFieldCipher.kt`). **The key
-  differs by branch.** `master`: a `@Singleton` Keystore key, alias **`symmetricDataKey`**
-  (`di/SecurityModule.kt`), whose provider does `if (!containsAlias) generateKey()` — a lost alias
-  **silently regenerates** and every record becomes undecryptable (visible since 2026-10-20 as
-  `keystore_key_created` with `db_exists = 1`). `feature/envelope-encryption` (MR 3, 2026-10-21): no
-  ambient key; `SymmetricKeyUtilsImpl` reads `SessionKeyHolder` per call, a locked vault fails closed
-  (`SessionLockedException`; list Flows emit empty); nothing creates the legacy alias any more (MR 5).
-  MR 4 (2026-10-23, `ActiveSessionManagerTest`): `clearSessionKey()` is the exit from the vault —
-  `HomeScreen` leaves for Login on `isVaultUnlocked = false`; the timeout records
-  `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**. Start destination is Room-first
-  (`VaultRepository.hasVault()`); the encrypted-prefs flag is deleted (MR 9). MR 6 (2026-10-31,
-  `git grep 'setSessionKey(' -- app/src/main`; `LoginViewModelTest`, `VaultResetUseCaseTest`): every
-  envelope unlock on the login screen is `LoginViewModel` → `setSessionKey` — password, fingerprint
-  (`WrapKeyOpener` cipher bound as the `CryptoObject`), forgot-password (`wrapped_dek_device`, then
-  `rewrapPassword(newPassword, dek, hint)`); *Continue for now* opens `setLegacySession`; signup and
-  the migrator call `setSessionKey` too. `VaultResetUseCase.eraseVault()` is the second clear.
+- Field encryption: AES-GCM per field, `b64(ct)|b64(iv)` (`security/AesGcmFieldCipher.kt`), under the
+  **session key** in `SessionKeyHolder` — the vault's DEK, or the legacy `symmetricDataKey` handle in a
+  *Continue for now* session. No ambient key: a locked vault fails closed (`SessionLockedException`;
+  list Flows emit empty), and nothing creates the legacy alias any more. `clearSessionKey()` is the
+  exit from the vault (`HomeScreen` leaves for Login on `isVaultUnlocked = false`; the away timeout
+  records `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**). Start destination is
+  Room-only (`VaultRepository.hasVault()`). Every login-screen unlock ends in `LoginViewModel` →
+  `setSessionKey` (password, fingerprint via the `CryptoObject`, forgot-password via
+  `wrapped_dek_device`); signup and the migrator call it too. Releases before the envelope one used a
+  process-wide Keystore key that **silently regenerated** when its alias was lost.
   [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
-- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4** on `feature/envelope-encryption` (MR 8,
-  2026-11-10), **3** on `master` until that merges. Changing the
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4**. Changing the
   export classes (`data/db/docs/export/`, incl. `ExportBackupPayload`) fails
   `scripts/tests/backup-format-test.sh` until `BACKUP_VERSION` is bumped, `app/backup-format.lock`
   gains a line and a new seed is captured.
@@ -85,8 +77,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
   `application/x-trash`, `application/x-binary`.
 - Encrypted with a **user-supplied backup password** (the master password for the auto-backup after
-  login). On `feature/envelope-encryption` (MR 8; `master` still writes format 3 until the merge)
-  `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
+  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
   plaintext JSON header, NFKC + PBKDF2-SHA256, AES-GCM key check and body); `RestoreDataWorker`
   routes on the first four bytes and reads formats 1–3 (Java-serialised map, PBKDF2-SHA1 + AES-CBC,
   raw password) through `LegacyBackupReader`. Their traps (absent key vs null value, 1-byte v1 date,
@@ -101,7 +92,7 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Assert `<=` for authenticators, `==` for the rest.
 - Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
   `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
-  `FOLDER_INACCESSIBLE` clears the saved folder. `feature/envelope-encryption` (MR 4, 2026-10-23): both end
+  `FOLDER_INACCESSIBLE` clears the saved folder. Both end
   in `SESSION_LOCKED`; the backup password reaches a worker via `BackupPasswordRegistry` (process memory, keyed
   by work id), **never** WorkManager input data; a lock cancels nothing — the worker fails closed at its next use of the key. [doc](../docs/architecture/persistence-and-crypto.md)
 
