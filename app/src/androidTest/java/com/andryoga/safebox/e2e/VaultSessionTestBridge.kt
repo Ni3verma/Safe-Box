@@ -19,8 +19,8 @@ import dagger.hilt.components.SingletonComponent
  * `SessionLockedException`. [seedVaultAndOpenSession] creates a `crypto_version = 2` vault via
  * [VaultRepository.createVault] and opens a DEK session on the minted key; [openSessionForSeeding]
  * ensures a DEK session is open for suites that seed records without a user account or reopen the
- * session after an explicit [lockVault]; [seedBiometricWrap] adds the wrap the fingerprint login
- * needs.
+ * session after an explicit [lockVault]; [seedBiometricWrap] and [seedDeviceWrap] add the wraps the
+ * fingerprint login and the forgot-password recovery need.
  *
  * Resolved through an entry point rather than injected into every test class: eleven suites call
  * the seed helpers and none of them should have to know about the session to seed a vault.
@@ -70,6 +70,18 @@ object VaultSessionTestBridge {
         val blob = currentEntryPoint.envelopeEncryptionManager()
             .wrapWithKeystoreKey(WrapKeySpec.BIOMETRIC, dek.copyOf())
         currentEntryPoint.vaultRepository().storeWrap(WrapKeySpec.BIOMETRIC, blob)
+    }
+
+    /**
+     * Wraps the DEK of the most recent [seedVaultAndOpenSession] under a fresh `KEK_Device` and
+     * stores `wrapped_dek_device`, which is what lets *Forgot password?* recover the vault.
+     */
+    suspend fun seedDeviceWrap() {
+        val dek = requireNotNull(lastSeededDek) { "seedVaultAndOpenSession must run first" }
+        val currentEntryPoint = entryPoint
+        val blob = currentEntryPoint.envelopeEncryptionManager()
+            .wrapWithKeystoreKey(WrapKeySpec.DEVICE, dek.copyOf())
+        currentEntryPoint.vaultRepository().storeWrap(WrapKeySpec.DEVICE, blob)
     }
 
     /**

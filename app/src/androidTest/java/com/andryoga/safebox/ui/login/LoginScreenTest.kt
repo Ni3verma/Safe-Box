@@ -1,14 +1,19 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -695,6 +700,71 @@ class LoginScreenTest {
         composeTestRule.onNodeWithText(
             context.getString(R.string.vault_migration_progress_counter, 3, 10),
         ).assertIsDisplayed()
+    }
+
+    @Test
+    fun migrationRunningState_shouldOfferNoInputAndSwallowBack() {
+        var backReachedHost = false
+        lateinit var dispatcher: OnBackPressedDispatcher
+
+        composeTestRule.setContent {
+            dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            // Registered first, so it only runs if the screen lets a back press through.
+            BackHandler { backReachedHost = true }
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.login)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.forgot_password)).assertDoesNotExist()
+        composeTestRule.runOnUiThread { dispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+        assertThat(backReachedHost).isFalse()
+    }
+
+    @Test
+    fun migrationRunningState_shouldExposeTheDeterminateProgressToAccessibilityServices() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        // TalkBack announces the fraction from this semantics, not from the counter text.
+        composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo(0.3f, 0f..1f)))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun loginFormWithoutMigration_shouldLetBackReachTheHost() {
+        var backReachedHost = false
+        lateinit var dispatcher: OnBackPressedDispatcher
+
+        composeTestRule.setContent {
+            dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            BackHandler { backReachedHost = true }
+            SafeBoxTheme {
+                LoginScreen(uiState = LoginUiState(isLegacyVault = true), screenAction = {})
+            }
+        }
+
+        composeTestRule.runOnUiThread { dispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+        assertThat(backReachedHost).isTrue()
     }
 
     @Test

@@ -31,6 +31,9 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
     // TODO(D3): legacy vault (crypto_version = 1) only — the in-memory stand-in for the legacy alias
     var legacyKey: SecretKey? = null
 
+    // TODO(D3): legacy vault (crypto_version = 1) only — when set, the legacy key is read from and deleted in it (the real Keystore) instead of [legacyKey]
+    var legacyKeyDelegate: KeystoreGateway? = null
+
     private val keyPairs = mutableMapOf<String, KeyPair>()
     private val keySpecs = mutableMapOf<String, WrapKeySpec>()
     private val generationCounts = mutableMapOf<String, Int>()
@@ -84,7 +87,10 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
         unauthenticatedAliases.remove(alias)
     }
 
-    override fun legacyVaultKey(): SecretKey? = legacyKey
+    override fun legacyVaultKey(): SecretKey? {
+        val delegate = legacyKeyDelegate ?: return legacyKey
+        return delegate.legacyVaultKey()
+    }
 
     fun getOrCreateLegacyVaultKey(): SecretKey {
         return legacyKey ?: KeyGenerator.getInstance("AES").apply { init(AES_KEY_SIZE_BITS) }
@@ -93,6 +99,7 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
     }
 
     override fun deleteLegacyVaultKey() {
+        legacyKeyDelegate?.deleteLegacyVaultKey()
         legacyKey = null
     }
 
@@ -128,6 +135,7 @@ class FakeKeystoreGateway @Inject constructor() : KeystoreGateway {
         isLockScreenConfigured = true
         isBiometricEnrolled = true
         legacyKey = null
+        legacyKeyDelegate = null
         keyPairs.clear()
         keySpecs.clear()
         generationCounts.clear()
