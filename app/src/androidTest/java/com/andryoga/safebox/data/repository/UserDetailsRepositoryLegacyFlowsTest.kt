@@ -1,16 +1,12 @@
 package com.andryoga.safebox.data.repository
 
-import androidx.room.withTransaction
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.andryoga.safebox.data.db.SafeBoxDatabase
-import com.andryoga.safebox.data.db.entity.UserDetailsEntity
-import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.security.AesGcmFieldCipher
-import com.andryoga.safebox.security.interfaces.HashingUtils
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
+import com.andryoga.safebox.test.fixtures.LegacyVaultFixtures
 import com.google.common.truth.Truth.assertThat
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -19,8 +15,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Date
-import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -43,9 +37,6 @@ class UserDetailsRepositoryLegacyFlowsTest {
 
     @Inject
     lateinit var database: SafeBoxDatabase
-
-    @Inject
-    lateinit var hashingUtils: HashingUtils
 
     @Inject
     lateinit var keystoreGateway: FakeKeystoreGateway
@@ -88,7 +79,7 @@ class UserDetailsRepositoryLegacyFlowsTest {
     fun getHint_afterTheKeyWasLostAndReplaced_shouldFailInsteadOfReadingGarbage() = runBlocking {
         seedLegacyVault(password = "Qwerty@@123", hint = "first hint")
         keystoreGateway.deleteLegacyVaultKey()
-        // What the pre-MR 3 provider used to do silently on a lost alias.
+        // What the old ambient-key provider did silently on a lost alias.
         keystoreGateway.getOrCreateLegacyVaultKey()
 
         val result = runCatching { repository.getHint() }
@@ -98,22 +89,11 @@ class UserDetailsRepositoryLegacyFlowsTest {
 
     /** A vault as a pre-envelope build left it: hash parked by `MIGRATION_5_6`, hint under the legacy key. */
     private suspend fun seedLegacyVault(password: String, hint: String) {
-        val now = Date()
-        val legacyKey = checkNotNull(keystoreGateway.legacyVaultKey())
-        database.withTransaction {
-            database.vaultMetaDao()
-                .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
-            database.vaultMetaDao()
-                .upsert(VaultMetaEntity(VaultMetaKey.LEGACY_PASSWORD_HASH, hashingUtils.hash(password)))
-            database.userDetailsDao().insertUserDetailsData(
-                UserDetailsEntity(
-                    key = 0,
-                    uid = UUID.randomUUID().toString(),
-                    hint = AesGcmFieldCipher.encrypt(hint, legacyKey),
-                    creationDate = now,
-                    updateDate = now,
-                ),
-            )
-        }
+        LegacyVaultFixtures.seedLegacyVault(
+            database = database,
+            legacyKey = checkNotNull(keystoreGateway.legacyVaultKey()),
+            password = password,
+            hint = hint,
+        )
     }
 }

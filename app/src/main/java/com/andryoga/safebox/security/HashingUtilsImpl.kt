@@ -1,7 +1,6 @@
 package com.andryoga.safebox.security
 
 import com.andryoga.safebox.security.interfaces.HashingUtils
-import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
@@ -9,32 +8,12 @@ class HashingUtilsImpl : HashingUtils {
     object Constants {
         const val iterationCount = 500
         const val keyLength = 64 * 8
-        const val saltSize = 16
     }
 
     private val separator = "|"
-    private val secureRandomAlgo = "SHA1PRNG"
     private val hashingAlgo = "PBKDF2WithHmacSHA1"
 
-    private val secureRandom: SecureRandom = SecureRandom.getInstance(secureRandomAlgo)
     private val keyFactory = SecretKeyFactory.getInstance(hashingAlgo)
-
-    override fun hash(password: String): String {
-        val salt = getSalt()
-        val base64EncodedSalt = SecurityUtils.encodeBase64(salt)
-
-        val spec = PBEKeySpec(
-            password.toCharArray(),
-            salt,
-            Constants.iterationCount,
-            Constants.keyLength
-        )
-        val base64EncodedPasswordHash = SecurityUtils.encodeBase64(
-            keyFactory.generateSecret(spec).encoded
-        )
-
-        return base64EncodedPasswordHash + separator + base64EncodedSalt
-    }
 
     // TODO(D3): legacy vault (crypto_version = 1) only
     override fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
@@ -59,11 +38,5 @@ class HashingUtilsImpl : HashingUtils {
         )
 
         return base64EncodedPasswordHash == hashInfo[0]
-    }
-
-    private fun getSalt(): ByteArray {
-        val salt = ByteArray(Constants.saltSize)
-        secureRandom.nextBytes(salt)
-        return salt
     }
 }
