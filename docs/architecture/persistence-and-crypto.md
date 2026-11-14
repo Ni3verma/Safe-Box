@@ -240,8 +240,10 @@ Older files simply have no entry for newer keys, and `LegacyBackupReader` reads 
 ### Deserialization hardening
 
 `LegacyBackupReader` subclasses `ObjectInputStream` and overrides `resolveClass` with an allowlist:
-`java.util.HashMap`, `LinkedHashMap`, `Map`, `String`, `[B`, `Number`, `Integer`, `Long`. Anything
-else throws `InvalidClassException`. **Do not widen this** — a password manager deserializing
+`java.util.LinkedHashMap`, `java.util.HashMap`, `[B` — exactly what it sees in the committed
+format-1/2/3 files (narrowed in MR 8 from eight entries; `LegacyBackupReaderTest` decodes all three
+fixtures through it, and the CI restore test restores them on a device). Anything else throws
+`InvalidClassException`. **Do not widen this** — a password manager deserializing
 arbitrary classes from a user-supplied file is a remote-code-execution primitive.
 
 > [!WARNING]

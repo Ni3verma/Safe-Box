@@ -91,7 +91,7 @@ class RestoreDataWorker
         }
     }
 
-    private suspend fun restore(): Result {
+    private fun restore(): Result {
         // 0 until the container is read, so a failure before that reports an unknown version.
         var version = 0
         return try {

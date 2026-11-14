@@ -129,15 +129,14 @@ class LegacyBackupReader @Inject constructor(
     }
 
     companion object {
+        /**
+         * Exactly what `resolveClass` sees in a real format 1–3 file: the `LinkedHashMap` written,
+         * its `HashMap` superclass and the `byte[]` values. Strings are `TC_STRING` and never reach it.
+         */
         private val ALLOWED_CLASSES = setOf(
-            "java.util.HashMap",
             "java.util.LinkedHashMap",
-            "java.util.Map",
-            "java.lang.String",
+            "java.util.HashMap",
             "[B",
-            "java.lang.Number",
-            "java.lang.Integer",
-            "java.lang.Long",
         )
 
         /** `STREAM_MAGIC` and `STREAM_VERSION`, the first four bytes of every Java serialisation stream. */

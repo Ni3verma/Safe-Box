@@ -33,8 +33,6 @@ object CommonConstants {
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
     const val AUTHENTICATOR_DATA_KEY = "8"
-
-    // Format written by BackupDataWorker; 1–3 are still restored
     const val BACKUP_VERSION = 4
 
     // Backup params. The password is not one: it travels through BackupPasswordRegistry.

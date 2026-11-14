@@ -154,7 +154,8 @@ object BackupCodec {
             }
             val key = PasswordKdf.deriveKey(password.copyOf(), kdfParams)
             try {
-                // A wrong password fails here with AEADBadTagException, a BadPaddingException.
+                // A wrong password fails here with AEADBadTagException; it propagates, and
+                // RestoreDataWorker's BadPaddingException catch reports INCORRECT_PASSWORD.
                 openSealed(key, bytes, keyCheckOffset, KEY_CHECK_BYTES, prefix)
                 val payload = try {
                     openSealed(key, bytes, bodyOffset, bodyLength, prefix)

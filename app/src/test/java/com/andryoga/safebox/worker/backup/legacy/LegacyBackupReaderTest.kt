@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InvalidClassException
 import java.io.ObjectOutputStream
 import java.nio.ByteBuffer
@@ -88,6 +89,24 @@ class LegacyBackupReaderTest {
         assertThat(reader.open(bytes).version).isEqualTo(128)
     }
 
+    /** The committed files written by the old builds themselves, through the narrowed allow-list. */
+    @Test
+    fun openThenDecode_committedFormatOneToThreeFixtures_returnTheirRecords() {
+        val fixtures = listOf(
+            Triple("format-1.bak", 1, "Upgrade@@Test123"),
+            Triple("format-2.bak", 2, "Fixture@Backup1"),
+            Triple("format-3.bak", 3, "Upgrade@@Test123"),
+        )
+        for ((name, version, password) in fixtures) {
+            val opened = reader.open(File(FIXTURES_DIR, name).readBytes())
+            val decoded = opened.decode(password.toCharArray())
+
+            assertThat(opened.version).isEqualTo(version)
+            assertThat(decoded.logins).isNotEmpty()
+            assertThat(decoded.hasNoRecordPayload).isFalse()
+        }
+    }
+
     @Test
     fun open_streamNamingAClassOutsideTheAllowList_isRefused() {
         val output = ByteArrayOutputStream()
@@ -124,5 +143,8 @@ class LegacyBackupReaderTest {
 
     private companion object {
         const val PASSWORD = "Legacy@Password1"
+
+        /** Unit tests run with the module directory as the working directory. */
+        const val FIXTURES_DIR = "../upgrade-test/fixtures"
     }
 }

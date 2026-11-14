@@ -424,7 +424,7 @@ v4 is a **new container, not a patched map**. Since v4 breaks compatibility anyw
 ```mermaid
 flowchart TB
     F["RestoreDataWorker opens the .bak stream"] --> M{"first 4 bytes"}
-    M -->|"SBOX"| V4["BackupCodec.read - header, PasswordKdf (NFKC), key check, body"]
+    M -->|"SBOX"| V4["BackupCodec.open, then decode - header, PasswordKdf (NFKC), key check, body"]
     M -->|"AC ED 00 05 - Java serialisation"| L["LegacyBackupReader - today's allow-listed ObjectInputStream + PasswordBasedEncryptionImpl, RAW password (no NFKC)"]
     M -->|"anything else"| ERR["CORRUPT_OR_INVALID_FILE"]
     V4 --> VER{"version byte"}
@@ -435,7 +435,7 @@ flowchart TB
 ```
 
 - `RestoreDataWorker` keeps orchestration, the version-too-new check, failure mapping and the DB replace. The v1–v3 code it contains today (map parsing, `SecureObjectInputStream`, creation-date byte quirks, absent-vs-null semantics) moves **verbatim** into `LegacyBackupReader`; behaviour and the `resolveClass` allow-list are unchanged, and it receives the raw, un-normalised password because those files were written without NFKC.
-- `BackupDataWorker` only writes v4 through `BackupCodec.write`. The `encrypt: Boolean` flag of `PasswordBasedEncryption.encryptDecrypt` goes; `PasswordBasedEncryptionImpl` survives only inside the legacy reader.
+- `BackupDataWorker` only writes v4 through `BackupCodec.encode`. The `encrypt: Boolean` flag of `PasswordBasedEncryption.encryptDecrypt` goes; `PasswordBasedEncryptionImpl` survives only inside the legacy reader.
 - `AEADBadTagException` is a `BadPaddingException`, so the existing wrong-password catch keeps working; the v4 path additionally maps a body-tag failure after a successful key check to `CORRUPT_OR_INVALID_FILE`. The pinned salt/IV workaround in `PasswordBasedEncryptionImplTest` (`75a8d18`) is removed.
 - Restoring any format into a v2 vault needs no further change: rows go through the secure DAOs, which encrypt under the DEK.
 
