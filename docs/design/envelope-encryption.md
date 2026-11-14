@@ -1408,7 +1408,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 - G5 Auto-backup after password login writes v4; after biometric login nothing is written (unchanged).
 
 **H. Downgrade**
-- H1 Install N-1 as resolved by `scripts/lib/previous-release.sh` over the new build (`adb install -r -d`) → the app fails cleanly at DB open (Room 6→5 missing), no silent key regeneration; reinstall the new build → vault intact.
+- H1 Install N-1 as resolved by `scripts/lib/previous-release.sh` over the new build (`adb install -r -d`) → N-1 does not open Room at launch: it routes on its `is_sign_up_required` encrypted pref (Signup was shown on API 29, 2026-11-15) and regenerates its own unused `symmetricDataKey`; any DB access fails with Room's missing 6→5 migration (N-1 has no destructive fallback), so nothing is written; reinstall the new build → vault intact.
 
 **I. Logs & analytics on the QA APK (after the last MR, on the minified `qa` build)** — the `debug` build proves nothing here: R8 only runs on `qa`/`release`, and `qa` plants `ReleaseTree` (INFO/WARN/ERROR to `FirebaseCrashlytics.log`, nothing to logcat). Drive A1, B1, B4, C1, D1, E1, E3, F1, F2 and an erase on one QA install, then:
 - I1 **Breadcrumbs carry the story.** Force a non-fatal at the end of the run (any `crashInDebugBuild` site reached on purpose, or a test `Timber.e(Exception())` in a throwaway QA build) and read the attached log in the Crashlytics console: every stage of each flow is there once, in order, enough to tell which branch failed without the code open; no line repeats in a loop (per-row, per-frame, per-emission), nothing at INFO that only debugging needed (standing preference for few logs, `PROJECT_FACTS.md`).
