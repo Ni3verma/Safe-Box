@@ -23,6 +23,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
@@ -572,6 +576,35 @@ class LoginScreenTest {
         val success = actions.filterIsInstance<LoginScreenAction.BiometricSuccess>().single()
         assertThat(success.cipher).isSameInstanceAs(cipher)
         composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
+    }
+
+    @Test
+    fun biometricUnlockCipher_whileTheScreenIsNotResumed_shouldWaitAndPromptOnResume() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply { canAuthenticateOverride = true }
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+        val lifecycleOwner = object : LifecycleOwner {
+            val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.STARTED }
+            override val lifecycle: Lifecycle get() = registry
+        }
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDeviceSecurityAuthProvider provides fakeAuthProvider,
+                LocalLifecycleOwner provides lifecycleOwner,
+            ) {
+                SafeBoxTheme {
+                    LoginScreen(uiState = LoginUiState(biometricUnlockCipher = cipher), screenAction = {})
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        // A vault locked in the background must not start a prompt BiometricPrompt would refuse.
+        assertThat(fakeAuthProvider.lastCryptoObject).isNull()
+
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.RESUMED }
+        composeTestRule.waitForIdle()
+
+        assertThat(fakeAuthProvider.lastCryptoObject?.cipher).isSameInstanceAs(cipher)
     }
 
     @Test
