@@ -1,4 +1,4 @@
-package com.andryoga.safebox.security.interfaces
+package com.andryoga.safebox.security.envelope.interfaces
 
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow

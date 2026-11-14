@@ -1,6 +1,7 @@
-package com.andryoga.safebox.security.interfaces
+package com.andryoga.safebox.security.envelope.interfaces
 
-import com.andryoga.safebox.security.envelope.KdfParams
+import com.andryoga.safebox.security.envelope.models.KdfParams
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import java.security.GeneralSecurityException
 import javax.crypto.Cipher
 

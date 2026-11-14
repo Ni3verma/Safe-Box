@@ -1,5 +1,6 @@
 package com.andryoga.safebox.security.envelope
 
+import com.andryoga.safebox.security.envelope.models.KdfParams
 import java.nio.CharBuffer
 import java.security.SecureRandom
 import java.text.Normalizer

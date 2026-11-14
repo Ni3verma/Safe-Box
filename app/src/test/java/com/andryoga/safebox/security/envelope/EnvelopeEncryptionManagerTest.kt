@@ -3,9 +3,10 @@ package com.andryoga.safebox.security.envelope
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.Exceptions
-import com.andryoga.safebox.security.interfaces.KeyHealth
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
-import com.andryoga.safebox.security.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.interfaces.WrongPasswordException
+import com.andryoga.safebox.security.envelope.models.KdfParams
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows

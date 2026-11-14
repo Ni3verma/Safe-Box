@@ -15,6 +15,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.R
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
@@ -24,6 +25,7 @@ import com.andryoga.safebox.common.CommonConstants.BACKUP_PARAM_IS_SHOW_START_NO
 import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
+import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
 import com.andryoga.safebox.data.db.docs.export.ExportBankAccountData
 import com.andryoga.safebox.data.db.docs.export.ExportBankCardData
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
@@ -36,23 +38,19 @@ import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.domain.models.NotificationOptions
 import com.andryoga.safebox.domain.models.backup.BackupPathData
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.BackupFailureReason
+import com.andryoga.safebox.worker.backup.BackupCodec
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.ObjectOutputStream
-import java.nio.ByteBuffer
 import java.util.Date
 import java.util.UUID
 
@@ -63,7 +61,6 @@ class BackupDataWorker
     @Assisted params: WorkerParameters,
     private val backupPasswordRegistry: BackupPasswordRegistry,
     private val backupMetadataRepository: BackupMetadataRepository,
-    private val passwordBasedEncryption: PasswordBasedEncryption,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
@@ -75,11 +72,6 @@ class BackupDataWorker
     private val localTag = "backup data worker -> "
 
     private var startTime = System.currentTimeMillis()
-
-    private lateinit var salt: ByteArray
-    private lateinit var iv: ByteArray
-
-    private val exportMap = mutableMapOf<String, ByteArray?>()
 
     override suspend fun doWork(): Result {
         // Taken first so no early return leaves it registered; zeroed in finally.
@@ -165,31 +157,23 @@ class BackupDataWorker
         val pickedDir = resolveWritableDir(backupMetadata.uriString)
             ?: return onBackupFailure(BackupFailureReason.FOLDER_INACCESSIBLE, null)
 
-        salt = passwordBasedEncryption.getRandomSalt()
-        iv = passwordBasedEncryption.getRandomIV()
-        exportMap.putAll(
-            mapOf(
-                CommonConstants.SALT_KEY to salt,
-                CommonConstants.IV_KEY to iv,
-                CommonConstants.VERSION_KEY to ByteArray(1) {
-                    CommonConstants.BACKUP_VERSION.toByte()
-                },
-            )
+        val backupBytes = BackupCodec.encode(
+            password = password,
+            payload = ExportBackupPayload(
+                logins = loginData,
+                bankAccounts = bankAccountData,
+                bankCards = bankCardData,
+                secureNotes = secureNoteData,
+                authenticators = authenticatorData,
+            ),
+            createdAt = System.currentTimeMillis(),
+            appVersionCode = BuildConfig.VERSION_CODE,
         )
-        recordTime("got salt and iv")
-
-        populateExportMapWithData(
-            loginData,
-            password,
-            bankAccountData,
-            bankCardData,
-            secureNoteData,
-            authenticatorData,
-        )
+        recordTime("encrypted backup")
 
         val writtenBytes = try {
             deleteExtraBackupFiles(pickedDir)
-            exportToFile(pickedDir)
+            exportToFile(pickedDir, backupBytes)
         } catch (exception: CancellationException) {
             throw exception
         } catch (exception: Exception) {
@@ -282,39 +266,6 @@ class BackupDataWorker
         return Result.failure(reason.toWorkData())
     }
 
-    private fun populateExportMapWithData(
-        loginData: List<ExportLoginData>,
-        password: CharArray,
-        bankAccountData: List<ExportBankAccountData>,
-        bankCardData: List<ExportBankCardData>,
-        secureNoteData: List<ExportSecureNoteData>,
-        authenticatorData: List<ExportAuthenticatorData>,
-    ) {
-        exportMap[CommonConstants.LOGIN_DATA_KEY] = encryptLoginData(loginData, password)
-        recordTime("got login data byte array")
-
-        exportMap[CommonConstants.BANK_ACCOUNT_DATA_KEY] =
-            encryptBankAccountData(bankAccountData, password)
-        recordTime("got bank account data byte array")
-
-        exportMap[CommonConstants.BANK_CARD_DATA_KEY] =
-            encryptBankCardData(bankCardData, password)
-        recordTime("got bank card data byte array")
-
-        exportMap[CommonConstants.SECURE_NOTE_DATA_KEY] =
-            encryptSecureNoteData(secureNoteData, password)
-        recordTime("got secure note data byte array")
-
-        exportMap[CommonConstants.AUTHENTICATOR_DATA_KEY] =
-            encryptAuthenticatorData(authenticatorData, password)
-        recordTime("got authenticator data byte array")
-
-        exportMap[CommonConstants.CREATION_DATE_KEY] =
-            ByteBuffer.allocate(Long.SIZE_BYTES)
-                .putLong(System.currentTimeMillis())
-                .array()
-    }
-
     private suspend fun deleteExtraBackupFiles(pickedDir: DocumentFile) =
         withContext(dispatchersProvider.io) {
             val files = pickedDir.listFiles().filter {
@@ -335,13 +286,14 @@ class BackupDataWorker
         }
 
     /**
-     * Writes the export map to a new file in [pickedDir].
+     * Writes [backupBytes] to a new file in [pickedDir].
      *
      * @return the written file's size in bytes, or -1 when the provider cannot report it. Read
      * for analytics only; the write itself is unchanged.
      */
     private suspend fun exportToFile(
         pickedDir: DocumentFile,
+        backupBytes: ByteArray,
     ): Long = withContext(dispatchersProvider.io) {
         val nameSuffix =
             Utils.getFormattedDate(Date(), "yyyyMMddHHmmssSSS") + ".bak"
@@ -351,9 +303,9 @@ class BackupDataWorker
             val path = uri.path ?: throw IllegalArgumentException("Backup directory path is null")
             val targetFile = File(path, fileName)
             Timber.i("$localTag making output stream for file path: ${targetFile.absolutePath}")
-            ObjectOutputStream(FileOutputStream(targetFile)).use {
+            FileOutputStream(targetFile).use {
                 Timber.i("$localTag writing to backup file")
-                it.writeObject(exportMap)
+                it.write(backupBytes)
             }
             targetFile.length()
         } else {
@@ -367,9 +319,9 @@ class BackupDataWorker
                 "w"
             )?.use { parcelFileDescriptor ->
                 Timber.i("$localTag making output stream")
-                ObjectOutputStream(FileOutputStream(parcelFileDescriptor.fileDescriptor)).use {
+                FileOutputStream(parcelFileDescriptor.fileDescriptor).use {
                     Timber.i("$localTag writing to backup file")
-                    it.writeObject(exportMap)
+                    it.write(backupBytes)
                 }
             } ?: throw IOException("Failed to open file descriptor for URI: $fileUri")
             // telemetry only: a provider that cannot answer must not fail a backup that was written.
@@ -377,99 +329,6 @@ class BackupDataWorker
             val reportedLength = runCatching { file.length() }.getOrDefault(UNKNOWN_SIZE)
             if (reportedLength > 0) reportedLength else UNKNOWN_SIZE
         }
-    }
-
-    private fun encryptLoginData(
-        data: List<ExportLoginData>,
-        password: CharArray,
-    ): ByteArray? {
-        if (data.isNotEmpty()) {
-            val json = Json.encodeToString(ListSerializer(ExportLoginData.serializer()), data)
-            return passwordBasedEncryption.encryptDecrypt(
-                password,
-                json.toByteArray(),
-                salt,
-                iv,
-                true
-            )
-        }
-        return null
-    }
-
-    private fun encryptBankAccountData(
-        data: List<ExportBankAccountData>,
-        password: CharArray,
-    ): ByteArray? {
-        if (data.isNotEmpty()) {
-            val json = Json.encodeToString(ListSerializer(ExportBankAccountData.serializer()), data)
-            return passwordBasedEncryption.encryptDecrypt(
-                password,
-                json.toByteArray(),
-                salt,
-                iv,
-                true
-            )
-        }
-        return null
-    }
-
-    private fun encryptBankCardData(
-        data: List<ExportBankCardData>,
-        password: CharArray,
-    ): ByteArray? {
-        if (data.isNotEmpty()) {
-            val json = Json.encodeToString(ListSerializer(ExportBankCardData.serializer()), data)
-            return passwordBasedEncryption.encryptDecrypt(
-                password,
-                json.toByteArray(),
-                salt,
-                iv,
-                true
-            )
-        }
-        return null
-    }
-
-    private fun encryptSecureNoteData(
-        data: List<ExportSecureNoteData>,
-        password: CharArray,
-    ): ByteArray? {
-        if (data.isNotEmpty()) {
-            val json = Json.encodeToString(ListSerializer(ExportSecureNoteData.serializer()), data)
-            return passwordBasedEncryption.encryptDecrypt(
-                password,
-                json.toByteArray(),
-                salt,
-                iv,
-                true
-            )
-        }
-        return null
-    }
-
-    /**
-     * Serializes and encrypts the list of TOTP authenticators using password-based encryption.
-     *
-     * @param data The authenticator records to encrypt.
-     * @param password The user-supplied backup password.
-     * @return Encrypted byte array payload, or null if the record list is empty.
-     */
-    private fun encryptAuthenticatorData(
-        data: List<ExportAuthenticatorData>,
-        password: CharArray,
-    ): ByteArray? {
-        if (data.isNotEmpty()) {
-            val json =
-                Json.encodeToString(ListSerializer(ExportAuthenticatorData.serializer()), data)
-            return passwordBasedEncryption.encryptDecrypt(
-                password,
-                json.toByteArray(),
-                salt,
-                iv,
-                true,
-            )
-        }
-        return null
     }
 
     private fun recordTime(message: String) {

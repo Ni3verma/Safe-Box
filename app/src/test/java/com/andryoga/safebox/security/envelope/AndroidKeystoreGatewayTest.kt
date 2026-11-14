@@ -4,10 +4,10 @@ import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.StrongBoxUnavailableException
 import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.Exceptions
-import com.andryoga.safebox.security.interfaces.BiometricNotEnrolledException
-import com.andryoga.safebox.security.interfaces.KeyHealth
-import com.andryoga.safebox.security.interfaces.LockScreenRequiredException
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.BiometricNotEnrolledException
+import com.andryoga.safebox.security.envelope.interfaces.LockScreenRequiredException
+import com.andryoga.safebox.security.envelope.models.KeyHealth
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
 import org.junit.Assume.assumeTrue

@@ -5,11 +5,11 @@ import com.andryoga.safebox.common.DispatchersProvider
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
-import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.models.VaultState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import timber.log.Timber

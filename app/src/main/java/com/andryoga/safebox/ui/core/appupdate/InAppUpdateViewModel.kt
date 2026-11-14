@@ -9,7 +9,7 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.di.ApplicationScope
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateController
 import com.andryoga.safebox.ui.core.appupdate.controller.AppUpdateState
 import dagger.hilt.android.lifecycle.HiltViewModel

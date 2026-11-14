@@ -1,6 +1,6 @@
 package com.andryoga.safebox.di
 
-import com.andryoga.safebox.security.interfaces.KeystoreGateway
+import com.andryoga.safebox.security.envelope.interfaces.KeystoreGateway
 import com.andryoga.safebox.test.fakes.FakeKeystoreGateway
 import dagger.Binds
 import dagger.Module

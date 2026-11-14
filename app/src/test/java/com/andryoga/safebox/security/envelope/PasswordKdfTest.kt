@@ -1,5 +1,6 @@
 package com.andryoga.safebox.security.envelope
 
+import com.andryoga.safebox.security.envelope.models.KdfParams
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.assertThrows
 import org.junit.Test

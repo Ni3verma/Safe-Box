@@ -1,8 +1,8 @@
 package com.andryoga.safebox.security.envelope
 
 import androidx.annotation.VisibleForTesting
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow

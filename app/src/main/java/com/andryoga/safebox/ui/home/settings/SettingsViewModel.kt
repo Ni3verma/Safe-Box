@@ -9,13 +9,13 @@ import com.andryoga.safebox.common.AnalyticsSource
 import com.andryoga.safebox.common.Utils.launchVaultOperation
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
-import com.andryoga.safebox.data.repository.interfaces.VaultState
 import com.andryoga.safebox.security.envelope.ChangeMasterPasswordUseCase
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.models.VaultState
 import com.andryoga.safebox.security.interfaces.BiometricClass
 import com.andryoga.safebox.security.interfaces.DeviceSecurityStatus
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.SessionLockedException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow

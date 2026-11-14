@@ -26,28 +26,23 @@ import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
-import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
+import com.andryoga.safebox.worker.backup.BackupCodec
+import com.andryoga.safebox.worker.backup.CorruptBackupException
+import com.andryoga.safebox.worker.backup.OpenedBackup
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
 import timber.log.Timber
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.io.InvalidClassException
-import java.io.InvalidObjectException
-import java.io.ObjectInputStream
-import java.io.ObjectStreamClass
+import java.io.InputStream
 import java.nio.BufferUnderflowException
-import java.nio.ByteBuffer
 import java.security.GeneralSecurityException
 import java.util.Date
 import javax.crypto.BadPaddingException
@@ -59,7 +54,7 @@ class RestoreDataWorker
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val backupPasswordRegistry: BackupPasswordRegistry,
-    private val passwordBasedEncryption: PasswordBasedEncryption,
+    private val legacyBackupReader: LegacyBackupReader,
     private val safeBoxDatabase: SafeBoxDatabase,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
@@ -77,9 +72,6 @@ class RestoreDataWorker
     /** Set at doWork start; [startTime] is reset by every [recordTime] so it cannot serve. */
     private var restoreStartedAt = startTime
 
-    private lateinit var importMap: Map<String, ByteArray?>
-    private lateinit var salt: ByteArray
-    private lateinit var iv: ByteArray
     private lateinit var inputPassword: CharArray
 
     override suspend fun doWork(): Result {
@@ -99,100 +91,64 @@ class RestoreDataWorker
         }
     }
 
-    private suspend fun restore(): Result {
+    private fun restore(): Result {
+        // 0 until the container is read, so a failure before that reports an unknown version.
+        var version = 0
         return try {
             val fileUri = inputData.getString(CommonConstants.RESTORE_PARAM_FILE_URI)
                 ?: throw IllegalArgumentException("expected file uri input was not received")
 
             recordTime("got file uri")
 
-            val uri = fileUri.toUri()
-            val inputStream =
-                if (BackupStorageUtils.isRawFileScheme(uri)) {
-                    val path =
-                        uri.path ?: throw IllegalArgumentException("Restore file path is null")
-                    FileInputStream(File(path))
-                } else {
-                    applicationContext.contentResolver.openInputStream(uri)
-                        ?: throw IllegalArgumentException("Could not open input stream for $uri")
+            val bytes = openRestoreFile(fileUri).use(::readWithinLimit)
+            val backup = openBackup(bytes)
+            version = backup.version
+            // A newer build may have changed the payload in ways this build cannot read, which
+            // would otherwise surface as a misleading "corrupt file". Older versions are still
+            // accepted. Checked before any password work.
+            if (version > CommonConstants.BACKUP_VERSION) {
+                analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW) {
+                    param(AnalyticsParam.VERSION, version.toDouble())
                 }
-
-            val secureObjectInputStream = try {
-                object : ObjectInputStream(inputStream) {
-                    override fun resolveClass(desc: ObjectStreamClass): Class<*> {
-                        val allowedClasses = setOf(
-                            "java.util.HashMap",
-                            "java.util.LinkedHashMap",
-                            "java.util.Map",
-                            "java.lang.String",
-                            "[B",
-                            "java.lang.Number",
-                            "java.lang.Integer",
-                            "java.lang.Long"
-                        )
-                        if (desc.name !in allowedClasses) {
-                            throw InvalidClassException(
-                                "Unauthorized deserialization attempt",
-                                desc.name
-                            )
-                        }
-                        return super.resolveClass(desc)
-                    }
-                }
-            } catch (t: Throwable) {
-                inputStream.close()
-                throw t
+                return Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData())
             }
-            secureObjectInputStream.use {
-                val fileObject = it.readObject()
-                if (fileObject !is Map<*, *>) {
-                    throw InvalidObjectException("input file is not correct, was not able to read it is as Map")
+            val decoded = backup.decode(inputPassword)
+            Timber.i(
+                "$localTag version = $version, " +
+                    "created on : ${Utils.getFormattedDate(Date(decoded.createdAt))}",
+            )
+            recordTime("file read and decrypted")
+            // Only an encrypted payload can prove a format-1–3 password: a file without one
+            // decrypted nothing, and the destructive replace would wipe the vault for any password
+            // (#272). No genuine backup looks like that, because BackupDataWorker writes no file
+            // for an empty vault. A payload that decrypts to an empty list still counts.
+            if (decoded.hasNoRecordPayload) {
+                analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY) {
+                    param(AnalyticsParam.VERSION, version.toDouble())
                 }
-
-                importMap = fileObject as Map<String, ByteArray?>
-                val version = readBackupVersion(importMap)
-                // A newer build may have changed the payload in ways this build cannot read, which
-                // would otherwise surface as a misleading "corrupt file". Older versions are still
-                // accepted. Non-local return: `use` is inline, so this closes the stream and skips
-                // the catch clauses below, keeping the reason from being remapped or double-logged.
-                if (version > CommonConstants.BACKUP_VERSION) {
-                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW) {
-                        param(AnalyticsParam.VERSION, version.toDouble())
-                    }
-                    return Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData())
-                }
-                val creationDateBytes = importMap[CommonConstants.CREATION_DATE_KEY]!!
-                // Check size for backward compatibility: new backups store an 8-byte Long timestamp,
-                // while legacy backups stored a 1-byte value. Calling ByteBuffer.wrap().long on <8 bytes
-                // throws BufferUnderflowException and fails the restore.
-                val creationDate = if (creationDateBytes.size >= Long.SIZE_BYTES) {
-                    ByteBuffer.wrap(creationDateBytes).long
-                } else {
-                    creationDateBytes[0].toLong()
-                }
-                Timber.i(
-                    "$localTag version = $version, " +
-                            "created on : ${Utils.getFormattedDate(Date(creationDate))}"
-                )
-                recordTime("file read to map object")
-                // Same non-local return as the version check above: skips the catch clauses so
-                // the reason is not remapped or double-logged.
-                if (!startRestore()) {
-                    analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_BACKUP_EMPTY) {
-                        param(AnalyticsParam.VERSION, version.toDouble())
-                    }
-                    return Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData())
-                }
+                return Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData())
             }
-
+            val authenticatorData = filterDecodableAuthenticatorData(
+                decoded.authenticators,
+                decoded.undecodableAuthenticatorCount,
+            )
+            restoreDataToDb(
+                decoded.logins,
+                decoded.bankAccounts,
+                decoded.bankCards,
+                decoded.secureNotes,
+                authenticatorData,
+            )
+            analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS) {
+                param(AnalyticsParam.VERSION, version.toDouble())
+                param(AnalyticsParam.DURATION_MS, System.currentTimeMillis() - restoreStartedAt)
+            }
             Result.success()
         } catch (badPaddingException: BadPaddingException) {
+            // An SBOX key check failure is an AEADBadTagException, a BadPaddingException too.
             Timber.e(badPaddingException, "wrong password entered for restore")
-            val version = runCatching {
-                if (::importMap.isInitialized) readBackupVersion(importMap).toDouble() else 0.0
-            }.getOrNull() ?: 0.0
             analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD) {
-                param(AnalyticsParam.VERSION, version)
+                param(AnalyticsParam.VERSION, version.toDouble())
             }
             Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData())
         } catch (exception: SessionLockedException) {
@@ -200,10 +156,56 @@ class RestoreDataWorker
             Timber.i("$localTag restore abandoned, the vault is locked")
             Result.failure(RestoreFailureReason.SESSION_LOCKED.toWorkData())
         } catch (exception: Exception) {
-            onRestoreError(exception)
             val failureReason = mapExceptionToFailureReason(exception)
+            onRestoreError(exception, failureReason, version)
             Result.failure(failureReason.toWorkData())
         }
+    }
+
+    private fun openRestoreFile(fileUri: String): InputStream {
+        val uri = fileUri.toUri()
+        return if (BackupStorageUtils.isRawFileScheme(uri)) {
+            val path = uri.path ?: throw IllegalArgumentException("Restore file path is null")
+            FileInputStream(File(path))
+        } else {
+            applicationContext.contentResolver.openInputStream(uri)
+                ?: throw IllegalArgumentException("Could not open input stream for $uri")
+        }
+    }
+
+    /**
+     * Reads the whole file, refusing one that does not start like a backup after its first four
+     * bytes and one longer than [BackupCodec.MAX_FILE_BYTES] before it is buffered in full.
+     *
+     * @throws CorruptBackupException When the file is not a backup or is too large.
+     */
+    private fun readWithinLimit(input: InputStream): ByteArray {
+        val output = ByteArrayOutputStream()
+        repeat(BACKUP_HEADER_BYTES) {
+            val byte = input.read()
+            if (byte < 0) throw CorruptBackupException("file shorter than any backup")
+            output.write(byte)
+        }
+        val head = output.toByteArray()
+        if (!BackupCodec.hasMagic(head) && !LegacyBackupReader.hasStreamHeader(head)) {
+            throw CorruptBackupException("not a Safe-Box backup")
+        }
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) return output.toByteArray()
+            output.write(buffer, 0, read)
+            if (output.size() > BackupCodec.MAX_FILE_BYTES) {
+                throw CorruptBackupException("file larger than any backup")
+            }
+        }
+    }
+
+    /** Routes on the first bytes: formats 4+ start with the SBOX magic, 1–3 with a Java serialisation header. */
+    private fun openBackup(bytes: ByteArray): OpenedBackup = when {
+        BackupCodec.hasMagic(bytes) -> BackupCodec.open(bytes)
+        LegacyBackupReader.hasStreamHeader(bytes) -> legacyBackupReader.open(bytes)
+        else -> throw CorruptBackupException("not a Safe-Box backup")
     }
 
     private fun mapExceptionToFailureReason(exception: Exception): RestoreFailureReason {
@@ -221,87 +223,15 @@ class RestoreDataWorker
         }
     }
 
-    private fun onRestoreError(exception: Exception) {
+    private fun onRestoreError(exception: Exception, reason: RestoreFailureReason, version: Int) {
         Timber.e(
             exception,
             "$localTag exception occurred : ${exception.localizedMessage}"
         )
-        val version = runCatching {
-            if (::importMap.isInitialized) readBackupVersion(importMap).toDouble() else 0.0
-        }.getOrNull() ?: 0.0
         analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_FAILURE) {
-            param(AnalyticsParam.VERSION, version)
+            param(AnalyticsParam.VERSION, version.toDouble())
+            param(AnalyticsParam.REASON, reason.name)
         }
-    }
-
-    /**
-     * Reads the backup format version from the header.
-     *
-     * The version is a single byte written with `toByte()`, so it is read back as **unsigned**:
-     * a signed read would turn `0x80`..`0xFF` negative and let those versions pass the
-     * newer-version check. `0xFF` is reserved as the marker for a future multi-byte version,
-     * see persistence-and-crypto.md.
-     *
-     * @param map Deserialized backup header and payload map.
-     * @return Version in `0..255`.
-     * @throws NullPointerException if the version key is missing.
-     * @throws IndexOutOfBoundsException if the version entry is empty.
-     */
-    private fun readBackupVersion(map: Map<String, ByteArray?>): Int {
-        return map[CommonConstants.VERSION_KEY]!![0].toUByte().toInt()
-    }
-
-    /**
-     * Decrypts every record payload and replaces the vault with them.
-     *
-     * Only an encrypted payload can prove the password: each `decrypt*Data` returns null without
-     * decrypting when its entry is absent or null. So when every result is null nothing verified
-     * the password, and the destructive replace would wipe the vault for any password (#272). No
-     * genuine backup looks like that, because `BackupDataWorker` writes no file for an empty vault.
-     * A payload that decrypts to an empty list still counts, since decrypting it verified the
-     * password.
-     *
-     * @return `false`, without touching the DB, when the backup has no record payload.
-     */
-    private fun startRestore(): Boolean {
-        salt = importMap[CommonConstants.SALT_KEY]!!
-        iv = importMap[CommonConstants.IV_KEY]!!
-        recordTime("read salt and iv")
-        val loginData = decryptLoginData(importMap[CommonConstants.LOGIN_DATA_KEY])
-        val bankAccountData =
-            decryptBankAccountData(importMap[CommonConstants.BANK_ACCOUNT_DATA_KEY])
-        val bankCardData = decryptBankCardData(importMap[CommonConstants.BANK_CARD_DATA_KEY])
-        val secureNoteData = decryptSecureNoteData(importMap[CommonConstants.SECURE_NOTE_DATA_KEY])
-        val decodedAuthenticators =
-            decryptAuthenticatorData(importMap[CommonConstants.AUTHENTICATOR_DATA_KEY])
-        // A new record type must be added here too, otherwise a backup holding only that type is
-        // rejected as empty.
-        val decryptedPayloads = listOf(
-            loginData,
-            bankAccountData,
-            bankCardData,
-            secureNoteData,
-            decodedAuthenticators,
-        )
-        if (decryptedPayloads.all { it == null }) return false
-        val authenticatorData = filterDecodableAuthenticatorData(
-            decodedAuthenticators?.records,
-            decodedAuthenticators?.deserializationFailedCount ?: 0,
-        )
-        recordTime("all data decrypted")
-
-        restoreDataToDb(
-            loginData,
-            bankAccountData,
-            bankCardData,
-            secureNoteData,
-            authenticatorData,
-        )
-        analyticsHelper.logEvent(AnalyticsKey.RESTORE_DATA_SUCCESS) {
-            param(AnalyticsParam.VERSION, readBackupVersion(importMap).toDouble())
-            param(AnalyticsParam.DURATION_MS, System.currentTimeMillis() - restoreStartedAt)
-        }
-        return true
     }
 
     /**
@@ -316,8 +246,8 @@ class RestoreDataWorker
      * bad 2FA seed must not cost the user every login, card and note in the backup.
      *
      * @param authenticatorData Records decoded from the backup, or null when the backup has none.
-     * @param deserializationFailedCount Elements [decryptAuthenticatorData] could not deserialize
-     * at all. They leave no record to inspect here, so they are counted rather than filtered.
+     * @param deserializationFailedCount Elements the reader could not deserialize at all. They
+     * leave no record to inspect here, so they are counted rather than filtered.
      * @return Records safe to persist, or null when the input was null.
      */
     private fun filterDecodableAuthenticatorData(
@@ -354,128 +284,6 @@ class RestoreDataWorker
             digits = digits,
             period = period,
         )
-    }
-
-    private fun decryptLoginData(loginDataByteArray: ByteArray?): List<ExportLoginData>? {
-        return if (loginDataByteArray != null) {
-            val json = String(
-                passwordBasedEncryption.encryptDecrypt(
-                    inputPassword,
-                    loginDataByteArray,
-                    salt,
-                    iv,
-                    false
-                )
-            )
-            Json.decodeFromString(ListSerializer(ExportLoginData.serializer()), json)
-        } else {
-            null
-        }
-    }
-
-    private fun decryptBankAccountData(bankAccountDataByteArray: ByteArray?): List<ExportBankAccountData>? {
-        return if (bankAccountDataByteArray != null) {
-            val json = String(
-                passwordBasedEncryption.encryptDecrypt(
-                    inputPassword,
-                    bankAccountDataByteArray,
-                    salt,
-                    iv,
-                    false
-                )
-            )
-            Json.decodeFromString(ListSerializer(ExportBankAccountData.serializer()), json)
-        } else {
-            null
-        }
-    }
-
-    private fun decryptBankCardData(bankCardDataByteArray: ByteArray?): List<ExportBankCardData>? {
-        return if (bankCardDataByteArray != null) {
-            val json = String(
-                passwordBasedEncryption.encryptDecrypt(
-                    inputPassword,
-                    bankCardDataByteArray,
-                    salt,
-                    iv,
-                    false
-                )
-            )
-            Json.decodeFromString(ListSerializer(ExportBankCardData.serializer()), json)
-        } else {
-            null
-        }
-    }
-
-    private fun decryptSecureNoteData(secureNoteDataByteArray: ByteArray?): List<ExportSecureNoteData>? {
-        return if (secureNoteDataByteArray != null) {
-            val json = String(
-                passwordBasedEncryption.encryptDecrypt(
-                    inputPassword,
-                    secureNoteDataByteArray,
-                    salt,
-                    iv,
-                    false
-                )
-            )
-            Json.decodeFromString(ListSerializer(ExportSecureNoteData.serializer()), json)
-        } else {
-            null
-        }
-    }
-
-    /**
-     * Authenticator records read out of a backup, paired with the number of array elements that
-     * could not be deserialized at all.
-     *
-     * The count travels with the records because a failed element leaves nothing behind to inspect
-     * later, yet it still has to be reported as skipped.
-     *
-     * @property records Elements that deserialized, not yet checked for semantic usability.
-     * @property deserializationFailedCount Elements dropped because they did not match the schema.
-     */
-    private data class DecodedAuthenticators(
-        val records: List<ExportAuthenticatorData>,
-        val deserializationFailedCount: Int,
-    )
-
-    /**
-     * Decrypts and deserializes TOTP authenticator records from the encrypted backup byte array.
-     *
-     * Elements are decoded one at a time rather than through [ListSerializer], so a single record
-     * written by a future build, for example with an algorithm this version does not know, is
-     * dropped on its own instead of aborting a restore that also carries the user's logins, cards
-     * and notes.
-     *
-     * @param authenticatorDataByteArray The encrypted payload from the backup archive, or null if absent.
-     * @return Decoded records and the count of undecodable elements, or null if the payload is null.
-     */
-    private fun decryptAuthenticatorData(
-        authenticatorDataByteArray: ByteArray?,
-    ): DecodedAuthenticators? {
-        if (authenticatorDataByteArray == null) return null
-
-        val json = String(
-            passwordBasedEncryption.encryptDecrypt(
-                inputPassword,
-                authenticatorDataByteArray,
-                salt,
-                iv,
-                false,
-            ),
-        )
-        val decodedRecords = mutableListOf<ExportAuthenticatorData>()
-        var deserializationFailedCount = 0
-        for (element in Json.parseToJsonElement(json).jsonArray) {
-            try {
-                decodedRecords.add(
-                    Json.decodeFromJsonElement(ExportAuthenticatorData.serializer(), element),
-                )
-            } catch (_: SerializationException) {
-                deserializationFailedCount++
-            }
-        }
-        return DecodedAuthenticators(decodedRecords, deserializationFailedCount)
     }
 
     private fun restoreDataToDb(
@@ -581,5 +389,8 @@ class RestoreDataWorker
 
     private companion object {
         const val NUL = '\u0000'
+
+        /** Bytes that tell the formats apart: the SBOX magic or the Java serialisation header. */
+        const val BACKUP_HEADER_BYTES = 4
     }
 }

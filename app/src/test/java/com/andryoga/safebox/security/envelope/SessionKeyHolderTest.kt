@@ -1,7 +1,7 @@
 package com.andryoga.safebox.security.envelope
 
-import com.andryoga.safebox.security.interfaces.SessionLockedException
 import app.cash.turbine.test
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch

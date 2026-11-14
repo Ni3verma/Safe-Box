@@ -1,4 +1,4 @@
-package com.andryoga.safebox.security.envelope
+package com.andryoga.safebox.security.envelope.models
 
 import java.util.Base64
 

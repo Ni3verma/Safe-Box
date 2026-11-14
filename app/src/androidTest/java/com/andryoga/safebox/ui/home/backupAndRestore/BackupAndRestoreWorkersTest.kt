@@ -8,6 +8,7 @@ import androidx.work.ListenableWorker.Result
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.repository.interfaces.AuthenticatorDataRepository
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.BankAccountDataRepository
@@ -30,12 +31,15 @@ import com.andryoga.safebox.worker.BackupDataWorker
 import com.andryoga.safebox.worker.BackupPasswordRegistry
 import com.andryoga.safebox.worker.RestoreDataWorker
 import com.andryoga.safebox.worker.SafeBoxWorkerFactory
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryptionImpl
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -49,6 +53,11 @@ import java.nio.ByteBuffer
 import java.util.Date
 import java.util.Locale
 import java.util.UUID
+import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.PBEKeySpec
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -435,7 +444,7 @@ class BackupAndRestoreWorkersTest {
             ObjectOutputStream(FileOutputStream(headerOnlyFile)).use {
                 it.writeObject(
                     hashMapOf(
-                        CommonConstants.VERSION_KEY to byteArrayOf(CommonConstants.BACKUP_VERSION.toByte()),
+                        CommonConstants.VERSION_KEY to byteArrayOf(LAST_LEGACY_VERSION),
                         CommonConstants.SALT_KEY to ByteArray(256),
                         CommonConstants.IV_KEY to ByteArray(16),
                         CommonConstants.CREATION_DATE_KEY to
@@ -450,6 +459,41 @@ class BackupAndRestoreWorkersTest {
             assertThat(loginDataRepository.getAllLoginData().first().any { it.title == "Apple ID Login" })
                 .isTrue()
             assertThat(authenticatorDataRepository.getAllAuthenticatorData().first()).isNotEmpty()
+        }
+
+    /** Files users already hold keep restoring into an envelope vault through the real factory. */
+    @Test
+    fun restoreFromBackupFile_withFormatThreeFile_shouldRestoreItsRecords() =
+        runBlocking<Unit> {
+            val backupDir = File(context.cacheDir, "backup_format_three")
+            backupDir.deleteRecursively()
+            backupDir.mkdirs()
+            val salt = ByteArray(PasswordBasedEncryptionImpl.Constants.SALT_SIZE) { it.toByte() }
+            val iv = ByteArray(PasswordBasedEncryptionImpl.Constants.IV_SIZE) { it.toByte() }
+            val loginJson = Json.encodeToString(
+                ListSerializer(ExportLoginData.serializer()),
+                listOf(ExportLoginData("Format Three Login", null, "pwd", null, "legacy-user", 1_000L, 2_000L)),
+            )
+            val legacyFile = File(backupDir, "format_three.bak")
+            ObjectOutputStream(FileOutputStream(legacyFile)).use {
+                it.writeObject(
+                    linkedMapOf(
+                        CommonConstants.VERSION_KEY to byteArrayOf(LAST_LEGACY_VERSION),
+                        CommonConstants.SALT_KEY to salt,
+                        CommonConstants.IV_KEY to iv,
+                        CommonConstants.CREATION_DATE_KEY to
+                            ByteBuffer.allocate(Long.SIZE_BYTES).putLong(System.currentTimeMillis()).array(),
+                        CommonConstants.LOGIN_DATA_KEY to encryptLegacy(loginJson.toByteArray(), salt, iv),
+                        CommonConstants.AUTHENTICATOR_DATA_KEY to null,
+                    ),
+                )
+            }
+
+            val result = runRestoreWorker(testPassword, Uri.fromFile(legacyFile).toString())
+
+            assertThat(result).isEqualTo(Result.success())
+            assertThat(loginDataRepository.getAllLoginData().first().map { it.title })
+                .containsExactly("Format Three Login")
         }
 
     @Test
@@ -761,6 +805,25 @@ class BackupAndRestoreWorkersTest {
         }
     }
 
+    /** Encrypts like builds before format 4 did; the app itself only decrypts this scheme now. */
+    private fun encryptLegacy(data: ByteArray, salt: ByteArray, iv: ByteArray): ByteArray {
+        val keySpec = PBEKeySpec(
+            testPassword.toCharArray(),
+            salt,
+            PasswordBasedEncryptionImpl.Constants.KEY_ITERATION_COUNT,
+            PasswordBasedEncryptionImpl.Constants.KEY_LENGTH,
+        )
+        val keyBytes = SecretKeyFactory.getInstance(PasswordBasedEncryptionImpl.Constants.KEY_FACTORY_ALGO)
+            .generateSecret(keySpec).encoded
+        val cipher = Cipher.getInstance(PasswordBasedEncryptionImpl.Constants.CIPHER_TRANSFORMATION)
+        cipher.init(
+            Cipher.ENCRYPT_MODE,
+            SecretKeySpec(keyBytes, PasswordBasedEncryptionImpl.Constants.KEY_ALGO),
+            IvParameterSpec(iv),
+        )
+        return cipher.doFinal(data)
+    }
+
     private fun randomFrom(pool: String, length: Int, random: Random): String {
         val codePoints = pool.codePoints().toArray()
         return (1..length).joinToString("") {
@@ -939,5 +1002,8 @@ class BackupAndRestoreWorkersTest {
 
         // Instrumentation argument that replays a specific randomized dataset. See [randomSeed].
         private const val SEED_ARGUMENT_KEY = "backupSeed"
+
+        /** Last format of the Java-serialised map container. */
+        private const val LAST_LEGACY_VERSION: Byte = 3
     }
 }

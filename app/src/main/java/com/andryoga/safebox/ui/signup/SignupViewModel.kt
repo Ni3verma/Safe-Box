@@ -5,13 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.common.Utils
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.di.IsDebug
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.password.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +26,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignupViewModel @Inject constructor(
-    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
     private val vaultRepository: VaultRepository,
     private val analyticsHelper: AnalyticsHelper,
     private val sessionKeyHolder: SessionKeyHolder,
@@ -135,11 +132,6 @@ class SignupViewModel @Inject constructor(
                 } finally {
                     dek.fill(0)
                 }
-                // TODO(MR8): remove EncryptedPreferenceProvider and IS_SIGN_UP_REQUIRED write
-                encryptedPreferenceProvider.upsertBooleanPref(
-                    CommonConstants.IS_SIGN_UP_REQUIRED,
-                    false,
-                )
                 vaultKeyMaintenance.scheduleAfterUnlock()
                 Timber.i("Added pswrd in db")
 

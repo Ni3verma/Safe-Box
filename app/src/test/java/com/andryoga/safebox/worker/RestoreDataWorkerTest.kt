@@ -14,19 +14,21 @@ import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.docs.export.ExportAuthenticatorData
+import com.andryoga.safebox.data.db.docs.export.ExportBackupPayload
 import com.andryoga.safebox.data.db.docs.export.ExportLoginData
 import com.andryoga.safebox.data.db.secureDao.AuthenticatorDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankAccountDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SessionLockedException
+import com.andryoga.safebox.security.envelope.interfaces.SessionLockedException
 import com.andryoga.safebox.test.fakes.FakeAnalyticsHelper
 import com.andryoga.safebox.test.fixtures.TestFixtures
 import com.andryoga.safebox.totp.engine.TotpGeneratorImpl
 import com.andryoga.safebox.totp.models.TotpAlgorithm
 import com.andryoga.safebox.ui.home.backupAndRestore.components.newBackupOrRestore.RestoreFailureReason
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
+import com.andryoga.safebox.worker.backup.legacy.PasswordBasedEncryption
 import com.google.common.truth.Truth.assertThat
 import io.mockk.MockKAnnotations
 import io.mockk.every
@@ -136,7 +138,7 @@ class RestoreDataWorkerTest {
                     context = appContext,
                     params = workerParameters,
                     backupPasswordRegistry = backupPasswordRegistry,
-                    passwordBasedEncryption = passwordBasedEncryption,
+                    legacyBackupReader = LegacyBackupReader(passwordBasedEncryption),
                     safeBoxDatabase = safeBoxDatabase,
                     loginDataDaoSecure = loginDataDaoSecure,
                     bankAccountDataDaoSecure = bankAccountDataDaoSecure,
@@ -184,7 +186,7 @@ class RestoreDataWorkerTest {
         val passwordsSeen = mutableListOf<String>()
         val passwordArrays = mutableListOf<CharArray>()
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } answers {
             passwordArrays += firstArg<CharArray>()
             passwordsSeen += String(firstArg<CharArray>())
@@ -217,7 +219,7 @@ class RestoreDataWorkerTest {
         }
         val successEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RESTORE_DATA_SUCCESS }
         assertThat(successEvent.params[AnalyticsParam.VERSION.paramName])
-            .isEqualTo(CommonConstants.BACKUP_VERSION.toDouble())
+            .isEqualTo(WorkerTestFixtures.LAST_LEGACY_VERSION.toDouble())
         assertThat(successEvent.params[AnalyticsParam.DURATION_MS.paramName] as Long).isAtLeast(0L)
     }
 
@@ -228,7 +230,7 @@ class RestoreDataWorkerTest {
         val backupFile = File(tempDir, "WrongPasswordBackup.bak")
         WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } throws BadPaddingException("Invalid decryption key or password")
 
         val inputData = Data.Builder()
@@ -292,7 +294,7 @@ class RestoreDataWorkerTest {
             val result = buildWorker(inputData).doWork()
 
             assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData()))
-            verify(exactly = 0) { passwordBasedEncryption.encryptDecrypt(any(), any(), any(), any(), any()) }
+            verify(exactly = 0) { passwordBasedEncryption.decrypt(any(), any(), any(), any()) }
             verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
             val tooNewEvent = analyticsHelper.loggedEvents.single {
                 it.key == AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW
@@ -331,8 +333,8 @@ class RestoreDataWorkerTest {
     }
 
     @Test
-    fun doWork_backupVersionEqualToSupported_isNotRejectedAsTooNew() = runTest {
-        val result = restoreBackupOfVersion(CommonConstants.BACKUP_VERSION.toByte())
+    fun doWork_lastLegacyBackupVersion_isNotRejectedAsTooNew() = runTest {
+        val result = restoreBackupOfVersion(WorkerTestFixtures.LAST_LEGACY_VERSION)
 
         assertThat(result).isEqualTo(Result.success())
         assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW)).isFalse()
@@ -354,7 +356,7 @@ class RestoreDataWorkerTest {
 
             val result = restoreFile(backupFile)
 
-            assertBackupEmptyWithoutDbWork(result, CommonConstants.BACKUP_VERSION.toDouble())
+            assertBackupEmptyWithoutDbWork(result, WorkerTestFixtures.LAST_LEGACY_VERSION.toDouble())
         }
 
     @Test
@@ -372,7 +374,7 @@ class RestoreDataWorkerTest {
 
         val result = restoreFile(backupFile)
 
-        assertBackupEmptyWithoutDbWork(result, CommonConstants.BACKUP_VERSION.toDouble())
+        assertBackupEmptyWithoutDbWork(result, WorkerTestFixtures.LAST_LEGACY_VERSION.toDouble())
     }
 
     @Test
@@ -398,7 +400,7 @@ class RestoreDataWorkerTest {
             WorkerTestFixtures.createBackupMap(secureNoteData = dummyCipherBytes),
         )
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } returns "[]".toByteArray()
 
         val result = restoreFile(backupFile)
@@ -429,7 +431,7 @@ class RestoreDataWorkerTest {
         val backupFile = File(tempDir, "AuthBackup.bak")
         WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } returns authJson.toByteArray()
 
         val inputData = Data.Builder()
@@ -477,7 +479,7 @@ class RestoreDataWorkerTest {
         val backupFile = File(tempDir, "CorruptAuthBackup.bak")
         WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } returns authJson.toByteArray()
 
         val inputData = Data.Builder()
@@ -597,7 +599,7 @@ class RestoreDataWorkerTest {
             val backupFile = File(tempDir, "LegacyBackup.bak")
             WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
             every {
-                passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+                passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
             } returns loginJson.toByteArray()
 
             val inputData = Data.Builder()
@@ -673,7 +675,7 @@ class RestoreDataWorkerTest {
         val result = buildWorker(inputData, password = null).doWork()
 
         assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.SESSION_LOCKED.toWorkData()))
-        verify(exactly = 0) { passwordBasedEncryption.encryptDecrypt(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { passwordBasedEncryption.decrypt(any(), any(), any(), any()) }
         verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
         verify(exactly = 0) { loginDataDaoSecure.deleteAllData() }
         assertThat(analyticsHelper.loggedEvents).isEmpty()
@@ -697,7 +699,7 @@ class RestoreDataWorkerTest {
                 WorkerTestFixtures.createBackupMap(loginData = dummyCipherBytes),
             )
             every {
-                passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+                passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
             } returns loginJson.toByteArray()
             every { loginDataDaoSecure.insertMultipleLoginData(any()) } throws SessionLockedException()
             val inputData = Data.Builder()
@@ -711,6 +713,124 @@ class RestoreDataWorkerTest {
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
             assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_SUCCESS)).isFalse()
         }
+
+    @Test
+    fun doWork_formatFourBackupAndCorrectPassword_restoresRecordsAndLogsVersionFour() = runTest {
+        val backupFile = File(tempDir, "FormatFour.bak")
+        WorkerTestFixtures.writeFormatFourBackup(
+            backupFile,
+            TEST_PASSWORD,
+            ExportBackupPayload(
+                logins = listOf(ExportLoginData("V4 Login", null, "pwd", null, "user", 1000L, 2000L)),
+                bankAccounts = emptyList(),
+                bankCards = emptyList(),
+                secureNotes = emptyList(),
+                authenticators = listOf(
+                    TestFixtures.createTestExportAuthenticatorData(title = "V4 2FA", secretKey = "JBSWY3DPEHPK3PXP"),
+                ),
+            ),
+        )
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.success())
+        verify(exactly = 0) { passwordBasedEncryption.decrypt(any(), any(), any(), any()) }
+        verify(exactly = 1) {
+            loginDataDaoSecure.insertMultipleLoginData(match { it.single().title == "V4 Login" })
+        }
+        verify(exactly = 1) {
+            authenticatorDataDaoSecure.insertMultipleAuthenticatorData(match { it.single().title == "V4 2FA" })
+        }
+        verify(exactly = 1) { bankCardDataDaoSecure.deleteAllData() }
+        val successEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RESTORE_DATA_SUCCESS }
+        assertThat(successEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(4.0)
+    }
+
+    @Test
+    fun doWork_formatFourBackupWithWrongPassword_failsAsIncorrectPasswordWithoutDbWork() = runTest {
+        val backupFile = File(tempDir, "FormatFourWrongPassword.bak")
+        WorkerTestFixtures.writeFormatFourBackup(backupFile, "other_password", loginOnlyPayload())
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.INCORRECT_PASSWORD.toWorkData()))
+        verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+        val wrongPasswordEvent = analyticsHelper.loggedEvents.single {
+            it.key == AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD
+        }
+        assertThat(wrongPasswordEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(4.0)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
+    }
+
+    @Test
+    fun doWork_formatFourBackupWithTamperedBody_failsAsCorruptWithReasonAndWithoutDbWork() = runTest {
+        val backupFile = File(tempDir, "FormatFourTampered.bak")
+        val bytes = WorkerTestFixtures.writeFormatFourBackup(backupFile, TEST_PASSWORD, loginOnlyPayload())
+        // The last byte is the body's tag; the key check before it still passes.
+        bytes[bytes.size - 1] = (bytes[bytes.size - 1].toInt() xor 0x01).toByte()
+        backupFile.writeBytes(bytes)
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
+        verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+        val failureEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RESTORE_DATA_FAILURE }
+        assertThat(failureEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(4.0)
+        assertThat(failureEvent.params[AnalyticsParam.REASON.paramName])
+            .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.name)
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_WRONG_PASSWORD)).isFalse()
+    }
+
+    @Test
+    fun doWork_formatFourMagicWithNewerVersion_failsAsTooNewBeforeAnyPasswordWork() = runTest {
+        val newerVersion = CommonConstants.BACKUP_VERSION + 1
+        val backupFile = File(tempDir, "FormatFive.bak")
+        // Only the magic and version are meaningful: a newer layout must not be parsed at all.
+        backupFile.writeBytes("SBOX".toByteArray() + newerVersion.toByte() + ByteArray(64) { 0x7F })
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_TOO_NEW.toWorkData()))
+        verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
+        val tooNewEvent = analyticsHelper.loggedEvents.single {
+            it.key == AnalyticsKey.RESTORE_DATA_BACKUP_TOO_NEW
+        }
+        assertThat(tooNewEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(newerVersion.toDouble())
+        assertThat(analyticsHelper.hasLogged(AnalyticsKey.RESTORE_DATA_FAILURE)).isFalse()
+    }
+
+    @Test
+    fun doWork_formatFourBackupWithoutAnyRecordList_failsWithBackupEmpty() = runTest {
+        val backupFile = File(tempDir, "FormatFourEmpty.bak")
+        WorkerTestFixtures.writeFormatFourBackup(backupFile, TEST_PASSWORD, ExportBackupPayload())
+
+        val result = restoreFile(backupFile)
+
+        assertBackupEmptyWithoutDbWork(result, 4.0)
+    }
+
+    @Test
+    fun doWork_fileThatIsNeitherFormat_failsAsCorruptWithUnknownVersionAndReason() = runTest {
+        val backupFile = File(tempDir, "NotABackup.bak")
+        backupFile.writeText("PK zip or anything else")
+
+        val result = restoreFile(backupFile)
+
+        assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.toWorkData()))
+        val failureEvent = analyticsHelper.loggedEvents.single { it.key == AnalyticsKey.RESTORE_DATA_FAILURE }
+        assertThat(failureEvent.params[AnalyticsParam.VERSION.paramName]).isEqualTo(0.0)
+        assertThat(failureEvent.params[AnalyticsParam.REASON.paramName])
+            .isEqualTo(RestoreFailureReason.CORRUPT_OR_INVALID_FILE.name)
+    }
+
+    /** One login and every other type empty, the shape BackupDataWorker writes for a small vault. */
+    private fun loginOnlyPayload() = ExportBackupPayload(
+        logins = listOf(ExportLoginData("Login", null, "pwd", null, "user", 1000L, 1000L)),
+        bankAccounts = emptyList(),
+        bankCards = emptyList(),
+        secureNotes = emptyList(),
+        authenticators = emptyList(),
+    )
 
     /**
      * Runs a full restore whose authenticator payload decrypts to [authJson].
@@ -731,7 +851,7 @@ class RestoreDataWorkerTest {
         val backupFile = File(tempDir, fileName)
         WorkerTestFixtures.writeBackupMapToFile(backupFile, backupMap)
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } returns authJson.toByteArray()
 
         val inputData = Data.Builder()
@@ -758,7 +878,7 @@ class RestoreDataWorkerTest {
             WorkerTestFixtures.createBackupMap(version = version, loginData = dummyCipherBytes),
         )
         every {
-            passwordBasedEncryption.encryptDecrypt(any(), dummyCipherBytes, any(), any(), false)
+            passwordBasedEncryption.decrypt(any(), dummyCipherBytes, any(), any())
         } returns "[]".toByteArray()
 
         return restoreFile(backupFile)
@@ -790,7 +910,7 @@ class RestoreDataWorkerTest {
         expectedVersion: Double,
     ) {
         assertThat(result).isEqualTo(Result.failure(RestoreFailureReason.BACKUP_EMPTY.toWorkData()))
-        verify(exactly = 0) { passwordBasedEncryption.encryptDecrypt(any(), any(), any(), any(), any()) }
+        verify(exactly = 0) { passwordBasedEncryption.decrypt(any(), any(), any(), any()) }
         verify(exactly = 0) { safeBoxDatabase.runInTransaction(any<Runnable>()) }
         verify(exactly = 0) { loginDataDaoSecure.deleteAllData() }
         verify(exactly = 0) { authenticatorDataDaoSecure.deleteAllData() }

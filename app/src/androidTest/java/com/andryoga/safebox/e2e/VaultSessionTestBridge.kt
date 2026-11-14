@@ -3,9 +3,9 @@ package com.andryoga.safebox.e2e
 import androidx.test.core.app.ApplicationProvider
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.security.envelope.AesGcmWrap
-import com.andryoga.safebox.security.interfaces.EnvelopeEncryptionManager
-import com.andryoga.safebox.security.interfaces.SessionKeyHolder
-import com.andryoga.safebox.security.interfaces.WrapKeySpec
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
