@@ -54,6 +54,7 @@ enum class AnalyticsParam(val paramName: String) {
     STAGE("stage"),
     TABLE("table"),
     RECORDS_DONE("records_done"),
+    RECORDS_DELETED("records_deleted"),
     WRAP("wrap"),
     // endregion
 

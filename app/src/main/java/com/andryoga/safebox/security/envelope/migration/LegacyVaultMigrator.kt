@@ -264,19 +264,25 @@ class LegacyVaultMigrator @Inject constructor(
             attempts.set(0)
 
             val durationMs = (System.currentTimeMillis() - ctx.startTimeMs).coerceAtLeast(0L)
+            val recordsDeleted = decryptedLogins.corruptedKeys.size + decryptedAccounts.corruptedKeys.size +
+                decryptedCards.corruptedKeys.size + decryptedNotes.corruptedKeys.size +
+                decryptedAuthenticators.corruptedKeys.size
             val wrapsValue = buildWrapsParam(
                 hasDeviceWrap = wrappedDevice != null,
                 hasBiometricWrap = wrappedBiometric != null,
             )
             Timber.i(
-                "legacy vault migration completed: durationMs=%d, totalRecords=%d, wraps=%s",
+                "legacy vault migration completed: durationMs=%d, totalRecords=%d, recordsDeleted=%d, wraps=%s",
                 durationMs,
                 totalRecords,
+                recordsDeleted,
                 wrapsValue,
             )
             analyticsHelper.logEvent(AnalyticsKey.VAULT_MIGRATION_SUCCESS) {
                 param(AnalyticsParam.DURATION_MS, durationMs)
                 param(AnalyticsParam.RECORD_COUNT, totalRecords)
+                // Rows the legacy key could not read; the migration deletes them.
+                param(AnalyticsParam.RECORDS_DELETED, recordsDeleted)
                 param(AnalyticsParam.RETRIES, ctx.retriesCount)
                 param(AnalyticsParam.LEGACY_DECRYPT_MS, ctx.legacyDecryptNanos / NANOS_PER_MILLI)
                 param(AnalyticsParam.WRAPS, wrapsValue)

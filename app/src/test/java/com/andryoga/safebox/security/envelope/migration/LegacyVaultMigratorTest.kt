@@ -239,6 +239,7 @@ class LegacyVaultMigratorTest {
         }
         assertThat(successEvent.params[AnalyticsParam.ATTEMPT.paramName]).isEqualTo(1)
         assertThat(successEvent.params[AnalyticsParam.RECORD_COUNT.paramName]).isEqualTo(5)
+        assertThat(successEvent.params[AnalyticsParam.RECORDS_DELETED.paramName]).isEqualTo(0)
         assertThat(successEvent.params[AnalyticsParam.WRAPS.paramName])
             .isEqualTo("device_biometric")
     }
@@ -388,6 +389,8 @@ class LegacyVaultMigratorTest {
         coVerify(exactly = 1) { loginDataDao.deleteLoginDataByKey(11) }
         coVerify(exactly = 1) { secureNoteDataDao.deleteSecretNoteDataByKey(22) }
         assertThat(fakeKeystoreGateway.legacyVaultKey()).isNull()
+        val successEvent = fakeAnalytics.loggedEvents.first { it.key == AnalyticsKey.VAULT_MIGRATION_SUCCESS }
+        assertThat(successEvent.params[AnalyticsParam.RECORDS_DELETED.paramName]).isEqualTo(2)
     }
 
     @Test
