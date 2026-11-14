@@ -17,9 +17,6 @@ object CommonConstants {
     // higher one. See InAppUpdateViewModel.
     const val IN_APP_UPDATE_PROMPTED_VERSION_CODE = "in_app_update_prompted_version_code"
 
-    //        SHOULD ONLY be user for encrypted shared preference
-    const val IS_SIGN_UP_REQUIRED = "is_sign_up_required"
-
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
 

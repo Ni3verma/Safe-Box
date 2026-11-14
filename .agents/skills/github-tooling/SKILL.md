@@ -55,8 +55,9 @@ repository UI or `.coderabbit.yaml` on the PR's *head* branch) brought it under 
 filtered files are subtracted before the limit check. `path_instructions` does **not** help: it is
 prompt text for files that are still reviewed and counted. Re-trigger with `@coderabbitai review`
 (incremental) or `@coderabbitai full review`; `@coderabbitai configuration` prints the effective
-config with each value's source. The owner wants the locale filter removed again once the big PRs
-are through, because the bot has caught real `strings.xml` problems before.
+config with each value's source. The locale filter was removed again after the big PRs (verified on
+#320, 2026-11-14: `path_filters: []`, source `defaults`), because the bot has caught real
+`strings.xml` problems before.
 
 ## Current authentication state
 

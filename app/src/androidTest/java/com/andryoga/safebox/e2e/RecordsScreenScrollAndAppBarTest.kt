@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -23,7 +21,6 @@ import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.domain.mappers.record.toRecordListItem
 import com.andryoga.safebox.domain.models.record.RecordListItem
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -50,9 +47,6 @@ class RecordsScreenScrollAndAppBarTest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -105,7 +99,6 @@ class RecordsScreenScrollAndAppBarTest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
@@ -129,7 +122,6 @@ class RecordsScreenScrollAndAppBarTest {
         E2ETestUtils.setupUnlockedHomeState(
             safeBoxDatabase,
             userDetailsRepository,
-            encryptedPreferenceProvider,
             preferenceProvider
         )
 

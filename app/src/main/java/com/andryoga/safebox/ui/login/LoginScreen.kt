@@ -26,6 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import com.andryoga.safebox.R
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
 import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
@@ -162,7 +165,19 @@ internal fun LoginScreen(
 
     val biometricCipher = uiState.biometricUnlockCipher
     val isLoginFormShowing = migrationRunning == null && uiState.migrationFailure == null
-    if (biometricCipher != null && isLoginFormShowing && uiState.forgotPasswordStep == null) {
+    // A lock while the app is in the background composes Login there; a prompt started then is
+    // refused by BiometricPrompt and lost, so it starts on the first resume and is not restarted
+    // when the prompt itself pauses the screen.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    var isPromptReleased by remember(biometricCipher) { mutableStateOf(false) }
+    LaunchedEffect(lifecycleState, biometricCipher, uiState.forgotPasswordStep) {
+        when {
+            // A recovery prompt can pause the screen; release again only once it is resumed.
+            uiState.forgotPasswordStep != null -> isPromptReleased = false
+            lifecycleState.isAtLeast(Lifecycle.State.RESUMED) -> isPromptReleased = true
+        }
+    }
+    if (biometricCipher != null && isLoginFormShowing && uiState.forgotPasswordStep == null && isPromptReleased) {
         // Remembered per cipher: a new CryptoObject instance would re-launch the prompt.
         val cryptoObject = remember(biometricCipher) { BiometricPrompt.CryptoObject(biometricCipher) }
         DeviceSecurityAuthHandler(

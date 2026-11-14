@@ -134,7 +134,7 @@ object Migration {
     }
 
     /**
-     * Schema v6 (envelope encryption, design §4.2): `vault_meta`, and `user_details`
+     * Schema v6 (envelope encryption): `vault_meta`, and `user_details`
      * without the `password` column.
      *
      * The legacy credential state is parked in `vault_meta` first - `crypto_version = 1` for any

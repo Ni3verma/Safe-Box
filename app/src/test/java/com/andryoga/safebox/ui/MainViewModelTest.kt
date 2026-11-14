@@ -103,10 +103,7 @@ class MainViewModelTest {
         }
     }
 
-    /**
-     * Routing reads Room alone: the ViewModel has no preference dependency left, so
-     * `IS_SIGN_UP_REQUIRED` cannot steer an existing vault into signup whatever it says.
-     */
+    /** Routing reads Room alone: the ViewModel has no preference dependency to steer it. */
     @Test
     fun loadingState_whenAVaultExists_shouldProceedToLogin() = runTest {
         coEvery { vaultRepository.hasVault() } returns true

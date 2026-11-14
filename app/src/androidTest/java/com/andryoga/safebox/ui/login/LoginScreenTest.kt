@@ -1,11 +1,17 @@
 package com.andryoga.safebox.ui.login
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -17,11 +23,16 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
+import com.andryoga.safebox.security.envelope.migration.MigrationPhase
 import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
 import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.test.fakes.FakeHapticFeedback
@@ -33,6 +44,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import javax.crypto.Cipher
+import kotlin.math.abs
 
 /**
  * Component-level UI Test suite for [LoginScreen].
@@ -567,6 +579,72 @@ class LoginScreenTest {
     }
 
     @Test
+    fun biometricUnlockCipher_whileTheScreenIsNotResumed_shouldWaitAndPromptOnResume() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply { canAuthenticateOverride = true }
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+        val lifecycleOwner = object : LifecycleOwner {
+            val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.STARTED }
+            override val lifecycle: Lifecycle get() = registry
+        }
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDeviceSecurityAuthProvider provides fakeAuthProvider,
+                LocalLifecycleOwner provides lifecycleOwner,
+            ) {
+                SafeBoxTheme {
+                    LoginScreen(uiState = LoginUiState(biometricUnlockCipher = cipher), screenAction = {})
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+        // A vault locked in the background must not start a prompt BiometricPrompt would refuse.
+        assertThat(fakeAuthProvider.lastCryptoObject).isNull()
+
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.RESUMED }
+        composeTestRule.waitForIdle()
+
+        assertThat(fakeAuthProvider.lastCryptoObject?.cipher).isSameInstanceAs(cipher)
+    }
+
+    @Test
+    fun biometricUnlockCipher_whenForgotPasswordClosesWhilePaused_shouldWaitForResumeToPrompt() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply { canAuthenticateOverride = true }
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+        val lifecycleOwner = object : LifecycleOwner {
+            val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.RESUMED }
+            override val lifecycle: Lifecycle get() = registry
+        }
+        // The cipher arrived while the forgot-password flow was already open.
+        var uiState by mutableStateOf(
+            LoginUiState(biometricUnlockCipher = cipher, forgotPasswordStep = ForgotPasswordStep.NewPassword),
+        )
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDeviceSecurityAuthProvider provides fakeAuthProvider,
+                LocalLifecycleOwner provides lifecycleOwner,
+            ) {
+                SafeBoxTheme {
+                    LoginScreen(uiState = uiState, screenAction = {})
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // The recovery prompt paused the screen and was cancelled there.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.STARTED }
+        uiState = uiState.copy(forgotPasswordStep = null)
+        composeTestRule.waitForIdle()
+        assertThat(fakeAuthProvider.lastCryptoObject).isNull()
+
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.RESUMED }
+        composeTestRule.waitForIdle()
+
+        assertThat(fakeAuthProvider.lastCryptoObject?.cipher).isSameInstanceAs(cipher)
+    }
+
+    @Test
     fun legacyVaultState_shouldShowSecurityUpgradeNotice() {
         composeTestRule.setContent {
             SafeBoxTheme {
@@ -698,6 +776,99 @@ class LoginScreenTest {
     }
 
     @Test
+    fun migrationRunningState_shouldOfferNoInputAndSwallowBack() {
+        var backReachedHost = false
+        lateinit var dispatcher: OnBackPressedDispatcher
+
+        composeTestRule.setContent {
+            dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            // Registered first, so it only runs if the screen lets a back press through.
+            BackHandler { backReachedHost = true }
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNode(hasSetTextAction()).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.login)).assertDoesNotExist()
+        composeTestRule.onNodeWithText(context.getString(R.string.forgot_password)).assertDoesNotExist()
+        composeTestRule.runOnUiThread { dispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+        assertThat(backReachedHost).isFalse()
+    }
+
+    @Test
+    fun migrationRunningState_shouldExposeTheDeterminateProgressToAccessibilityServices() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        // TalkBack announces the fraction from this semantics; reading fills 90 % of the bar.
+        composeTestRule.onNode(hasProgressNear(0.27f))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_reading))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun migrationSavingPhase_shouldSaySavingAndContinuePastTheReadingShare() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                LoginScreen(
+                    uiState = LoginUiState(
+                        isLegacyVault = true,
+                        migrationProgress = MigrationProgressState.Running(
+                            done = 5,
+                            total = 10,
+                            phase = MigrationPhase.SAVING,
+                        ),
+                    ),
+                    screenAction = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_saving))
+            .assertIsDisplayed()
+        composeTestRule.onNode(hasProgressNear(0.95f))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_counter, 5, 10))
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun loginFormWithoutMigration_shouldLetBackReachTheHost() {
+        var backReachedHost = false
+        lateinit var dispatcher: OnBackPressedDispatcher
+
+        composeTestRule.setContent {
+            dispatcher = checkNotNull(LocalOnBackPressedDispatcherOwner.current).onBackPressedDispatcher
+            BackHandler { backReachedHost = true }
+            SafeBoxTheme {
+                LoginScreen(uiState = LoginUiState(isLegacyVault = true), screenAction = {})
+            }
+        }
+
+        composeTestRule.runOnUiThread { dispatcher.onBackPressed() }
+        composeTestRule.waitForIdle()
+        assertThat(backReachedHost).isTrue()
+    }
+
+    @Test
     fun migrationFailureForgotPasswordState_shouldShowForgotPasswordNoteAndHideContinueLegacyButton() {
         composeTestRule.setContent {
             SafeBoxTheme {
@@ -788,5 +959,11 @@ class LoginScreenTest {
         composeTestRule.onNodeWithText(context.getString(R.string.erase_vault_dialog_title))
             .assertIsDisplayed()
         assertThat(actions).contains(LoginScreenAction.OnEraseVaultDialogShown)
+    }
+
+    /** The bar's fraction is a product of floats, so compare within a tolerance rather than exactly. */
+    private fun hasProgressNear(expected: Float) = SemanticsMatcher("progress ~ $expected") { node ->
+        val info = node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)
+        info != null && abs(info.current - expected) < 0.001f
     }
 }

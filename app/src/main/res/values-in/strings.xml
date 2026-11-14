@@ -136,6 +136,7 @@
     <string name="save">Simpan</string>
     <string name="password">Kata Sandi</string>
     <string name="enter_hint">Masukkan petunjuk</string>
+    <string name="hint_not_secret_note">Petunjuk ditampilkan kepada siapa pun yang memegang ponsel Anda. Jangan pernah menuliskan kata sandi Anda di dalamnya.</string>
     <string name="show_hint">Tampilkan Petunjuk</string>
     <string name="hide_hint">Sembunyikan Petunjuk</string>
     <string name="hint">Petunjuk</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Peningkatan keamanan — masukkan kata sandi utama Anda sekali</string>
     <string name="vault_migration_progress_title">Meningkatkan keamanan brankas…</string>
     <string name="vault_migration_progress_counter">%1$d dari %2$d catatan</string>
+    <string name="vault_migration_phase_reading">Membaca catatan Anda…</string>
+    <string name="vault_migration_phase_saving">Menyimpan…</string>
     <string name="vault_migration_failure_keystore">Perangkat keras keamanan tidak merespons. Tidak ada yang diubah.</string>
     <string name="vault_migration_failure_verify">Pemeriksaan peningkatan gagal. Tidak ada yang diubah.</string>
     <string name="vault_migration_failure_storage">Tidak dapat menyimpan peningkatan. Tidak ada yang diubah.</string>

@@ -136,6 +136,7 @@
     <string name="save">சேமி</string>
     <string name="password">கடவுச்சொல்</string>
     <string name="enter_hint">குறிப்பை உள்ளிடவும்</string>
+    <string name="hint_not_secret_note">உங்கள் ஃபோனை வைத்திருக்கும் எவருக்கும் குறிப்பு காட்டப்படும். அதில் உங்கள் கடவுச்சொல்லை ஒருபோதும் எழுத வேண்டாம்.</string>
     <string name="show_hint">குறிப்பைக் காட்டு</string>
     <string name="hide_hint">குறிப்பை மறை</string>
     <string name="hint">குறிப்பு</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">பாதுகாப்பு மேம்படுத்தல் — உங்கள் முதன்மை கடவுச்சொல்லை ஒருமுறை உள்ளிடவும்</string>
     <string name="vault_migration_progress_title">பெட்டகப் பாதுகாப்பு மேம்படுத்தப்படுகிறது…</string>
     <string name="vault_migration_progress_counter">%2$d இல் %1$d பதிவுகள்</string>
+    <string name="vault_migration_phase_reading">உங்கள் பதிவுகள் படிக்கப்படுகின்றன…</string>
+    <string name="vault_migration_phase_saving">சேமிக்கப்படுகிறது…</string>
     <string name="vault_migration_failure_keystore">பாதுகாப்பான வன்பொருள் பதிலளிக்கவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
     <string name="vault_migration_failure_verify">மேம்படுத்தல் சரிபார்ப்பு தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>
     <string name="vault_migration_failure_storage">மேம்படுத்தலைச் சேமிக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>

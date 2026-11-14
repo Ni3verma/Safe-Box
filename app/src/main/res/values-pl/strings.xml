@@ -136,6 +136,7 @@
     <string name="save">Zapisz</string>
     <string name="password">Hasło</string>
     <string name="enter_hint">Wpisz podpowiedź</string>
+    <string name="hint_not_secret_note">Podpowiedź jest widoczna dla każdego, kto ma Twój telefon. Nigdy nie wpisuj w niej hasła.</string>
     <string name="show_hint">Pokaż podpowiedź</string>
     <string name="hide_hint">Ukryj podpowiedź</string>
     <string name="hint">Podpowiedź</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Aktualizacja zabezpieczeń — wprowadź jednorazowo hasło główne</string>
     <string name="vault_migration_progress_title">Aktualizowanie zabezpieczeń sejfu…</string>
     <string name="vault_migration_progress_counter">%1$d z %2$d wpisów</string>
+    <string name="vault_migration_phase_reading">Odczytywanie Twoich rekordów…</string>
+    <string name="vault_migration_phase_saving">Zapisywanie…</string>
     <string name="vault_migration_failure_keystore">Bezpieczny sprzęt nie odpowiedział. Nic nie zostało zmienione.</string>
     <string name="vault_migration_failure_verify">Weryfikacja aktualizacji nie powiodła się. Nic nie zostało zmienione.</string>
     <string name="vault_migration_failure_storage">Nie udało się zapisać aktualizacji. Nic nie zostało zmienione.</string>

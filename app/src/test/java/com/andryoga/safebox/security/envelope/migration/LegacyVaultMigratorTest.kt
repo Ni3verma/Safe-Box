@@ -48,6 +48,7 @@ import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.unmockkStatic
+import io.mockk.verifyOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -123,7 +124,7 @@ class LegacyVaultMigratorTest {
         legacyKey = fakeKeystoreGateway.getOrCreateLegacyVaultKey()
         envelopeEncryptionManager = spyk(EnvelopeEncryptionManagerImpl(fakeKeystoreGateway))
         sessionKeyHolder = SessionKeyHolderImpl()
-        progress = VaultMigrationProgress()
+        progress = spyk(VaultMigrationProgress())
         fakeAnalytics = FakeAnalyticsHelper()
         fakeCrashReporter = FakeCrashReporter()
 
@@ -239,6 +240,7 @@ class LegacyVaultMigratorTest {
         }
         assertThat(successEvent.params[AnalyticsParam.ATTEMPT.paramName]).isEqualTo(1)
         assertThat(successEvent.params[AnalyticsParam.RECORD_COUNT.paramName]).isEqualTo(5)
+        assertThat(successEvent.params[AnalyticsParam.RECORDS_DELETED.paramName]).isEqualTo(0)
         assertThat(successEvent.params[AnalyticsParam.WRAPS.paramName])
             .isEqualTo("device_biometric")
     }
@@ -261,6 +263,20 @@ class LegacyVaultMigratorTest {
             it.key == AnalyticsKey.VAULT_MIGRATION_START
         }
         assertThat(startEvent.params[AnalyticsParam.TRIGGER.paramName]).isEqualTo("forgot_password")
+    }
+
+    @Test
+    fun migrate_shouldReportProgressThroughTheDecryptPassThenTheSavePass() = runTest {
+        seedOneRecordPerTable()
+
+        migrator.migrate("MasterPassword#1".toCharArray())
+
+        verifyOrder {
+            progress.start(5)
+            (1..5).forEach { progress.update(MigrationPhase.DECRYPTING, it, 5) }
+            (1..5).forEach { progress.update(MigrationPhase.SAVING, it, 5) }
+            progress.reset()
+        }
     }
 
     @Test
@@ -388,6 +404,8 @@ class LegacyVaultMigratorTest {
         coVerify(exactly = 1) { loginDataDao.deleteLoginDataByKey(11) }
         coVerify(exactly = 1) { secureNoteDataDao.deleteSecretNoteDataByKey(22) }
         assertThat(fakeKeystoreGateway.legacyVaultKey()).isNull()
+        val successEvent = fakeAnalytics.loggedEvents.first { it.key == AnalyticsKey.VAULT_MIGRATION_SUCCESS }
+        assertThat(successEvent.params[AnalyticsParam.RECORDS_DELETED.paramName]).isEqualTo(2)
     }
 
     @Test

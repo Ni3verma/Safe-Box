@@ -129,6 +129,7 @@
     <string name="save">저장</string>
     <string name="password">비밀번호</string>
     <string name="enter_hint">힌트 입력</string>
+    <string name="hint_not_secret_note">힌트는 휴대전화를 가진 누구에게나 표시됩니다. 힌트에 비밀번호를 절대 넣지 마세요.</string>
     <string name="show_hint">힌트 보기</string>
     <string name="hide_hint">힌트 숨기기</string>
     <string name="hint">힌트</string>
@@ -201,6 +202,8 @@
     <string name="login_security_upgrade_notice">보안 업그레이드 — 마스터 비밀번호를 한 번 입력하세요</string>
     <string name="vault_migration_progress_title">보관함 보안 업그레이드 중…</string>
     <string name="vault_migration_progress_counter">항목 %2$d개 중 %1$d개</string>
+    <string name="vault_migration_phase_reading">기록을 읽는 중…</string>
+    <string name="vault_migration_phase_saving">저장 중…</string>
     <string name="vault_migration_failure_keystore">보안 하드웨어가 응답하지 않았습니다. 변경된 사항이 없습니다.</string>
     <string name="vault_migration_failure_verify">업그레이드 확인에 실패했습니다. 변경된 사항이 없습니다.</string>
     <string name="vault_migration_failure_storage">업그레이드를 저장할 수 없었습니다. 변경된 사항이 없습니다.</string>

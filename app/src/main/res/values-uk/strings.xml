@@ -136,6 +136,7 @@
     <string name="save">Зберегти</string>
     <string name="password">Пароль</string>
     <string name="enter_hint">Введіть підказку</string>
+    <string name="hint_not_secret_note">Підказку бачить будь-хто, у кого ваш телефон. Ніколи не вказуйте в ній пароль.</string>
     <string name="show_hint">Показати підказку</string>
     <string name="hide_hint">Приховати підказку</string>
     <string name="hint">Підказка</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Оновлення безпеки — введіть майстер-пароль один раз</string>
     <string name="vault_migration_progress_title">Оновлення захисту сховища…</string>
     <string name="vault_migration_progress_counter">%1$d із %2$d записів</string>
+    <string name="vault_migration_phase_reading">Читання ваших записів…</string>
+    <string name="vault_migration_phase_saving">Збереження…</string>
     <string name="vault_migration_failure_keystore">Захищений апаратний модуль не відповів. Нічого не змінено.</string>
     <string name="vault_migration_failure_verify">Перевірка оновлення не пройдена. Нічого не змінено.</string>
     <string name="vault_migration_failure_storage">Не вдалося зберегти оновлення. Нічого не змінено.</string>

@@ -1,5 +1,6 @@
 package com.andryoga.safebox.ui.loading
 
+import android.net.Uri
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
@@ -13,9 +14,9 @@ import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
+import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.e2e.E2ETestUtils
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -31,9 +32,9 @@ import javax.inject.Inject
 /**
  * Integration UI Test suite for [LoadingScreenRoot] (Splash Screen & Boot Routing).
  *
- * The start destination is decided by Room, never by `IS_SIGN_UP_REQUIRED`
- * (`docs/design/envelope-encryption.md` §3.6): every test below writes the preference so that it
- * contradicts the database, so a routing that still reads the preference fails.
+ * The start destination is decided by the vault tables in Room alone (`VaultRepository.hasVault()`).
+ * The signup case seeds every other kind of state a previous vault leaves behind, so a routing that
+ * reads anything but the vault tables fails.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -52,39 +53,33 @@ class LoadingScreenRootTest {
     lateinit var userDetailsRepository: UserDetailsRepository
 
     @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
-
-    @Inject
     lateinit var preferenceProvider: PreferenceProvider
 
+    @Inject
+    lateinit var backupMetadataRepository: BackupMetadataRepository
+
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private var originalSignupRequired: Boolean = false
 
     @Before
     fun setup() {
         hiltRule.inject()
-        runBlocking {
-            originalSignupRequired =
-                encryptedPreferenceProvider.getBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
-        }
     }
 
     @After
     fun tearDown() {
         runBlocking {
             safeBoxDatabase.clearAllTables()
-            encryptedPreferenceProvider.upsertBooleanPref(
-                CommonConstants.IS_SIGN_UP_REQUIRED,
-                originalSignupRequired,
-            )
+            preferenceProvider.upsertBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, false)
         }
     }
 
     @Test
-    fun bootWithNoVault_shouldNavigateToSignupRoute_evenWhenPrefSaysSignupNotRequired() {
+    fun bootWithNoVault_shouldNavigateToSignupRoute_evenWithStateLeftByAPreviousVault() {
         runBlocking {
             safeBoxDatabase.clearAllTables()
-            encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
+            // A backup folder row and the nudge preference outlive an erased vault; neither is a vault.
+            backupMetadataRepository.insertBackupMetadata(Uri.parse("file:///sdcard/SafeboxBackups"))
+            preferenceProvider.upsertBooleanPref(CommonConstants.IS_SCREEN_LOCK_NUDGE_DISMISSED, true)
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
@@ -93,15 +88,13 @@ class LoadingScreenRootTest {
     }
 
     @Test
-    fun bootWithLegacyUserRow_shouldNavigateToLoginRoute_evenWhenPrefSaysSignupRequired() {
+    fun bootWithEnvelopeVault_shouldNavigateToLoginRoute() {
         runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
-            encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->
@@ -110,12 +103,11 @@ class LoadingScreenRootTest {
     }
 
     @Test
-    fun bootWithCryptoVersionRowOnly_shouldNavigateToLoginRoute_evenWhenPrefSaysSignupRequired() {
+    fun bootWithCryptoVersionRowOnly_shouldNavigateToLoginRoute() {
         runBlocking {
             safeBoxDatabase.clearAllTables()
             safeBoxDatabase.vaultMetaDao()
                 .upsert(VaultMetaEntity(VaultMetaKey.CRYPTO_VERSION, CryptoVersion.LEGACY))
-            encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
         }
 
         ActivityScenario.launch(MainActivity::class.java).use { _ ->

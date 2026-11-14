@@ -136,6 +136,7 @@
     <string name="save">सेव करें</string>
     <string name="password">पासवर्ड</string>
     <string name="enter_hint">हिंट दर्ज करें</string>
+    <string name="hint_not_secret_note">संकेत आपका फ़ोन रखने वाले किसी भी व्यक्ति को दिखता है। इसमें कभी भी अपना पासवर्ड न लिखें।</string>
     <string name="show_hint">हिंट दिखाएं</string>
     <string name="hide_hint">हिंट छिपाएं</string>
     <string name="hint">हिंट</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">सुरक्षा अपग्रेड — अपना मास्टर पासवर्ड एक बार दर्ज करें</string>
     <string name="vault_migration_progress_title">तिजोरी की सुरक्षा अपग्रेड की जा रही है…</string>
     <string name="vault_migration_progress_counter">%2$d में से %1$d रिकॉर्ड</string>
+    <string name="vault_migration_phase_reading">आपके रिकॉर्ड पढ़े जा रहे हैं…</string>
+    <string name="vault_migration_phase_saving">सहेजा जा रहा है…</string>
     <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेयर ने कोई जवाब नहीं दिया। कुछ भी बदला नहीं गया।</string>
     <string name="vault_migration_failure_verify">अपग्रेड जांच विफल रही। कुछ भी बदला नहीं गया।</string>
     <string name="vault_migration_failure_storage">अपग्रेड सहेजा नहीं जा सका। कुछ भी बदला नहीं गया।</string>

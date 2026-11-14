@@ -2,9 +2,7 @@
 
 package com.andryoga.safebox.di
 
-import com.andryoga.safebox.providers.EncryptedPreferenceProviderImpl
 import com.andryoga.safebox.providers.PreferenceProviderImpl
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import dagger.Binds
 import dagger.Module
@@ -20,10 +18,4 @@ abstract class PreferenceModule {
     abstract fun bindPreferenceProvider(
         preferenceProviderImpl: PreferenceProviderImpl
     ): PreferenceProvider
-
-    @Singleton
-    @Binds
-    abstract fun bindEncryptedPreferenceProvider(
-        encryptedPreferenceProviderImpl: EncryptedPreferenceProviderImpl
-    ): EncryptedPreferenceProvider
 }

@@ -143,6 +143,7 @@ private fun SignupCardContent(
             onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
             label = { MandatoryLabelText(stringResource(R.string.hint)) },
             placeholder = { Text(stringResource(R.string.enter_hint)) },
+            supportingText = { Text(stringResource(R.string.hint_not_secret_note)) },
             singleLine = true,
             modifier = Modifier
                 .padding(bottom = 16.dp)

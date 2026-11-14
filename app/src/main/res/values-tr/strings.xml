@@ -136,6 +136,7 @@
     <string name="save">Kaydet</string>
     <string name="password">Parola</string>
     <string name="enter_hint">Bir ipucu girin</string>
+    <string name="hint_not_secret_note">İpucu, telefonunuzu elinde tutan herkese gösterilir. Şifrenizi asla ipucuna yazmayın.</string>
     <string name="show_hint">İpucunu Göster</string>
     <string name="hide_hint">İpucunu Gizle</string>
     <string name="hint">İpucu</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Güvenlik yükseltmesi — ana parolanızı bir kez girin</string>
     <string name="vault_migration_progress_title">Kasa güvenliği yükseltiliyor…</string>
     <string name="vault_migration_progress_counter">%1$d / %2$d kayıt</string>
+    <string name="vault_migration_phase_reading">Kayıtlarınız okunuyor…</string>
+    <string name="vault_migration_phase_saving">Kaydediliyor…</string>
     <string name="vault_migration_failure_keystore">Güvenli donanım yanıt vermedi. Hiçbir şey değiştirilmedi.</string>
     <string name="vault_migration_failure_verify">Yükseltme doğrulaması başarısız oldu. Hiçbir şey değiştirilmedi.</string>
     <string name="vault_migration_failure_storage">Yükseltme kaydedilemedi. Hiçbir şey değiştirilmedi.</string>

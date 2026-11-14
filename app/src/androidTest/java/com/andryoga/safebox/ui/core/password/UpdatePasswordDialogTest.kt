@@ -161,4 +161,18 @@ class UpdatePasswordDialogTest {
 
         assertThat(dismissCalled).isTrue()
     }
+
+    @Test
+    fun hintField_shouldWarnThatTheHintIsNotSecret() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                UpdatePasswordDialog(
+                    onDismiss = {},
+                    onSave = { _, _ -> },
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.hint_not_secret_note)).assertIsDisplayed()
+    }
 }

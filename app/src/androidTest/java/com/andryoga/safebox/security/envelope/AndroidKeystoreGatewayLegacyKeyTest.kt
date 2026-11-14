@@ -1,17 +1,14 @@
 package com.andryoga.safebox.security.envelope
 
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.andryoga.safebox.security.AesGcmFieldCipher
+import com.andryoga.safebox.test.fixtures.LegacyVaultFixtures
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.security.GeneralSecurityException
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
 
 /**
  * The legacy `symmetricDataKey` path of the real [AndroidKeystoreGateway], which the instrumentation
@@ -49,7 +46,7 @@ class AndroidKeystoreGatewayLegacyKeyTest {
 
     @Test
     fun legacyVaultKey_whenTheAliasExists_returnsTheSeededKey() {
-        val created = seedLegacyKeyInKeystore()
+        val created = LegacyVaultFixtures.seedLegacyKeystoreKey()
 
         val encrypted = AesGcmFieldCipher.encrypt("hint", created)
         val readBack = gateway.legacyVaultKey()
@@ -59,7 +56,7 @@ class AndroidKeystoreGatewayLegacyKeyTest {
 
     @Test
     fun legacyVaultKey_acrossRepeatedReads_returnsTheSameKey() {
-        val first = seedLegacyKeyInKeystore()
+        val first = LegacyVaultFixtures.seedLegacyKeystoreKey()
         val encrypted = AesGcmFieldCipher.encrypt("record field", first)
 
         val second = checkNotNull(gateway.legacyVaultKey())
@@ -70,33 +67,15 @@ class AndroidKeystoreGatewayLegacyKeyTest {
 
     @Test
     fun deleteLegacyVaultKey_removesTheAliasSoSubsequentReadReturnsNull() {
-        val old = seedLegacyKeyInKeystore()
+        val old = LegacyVaultFixtures.seedLegacyKeystoreKey()
         val encrypted = AesGcmFieldCipher.encrypt("record field", old)
         gateway.deleteLegacyVaultKey()
         assertThat(gateway.legacyVaultKey()).isNull()
 
-        val replacement = seedLegacyKeyInKeystore()
+        val replacement = LegacyVaultFixtures.seedLegacyKeystoreKey()
 
         // The silent-data-loss signature, made explicit: a regenerated key fails the GCM tag.
         val thrown = runCatching { AesGcmFieldCipher.decrypt(encrypted, replacement) }.exceptionOrNull()
         assertThat(thrown).isInstanceOf(GeneralSecurityException::class.java)
-    }
-
-    private fun seedLegacyKeyInKeystore(): SecretKey {
-        val keyGenerator = KeyGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_AES,
-            AndroidKeystoreGateway.ANDROID_KEYSTORE,
-        )
-        keyGenerator.init(
-            KeyGenParameterSpec.Builder(
-                AndroidKeystoreGateway.LEGACY_SYMMETRIC_KEY_ALIAS,
-                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
-            )
-                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                .setRandomizedEncryptionRequired(true)
-                .build(),
-        )
-        return keyGenerator.generateKey()
     }
 }

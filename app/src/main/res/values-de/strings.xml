@@ -129,6 +129,7 @@
     <string name="save">Speichern</string>
     <string name="password">Passwort</string>
     <string name="enter_hint">Hinweis eingeben</string>
+    <string name="hint_not_secret_note">Der Hinweis ist für jeden sichtbar, der Ihr Telefon in der Hand hat. Schreiben Sie niemals Ihr Passwort hinein.</string>
     <string name="show_hint">Hinweis anzeigen</string>
     <string name="hide_hint">Hinweis ausblenden</string>
     <string name="hint">Hinweis</string>
@@ -199,6 +200,8 @@
     <string name="login_security_upgrade_notice">Sicherheits-Upgrade — geben Sie Ihr Master-Passwort einmalig ein</string>
     <string name="vault_migration_progress_title">Tresorsicherheit wird aktualisiert…</string>
     <string name="vault_migration_progress_counter">%1$d von %2$d Einträgen</string>
+    <string name="vault_migration_phase_reading">Ihre Einträge werden gelesen…</string>
+    <string name="vault_migration_phase_saving">Wird gespeichert…</string>
     <string name="vault_migration_failure_keystore">Die sichere Hardware hat nicht reagiert. Es wurde nichts geändert.</string>
     <string name="vault_migration_failure_verify">Upgrade-Prüfung fehlgeschlagen. Es wurde nichts geändert.</string>
     <string name="vault_migration_failure_storage">Das Upgrade konnte nicht gespeichert werden. Es wurde nichts geändert.</string>

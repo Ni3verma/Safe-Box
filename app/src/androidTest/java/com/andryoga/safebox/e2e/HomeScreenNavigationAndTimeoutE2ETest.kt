@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.os.SystemClock
@@ -25,7 +23,6 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -53,9 +50,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -114,7 +108,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
@@ -181,7 +174,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             backupMetadataRepository.deleteBackupMetadata()
@@ -214,7 +206,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
             E2ETestUtils.setupSeededVaultRecords(
@@ -263,7 +254,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
 
     /**
      * The HomeGraph gate. Process death keeps Home on the saved navigation state but
-     * empties the RAM-only session holder; `lockVault()` + `recreate()` reproduces exactly that
+     * empties the RAM-only session holder; `recreateWithLockedVault` reproduces exactly that
      * pair, and the restored Home must leave for Login without ever showing the vault. No reason
      * was recorded, so no banner either.
      */
@@ -273,7 +264,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -282,8 +272,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.unlockApp(composeTestRule, context)
             composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
 
-            VaultSessionTestBridge.lockVault()
-            scenario.recreate()
+            VaultSessionTestBridge.recreateWithLockedVault(scenario)
 
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
@@ -304,7 +293,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -330,7 +318,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -364,7 +351,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -391,7 +377,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -413,7 +398,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             settingsDataStore.updatePrivacy(true)
@@ -445,7 +429,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             settingsDataStore.updatePrivacy(false)

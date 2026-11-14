@@ -59,7 +59,7 @@ interface EnvelopeEncryptionManager {
      * Returns an initialized `DECRYPT_MODE` RSA-OAEP [Cipher] for [spec].
      *
      * @param spec Wrapping key specification (`BIOMETRIC` or `DEVICE`).
-     * @param aliasSuffix Optional per-generation suffix from `vault_meta` (debt D13).
+     * @param aliasSuffix Optional per-generation suffix from `vault_meta`.
      * @return [Cipher] ready for `CryptoObject` binding or immediate time-bound unwrap.
      */
     fun decryptCipherFor(spec: WrapKeySpec, aliasSuffix: String? = null): Cipher
@@ -88,7 +88,7 @@ interface EnvelopeEncryptionManager {
      *
      * @param spec Wrapping key specification (`BIOMETRIC` or `DEVICE`).
      * @param dek 32-byte Data Encryption Key to wrap.
-     * @param aliasSuffix Optional per-generation suffix from `vault_meta` (debt D13).
+     * @param aliasSuffix Optional per-generation suffix from `vault_meta`.
      * @return Base64-encoded RSA-OAEP wrap blob.
      */
     fun wrapWithKeystoreKey(spec: WrapKeySpec, dek: ByteArray, aliasSuffix: String? = null): String

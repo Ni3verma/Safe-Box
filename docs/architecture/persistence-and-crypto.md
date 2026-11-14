@@ -11,7 +11,6 @@ sufficient coverage.
 | Layer | Holds |
 |---|---|
 | Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (`uid` in plaintext; the hint encrypted with the records' key while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, and wrapped keys) |
-| `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
 | `AndroidKeyStore` | the field-encryption key — **not** file-backed, not in `/data/data` |
@@ -50,15 +49,18 @@ A running backup or restore is **not** cancelled: it fails closed (`SESSION_LOCK
 use of the key — a restore's transaction rolls back — or finishes if it no longer needs one (a
 backup past its read phase). There is no `logoutEvent` any more and no away dialog. The start destination is Room's
 decision too: `VaultRepository.hasVault()` (a `vault_meta.crypto_version` row, or a `user_details`
-row) routes to Login, nothing routes to Signup; `IS_SIGN_UP_REQUIRED` is written but never read for
-routing.
+row) routes to Login, nothing routes to Signup. The old `IS_SIGN_UP_REQUIRED` flag and the
+`EncryptedSharedPreferences` file that held it (`encrypted_pref_safe_box`, plus the androidx
+master-key alias) are gone from the code since envelope MR 9; upgraded devices keep the orphaned
+file and alias, which hold one non-secret boolean and are never read.
 
 The legacy `symmetricDataKey` alias is reached only through `KeystoreGateway`:
 `legacyVaultKey()` returns the handle or `null` and **never generates** (the signup bridge that
 created it went with envelope MR 5; a fresh vault is `crypto_version = 2` from the start). The hint
-of a `crypto_version = 1` vault goes through that handle directly on read and write
-(`UserDetailsDaoSecure`), because it is the one field touched outside a session. A lost key reads
-as `null` and refuses to write; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST`,
+of a `crypto_version = 1` vault is decrypted through that handle directly (`UserDetailsDaoSecure`,
+read-only since envelope MR 7), because it is the one field read outside a session; nothing writes a
+legacy hint any more (the migrator rewrites it as plaintext inside its transaction). A lost key reads
+as `null`; the login that follows ends in `UserAuthState.LEGACY_KEY_LOST`,
 nothing is regenerated, and the only way forward is *Erase everything and start over*.
 
 **Who opens the key (since envelope MR 5 and MR 6).** Every envelope unlock from the login screen
@@ -366,10 +368,9 @@ backup. A skipped count is surfaced to the UI.
   Key names and values are SQL literals in the migration and constants in
   `data/db/models/VaultMetaKey.kt`; `MigrationTest` asserts through the constants so the two
   cannot drift apart, and also opens the migrated file through Room to drive the production DAOs.
-  Until MR 5 lands, signup still creates a legacy vault (`crypto_version = 1` + hash, written by
-  `UserDetailsRepositoryImpl` in one `withTransaction`, `crypto_version` first because
-  `UserDetailsDaoSecure` reads it to pick the hint's stored form), so a vault made by an interim
-  branch build is migrated like any other.
+  Since envelope MR 5, signup creates a `crypto_version = 2` vault directly
+  (`VaultRepository.createVault`); `MIGRATION_5_6` only ever parks legacy vaults that a
+  pre-envelope build left behind.
 
 ## Related
 

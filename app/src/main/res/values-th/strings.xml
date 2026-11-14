@@ -129,6 +129,7 @@
     <string name="save">บันทึก</string>
     <string name="password">รหัสผ่าน</string>
     <string name="enter_hint">ป้อนคำใบ้</string>
+    <string name="hint_not_secret_note">ทุกคนที่ถือโทรศัพท์ของคุณจะเห็นคำใบ้ อย่าใส่รหัสผ่านของคุณในคำใบ้</string>
     <string name="show_hint">แสดงคำใบ้</string>
     <string name="hide_hint">ซ่อนคำใบ้</string>
     <string name="hint">คำใบ้</string>
@@ -201,6 +202,8 @@
     <string name="login_security_upgrade_notice">อัปเกรดความปลอดภัย — กรอกรหัสผ่านหลักของคุณหนึ่งครั้ง</string>
     <string name="vault_migration_progress_title">กำลังอัปเกรดความปลอดภัยของตู้นิรภัย…</string>
     <string name="vault_migration_progress_counter">%1$d จาก %2$d รายการ</string>
+    <string name="vault_migration_phase_reading">กำลังอ่านรายการของคุณ…</string>
+    <string name="vault_migration_phase_saving">กำลังบันทึก…</string>
     <string name="vault_migration_failure_keystore">ฮาร์ดแวร์ความปลอดภัยไม่ตอบสนอง ไม่มีการเปลี่ยนแปลงใดๆ</string>
     <string name="vault_migration_failure_verify">การตรวจสอบการอัปเกรดล้มเหลว ไม่มีการเปลี่ยนแปลงใดๆ</string>
     <string name="vault_migration_failure_storage">ไม่สามารถบันทึกการอัปเกรดได้ ไม่มีการเปลี่ยนแปลงใดๆ</string>

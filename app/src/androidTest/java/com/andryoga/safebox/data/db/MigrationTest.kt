@@ -26,7 +26,7 @@ class MigrationTest {
         /** Throwaway database used only to read the current schema version off Room. */
         private const val VERSION_PROBE_DB = "schema-version-probe"
 
-        /** A hash in the `b64(hash)|b64(salt)` shape `HashingUtilsImpl` writes; the bytes are arbitrary. */
+        /** A hash in the `b64(hash)|b64(salt)` shape old releases wrote; the bytes are arbitrary. */
         private const val LEGACY_HASH = "aGFzaA==|c2FsdA=="
     }
 

@@ -165,7 +165,7 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
         const val LEGACY_SYMMETRIC_KEY_ALIAS = "symmetricDataKey"
         const val RSA_KEY_SIZE_BITS = 2048
 
-        /** Validity window of the time-bound `KEK_Device` on API 29 (design §2.3). */
+        /** Validity window of the time-bound `KEK_Device` on API 29. */
         const val DEVICE_KEY_VALIDITY_SECONDS = 5
         const val RSA_OAEP_TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
 
@@ -205,7 +205,7 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
         }
 
         /**
-         * Every probe failure means "recreate the wrap" (design §6.10). Crypto-API failures vary by
+         * Every probe failure means "recreate the wrap". Crypto-API failures vary by
          * OEM and are expected; any other class is a programming error and is flagged.
          */
         internal fun healthFromFailure(error: Exception): KeyHealth {

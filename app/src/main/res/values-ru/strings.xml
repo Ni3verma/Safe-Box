@@ -136,6 +136,7 @@
     <string name="save">Сохранить</string>
     <string name="password">Пароль</string>
     <string name="enter_hint">Введите подсказку</string>
+    <string name="hint_not_secret_note">Подсказку видит любой, у кого в руках ваш телефон. Никогда не указывайте в ней пароль.</string>
     <string name="show_hint">Показать подсказку</string>
     <string name="hide_hint">Скрыть подсказку</string>
     <string name="hint">Подсказка</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Обновление безопасности — введите мастер-пароль один раз</string>
     <string name="vault_migration_progress_title">Обновление защиты хранилища…</string>
     <string name="vault_migration_progress_counter">%1$d из %2$d записей</string>
+    <string name="vault_migration_phase_reading">Чтение ваших записей…</string>
+    <string name="vault_migration_phase_saving">Сохранение…</string>
     <string name="vault_migration_failure_keystore">Защищённый модуль не ответил. Ничего не изменено.</string>
     <string name="vault_migration_failure_verify">Проверка обновления не пройдена. Ничего не изменено.</string>
     <string name="vault_migration_failure_storage">Не удалось сохранить обновление. Ничего не изменено.</string>

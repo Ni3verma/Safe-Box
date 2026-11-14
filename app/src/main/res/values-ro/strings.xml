@@ -136,6 +136,7 @@
     <string name="save">Salvează</string>
     <string name="password">Parolă</string>
     <string name="enter_hint">Introdu un indiciu</string>
+    <string name="hint_not_secret_note">Indiciul este afișat oricui are telefonul tău. Nu pune niciodată parola în el.</string>
     <string name="show_hint">Afișează indiciul</string>
     <string name="hide_hint">Ascunde indiciul</string>
     <string name="hint">Indiciu</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Actualizare de securitate — introdu parola principală o singură dată</string>
     <string name="vault_migration_progress_title">Se actualizează securitatea seifului…</string>
     <string name="vault_migration_progress_counter">%1$d din %2$d înregistrări</string>
+    <string name="vault_migration_phase_reading">Se citesc înregistrările tale…</string>
+    <string name="vault_migration_phase_saving">Se salvează…</string>
     <string name="vault_migration_failure_keystore">Hardware-ul securizat nu a răspuns. Nu s-a modificat nimic.</string>
     <string name="vault_migration_failure_verify">Verificarea actualizării a eșuat. Nu s-a modificat nimic.</string>
     <string name="vault_migration_failure_storage">Actualizarea nu a putut fi salvată. Nu s-a modificat nimic.</string>

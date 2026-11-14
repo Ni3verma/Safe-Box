@@ -38,14 +38,14 @@ upgrade test must be `qa → qa`.
 
 ## Versioning
 
-- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15` (local builds: `9999999`); `versionName` is `GITHUB_REF_NAME` (local: `LOCAL-build`).
+- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15` (local builds: `9999999`); `versionName` is the tag without `v` on a tag build, `<ref>-build.<versionCode>` on other CI refs, `LOCAL-build` locally (`app/build.gradle` top + `defaultConfig`, read 2026-11-14).
 - Tag convention is **`vMAJOR.MINOR.DBVERSION.FIX`** — the third component is the **Room schema
   version**. Enforced on tag push by `release.yml`'s `tag_db_version` job; see the release-and-ci skill.
 
 ## Persistence & crypto
 
 - Room DB version: **5** on `master`; **6** on `feature/envelope-encryption` (`MIGRATION_5_6`,
-  2026-10-21: `vault_meta` + `quarantined_record`, `user_details` loses `password`, the hash is
+  2026-10-21: `vault_meta`, `user_details` loses `password`, the hash is
   parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
   `app/schemas/`, also wired in as androidTest assets.
 - `Migration.ALL` (`data/db/Migration.kt`) is the single migration list: `CacheModule` spreads it into
@@ -61,7 +61,7 @@ upgrade test must be `qa → qa`.
   MR 4 (2026-10-23, `ActiveSessionManagerTest`): `clearSessionKey()` is the exit from the vault —
   `HomeScreen` leaves for Login on `isVaultUnlocked = false`; the timeout records
   `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**. Start destination is Room-first
-  (`VaultRepository.hasVault()`); `IS_SIGN_UP_REQUIRED` is not written since MR 8. MR 6 (2026-10-31,
+  (`VaultRepository.hasVault()`); the encrypted-prefs flag is deleted (MR 9). MR 6 (2026-10-31,
   `git grep 'setSessionKey(' -- app/src/main`; `LoginViewModelTest`, `VaultResetUseCaseTest`): every
   envelope unlock on the login screen is `LoginViewModel` → `setSessionKey` — password, fingerprint
   (`WrapKeyOpener` cipher bound as the `CryptoObject`), forgot-password (`wrapped_dek_device`, then

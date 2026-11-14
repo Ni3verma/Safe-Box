@@ -7,7 +7,7 @@ import javax.inject.Singleton
 /**
  * Why the vault session was closed, for the login screen that follows: the HomeGraph gate
  * navigates on every clear, so the navigation itself cannot say why. One value per lock source
- * that Login explains with a banner; the envelope MRs 5 and 6 add theirs.
+ * that Login explains with a banner.
  */
 enum class SessionLockReason {
     /** The away timeout cleared an open session. */

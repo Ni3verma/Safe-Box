@@ -7,7 +7,7 @@ What is tested where, and why the boundaries are drawn as they are.
 | Layer | Location | Runs on | Count |
 |---|---|---|---|
 | Unit | `app/src/test` | JVM | full suite via `:app:testDebugUnitTest` |
-| Instrumentation / E2E | `app/src/androidTest` | `debug` build, device or GMD | ~199 tests, ~29 classes |
+| Instrumentation / E2E | `app/src/androidTest` | `debug` build, device or GMD | ~326 tests, ~44 classes (2026-11-14) |
 | Migration | `app/src/androidTest/.../MigrationTest.kt` | device, real SQLite | per-step plus a full v1→current chain |
 | Upgrade and restore | `upgrade-test/` + `scripts/run-*-test.sh` | `qa` APK, black box, emulator | [upgrade-testing.md](upgrade-testing.md); release gate on every tag |
 
@@ -33,6 +33,12 @@ Do not tag anything a test can already find by text or content description; see
 backup/restore tests generate fresh random records every run so corner cases surface over time.
 They must print enough on failure to reproduce the exact scenario — a seed is not enough on its own,
 dump the offending record.
+
+**Device capabilities are real unless a class says otherwise.** The CI image has no lock screen and
+no fingerprint, so a journey that needs Keystore wraps (migration, recovery, the fingerprint switch)
+replaces `DeviceSecurityStatus` for that class only: `@UninstallModules(TelemetryModule::class)` plus
+`@BindValue` a `FakeDeviceSecurityStatus` (`UpgradeMigrationE2ETest`, `VaultLifecycleE2ETest`). The
+keys behind it are `FakeKeystoreGateway`'s JCE pairs; the prompt is `FakeDeviceSecurityAuthProvider`.
 
 **Dispatchers are injected, never hardcoded.** `DispatchersProvider` makes virtual-time execution
 deterministic under `TestDispatcher`. A test that needs a real delay is usually a design smell.
@@ -60,7 +66,7 @@ These are deliberate, recorded so nobody re-discovers them as "bugs".
 | Keystore alias continuity is covered only by the upgrade test | nothing else survives an in-place install — see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md) |
 | Builds released before #249 do not reject a *newer* `BACKUP_VERSION` | unfixable retroactively; builds from #249 on reject it with `BACKUP_TOO_NEW` (see [persistence-and-crypto.md](../architecture/persistence-and-crypto.md#restore-semantics)) |
 | CameraX `bindToLifecycle` failure path | considered, not prioritised |
-| The real `BiometricManager`/`BiometricPrompt` is never exercised: every androidTest injects `FakeDeviceSecurityAuthProvider`, and API 34 (`pixel8Api34`) is the only level any automated test runs on | that is how `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` — unsupported by androidx.biometric on API 28-29 — blocked every master-password change on Android 9/10 for two months (#279). Version-specific library rules must be pinned by JVM tests with an injected API level (`DeviceSecurityAuthProviderTest`); prompt behaviour on 28-29 needs a real device or an API 29 AVD |
+| The real `BiometricPrompt` and an authenticated Keystore unwrap are never exercised automatically: every androidTest injects `FakeDeviceSecurityAuthProvider` and binds `FakeKeystoreGateway` | no automated image authenticates unattended, and the CI `aosp-atd` image has no secure lock screen ([ADR-0011](../decisions/0011-envelope-encryption-spike-results.md) S8). The wrap-key spec, probe and OAEP parameters are covered by `KeystoreWrapKeysTest`: its lock-screen-free half on CI, its PIN half on a `google_apis` AVD after `adb shell locksettings set-pin` whenever `AndroidKeystoreGateway` changes ([build-and-test skill](../../.agents/skills/build-and-test/SKILL.md)). Version-specific library rules stay pinned by JVM tests with an injected API level (`DeviceSecurityAuthProviderTest`, the #279 lesson: `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` blocked every master-password change on Android 9/10 for two months); the prompt itself on API 29/30 is a manual row of the envelope design §12 |
 
 ## The failure that looks like a bug but isn't
 

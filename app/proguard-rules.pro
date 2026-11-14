@@ -13,6 +13,10 @@
 -keepnames class com.andryoga.safebox.ui.**.*Action*
 -keepnames class com.andryoga.safebox.ui.**.*Action*$*
 
+# LoginViewModel logs which WrapOpenOutcome a failed fingerprint unwrap produced; keep the names readable.
+-keepnames class com.andryoga.safebox.security.envelope.WrapOpenOutcome
+-keepnames class com.andryoga.safebox.security.envelope.WrapOpenOutcome$*
+
 -dontwarn java.awt.Component
 -dontwarn java.awt.GraphicsEnvironment
 -dontwarn java.awt.HeadlessException

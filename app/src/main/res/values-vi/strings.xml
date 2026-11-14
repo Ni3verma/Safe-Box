@@ -136,6 +136,7 @@
     <string name="save">Lưu</string>
     <string name="password">Mật khẩu</string>
     <string name="enter_hint">Nhập gợi ý</string>
+    <string name="hint_not_secret_note">Gợi ý hiển thị cho bất kỳ ai cầm điện thoại của bạn. Không bao giờ ghi mật khẩu vào đó.</string>
     <string name="show_hint">Hiện gợi ý</string>
     <string name="hide_hint">Ẩn gợi ý</string>
     <string name="hint">Gợi ý</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Nâng cấp bảo mật — nhập mật khẩu chính của bạn một lần</string>
     <string name="vault_migration_progress_title">Đang nâng cấp bảo mật két an toàn…</string>
     <string name="vault_migration_progress_counter">%1$d / %2$d bản ghi</string>
+    <string name="vault_migration_phase_reading">Đang đọc các mục của bạn…</string>
+    <string name="vault_migration_phase_saving">Đang lưu…</string>
     <string name="vault_migration_failure_keystore">Phần cứng bảo mật không phản hồi. Không có gì thay đổi.</string>
     <string name="vault_migration_failure_verify">Kiểm tra nâng cấp thất bại. Không có gì thay đổi.</string>
     <string name="vault_migration_failure_storage">Không thể lưu bản nâng cấp. Không có gì thay đổi.</string>

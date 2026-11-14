@@ -136,6 +136,7 @@
     <string name="save">Spara</string>
     <string name="password">Lösenord</string>
     <string name="enter_hint">Ange en ledtråd</string>
+    <string name="hint_not_secret_note">Ledtråden visas för alla som har din telefon. Skriv aldrig ditt lösenord i den.</string>
     <string name="show_hint">Visa ledtråd</string>
     <string name="hide_hint">Dölj ledtråd</string>
     <string name="hint">Ledtråd</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Säkerhetsuppgradering — ange ditt huvudlösenord en gång</string>
     <string name="vault_migration_progress_title">Uppgraderar valvsäkerhet…</string>
     <string name="vault_migration_progress_counter">%1$d av %2$d poster</string>
+    <string name="vault_migration_phase_reading">Läser dina poster…</string>
+    <string name="vault_migration_phase_saving">Sparar…</string>
     <string name="vault_migration_failure_keystore">Den säkra hårdvaran svarade inte. Inget ändrades.</string>
     <string name="vault_migration_failure_verify">Uppgraderingskontrollen misslyckades. Inget ändrades.</string>
     <string name="vault_migration_failure_storage">Kunde inte spara uppgraderingen. Inget ändrades.</string>

@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.app.KeyguardManager
@@ -15,13 +13,11 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
-import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.db.models.CryptoVersion
 import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -42,7 +38,7 @@ import javax.inject.Inject
  * Exercises the entire application architecture:
  * - MainActivity & AppNavigation / NavHost routing
  * - Hilt Dependency Injection (@HiltAndroidTest)
- * - SharedPreferences / EncryptedPreferenceProvider persistence (IS_SIGN_UP_REQUIRED flag)
+ * - Room-first start destination (VaultRepository.hasVault())
  * - Room Database (UserDetailsRepository / UserDetailsDaoSecure / SafeBoxDatabase)
  * - Multi-screen navigation (Signup -> Home (0 records) and Login -> Home)
  */
@@ -55,9 +51,6 @@ class SignupAndLoginE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -88,17 +81,14 @@ class SignupAndLoginE2ETest {
                 safeBoxDatabase = safeBoxDatabase,
                 settingsDataStore = settingsDataStore,
                 activeSessionManager = activeSessionManager,
-                encryptedPreferenceProvider = encryptedPreferenceProvider,
-                isSignUpRequired = true
             )
         }
     }
 
     @Test
     fun firstLaunch_signupFlow_shouldPersistCredentialsAndNavigateToHomeWithZeroRecords() {
-        // Given: Fresh app state with zero records and signup required
+        // Given: Fresh app state with an empty database, so no vault exists
         runBlocking {
-            encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
             safeBoxDatabase.clearAllTables()
         }
 
@@ -148,7 +138,7 @@ class SignupAndLoginE2ETest {
                 E2ETestUtils.waitForText(composeTestRule, nudgeText)
             }
 
-            // 5. The vault in Room is what routes the next launch; signup no longer writes IS_SIGN_UP_REQUIRED.
+            // 5. The vault in Room is what routes the next launch.
             runBlocking {
                 assertThat(safeBoxDatabase.vaultMetaDao().get(VaultMetaKey.CRYPTO_VERSION))
                     .isEqualTo(CryptoVersion.ENVELOPE)
@@ -159,12 +149,11 @@ class SignupAndLoginE2ETest {
 
     @Test
     fun subsequentLaunch_loginFlow_shouldRejectWrongPasswordAndNavigateToHomeOnCorrectPassword() {
-        // Given: Pre-seeded credentials using E2ETestUtils (IS_SIGN_UP_REQUIRED = false, biometric count = 0)
+        // Given: Pre-seeded credentials using E2ETestUtils (envelope vault, biometric count = 0)
         runBlocking {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
