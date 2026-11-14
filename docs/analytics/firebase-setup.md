@@ -107,7 +107,7 @@ so a dimension would collapse to `(other)`; their real P95 read is in BigQuery):
 | `retries` | `vault_migration_success`, `vault_migration_failure` | total transient Keystore decrypt retries |
 | `legacy_decrypt_ms` | `vault_migration_success` | cumulative milliseconds spent in legacy Keystore `Cipher.doFinal` |
 | `records_done` | `vault_migration_failure` | records re-encrypted before the failure (`0..n`) |
-| `records_deleted` | `vault_migration_success` | rows the legacy key could not read, deleted by the migration (`0..n`). **Pending registration** (added 2026-11-14) |
+| `records_deleted` | `vault_migration_success` | rows the legacy key could not read, deleted by the migration (`0..n`). Registered 2026-11-14 |
 
 Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 27 + 10 used (26 + 10 after archiving `db_exists`).
 

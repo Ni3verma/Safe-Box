@@ -77,7 +77,11 @@ Every commit prints `Detekt task is not available in this build` and continues. 
 3. Flows that touch `BiometricPrompt` or the Keystore for real: a manual pass on the API 30
    `google_apis` AVD (`API_30`; `API_29` for the time-bound path). The GMD and the fakes cannot
    exercise them. The adb/uiautomator driver used for MR 6 is the pattern: `uiautomator dump`,
-   find by text, `input tap`, per-step `logcat` grep.
+   find by text, `input tap`, per-step `logcat` grep. **Any change to `AndroidKeystoreGateway`**
+   also runs `KeystoreWrapKeysTest` there after `adb shell locksettings set-pin 1234`: its PIN half
+   skips itself (`assumeTrue(isDeviceSecure)`) on the GMD. The GMD XML records such a skip as a
+   `<failure>` whose text is `org.junit.AssumptionViolatedException` while the task exits 0 (and CI,
+   which reads only the exit code, stays green) — read the message before counting it (2026-11-14).
 
 ## Traps
 
@@ -103,6 +107,13 @@ The file is `TEST-<device>.xml` with spaces and parentheses in the name; the roo
 its output through `./scripts/lib/instrumentation-guard.sh out.txt 1`, and use
 `scripts/lib/crash-sentinel.sh` for a crash of the app under test. Run the script suites with the
 loop in [Commands](#commands): a bare `for` exits with the last suite's status.
+
+### An expression-bodied test that ends in a Truth chain rejects the whole class
+
+`fun x() = runBlocking { ...; assertThat(list).containsExactly(a) }` returns `Ordered`, not `Unit`, and
+JUnit refuses the class ("Method x() should be void") — every test in it, and only at run time,
+so it shows up on CI, not at compile. Write `= runBlocking<Unit> { … }` whenever the last statement
+returns a value: `isTrue()` / `isEqualTo()` return `void` and are fine, `containsExactly` / `containsAtLeast` return `Ordered` and are not.
 
 ### The emulator runs out of disk and it looks like an app bug
 
