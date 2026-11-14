@@ -357,6 +357,7 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
+            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -383,6 +384,7 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
+            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -410,6 +412,7 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
+            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -432,6 +435,7 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
+            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -454,6 +458,7 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
+            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -915,12 +920,19 @@ class LegacyVaultMigrator @Inject constructor(
         var currentStage: MigrationStage = MigrationStage.LOAD_LEGACY_KEY,
         var currentTable: String = TABLE_NONE,
         var recordsDone: Int = 0,
+        var recordsDecrypted: Int = 0,
         var retriesCount: Int = 0,
         var legacyDecryptNanos: Long = 0L,
     ) {
+        fun onRecordDecrypted(progress: VaultMigrationProgress) {
+            recordsDecrypted++
+            progress.update(MigrationPhase.DECRYPTING, recordsDecrypted, totalRecords)
+        }
+
+        /** [recordsDone] is what a failure reports: records written before it. */
         fun onRecordProcessed(progress: VaultMigrationProgress) {
             recordsDone++
-            progress.onRecordProcessed(recordsDone, totalRecords)
+            progress.update(MigrationPhase.SAVING, recordsDone, totalRecords)
         }
     }
 

@@ -136,6 +136,7 @@
     <string name="save">Uložit</string>
     <string name="password">Heslo</string>
     <string name="enter_hint">Zadejte nápovědu</string>
+    <string name="hint_not_secret_note">Nápověda se zobrazí každému, kdo drží váš telefon. Nikdy do ní nepište své heslo.</string>
     <string name="show_hint">Zobrazit nápovědu</string>
     <string name="hide_hint">Skrýt nápovědu</string>
     <string name="hint">Nápověda</string>
@@ -206,6 +207,8 @@
     <string name="login_security_upgrade_notice">Bezpečnostní aktualizace — zadejte jednou své hlavní heslo</string>
     <string name="vault_migration_progress_title">Aktualizace zabezpečení trezoru…</string>
     <string name="vault_migration_progress_counter">%1$d z %2$d záznamů</string>
+    <string name="vault_migration_phase_reading">Načítání vašich záznamů…</string>
+    <string name="vault_migration_phase_saving">Ukládání…</string>
     <string name="vault_migration_failure_keystore">Bezpečný hardware neodpověděl. Nic nebylo změněno.</string>
     <string name="vault_migration_failure_verify">Kontrola aktualizace selhala. Nic nebylo změněno.</string>
     <string name="vault_migration_failure_storage">Aktualizaci se nepodařilo uložit. Nic nebylo změněno.</string>

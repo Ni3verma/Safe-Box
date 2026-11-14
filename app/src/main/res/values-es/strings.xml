@@ -129,6 +129,7 @@
     <string name="save">Guardar</string>
     <string name="password">Contraseña</string>
     <string name="enter_hint">Introduce una pista</string>
+    <string name="hint_not_secret_note">La pista se muestra a cualquiera que tenga tu teléfono. Nunca pongas tu contraseña en ella.</string>
     <string name="show_hint">Mostrar pista</string>
     <string name="hide_hint">Ocultar pista</string>
     <string name="hint">Pista</string>
@@ -199,6 +200,8 @@
     <string name="login_security_upgrade_notice">Actualización de seguridad — introduce tu contraseña maestra una vez</string>
     <string name="vault_migration_progress_title">Actualizando la seguridad de la bóveda…</string>
     <string name="vault_migration_progress_counter">%1$d de %2$d registros</string>
+    <string name="vault_migration_phase_reading">Leyendo tus registros…</string>
+    <string name="vault_migration_phase_saving">Guardando…</string>
     <string name="vault_migration_failure_keystore">El hardware seguro no respondió. No se realizó ningún cambio.</string>
     <string name="vault_migration_failure_verify">Falló la verificación de la actualización. No se realizó ningún cambio.</string>
     <string name="vault_migration_failure_storage">No se pudo guardar la actualización. No se realizó ningún cambio.</string>
