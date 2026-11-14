@@ -41,6 +41,8 @@ import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils.TEST_MASTER_PASSWORD
+import com.andryoga.safebox.e2e.E2ETestUtils.setupCameraPermissionAskedState
+import com.andryoga.safebox.e2e.E2ETestUtils.setupUnlockedHomeState
 import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpConfig
