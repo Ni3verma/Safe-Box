@@ -2,6 +2,7 @@
 
 package com.andryoga.safebox.e2e
 
+import android.app.KeyguardManager
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -17,6 +18,8 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
+import com.andryoga.safebox.data.db.models.CryptoVersion
+import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
@@ -136,17 +139,20 @@ class SignupAndLoginE2ETest {
             composeTestRule.onNodeWithText(context.getString(R.string.no_record))
                 .assertIsDisplayed()
 
-            // 5. Verify database and preference persistence directly from injected singletons
-            runBlocking {
-                val isSignupStillRequired = encryptedPreferenceProvider.getBooleanPref(
-                    CommonConstants.IS_SIGN_UP_REQUIRED,
-                    true
-                )
-                assertThat(isSignupStillRequired).isFalse()
+            // 4b. Without a lock screen (the CI image has none) Home nudges the user to set one.
+            val nudgeText = context.getString(R.string.home_screen_lock_nudge_banner)
+            if (context.getSystemService(KeyguardManager::class.java).isDeviceSecure) {
+                composeTestRule.onNodeWithText(nudgeText).assertDoesNotExist()
+            } else {
+                // The banner follows an async preference read that waitForIdle does not cover.
+                E2ETestUtils.waitForText(composeTestRule, nudgeText)
+            }
 
-                val isPasswordCorrect =
-                    userDetailsRepository.checkPassword(E2ETestUtils.TEST_MASTER_PASSWORD)
-                assertThat(isPasswordCorrect).isTrue()
+            // 5. The vault in Room is what routes the next launch; signup no longer writes IS_SIGN_UP_REQUIRED.
+            runBlocking {
+                assertThat(safeBoxDatabase.vaultMetaDao().get(VaultMetaKey.CRYPTO_VERSION))
+                    .isEqualTo(CryptoVersion.ENVELOPE)
+                assertThat(userDetailsRepository.getHint()).isEqualTo(E2ETestUtils.TEST_MASTER_HINT)
             }
         }
     }

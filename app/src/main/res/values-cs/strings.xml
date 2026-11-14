@@ -152,8 +152,7 @@
     <string name="micr_code">Kód MICR</string>
     <string name="welcome_back">Vítejte zpět!</string>
     <string name="welcome">Vítejte!</string>
-    <string name="timeout_dialog_message">Byli jste příliš dlouho neaktivní. Kliknutím na OK se znovu přihlaste do aplikace</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Po vaší nepřítomnosti — odemkněte znovu.</string>
     <string name="created_on">Vytvořeno</string>
     <string name="updated_on">Aktualizováno</string>
     <string name="add_a_new_record">Přidat nový záznam</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Aktualizace byla stažena. Pro instalaci restartujte aplikaci Safe Box.</string>
     <string name="in_app_update_restart">Restartovat</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Bezpečnostní aktualizace — zadejte jednou své hlavní heslo</string>
+    <string name="vault_migration_progress_title">Aktualizace zabezpečení trezoru…</string>
+    <string name="vault_migration_progress_counter">%1$d z %2$d záznamů</string>
+    <string name="vault_migration_failure_keystore">Bezpečný hardware neodpověděl. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_verify">Kontrola aktualizace selhala. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_storage">Aktualizaci se nepodařilo uložit. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_unexpected">Aktualizace selhala. Nic nebylo změněno.</string>
+    <string name="vault_migration_failure_forgot_password_note">Vaše hlavní heslo nebylo změněno.</string>
+    <string name="vault_migration_retry">Zkusit znovu</string>
+    <string name="vault_migration_continue_legacy">Zatím pokračovat</string>
+    <string name="legacy_key_lost_title">Šifrovací klíč není k dispozici</string>
+    <string name="legacy_key_lost_body">Hardwarový klíč, kterým byl tento trezor zašifrován, již není v tomto zařízení k dispozici, takže stávající záznamy nelze otevřít. Pokud máte záložní soubor, můžete tento trezor vymazat a obnovit jej ze zálohy.</string>
+    <string name="home_upgrade_pending_banner">Čeká bezpečnostní aktualizace — proběhne při příštím přihlášení</string>
+    <string name="home_upgrade_pending_retry">Zkusit nyní</string>
+    <string name="login_biometric_invalidated_banner">Přihlášení otiskem prstu je třeba znovu nastavit — zadejte své hlavní heslo</string>
+    <string name="recovery_not_set_up_title">Obnovení hesla není nastaveno</string>
+    <string name="recovery_not_set_up_body">Zapomenuté hlavní heslo lze obnovit pouze pomocí zámku obrazovky, který byl nastaven už při vašem posledním přihlášení. Toto zařízení neobsahuje žádný klíč pro obnovení tohoto trezoru, takže jej lze otevřít pouze jeho hlavním heslem.</string>
+    <string name="recovery_not_set_up_restore_hint">Pokud máte záložní soubor, vymažte tento trezor, znovu se zaregistrujte a obnovte zálohu v části Záloha a obnovení.</string>
+    <string name="recovery_back_to_login">Zpět na přihlášení</string>
+    <string name="erase_vault_action">Vymazat vše a začít znovu</string>
+    <string name="erase_vault_dialog_title">Vymazat vše?</string>
+    <string name="erase_vault_dialog_body">Všechny záznamy, hlavní heslo i klíče pro obnovení v tomto zařízení budou trvale odstraněny. Záložní soubory uložené jinde zůstanou nedotčeny.</string>
+    <string name="erase_vault_dialog_confirm">Vymazat</string>
+    <string name="recovery_failure_not_authenticated">Platnost odemknutí vypršela dříve, než se podařilo trezor otevřít. Zkuste to znovu.</string>
+    <string name="recovery_failure_verifier">Data pro obnovení v tomto zařízení jsou poškozená. Nic nebylo změněno.</string>
+    <string name="recovery_failure_keystore">Bezpečný hardware nedokázal otevřít klíč pro obnovení. Nic nebylo změněno.</string>
+    <string name="recovery_failure_storage">Nové heslo se nepodařilo uložit. Nic nebylo změněno.</string>
+    <string name="settings_change_password_legacy_body">K dispozici po bezpečnostní aktualizaci</string>
+    <string name="settings_current_password_title">Potvrďte, že jste to vy</string>
+    <string name="settings_current_password_label">Aktuální hlavní heslo</string>
+    <string name="password_update_failed">Nové hlavní heslo se nepodařilo uložit. Vaše současné heslo stále funguje.</string>
+    <string name="settings_biometric_unlock_title">Odemknutí otiskem prstu</string>
+    <string name="settings_biometric_unlock_body">Odemykejte otiskem prstu místo zadávání hlavního hesla</string>
+    <string name="settings_biometric_unlock_unavailable_body">Vyžaduje otisk prstu přidaný v nastavení telefonu. Ne každý telefon to podporuje.</string>
+    <string name="home_screen_lock_nudge_banner">Nastavte zámek obrazovky, aby bylo možné obnovit zapomenuté hlavní heslo</string>
+    <string name="home_screen_lock_nudge_set_up">Nastavit</string>
+    <string name="home_screen_lock_nudge_accept_risk">Přijímám riziko</string>
 </resources>

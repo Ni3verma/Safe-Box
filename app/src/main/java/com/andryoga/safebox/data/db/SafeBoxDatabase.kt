@@ -10,6 +10,7 @@ import com.andryoga.safebox.data.db.dao.BankCardDataDao
 import com.andryoga.safebox.data.db.dao.LoginDataDao
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.dao.UserDetailsDao
+import com.andryoga.safebox.data.db.dao.VaultMetaDao
 import com.andryoga.safebox.data.db.entity.AuthenticatorDataEntity
 import com.andryoga.safebox.data.db.entity.BackupMetadataEntity
 import com.andryoga.safebox.data.db.entity.BankAccountDataEntity
@@ -17,6 +18,7 @@ import com.andryoga.safebox.data.db.entity.BankCardDataEntity
 import com.andryoga.safebox.data.db.entity.LoginDataEntity
 import com.andryoga.safebox.data.db.entity.SecureNoteDataEntity
 import com.andryoga.safebox.data.db.entity.UserDetailsEntity
+import com.andryoga.safebox.data.db.entity.VaultMetaEntity
 
 @Database(
     entities = [
@@ -27,8 +29,9 @@ import com.andryoga.safebox.data.db.entity.UserDetailsEntity
         SecureNoteDataEntity::class,
         BackupMetadataEntity::class,
         AuthenticatorDataEntity::class,
+        VaultMetaEntity::class,
     ],
-    version = 5,
+    version = 6,
 )
 @TypeConverters(Converters::class)
 abstract class SafeBoxDatabase : RoomDatabase() {
@@ -39,6 +42,7 @@ abstract class SafeBoxDatabase : RoomDatabase() {
     abstract fun secureNoteDataDao(): SecureNoteDataDao
     abstract fun backupMetadataDao(): BackupMetadataDao
     abstract fun authenticatorDataDao(): AuthenticatorDataDao
+    abstract fun vaultMetaDao(): VaultMetaDao
 
     companion object {
         const val DATABASE_NAME: String = "SAFEBOX_APP_DB"

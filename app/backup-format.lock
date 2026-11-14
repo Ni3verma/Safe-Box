@@ -8,3 +8,4 @@
 # for the current BACKUP_VERSION. The fix is always the same: bump BACKUP_VERSION, append a line,
 # and capture a new seed. See docs/testing/upgrade-harness-operations.md#capturing-a-seed.
 3=b0528b29f46bbe5d02924239d9c9e299437358dedb63c8e9bb60d06ee77eaa04
+4=c3bfa5eaa4f392e58d020bf657b53c5d8bb34d34f899bfb96c183d39ede38ee8

@@ -145,8 +145,7 @@
     <string name="micr_code">MICR コード</string>
     <string name="welcome_back">お帰りなさい！</string>
     <string name="welcome">ようこそ！</string>
-    <string name="timeout_dialog_message">しばらく操作がなかったため自動ログアウトしました。OK を押して再度ログインしてください</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">しばらく操作がなかったため、もう一度ロックを解除してください。</string>
     <string name="created_on">作成日</string>
     <string name="updated_on">更新日</string>
     <string name="add_a_new_record">新しいレコードを追加</string>
@@ -198,4 +197,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">アップデートをダウンロードしました。Safe Box を再起動してインストールしてください。</string>
     <string name="in_app_update_restart">再起動</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">セキュリティアップグレード — マスターパスワードを1回入力してください</string>
+    <string name="vault_migration_progress_title">保管庫のセキュリティをアップグレード中…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d 件のレコード</string>
+    <string name="vault_migration_failure_keystore">セキュアハードウェアが応答しませんでした。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_verify">アップグレードの検証に失敗しました。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_storage">アップグレードを保存できませんでした。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_unexpected">アップグレードに失敗しました。変更は行われませんでした。</string>
+    <string name="vault_migration_failure_forgot_password_note">マスターパスワードは変更されていません。</string>
+    <string name="vault_migration_retry">再試行</string>
+    <string name="vault_migration_continue_legacy">今はこのまま続行</string>
+    <string name="legacy_key_lost_title">暗号化キーが利用できません</string>
+    <string name="legacy_key_lost_body">この保管庫を暗号化したハードウェアキーがこの端末で利用できなくなったため、既存のレコードを開けません。バックアップファイルがある場合は、この保管庫を消去してバックアップから復元できます。</string>
+    <string name="home_upgrade_pending_banner">セキュリティアップグレード保留中 — 次回のサインイン時に実行されます</string>
+    <string name="home_upgrade_pending_retry">今すぐ再試行</string>
+    <string name="login_biometric_invalidated_banner">指紋ログインの再設定が必要です — マスターパスワードを入力してください</string>
+    <string name="recovery_not_set_up_title">復旧が設定されていません</string>
+    <string name="recovery_not_set_up_body">忘れたマスターパスワードをリセットできるのは、前回ログインした時点ですでに設定されていた画面ロックを使う場合のみです。この端末にはこの保管庫の復旧キーがないため、保管庫はマスターパスワードでしか開けません。</string>
+    <string name="recovery_not_set_up_restore_hint">バックアップファイルがある場合は、この保管庫を消去して新規登録をやり直し、「バックアップと復元」からバックアップを復元してください。</string>
+    <string name="recovery_back_to_login">ログインに戻る</string>
+    <string name="erase_vault_action">すべて消去してやり直す</string>
+    <string name="erase_vault_dialog_title">すべて消去しますか？</string>
+    <string name="erase_vault_dialog_body">この端末上のすべてのレコード、マスターパスワード、復旧キーが完全に削除されます。別の場所に保存したバックアップファイルには影響しません。</string>
+    <string name="erase_vault_dialog_confirm">消去</string>
+    <string name="recovery_failure_not_authenticated">保管庫を開く前にロック解除の有効期限が切れました。もう一度お試しください。</string>
+    <string name="recovery_failure_verifier">この端末の復旧データが破損しています。変更は行われませんでした。</string>
+    <string name="recovery_failure_keystore">セキュアハードウェアが復旧キーを開けませんでした。変更は行われませんでした。</string>
+    <string name="recovery_failure_storage">新しいパスワードを保存できませんでした。変更は行われませんでした。</string>
+    <string name="settings_change_password_legacy_body">セキュリティアップグレード後に利用可能</string>
+    <string name="settings_current_password_title">本人確認</string>
+    <string name="settings_current_password_label">現在のマスターパスワード</string>
+    <string name="password_update_failed">新しいマスターパスワードを保存できませんでした。現在のパスワードは引き続き使用できます。</string>
+    <string name="settings_biometric_unlock_title">指紋でロック解除</string>
+    <string name="settings_biometric_unlock_body">マスターパスワードを入力する代わりに指紋でロックを解除します</string>
+    <string name="settings_biometric_unlock_unavailable_body">端末の設定で指紋を登録する必要があります。すべての端末が対応しているわけではありません。</string>
+    <string name="home_screen_lock_nudge_banner">マスターパスワードを忘れた場合に復旧できるよう、画面ロックを設定してください</string>
+    <string name="home_screen_lock_nudge_set_up">設定する</string>
+    <string name="home_screen_lock_nudge_accept_risk">リスクを受け入れる</string>
 </resources>

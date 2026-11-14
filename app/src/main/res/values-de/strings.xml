@@ -145,8 +145,7 @@
     <string name="micr_code">MICR-Code</string>
     <string name="welcome_back">Willkommen zurück!</string>
     <string name="welcome">Willkommen!</string>
-    <string name="timeout_dialog_message">Sie waren zu lange inaktiv. Bitte tippen Sie auf OK, um sich erneut anzumelden</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Sie waren abwesend — bitte erneut entsperren.</string>
     <string name="created_on">Erstellt am</string>
     <string name="updated_on">Aktualisiert am</string>
     <string name="add_a_new_record">Neuen Eintrag hinzufügen</string>
@@ -196,4 +195,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Update heruntergeladen. Starten Sie Safe Box neu, um es zu installieren.</string>
     <string name="in_app_update_restart">Neu starten</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Sicherheits-Upgrade — geben Sie Ihr Master-Passwort einmalig ein</string>
+    <string name="vault_migration_progress_title">Tresorsicherheit wird aktualisiert…</string>
+    <string name="vault_migration_progress_counter">%1$d von %2$d Einträgen</string>
+    <string name="vault_migration_failure_keystore">Die sichere Hardware hat nicht reagiert. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_verify">Upgrade-Prüfung fehlgeschlagen. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_storage">Das Upgrade konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_unexpected">Upgrade fehlgeschlagen. Es wurde nichts geändert.</string>
+    <string name="vault_migration_failure_forgot_password_note">Ihr Master-Passwort wurde nicht geändert.</string>
+    <string name="vault_migration_retry">Erneut versuchen</string>
+    <string name="vault_migration_continue_legacy">Vorerst fortfahren</string>
+    <string name="legacy_key_lost_title">Verschlüsselungsschlüssel nicht verfügbar</string>
+    <string name="legacy_key_lost_body">Der Hardwareschlüssel, mit dem dieser Tresor verschlüsselt wurde, ist auf diesem Gerät nicht mehr verfügbar, sodass vorhandene Einträge nicht geöffnet werden können. Wenn Sie eine Sicherungsdatei haben, können Sie diesen Tresor löschen und aus der Sicherung wiederherstellen.</string>
+    <string name="home_upgrade_pending_banner">Sicherheits-Upgrade ausstehend — wird bei der nächsten Anmeldung ausgeführt</string>
+    <string name="home_upgrade_pending_retry">Jetzt erneut versuchen</string>
+    <string name="login_biometric_invalidated_banner">Die Anmeldung per Fingerabdruck muss neu eingerichtet werden — geben Sie Ihr Master-Passwort ein</string>
+    <string name="recovery_not_set_up_title">Wiederherstellung nicht eingerichtet</string>
+    <string name="recovery_not_set_up_body">Ein vergessenes Master-Passwort kann nur über eine Displaysperre zurückgesetzt werden, die bei Ihrer letzten Anmeldung bereits eingerichtet war. Auf diesem Gerät ist kein Wiederherstellungsschlüssel für diesen Tresor vorhanden, daher lässt er sich nur mit seinem Master-Passwort öffnen.</string>
+    <string name="recovery_not_set_up_restore_hint">Wenn Sie eine Sicherungsdatei haben, löschen Sie diesen Tresor, registrieren Sie sich erneut und stellen Sie die Sicherung unter Sichern &amp; Wiederherstellen wieder her.</string>
+    <string name="recovery_back_to_login">Zurück zur Anmeldung</string>
+    <string name="erase_vault_action">Alles löschen und neu beginnen</string>
+    <string name="erase_vault_dialog_title">Alles löschen?</string>
+    <string name="erase_vault_dialog_body">Alle Einträge, das Master-Passwort und die Wiederherstellungsschlüssel auf diesem Gerät werden dauerhaft gelöscht. Sicherungsdateien, die Sie an anderer Stelle gespeichert haben, sind nicht betroffen.</string>
+    <string name="erase_vault_dialog_confirm">Löschen</string>
+    <string name="recovery_failure_not_authenticated">Die Entsperrung ist abgelaufen, bevor der Tresor geöffnet werden konnte. Versuchen Sie es erneut.</string>
+    <string name="recovery_failure_verifier">Die Wiederherstellungsdaten auf diesem Gerät sind beschädigt. Es wurde nichts geändert.</string>
+    <string name="recovery_failure_keystore">Die sichere Hardware konnte den Wiederherstellungsschlüssel nicht öffnen. Es wurde nichts geändert.</string>
+    <string name="recovery_failure_storage">Das neue Passwort konnte nicht gespeichert werden. Es wurde nichts geändert.</string>
+    <string name="settings_change_password_legacy_body">Verfügbar nach dem Sicherheitsupgrade</string>
+    <string name="settings_current_password_title">Bestätigen Sie, dass Sie es sind</string>
+    <string name="settings_current_password_label">Aktuelles Master-Passwort</string>
+    <string name="password_update_failed">Das neue Master-Passwort konnte nicht gespeichert werden. Ihr aktuelles Passwort funktioniert weiterhin.</string>
+    <string name="settings_biometric_unlock_title">Entsperren per Fingerabdruck</string>
+    <string name="settings_biometric_unlock_body">Mit Ihrem Fingerabdruck entsperren, statt das Master-Passwort einzugeben</string>
+    <string name="settings_biometric_unlock_unavailable_body">Erfordert einen in den Telefoneinstellungen eingerichteten Fingerabdruck. Nicht jedes Telefon unterstützt das.</string>
+    <string name="home_screen_lock_nudge_banner">Richten Sie eine Displaysperre ein, damit ein vergessenes Master-Passwort wiederhergestellt werden kann</string>
+    <string name="home_screen_lock_nudge_set_up">Einrichten</string>
+    <string name="home_screen_lock_nudge_accept_risk">Risiko akzeptieren</string>
 </resources>

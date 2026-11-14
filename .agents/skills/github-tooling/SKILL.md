@@ -18,6 +18,22 @@ gh run watch <run-id>                                        # follow a run to c
 gh api repos/Ni3verma/Safe-Box/pulls/241/comments            # raw API when a subcommand is missing
 ```
 
+## Opening a PR: title only, never a body
+
+The `PR Agent (Gemini)` workflow writes the description from the diff and the commits on every PR,
+so a hand-written body is overwritten work (owner instruction after #302, 2026-10-21 — AGENTS.md
+*Pull Requests*). Create with an empty body; `gh` would otherwise open an editor or prompt:
+
+```bash
+gh pr create --base feature/envelope-encryption --head <branch> --title "<type>(<scope>): <summary>" --body ""
+```
+
+Everything a rule used to want "in the PR description" belongs in the **commit message**, which
+the bot reads: new `AnalyticsParam` names, a child MR's `TODO(MR n)` inventory, `Part of #n`.
+Human notes that must accompany the PR (manual test results, a reasoned reply to a bot finding) go
+in a PR comment. The token has `Pull requests: write`, so `gh pr create` and `gh pr comment` work;
+the push itself still has to be done by the user.
+
 ## A new `workflow_dispatch` workflow cannot be run before it merges
 
 GitHub resolves workflows from the **default branch**. A workflow file that exists only on a feature
@@ -28,6 +44,19 @@ The way out is a trigger that resolves from the PR: `pull_request` runs the work
 PR's **merge commit** (`refs/pull/N/merge`). So what runs is the merged result, and **a PR with a
 merge conflict fires no `pull_request` run at all**. `upgrade-test.yml` gates it on the
 `run-upgrade-test` label so ordinary pushes cost nothing; remove and re-add the label to run again.
+
+## CodeRabbit: the 100-file limit and how to get under it
+
+The free plan refuses a review whose **delta** (files changed since the last reviewed commit, or
+the whole PR on `@coderabbitai full review`) exceeds 100 files, and allows one review per hour.
+Verified on #303, 2026-10-31: a 102-file delta was skipped; excluding the 26 translated
+`app/src/main/res/values-*/strings.xml` through **`reviews.path_filters`** (`!` globs, in the
+repository UI or `.coderabbit.yaml` on the PR's *head* branch) brought it under and the review ran —
+filtered files are subtracted before the limit check. `path_instructions` does **not** help: it is
+prompt text for files that are still reviewed and counted. Re-trigger with `@coderabbitai review`
+(incremental) or `@coderabbitai full review`; `@coderabbitai configuration` prints the effective
+config with each value's source. The owner wants the locale filter removed again once the big PRs
+are through, because the bot has caught real `strings.xml` problems before.
 
 ## Current authentication state
 

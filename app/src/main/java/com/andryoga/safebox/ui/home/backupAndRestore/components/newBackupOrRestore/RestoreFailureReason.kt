@@ -26,7 +26,12 @@ enum class RestoreFailureReason {
     BACKUP_TOO_NEW,
 
     // Backup has no record payload, so nothing proves the password. Rejected before any DB work.
-    BACKUP_EMPTY;
+    BACKUP_EMPTY,
+
+    // The vault locked before or during the restore, or the process that registered the password
+    // is gone. A lock inside the transaction rolls it back, so the vault is untouched.
+    SESSION_LOCKED,
+    ;
 
     fun toWorkData(): Data = workDataOf(KEY_RESTORE_FAILURE_REASON to ordinal)
 

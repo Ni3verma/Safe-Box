@@ -49,9 +49,10 @@ flowchart TD
     I -- locked --> E
 ```
 
-**Unlocked** means the root nav is in `HomeGraph` *and* the away timeout has not fired since the
-graph was entered. The away dialog (`UserAwayDialogRoute`) sits inside the Home graph but only leads
-to a new login, so it counts as locked. Driven by `ActiveSessionManager.logoutEvent`.
+**Unlocked** means the root nav is in `HomeGraph` *and* the session key has not been cleared since
+the graph was entered. Any lock counts — the away timeout clears the key through
+`SessionKeyHolder`, and so will every later lock source — and it counts from the clear itself, one
+frame before the HomeGraph gate navigates to Login. Driven by `SessionKeyHolder.lockEvents`.
 
 The host collects with `collectAsState`, not a lifecycle-aware collector. So a lock that happens in
 the background is seen straight away, and Play installs silently while the app is not in the

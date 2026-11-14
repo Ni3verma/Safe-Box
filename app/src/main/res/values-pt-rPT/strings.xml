@@ -152,8 +152,7 @@
     <string name="micr_code">Código MICR</string>
     <string name="welcome_back">Bem-vindo de volta!</string>
     <string name="welcome">Bem-vindo!</string>
-    <string name="timeout_dialog_message">Esteve ausente durante demasiado tempo. Toque em OK para iniciar sessão novamente na aplicação.</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Esteve ausente — desbloqueie novamente.</string>
     <string name="created_on">Criado em</string>
     <string name="updated_on">Atualizado em</string>
     <string name="add_a_new_record">Adicionar um novo registo</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Atualização transferida. Reinicie o Safe Box para a instalar.</string>
     <string name="in_app_update_restart">Reiniciar</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Atualização de segurança — introduza a sua palavra-passe mestra uma vez</string>
+    <string name="vault_migration_progress_title">A atualizar a segurança do cofre…</string>
+    <string name="vault_migration_progress_counter">%1$d de %2$d registos</string>
+    <string name="vault_migration_failure_keystore">O hardware seguro não respondeu. Nada foi alterado.</string>
+    <string name="vault_migration_failure_verify">A verificação da atualização falhou. Nada foi alterado.</string>
+    <string name="vault_migration_failure_storage">Não foi possível guardar a atualização. Nada foi alterado.</string>
+    <string name="vault_migration_failure_unexpected">A atualização falhou. Nada foi alterado.</string>
+    <string name="vault_migration_failure_forgot_password_note">A sua palavra-passe mestra não foi alterada.</string>
+    <string name="vault_migration_retry">Tentar novamente</string>
+    <string name="vault_migration_continue_legacy">Continuar por agora</string>
+    <string name="legacy_key_lost_title">Chave de encriptação indisponível</string>
+    <string name="legacy_key_lost_body">A chave de hardware que encriptava este cofre já não está disponível neste dispositivo, pelo que os registos existentes não podem ser abertos. Se tiver um ficheiro de cópia de segurança, pode apagar este cofre e restaurar a partir dessa cópia.</string>
+    <string name="home_upgrade_pending_banner">Atualização de segurança pendente — será executada no próximo início de sessão</string>
+    <string name="home_upgrade_pending_retry">Tentar agora</string>
+    <string name="login_biometric_invalidated_banner">O início de sessão por impressão digital tem de ser configurado novamente — introduza a sua palavra-passe mestra</string>
+    <string name="recovery_not_set_up_title">A recuperação não está configurada</string>
+    <string name="recovery_not_set_up_body">Uma palavra-passe mestra esquecida só pode ser redefinida através de um bloqueio de ecrã que já estivesse configurado na última vez que iniciou sessão. Este dispositivo não contém nenhuma chave de recuperação para este cofre, pelo que só pode ser aberto com a respetiva palavra-passe mestra.</string>
+    <string name="recovery_not_set_up_restore_hint">Se tiver um ficheiro de cópia de segurança, apague este cofre, registe-se novamente e restaure a cópia a partir de Cópia e restauro.</string>
+    <string name="recovery_back_to_login">Voltar ao início de sessão</string>
+    <string name="erase_vault_action">Apagar tudo e recomeçar</string>
+    <string name="erase_vault_dialog_title">Apagar tudo?</string>
+    <string name="erase_vault_dialog_body">Todos os registos, a palavra-passe mestra e as chaves de recuperação neste dispositivo serão eliminados permanentemente. Os ficheiros de cópia de segurança guardados noutro local não são afetados.</string>
+    <string name="erase_vault_dialog_confirm">Apagar</string>
+    <string name="recovery_failure_not_authenticated">O desbloqueio expirou antes de o cofre poder ser aberto. Tente novamente.</string>
+    <string name="recovery_failure_verifier">Os dados de recuperação neste dispositivo estão danificados. Nada foi alterado.</string>
+    <string name="recovery_failure_keystore">O hardware seguro não conseguiu abrir a chave de recuperação. Nada foi alterado.</string>
+    <string name="recovery_failure_storage">Não foi possível guardar a nova palavra-passe. Nada foi alterado.</string>
+    <string name="settings_change_password_legacy_body">Disponível após a atualização de segurança</string>
+    <string name="settings_current_password_title">Confirme a sua identidade</string>
+    <string name="settings_current_password_label">Palavra-passe mestra atual</string>
+    <string name="password_update_failed">Não foi possível guardar a nova palavra-passe mestra. A sua palavra-passe atual continua a funcionar.</string>
+    <string name="settings_biometric_unlock_title">Desbloqueio por impressão digital</string>
+    <string name="settings_biometric_unlock_body">Desbloqueie com a impressão digital em vez de escrever a palavra-passe mestra</string>
+    <string name="settings_biometric_unlock_unavailable_body">Requer uma impressão digital registada nas definições do telemóvel. Nem todos os telemóveis o suportam.</string>
+    <string name="home_screen_lock_nudge_banner">Defina um bloqueio de ecrã para que uma palavra-passe mestra esquecida possa ser recuperada</string>
+    <string name="home_screen_lock_nudge_set_up">Configurar</string>
+    <string name="home_screen_lock_nudge_accept_risk">Aceito o risco</string>
 </resources>

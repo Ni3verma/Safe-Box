@@ -1,7 +1,6 @@
 package com.andryoga.safebox.data.repository.interfaces
 
 interface UserDetailsRepository {
-    suspend fun insertUserDetailsData(password: String, hint: String)
     suspend fun checkPassword(password: String): Boolean
 
     /**
@@ -13,5 +12,4 @@ interface UserDetailsRepository {
     suspend fun onAuthSuccess(withBiometric: Boolean = false): Int
     suspend fun getHint(): String?
     suspend fun shouldStartBiometricAuthFlow(): Boolean
-    suspend fun updatePasswordAndHint(newPassword: String, hint: String)
 }

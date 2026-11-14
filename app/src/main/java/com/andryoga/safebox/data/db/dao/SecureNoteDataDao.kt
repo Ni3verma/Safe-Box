@@ -30,6 +30,12 @@ interface SecureNoteDataDao {
     @Query("select * from secure_note_data")
     suspend fun exportAllData(): List<ExportSecureNoteData>
 
+    @Query("select * from secure_note_data")
+    suspend fun getAllEntities(): List<SecureNoteDataEntity>
+
+    @Query("select count(*) from secure_note_data")
+    suspend fun count(): Int
+
     @Query("delete from secure_note_data")
     fun deleteAllData()
 }

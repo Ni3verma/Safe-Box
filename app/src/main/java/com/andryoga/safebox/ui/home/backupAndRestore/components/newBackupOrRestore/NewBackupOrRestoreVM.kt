@@ -12,9 +12,9 @@ import com.andryoga.safebox.common.AnalyticsKey
 import com.andryoga.safebox.common.AnalyticsParam
 import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.di.IsDebug
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.ui.core.InAppReviewManager
 import com.andryoga.safebox.worker.BackupDataWorker
+import com.andryoga.safebox.worker.BackupPasswordRegistry
 import com.andryoga.safebox.worker.RestoreDataWorker
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +33,7 @@ import javax.inject.Inject
 @HiltViewModel
 class NewBackupOrRestoreVM @Inject constructor(
     private val workManager: WorkManager,
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val analyticsHelper: AnalyticsHelper,
     val inAppReviewManager: Lazy<InAppReviewManager>,
     @param:IsDebug private val isDebug: Boolean
@@ -109,6 +109,7 @@ class NewBackupOrRestoreVM @Inject constructor(
                                     RestoreFailureReason.UNKNOWN_ERROR -> WorkflowState.FAILED
                                     RestoreFailureReason.BACKUP_TOO_NEW -> WorkflowState.BACKUP_TOO_NEW
                                     RestoreFailureReason.BACKUP_EMPTY -> WorkflowState.BACKUP_EMPTY
+                                    RestoreFailureReason.SESSION_LOCKED -> WorkflowState.FAILED
                                 }
 
                             operation is Operation.Backup && isFailed -> {
@@ -144,22 +145,20 @@ class NewBackupOrRestoreVM @Inject constructor(
             password = password,
             showBackupStartNotification = true,
             workManager = workManager,
-            symmetricKeyUtils = symmetricKeyUtils
+            backupPasswordRegistry = backupPasswordRegistry,
         )
     }
 
+    /** The password is registered under the request id before the enqueue; input data carries only the file. */
     private fun enqueueRestoreWork(password: String, fileUri: String): UUID {
         val restoreDataRequest = OneTimeWorkRequestBuilder<RestoreDataWorker>()
             .setInputData(
                 Data.Builder()
-                    .putString(
-                        CommonConstants.RESTORE_PARAM_PASSWORD,
-                        symmetricKeyUtils.encrypt(password)
-                    )
                     .putString(CommonConstants.RESTORE_PARAM_FILE_URI, fileUri)
-                    .build()
+                    .build(),
             )
             .build()
+        backupPasswordRegistry.put(restoreDataRequest.id, password)
         workManager.enqueueUniqueWork(
             CommonConstants.WORKER_NAME_RESTORE_DATA,
             ExistingWorkPolicy.APPEND_OR_REPLACE,
@@ -182,5 +181,6 @@ class NewBackupOrRestoreVM @Inject constructor(
         BackupFailureReason.FOLDER_INACCESSIBLE -> WorkflowState.BACKUP_FOLDER_INACCESSIBLE
         BackupFailureReason.WRITE_FAILED -> WorkflowState.BACKUP_WRITE_FAILED
         BackupFailureReason.UNKNOWN -> WorkflowState.BACKUP_UNKNOWN_ERROR
+        BackupFailureReason.SESSION_LOCKED -> WorkflowState.BACKUP_UNKNOWN_ERROR
     }
 }

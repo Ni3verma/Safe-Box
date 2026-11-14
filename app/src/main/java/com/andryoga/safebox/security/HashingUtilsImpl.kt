@@ -36,6 +36,7 @@ class HashingUtilsImpl : HashingUtils {
         return base64EncodedPasswordHash + separator + base64EncodedSalt
     }
 
+    // TODO(D3): legacy vault (crypto_version = 1) only
     override fun compareHash(toCompareText: String, toCompareWithHash: String): Boolean {
         val hashInfo = toCompareWithHash.split(separator)
         if (hashInfo.size != 2) {

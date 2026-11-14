@@ -152,8 +152,7 @@
     <string name="micr_code">Mã MICR</string>
     <string name="welcome_back">Chào mừng trở lại!</string>
     <string name="welcome">Chào mừng!</string>
-    <string name="timeout_dialog_message">Bạn đã rời khỏi ứng dụng quá lâu. Vui lòng nhấn OK để đăng nhập lại</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Bạn đã rời đi — hãy mở khóa lại.</string>
     <string name="created_on">Tạo vào</string>
     <string name="updated_on">Cập nhật vào</string>
     <string name="add_a_new_record">Thêm bản ghi mới</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Đã tải bản cập nhật xuống. Khởi động lại Safe Box để cài đặt.</string>
     <string name="in_app_update_restart">Khởi động lại</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Nâng cấp bảo mật — nhập mật khẩu chính của bạn một lần</string>
+    <string name="vault_migration_progress_title">Đang nâng cấp bảo mật két an toàn…</string>
+    <string name="vault_migration_progress_counter">%1$d / %2$d bản ghi</string>
+    <string name="vault_migration_failure_keystore">Phần cứng bảo mật không phản hồi. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_verify">Kiểm tra nâng cấp thất bại. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_storage">Không thể lưu bản nâng cấp. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_unexpected">Nâng cấp thất bại. Không có gì thay đổi.</string>
+    <string name="vault_migration_failure_forgot_password_note">Mật khẩu chính của bạn chưa bị thay đổi.</string>
+    <string name="vault_migration_retry">Thử lại</string>
+    <string name="vault_migration_continue_legacy">Tiếp tục tạm thời</string>
+    <string name="legacy_key_lost_title">Khóa mã hóa không khả dụng</string>
+    <string name="legacy_key_lost_body">Khóa phần cứng dùng để mã hóa két này không còn khả dụng trên thiết bị này, vì vậy không thể mở các bản ghi hiện có. Nếu bạn có tệp sao lưu, bạn có thể xóa két này và khôi phục từ bản sao lưu đó.</string>
+    <string name="home_upgrade_pending_banner">Đang chờ nâng cấp bảo mật — sẽ chạy vào lần đăng nhập tiếp theo</string>
+    <string name="home_upgrade_pending_retry">Thử lại ngay</string>
+    <string name="login_biometric_invalidated_banner">Cần thiết lập lại đăng nhập bằng vân tay — hãy nhập mật khẩu chính của bạn</string>
+    <string name="recovery_not_set_up_title">Chưa thiết lập khôi phục</string>
+    <string name="recovery_not_set_up_body">Mật khẩu chính bị quên chỉ có thể được đặt lại thông qua khóa màn hình đã được thiết lập từ trước tại lần đăng nhập gần nhất của bạn. Thiết bị này không có khóa khôi phục cho két này, vì vậy két chỉ có thể được mở bằng mật khẩu chính của nó.</string>
+    <string name="recovery_not_set_up_restore_hint">Nếu bạn có tệp sao lưu, hãy xóa két này, đăng ký lại rồi khôi phục bản sao lưu từ mục Sao lưu &amp; Khôi phục.</string>
+    <string name="recovery_back_to_login">Quay lại đăng nhập</string>
+    <string name="erase_vault_action">Xóa tất cả và bắt đầu lại</string>
+    <string name="erase_vault_dialog_title">Xóa tất cả?</string>
+    <string name="erase_vault_dialog_body">Tất cả bản ghi, mật khẩu chính và các khóa khôi phục trên thiết bị này sẽ bị xóa vĩnh viễn. Các tệp sao lưu bạn đã lưu ở nơi khác không bị ảnh hưởng.</string>
+    <string name="erase_vault_dialog_confirm">Xóa</string>
+    <string name="recovery_failure_not_authenticated">Phiên mở khóa đã hết hạn trước khi két kịp mở. Hãy thử lại.</string>
+    <string name="recovery_failure_verifier">Dữ liệu khôi phục trên thiết bị này đã bị hỏng. Không có gì thay đổi.</string>
+    <string name="recovery_failure_keystore">Phần cứng bảo mật không thể truy cập khóa khôi phục. Không có gì thay đổi.</string>
+    <string name="recovery_failure_storage">Không thể lưu mật khẩu mới. Không có gì thay đổi.</string>
+    <string name="settings_change_password_legacy_body">Có sẵn sau khi nâng cấp bảo mật</string>
+    <string name="settings_current_password_title">Xác nhận đó là bạn</string>
+    <string name="settings_current_password_label">Mật khẩu chính hiện tại</string>
+    <string name="password_update_failed">Không thể lưu mật khẩu chính mới. Mật khẩu hiện tại của bạn vẫn hoạt động.</string>
+    <string name="settings_biometric_unlock_title">Mở khóa bằng vân tay</string>
+    <string name="settings_biometric_unlock_body">Mở khóa bằng vân tay thay vì nhập mật khẩu chính</string>
+    <string name="settings_biometric_unlock_unavailable_body">Cần đăng ký vân tay trong phần cài đặt điện thoại. Không phải điện thoại nào cũng hỗ trợ.</string>
+    <string name="home_screen_lock_nudge_banner">Đặt khóa màn hình để có thể khôi phục mật khẩu chính khi bị quên</string>
+    <string name="home_screen_lock_nudge_set_up">Thiết lập</string>
+    <string name="home_screen_lock_nudge_accept_risk">Tôi chấp nhận rủi ro</string>
 </resources>

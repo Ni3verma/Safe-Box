@@ -31,6 +31,12 @@ interface BankAccountDataDao {
     @Query("select * from bank_account_data")
     suspend fun exportAllData(): List<ExportBankAccountData>
 
+    @Query("select * from bank_account_data")
+    suspend fun getAllEntities(): List<BankAccountDataEntity>
+
+    @Query("select count(*) from bank_account_data")
+    suspend fun count(): Int
+
     @Query("delete from bank_account_data")
     fun deleteAllData()
 }

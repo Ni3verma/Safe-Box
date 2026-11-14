@@ -152,8 +152,7 @@
     <string name="micr_code">MICR-code</string>
     <string name="welcome_back">Welkom terug!</string>
     <string name="welcome">Welkom!</string>
-    <string name="timeout_dialog_message">Je was te lang afwezig. Tik op OK om opnieuw in te loggen bij de app.</string>
-    <string name="timeout_dialog_positive_button_text">OK</string>
+    <string name="login_away_banner">Je was afwezig — ontgrendel opnieuw.</string>
     <string name="created_on">Aangemaakt op</string>
     <string name="updated_on">Bijgewerkt op</string>
     <string name="add_a_new_record">Nieuw item toevoegen</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">Update gedownload. Start Safe Box opnieuw op om deze te installeren.</string>
     <string name="in_app_update_restart">Opnieuw starten</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">Beveiligingsupgrade — voer je hoofdwachtwoord één keer in</string>
+    <string name="vault_migration_progress_title">Kluisbeveiliging upgraden…</string>
+    <string name="vault_migration_progress_counter">%1$d van %2$d items</string>
+    <string name="vault_migration_failure_keystore">De beveiligde hardware reageerde niet. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_verify">Upgradecontrole mislukt. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_storage">Kan de upgrade niet opslaan. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_unexpected">Upgrade mislukt. Er is niets gewijzigd.</string>
+    <string name="vault_migration_failure_forgot_password_note">Je hoofdwachtwoord is niet gewijzigd.</string>
+    <string name="vault_migration_retry">Opnieuw proberen</string>
+    <string name="vault_migration_continue_legacy">Voorlopig doorgaan</string>
+    <string name="legacy_key_lost_title">Versleutelingssleutel niet beschikbaar</string>
+    <string name="legacy_key_lost_body">De hardwaresleutel waarmee deze kluis is versleuteld, is niet meer beschikbaar op dit apparaat, waardoor bestaande items niet kunnen worden geopend. Als je een back-upbestand hebt, kun je deze kluis wissen en vanuit die back-up herstellen.</string>
+    <string name="home_upgrade_pending_banner">Beveiligingsupgrade in behandeling — wordt uitgevoerd bij je volgende aanmelding</string>
+    <string name="home_upgrade_pending_retry">Nu opnieuw proberen</string>
+    <string name="login_biometric_invalidated_banner">Inloggen met vingerafdruk moet opnieuw worden ingesteld — voer je hoofdwachtwoord in</string>
+    <string name="recovery_not_set_up_title">Wachtwoordherstel is niet ingesteld</string>
+    <string name="recovery_not_set_up_body">Een vergeten hoofdwachtwoord kan alleen opnieuw worden ingesteld via een schermvergrendeling die al was ingesteld toen je voor het laatst inlogde. Dit apparaat bevat geen herstelsleutel voor deze kluis, dus deze kan alleen met het bijbehorende hoofdwachtwoord worden geopend.</string>
+    <string name="recovery_not_set_up_restore_hint">Als je een back-upbestand hebt, wis dan deze kluis, registreer je opnieuw en herstel de back-up via Back-up &amp; herstel.</string>
+    <string name="recovery_back_to_login">Terug naar inloggen</string>
+    <string name="erase_vault_action">Alles wissen en opnieuw beginnen</string>
+    <string name="erase_vault_dialog_title">Alles wissen?</string>
+    <string name="erase_vault_dialog_body">Alle items, het hoofdwachtwoord en de herstelsleutels op dit apparaat worden definitief verwijderd. Back-upbestanden die je elders hebt opgeslagen, blijven onaangetast.</string>
+    <string name="erase_vault_dialog_confirm">Wissen</string>
+    <string name="recovery_failure_not_authenticated">De ontgrendeling is verlopen voordat de kluis kon worden geopend. Probeer het opnieuw.</string>
+    <string name="recovery_failure_verifier">De herstelgegevens op dit apparaat zijn beschadigd. Er is niets gewijzigd.</string>
+    <string name="recovery_failure_keystore">De beveiligde hardware kon de herstelsleutel niet openen. Er is niets gewijzigd.</string>
+    <string name="recovery_failure_storage">Het nieuwe wachtwoord kon niet worden opgeslagen. Er is niets gewijzigd.</string>
+    <string name="settings_change_password_legacy_body">Beschikbaar na de beveiligingsupgrade</string>
+    <string name="settings_current_password_title">Bevestig dat jij het bent</string>
+    <string name="settings_current_password_label">Huidig hoofdwachtwoord</string>
+    <string name="password_update_failed">Het nieuwe hoofdwachtwoord kon niet worden opgeslagen. Je huidige wachtwoord werkt nog steeds.</string>
+    <string name="settings_biometric_unlock_title">Ontgrendelen met vingerafdruk</string>
+    <string name="settings_biometric_unlock_body">Ontgrendel met je vingerafdruk in plaats van je hoofdwachtwoord te typen</string>
+    <string name="settings_biometric_unlock_unavailable_body">Vereist een vingerafdruk die is geregistreerd in de instellingen van je telefoon. Niet elke telefoon ondersteunt dit.</string>
+    <string name="home_screen_lock_nudge_banner">Stel een schermvergrendeling in zodat een vergeten hoofdwachtwoord kan worden hersteld</string>
+    <string name="home_screen_lock_nudge_set_up">Instellen</string>
+    <string name="home_screen_lock_nudge_accept_risk">Ik accepteer het risico</string>
 </resources>

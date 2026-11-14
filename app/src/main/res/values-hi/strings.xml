@@ -152,8 +152,7 @@
     <string name="micr_code">MICR कोड</string>
     <string name="welcome_back">वापसी पर स्वागत है!</string>
     <string name="welcome">स्वागत है!</string>
-    <string name="timeout_dialog_message">आप काफ़ी देर से ऐप से दूर थे। दोबारा लॉग इन करने के लिए कृपया ठीक है पर क्लिक करें</string>
-    <string name="timeout_dialog_positive_button_text">ठीक है</string>
+    <string name="login_away_banner">ऐप से कुछ समय दूर रहने के बाद — फिर से अनलॉक करें।</string>
     <string name="created_on">बनाया गया</string>
     <string name="updated_on">अपडेट किया गया</string>
     <string name="add_a_new_record">नया रिकॉर्ड जोड़ें</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">अपडेट डाउनलोड हो गया है। इंस्टॉल करने के लिए Safe Box रीस्टार्ट करें।</string>
     <string name="in_app_update_restart">रीस्टार्ट करें</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">सुरक्षा अपग्रेड — अपना मास्टर पासवर्ड एक बार दर्ज करें</string>
+    <string name="vault_migration_progress_title">तिजोरी की सुरक्षा अपग्रेड की जा रही है…</string>
+    <string name="vault_migration_progress_counter">%2$d में से %1$d रिकॉर्ड</string>
+    <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेयर ने कोई जवाब नहीं दिया। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_verify">अपग्रेड जांच विफल रही। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_storage">अपग्रेड सहेजा नहीं जा सका। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_unexpected">अपग्रेड विफल रहा। कुछ भी बदला नहीं गया।</string>
+    <string name="vault_migration_failure_forgot_password_note">आपका मास्टर पासवर्ड नहीं बदला गया।</string>
+    <string name="vault_migration_retry">पुनः प्रयास करें</string>
+    <string name="vault_migration_continue_legacy">अभी के लिए जारी रखें</string>
+    <string name="legacy_key_lost_title">एन्क्रिप्शन कुंजी अनुपलब्ध</string>
+    <string name="legacy_key_lost_body">इस तिजोरी को एन्क्रिप्ट करने वाली हार्डवेयर कुंजी अब इस डिवाइस पर उपलब्ध नहीं है, इसलिए मौजूदा रिकॉर्ड नहीं खोले जा सकते। यदि आपके पास बैकअप फ़ाइल है, तो आप इस तिजोरी को मिटाकर उस बैकअप से रीस्टोर कर सकते हैं।</string>
+    <string name="home_upgrade_pending_banner">सुरक्षा अपग्रेड बाकी है — यह आपके अगले साइन-इन पर चलेगा</string>
+    <string name="home_upgrade_pending_retry">अभी पुनः प्रयास करें</string>
+    <string name="login_biometric_invalidated_banner">फ़िंगरप्रिंट लॉगिन फिर से सेट करना होगा — अपना मास्टर पासवर्ड दर्ज करें</string>
+    <string name="recovery_not_set_up_title">रिकवरी सेट नहीं है</string>
+    <string name="recovery_not_set_up_body">भूला हुआ मास्टर पासवर्ड केवल उसी स्क्रीन लॉक से रीसेट किया जा सकता है जो आपके पिछले साइन-इन के समय पहले से सेट था। इस डिवाइस पर इस तिजोरी के लिए कोई रिकवरी कुंजी नहीं है, इसलिए इसे केवल इसके मास्टर पासवर्ड से ही खोला जा सकता है।</string>
+    <string name="recovery_not_set_up_restore_hint">यदि आपके पास बैकअप फ़ाइल है, तो इस तिजोरी को मिटाएं, दोबारा साइन अप करें, फिर बैकअप और रीस्टोर में जाकर बैकअप रीस्टोर करें।</string>
+    <string name="recovery_back_to_login">लॉगिन पर वापस जाएं</string>
+    <string name="erase_vault_action">सब कुछ मिटाएं और नए सिरे से शुरू करें</string>
+    <string name="erase_vault_dialog_title">सब कुछ मिटा दें?</string>
+    <string name="erase_vault_dialog_body">इस डिवाइस पर मौजूद सभी रिकॉर्ड, मास्टर पासवर्ड और रिकवरी कुंजियां स्थायी रूप से हटा दी जाएंगी। कहीं और सहेजी गई आपकी बैकअप फ़ाइलें प्रभावित नहीं होंगी।</string>
+    <string name="erase_vault_dialog_confirm">मिटाएं</string>
+    <string name="recovery_failure_not_authenticated">तिजोरी खुलने से पहले ही अनलॉक की अवधि समाप्त हो गई। पुनः प्रयास करें।</string>
+    <string name="recovery_failure_verifier">इस डिवाइस पर मौजूद रिकवरी डेटा क्षतिग्रस्त है। कुछ भी बदला नहीं गया।</string>
+    <string name="recovery_failure_keystore">सुरक्षित हार्डवेयर रिकवरी कुंजी नहीं खोल सका। कुछ भी बदला नहीं गया।</string>
+    <string name="recovery_failure_storage">नया पासवर्ड सहेजा नहीं जा सका। कुछ भी बदला नहीं गया।</string>
+    <string name="settings_change_password_legacy_body">सुरक्षा अपग्रेड के बाद उपलब्ध</string>
+    <string name="settings_current_password_title">पुष्टि करें कि यह आप हैं</string>
+    <string name="settings_current_password_label">वर्तमान मास्टर पासवर्ड</string>
+    <string name="password_update_failed">नया मास्टर पासवर्ड सेव नहीं हो सका। आपका वर्तमान पासवर्ड अब भी काम करता है।</string>
+    <string name="settings_biometric_unlock_title">फ़िंगरप्रिंट से अनलॉक</string>
+    <string name="settings_biometric_unlock_body">मास्टर पासवर्ड टाइप करने के बजाय अपने फ़िंगरप्रिंट से अनलॉक करें</string>
+    <string name="settings_biometric_unlock_unavailable_body">फ़ोन की सेटिंग में फ़िंगरप्रिंट जोड़ा होना ज़रूरी है। हर फ़ोन इसे सपोर्ट नहीं करता।</string>
+    <string name="home_screen_lock_nudge_banner">स्क्रीन लॉक सेट करें ताकि भूला हुआ मास्टर पासवर्ड रिकवर किया जा सके</string>
+    <string name="home_screen_lock_nudge_set_up">सेट करें</string>
+    <string name="home_screen_lock_nudge_accept_risk">मैं जोखिम स्वीकार करता/करती हूँ</string>
 </resources>

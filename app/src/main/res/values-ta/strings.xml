@@ -152,8 +152,7 @@
     <string name="micr_code">MICR குறியீடு</string>
     <string name="welcome_back">மீண்டும் வருக!</string>
     <string name="welcome">வருக!</string>
-    <string name="timeout_dialog_message">நீங்கள் நீண்ட நேரம் செயலியை விட்டு விலகியிருந்தீர்கள். மீண்டும் உள்நுழைய சரி என்பதைக் கிளிக் செய்யவும்</string>
-    <string name="timeout_dialog_positive_button_text">சரி</string>
+    <string name="login_away_banner">நீங்கள் சிறிது நேரம் விலகியிருந்தீர்கள் — மீண்டும் திறக்கவும்.</string>
     <string name="created_on">உருவாக்கப்பட்ட தேதி</string>
     <string name="updated_on">புதுப்பிக்கப்பட்ட தேதி</string>
     <string name="add_a_new_record">புதிய பதிவைச் சேர்</string>
@@ -203,4 +202,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">புதுப்பிப்பு பதிவிறக்கப்பட்டது. நிறுவ Safe Box ஐ மறுதொடக்கம் செய்யவும்.</string>
     <string name="in_app_update_restart">மறுதொடக்கம் செய்</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">பாதுகாப்பு மேம்படுத்தல் — உங்கள் முதன்மை கடவுச்சொல்லை ஒருமுறை உள்ளிடவும்</string>
+    <string name="vault_migration_progress_title">பெட்டகப் பாதுகாப்பு மேம்படுத்தப்படுகிறது…</string>
+    <string name="vault_migration_progress_counter">%2$d இல் %1$d பதிவுகள்</string>
+    <string name="vault_migration_failure_keystore">பாதுகாப்பான வன்பொருள் பதிலளிக்கவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_verify">மேம்படுத்தல் சரிபார்ப்பு தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_storage">மேம்படுத்தலைச் சேமிக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_unexpected">மேம்படுத்தல் தோல்வியடைந்தது. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_failure_forgot_password_note">உங்கள் முதன்மை கடவுச்சொல் மாற்றப்படவில்லை.</string>
+    <string name="vault_migration_retry">மீண்டும் முயல்க</string>
+    <string name="vault_migration_continue_legacy">இப்போதைக்குத் தொடரவும்</string>
+    <string name="legacy_key_lost_title">குறியாக்க விசை கிடைக்கவில்லை</string>
+    <string name="legacy_key_lost_body">இந்தப் பெட்டகத்தைக் குறியாக்கிய வன்பொருள் விசை இந்தச் சாதனத்தில் இனி கிடைக்காது என்பதால், தற்போதுள்ள பதிவுகளைத் திறக்க முடியாது. உங்களிடம் காப்புப் பிரதி கோப்பு இருந்தால், இந்தப் பெட்டகத்தை அழித்து அந்தக் காப்புப் பிரதியிலிருந்து மீட்டெடுக்கலாம்.</string>
+    <string name="home_upgrade_pending_banner">பாதுகாப்பு மேம்படுத்தல் நிலுவையில் உள்ளது — அடுத்த உள்நுழைவின்போது இது இயங்கும்</string>
+    <string name="home_upgrade_pending_retry">இப்போதே மீண்டும் முயல்க</string>
+    <string name="login_biometric_invalidated_banner">கைரேகை உள்நுழைவை மீண்டும் அமைக்க வேண்டும் — உங்கள் முதன்மைக் கடவுச்சொல்லை உள்ளிடவும்</string>
+    <string name="recovery_not_set_up_title">கடவுச்சொல் மீட்பு அமைக்கப்படவில்லை</string>
+    <string name="recovery_not_set_up_body">மறந்துபோன முதன்மைக் கடவுச்சொல்லை, நீங்கள் கடைசியாக உள்நுழைந்தபோது ஏற்கனவே அமைக்கப்பட்டிருந்த திரைப் பூட்டின் மூலம் மட்டுமே மீட்டமைக்க முடியும். இந்தச் சாதனத்தில் இந்தப் பெட்டகத்திற்கான மீட்பு விசை எதுவும் இல்லை, எனவே அதன் முதன்மைக் கடவுச்சொல்லால் மட்டுமே இதைத் திறக்க முடியும்.</string>
+    <string name="recovery_not_set_up_restore_hint">உங்களிடம் காப்புப்பிரதி கோப்பு இருந்தால், இந்தப் பெட்டகத்தை அழித்து, மீண்டும் பதிவுசெய்து, காப்பு &amp; மீட்பு பக்கத்திலிருந்து காப்புப்பிரதியை மீட்டெடுக்கவும்.</string>
+    <string name="recovery_back_to_login">உள்நுழைவுக்குத் திரும்பு</string>
+    <string name="erase_vault_action">அனைத்தையும் அழித்து புதிதாகத் தொடங்கு</string>
+    <string name="erase_vault_dialog_title">அனைத்தையும் அழிக்கவா?</string>
+    <string name="erase_vault_dialog_body">இந்தச் சாதனத்தில் உள்ள அனைத்துப் பதிவுகளும், முதன்மைக் கடவுச்சொல்லும், மீட்பு விசைகளும் நிரந்தரமாக நீக்கப்படும். நீங்கள் வேறு இடத்தில் சேமித்த காப்புப்பிரதி கோப்புகள் பாதிக்கப்படாது.</string>
+    <string name="erase_vault_dialog_confirm">அழி</string>
+    <string name="recovery_failure_not_authenticated">பெட்டகம் திறக்கப்படுவதற்கு முன்பே அன்லாக் காலாவதியாகிவிட்டது. மீண்டும் முயலவும்.</string>
+    <string name="recovery_failure_verifier">இந்தச் சாதனத்தில் உள்ள மீட்புத் தரவு சேதமடைந்துள்ளது. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="recovery_failure_keystore">பாதுகாப்பான வன்பொருளால் மீட்பு விசையைத் திறக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="recovery_failure_storage">புதிய கடவுச்சொல்லைச் சேமிக்க முடியவில்லை. எதுவும் மாற்றப்படவில்லை.</string>
+    <string name="settings_change_password_legacy_body">பாதுகாப்பு மேம்படுத்தலுக்குப் பிறகு கிடைக்கும்</string>
+    <string name="settings_current_password_title">இது நீங்கள்தான் என உறுதிப்படுத்தவும்</string>
+    <string name="settings_current_password_label">தற்போதைய முதன்மைக் கடவுச்சொல்</string>
+    <string name="password_update_failed">புதிய முதன்மைக் கடவுச்சொல்லைச் சேமிக்க முடியவில்லை. உங்கள் தற்போதைய கடவுச்சொல் இன்னும் செயல்படும்.</string>
+    <string name="settings_biometric_unlock_title">கைரேகை மூலம் திறத்தல்</string>
+    <string name="settings_biometric_unlock_body">முதன்மைக் கடவுச்சொல்லைத் தட்டச்சு செய்வதற்குப் பதிலாக உங்கள் கைரேகை மூலம் திறக்கவும்</string>
+    <string name="settings_biometric_unlock_unavailable_body">ஃபோன் அமைப்புகளில் கைரேகை பதிவுசெய்யப்பட்டிருக்க வேண்டும். எல்லா ஃபோன்களும் இதை ஆதரிப்பதில்லை.</string>
+    <string name="home_screen_lock_nudge_banner">மறந்துபோன முதன்மைக் கடவுச்சொல்லை மீட்டெடுக்க திரைப் பூட்டை அமைக்கவும்</string>
+    <string name="home_screen_lock_nudge_set_up">அமை</string>
+    <string name="home_screen_lock_nudge_accept_risk">அபாயத்தை ஏற்கிறேன்</string>
 </resources>

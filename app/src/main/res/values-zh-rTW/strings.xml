@@ -145,8 +145,7 @@
     <string name="micr_code">MICR 代碼</string>
     <string name="welcome_back">歡迎回來！</string>
     <string name="welcome">歡迎使用！</string>
-    <string name="timeout_dialog_message">您離開的時間過久，請點擊「確定」重新登入應用程式</string>
-    <string name="timeout_dialog_positive_button_text">確定</string>
+    <string name="login_away_banner">您已離開一段時間 — 請重新解鎖。</string>
     <string name="created_on">建立日期</string>
     <string name="updated_on">更新日期</string>
     <string name="add_a_new_record">新增記錄</string>
@@ -198,4 +197,42 @@
     <!-- In-app updates -->
     <string name="in_app_update_downloaded">已下載更新。請重新啟動 Safe Box 以進行安裝。</string>
     <string name="in_app_update_restart">重新啟動</string>
+    <!-- Envelope encryption migration & fallback -->
+    <string name="login_security_upgrade_notice">安全升級 — 請輸入一次主密碼</string>
+    <string name="vault_migration_progress_title">正在升級保險庫安全性…</string>
+    <string name="vault_migration_progress_counter">第 %1$d / %2$d 筆記錄</string>
+    <string name="vault_migration_failure_keystore">安全硬體未回應。未進行任何變更。</string>
+    <string name="vault_migration_failure_verify">升級驗證失敗。未進行任何變更。</string>
+    <string name="vault_migration_failure_storage">無法儲存升級。未進行任何變更。</string>
+    <string name="vault_migration_failure_unexpected">升級失敗。未進行任何變更。</string>
+    <string name="vault_migration_failure_forgot_password_note">您的主密碼並未變更。</string>
+    <string name="vault_migration_retry">重試</string>
+    <string name="vault_migration_continue_legacy">暫時繼續</string>
+    <string name="legacy_key_lost_title">加密金鑰無法使用</string>
+    <string name="legacy_key_lost_body">加密此保險庫的硬體金鑰在此裝置上已無法使用，因此無法開啟現有記錄。如果您有備份檔案，可以清除此保險庫並從備份還原。</string>
+    <string name="home_upgrade_pending_banner">安全升級待處理 — 將於下次登入時執行</string>
+    <string name="home_upgrade_pending_retry">立即重試</string>
+    <string name="login_biometric_invalidated_banner">指紋登入需要重新設定 — 請輸入您的主密碼</string>
+    <string name="recovery_not_set_up_title">尚未設定密碼復原</string>
+    <string name="recovery_not_set_up_body">忘記的主密碼只能透過您上次登入時就已設定好的螢幕鎖定來重設。此裝置上沒有此保險庫的復原金鑰，因此該保險庫只能以其主密碼開啟。</string>
+    <string name="recovery_not_set_up_restore_hint">如果您有備份檔案，請清除此保險庫並重新註冊，然後在「備份與還原」中還原該備份。</string>
+    <string name="recovery_back_to_login">返回登入</string>
+    <string name="erase_vault_action">清除所有資料並重新開始</string>
+    <string name="erase_vault_dialog_title">清除所有資料？</string>
+    <string name="erase_vault_dialog_body">此裝置上的所有記錄、主密碼和復原金鑰都將被永久刪除。您儲存在其他位置的備份檔案不受影響。</string>
+    <string name="erase_vault_dialog_confirm">清除</string>
+    <string name="recovery_failure_not_authenticated">解鎖已過期，未能開啟保險庫。請重試。</string>
+    <string name="recovery_failure_verifier">此裝置上的復原資料已損毀。未進行任何變更。</string>
+    <string name="recovery_failure_keystore">安全硬體無法開啟復原金鑰。未進行任何變更。</string>
+    <string name="recovery_failure_storage">無法儲存新密碼。未進行任何變更。</string>
+    <string name="settings_change_password_legacy_body">安全性升級後即可使用</string>
+    <string name="settings_current_password_title">確認是您本人</string>
+    <string name="settings_current_password_label">目前的主密碼</string>
+    <string name="password_update_failed">無法儲存新的主密碼。您目前的密碼仍可使用。</string>
+    <string name="settings_biometric_unlock_title">指紋解鎖</string>
+    <string name="settings_biometric_unlock_body">使用指紋解鎖，不必輸入主密碼</string>
+    <string name="settings_biometric_unlock_unavailable_body">需要在手機設定中註冊指紋。並非所有手機都支援此功能。</string>
+    <string name="home_screen_lock_nudge_banner">設定螢幕鎖定，以便在忘記主密碼時可以復原</string>
+    <string name="home_screen_lock_nudge_set_up">設定</string>
+    <string name="home_screen_lock_nudge_accept_risk">我接受風險</string>
 </resources>

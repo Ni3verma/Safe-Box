@@ -47,7 +47,11 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -527,6 +531,69 @@ class RecordsViewModelTest {
             assertThat(lastState.records).containsExactlyElementsIn(expected).inOrder()
         }
     }
+
+    @Test
+    fun `uiState survives a lock mid-stream with an empty list and refreshes on the next subscription`() =
+        runTest {
+            // A secure-DAO Flow is cold like Room's: it serves the records until the vault locks,
+            // then emits an empty list and completes. The ViewModel captures each
+            // repository flow once, so a restart re-collects the same flow against the new state.
+            val isLocked = MutableStateFlow(false)
+            fun <T> secureDaoFlow(records: List<T>) = flow {
+                emit(records)
+                isLocked.first { it }
+                emit(emptyList<T>())
+            }
+            every { bankAccountDataRepository.getAllBankAccountData() } returns
+                secureDaoFlow(getBankAccountDataList(1))
+            every { secureNoteDataRepository.getAllSecureNoteData() } returns
+                secureDaoFlow(getSecureNoteDataList(1))
+            every { loginDataRepository.getAllLoginData() } returns secureDaoFlow(getLoginDataList(1))
+            every { cardDataRepository.getAllBankCardData() } returns secureDaoFlow(getBankCardDataList(1))
+            every { authenticatorDataRepository.getAllAuthenticatorData() } returns
+                secureDaoFlow(emptyList())
+            viewModel = RecordsViewModel(
+                bankAccountDataRepository,
+                secureNoteDataRepository,
+                loginDataRepository,
+                cardDataRepository,
+                authenticatorDataRepository,
+                mainDispatcherRule.testDispatcherProvider,
+                backupMetadataRepository,
+                preferenceProvider,
+                analyticsHelper,
+                vaultStorageStats,
+                inAppReviewManager,
+            )
+
+            viewModel.uiState.test {
+                awaitItem()
+                advanceUntilIdle()
+                assertThat(expectMostRecentItem().totalDbRecords).isEqualTo(4)
+
+                isLocked.value = true
+                advanceUntilIdle()
+
+                val locked = expectMostRecentItem()
+                assertThat(locked.records).isEmpty()
+                assertThat(locked.totalDbRecords).isEqualTo(0)
+                assertThat(locked.isLoading).isFalse()
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Re-login: the vault is open again and the next collector restarts the pipeline once
+            // both nested WhileSubscribed windows have elapsed (uiState stops 5 s after its
+            // collector leaves, which is when dbRecords loses its own subscriber and starts its 5 s).
+            isLocked.value = false
+            advanceTimeBy(10_001)
+            runCurrent()
+            viewModel.uiState.test {
+                awaitItem()
+                advanceUntilIdle()
+
+                assertThat(expectMostRecentItem().totalDbRecords).isEqualTo(4)
+            }
+        }
 
     @Test
     fun `uiState restores all records when search text is added and then cleared`() = runTest {

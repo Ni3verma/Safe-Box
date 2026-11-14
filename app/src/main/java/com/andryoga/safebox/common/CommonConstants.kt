@@ -10,6 +10,9 @@ object CommonConstants {
     const val IS_NEVER_ASK_FOR_NOTIFICATION_PERMISSION = "is_never_ask_for_notification_permission"
     const val IS_CAMERA_PERMISSION_ASKED_BEFORE = "is_camera_permission_asked_before"
 
+    // the user chose "I accept the risk" on the Home screen-lock nudge; cleared by erase
+    const val IS_SCREEN_LOCK_NUDGE_DISMISSED = "is_screen_lock_nudge_dismissed"
+
     // Play version code the user was last asked to update to. The user is asked again only for a
     // higher one. See InAppUpdateViewModel.
     const val IN_APP_UPDATE_PROMPTED_VERSION_CODE = "in_app_update_prompted_version_code"
@@ -20,7 +23,7 @@ object CommonConstants {
     // crashlytics
     const val CRASHLYTICS_KEY_UID = "uid"
 
-    // Backup file data
+    // Map keys of backup formats 1–3, read only by LegacyBackupReader
     const val VERSION_KEY = "0"
     const val SALT_KEY = "1"
     const val IV_KEY = "2"
@@ -30,18 +33,16 @@ object CommonConstants {
     const val BANK_CARD_DATA_KEY = "6"
     const val SECURE_NOTE_DATA_KEY = "7"
     const val AUTHENTICATOR_DATA_KEY = "8"
-    const val BACKUP_VERSION = 3
+    const val BACKUP_VERSION = 4
 
-    // Backup params
-    const val BACKUP_PARAM_PASSWORD = "0"
+    // Backup params. The password is not one: it travels through BackupPasswordRegistry.
     const val BACKUP_PARAM_IS_SHOW_START_NOTIFICATION = "1"
 
     // Backup metadata
     const val WORKER_NAME_BACKUP_DATA = "BACKUP_SAFE_BOX_DATA_WORK"
     const val MAX_BACKUP_FILES = 5
 
-    // Restore params
-    const val RESTORE_PARAM_PASSWORD = "0"
+    // Restore params. The password is not one: it travels through BackupPasswordRegistry.
     const val RESTORE_PARAM_FILE_URI = "1"
 
     // Backup metadata

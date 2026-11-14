@@ -1,13 +1,15 @@
 package com.andryoga.safebox.ui.signup
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.AnalyticsKey
-import com.andryoga.safebox.common.CommonConstants
-import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
+import com.andryoga.safebox.common.Utils
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.di.IsDebug
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
+import com.andryoga.safebox.security.envelope.VaultKeyMaintenance
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
 import com.andryoga.safebox.ui.core.password.PasswordValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,17 +26,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignupViewModel @Inject constructor(
-    private val encryptedPreferenceProvider: EncryptedPreferenceProvider,
-    private val userDetailsRepository: UserDetailsRepository,
+    private val vaultRepository: VaultRepository,
     private val analyticsHelper: AnalyticsHelper,
+    private val sessionKeyHolder: SessionKeyHolder,
+    private val vaultKeyMaintenance: VaultKeyMaintenance,
     @param:IsDebug private val isDebug: Boolean,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(SignupUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val _navigateToHome = MutableStateFlow<Boolean>(false)
+    private val _navigateToHome = MutableStateFlow(false)
     val navigateToHome: StateFlow<Boolean> = _navigateToHome
 
+    private var isSigningUp = false
 
     init {
         if (isDebug) {
@@ -42,25 +46,28 @@ class SignupViewModel @Inject constructor(
                 it.copy(
                     password = "Qwerty@@135",
                     hint = "first 5 @@ first 3",
-                    passwordValidatorState = runPasswordValidator("Qwerty@@135")
+                    passwordValidatorState = runPasswordValidator("Qwerty@@135"),
                 )
             }
         }
 
         uiState.map {
             SignupButtonEnableParams(
-                passwordValidatorState = it.passwordValidatorState, hint = it.hint
+                passwordValidatorState = it.passwordValidatorState,
+                hint = it.hint,
             )
         }.distinctUntilChanged().onEach { enableParams ->
             _uiState.update {
-                it.copy(isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotBlank())
+                it.copy(
+                    isSignupButtonEnabled = enableParams.passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK && enableParams.hint.isNotBlank(),
+                )
             }
         }.launchIn(viewModelScope)
 
         uiState.map { it.passwordValidatorState }.distinctUntilChanged()
             .onEach { passwordValidatorState ->
                 _uiState.value = _uiState.value.copy(
-                    isPasswordFieldError = !(passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK || passwordValidatorState == PasswordValidatorState.INITIAL_STATE)
+                    isPasswordFieldError = !(passwordValidatorState == PasswordValidatorState.PASSWORD_IS_OK || passwordValidatorState == PasswordValidatorState.INITIAL_STATE),
                 )
             }.launchIn(viewModelScope)
     }
@@ -75,7 +82,8 @@ class SignupViewModel @Inject constructor(
 
     private fun onPasswordUpdate(password: String) {
         _uiState.value = _uiState.value.copy(
-            password = password, passwordValidatorState = runPasswordValidator(password = password)
+            password = password,
+            passwordValidatorState = runPasswordValidator(password = password),
         )
     }
 
@@ -83,18 +91,19 @@ class SignupViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(hint = hint)
     }
 
-    @androidx.annotation.VisibleForTesting
+    @VisibleForTesting
     internal companion object {
         fun runPasswordValidator(
-            password: String
+            password: String,
         ): PasswordValidatorState = PasswordValidator.validate(password)
     }
 
     private fun signup() {
+        if (isSigningUp) return
         val password = _uiState.value.password
         val hint = _uiState.value.hint
 
-        Timber.i("save password clicked")
+        Timber.i("signup button clicked")
         val passwordValidatorState = runPasswordValidator(password)
         if (passwordValidatorState != PasswordValidatorState.PASSWORD_IS_OK || hint.isBlank()) {
             // ideally flow should NEVER come here bcz we don't allow signup click
@@ -104,18 +113,32 @@ class SignupViewModel @Inject constructor(
             return
         }
 
+        isSigningUp = true
         analyticsHelper.logEvent(AnalyticsKey.SIGN_UP)
 
         viewModelScope.launch {
-            userDetailsRepository.insertUserDetailsData(password, hint)
+            try {
+                if (vaultRepository.hasVault()) {
+                    Utils.crashInDebugBuild("Signup invoked when a vault already exists")
+                    return@launch
+                }
 
-            encryptedPreferenceProvider.upsertBooleanPref(
-                CommonConstants.IS_SIGN_UP_REQUIRED,
-                false
-            )
-            Timber.i("Added pswrd in db")
+                val dek = vaultRepository.createVault(
+                    password = password.toCharArray(),
+                    hint = hint,
+                )
+                try {
+                    sessionKeyHolder.setSessionKey(dek)
+                } finally {
+                    dek.fill(0)
+                }
+                vaultKeyMaintenance.scheduleAfterUnlock()
+                Timber.i("Added pswrd in db")
 
-            _navigateToHome.emit(true)
+                _navigateToHome.emit(true)
+            } finally {
+                isSigningUp = false
+            }
         }
     }
 
