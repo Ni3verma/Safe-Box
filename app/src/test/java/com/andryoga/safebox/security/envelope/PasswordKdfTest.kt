@@ -135,6 +135,13 @@ class PasswordKdfTest {
     }
 
     @Test
+    fun pbkdf2Iterations_arePinnedUntilALoginRewrapShipsWithAnyChange() {
+        // Existing vaults keep the count stored in kdf_params; nothing re-wraps them at login yet.
+        // Raising this without that re-wrap would leave every existing vault on the old count.
+        assertThat(PasswordKdf.PBKDF2_ITERATIONS).isEqualTo(99_000)
+    }
+
+    @Test
     fun deriveKey_shouldClearCallerPasswordArrayAfterUse() {
         val params = testParams()
         val password = "Secret#Password99".toCharArray()
