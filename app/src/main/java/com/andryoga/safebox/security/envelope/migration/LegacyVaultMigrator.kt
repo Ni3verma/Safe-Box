@@ -253,7 +253,8 @@ class LegacyVaultMigrator @Inject constructor(
             }
 
             // Stage 5: Open DEK session, cancel pre-upgrade workers, and remove legacy Keystore key.
-            sessionKeyHolder.setSessionKey(mintedDek.clone())
+            // The holder keeps its own copy; mintedDek goes to the caller, who zeroes it.
+            sessionKeyHolder.setSessionKey(mintedDek)
             runCatching {
                 workManager.get().cancelUniqueWork(CommonConstants.WORKER_NAME_BACKUP_DATA)
                 workManager.get().cancelUniqueWork(CommonConstants.WORKER_NAME_RESTORE_DATA)

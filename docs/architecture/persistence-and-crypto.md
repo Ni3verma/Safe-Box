@@ -11,7 +11,6 @@ sufficient coverage.
 | Layer | Holds |
 |---|---|
 | Room (`SafeBoxDatabase`) | all vault records, per-field encrypted; `user_details` (`uid` in plaintext; the hint encrypted with the records' key while `crypto_version = 1`, `UserDetailsDaoSecure.getHint`); `vault_meta` (the vault's crypto state: `crypto_version`, the parked legacy password hash, and wrapped keys) |
-| `EncryptedSharedPreferences` | signup state, other secrets |
 | Plain `SharedPreferences` | login counters, permission-asked flags |
 | DataStore | settings/preferences |
 | `AndroidKeyStore` | the field-encryption key — **not** file-backed, not in `/data/data` |
