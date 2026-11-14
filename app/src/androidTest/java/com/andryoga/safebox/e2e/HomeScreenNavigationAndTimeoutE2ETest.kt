@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.os.SystemClock
@@ -25,7 +23,6 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -53,9 +50,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -114,7 +108,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
@@ -181,7 +174,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             backupMetadataRepository.deleteBackupMetadata()
@@ -214,7 +206,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
             E2ETestUtils.setupSeededVaultRecords(
@@ -273,7 +264,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -304,7 +294,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -330,7 +319,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -364,7 +352,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -391,7 +378,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider,
             )
         }
@@ -413,7 +399,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             settingsDataStore.updatePrivacy(true)
@@ -445,7 +430,6 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             settingsDataStore.updatePrivacy(false)

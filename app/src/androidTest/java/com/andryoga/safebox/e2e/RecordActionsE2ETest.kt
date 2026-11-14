@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.content.ClipboardManager
@@ -33,7 +31,6 @@ import com.andryoga.safebox.domain.models.record.BankAccountData
 import com.andryoga.safebox.domain.models.record.CardData
 import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -63,9 +60,6 @@ class RecordActionsE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -124,7 +118,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -193,7 +186,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -256,7 +248,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -324,7 +315,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -395,7 +385,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -446,7 +435,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -507,7 +495,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 
@@ -558,7 +545,6 @@ class RecordActionsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
 

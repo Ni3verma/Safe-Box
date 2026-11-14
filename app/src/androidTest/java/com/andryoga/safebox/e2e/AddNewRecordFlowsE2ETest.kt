@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,7 +19,6 @@ import com.andryoga.safebox.R
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.ParsedTotpData
 import com.andryoga.safebox.totp.models.TotpConfig
@@ -54,9 +51,6 @@ class AddNewRecordFlowsE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -100,7 +94,6 @@ class AddNewRecordFlowsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
@@ -194,7 +187,6 @@ class AddNewRecordFlowsE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             E2ETestUtils.setupCameraPermissionAskedState(preferenceProvider)
