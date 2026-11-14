@@ -119,8 +119,7 @@ class BypassProtectionTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             openLoginRecord()
 
-            VaultSessionTestBridge.lockVault()
-            scenario.recreate()
+            VaultSessionTestBridge.recreateWithLockedVault(scenario)
 
             assertOnLoginWithoutPlaintext()
             scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }

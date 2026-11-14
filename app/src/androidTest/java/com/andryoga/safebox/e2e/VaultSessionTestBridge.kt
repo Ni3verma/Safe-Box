@@ -1,5 +1,9 @@
 package com.andryoga.safebox.e2e
 
+import android.app.Activity
+import android.app.Application
+import android.os.Bundle
+import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.andryoga.safebox.data.repository.interfaces.VaultRepository
 import com.andryoga.safebox.security.envelope.AesGcmWrap
@@ -102,6 +106,35 @@ object VaultSessionTestBridge {
      */
     fun lockVault() {
         entryPoint.sessionKeyHolder().clearSessionKey()
+    }
+
+    /**
+     * Process death with the navigation state kept: [scenario] is recreated while the vault is
+     * open, so the current destination is what gets saved, and the key is cleared just before the
+     * new Activity is created, so the restored screen meets an empty holder. A plain
+     * [lockVault] + `recreate()` races the lock-driven navigation to Login and can save Login.
+     */
+    fun <A : Activity> recreateWithLockedVault(scenario: ActivityScenario<A>) {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val lockBeforeRestore = object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+                if (savedInstanceState != null) lockVault()
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        }
+        application.registerActivityLifecycleCallbacks(lockBeforeRestore)
+        try {
+            scenario.recreate()
+        } finally {
+            application.unregisterActivityLifecycleCallbacks(lockBeforeRestore)
+        }
     }
 
     /** Whether the current test component's session is open; lets a test tell a missed lock from a missed navigation. */

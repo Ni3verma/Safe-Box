@@ -254,7 +254,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
 
     /**
      * The HomeGraph gate. Process death keeps Home on the saved navigation state but
-     * empties the RAM-only session holder; `lockVault()` + `recreate()` reproduces exactly that
+     * empties the RAM-only session holder; `recreateWithLockedVault` reproduces exactly that
      * pair, and the restored Home must leave for Login without ever showing the vault. No reason
      * was recorded, so no banner either.
      */
@@ -272,8 +272,7 @@ class HomeScreenNavigationAndTimeoutE2ETest {
             E2ETestUtils.unlockApp(composeTestRule, context)
             composeTestRule.onNodeWithText(context.getString(R.string.no_record)).assertIsDisplayed()
 
-            VaultSessionTestBridge.lockVault()
-            scenario.recreate()
+            VaultSessionTestBridge.recreateWithLockedVault(scenario)
 
             composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back)).assertIsDisplayed()
