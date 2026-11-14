@@ -17,7 +17,7 @@ object VaultMetaKey {
     /** Base64-encoded AES-256-GCM wrap of the DEK under `KEK_Password`. */
     const val WRAPPED_DEK_PASSWORD = "wrapped_dek_password"
 
-    /** Base64-encoded AES-256-GCM verifier payload (`safebox.dek.verify.v1`) encrypted under the DEK. */
+    /** Base64-encoded AES-256-GCM verifier payload (`safebox.dek.verifier.v1`) encrypted under the DEK. */
     const val DEK_VERIFIER = "dek_verifier"
 
     /** Base64-encoded RSA-2048-OAEP wrap of the DEK under `KEK_Biometric`. */
@@ -43,7 +43,7 @@ object VaultMetaKey {
      * `MIGRATION_5_6` when the `user_details.password` column was dropped. Present only while the
      * vault is [CryptoVersion.LEGACY].
      */
-    // TODO(D3): legacy vault (crypto_version = 1) only (debt row D2 tracks the row itself)
+    // TODO(D3): legacy vault (crypto_version = 1) only
     const val LEGACY_PASSWORD_HASH = "legacy_password_hash"
 }
 

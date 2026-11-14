@@ -1,5 +1,6 @@
 package com.andryoga.safebox.security
 
+import javax.crypto.AEADBadTagException
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
@@ -10,7 +11,7 @@ import javax.crypto.spec.GCMParameterSpec
  *
  * Pure functions over an explicit [SecretKey], so the same codec serves the session key behind
  * [SymmetricKeyUtilsImpl], the legacy Keystore handle for the pre-login hint read
- * (`UserDetailsDaoSecure`) and, later, the migration that re-encrypts every field.
+ * (`UserDetailsDaoSecure`) and the migration that re-encrypts every field.
  */
 object AesGcmFieldCipher {
     const val SEPARATOR = "|"
@@ -38,7 +39,7 @@ object AesGcmFieldCipher {
      * @param data A value produced by [encrypt].
      * @param key The key that produced it.
      * @return The original plaintext.
-     * @throws javax.crypto.AEADBadTagException When [key] is not the key that produced [data], or
+     * @throws AEADBadTagException When [key] is not the key that produced [data], or
      * the ciphertext was altered.
      */
     fun decrypt(data: String, key: SecretKey): String {
