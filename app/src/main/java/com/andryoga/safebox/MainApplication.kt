@@ -28,6 +28,10 @@ class MainApplication : Application(), Configuration.Provider {
             Configuration.Builder()
                 .setWorkerFactory(safeBoxWorkerFactory)
                 .setMinimumLoggingLevel(Log.INFO)
+                // a full disk must not kill the process: records stay readable, work waits for space
+                .setInitializationExceptionHandler { e ->
+                    Timber.e(e, "WorkManager init failed; background work unavailable")
+                }
                 .build()
 
     override fun onCreate() {
