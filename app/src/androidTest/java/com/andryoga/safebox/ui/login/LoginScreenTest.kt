@@ -608,6 +608,43 @@ class LoginScreenTest {
     }
 
     @Test
+    fun biometricUnlockCipher_whenForgotPasswordClosesWhilePaused_shouldWaitForResumeToPrompt() {
+        val fakeAuthProvider = FakeDeviceSecurityAuthProvider().apply { canAuthenticateOverride = true }
+        val cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
+        val lifecycleOwner = object : LifecycleOwner {
+            val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.RESUMED }
+            override val lifecycle: Lifecycle get() = registry
+        }
+        // The cipher arrived while the forgot-password flow was already open.
+        var uiState by mutableStateOf(
+            LoginUiState(biometricUnlockCipher = cipher, forgotPasswordStep = ForgotPasswordStep.NewPassword),
+        )
+
+        composeTestRule.setContent {
+            CompositionLocalProvider(
+                LocalDeviceSecurityAuthProvider provides fakeAuthProvider,
+                LocalLifecycleOwner provides lifecycleOwner,
+            ) {
+                SafeBoxTheme {
+                    LoginScreen(uiState = uiState, screenAction = {})
+                }
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        // The recovery prompt paused the screen and was cancelled there.
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.STARTED }
+        uiState = uiState.copy(forgotPasswordStep = null)
+        composeTestRule.waitForIdle()
+        assertThat(fakeAuthProvider.lastCryptoObject).isNull()
+
+        composeTestRule.runOnUiThread { lifecycleOwner.registry.currentState = Lifecycle.State.RESUMED }
+        composeTestRule.waitForIdle()
+
+        assertThat(fakeAuthProvider.lastCryptoObject?.cipher).isSameInstanceAs(cipher)
+    }
+
+    @Test
     fun legacyVaultState_shouldShowSecurityUpgradeNotice() {
         composeTestRule.setContent {
             SafeBoxTheme {

@@ -170,8 +170,12 @@ internal fun LoginScreen(
     // when the prompt itself pauses the screen.
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     var isPromptReleased by remember(biometricCipher) { mutableStateOf(false) }
-    LaunchedEffect(lifecycleState, biometricCipher) {
-        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) isPromptReleased = true
+    LaunchedEffect(lifecycleState, biometricCipher, uiState.forgotPasswordStep) {
+        when {
+            // A recovery prompt can pause the screen; release again only once it is resumed.
+            uiState.forgotPasswordStep != null -> isPromptReleased = false
+            lifecycleState.isAtLeast(Lifecycle.State.RESUMED) -> isPromptReleased = true
+        }
     }
     if (biometricCipher != null && isLoginFormShowing && uiState.forgotPasswordStep == null && isPromptReleased) {
         // Remembered per cipher: a new CryptoObject instance would re-launch the prompt.
