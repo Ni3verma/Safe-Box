@@ -23,6 +23,7 @@ import com.andryoga.safebox.ui.login.LoginScreenRoot
 import com.andryoga.safebox.ui.signup.SignupRoute
 import com.andryoga.safebox.ui.signup.SignupScreenRoot
 import kotlinx.serialization.Serializable
+import timber.log.Timber
 
 @Composable
 fun AppNavigation(
@@ -119,6 +120,7 @@ private fun NavGraphBuilder.homeGraph(
             HomeScreen(
                 inAppUpdateViewModel = inAppUpdateViewModel,
                 onExitHomeNavGraph = {
+                    Timber.i("onExitHomeNavGraph called")
                     // Straight to Login: a vault exists whenever Home was reached, so the Loading
                     // decision is known, and a second root navigation issued from Loading while
                     // the first is still animating can leave the NavHost without a destination.
