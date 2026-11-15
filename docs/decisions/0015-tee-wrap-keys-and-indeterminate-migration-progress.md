@@ -46,6 +46,17 @@ At the measured ~9 ms per legacy record, the largest production vault decrypts i
    keygen commits without that wrap and post-unlock maintenance recreates it. The existing failure
    card covers real errors.
 
+## Readiness read-back (same window)
+
+The other readiness questions of [envelope-readiness.md](../analytics/envelope-readiness.md), read
+with recipes 3 and 5 and an active-users split by OS:
+
+| Question | Result | Outcome |
+|---|---|---|
+| Does the legacy alias disappear in the field? | `keystore_key_created`: 272 events, 269 users, **all `db_exists = 0`** | the silent-data-loss path never fired; the `db_exists` dimension was archived in GA (debt row D12 closed) |
+| Forgot-password use by Android version | 56 `forgot_password_click` from 12 users, 3 completed resets (Android 14, 9, 8.1); **Android 10: 0 taps** | recovery stays |
+| Active users by OS (`login_success`) | Android 16: 30, 17: 17, 15: 8, 14: 7, 13: 6, 11: 3, 9: 3, 12: 2, 8.1: 1, 7.0: 1; **Android 10: 0** | the owner kept the API 29 time-bound recovery key (design residual 1): with no Android 10 users the exposure is near zero |
+
 ## Consequences
 
 - Manual matrix rows B7 (2 000-record progress mode) and D4 (StrongBox-backed `KEK_*`) are dropped.

@@ -86,11 +86,9 @@ dimension name = parameter name:
 | `wrap` | `vault_wrap_created`, `vault_wrap_create_failure` | `biometric`, `device` |
 | `gate` | `change_password_gate_passed` (registered 2026-11-10, envelope MR 7) | `device_auth`, `master_password` |
 
-`db_exists` (on `keystore_key_created`, values `0`/`1`) is also registered for the `master`
-readiness patch (`v2.3.5.0-rc2`); the event's only firing site — the key provider's regenerate
-branch — was deleted on `feature/envelope-encryption` by envelope MR 3 (2026-10-21). **Archive
-`db_exists`** once the read-back ADR has its number (week 4–8 after the patch), which frees the
-slot; BigQuery keeps the rows already collected.
+`db_exists` (on `keystore_key_created`, `master` readiness patch `v2.3.5.0-rc2`) was **archived on
+2026-11-15** after the read-back in [ADR-0015](../decisions/0015-tee-wrap-keys-and-indeterminate-migration-progress.md)
+(all 272 events `db_exists = 0`); BigQuery keeps the rows already collected.
 
 Custom **metrics**, event-scoped, unit *Standard* (`record_count`, `db_size_kb`, `free_space_mb`,
 `duration_ms`, and `size_kb` are per-user or per-run snapshots whose exact values are near-unique,
@@ -109,7 +107,7 @@ so a dimension would collapse to `(other)`; their real P95 read is in BigQuery):
 | `records_done` | `vault_migration_failure` | records re-encrypted before the failure (`0..n`) |
 | `records_deleted` | `vault_migration_success` | rows the legacy key could not read, deleted by the migration (`0..n`). Registered 2026-11-14 |
 
-Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 27 + 10 used (26 + 10 after archiving `db_exists`).
+Quota: 50 event-scoped dimensions and 50 metrics on the free tier; 26 + 10 used (`db_exists` archived 2026-11-15).
 
 **Wire formats** (verified from `FA-SVC` logcat on the emulator, 2026-10-17): booleans arrive as
 **`0` / `1`**, not `true` / `false`; `Int` params arrive as numbers; `version` is always logged as
