@@ -1393,7 +1393,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 
 **E. Session & lock**
 - E1 Away-timeout while on the records list → Login + away banner; back button does not return to Home; password → list restored.
-- E2 "Don't keep activities" + background/foreground at Home → Login, no crash, no plaintext flash.
+- E2 "Don't keep activities" + background/foreground at Home: back within the away timeout → the list is rebuilt from the live session; after it → Login, no crash, no plaintext flash.
 - E3 Timeout during a manual backup → Login (the dialog leaves with Home); the backup fails closed at its next decrypt (`SESSION_LOCKED`, silent, no file) or, past its read phase, finishes; next password login auto-backup runs.
 
 **F. Settings**
