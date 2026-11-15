@@ -63,10 +63,10 @@ effort ran as MR T (telemetry on `master`), MR 0 (design and spike) and MR 1–9
 
 | Register row | What goes | Trigger |
 |---|---|---|
-| D2 / D3 | `legacy_password_hash` handling and everything marked `// TODO(D3)`: the legacy session, `legacyVaultKey()`, `compareHash`, `LegacyVaultMigrator`, the legacy hint branch | Firebase shows no `vault_migration_*` and no `vault_legacy_session_start` for N months |
-| D10 | `LegacyBackupReader` and `PasswordBasedEncryptionImpl` (format 1–3 restore) | `restore_data_success` with `version ≤ 3` is zero for N months |
-| D11 | `LegacyVaultMigrator.debugFailStage` test hook | with D3 |
-| — | API 29 time-bound `KEK_Device` path | Android 10 share of `forgot_password_click` ≈ 0 after a release ⇒ recovery becomes API 30+ |
+| D2 / D3 | `legacy_password_hash` handling and everything marked `// TODO(D3)`: the legacy session, `legacyVaultKey()`, `compareHash`, `LegacyVaultMigrator`, the legacy hint branch | Firebase shows no `vault_migration_*` and no `vault_legacy_session_start` for 6 months (#321) |
+| D10 | `LegacyBackupReader` and `PasswordBasedEncryptionImpl` (format 1–3 restore) | `restore_data_success` with `version ≤ 3` is zero for 6 months (#322) |
+| D11 | `LegacyVaultMigrator.debugFailStage` test hook | with D3 (#321) |
+| — | API 29 time-bound `KEK_Device` path | **decided 2026-11-15: kept** — the read-back showed 0 Android 10 users and taps, so the owner accepted the residual instead of dropping recovery ([ADR-0015](0015-tee-wrap-keys-and-indeterminate-migration-progress.md)) |
 
 ## Consequences
 
