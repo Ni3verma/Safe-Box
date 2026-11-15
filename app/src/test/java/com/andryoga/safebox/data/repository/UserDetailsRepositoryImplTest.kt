@@ -5,19 +5,20 @@ package com.andryoga.safebox.data.repository
 import com.andryoga.safebox.MainDispatcherRule
 import com.andryoga.safebox.analytics.AnalyticsHelper
 import com.andryoga.safebox.common.CommonConstants
+import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
-import com.andryoga.safebox.data.db.entity.UserDetailsEntity
+import com.andryoga.safebox.data.db.dao.VaultMetaDao
+import com.andryoga.safebox.data.db.models.VaultMetaKey
 import com.andryoga.safebox.data.db.secureDao.UserDetailsDaoSecure
+import com.andryoga.safebox.test.fakes.FakeHashingUtils
 import com.andryoga.safebox.test.fakes.FakePreferenceProvider
 import com.andryoga.safebox.test.fakes.FirebaseCrashlyticsTestHelper
 import com.google.common.truth.Truth.assertThat
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.impl.annotations.MockK
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -31,8 +32,11 @@ class UserDetailsRepositoryImplTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    @MockK
+    @MockK(relaxUnitFun = true)
     lateinit var userDetailsDaoSecure: UserDetailsDaoSecure
+
+    @MockK(relaxUnitFun = true)
+    lateinit var vaultMetaDao: VaultMetaDao
 
     @MockK
     lateinit var settingsDataStore: SettingsDataStore
@@ -40,6 +44,7 @@ class UserDetailsRepositoryImplTest {
     @RelaxedMockK
     lateinit var analyticsHelper: AnalyticsHelper
 
+    private lateinit var hashingUtils: FakeHashingUtils
     private lateinit var preferenceProvider: FakePreferenceProvider
     private lateinit var mockCrashlytics: FirebaseCrashlytics
     private lateinit var repository: UserDetailsRepositoryImpl
@@ -48,12 +53,16 @@ class UserDetailsRepositoryImplTest {
     fun setUp() {
         MockKAnnotations.init(this)
         mockCrashlytics = FirebaseCrashlyticsTestHelper.setupMockCrashlytics()
+        hashingUtils = FakeHashingUtils()
         preferenceProvider = FakePreferenceProvider()
+
         repository = UserDetailsRepositoryImpl(
             userDetailsDaoSecure = userDetailsDaoSecure,
+            vaultMetaDao = vaultMetaDao,
+            hashingUtils = hashingUtils,
             preferenceProvider = preferenceProvider,
             settingsDataStore = settingsDataStore,
-            analyticsHelper = analyticsHelper
+            analyticsHelper = analyticsHelper,
         )
     }
 
@@ -63,28 +72,20 @@ class UserDetailsRepositoryImplTest {
     }
 
     @Test
-    fun insertUserDetailsData_shouldSetCrashlyticsUidAndInsertEntityToDaoSecure() = runTest {
-        val slot = slot<UserDetailsEntity>()
-        coEvery { userDetailsDaoSecure.insertUserDetailsData(capture(slot)) } returns Unit
-
-        repository.insertUserDetailsData(password = "secretPass123", hint = "favorite color")
-
-        verify { mockCrashlytics.setUserId(any()) }
-        verify { mockCrashlytics.setCustomKey(CommonConstants.CRASHLYTICS_KEY_UID, any<String>()) }
-
-        assertThat(slot.isCaptured).isTrue()
-        assertThat(slot.captured.password).isEqualTo("secretPass123")
-        assertThat(slot.captured.hint).isEqualTo("favorite color")
-        assertThat(slot.captured.uid).isNotEmpty()
-    }
-
-    @Test
-    fun checkPassword_shouldDelegateToUserDetailsDaoSecure() = runTest {
-        coEvery { userDetailsDaoSecure.checkPassword("correctPass") } returns true
-        coEvery { userDetailsDaoSecure.checkPassword("wrongPass") } returns false
+    fun checkPassword_shouldCompareAgainstLegacyPasswordHashFromVaultMeta() = runTest {
+        coEvery { vaultMetaDao.get(VaultMetaKey.LEGACY_PASSWORD_HASH) } returns "HASH[correctPass]|FAKE_SALT"
 
         assertThat(repository.checkPassword("correctPass")).isTrue()
         assertThat(repository.checkPassword("wrongPass")).isFalse()
+    }
+
+    @Test
+    fun checkPassword_whenLegacyPasswordHashIsMissing_shouldAssertInDebugBuilds() = runTest {
+        coEvery { vaultMetaDao.get(VaultMetaKey.LEGACY_PASSWORD_HASH) } returns null
+
+        val outcome = runCatching { repository.checkPassword("anyPass") }
+
+        assertThat(outcome.exceptionOrNull()).isInstanceOf(Exceptions.DebugFatalException::class.java)
     }
 
     @Test
@@ -194,28 +195,5 @@ class UserDetailsRepositoryImplTest {
             val result = repository.shouldStartBiometricAuthFlow()
 
             assertThat(result).isFalse()
-        }
-
-    @Test
-    fun updatePasswordAndHint_shouldUpdateDaoSecureAndResetBiometricCount() =
-        runTest {
-            coEvery { userDetailsDaoSecure.updatePasswordAndHint(any(), any(), any()) } returns Unit
-            coEvery { settingsDataStore.getPasswordAfterXBiometricLogins() } returns 10
-            preferenceProvider.upsertIntPref(
-                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                1
-            )
-
-            repository.updatePasswordAndHint("NewPassword@@123", "new hint")
-
-            coVerify {
-                userDetailsDaoSecure.updatePasswordAndHint("NewPassword@@123", "new hint", any())
-            }
-            val remaining = preferenceProvider.getIntPref(
-                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
-                -1
-            )
-
-            assertThat(remaining).isEqualTo(10)
         }
 }

@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.net.Uri
@@ -29,7 +27,6 @@ import com.andryoga.safebox.data.repository.interfaces.BankCardDataRepository
 import com.andryoga.safebox.data.repository.interfaces.LoginDataRepository
 import com.andryoga.safebox.data.repository.interfaces.SecureNoteDataRepository
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -58,9 +55,6 @@ class CrossFeatureUserJourneysE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -123,7 +117,6 @@ class CrossFeatureUserJourneysE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             E2ETestUtils.setupSeededVaultRecords(
@@ -309,28 +302,14 @@ class CrossFeatureUserJourneysE2ETest {
                 assertThat((activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE) == 0).isTrue()
             }
 
-            // Step 6: Session Timeout (Trigger UserAwayDialog & verify backstack pop)
+            // Step 6: Session Timeout (lock to Login with the away banner & verify backstack pop)
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(hasText(context.getString(R.string.timeout_dialog_message)))
-                        .fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
-            composeTestRule.onNodeWithText(context.getString(R.string.timeout_dialog_message))
-                .assertIsDisplayed()
-
-            composeTestRule.onNodeWithText(context.getString(R.string.timeout_dialog_positive_button_text))
-                .performClick()
-
-            composeTestRule.waitUntil(timeoutMillis = 15000L) {
-                runCatching {
-                    composeTestRule.onAllNodes(hasText(context.getString(R.string.welcome_back)))
-                        .fetchSemanticsNodes().isNotEmpty()
-                }.getOrDefault(false)
-            }
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.welcome_back)))
+            composeTestRule.waitUntilNodeDisplayed(hasText(context.getString(R.string.login_away_banner)))
             composeTestRule.onNodeWithText(context.getString(R.string.welcome_back))
+                .assertIsDisplayed()
+            composeTestRule.onNodeWithText(context.getString(R.string.login_away_banner))
                 .assertIsDisplayed()
 
             // Verify Backstack Security: HomeGraph is popped completely upon logout/timeout transition

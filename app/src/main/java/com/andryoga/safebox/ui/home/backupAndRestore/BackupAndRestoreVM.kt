@@ -57,10 +57,6 @@ class BackupAndRestoreVM @Inject constructor(
                 )
             }
         }.launchIn(viewModelScope)
-
-        uiState.onEach { uiState ->
-            Timber.i("ui state updated, backup state = ${uiState.backupState::class.simpleName}, newBackupOrRestoreScreenState = ${uiState.newBackupOrRestoreScreenState::class.simpleName}")
-        }.launchIn(viewModelScope)
     }
 
     fun onScreenAction(action: ScreenAction) {

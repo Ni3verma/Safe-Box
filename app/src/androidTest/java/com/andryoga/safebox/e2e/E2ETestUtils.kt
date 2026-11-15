@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import android.app.Activity
@@ -44,7 +42,6 @@ import com.andryoga.safebox.domain.models.record.LoginData
 import com.andryoga.safebox.domain.models.record.NoteData
 import com.andryoga.safebox.e2e.E2ETestUtils.TEST_MASTER_PASSWORD
 import com.andryoga.safebox.e2e.E2ETestUtils.unlockApp
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.totp.models.TotpConfig
 import com.andryoga.safebox.ui.MainActivity
@@ -67,18 +64,20 @@ object E2ETestUtils {
     val TEST_DATE: Date = Date(1700000000000L)
 
     /**
-     * Pre-seeds the database and encrypted preferences so the app boots directly onto the LoginScreen.
+     * Pre-seeds the database and preferences so the app boots directly onto the LoginScreen.
+     *
+     * Creates a `crypto_version = 2` vault and opens its DEK session ([VaultSessionTestBridge]):
+     * every record seeded afterwards is encrypted under it, and the UI login unwraps the same DEK.
      */
+    @Suppress("UnusedParameter")
     suspend fun setupUnlockedHomeState(
         safeBoxDatabase: SafeBoxDatabase,
         userDetailsRepository: UserDetailsRepository,
-        encryptedPreferenceProvider: EncryptedPreferenceProvider,
         preferenceProvider: PreferenceProvider,
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
-        userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
-        encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
+        VaultSessionTestBridge.seedVaultAndOpenSession(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         preferenceProvider.upsertIntPref(CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING, 0)
         settingsDataStore?.let {
             setupSettingsState(
@@ -92,15 +91,13 @@ object E2ETestUtils {
     }
 
     /**
-     * Pre-seeds the database and preferences so the app boots requiring signup.
+     * Empties the database so the app boots requiring signup (no vault in Room).
      */
     suspend fun setupSignupRequiredState(
         safeBoxDatabase: SafeBoxDatabase,
-        encryptedPreferenceProvider: EncryptedPreferenceProvider,
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
-        encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, true)
         settingsDataStore?.let {
             setupSettingsState(
                 settingsDataStore = it,
@@ -115,17 +112,16 @@ object E2ETestUtils {
     /**
      * Pre-seeds credentials with biometric login count enabled (`remainingCount` > 0).
      */
+    @Suppress("UnusedParameter")
     suspend fun setupBiometricAvailableState(
         safeBoxDatabase: SafeBoxDatabase,
         userDetailsRepository: UserDetailsRepository,
-        encryptedPreferenceProvider: EncryptedPreferenceProvider,
         preferenceProvider: PreferenceProvider,
         remainingCount: Int = 3,
         settingsDataStore: SettingsDataStore? = null
     ) {
         safeBoxDatabase.clearAllTables()
-        userDetailsRepository.insertUserDetailsData(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
-        encryptedPreferenceProvider.upsertBooleanPref(CommonConstants.IS_SIGN_UP_REQUIRED, false)
+        VaultSessionTestBridge.seedVaultAndOpenSession(TEST_MASTER_PASSWORD, TEST_MASTER_HINT)
         preferenceProvider.upsertIntPref(
             CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
             remainingCount
@@ -144,6 +140,9 @@ object E2ETestUtils {
     /**
      * Pre-seeds the database with comprehensive sample records across all 5 vault item types
      * to guarantee deterministic testing for search, filter, and detail screens without UI interaction.
+     *
+     * Ensures a DEK session is open, since worker suites call this without a preceding user seed;
+     * when called after [setupUnlockedHomeState], the already-open vault DEK session is kept.
      */
     suspend fun setupSeededVaultRecords(
         safeBoxDatabase: SafeBoxDatabase,
@@ -153,6 +152,7 @@ object E2ETestUtils {
         secureNoteDataRepository: SecureNoteDataRepository,
         authenticatorDataRepository: AuthenticatorDataRepository
     ) {
+        VaultSessionTestBridge.openSessionForSeeding()
         safeBoxDatabase.loginDataDao().deleteAllData()
         safeBoxDatabase.bankCardDataDao().deleteAllData()
         safeBoxDatabase.bankAccountDataDao().deleteAllData()
@@ -256,8 +256,6 @@ object E2ETestUtils {
         safeBoxDatabase: SafeBoxDatabase,
         settingsDataStore: SettingsDataStore,
         activeSessionManager: ActiveSessionManager,
-        encryptedPreferenceProvider: EncryptedPreferenceProvider? = null,
-        isSignUpRequired: Boolean = false
     ) {
         settingsDataStore.updateAwayTimeout(SettingsDataStore.DefaultValues.AWAY_TIMEOUT_DEFAULT)
         settingsDataStore.updatePrivacy(SettingsDataStore.DefaultValues.PRIVACY_ENABLED_DEFAULT)
@@ -265,10 +263,6 @@ object E2ETestUtils {
         settingsDataStore.updatePasswordAfterXBiometricLogin(SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT)
         activeSessionManager.setPaused(true)
         safeBoxDatabase.clearAllTables()
-        encryptedPreferenceProvider?.upsertBooleanPref(
-            CommonConstants.IS_SIGN_UP_REQUIRED,
-            isSignUpRequired
-        )
     }
 
     /**
@@ -315,30 +309,18 @@ object E2ETestUtils {
     }
 
     /**
-     * Dismisses any active timeout dialog, verifies the [LoginScreen] or unlocked [RecordsScreen],
-     * inputs the [TEST_MASTER_PASSWORD], and waits for the Home screen to render.
+     * Verifies the [LoginScreen] or unlocked [RecordsScreen], inputs [password] (the
+     * [TEST_MASTER_PASSWORD] by default), and waits for the Home screen to render.
      */
-    fun unlockApp(composeTestRule: ComposeTestRule, context: Context) {
+    fun unlockApp(
+        composeTestRule: ComposeTestRule,
+        context: Context,
+        password: String = TEST_MASTER_PASSWORD,
+    ) {
         val welcomeBackText = context.getString(R.string.welcome_back)
         val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
         composeTestRule.waitUntil(timeoutMillis = 25000L) {
             runCatching {
-                val timeoutNodes = composeTestRule.onAllNodes(
-                    hasText(context.getString(R.string.timeout_dialog_message)),
-                    useUnmergedTree = true
-                ).fetchSemanticsNodes()
-                if (timeoutNodes.isNotEmpty()) {
-                    val btnNodes = composeTestRule.onAllNodes(
-                        hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
-                        useUnmergedTree = true
-                    ).fetchSemanticsNodes()
-                    if (btnNodes.isNotEmpty()) {
-                        composeTestRule.onAllNodes(
-                            hasText(context.getString(R.string.timeout_dialog_positive_button_text)),
-                            useUnmergedTree = true
-                        ).onFirst().performClick()
-                    }
-                }
                 val isWelcome = composeTestRule.onAllNodes(
                     hasText(welcomeBackText),
                     useUnmergedTree = true
@@ -378,7 +360,7 @@ object E2ETestUtils {
                 substring = true
             )
         )
-        passwordNodes.onFirst().performTextReplacement(TEST_MASTER_PASSWORD)
+        passwordNodes.onFirst().performTextReplacement(password)
         composeTestRule.waitForIdle()
         closeSoftKeyboard(composeTestRule, context)
         composeTestRule.onNodeWithText(context.getString(R.string.login)).performClick()
@@ -386,7 +368,7 @@ object E2ETestUtils {
         val unlocked = runCatching {
             composeTestRule.waitUntilNodeDisplayed(
                 matcher = hasContentDescription(addNewButtonDesc),
-                timeoutMillis = 4000L
+                timeoutMillis = 10000L
             )
             true
         }.getOrDefault(false)
@@ -398,6 +380,16 @@ object E2ETestUtils {
                 matcher = hasContentDescription(addNewButtonDesc),
                 timeoutMillis = 20000L
             )
+        }
+        // NavHost crossfades LoginRoute out over 700ms after HomeRoute enters; wait until the
+        // exiting LoginRoute leaves the semantics tree so callers never read its stale nodes.
+        composeTestRule.waitUntil(timeoutMillis = 10000L) {
+            runCatching {
+                composeTestRule.onAllNodes(
+                    hasText(welcomeBackText),
+                    useUnmergedTree = true,
+                ).fetchSemanticsNodes().isEmpty()
+            }.getOrDefault(false)
         }
         composeTestRule.waitForIdle()
     }

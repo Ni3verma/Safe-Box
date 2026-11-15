@@ -241,4 +241,15 @@ class SignupScreenTest {
 
         assertThat(navigatedToNextScreen).isTrue()
     }
+
+    @Test
+    fun hintField_shouldWarnThatTheHintIsNotSecret() {
+        composeTestRule.setContent {
+            SafeBoxTheme {
+                SignupScreen(uiState = SignupUiState(), screenAction = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText(context.getString(R.string.hint_not_secret_note)).assertIsDisplayed()
+    }
 }

@@ -32,7 +32,7 @@ android {
     experimentalProperties["android.experimental.self-instrumenting"] = true
 
     defaultConfig {
-        minSdk 24
+        minSdk 29 // tracks :app
         targetSdk 37
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }

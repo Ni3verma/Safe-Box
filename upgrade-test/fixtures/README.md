@@ -30,6 +30,7 @@ JAVA=/Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java
 |---|---|---|---|
 | `format-1.bak` | `v1.4.4.0` QA APK (`versionCode` 6), the first release with backup; by hand on an emulator | 2026-09-25 | `Upgrade@@Test123` |
 | `format-2.bak` | `v2.1.4.0-rc3` (Room schema 4, the last version before TOTP) | 2026-09-21 | `Fixture@Backup1` (the only exception to the fixed password; see `password_for_format` in `scripts/lib/backup-files.sh`) |
+| `format-3.bak` | debug build (LOCAL-build) of feature/upgrade-restore-test, based on master e6adee2 | 2026-09-26 | `Upgrade@@Test123` |
 <!-- provenance rows end -->
 
 ## Things that look wrong but are not
@@ -45,5 +46,5 @@ JAVA=/Applications/Android\ Studio.app/Contents/jbr/Contents/Home/bin/java
   purpose.
 - **The `notes` fields look like junk** (embedded newlines, `^&*^`, `4(**^*((*%$@#`). They exercise
   JSON escaping across the serialise, encrypt, decrypt and deserialise round trip. Do not tidy them.
-- **Neither file has authenticators.** The type did not exist before format 3.
+- **`format-1.bak` and `format-2.bak` have no authenticators.** The type did not exist before format 3.
 - **No vault master password is in any file.** A `.bak` carries record data only.

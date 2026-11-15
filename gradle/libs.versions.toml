@@ -33,7 +33,6 @@ androidxHiltWork = "1.4.0"
 work = "2.12.0"
 timber = "5.0.1"
 room = "2.8.5"
-security = "1.1.0"
 kotlinxSerializationJson = "1.12.0"
 biometric = "1.1.0"
 playReview = "2.0.2"
@@ -46,6 +45,7 @@ zxing = "3.5.4"
 # AndroidX Core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
@@ -103,7 +103,6 @@ room-testing = { group = "androidx.room", name = "room-testing", version.ref = "
 
 #other
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
-security-crypto = { group = "androidx.security", name = "security-crypto", version.ref = "security" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 play-review = { group = "com.google.android.play", name = "review", version.ref = "playReview" }
@@ -120,7 +119,7 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 
 [bundles]
-androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]
+androidx = ["androidx-core-ktx", "androidx-lifecycle-runtime-ktx", "androidx-lifecycle-runtime-compose", "androidx-activity-compose", "androidx-navigation-compose", "lifecycle-process"]
 compose-ui = ["androidx-compose-ui", "androidx-compose-ui-graphics", "androidx-compose-ui-tooling-preview", "androidx-material3", "androidx-compose-icons"]
 compose-debug = ["androidx-compose-ui-tooling", "androidx-compose-ui-test-manifest"]
 unit-test = ["androidx-test-ext-junit", "androidx-test-junit", "mockk", "mockk-agent", "kotlinx-coroutines-test", "truth", "turbine"]

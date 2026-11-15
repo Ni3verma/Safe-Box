@@ -1,0 +1,142 @@
+package com.andryoga.safebox.e2e
+
+import android.app.Activity
+import android.app.Application
+import android.os.Bundle
+import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
+import com.andryoga.safebox.data.repository.interfaces.VaultRepository
+import com.andryoga.safebox.security.envelope.AesGcmWrap
+import com.andryoga.safebox.security.envelope.interfaces.EnvelopeEncryptionManager
+import com.andryoga.safebox.security.envelope.interfaces.SessionKeyHolder
+import com.andryoga.safebox.security.envelope.models.WrapKeySpec
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+
+/**
+ * Opens the vault session that the E2E seed helpers need.
+ *
+ * The seeds write through the repositories before the Activity is launched, and every record field
+ * is encrypted under the session key, so a seed without a session fails closed with
+ * `SessionLockedException`. [seedVaultAndOpenSession] creates a `crypto_version = 2` vault via
+ * [VaultRepository.createVault] and opens a DEK session on the minted key; [openSessionForSeeding]
+ * ensures a DEK session is open for suites that seed records without a user account or reopen the
+ * session after an explicit [lockVault]; [seedBiometricWrap] and [seedDeviceWrap] add the wraps the
+ * fingerprint login and the forgot-password recovery need.
+ *
+ * Resolved through an entry point rather than injected into every test class: eleven suites call
+ * the seed helpers and none of them should have to know about the session to seed a vault.
+ */
+object VaultSessionTestBridge {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface VaultSessionEntryPoint {
+        fun sessionKeyHolder(): SessionKeyHolder
+        fun vaultRepository(): VaultRepository
+        fun envelopeEncryptionManager(): EnvelopeEncryptionManager
+    }
+
+    private val entryPoint: VaultSessionEntryPoint
+        get() = EntryPointAccessors.fromApplication(
+            ApplicationProvider.getApplicationContext(),
+            VaultSessionEntryPoint::class.java,
+        )
+
+    @Volatile
+    private var lastSeededDek: ByteArray? = null
+
+    private val defaultSeedDek = ByteArray(AesGcmWrap.KEY_SIZE_BYTES) { index -> (index + 1).toByte() }
+
+    /**
+     * Creates a `crypto_version = 2` vault with [password] and [hint] via
+     * [VaultRepository.createVault] and opens the session on the returned DEK so subsequent
+     * record seeds and the UI password login share the same key.
+     */
+    suspend fun seedVaultAndOpenSession(password: String, hint: String) {
+        val currentEntryPoint = entryPoint
+        val dek = currentEntryPoint.vaultRepository().createVault(password.toCharArray(), hint)
+        lastSeededDek = dek.copyOf()
+        currentEntryPoint.sessionKeyHolder().setSessionKey(dek)
+    }
+
+    /**
+     * Wraps the DEK of the most recent [seedVaultAndOpenSession] under a fresh `KEK_Biometric`
+     * (a JCE pair through the test `FakeKeystoreGateway`, so no enrolled fingerprint is needed)
+     * and stores `wrapped_dek_biometric`, which is what makes the login screen offer the
+     * fingerprint path.
+     */
+    suspend fun seedBiometricWrap() {
+        val dek = requireNotNull(lastSeededDek) { "seedVaultAndOpenSession must run first" }
+        val currentEntryPoint = entryPoint
+        val blob = currentEntryPoint.envelopeEncryptionManager()
+            .wrapWithKeystoreKey(WrapKeySpec.BIOMETRIC, dek.copyOf())
+        currentEntryPoint.vaultRepository().storeWrap(WrapKeySpec.BIOMETRIC, blob)
+    }
+
+    /**
+     * Wraps the DEK of the most recent [seedVaultAndOpenSession] under a fresh `KEK_Device` and
+     * stores `wrapped_dek_device`, which is what lets *Forgot password?* recover the vault.
+     */
+    suspend fun seedDeviceWrap() {
+        val dek = requireNotNull(lastSeededDek) { "seedVaultAndOpenSession must run first" }
+        val currentEntryPoint = entryPoint
+        val blob = currentEntryPoint.envelopeEncryptionManager()
+            .wrapWithKeystoreKey(WrapKeySpec.DEVICE, dek.copyOf())
+        currentEntryPoint.vaultRepository().storeWrap(WrapKeySpec.DEVICE, blob)
+    }
+
+    /**
+     * Ensures a DEK session is open for seeding records when no session is currently active,
+     * reusing the DEK from the most recent [seedVaultAndOpenSession] if available.
+     */
+    fun openSessionForSeeding() {
+        val holder = entryPoint.sessionKeyHolder()
+        if (holder.isUnlocked.value) return
+        val dek = (lastSeededDek ?: defaultSeedDek).copyOf()
+        holder.setSessionKey(dek)
+    }
+
+    /**
+     * Locks the vault the way an explicit lock does: the key is cleared and no reason is recorded,
+     * so the login screen that follows shows no banner. The away timeout is driven through
+     * `ActiveSessionManager` instead, which records `AWAY_TIMEOUT` first.
+     */
+    fun lockVault() {
+        entryPoint.sessionKeyHolder().clearSessionKey()
+    }
+
+    /**
+     * Process death with the navigation state kept: [scenario] is recreated while the vault is
+     * open, so the current destination is what gets saved, and the key is cleared just before the
+     * new Activity is created, so the restored screen meets an empty holder. A plain
+     * [lockVault] + `recreate()` races the lock-driven navigation to Login and can save Login.
+     */
+    fun <A : Activity> recreateWithLockedVault(scenario: ActivityScenario<A>) {
+        val application = ApplicationProvider.getApplicationContext<Application>()
+        val lockBeforeRestore = object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+                if (savedInstanceState != null) lockVault()
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        }
+        application.registerActivityLifecycleCallbacks(lockBeforeRestore)
+        try {
+            scenario.recreate()
+        } finally {
+            application.unregisterActivityLifecycleCallbacks(lockBeforeRestore)
+        }
+    }
+
+    /** Whether the current test component's session is open; lets a test tell a missed lock from a missed navigation. */
+    fun isVaultUnlocked(): Boolean = entryPoint.sessionKeyHolder().isUnlocked.value
+}

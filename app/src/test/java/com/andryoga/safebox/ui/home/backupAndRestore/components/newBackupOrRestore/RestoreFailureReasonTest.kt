@@ -27,7 +27,13 @@ class RestoreFailureReasonTest {
             RestoreFailureReason.UNKNOWN_ERROR,
             RestoreFailureReason.BACKUP_TOO_NEW,
             RestoreFailureReason.BACKUP_EMPTY,
+            RestoreFailureReason.SESSION_LOCKED,
         ).inOrder()
+    }
+
+    @Test
+    fun sessionLocked_shouldKeepItsAppendedOrdinal() {
+        assertThat(RestoreFailureReason.SESSION_LOCKED.ordinal).isEqualTo(5)
     }
 
     @Test

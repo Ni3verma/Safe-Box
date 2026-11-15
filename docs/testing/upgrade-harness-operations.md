@@ -148,6 +148,14 @@ PR that bumps `BACKUP_VERSION`.
    as `upgrade-test/fixtures/format-<k>.bak` (with a provenance row), and rewrites the seed README.
 6. Commit the seed, the fixture, both READMEs, the lock line and the `BACKUP_VERSION` bump together.
 
+**Shortcut when only the container changed, not the record set** (used for format 4, 2026-11-10):
+keep step 2 on a **disposable** vault (restore replaces its records), skip step 3, and restore the
+outgoing seed instead (Backup & Restore → Restore, `Upgrade@@Test123`); then back up as in step 4.
+The new seed holds exactly the old records: write each `--canonical` dump to its own file, check
+both `InspectBackup` runs exited 0 (a failed run prints nothing, which would diff as equal), then
+`diff` them. The run doubles as an on-device restore of the outgoing format. Any emulator works;
+the vault's master password is not in the file.
+
 If the new format needs decoder changes (a new record type, header or crypto change), extend
 `InspectBackup.java` in the same PR. A new container key fails the seed decode (check 2) until
 it is added to `DATA_KEYS`.

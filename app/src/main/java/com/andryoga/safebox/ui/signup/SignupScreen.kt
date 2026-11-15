@@ -45,7 +45,9 @@ import com.andryoga.safebox.ui.signup.components.PasswordTextField
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 @Composable
-fun SignupScreenRoot(onSignupSuccess: () -> Unit) {
+fun SignupScreenRoot(
+    onSignupSuccess: () -> Unit,
+) {
     val viewModel = hiltViewModel<SignupViewModel>()
     val uiState by viewModel.uiState.collectAsState()
     val navigateToHome by viewModel.navigateToHome.collectAsState()
@@ -141,6 +143,7 @@ private fun SignupCardContent(
             onValueChange = { screenAction(SignupScreenAction.OnHintUpdate(it)) },
             label = { MandatoryLabelText(stringResource(R.string.hint)) },
             placeholder = { Text(stringResource(R.string.enter_hint)) },
+            supportingText = { Text(stringResource(R.string.hint_not_secret_note)) },
             singleLine = true,
             modifier = Modifier
                 .padding(bottom = 16.dp)

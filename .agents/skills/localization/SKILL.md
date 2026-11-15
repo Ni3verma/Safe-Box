@@ -17,7 +17,7 @@ English [`app/src/main/res/values/strings.xml`](../../../app/src/main/res/values
 | Indic | `hi`, `bn`, `ta`, `mr` |
 
 > [!NOTE]
-> Indonesian uses `values-in` so Android `Resources` resolves it across the full `minSdk 24`–`targetSdk 37` range (`Locale("id").language` returns `"in"` on legacy Android runtimes).
+> Indonesian uses `values-in` so Android `Resources` resolves it across the full `minSdk 29`–`targetSdk 37` range (`Locale("id").language` returns `"in"` on legacy Android runtimes).
 
 ## Commands
 
@@ -71,6 +71,14 @@ Strings marked `translatable="false"` (`app_name`, `notification_backup_channel_
 - **`pin`**: Numeric security/card PIN (keep `PIN` or standard local equivalent such as `Code PIN`, `PIN-код`, `Mã PIN`).
 - **`settings_support_title`**: Lower-case "Buy me a coffee" idiom — translate naturally into the local idiom (e.g. `Offre-moi un café`, `Kauf mir einen Kaffee`), not as an untranslated brand name.
 - **`cd_*` keys**: TalkBack accessibility content descriptions. Use natural platform screen-reader phrasing.
+
+### Form of Address & First Person (match the locale file, never the translator's default)
+Each locale already has a register; new strings follow it. Audited 2026-11-06 (#316, after `de` strings
+shipped with *du* in a *Sie* file): formal in `de` (Sie), `fr` (vous), `ru`/`uk` (вы/ви), `cs` (vy), `el`,
+`tr` (siz), `zh-*` (您), `in` (Anda), `hi`/`bn` (आप/আপনি), `mr` (तुम्ही), `pt-rPT` (3rd person);
+informal in `es`, `it`, `nl`, `ro`, `pl` (capitalised Ty), `sv`, `pt-rBR` (você). First-person strings
+("I accept…") stay gender-neutral: `hi` writes both forms (`करता/करती हूँ`), `mr` uses `मला … आहे` —
+see `delete_record_dialog_body`.
 
 ### Compact UI Length Budgets
 - **`bottom_nav_records`** (≤ 24 chars), **`bottom_nav_backup_and_restore`** (≤ 28 chars), **`bottom_nav_settings`** (≤ 24 chars): Enforced by `scripts/translations.py` so `NavigationBarItem` labels do not clip or wrap across multiple lines.

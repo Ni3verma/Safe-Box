@@ -25,15 +25,15 @@ import javax.inject.Inject
  * the prompt, so the two can never disagree.
  *
  * `BIOMETRIC_STRONG or DEVICE_CREDENTIAL` is documented by androidx.biometric as **unsupported on
- * API 28-29** (see `PromptInfo.Builder.setAllowedAuthenticators`): Android 9/10 have no biometric
- * strength classes in their API, and once a device-credential fallback is allowed the library can
- * no longer force strong-only behaviour, so it refuses the combination outright —
- * `BiometricManager.canAuthenticate` returns `BIOMETRIC_ERROR_UNSUPPORTED` regardless of enrolment
- * and `PromptInfo.Builder.build()` throws. Below API 30 the credential flows therefore request
- * `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`; the sensor shown to the user is the same, and those flows
- * already accept a PIN, which is weaker than any biometric. API 30+ keeps `BIOMETRIC_STRONG` with
- * the credential so a Class-2 face unlock is not newly admitted there, and biometric-only login keeps
- * `BIOMETRIC_STRONG` on every version. See issue #279.
+ * API 28-29** (see `PromptInfo.Builder.setAllowedAuthenticators`), and API 29 is the floor since
+ * minSdk 29: Android 10 has no biometric strength classes in its API, and once a device-credential
+ * fallback is allowed the library can no longer force strong-only behaviour, so it refuses the
+ * combination outright — `BiometricManager.canAuthenticate` returns `BIOMETRIC_ERROR_UNSUPPORTED`
+ * regardless of enrolment and `PromptInfo.Builder.build()` throws. On API 29 the credential flows
+ * therefore request `BIOMETRIC_WEAK or DEVICE_CREDENTIAL`; the sensor shown to the user is the
+ * same, and those flows already accept a PIN, which is weaker than any biometric. API 30+ keeps
+ * `BIOMETRIC_STRONG` with the credential so a Class-2 face unlock is not newly admitted there, and
+ * biometric-only login keeps `BIOMETRIC_STRONG` on every version. See issue #279.
  *
  * @param allowDeviceCredential Whether PIN/pattern/password may be used instead of a biometric.
  * @param sdkInt The running API level; injectable only so the matrix is unit-testable on the JVM.
@@ -51,6 +51,22 @@ internal fun getAllowedAuthenticators(
     else ->
         BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
 }
+
+/**
+ * Whether a [BiometricPrompt.CryptoObject] may accompany a prompt that allows the device
+ * credential. androidx.biometric rejects crypto-based authentication with `DEVICE_CREDENTIAL`
+ * below API 30 (`BiometricPrompt.authenticate` throws), which is why the API 29 recovery path
+ * authenticates without a `CryptoObject` and unwraps inside the time-bound key's window
+ * instead. Biometric-only prompts carry a `CryptoObject` on every supported API.
+ *
+ * @param allowDeviceCredential Whether the prompt allows PIN/pattern/password.
+ * @param sdkInt The running API level; injectable only so the rule is unit-testable on the JVM.
+ */
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+internal fun supportsCryptoObject(
+    allowDeviceCredential: Boolean,
+    sdkInt: Int = Build.VERSION.SDK_INT,
+): Boolean = !allowDeviceCredential || sdkInt >= Build.VERSION_CODES.R
 
 val LocalDeviceSecurityAuthProvider = staticCompositionLocalOf<DeviceSecurityAuthProvider> {
     DefaultDeviceSecurityAuthProvider()
@@ -73,20 +89,26 @@ interface DeviceSecurityAuthProvider {
     /**
      * Triggers the platform BiometricPrompt authentication flow.
      *
+     * @param onSuccess Callback invoked upon successful authentication with the authorised
+     *                  [BiometricPrompt.CryptoObject], or `null` when none was bound.
+     * @param onErrorOrCancel Callback invoked upon cancellation or authentication error.
      * @param title Custom prompt title, or defaults to app login title.
      * @param subtitle Custom prompt subtitle, or defaults to app verify identity subtitle.
      * @param allowDeviceCredential When true, enables PIN/Pattern/Password device credential fallback.
      *                              When false, restricts strictly to biometric and shows negative "Close" button.
-     * @param onSuccess Callback invoked upon successful authentication.
-     * @param onErrorOrCancel Callback invoked upon cancellation or authentication error.
+     * @param cryptoObject Optional cipher to bind the authentication to. Its operation is authorised
+     *                     only by a successful prompt, so the caller unwraps with the object handed
+     *                     back by [onSuccess], never with the one it passed in. Dropped (and
+     *                     [onSuccess] receives `null`) where [supportsCryptoObject] is false.
      */
     @Composable
     fun Authenticate(
+        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+        onErrorOrCancel: () -> Unit,
         title: String? = null,
         subtitle: String? = null,
         allowDeviceCredential: Boolean = false,
-        onSuccess: () -> Unit,
-        onErrorOrCancel: () -> Unit,
+        cryptoObject: BiometricPrompt.CryptoObject? = null,
     )
 }
 
@@ -107,11 +129,12 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
 
     @Composable
     override fun Authenticate(
+        onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+        onErrorOrCancel: () -> Unit,
         title: String?,
         subtitle: String?,
         allowDeviceCredential: Boolean,
-        onSuccess: () -> Unit,
-        onErrorOrCancel: () -> Unit,
+        cryptoObject: BiometricPrompt.CryptoObject?,
     ) {
         val context = LocalContext.current
         val activity = remember(context) { context.findActivity() as? FragmentActivity } ?: return
@@ -126,10 +149,11 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
                 executor,
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        currentOnSuccess()
+                        currentOnSuccess(result.cryptoObject)
                     }
 
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        Timber.w("device security prompt error %d: %s", errorCode, errString)
                         currentOnErrorOrCancel()
                     }
                 }
@@ -141,12 +165,16 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
         val promptTitle = title ?: defaultTitle
         val promptSubtitle = subtitle ?: defaultSubtitle
         val negativeButtonText = stringResource(R.string.biometric_negative_button_text)
+        // A credential prompt below API 30 cannot carry a cipher; the caller unwraps right after
+        // the callback instead (time-bound KEK_Device).
+        val boundCryptoObject = cryptoObject?.takeIf { supportsCryptoObject(allowDeviceCredential) }
         LaunchedEffect(
             biometricPrompt,
             promptTitle,
             promptSubtitle,
             allowDeviceCredential,
             negativeButtonText,
+            boundCryptoObject,
         ) {
             val promptInfoBuilder = BiometricPrompt.PromptInfo.Builder()
                 .setTitle(promptTitle)
@@ -157,7 +185,11 @@ class DefaultDeviceSecurityAuthProvider @Inject constructor() : DeviceSecurityAu
                 promptInfoBuilder.setNegativeButtonText(negativeButtonText)
             }
 
-            biometricPrompt.authenticate(promptInfoBuilder.build())
+            if (boundCryptoObject != null) {
+                biometricPrompt.authenticate(promptInfoBuilder.build(), boundCryptoObject)
+            } else {
+                biometricPrompt.authenticate(promptInfoBuilder.build())
+            }
         }
     }
 }

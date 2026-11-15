@@ -13,18 +13,17 @@ import com.andryoga.safebox.data.db.secureDao.BankCardDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.LoginDataDaoSecure
 import com.andryoga.safebox.data.db.secureDao.SecureNoteDataDaoSecure
 import com.andryoga.safebox.data.repository.interfaces.BackupMetadataRepository
-import com.andryoga.safebox.security.interfaces.PasswordBasedEncryption
-import com.andryoga.safebox.security.interfaces.SymmetricKeyUtils
 import com.andryoga.safebox.totp.engine.interfaces.TotpGenerator
+import com.andryoga.safebox.worker.backup.legacy.LegacyBackupReader
 import javax.inject.Inject
 
 /**
  * investigate why @HiltWorker is not working. if it starts to work, then below boiler plate code is not required
  */
 class SafeBoxWorkerFactory @Inject constructor(
-    private val symmetricKeyUtils: SymmetricKeyUtils,
+    private val backupPasswordRegistry: BackupPasswordRegistry,
     private val backupMetadataRepository: BackupMetadataRepository,
-    private val passwordBasedEncryption: PasswordBasedEncryption,
+    private val legacyBackupReader: LegacyBackupReader,
     private val loginDataDaoSecure: LoginDataDaoSecure,
     private val bankAccountDataDaoSecure: BankAccountDataDaoSecure,
     private val bankCardDataDaoSecure: BankCardDataDaoSecure,
@@ -45,9 +44,8 @@ class SafeBoxWorkerFactory @Inject constructor(
                 BackupDataWorker(
                     appContext,
                     workerParameters,
-                    symmetricKeyUtils,
+                    backupPasswordRegistry,
                     backupMetadataRepository,
-                    passwordBasedEncryption,
                     loginDataDaoSecure,
                     bankAccountDataDaoSecure,
                     bankCardDataDaoSecure,
@@ -62,8 +60,8 @@ class SafeBoxWorkerFactory @Inject constructor(
                 RestoreDataWorker(
                     appContext,
                     workerParameters,
-                    symmetricKeyUtils,
-                    passwordBasedEncryption,
+                    backupPasswordRegistry,
+                    legacyBackupReader,
                     safeBoxDatabase,
                     loginDataDaoSecure,
                     bankAccountDataDaoSecure,

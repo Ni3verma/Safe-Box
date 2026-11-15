@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +18,6 @@ import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -47,9 +44,6 @@ class LoginBiometricAndHintE2ETest {
 
     @get:Rule(order = 1)
     val composeTestRule = createEmptyComposeRule()
-
-    @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
 
     @Inject
     lateinit var preferenceProvider: PreferenceProvider
@@ -95,7 +89,6 @@ class LoginBiometricAndHintE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
         }
@@ -152,7 +145,6 @@ class LoginBiometricAndHintE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             val initialLoginCount =
@@ -183,7 +175,6 @@ class LoginBiometricAndHintE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             preferenceProvider.upsertIntPref(
@@ -236,7 +227,6 @@ class LoginBiometricAndHintE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
             preferenceProvider.upsertIntPref(
@@ -306,9 +296,9 @@ class LoginBiometricAndHintE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase,
                 userDetailsRepository,
-                encryptedPreferenceProvider,
                 preferenceProvider
             )
+            VaultSessionTestBridge.seedBiometricWrap()
             preferenceProvider.upsertIntPref(
                 CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
                 3
@@ -360,6 +350,54 @@ class LoginBiometricAndHintE2ETest {
 
             // Assert that biometric prompt/handler was invoked only once, proving no prompt loop occurs
             assertThat(fakeDeviceSecurityAuthProvider.invocationCount).isEqualTo(1)
+        }
+    }
+
+    @Test
+    fun biometricLogin_throughTheBoundCryptoObject_shouldUnlockTheVaultWithoutAPassword() {
+        fakeDeviceSecurityAuthProvider.canAuthenticateOverride = true
+        // The fake substitutes the CryptoObject the screen bound, so the ViewModel unwraps for real.
+        fakeDeviceSecurityAuthProvider.authHandlerOverride = { onSuccess, _ ->
+            LaunchedEffect(Unit) {
+                onSuccess(null)
+            }
+        }
+
+        runBlocking {
+            E2ETestUtils.setupUnlockedHomeState(
+                safeBoxDatabase,
+                userDetailsRepository,
+                preferenceProvider,
+            )
+            VaultSessionTestBridge.seedBiometricWrap()
+            preferenceProvider.upsertIntPref(
+                CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                3,
+            )
+            VaultSessionTestBridge.lockVault()
+        }
+
+        ActivityScenario.launch(MainActivity::class.java).use { _ ->
+            val addNewButtonDesc = context.getString(R.string.cd_add_new_record_button)
+            composeTestRule.waitUntil(timeoutMillis = 25000L) {
+                runCatching {
+                    composeTestRule.onAllNodes(
+                        hasContentDescription(addNewButtonDesc),
+                        useUnmergedTree = true,
+                    ).fetchSemanticsNodes().isNotEmpty()
+                }.getOrDefault(false)
+            }
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNode(hasContentDescription(addNewButtonDesc)).assertIsDisplayed()
+            assertThat(fakeDeviceSecurityAuthProvider.lastCryptoObject?.cipher).isNotNull()
+            runBlocking {
+                val remainingCount = preferenceProvider.getIntPref(
+                    CommonConstants.ALLOWED_BIOMETRIC_LOGIN_COUNT_REMAINING,
+                    SettingsDataStore.DefaultValues.PASSWORD_AFTER_X_BIOMETRIC_LOGIN_DEFAULT,
+                )
+                assertThat(remainingCount).isEqualTo(2)
+            }
         }
     }
 }

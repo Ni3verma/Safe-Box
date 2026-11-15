@@ -1,12 +1,17 @@
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.Normalizer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,15 +20,19 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Standalone verifier for a Safe-Box .bak file.
+ * Standalone verifier for a Safe-Box .bak file, in any format the app restores.
  *
- * Mirrors the parameters in PasswordBasedEncryptionImpl exactly:
- * PBKDF2WithHmacSHA1, 1324 iterations, 256-bit key, AES/CBC/PKCS5Padding.
+ * Formats 1-3 are a Java-serialised map; it mirrors PasswordBasedEncryptionImpl exactly:
+ * PBKDF2WithHmacSHA1, 1324 iterations, 256-bit key, AES/CBC/PKCS5Padding, raw password.
+ * Formats 4 and later start with "SBOX" and mirror BackupCodec: a plaintext JSON header naming the KDF,
+ * NFKC-normalised password, PBKDF2 key, an AES-GCM key check and one AES-GCM body, both bound to
+ * the header as AAD.
  *
  * It deliberately does not reuse the app's own decryption: the upgrade and restore tests compare
  * two decoded backups, and a bug shared by both sides of that comparison would cancel out.
@@ -95,17 +104,36 @@ public class InspectBackup {
         DATA_KEYS.put("8", "AUTHENTICATOR");
     }
 
+    /** First bytes of formats 4 and later; formats 1-3 start with Java serialisation's AC ED 00 05. */
+    private static final byte[] SBOX_MAGIC = "SBOX".getBytes(StandardCharsets.US_ASCII);
+    private static final int SBOX_FIRST_VERSION = 4;
+    private static final int SBOX_HEADER_OFFSET = 7;
+    private static final int GCM_IV_BYTES = 12;
+    private static final int GCM_TAG_BITS = 128;
+    private static final int GCM_TAG_BYTES = GCM_TAG_BITS / 8;
+
+    // Payload fields of the SBOX formats, as named by ExportBackupPayload.
+    private static final Map<String, String> PAYLOAD_FIELDS = new TreeMap<>();
+
+    static {
+        PAYLOAD_FIELDS.put("logins", "LOGIN");
+        PAYLOAD_FIELDS.put("bankAccounts", "BANK_ACCOUNT");
+        PAYLOAD_FIELDS.put("bankCards", "BANK_CARD");
+        PAYLOAD_FIELDS.put("secureNotes", "SECURE_NOTE");
+        PAYLOAD_FIELDS.put("authenticators", "AUTHENTICATOR");
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length == 2 && args[0].equals("--header")) {
-            runMachineMode(() -> printHeaderVersion(readContainer(args[1])));
+            runMachineMode(() -> printHeaderVersion(readFile(args[1])));
             return;
         }
         if (args.length == 3 && args[0].equals("--canonical")) {
-            runMachineMode(() -> printCanonical(readContainer(args[1]), args[2].toCharArray()));
+            runMachineMode(() -> printCanonical(decodeFile(readFile(args[1]), args[2].toCharArray())));
             return;
         }
         if (args.length == 3 && args[0].equals("--rows")) {
-            runMachineMode(() -> printRows(readContainer(args[1]), args[2].toCharArray()));
+            runMachineMode(() -> printRows(decodeFile(readFile(args[1]), args[2].toCharArray())));
             return;
         }
         if (args.length != 2 || args[0].startsWith("--")) {
@@ -118,7 +146,12 @@ public class InspectBackup {
         String path = args[0];
         char[] password = args[1].toCharArray();
 
-        Map<String, byte[]> map = readContainer(path);
+        byte[] bytes = readFile(path);
+        if (isSbox(bytes)) {
+            printSboxDump(bytes, password);
+            return;
+        }
+        Map<String, byte[]> map = readContainer(bytes);
 
         System.out.println("map keys present: " + new TreeMap<>(map).keySet());
 
@@ -224,12 +257,12 @@ public class InspectBackup {
      * allowlist turns "pointed at the wrong file" into a named failure instead of arbitrary
      * construction; the app's RestoreDataWorker overrides resolveClass for the same reason.
      *
-     * @param path the .bak file
+     * @param bytes the whole .bak file
      * @return the container, keyed as in CommonConstants
      */
     @SuppressWarnings("unchecked")
-    private static Map<String, byte[]> readContainer(String path) throws Exception {
-        try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(path))) {
+    private static Map<String, byte[]> readContainer(byte[] bytes) throws Exception {
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
             in.setObjectInputFilter(InspectBackup::filterBackupClasses);
             return (HashMap<String, byte[]>) in.readObject();
         }
@@ -257,15 +290,44 @@ public class InspectBackup {
         }
     }
 
+    private static byte[] readFile(String path) throws Exception {
+        return Files.readAllBytes(Path.of(path));
+    }
+
+    static boolean isSbox(byte[] bytes) {
+        return bytes.length >= SBOX_MAGIC.length
+            && Arrays.equals(Arrays.copyOf(bytes, SBOX_MAGIC.length), SBOX_MAGIC);
+    }
+
     /**
-     * Prints the file's BACKUP_VERSION byte, which is stored unencrypted, so no password is
-     * needed. Used by the PR checks to compare the committed seed and fixtures with the code.
-     * Printed unsigned, matching RestoreDataWorker.readBackupVersion, so versions 128..254 compare
-     * equal to the decimal BACKUP_VERSION those checks read from source.
+     * Decodes every record of a file in any supported format.
      *
-     * @param map the backup container
+     * @param bytes the whole .bak file
+     * @param password the backup password
+     * @return (type, record) pairs; the record maps field name to JSON literal
      */
-    private static void printHeaderVersion(Map<String, byte[]> map) {
+    static List<Map.Entry<String, Map<String, String>>> decodeFile(byte[] bytes, char[] password)
+            throws Exception {
+        return isSbox(bytes) ? decodeSboxRecords(bytes, password) : decodeRecords(readContainer(bytes), password);
+    }
+
+    /**
+     * Prints the file's format version, which is stored unencrypted, so no password is needed.
+     * Used by the PR checks to compare the committed seed and fixtures with the code. Printed
+     * unsigned, matching the app's readers, so versions 128..254 compare equal to the decimal
+     * BACKUP_VERSION those checks read from source.
+     *
+     * @param bytes the whole .bak file
+     */
+    private static void printHeaderVersion(byte[] bytes) throws Exception {
+        if (isSbox(bytes)) {
+            if (bytes.length <= SBOX_MAGIC.length) {
+                fail("the SBOX file has no version byte");
+            }
+            System.out.println(bytes[SBOX_MAGIC.length] & 0xFF);
+            return;
+        }
+        Map<String, byte[]> map = readContainer(bytes);
         byte[] versionBytes = map.get("0");
         if (versionBytes == null || versionBytes.length == 0) {
             fail("the backup has no BACKUP_VERSION byte");
@@ -288,15 +350,15 @@ public class InspectBackup {
      *   equal to an older file lacking it, as long as the newer build left it null. An empty
      *   string is not null and does print: the difference is real data.
      *
-     * The header (version, salt, IV, creation time) is not printed; it differs between any two
-     * backups of the same data. Any decryption or parsing failure exits non-zero.
+     * The header (version, salt, IV or KDF parameters, creation time) is not printed; it differs
+     * between any two backups of the same data, and between formats. Any decryption or parsing
+     * failure exits non-zero.
      *
-     * @param map the backup container
-     * @param password the backup password
+     * @param records the decoded records of the backup
      */
-    private static void printCanonical(Map<String, byte[]> map, char[] password) throws Exception {
+    private static void printCanonical(List<Map.Entry<String, Map<String, String>>> records) {
         List<String> lines = new ArrayList<>();
-        for (Map.Entry<String, Map<String, String>> record : decodeRecords(map, password)) {
+        for (Map.Entry<String, Map<String, String>> record : records) {
             lines.addAll(canonicalLines(record.getKey(), record.getValue()));
         }
         Collections.sort(lines);
@@ -310,12 +372,11 @@ public class InspectBackup {
      * text the app displays. The harness passes these to the instrumentation as the rows the
      * records list must show, so no script has to parse JSON.
      *
-     * @param map the backup container
-     * @param password the backup password
+     * @param records the decoded records of the backup
      */
-    private static void printRows(Map<String, byte[]> map, char[] password) throws Exception {
+    private static void printRows(List<Map.Entry<String, Map<String, String>>> records) {
         List<String> lines = new ArrayList<>();
-        for (Map.Entry<String, Map<String, String>> record : decodeRecords(map, password)) {
+        for (Map.Entry<String, Map<String, String>> record : records) {
             lines.add(rowLine(record.getKey(), record.getValue()));
         }
         Collections.sort(lines);
@@ -387,6 +448,153 @@ public class InspectBackup {
     }
 
     /**
+     * Decrypts and parses an SBOX file (format 4 or later).
+     *
+     * @param bytes the whole .bak file, starting with the magic
+     * @param password the backup password; NFKC-normalised here, as the app does
+     * @return (type, record) pairs; the record maps field name to JSON literal
+     */
+    static List<Map.Entry<String, Map<String, String>>> decodeSboxRecords(byte[] bytes, char[] password)
+            throws Exception {
+        SboxFile file = parseSbox(bytes);
+        byte[] key = deriveSboxKey(password, file.kdf);
+        // A wrong password fails here, before the body is touched.
+        gcmOpen(key, bytes, file.keyCheckOffset, GCM_IV_BYTES + GCM_TAG_BYTES, file.prefix);
+        byte[] body = gcmOpen(key, bytes, file.bodyOffset, bytes.length - file.bodyOffset, file.prefix);
+        return parseSboxPayload(new String(body, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Parses the decrypted SBOX payload: one object holding an array per record type.
+     *
+     * @param json the decrypted body
+     * @return (type, record) pairs
+     */
+    static List<Map.Entry<String, Map<String, String>>> parseSboxPayload(String json) {
+        JsonCursor cursor = new JsonCursor(json);
+        List<Map.Entry<String, Map<String, String>>> records = new ArrayList<>();
+        cursor.expect('{');
+        if (cursor.peekSkippingSpace() == '}') {
+            cursor.expect('}');
+            cursor.expectEnd();
+            return records;
+        }
+        while (true) {
+            cursor.skipSpace();
+            String field = cursor.readString();
+            String type = PAYLOAD_FIELDS.get(field);
+            if (type == null) {
+                fail("unknown payload field '" + field + "': the format grew a record type;"
+                    + " add it to PAYLOAD_FIELDS in InspectBackup.java");
+            }
+            cursor.expect(':');
+            if (cursor.peekSkippingSpace() == 'n') {
+                if (!NULL_TOKEN.equals(cursor.readScalar())) {
+                    fail("expected an array or null for '" + field + "'");
+                }
+            } else {
+                for (Map<String, String> record : cursor.readFlatObjectArray()) {
+                    records.add(Map.entry(type, record));
+                }
+            }
+            char next = cursor.nextSkippingSpace();
+            if (next == '}') {
+                break;
+            }
+            if (next != ',') {
+                fail("expected ',' or '}' in the payload at offset " + (cursor.position - 1));
+            }
+        }
+        cursor.expectEnd();
+        return records;
+    }
+
+    /** The unencrypted parts of an SBOX file, located and bounds-checked. */
+    private static final class SboxFile {
+        Map<String, String> header;
+        String kdf;
+        byte[] prefix;
+        int keyCheckOffset;
+        int bodyOffset;
+    }
+
+    private static SboxFile parseSbox(byte[] bytes) {
+        if (bytes.length < SBOX_HEADER_OFFSET) {
+            fail("SBOX file truncated before its header");
+        }
+        int version = bytes[SBOX_MAGIC.length] & 0xFF;
+        // Every format from 4 on shares this container; a newer one only changes the payload.
+        if (version < SBOX_FIRST_VERSION) {
+            fail("SBOX container with version " + version + ", before its first format " + SBOX_FIRST_VERSION);
+        }
+        int headerLength = ((bytes[5] & 0xFF) << 8) | (bytes[6] & 0xFF);
+        SboxFile file = new SboxFile();
+        file.keyCheckOffset = SBOX_HEADER_OFFSET + headerLength;
+        file.bodyOffset = file.keyCheckOffset + GCM_IV_BYTES + GCM_TAG_BYTES;
+        if (bytes.length < file.bodyOffset + GCM_IV_BYTES + GCM_TAG_BYTES) {
+            fail("SBOX file truncated before its body");
+        }
+        file.prefix = Arrays.copyOf(bytes, file.keyCheckOffset);
+        String headerJson = new String(bytes, SBOX_HEADER_OFFSET, headerLength, StandardCharsets.UTF_8);
+        file.header = new JsonCursor(headerJson).readFlatObject();
+        String kdfLiteral = file.header.get("kdf");
+        if (kdfLiteral == null || !kdfLiteral.startsWith("\"")) {
+            fail("header without a kdf string: " + headerJson);
+        }
+        file.kdf = new JsonCursor(kdfLiteral).readString();
+        return file;
+    }
+
+    /**
+     * Derives the SBOX key from {@code v1|<algorithm>|<iterations>|<base64 salt>}.
+     */
+    private static byte[] deriveSboxKey(char[] password, String kdf) throws Exception {
+        String[] parts = kdf.split("\\|");
+        if (parts.length != 4 || !parts[0].equals("v1") || !parts[1].equals("PBKDF2WithHmacSHA256")) {
+            fail("unsupported KDF parameters '" + kdf + "'");
+        }
+        char[] normalised = Normalizer.normalize(new String(password), Normalizer.Form.NFKC).toCharArray();
+        PBEKeySpec keySpec = new PBEKeySpec(
+            normalised, Base64.getDecoder().decode(parts[3]), Integer.parseInt(parts[2]), KEY_LENGTH);
+        return SecretKeyFactory.getInstance(parts[1]).generateSecret(keySpec).getEncoded();
+    }
+
+    /** Opens the {@code iv || ciphertext || tag} section at {@code offset}, bound to {@code aad}. */
+    private static byte[] gcmOpen(byte[] key, byte[] source, int offset, int length, byte[] aad)
+            throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(
+            Cipher.DECRYPT_MODE,
+            new SecretKeySpec(key, "AES"),
+            new GCMParameterSpec(GCM_TAG_BITS, source, offset, GCM_IV_BYTES));
+        cipher.updateAAD(aad);
+        return cipher.doFinal(source, offset + GCM_IV_BYTES, length - GCM_IV_BYTES);
+    }
+
+    /** Human-readable dump of an SBOX file: the header, then each type's records. */
+    private static void printSboxDump(byte[] bytes, char[] password) throws Exception {
+        SboxFile file = parseSbox(bytes);
+        System.out.println("format          : " + (bytes[SBOX_MAGIC.length] & 0xFF) + " (SBOX container)");
+        System.out.println("createdAt       : " + file.header.get("createdAt"));
+        System.out.println("appVersionCode  : " + file.header.get("appVersionCode"));
+        String[] kdf = file.kdf.split("\\|");
+        System.out.println("kdf             : " + kdf[1] + ", " + kdf[2] + " iterations");
+        System.out.println();
+        Map<String, List<Map<String, String>>> byType = new TreeMap<>();
+        for (Map.Entry<String, Map<String, String>> record : decodeSboxRecords(bytes, password)) {
+            byType.computeIfAbsent(record.getKey(), k -> new ArrayList<>()).add(record.getValue());
+        }
+        for (String type : new TreeMap<>(PAYLOAD_FIELDS).values()) {
+            List<Map<String, String>> records = byType.getOrDefault(type, List.of());
+            System.out.println(pad(type) + " : " + records.size() + " record(s)");
+            for (Map<String, String> record : records) {
+                System.out.println("    " + record);
+            }
+            System.out.println();
+        }
+    }
+
+    /**
      * Turns one decoded record into its canonical lines.
      *
      * @param type the record type, e.g. LOGIN
@@ -426,34 +634,37 @@ public class InspectBackup {
      */
     static List<Map<String, String>> parseFlatObjectArray(String json) {
         JsonCursor cursor = new JsonCursor(json);
-        List<Map<String, String>> records = new ArrayList<>();
-        cursor.expect('[');
-        if (cursor.peekSkippingSpace() == ']') {
-            cursor.expect(']');
-            cursor.expectEnd();
-            return records;
-        }
-        while (true) {
-            records.add(cursor.readFlatObject());
-            char next = cursor.nextSkippingSpace();
-            if (next == ']') {
-                break;
-            }
-            if (next != ',') {
-                fail("expected ',' or ']' in record array at offset " + (cursor.position - 1));
-            }
-        }
+        List<Map<String, String>> records = cursor.readFlatObjectArray();
         cursor.expectEnd();
         return records;
     }
 
-    /** Minimal cursor over a JSON string, sufficient for {@link #parseFlatObjectArray}. */
+    /** Minimal cursor over a JSON string, sufficient for the record arrays and the SBOX payload. */
     private static final class JsonCursor {
         private final String text;
         private int position;
 
         JsonCursor(String text) {
             this.text = text;
+        }
+
+        List<Map<String, String>> readFlatObjectArray() {
+            List<Map<String, String>> records = new ArrayList<>();
+            expect('[');
+            if (peekSkippingSpace() == ']') {
+                expect(']');
+                return records;
+            }
+            while (true) {
+                records.add(readFlatObject());
+                char next = nextSkippingSpace();
+                if (next == ']') {
+                    return records;
+                }
+                if (next != ',') {
+                    fail("expected ',' or ']' in record array at offset " + (position - 1));
+                }
+            }
         }
 
         Map<String, String> readFlatObject() {

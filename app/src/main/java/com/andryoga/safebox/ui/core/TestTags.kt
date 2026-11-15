@@ -25,6 +25,7 @@ package com.andryoga.safebox.ui.core
 object TestTags {
     const val SETTINGS_PRIVACY_SWITCH = "settings_privacy_switch"
     const val SETTINGS_AUTO_BACKUP_SWITCH = "settings_auto_backup_switch"
+    const val SETTINGS_BIOMETRIC_UNLOCK_SWITCH = "settings_biometric_unlock_switch"
     const val SETTINGS_PASSWORD_AFTER_BIOMETRIC_SLIDER = "settings_password_after_biometric_slider"
     const val SETTINGS_AWAY_TIMEOUT_SLIDER = "settings_away_timeout_slider"
     const val RECORDS_LIST = "records_list"

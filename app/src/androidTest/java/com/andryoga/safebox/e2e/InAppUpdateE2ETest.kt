@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package com.andryoga.safebox.e2e
 
 import androidx.compose.ui.test.hasText
@@ -16,7 +14,6 @@ import com.andryoga.safebox.common.CommonConstants
 import com.andryoga.safebox.data.dataStore.SettingsDataStore
 import com.andryoga.safebox.data.db.SafeBoxDatabase
 import com.andryoga.safebox.data.repository.interfaces.UserDetailsRepository
-import com.andryoga.safebox.providers.interfaces.EncryptedPreferenceProvider
 import com.andryoga.safebox.providers.interfaces.PreferenceProvider
 import com.andryoga.safebox.ui.MainActivity
 import com.andryoga.safebox.ui.core.ActiveSessionManager
@@ -55,9 +52,6 @@ class InAppUpdateE2ETest {
     lateinit var fakeAppUpdateManager: FakeAppUpdateManager
 
     @Inject
-    lateinit var encryptedPreferenceProvider: EncryptedPreferenceProvider
-
-    @Inject
     lateinit var preferenceProvider: PreferenceProvider
 
     @Inject
@@ -82,7 +76,6 @@ class InAppUpdateE2ETest {
             E2ETestUtils.setupUnlockedHomeState(
                 safeBoxDatabase = safeBoxDatabase,
                 userDetailsRepository = userDetailsRepository,
-                encryptedPreferenceProvider = encryptedPreferenceProvider,
                 preferenceProvider = preferenceProvider,
                 settingsDataStore = settingsDataStore,
             )
@@ -103,7 +96,6 @@ class InAppUpdateE2ETest {
                 safeBoxDatabase = safeBoxDatabase,
                 settingsDataStore = settingsDataStore,
                 activeSessionManager = activeSessionManager,
-                encryptedPreferenceProvider = encryptedPreferenceProvider,
             )
         }
     }
@@ -173,7 +165,7 @@ class InAppUpdateE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             acceptAndDownloadUpdate()
 
-            // a zero timeout fires the logout event as soon as the app stops
+            // a zero timeout clears the session key as soon as the app stops
             activeSessionManager.onStop(E2ETestUtils.createTestLifecycleOwner())
 
             waitUntilFake { isInstallSplashScreenVisible }

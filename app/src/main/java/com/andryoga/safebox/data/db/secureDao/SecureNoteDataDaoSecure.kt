@@ -1,5 +1,6 @@
 package com.andryoga.safebox.data.db.secureDao
 
+import com.andryoga.safebox.common.Utils.emptyWhenSessionLocked
 import com.andryoga.safebox.data.db.dao.SecureNoteDataDao
 import com.andryoga.safebox.data.db.docs.SearchSecureNoteData
 import com.andryoga.safebox.data.db.docs.export.ExportSecureNoteData
@@ -21,7 +22,9 @@ class SecureNoteDataDaoSecure @Inject constructor(
     }
 
     override fun getAllSecretNoteData(): Flow<List<SearchSecureNoteData>> {
+        // No encrypted column in this list today; the operator keeps the secure-DAO Flow contract uniform.
         return secureNoteDataDao.getAllSecretNoteData()
+            .emptyWhenSessionLocked()
     }
 
     override suspend fun getSecretNoteDataByKey(key: Int): SecureNoteDataEntity {
@@ -34,6 +37,14 @@ class SecureNoteDataDaoSecure @Inject constructor(
 
     override suspend fun exportAllData(): List<ExportSecureNoteData> {
         return secureNoteDataDao.exportAllData().map { decrypt(it) }
+    }
+
+    override suspend fun getAllEntities(): List<SecureNoteDataEntity> {
+        return secureNoteDataDao.getAllEntities().map { decrypt(it) }
+    }
+
+    override suspend fun count(): Int {
+        return secureNoteDataDao.count()
     }
 
     override fun deleteAllData() {

@@ -1,6 +1,7 @@
 package com.andryoga.safebox.ui.core
 
 import android.content.Context
+import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
 import timber.log.Timber
 
@@ -23,22 +24,26 @@ fun canAuthenticateUsingDeviceSecurity(
 
 /**
  * Composable wrapper triggering biometric or device credential authentication via [DeviceSecurityAuthProvider].
+ *
+ * @param cryptoObject Optional cipher to bind to the prompt; [onSuccess] receives the authorised
+ *                     object (or `null` when none was bound), see [DeviceSecurityAuthProvider.Authenticate].
  */
 @Composable
 fun DeviceSecurityAuthHandler(
+    onSuccess: (BiometricPrompt.CryptoObject?) -> Unit,
+    onErrorOrCancel: () -> Unit = {},
     title: String? = null,
     subtitle: String? = null,
     allowDeviceCredential: Boolean = false,
-    onSuccess: () -> Unit,
-    onErrorOrCancel: () -> Unit = {},
+    cryptoObject: BiometricPrompt.CryptoObject? = null,
     biometricAuthProvider: DeviceSecurityAuthProvider = LocalDeviceSecurityAuthProvider.current,
 ) {
     biometricAuthProvider.Authenticate(
+        onSuccess = onSuccess,
+        onErrorOrCancel = onErrorOrCancel,
         title = title,
         subtitle = subtitle,
         allowDeviceCredential = allowDeviceCredential,
-        onSuccess = onSuccess,
-        onErrorOrCancel = onErrorOrCancel,
+        cryptoObject = cryptoObject,
     )
 }
-

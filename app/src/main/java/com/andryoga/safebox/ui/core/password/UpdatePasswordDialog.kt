@@ -157,6 +157,7 @@ fun UpdatePasswordDialog(
                     onValueChange = { hint = it },
                     label = { MandatoryLabelText(stringResource(R.string.hint)) },
                     placeholder = { Text(stringResource(R.string.enter_hint)) },
+                    supportingText = { Text(stringResource(R.string.hint_not_secret_note)) },
                     singleLine = true,
                     modifier = Modifier
                         .padding(top = 8.dp)

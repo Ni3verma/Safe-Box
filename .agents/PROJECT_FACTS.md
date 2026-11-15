@@ -21,7 +21,7 @@ task so you do not re-derive things that are already known.
 | | |
 |---|---|
 | Namespace | `com.andryoga.safebox` |
-| `minSdk` / `targetSdk` / `compileSdk` | 24 / 37 / 37 |
+| `minSdk` / `targetSdk` / `compileSdk` | **29** / 37 / 37 ([ADR-0012](../docs/decisions/0012-min-sdk-29.md); 24 before the envelope release) |
 | JDK / Kotlin toolchain | 17 |
 | NDK | `29.0.14206865` (CI has a gatekeeper step that fails if missing) |
 | Build system | Groovy `build.gradle` — **never** Kotlin DSL |
@@ -38,62 +38,53 @@ upgrade test must be `qa → qa`.
 
 ## Versioning
 
-- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15`. Local builds therefore get `9999999`.
-- `versionName` comes from `GITHUB_REF_NAME`; local builds are `LOCAL-build`.
+- `versionCode = (GITHUB_RUN_NUMBER ?: 9999984) + 15` (local builds: `9999999`); `versionName` is the tag without `v` on a tag build, `<ref>-build.<versionCode>` on other CI refs, `LOCAL-build` locally (`app/build.gradle` top + `defaultConfig`, read 2026-11-14).
 - Tag convention is **`vMAJOR.MINOR.DBVERSION.FIX`** — the third component is the **Room schema
   version**. Enforced on tag push by `release.yml`'s `tag_db_version` job; see the release-and-ci skill.
 
 ## Persistence & crypto
 
-- Room DB version: **5** (`data/db/SafeBoxDatabase.kt`). Exported schemas `1.json`–`5.json` in
+- Room DB version: **6** (`MIGRATION_5_6`: `vault_meta`, `user_details` loses `password`, the
+  hash is parked as `vault_meta.legacy_password_hash`). Exported schemas `1.json`–`6.json` in
   `app/schemas/`, also wired in as androidTest assets.
-- `Migration.ALL` in `data/db/Migration.kt` is the single source of truth for the migration list;
-  `CacheModule` spreads it into `.addMigrations(*Migration.ALL)`. Add a migration there and it is
-  wired into both production and the full-chain migration test.
+- `Migration.ALL` (`data/db/Migration.kt`) is the single migration list: `CacheModule` spreads it into
+  `.addMigrations(*Migration.ALL)` and the full-chain migration test reads it too. Add migrations there only.
 - **No `fallbackToDestructiveMigration` anywhere.** Verified by grep. Keep it that way.
-- Field encryption: AES-GCM key in `AndroidKeyStore` under alias **`symmetricDataKey`**
-  (`di/SecurityModule.kt`). The provider does `if (!keyStore.containsAlias(alias)) generateKey()`,
-  so a lost alias **silently regenerates** and every stored record becomes undecryptable with no
-  error. This is the single highest-severity failure mode in the app. Since 2026-10-20 it is at
-  least visible: `keystore_key_created` with `db_exists = 1`, and `record_decrypt_failure` from the
-  decorator around `SymmetricKeyUtilsImpl`
-  ([envelope-readiness.md](../docs/analytics/envelope-readiness.md)).
-- `BACKUP_VERSION` in `common/CommonConstants.kt`: **3**. Version 3 added
-  `AUTHENTICATOR_DATA_KEY = "8"` to the export map; a v2 file simply has no key `"8"`. Changing the
-  export classes (`data/db/docs/export/`) fails `scripts/tests/backup-format-test.sh` until
-  `BACKUP_VERSION` is bumped, `app/backup-format.lock` gains a line and a new seed is captured.
-- Record types (`domain/models/record/RecordType.kt`): `LOGIN`, `CARD`, `BANK_ACCOUNT`, `NOTE`,
-  `AUTHENTICATOR`.
+- Field encryption: AES-GCM per field, `b64(ct)|b64(iv)` (`security/AesGcmFieldCipher.kt`), under the
+  **session key** in `SessionKeyHolder` — the vault's DEK, or the legacy `symmetricDataKey` handle in a
+  *Continue for now* session. No ambient key: a locked vault fails closed (`SessionLockedException`;
+  list Flows emit empty), and nothing creates the legacy alias any more. `clearSessionKey()` is the
+  exit from the vault (`HomeScreen` leaves for Login on `isVaultUnlocked = false`; the away timeout
+  records `SessionLockReason.AWAY_TIMEOUT` and clears, **nothing navigates**). Start destination is
+  Room-only (`VaultRepository.hasVault()`). Every login-screen unlock ends in `LoginViewModel` →
+  `setSessionKey` (password, fingerprint via the `CryptoObject`, forgot-password via
+  `wrapped_dek_device`); signup and the migrator call it too. Releases before the envelope one used a
+  process-wide Keystore key that **silently regenerated** when its alias was lost.
+  [Detail](../docs/architecture/persistence-and-crypto.md#field-encryption)
+- `BACKUP_VERSION` in `common/CommonConstants.kt`: **4**. Changing the
+  export classes (`data/db/docs/export/`, incl. `ExportBackupPayload`) fails
+  `scripts/tests/backup-format-test.sh` until `BACKUP_VERSION` is bumped, `app/backup-format.lock`
+  gains a line and a new seed is captured.
 - **Master password rules** (`ui/core/password/PasswordValidator.kt`, verified 2026-09-21): non-blank,
-  mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**. Signup also needs a non-blank
-  hint. Applies to signup and change-password only — **not** to the backup file password, which is
-  unconstrained. Any **vault master password** you invent for a test or fixture must satisfy all
-  five; backup-file passwords need not.
+  mixed case, **≥ 2 digits**, ≥ 1 non-alphanumeric, length **≥ 7**, plus a non-blank hint at signup.
+  Any vault password in a test or fixture must pass all five; backup-file passwords are unconstrained.
 
 Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md)
 
 ## Backup & restore
 
-- Backup file: `yyyyMMddHHmmssSSS.bak`, written into a directory the user picks **once** via
-  `OpenDocumentTree`, created as mime `application/octet-stream`.
-- Restore: `OpenDocument` with mimes `application/octet-stream`, `application/x-trash`,
-  `application/x-binary`.
-- Payload is a Java-serialized **`LinkedHashMap<String, ByteArray?>`** (Kotlin's `mutableMapOf()`),
-  PBE-encrypted with a **user-supplied backup password** independent of the vault master password.
-  Keys `"0"`–`"8"`: version, salt, IV, creation date, then one per record type (`4` login,
-  `5` bank account, `6` bank card, `7` secure note, `8` authenticator).
-- **Absent key and null value are different signals.** `encrypt*Data` returns `null` for a record
-  type with no rows, so the key is present holding null. Absent means the file predates the key;
-  null means the type is supported and the vault had none. Conflating them reads a v3 backup with
-  no TOTP records as a pre-TOTP v2 file.
-- Key `"3"` is **raw big-endian bytes**, not text — 8 bytes since v2, **1 byte in v1**, and both are
-  still read. Decoding it as UTF-8 prints control characters and looks like corruption.
-- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java` — it also carries the
-  PBE parameters (`PBKDF2WithHmacSHA1`, 1324 iterations, `AES/CBC/PKCS5Padding`) in executable form,
-  so read them there rather than copying them around. Verified 2026-09-21.
-- `ObjectInputStream.resolveClass` is allowlisted in `RestoreDataWorker` — **do not widen it**, and
-  do not translate it into an `ObjectInputFilter`; the two allowlists see different class sets. Both
-  forms: [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md).
+- Backup file `yyyyMMddHHmmssSSS.bak` goes into a directory picked **once** via `OpenDocumentTree`
+  (mime `application/octet-stream`); restore uses `OpenDocument` with mimes `application/octet-stream`,
+  `application/x-trash`, `application/x-binary`.
+- Encrypted with a **user-supplied backup password** (the master password for the auto-backup after
+  login). `BackupDataWorker` writes only **format 4** (`worker/backup/BackupCodec`: magic `SBOX`,
+  plaintext JSON header, NFKC + PBKDF2-SHA256, AES-GCM key check and body); `RestoreDataWorker`
+  routes on the first four bytes and reads formats 1–3 (Java-serialised map, PBKDF2-SHA1 + AES-CBC,
+  raw password) through `LegacyBackupReader`. Their traps (absent key vs null value, 1-byte v1 date,
+  the `resolveClass` allow-list that must not be widened or turned into an `ObjectInputFilter`):
+  [persistence-and-crypto.md](../docs/architecture/persistence-and-crypto.md#formats-13-read-only).
+- **To read a `.bak` without an emulator**, run `scripts/InspectBackup.java`; it reads every format
+  with its own crypto, not the app's. Verified on the format-4 seed 2026-11-10.
 - **Restore is a destructive replace**, not a merge: `restoreDataToDb` calls `deleteAllData()` per
   table inside `runInTransaction`. Post-restore counts equal the file's counts exactly **for every
   type except authenticator**: `filterDecodableAuthenticatorData` **silently drops** records failing
@@ -101,7 +92,9 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   Assert `<=` for authenticators, `==` for the rest.
 - Worker failure enums are append-only, ordinals pinned by `*FailureReasonTest`. Restore: `BACKUP_TOO_NEW`,
   `BACKUP_EMPTY` (crafted files only; an empty vault writes no file), etc. Backup (#274): only
-  `FOLDER_INACCESSIBLE` clears the saved folder. Both: [doc](../docs/architecture/persistence-and-crypto.md).
+  `FOLDER_INACCESSIBLE` clears the saved folder. Both end
+  in `SESSION_LOCKED`; the backup password reaches a worker via `BackupPasswordRegistry` (process memory, keyed
+  by work id), **never** WorkManager input data; a lock cancels nothing — the worker fails closed at its next use of the key. [doc](../docs/architecture/persistence-and-crypto.md)
 
 ## Testing
 
@@ -110,14 +103,11 @@ Full detail: [docs/architecture/persistence-and-crypto.md](../docs/architecture/
   `com.andryoga.safebox.CustomHiltTestRunner`, test Application `BaseTestApplication`.
 - **`Modifier.testTag` only where a label cannot identify the element** (`ui/core/TestTags.kt`),
   exposed as resource ids in `debug`/`qa` only; everything else by text or content description.
-- QR decoding is ZXing `com.google.zxing:core` — pure Java, no Play services needed
-  ([ADR-0005](../docs/decisions/0005-qr-decoding-with-zxing-core.md)). The `aosp-atd` CI image has
-  **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock screen** (so no
-  auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
-- **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and
-  restore tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
-  `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. See
-  [upgrade-testing.md](../docs/testing/upgrade-testing.md).
+- The `aosp-atd` CI image has **no DocumentsUI** (so no `:upgrade-test`, 2026-09-23) and **no secure lock
+  screen** (no auth-bound Keystore keys; `locksettings` is ignored — [ADR-0011](../docs/decisions/0011-envelope-encryption-spike-results.md) S8, 2026-10-21).
+- **`:upgrade-test`**: self-instrumenting `com.android.test` module for the black-box upgrade and restore
+  tests on the QA APK; `assembleDebug` runs **zero `:app` tasks** (2026-09-22). Driven by
+  `scripts/run-{upgrade,restore}-test.sh`; gates `release.yml`. [Doc](../docs/testing/upgrade-testing.md)
 - In-app updates are `release`-only (`IN_APP_UPDATE_ENABLED`, 2026-09-28); every androidTest gets
   Play's `FakeAppUpdateManager` via `FakeAppUpdateModule`. [Design](../docs/architecture/in-app-updates.md)
 
@@ -140,14 +130,9 @@ Detail: [skills/release-and-ci/SKILL.md](skills/release-and-ci/SKILL.md)
 
 ## Known traps
 
-- An authenticator record whose Base32 seed is invalid **cannot be repaired in the UI** — the seed
-  field is `visibleIn = setOf(ViewMode.NEW)`, so it is not rendered in EDIT. Delete and re-add is
-  the only recourse.
+- An authenticator record whose Base32 seed is invalid **cannot be repaired in the UI** (the seed field
+  is `visibleIn = setOf(ViewMode.NEW)`, so EDIT never renders it); delete and re-add is the only recourse.
 - The user has an explicit standing preference for **few logs**, because they reach production
   builds. Do not add `Timber` calls casually.
 - Firebase's automatic `screen_view` is **one screen for the whole app** (single Activity), so every
   funnel step must be an explicit `AnalyticsKey`: [activation-funnel.md](../docs/analytics/activation-funnel.md). (2026-10-17)
-- **Biometric login is unavailable on API 24–28** with the current dependencies: `androidx.core` ≥ 1.18
-  stubs `FingerprintManagerCompat`, which `androidx.biometric:1.1.0` uses for `canAuthenticate` on
-  API ≤ 28 and the fingerprint dialog on ≤ 27 (verified on API 24/28 emulators, 2026-10-20). Credential
-  flows still work. Untested fixes: `androidx.biometric` 1.4.0 (alpha, no compat references) or API 29+: #299.

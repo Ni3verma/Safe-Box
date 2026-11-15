@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -19,7 +20,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -34,8 +38,8 @@ import com.andryoga.safebox.ui.core.appupdate.InAppUpdateViewModel
 import com.andryoga.safebox.ui.core.motion.MotionTokens
 import com.andryoga.safebox.ui.home.backupAndRestore.BackupAndRestoreScreenRoot
 import com.andryoga.safebox.ui.home.components.BottomNavBar
-import com.andryoga.safebox.ui.home.components.UserAwayDialog
-import com.andryoga.safebox.ui.home.components.UserAwayDialogRoute
+import com.andryoga.safebox.ui.home.components.ScreenLockNudgeBanner
+import com.andryoga.safebox.ui.home.components.UpgradePendingBanner
 import com.andryoga.safebox.ui.home.navigation.HomeRouteType
 import com.andryoga.safebox.ui.home.navigation.isHomeTopLevelRoute
 import com.andryoga.safebox.ui.home.navigation.rememberHomeNavTransitions
@@ -45,6 +49,7 @@ import com.andryoga.safebox.ui.qrScanner.QrScannerRoute
 import com.andryoga.safebox.ui.qrScanner.QrScannerScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoot
 import com.andryoga.safebox.ui.singleRecord.SingleRecordScreenRoute
+import com.andryoga.safebox.ui.utils.openSecuritySettings
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -72,10 +77,26 @@ fun HomeScreen(
     inAppUpdateViewModel: InAppUpdateViewModel,
     onExitHomeNavGraph: () -> Unit,
 ) {
+    val mainViewModel = hiltViewModel<MainViewModel>()
+    val homeViewModel = hiltViewModel<HomeViewModel>()
+
+    // Home is only ever composed with an open session. A back stack restored after process death,
+    // a navigation that skipped Login, and a lock while Home is showing all leave for Login here,
+    // before anything in the graph reads the vault.
+    val isVaultUnlocked by mainViewModel.isVaultUnlocked.collectAsState()
+    LaunchedEffect(isVaultUnlocked) {
+        if (!isVaultUnlocked) onExitHomeNavGraph()
+    }
+    if (!isVaultUnlocked) return
+
+    val homeUiState by homeViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        homeViewModel.onScreenResumed()
+    }
     val nestedNavController = rememberNavController()
     val navBackStackEntry by nestedNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val mainViewModel = hiltViewModel<MainViewModel>()
 
     val isBackupPathSet by mainViewModel.isBackupPathSet.collectAsState()
     val isBottomBarVisible = currentDestination.isHomeTopLevelRoute()
@@ -93,12 +114,6 @@ fun HomeScreen(
             if (screenName != null) {
                 Timber.i("Navigated to: $screenName")
             }
-        }
-    }
-
-    LaunchedEffect(mainViewModel.logoutEvent) {
-        mainViewModel.logoutEvent.collect {
-            nestedNavController.navigate(UserAwayDialogRoute)
         }
     }
 
@@ -123,7 +138,25 @@ fun HomeScreen(
                         shrinkTowards = Alignment.Top,
                     ),
                 ) {
-                    BottomNavBar(nestedNavController, isBackupPathSet)
+                    Column {
+                        if (homeUiState.isLegacySession) {
+                            UpgradePendingBanner(
+                                onRetryClick = homeViewModel::onRetryUpgradeClick,
+                            )
+                        }
+                        if (homeUiState.isScreenLockNudgeVisible) {
+                            ScreenLockNudgeBanner(
+                                onSetUpClick = {
+                                    homeViewModel.onScreenLockNudgeSetUpClick(
+                                        isSettingsOpened = context.openSecuritySettings(),
+                                    )
+                                },
+                                onAcceptRiskClick = homeViewModel::onScreenLockNudgeAcceptRiskClick,
+                                onShow = homeViewModel::onScreenLockNudgeShown,
+                            )
+                        }
+                        BottomNavBar(nestedNavController, isBackupPathSet)
+                    }
                 }
             },
             snackbarHost = {
@@ -156,15 +189,15 @@ fun HomeScreen(
                                 nestedNavController.navigate(route = QrScannerRoute)
                             } else {
                                 nestedNavController.navigate(
-                                    route = SingleRecordScreenRoute(recordType)
+                                    route = SingleRecordScreenRoute(recordType),
                                 )
                             }
                         },
                         onRestoreFromBackup = {
                             nestedNavController.navigate(
                                 route = HomeRouteType.BackupAndRestoreRoute(
-                                    startWithRestoreWorkflow = true
-                                )
+                                    startWithRestoreWorkflow = true,
+                                ),
                             ) {
                                 popUpTo(nestedNavController.graph.findStartDestination().id) {
                                     saveState = true
@@ -175,8 +208,8 @@ fun HomeScreen(
                             nestedNavController.navigate(
                                 route = SingleRecordScreenRoute(
                                     recordType,
-                                    id
-                                )
+                                    id,
+                                ),
                             )
                         },
                     )
@@ -205,11 +238,8 @@ fun HomeScreen(
                         onScreenClose = {
                             Timber.i("single record screen closure callback")
                             nestedNavController.popBackStack()
-                        }
+                        },
                     )
-                }
-                composable<UserAwayDialogRoute> {
-                    UserAwayDialog(onExitHomeNavGraph = onExitHomeNavGraph)
                 }
             }
         }
