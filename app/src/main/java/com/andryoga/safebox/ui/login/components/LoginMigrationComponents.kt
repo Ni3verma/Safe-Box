@@ -36,8 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.andryoga.safebox.R
 import com.andryoga.safebox.security.envelope.migration.LegacyVaultMigrator
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
-import com.andryoga.safebox.security.envelope.migration.MigrationPhase
-import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
 import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.ui.login.LoginScreenAction
 import com.andryoga.safebox.ui.login.MigrationFailureUiState
@@ -45,14 +43,11 @@ import com.andryoga.safebox.ui.previewHelper.LightDarkModePreview
 import com.andryoga.safebox.ui.theme.SafeBoxTheme
 
 /**
- * Non-dismissable progress card shown while [LegacyVaultMigrator] runs: indeterminate while keys are
- * prepared, determinate with a record counter once records are read and saved.
+ * Non-dismissable indeterminate progress card shown while [LegacyVaultMigrator] runs.
  */
 // TODO(D3): legacy vault (crypto_version = 1) only
 @Composable
-internal fun MigrationProgressCardContent(
-    progress: MigrationProgressState.Running,
-) {
+internal fun MigrationProgressCardContent() {
     Column(
         modifier = Modifier
             .padding(24.dp)
@@ -67,37 +62,13 @@ internal fun MigrationProgressCardContent(
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = stringResource(
-                when (progress.phase) {
-                    MigrationPhase.PREPARING -> R.string.vault_migration_phase_preparing
-                    MigrationPhase.DECRYPTING -> R.string.vault_migration_phase_reading
-                    MigrationPhase.SAVING -> R.string.vault_migration_phase_saving
-                },
-            ),
+            text = stringResource(R.string.vault_migration_progress_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(16.dp))
-        if (progress.phase == MigrationPhase.PREPARING) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-        } else {
-            LinearProgressIndicator(
-                progress = { progress.fraction },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = stringResource(
-                    R.string.vault_migration_progress_counter,
-                    progress.done,
-                    progress.total,
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
     }
 }
 
@@ -259,60 +230,13 @@ internal fun LoginNoticeBanner(
 
 @LightDarkModePreview
 @Composable
-private fun MigrationProgressCardPreparingPreview() {
-    SafeBoxTheme {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
-        ) {
-            MigrationProgressCardContent(
-                progress = MigrationProgressState.Running(done = 0, total = 42, phase = MigrationPhase.PREPARING),
-            )
-        }
-    }
-}
-
-@LightDarkModePreview
-@Composable
 private fun MigrationProgressCardPreview() {
     SafeBoxTheme {
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
         ) {
-            MigrationProgressCardContent(
-                progress = MigrationProgressState.Running(done = 18, total = 42),
-            )
-        }
-    }
-}
-
-@LightDarkModePreview
-@Composable
-private fun MigrationProgressCardSavingPreview() {
-    SafeBoxTheme {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
-        ) {
-            MigrationProgressCardContent(
-                progress = MigrationProgressState.Running(done = 30, total = 42, phase = MigrationPhase.SAVING),
-            )
-        }
-    }
-}
-
-@LightDarkModePreview
-@Composable
-private fun MigrationProgressCardEmptyVaultPreview() {
-    SafeBoxTheme {
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainerLow),
-        ) {
-            MigrationProgressCardContent(
-                progress = MigrationProgressState.Running(done = 0, total = 0),
-            )
+            MigrationProgressCardContent()
         }
     }
 }

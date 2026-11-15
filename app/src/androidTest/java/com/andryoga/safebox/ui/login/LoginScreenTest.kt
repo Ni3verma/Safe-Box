@@ -9,12 +9,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
@@ -32,7 +31,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.andryoga.safebox.R
 import com.andryoga.safebox.di.FakeDeviceSecurityAuthProvider
 import com.andryoga.safebox.security.envelope.migration.MigrationFailureReason
-import com.andryoga.safebox.security.envelope.migration.MigrationPhase
 import com.andryoga.safebox.security.envelope.migration.MigrationProgressState
 import com.andryoga.safebox.security.envelope.migration.MigrationTrigger
 import com.andryoga.safebox.test.fakes.FakeHapticFeedback
@@ -44,7 +42,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import javax.crypto.Cipher
-import kotlin.math.abs
 
 /**
  * Component-level UI Test suite for [LoginScreen].
@@ -755,13 +752,13 @@ class LoginScreenTest {
     }
 
     @Test
-    fun migrationRunningState_shouldShowProgressCardWithDeterminateCount() {
+    fun migrationRunningState_shouldShowTitleSubtitleAndAnIndeterminateBar() {
         composeTestRule.setContent {
             SafeBoxTheme {
                 LoginScreen(
                     uiState = LoginUiState(
                         isLegacyVault = true,
-                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                        migrationProgress = MigrationProgressState.Running,
                     ),
                     screenAction = {},
                 )
@@ -770,33 +767,10 @@ class LoginScreenTest {
 
         composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_title))
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(
-            context.getString(R.string.vault_migration_progress_counter, 3, 10),
-        ).assertIsDisplayed()
-    }
-
-    @Test
-    fun migrationPreparingPhase_shouldShowPreparingTextWithoutTheRecordCounter() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                LoginScreen(
-                    uiState = LoginUiState(
-                        isLegacyVault = true,
-                        migrationProgress = MigrationProgressState.Running(
-                            done = 0,
-                            total = 10,
-                            phase = MigrationPhase.PREPARING,
-                        ),
-                    ),
-                    screenAction = {},
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_preparing))
+        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_subtitle))
             .assertIsDisplayed()
-        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_counter, 0, 10))
-            .assertDoesNotExist()
+        composeTestRule.onNode(hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate))
+            .assertIsDisplayed()
     }
 
     @Test
@@ -812,7 +786,7 @@ class LoginScreenTest {
                 LoginScreen(
                     uiState = LoginUiState(
                         isLegacyVault = true,
-                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
+                        migrationProgress = MigrationProgressState.Running,
                     ),
                     screenAction = {},
                 )
@@ -825,53 +799,6 @@ class LoginScreenTest {
         composeTestRule.runOnUiThread { dispatcher.onBackPressed() }
         composeTestRule.waitForIdle()
         assertThat(backReachedHost).isFalse()
-    }
-
-    @Test
-    fun migrationRunningState_shouldExposeTheDeterminateProgressToAccessibilityServices() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                LoginScreen(
-                    uiState = LoginUiState(
-                        isLegacyVault = true,
-                        migrationProgress = MigrationProgressState.Running(done = 3, total = 10),
-                    ),
-                    screenAction = {},
-                )
-            }
-        }
-
-        // TalkBack announces the fraction from this semantics; reading fills 90 % of the bar.
-        composeTestRule.onNode(hasProgressNear(0.27f))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_reading))
-            .assertIsDisplayed()
-    }
-
-    @Test
-    fun migrationSavingPhase_shouldSaySavingAndContinuePastTheReadingShare() {
-        composeTestRule.setContent {
-            SafeBoxTheme {
-                LoginScreen(
-                    uiState = LoginUiState(
-                        isLegacyVault = true,
-                        migrationProgress = MigrationProgressState.Running(
-                            done = 5,
-                            total = 10,
-                            phase = MigrationPhase.SAVING,
-                        ),
-                    ),
-                    screenAction = {},
-                )
-            }
-        }
-
-        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_phase_saving))
-            .assertIsDisplayed()
-        composeTestRule.onNode(hasProgressNear(0.95f))
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText(context.getString(R.string.vault_migration_progress_counter, 5, 10))
-            .assertIsDisplayed()
     }
 
     @Test
@@ -983,11 +910,5 @@ class LoginScreenTest {
         composeTestRule.onNodeWithText(context.getString(R.string.erase_vault_dialog_title))
             .assertIsDisplayed()
         assertThat(actions).contains(LoginScreenAction.OnEraseVaultDialogShown)
-    }
-
-    /** The bar's fraction is a product of floats, so compare within a tolerance rather than exactly. */
-    private fun hasProgressNear(expected: Float) = SemanticsMatcher("progress ~ $expected") { node ->
-        val info = node.config.getOrNull(SemanticsProperties.ProgressBarRangeInfo)
-        info != null && abs(info.current - expected) < 0.001f
     }
 }

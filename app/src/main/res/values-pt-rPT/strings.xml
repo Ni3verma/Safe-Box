@@ -206,10 +206,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Atualização de segurança — introduza a sua palavra-passe mestra uma vez</string>
     <string name="vault_migration_progress_title">A atualizar a segurança do cofre…</string>
-    <string name="vault_migration_progress_counter">%1$d de %2$d registos</string>
-    <string name="vault_migration_phase_reading">A ler os seus registos…</string>
-    <string name="vault_migration_phase_preparing">A configurar chaves seguras… Isto pode demorar até um minuto.</string>
-    <string name="vault_migration_phase_saving">A guardar…</string>
+    <string name="vault_migration_progress_subtitle">Isto demora alguns segundos.</string>
     <string name="vault_migration_failure_keystore">O hardware seguro não respondeu. Nada foi alterado.</string>
     <string name="vault_migration_failure_verify">A verificação da atualização falhou. Nada foi alterado.</string>
     <string name="vault_migration_failure_storage">Não foi possível guardar a atualização. Nada foi alterado.</string>

@@ -65,8 +65,8 @@ Exactly **one data key** and **three key-encryption keys (KEKs)**. A *wrapped DE
 |---|---|---|---|---|---|
 | **DEK** | AES-256 (32 random bytes) | RAM only (`SessionKeyHolder`); on disk only as the three wraps | every record field + verifier | signup / migration, **never rotated** by a password change | zeroed on lock, timeout, process death |
 | **KEK_Password** | AES-256 derived by PBKDF2 from the master password | RAM for the duration of one unlock | `wrapped_dek_password` | re-derived on every password unlock | discarded immediately |
-| **KEK_Biometric** | **RSA-2048 key pair**, AndroidKeyStore, per-operation, `AUTH_BIOMETRIC_STRONG`, invalidated by enrolment | TEE / StrongBox (private half never leaves) | `wrapped_dek_biometric` — private half only inside a `BiometricPrompt` + `CryptoObject` | silently, any unlocked session with a Class-3 biometric enrolled | new enrolment, lock-screen removal, user opt-out |
-| **KEK_Device** | **RSA-2048 key pair**, AndroidKeyStore, `AUTH_DEVICE_CREDENTIAL or AUTH_BIOMETRIC_STRONG`; per-operation on API 30+, time-bound (`T` = 5 s) on 29 | TEE / StrongBox | `wrapped_dek_device` — private half only after a PIN/pattern/password or biometric authentication | silently, any unlocked session with a lock screen present | lock-screen removal |
+| **KEK_Biometric** | **RSA-2048 key pair**, AndroidKeyStore, per-operation, `AUTH_BIOMETRIC_STRONG`, invalidated by enrolment | TEE (private half never leaves; not StrongBox, ADR-0015) | `wrapped_dek_biometric` — private half only inside a `BiometricPrompt` + `CryptoObject` | silently, any unlocked session with a Class-3 biometric enrolled | new enrolment, lock-screen removal, user opt-out |
+| **KEK_Device** | **RSA-2048 key pair**, AndroidKeyStore, `AUTH_DEVICE_CREDENTIAL or AUTH_BIOMETRIC_STRONG`; per-operation on API 30+, time-bound (`T` = 5 s) on 29 | TEE | `wrapped_dek_device` — private half only after a PIN/pattern/password or biometric authentication | silently, any unlocked session with a lock screen present | lock-screen removal |
 
 **Why RSA for the Keystore KEKs.** Keystore's authentication requirement *"applies only to secret key and private key operations. Public key operations are not restricted"* (`KeyGenParameterSpec.java` L1451-1452). The **public half can only lock**: wrapping the DEK needs no prompt and reveals nothing. The **private half unlocks** and the hardware refuses to run it without a genuine authentication token. With symmetric AES keys both directions are gated and every wrap creation would need a prompt.
 
@@ -93,7 +93,7 @@ KeyGenParameterSpec.Builder(alias, PURPOSE_ENCRYPT or PURPOSE_DECRYPT)
                 else setUserAuthenticationValidityDurationSeconds(DEVICE_KEY_VALIDITY_SECONDS) // 5
             }
         }
-        setIsStrongBoxBacked(true)                        // retried once without StrongBox on any failure (OEM StrongBox rejects parameters with varying classes)
+        // no setIsStrongBoxBacked: TEE only, StrongBox keygen took 5–20 s per key (ADR-0015)
     }
 ```
 
@@ -139,7 +139,7 @@ sequenceDiagram
 **Why 5 s and not 1 s.** Step 4 is not "a few milliseconds" end to end:
 
 - On API 29 the PIN/pattern UI is **inside the framework prompt**: androidx 1.1.0 launches the separate `KeyguardManager` Activity (`createConfirmDeviceCredentialIntent`, `BiometricFragment` L804-824 → `onActivityResult` L251) only on API ≤ 28 (`isManagingDeviceCredentialButton()` is `SDK_INT <= P`; verified in the 1.1.0 sources, 2026-10-21). Gatekeeper stamps the authentication when the PIN is verified; what remains before our callback is the prompt's own dismissal and the fragment dispatch — the 300–800 ms of Activity transitions S1 measured on API 24/28 are the upper bound, not the API 29 path.
-- Then the RSA-2048 private operation runs in the TEE (20–150 ms) or in StrongBox (up to ~500 ms on 2018–2019 StrongBox hardware; 306 ms on the Pixel 6a, S5).
+- Then the RSA-2048 private operation runs in the TEE (20–150 ms; 36 ms on the Pixel 6a, S5). Keys created StrongBox-backed before ADR-0015 take up to ~500 ms (306 ms on the Pixel 6a) until they are regenerated.
 - 1 s leaves no margin. The failure is not data loss but a **loop**: `UserNotAuthenticatedException` → prompt again → same latency → same exception, on exactly the 2018–2019 hardware that still runs Android 10. Recovery would be impossible for them.
 - What a shorter `T` buys: **nothing against a resident attacker** — code already running in the sandbox simply polls after every unlock, and a phone is unlocked dozens of times a day; 1 s and 5 s both let it in. Only a one-shot attacker landing at a random moment is cut proportionally.
 
@@ -227,9 +227,9 @@ Record fields keep today's on-disk format (`b64(ct)|b64(iv)`, AES-256-GCM); only
 | `BACKUP_VERSION` | **4** (today 3, raised by #241) | §5.2, #242 |
 | Migration free-space precheck | **none** — dropped in the MR 5 owner review; a full disk fails the transaction (`commit_tx` / `db_io`) and SQLite rolls back (S11: rollback intact, peak WAL 0.98 × DB) | §6.4.2; S11 |
 | Migration field-decrypt retries | 3, backoff 100 / 300 / 900 ms | §6.4.2 |
-| Migration progress mode | **determinate** — 2.5 ms per legacy field on the Pixel 6a: 100 records 1.4 s, 500 records 7.3 s, 2 000 records 27 s | §6.4; S7 |
+| Migration progress mode | **indeterminate** — production P95 `record_count` 48, max 176 (2026-11-15); ~9 ms per legacy record on the Pixel 6a ⇒ ≤ 1.6 s | §6.4; ADR-0015 (supersedes S7's determinate) |
 | Legacy field decrypt vs DEK field decrypt | 2.5 ms (Keystore round-trip) vs 0.06 ms in-process; a 2 000-record list reads in 0.6 s instead of 25 s | S7 |
-| RSA keygen | TEE: 0.8 s median, 1.5 s max; **StrongBox: 5.2 s median, 18–20 s max** (Pixel 6a) | S5 |
+| RSA keygen | TEE: 0.8 s median, 1.5 s max; StrongBox: 5.2 s median, 18–20 s max (Pixel 6a) — **wrap keys are TEE-only** | S5; ADR-0015 |
 | RSA private unwrap | TEE 36 ms; StrongBox 306 ms; probe (`init` only) 8 / 37 ms (Pixel 6a) | S5 |
 | CI image (`aosp-atd`) | **no secure lock screen** — `locksettings` is ignored and auth-bound keys cannot be generated | S8 |
 
@@ -591,7 +591,7 @@ sequenceDiagram
     end
 ```
 
-- **UI during the transaction:** non-dismissable **determinate** progress state on the login screen (`progress/total`): every legacy field is a Keystore round-trip of ~2.5 ms on the Pixel 6a, so 100 records take 1.4 s, 500 take 7 s and 2 000 take 27 s before any entry-level derating (ADR-0011 S7). The legacy decrypts run sequentially *before* the transaction; since MR 9 the bar has two phases (`MigrationPhase`): the decrypt pass fills 90 % of it, the in-transaction save pass the rest, with *Reading your records…* / *Saving…* above the `done of total` counter. Before them, a `PREPARING` phase shows an indeterminate bar and *Setting up secure keys… This can take up to a minute.* with no counter: it covers the KDF and both inline Keystore keygens, which on the Pixel 6a took 17 s with StrongBox (two keys, S5 max 18–20 s each) while the old counter sat at 0 (manual matrix, 2026-11-15; moving the keygens to post-unlock maintenance was rejected to keep both wraps guaranteed at commit). The work runs in `@ApplicationScope`; back press and ViewModel clearing cannot abort it.
+- **UI during the transaction:** non-dismissable **indeterminate** progress state on the login screen: *Upgrading vault security…* / *This takes a few seconds.* over an indeterminate bar (`MigrationProgressState` is `Idle` / `Running`). The legacy decrypts run sequentially *before* the transaction at ~9 ms per record on the Pixel 6a, so the largest production vault (176 records) takes about 1.6 s; MR 9's two-phase determinate counter was removed on that evidence ([ADR-0015](../decisions/0015-tee-wrap-keys-and-indeterminate-migration-progress.md)). The work runs in `@ApplicationScope`; back press and ViewModel clearing cannot abort it.
 - **Performance:** every legacy decrypt is a Keystore binder round-trip; after migration every field decrypt is in-process AES-GCM. Measured on the Pixel 6a: reading all fields of 2 000 records takes 24.9 s under the legacy key and 0.63 s under the DEK — the records list gets ~40× faster (ADR-0011 S7).
 - **Downgrade after migration:** a v5 build refuses to open a v6 database — a clean failure instead of silent key regeneration. Downgrade stays unsupported.
 
@@ -648,7 +648,7 @@ flowchart TB
 | `load_legacy_key` | alias missing (`legacyVaultKey() == null`) | gateway, never regenerates | legacy-key-lost card → Erase & start over (§6.10, §6.11) | untouched, but already unreadable | `legacy_key_lost` → `legacy_key_lost_title` / `_body` (the failure card never shows it) |
 | `load_legacy_key`, `decrypt_row`, `decrypt_hint` | **transient** Keystore error (`KeyStoreException`, `ProviderException`, `ServiceSpecificException`, `IllegalBlockSizeException` without an AEAD cause) | exception type | retried 3× (100 / 300 / 900 ms); then the failure card + Try again / Continue for now | untouched — the decrypts run before the transaction | `keystore_transient` → `vault_migration_failure_keystore` |
 | `derive_kdf` | KDF or cipher provider exception (not expected on any supported device) | exception | failure card + Try again / Continue for now | untouched | `unexpected` → `vault_migration_failure_unexpected` |
-| optional Keystore wraps (no stage) | keygen fails (StrongBox, TEE timeout, lock screen removed mid-way) | exception | nothing — step skipped, `VAULT_WRAP_CREATE_FAILURE`, §6.5 retries after unlock | migration continues | — |
+| optional Keystore wraps (no stage) | keygen fails (TEE timeout, lock screen removed mid-way) | exception | nothing — step skipped, `VAULT_WRAP_CREATE_FAILURE`, §6.5 retries after unlock | migration continues | — |
 | `decrypt_row` | `AEADBadTagException`, `BadPaddingException`, `InvalidAlgorithmParameterException`, `IllegalArgumentException`, or a field that is not well-formed `b64(ct)\|b64(iv)` (`CorruptedRowException`) — the row cannot be read under the legacy key. **It is unreadable today too.** | exception type, structure check | nothing — the migration continues, no notice | row **deleted** inside the transaction; `verify_count` accounts for it | — |
 | `decrypt_hint` | the same on the legacy hint | the same | nothing | hint cleared to empty | — |
 | `encrypt_row` | cipher exception — never expected | exception | failure card | rollback | `unexpected` → `vault_migration_failure_unexpected` |
@@ -1172,7 +1172,7 @@ graph LR
 | **6** | `feature/*` | Vault flows part 2: biometric login with `CryptoObject` + invalidation banner; forgot-password recovery (API 30+ / 29); recovery-not-set-up state; `VaultResetUseCase` + erase dialog; `DeviceSecurityRequiredDialog` off the v2 login; analytics, VM tests. **Delivered 2026-10-25** | 48 (6 test files; 26 locale files) | removes all 5 `MR6`; adds none |
 | **7** | `feature/*` | Settings & Home: change-password gate + re-wrap, fingerprint-unlock switch, legacy-session disabling; Home screen-lock nudge; strings, analytics, VM tests. **Delivered 2026-11-01** | ≈ 60 (26 locale files) | removes both `MR7`; adds none |
 | **8** | `feature/*` | Backup format v4 (*Part of #242*) + envelope package & preference cleanup: `BackupCodec`, `LegacyBackupReader` (code moved out of `RestoreDataWorker`), `DecodedBackup`, worker routing, `InspectBackup.java` v4 branch, `update-seed.sh` run (v3 → `format-3.bak`, new v4 seed), `backup-format.lock`, tests, analytics; move envelope interfaces to `security/envelope/interfaces/` and envelope/vault models (`VaultState`, `KdfParams`, `WrapKeySpec`, `KeyHealth`) to `security/envelope/models/` (D14); remove `EncryptedPreferenceProvider` / `IS_SIGN_UP_REQUIRED` from `SignupViewModel` (D15). **Delivered 2026-11-10** | 87 (61 of them the D14 import move) | removes `MR8` |
-| **9** | `feature/*` | Instrumentation & final cleanup: `KeystoreWrapKeysTest`, `VaultCryptoMigrationTest`, `BypassProtectionTest`, `UpgradeMigrationE2ETest`, `VaultLifecycleE2ETest`; D1, D7, D9, D16; two-phase migration progress, background fingerprint-prompt fix, hint note, `records_deleted`; QA-APK audit; docs, ADR-0014. **Delivered 2026-11-14** | ≈ 90 (27 locale files) | none left |
+| **9** | `feature/*` | Instrumentation & final cleanup: `KeystoreWrapKeysTest`, `VaultCryptoMigrationTest`, `BypassProtectionTest`, `UpgradeMigrationE2ETest`, `VaultLifecycleE2ETest`; D1, D7, D9, D16; two-phase migration progress (replaced by one indeterminate state, ADR-0015), background fingerprint-prompt fix, hint note, `records_deleted`; QA-APK audit; docs, ADR-0014. **Delivered 2026-11-14** | ≈ 90 (27 locale files) | none left |
 
 ### 9.3 Detailed MR-by-MR Walkthrough
 
@@ -1298,7 +1298,7 @@ Naming follows the repo convention: descriptive, no test-case numbers (`transien
 | 2 | `PasswordKdfTest` | RFC 6070 vectors · `kdf_params` round-trip · unknown version fails closed · NFKC: U+00E9 vs `e`+U+0301 same key · full-width digits same key · `ﬁ` ligature same key · `'` vs `’` different keys · password array cleared after use |
 | 3 | `AesGcmWrapTest`, `DekVerifierTest` | wrong KEK ⇒ `AEADBadTagException` · AAD mismatch rejected · verifier accepts the real DEK · verifier rejects a substituted DEK · verifier rejects a truncated blob |
 | 4 | `EnvelopeEncryptionManagerTest` (`FakeKeystoreGateway`) | OAEP wrap/unwrap round-trip with MGF1-SHA1 params · re-wrap preserves DEK · invalidated key ⇒ `Invalidated` · `unwrapWithPassword` wrong password ⇒ `WrongPassword` · `wrapWithKeystoreKey` generates the pair when absent |
-| 5 | `AndroidKeystoreGateway` mapping tests | `IllegalStateException` ⇒ `LockScreenRequiredException` / `BiometricNotEnrolledException` · `StrongBoxUnavailableException` ⇒ retried without StrongBox |
+| 5 | `AndroidKeystoreGateway` mapping tests | `IllegalStateException` ⇒ `LockScreenRequiredException` / `BiometricNotEnrolledException` (the StrongBox retry was removed with ADR-0015) |
 | 6 | `CrashlyticsCrashReporterTest` (contract) | keys and breadcrumbs forwarded; nothing thrown when Crashlytics is unavailable |
 | 7 | `LegacyVaultMigratorTest` (fake DAOs and transaction, `FakeKeystoreGateway`, `FakeCrashReporter`) | already at `crypto_version = 2` ⇒ `AlreadyMigrated`, nothing logged · happy path re-encrypts every table and the hint, commits `vault_meta`, opens the DEK session, deletes the legacy key · forgot-password trigger writes the new hint without decrypting the old one · legacy key missing ⇒ `legacy_key_lost` · transient Keystore error recovering within the retries ⇒ success with the retry count · retries exhausted ⇒ `keystore_transient`, no transaction opened · rows failing the GCM tag or the format check ⇒ deleted, legacy key deleted, upgrade finishes · row count off ⇒ `verify_count` · password-wrap round trip fails ⇒ `verify_wrap` · `SQLiteException` at commit ⇒ `db_io` · `debugFailStage` ⇒ fails at that stage with the expected reason |
 | 8 | `VaultRepositoryTest` | `createVault` writes the five rows in one transaction · `rewrapPassword` changes only `kdf_params`, `wrapped_dek_password`, `hint` · erase is covered by `VaultResetUseCaseTest` (§6.11) |
@@ -1327,7 +1327,7 @@ Naming follows the repo convention: descriptive, no test-case numbers (`transien
 
 | Suite | Cases |
 |---|---|
-| `LoginScreenTest` (extend) | upgrade notice shown for `crypto_version = 1` · migration progress shows a determinate count, offers no input and swallows back (control: without a migration back reaches the host) · determinate progress exposed as `ProgressBarRangeInfo` for TalkBack · failure card shows the reason, *Try again*, *Continue for now* and emits both events · forgot-password variant hides *Continue* and says the password was not changed · legacy-key-lost card with Erase · recovery-not-set-up state and its actions · invalidated banner · away banner |
+| `LoginScreenTest` (extend) | upgrade notice shown for `crypto_version = 1` · migration progress shows the title, subtitle and an indeterminate bar (ADR-0015), offers no input and swallows back (control: without a migration back reaches the host) · determinate progress exposed as `ProgressBarRangeInfo` for TalkBack · failure card shows the reason, *Try again*, *Continue for now* and emits both events · forgot-password variant hides *Continue* and says the password was not changed · legacy-key-lost card with Erase · recovery-not-set-up state and its actions · invalidated banner · away banner |
 | `SignupScreenTest`, `UpdatePasswordDialogTest` | hint-is-not-secret note under the hint field (MR 9) |
 | `HomeScreenBannersTest` (new) | screen-lock nudge: shown once, *Set up* and *I accept the risk* reach their callbacks · upgrade-pending banner: *Retry now* reaches its callback |
 | `SettingsScreenComprehensiveTest` (extend) | switch hidden / disabled / on / off states · change-password: device-auth path, *Use master password instead* field, wrong current password stays · both entries disabled in a legacy session |
@@ -1362,7 +1362,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 | **API 30** emulator | first per-operation `CryptoObject` + `DEVICE_CREDENTIAL` recovery (`setUserAuthenticationParameters`) | B1, C1, D1–D3, F1–F2 |
 | **API 34** emulator | CI parity (`aosp-atd` GMD). **The `aosp-atd` image has no secure lock screen** (`locksettings` is ignored, auth-bound keys cannot be generated — S8), so every lock-screen or biometric scenario needs a `google_apis` image at this level | A1–A3, B1–B3, E1–E3, G1–G5, H1 |
 | **API 36** emulator | current platform behaviour (predictive back on the progress state, notification permission for workers) | A1, B1, E2, G1 |
-| **Pixel 6a** (physical) | StrongBox (Titan M2) RSA keygen/decrypt and the TEE fallback; real under-display fingerprint and Gatekeeper timings; real "remove lock screen deletes fingerprints"; the timing numbers of S5–S7 | A1–A2, B1–B2, C1, D1–D4, E1, F1–F2, G1–G2 |
+| **Pixel 6a** (physical) | TEE RSA keygen/decrypt on a StrongBox device (migration timing, ADR-0015); real under-display fingerprint and Gatekeeper timings; real "remove lock screen deletes fingerprints"; the timing numbers of S5–S7 | A1–A2, B1–B2, C1, D1–D3, E1, F1–F2, G1–G2 |
 
 ### 12.2 Scenarios
 
@@ -1378,7 +1378,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 - B4 Continue for now: from the B3 failure card, before freeing space (there is no manual fault switch; `debugFailStage` is a test hook, D11) → *Continue for now* → records usable (no crash: WorkManager's `initializationExceptionHandler` absorbs its own `SQLiteFullException` at first use, 2026-11-15), upgrade-pending banner → free the space → *Retry now* → login → migration completes.
 - B5 Corrupt row: before the upgrade, `adb root` + `sqlite3 /data/data/<pkg>/databases/SAFEBOX_APP_DB "UPDATE login_data SET password='Zm9v|YmFy' WHERE …"` → upgrade → completes with no notice; that row is deleted, every other record intact; the legacy alias is deleted after the commit (asserted by `VaultCryptoMigrationTest`).
 - B6 Forgot password while legacy: *Forgot password?* → PIN → new password → migration → Home; repeat with a kill during progress → old password still valid, flow repeatable.
-- B7 Two thousand records (seed via the restore of a large fixture) → migration duration and progress mode as decided in S7.
+- B7 *dropped 2026-11-15*: production vaults stay under 200 records, so the progress is indeterminate (ADR-0015).
 
 **C. Recovery (v2 vault)**
 - C1 API 30+: *Forgot password?* → PIN path and fingerprint path → new password → Home; wraps intact; `UPDATE_PASSWORD_DIALOG_*` with `source=login`.
@@ -1389,7 +1389,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 - D1 Enrol a second fingerprint (emulator: `adb -e emu finger touch 2` during enrolment) → relaunch → invalidated banner → password → relaunch → fingerprint works again.
 - D2 Remove all fingerprints → password login → switch shows "No fingerprint enrolled".
 - D3 Remove the lock screen (`adb shell locksettings clear --old 1234`) → relaunch → password → nudge on Home → set PIN again → next login → forgot-password works.
-- D4 Pixel 6a only: toggle StrongBox availability is impossible — instead confirm in logs that `KEK_*` were created StrongBox-backed and recovery still completes within `T` on the TEE fallback build flag.
+- D4 *dropped 2026-11-15*: wrap keys are TEE-only (ADR-0015).
 
 **E. Session & lock**
 - E1 Away-timeout while on the records list → Login + away banner; back button does not return to Home; password → list restored.

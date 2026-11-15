@@ -206,10 +206,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Оновлення безпеки — введіть майстер-пароль один раз</string>
     <string name="vault_migration_progress_title">Оновлення захисту сховища…</string>
-    <string name="vault_migration_progress_counter">%1$d із %2$d записів</string>
-    <string name="vault_migration_phase_reading">Читання ваших записів…</string>
-    <string name="vault_migration_phase_preparing">Налаштування захищених ключів… Це може тривати до хвилини.</string>
-    <string name="vault_migration_phase_saving">Збереження…</string>
+    <string name="vault_migration_progress_subtitle">Це займе кілька секунд.</string>
     <string name="vault_migration_failure_keystore">Захищений апаратний модуль не відповів. Нічого не змінено.</string>
     <string name="vault_migration_failure_verify">Перевірка оновлення не пройдена. Нічого не змінено.</string>
     <string name="vault_migration_failure_storage">Не вдалося зберегти оновлення. Нічого не змінено.</string>

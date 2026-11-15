@@ -168,7 +168,7 @@ class LegacyVaultMigrator @Inject constructor(
             param(AnalyticsParam.RECORD_COUNT, totalRecords)
             param(AnalyticsParam.ATTEMPT, attempt)
         }
-        progress.start(totalRecords)
+        progress.start()
 
         var dek: ByteArray? = null
         try {
@@ -198,7 +198,6 @@ class LegacyVaultMigrator @Inject constructor(
             val (wrappedDevice, wrappedBiometric) = createOptionalKeystoreWraps(mintedDek)
 
             // Stage 3: Decrypt all record tables and legacy hint into memory before opening the DB transaction.
-            progress.update(MigrationPhase.DECRYPTING, 0, totalRecords)
             val decryptedLogins = decryptLogins(ctx, legacyKey, logins)
             val decryptedAccounts = decryptBankAccounts(ctx, legacyKey, accounts)
             val decryptedCards = decryptBankCards(ctx, legacyKey, cards)
@@ -359,7 +358,6 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
-            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -386,7 +384,6 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
-            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -414,7 +411,6 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
-            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -437,7 +433,6 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
-            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -460,7 +455,6 @@ class LegacyVaultMigrator @Inject constructor(
             } catch (_: CorruptedRowException) {
                 corruptedKeys += row.key
             }
-            ctx.onRecordDecrypted(progress)
         }
         return DecryptedTableResult(decrypted, corruptedKeys)
     }
@@ -496,7 +490,7 @@ class LegacyVaultMigrator @Inject constructor(
         ctx.currentTable = TABLE_LOGIN
         for (key in table.corruptedKeys) {
             dao.deleteLoginDataByKey(key)
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
         for (row in table.rows) {
             dao.upsertLoginData(
@@ -507,7 +501,7 @@ class LegacyVaultMigrator @Inject constructor(
                     userId = encryptAndVerifyField(ctx, dekSecretKey, row.userId),
                 ),
             )
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
     }
 
@@ -520,7 +514,7 @@ class LegacyVaultMigrator @Inject constructor(
         ctx.currentTable = TABLE_BANK_ACCOUNT
         for (key in table.corruptedKeys) {
             dao.deleteBankAccountDataByKey(key)
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
         for (row in table.rows) {
             dao.upsertBankAccountData(
@@ -532,7 +526,7 @@ class LegacyVaultMigrator @Inject constructor(
                     notes = encryptAndVerifyNullable(ctx, dekSecretKey, row.notes),
                 ),
             )
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
     }
 
@@ -545,7 +539,7 @@ class LegacyVaultMigrator @Inject constructor(
         ctx.currentTable = TABLE_BANK_CARD
         for (key in table.corruptedKeys) {
             dao.deleteBankCardDataByKey(key)
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
         for (row in table.rows) {
             dao.upsertBankCardData(
@@ -558,7 +552,7 @@ class LegacyVaultMigrator @Inject constructor(
                     notes = encryptAndVerifyNullable(ctx, dekSecretKey, row.notes),
                 ),
             )
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
     }
 
@@ -571,7 +565,7 @@ class LegacyVaultMigrator @Inject constructor(
         ctx.currentTable = TABLE_SECURE_NOTE
         for (key in table.corruptedKeys) {
             dao.deleteSecretNoteDataByKey(key)
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
         for (row in table.rows) {
             dao.upsertSecretNoteData(
@@ -579,7 +573,7 @@ class LegacyVaultMigrator @Inject constructor(
                     notes = encryptAndVerifyField(ctx, dekSecretKey, row.notes),
                 ),
             )
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
     }
 
@@ -592,7 +586,7 @@ class LegacyVaultMigrator @Inject constructor(
         ctx.currentTable = TABLE_AUTHENTICATOR
         for (key in table.corruptedKeys) {
             dao.deleteAuthenticatorDataByKey(key)
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
         for (row in table.rows) {
             dao.upsertAuthenticatorData(
@@ -600,7 +594,7 @@ class LegacyVaultMigrator @Inject constructor(
                     secretKey = encryptAndVerifyField(ctx, dekSecretKey, row.secretKey),
                 ),
             )
-            ctx.onRecordProcessed(progress)
+            ctx.onRecordProcessed()
         }
     }
 
@@ -922,19 +916,12 @@ class LegacyVaultMigrator @Inject constructor(
         var currentStage: MigrationStage = MigrationStage.LOAD_LEGACY_KEY,
         var currentTable: String = TABLE_NONE,
         var recordsDone: Int = 0,
-        var recordsDecrypted: Int = 0,
         var retriesCount: Int = 0,
         var legacyDecryptNanos: Long = 0L,
     ) {
-        fun onRecordDecrypted(progress: VaultMigrationProgress) {
-            recordsDecrypted++
-            progress.update(MigrationPhase.DECRYPTING, recordsDecrypted, totalRecords)
-        }
-
         /** [recordsDone] is what a failure reports: records written before it. */
-        fun onRecordProcessed(progress: VaultMigrationProgress) {
+        fun onRecordProcessed() {
             recordsDone++
-            progress.update(MigrationPhase.SAVING, recordsDone, totalRecords)
         }
     }
 

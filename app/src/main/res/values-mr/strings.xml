@@ -206,10 +206,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">सुरक्षा अपग्रेड — तुमचा मास्टर पासवर्ड एकदा प्रविष्ट करा</string>
     <string name="vault_migration_progress_title">तिजोरीची सुरक्षा अपग्रेड करत आहे…</string>
-    <string name="vault_migration_progress_counter">%2$d पैकी %1$d रेकॉर्ड</string>
-    <string name="vault_migration_phase_reading">तुमच्या नोंदी वाचल्या जात आहेत…</string>
-    <string name="vault_migration_phase_preparing">सुरक्षित की सेट केल्या जात आहेत… याला एक मिनिटापर्यंत वेळ लागू शकतो.</string>
-    <string name="vault_migration_phase_saving">जतन केले जात आहे…</string>
+    <string name="vault_migration_progress_subtitle">याला काही सेकंद लागतात.</string>
     <string name="vault_migration_failure_keystore">सुरक्षित हार्डवेअरने प्रतिसाद दिला नाही. काहीही बदलले नाही.</string>
     <string name="vault_migration_failure_verify">अपग्रेड तपासणी अयशस्वी झाली. काहीही बदलले नाही.</string>
     <string name="vault_migration_failure_storage">अपग्रेड सेव्ह करता आले नाही. काहीही बदलले नाही.</string>

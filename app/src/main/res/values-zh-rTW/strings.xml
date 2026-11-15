@@ -201,10 +201,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">安全升級 — 請輸入一次主密碼</string>
     <string name="vault_migration_progress_title">正在升級保險庫安全性…</string>
-    <string name="vault_migration_progress_counter">第 %1$d / %2$d 筆記錄</string>
-    <string name="vault_migration_phase_reading">正在讀取您的記錄…</string>
-    <string name="vault_migration_phase_preparing">正在設定安全金鑰… 這可能需要最多一分鐘。</string>
-    <string name="vault_migration_phase_saving">正在儲存…</string>
+    <string name="vault_migration_progress_subtitle">這需要幾秒鐘。</string>
     <string name="vault_migration_failure_keystore">安全硬體未回應。未進行任何變更。</string>
     <string name="vault_migration_failure_verify">升級驗證失敗。未進行任何變更。</string>
     <string name="vault_migration_failure_storage">無法儲存升級。未進行任何變更。</string>

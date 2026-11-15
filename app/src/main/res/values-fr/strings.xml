@@ -199,10 +199,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Mise à niveau de sécurité — saisissez votre mot de passe principal une fois</string>
     <string name="vault_migration_progress_title">Mise à niveau de la sécurité du coffre…</string>
-    <string name="vault_migration_progress_counter">%1$d sur %2$d enregistrements</string>
-    <string name="vault_migration_phase_reading">Lecture de vos enregistrements…</string>
-    <string name="vault_migration_phase_preparing">Configuration des clés sécurisées… Cela peut prendre jusqu\'à une minute.</string>
-    <string name="vault_migration_phase_saving">Enregistrement…</string>
+    <string name="vault_migration_progress_subtitle">Cela prend quelques secondes.</string>
     <string name="vault_migration_failure_keystore">Le matériel sécurisé n\'a pas répondu. Aucune modification n\'a été effectuée.</string>
     <string name="vault_migration_failure_verify">La vérification de la mise à niveau a échoué. Aucune modification n\'a été effectuée.</string>
     <string name="vault_migration_failure_storage">Impossible d\'enregistrer la mise à niveau. Aucune modification n\'a été effectuée.</string>

@@ -84,9 +84,9 @@ internal fun LoginScreen(
     val context = LocalContext.current
     val biometricAuthProvider = LocalDeviceSecurityAuthProvider.current
     var showEraseVaultDialog by remember { mutableStateOf(false) }
-    val migrationRunning = uiState.migrationProgress as? MigrationProgressState.Running
+    val migrationRunning = uiState.migrationProgress == MigrationProgressState.Running
 
-    if (migrationRunning != null) {
+    if (migrationRunning) {
         BackHandler(enabled = true) {
             // Non-dismissable while the vault migration is in flight.
         }
@@ -119,8 +119,8 @@ internal fun LoginScreen(
                 .padding(24.dp),
         ) {
             when {
-                migrationRunning != null -> {
-                    MigrationProgressCardContent(progress = migrationRunning)
+                migrationRunning -> {
+                    MigrationProgressCardContent()
                 }
 
                 uiState.migrationFailure != null -> {
@@ -164,7 +164,7 @@ internal fun LoginScreen(
     }
 
     val biometricCipher = uiState.biometricUnlockCipher
-    val isLoginFormShowing = migrationRunning == null && uiState.migrationFailure == null
+    val isLoginFormShowing = !migrationRunning && uiState.migrationFailure == null
     // A lock while the app is in the background composes Login there; a prompt started then is
     // refused by BiometricPrompt and lost, so it starts on the first resume and is not restarted
     // when the prompt itself pauses the screen.
@@ -263,7 +263,7 @@ private fun LoginPreviewMigrationProgress() {
         LoginScreen(
             uiState = LoginUiState(
                 isLegacyVault = true,
-                migrationProgress = MigrationProgressState.Running(done = 18, total = 42),
+                migrationProgress = MigrationProgressState.Running,
             ),
             screenAction = {},
         )

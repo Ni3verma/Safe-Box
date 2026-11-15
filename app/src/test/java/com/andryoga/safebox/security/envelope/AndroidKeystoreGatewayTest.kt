@@ -1,7 +1,6 @@
 package com.andryoga.safebox.security.envelope
 
 import android.security.keystore.KeyPermanentlyInvalidatedException
-import android.security.keystore.StrongBoxUnavailableException
 import com.andryoga.safebox.BuildConfig
 import com.andryoga.safebox.common.Exceptions
 import com.andryoga.safebox.security.envelope.interfaces.BiometricNotEnrolledException
@@ -61,44 +60,6 @@ class AndroidKeystoreGatewayTest {
         val mapped = AndroidKeystoreGateway.mapKeyGenFailure(unrelated, WrapKeySpec.DEVICE)
 
         assertThat(mapped).isSameInstanceAs(unrelated)
-    }
-
-    @Test
-    fun withStrongBoxFallback_whenStrongBoxAttemptFails_shouldRetryOnceWithoutStrongBox() {
-        val strongBoxFailures = listOf(
-            StrongBoxUnavailableException("StrongBox not supported"),
-            ProviderException("StrongBox rejected the key parameters"),
-            InvalidAlgorithmParameterException("Unsupported digest for StrongBox"),
-        )
-
-        strongBoxFailures.forEach { failure ->
-            val attempts = mutableListOf<Boolean>()
-
-            val result = AndroidKeystoreGateway.withStrongBoxFallback { strongBoxBacked ->
-                attempts.add(strongBoxBacked)
-                if (strongBoxBacked) throw failure
-                "generated"
-            }
-
-            assertThat(result).isEqualTo("generated")
-            assertThat(attempts).containsExactly(true, false).inOrder()
-        }
-    }
-
-    @Test
-    fun withStrongBoxFallback_whenBothAttemptsFail_shouldPropagateTheRetryFailure() {
-        val attempts = mutableListOf<Boolean>()
-        val retryFailure = IllegalStateException("Secure lock screen must be enabled")
-
-        val thrown = assertThrows(IllegalStateException::class.java) {
-            AndroidKeystoreGateway.withStrongBoxFallback<Unit> { strongBoxBacked ->
-                attempts.add(strongBoxBacked)
-                if (strongBoxBacked) throw ProviderException("TEE timeout") else throw retryFailure
-            }
-        }
-
-        assertThat(thrown).isSameInstanceAs(retryFailure)
-        assertThat(attempts).containsExactly(true, false).inOrder()
     }
 
     @Test

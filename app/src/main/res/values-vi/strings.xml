@@ -206,10 +206,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Nâng cấp bảo mật — nhập mật khẩu chính của bạn một lần</string>
     <string name="vault_migration_progress_title">Đang nâng cấp bảo mật két an toàn…</string>
-    <string name="vault_migration_progress_counter">%1$d / %2$d bản ghi</string>
-    <string name="vault_migration_phase_reading">Đang đọc các mục của bạn…</string>
-    <string name="vault_migration_phase_preparing">Đang thiết lập khóa bảo mật… Quá trình này có thể mất đến một phút.</string>
-    <string name="vault_migration_phase_saving">Đang lưu…</string>
+    <string name="vault_migration_progress_subtitle">Quá trình này mất vài giây.</string>
     <string name="vault_migration_failure_keystore">Phần cứng bảo mật không phản hồi. Không có gì thay đổi.</string>
     <string name="vault_migration_failure_verify">Kiểm tra nâng cấp thất bại. Không có gì thay đổi.</string>
     <string name="vault_migration_failure_storage">Không thể lưu bản nâng cấp. Không có gì thay đổi.</string>

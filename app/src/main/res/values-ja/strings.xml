@@ -201,10 +201,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">セキュリティアップグレード — マスターパスワードを1回入力してください</string>
     <string name="vault_migration_progress_title">保管庫のセキュリティをアップグレード中…</string>
-    <string name="vault_migration_progress_counter">%1$d / %2$d 件のレコード</string>
-    <string name="vault_migration_phase_reading">記録を読み込んでいます…</string>
-    <string name="vault_migration_phase_preparing">安全なキーを設定しています… 最大 1 分ほどかかる場合があります。</string>
-    <string name="vault_migration_phase_saving">保存しています…</string>
+    <string name="vault_migration_progress_subtitle">数秒かかります。</string>
     <string name="vault_migration_failure_keystore">セキュアハードウェアが応答しませんでした。変更は行われませんでした。</string>
     <string name="vault_migration_failure_verify">アップグレードの検証に失敗しました。変更は行われませんでした。</string>
     <string name="vault_migration_failure_storage">アップグレードを保存できませんでした。変更は行われませんでした。</string>

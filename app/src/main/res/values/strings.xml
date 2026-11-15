@@ -219,10 +219,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Security upgrade — enter your master password once</string>
     <string name="vault_migration_progress_title">Upgrading vault security…</string>
-    <string name="vault_migration_progress_counter">%1$d of %2$d records</string>
-    <string name="vault_migration_phase_reading">Reading your records…</string>
-    <string name="vault_migration_phase_preparing">Setting up secure keys… This can take up to a minute.</string>
-    <string name="vault_migration_phase_saving">Saving…</string>
+    <string name="vault_migration_progress_subtitle">This takes a few seconds.</string>
     <string name="vault_migration_failure_keystore">The secure hardware did not respond. Nothing was changed.</string>
     <string name="vault_migration_failure_verify">Upgrade check failed. Nothing was changed.</string>
     <string name="vault_migration_failure_storage">Could not save the upgrade. Nothing was changed.</string>

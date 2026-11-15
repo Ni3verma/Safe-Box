@@ -199,10 +199,7 @@
     <!-- Envelope encryption migration & fallback -->
     <string name="login_security_upgrade_notice">Aggiornamento di sicurezza — inserisci la password principale una volta</string>
     <string name="vault_migration_progress_title">Aggiornamento della sicurezza della cassaforte…</string>
-    <string name="vault_migration_progress_counter">%1$d di %2$d record</string>
-    <string name="vault_migration_phase_reading">Lettura dei tuoi record…</string>
-    <string name="vault_migration_phase_preparing">Configurazione delle chiavi sicure… Può richiedere fino a un minuto.</string>
-    <string name="vault_migration_phase_saving">Salvataggio…</string>
+    <string name="vault_migration_progress_subtitle">Richiede alcuni secondi.</string>
     <string name="vault_migration_failure_keystore">L\'hardware sicuro non ha risposto. Non è stata apportata alcuna modifica.</string>
     <string name="vault_migration_failure_verify">Verifica dell\'aggiornamento non riuscita. Non è stata apportata alcuna modifica.</string>
     <string name="vault_migration_failure_storage">Impossibile salvare l\'aggiornamento. Non è stata apportata alcuna modifica.</string>

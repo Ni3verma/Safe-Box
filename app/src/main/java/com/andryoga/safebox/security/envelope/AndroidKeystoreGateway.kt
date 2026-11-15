@@ -29,12 +29,13 @@ import javax.inject.Singleton
 /**
  * Production [KeystoreGateway] over `AndroidKeyStore`.
  *
- * Wrap keys are RSA-2048 OAEP pairs generated StrongBox-first. Every private-key cipher is
- * initialised with the explicit MGF1-SHA1 parameters of [OAEP_SPEC], the only combination that
- * interoperates with the JCA encrypt side on every supported API (ADR-0011 S4). The legacy
+ * Wrap keys are RSA-2048 OAEP pairs generated in the TEE, never StrongBox, whose keygen takes
+ * 5-20 s per key (ADR-0015). Every private-key cipher is initialised with the explicit MGF1-SHA1
+ * parameters of [OAEP_SPEC], the only combination that interoperates with the JCA encrypt side on
+ * every supported API (ADR-0011 S4). The legacy
  * `symmetricDataKey` is read or deleted here and never generated.
  *
- * The decisions (failure mapping, StrongBox retry, probe classification) are pure companion
+ * The decisions (failure mapping, probe classification) are pure companion
  * functions so they are unit-tested on the JVM; the Keystore calls themselves are covered on a
  * device by `KeystoreWrapKeysTest`.
  */
@@ -44,11 +45,9 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
     override fun generateWrapKeyPair(alias: String, spec: WrapKeySpec): PublicKey {
         deleteKey(alias)
         return try {
-            withStrongBoxFallback { strongBoxBacked ->
-                val generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE)
-                generator.initialize(buildKeyGenParameterSpec(alias, spec, strongBoxBacked))
-                generator.generateKeyPair().public
-            }
+            val generator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE)
+            generator.initialize(buildKeyGenParameterSpec(alias, spec))
+            generator.generateKeyPair().public
         } catch (e: Exception) {
             throw mapKeyGenFailure(e, spec)
         }
@@ -123,7 +122,6 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
     private fun buildKeyGenParameterSpec(
         alias: String,
         spec: WrapKeySpec,
-        strongBoxBacked: Boolean,
     ): KeyGenParameterSpec = KeyGenParameterSpec.Builder(
         alias,
         KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
@@ -155,7 +153,6 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
                     }
                 }
             }
-            setIsStrongBoxBacked(strongBoxBacked)
         }
         .build()
 
@@ -171,19 +168,6 @@ class AndroidKeystoreGateway @Inject constructor() : KeystoreGateway {
 
         /** Keystore pads OAEP with MGF1-SHA1 while Conscrypt defaults to MGF1-SHA256; both sides must say SHA1 explicitly. */
         val OAEP_SPEC = OAEPParameterSpec("SHA-256", "MGF1", MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
-
-        /**
-         * Runs [generate] StrongBox-backed first and once more without StrongBox if that fails for
-         * any reason: a device without StrongBox throws `StrongBoxUnavailableException` (ADR-0011
-         * S4), but OEM StrongBox implementations also reject key parameters with other classes, and
-         * a TEE key is acceptable by design. A failure unrelated to StrongBox recurs on the retry
-         * and propagates from there.
-         */
-        internal fun <T> withStrongBoxFallback(generate: (strongBoxBacked: Boolean) -> T): T = try {
-            generate(true)
-        } catch (_: Exception) {
-            generate(false)
-        }
 
         /**
          * Maps the `IllegalStateException` Keystore raises for a missing lock screen or biometric —
