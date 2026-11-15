@@ -31,9 +31,10 @@ locked vault fails closed with `SessionLockedException` on both directions:
 - the five record `getAll*` Flows catch it through `emptyWhenSessionLocked()` (`common/Utils.kt`) and emit an empty list
   (any other failure still propagates: a broken row is a bug to surface, not a state to hide);
 - suspend reads and writes throw it to the caller that owns the recovery: a ViewModel launch that
-  touches records goes through `Utils.launchVaultOperation` (since envelope MR 4), which ends the
-  operation silently on `SessionLockedException` and propagates anything else — the four
-  `SingleRecordViewModel` sites today; the workers return `SESSION_LOCKED` (below);
+  touches records or the session key goes through `Utils.launchVaultOperation` (since envelope
+  MR 4), which ends the operation silently on `SessionLockedException` and propagates anything
+  else — the four `SingleRecordViewModel` sites and `SettingsViewModel.updateMasterPassword`
+  today; the workers return `SESSION_LOCKED` (below);
 - the route to Login is central: `HomeScreen` collects `MainViewModel.isVaultUnlocked`
   (`SessionKeyHolder.isUnlocked`, a `StateFlow`) and leaves for the Login graph, composing
   nothing, whenever it is `false` — on entry for a back stack restored after process death or

@@ -1327,7 +1327,7 @@ Naming follows the repo convention: descriptive, no test-case numbers (`transien
 
 | Suite | Cases |
 |---|---|
-| `LoginScreenTest` (extend) | upgrade notice shown for `crypto_version = 1` · migration progress shows the title, subtitle and an indeterminate bar (ADR-0015), offers no input and swallows back (control: without a migration back reaches the host) · determinate progress exposed as `ProgressBarRangeInfo` for TalkBack · failure card shows the reason, *Try again*, *Continue for now* and emits both events · forgot-password variant hides *Continue* and says the password was not changed · legacy-key-lost card with Erase · recovery-not-set-up state and its actions · invalidated banner · away banner |
+| `LoginScreenTest` (extend) | upgrade notice shown for `crypto_version = 1` · migration progress shows the title, subtitle and an indeterminate bar (ADR-0015), offers no input and swallows back (control: without a migration back reaches the host) · failure card shows the reason, *Try again*, *Continue for now* and emits both events · forgot-password variant hides *Continue* and says the password was not changed · legacy-key-lost card with Erase · recovery-not-set-up state and its actions · invalidated banner · away banner |
 | `SignupScreenTest`, `UpdatePasswordDialogTest` | hint-is-not-secret note under the hint field (MR 9) |
 | `HomeScreenBannersTest` (new) | screen-lock nudge: shown once, *Set up* and *I accept the risk* reach their callbacks · upgrade-pending banner: *Retry now* reaches its callback |
 | `SettingsScreenComprehensiveTest` (extend) | switch hidden / disabled / on / off states · change-password: device-auth path, *Use master password instead* field, wrong current password stays · both entries disabled in a legacy session |
@@ -1358,7 +1358,7 @@ Automated suites cannot enrol a fingerprint on the CI image, cannot exercise Str
 
 | Target | Why this level specifically | Must-run scenarios |
 |---|---|---|
-| **API 29** emulator | oldest supported ([ADR-0012](../decisions/0012-min-sdk-29.md)); the only time-bound `KEK_Device` level; framework `BiometricPrompt` with `setDeviceCredentialAllowed` and the #279 `BIOMETRIC_WEAK or DEVICE_CREDENTIAL` split; SQLite 3.28 (no `DROP COLUMN`, exercises the create-copy-drop-rename migration); `setIsStrongBoxBacked` exists but no StrongBox ⇒ fallback path; `locksettings` available | B1–B6, C2, D1–D3, E1, G1–G4 |
+| **API 29** emulator | oldest supported ([ADR-0012](../decisions/0012-min-sdk-29.md)); the only time-bound `KEK_Device` level; framework `BiometricPrompt` with `setDeviceCredentialAllowed` and the #279 `BIOMETRIC_WEAK or DEVICE_CREDENTIAL` split; SQLite 3.28 (no `DROP COLUMN`, exercises the create-copy-drop-rename migration); `locksettings` available | B1–B6, C2, D1–D3, E1, G1–G4 |
 | **API 30** emulator | first per-operation `CryptoObject` + `DEVICE_CREDENTIAL` recovery (`setUserAuthenticationParameters`) | B1, C1, D1–D3, F1–F2 |
 | **API 34** emulator | CI parity (`aosp-atd` GMD). **The `aosp-atd` image has no secure lock screen** (`locksettings` is ignored, auth-bound keys cannot be generated — S8), so every lock-screen or biometric scenario needs a `google_apis` image at this level | A1–A3, B1–B3, E1–E3, G1–G5, H1 |
 | **API 36** emulator | current platform behaviour (predictive back on the progress state, notification permission for workers) | A1, B1, E2, G1 |

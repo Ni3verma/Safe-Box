@@ -45,14 +45,14 @@ fun SwitchPreference(
             .fillMaxWidth()
             .padding(bottom = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 12.dp)
                 // The Switch dims itself when disabled; only the text needs it.
-                .alpha(if (enabled) 1f else DISABLED_ALPHA)
+                .alpha(if (enabled) 1f else DISABLED_ALPHA),
         ) {
             Text(
                 title,

@@ -46,7 +46,7 @@ fun TextPreference(
             }
             .alpha(if (enabled) 1f else DISABLED_ALPHA),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
             modifier = Modifier
